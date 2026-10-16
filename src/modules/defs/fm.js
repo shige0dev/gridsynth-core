@@ -1,5 +1,11 @@
 import { UIHelpers } from '../../ui/helpers.js';
 
+const FM_OPERATORS = [
+    { num: 3, key: 'op3', label: 'OP 3', sub: 'MOD 2', color: 'amber', hasWave: true, hasFb: true },
+    { num: 2, key: 'op2', label: 'OP 2', sub: 'MOD 1', color: 'purple', hasWave: false, hasFb: false },
+    { num: 1, key: 'op1', label: 'OP 1', sub: 'CARRIER', color: 'cyan', hasWave: false, hasFb: false }
+];
+
 export const FMx3 = {
     color: 'cyan',
     ALGORITHMS: [
@@ -17,27 +23,25 @@ export const FMx3 = {
     }),
     onNormalize: (m) => {
         const curveVal = (c) => c === 'log' ? 0.75 : (c === 'exp' ? -0.75 : 0.0);
-        const normOp = (op, def) => {
-            if (!op) op = { ...def };
-            if (op.ratio === undefined) op.ratio = def.ratio;
-            if (op.level === undefined) op.level = def.level;
-            if (op.attack === undefined) op.attack = def.attack;
-            if (op.decay === undefined) op.decay = def.decay;
-            if (op.sustain === undefined) op.sustain = def.sustain;
-            if (op.release === undefined) op.release = def.release;
-            if (!op.aCurve) op.aCurve = op.curve || 'exp';
-            if (!op.dCurve) op.dCurve = op.curve || 'exp';
-            if (!op.rCurve) op.rCurve = op.curve || 'exp';
-            op.attackCurve = curveVal(op.aCurve);
-            op.decayCurve = curveVal(op.dCurve);
-            op.releaseCurve = curveVal(op.rCurve);
-            return op;
+        const DEFAULTS = {
+            op1: { ratio: 1.0, level: 0.85, attack: 0.005, decay: 0.4, sustain: 0.0, release: 0.1 },
+            op2: { ratio: 2.0, level: 1.5, attack: 0.005, decay: 0.15, sustain: 0.0, release: 0.05 },
+            op3: { ratio: 3.5, level: 1.8, feedback: 0.0, wave: 'sine', attack: 0.005, decay: 0.05, sustain: 0.0, release: 0.02 }
         };
-        m.op1 = normOp(m.op1, { ratio: 1.0, level: 0.85, attack: 0.005, decay: 0.4, sustain: 0.0, release: 0.1, aCurve: 'exp', dCurve: 'exp', rCurve: 'exp' });
-        m.op2 = normOp(m.op2, { ratio: 2.0, level: 1.5, attack: 0.005, decay: 0.15, sustain: 0.0, release: 0.05, aCurve: 'exp', dCurve: 'exp', rCurve: 'exp' });
-        m.op3 = normOp(m.op3, { ratio: 3.5, level: 1.8, feedback: 0.0, wave: 'sine', attack: 0.005, decay: 0.05, sustain: 0.0, release: 0.02, aCurve: 'exp', dCurve: 'exp', rCurve: 'exp' });
-        if (m.algorithm === undefined) m.algorithm = 1;
-        else m.algorithm = Math.max(1, Math.min(3, Math.round(m.algorithm)));
+        FM_OPERATORS.forEach(op => {
+            const def = DEFAULTS[op.key];
+            if (!m[op.key]) m[op.key] = { ...def };
+            const cur = m[op.key];
+            Object.keys(def).forEach(k => {
+                if (cur[k] === undefined) cur[k] = def[k];
+            });
+            ['a', 'd', 'r'].forEach(st => {
+                const cKey = `${st}Curve`;
+                if (!cur[cKey]) cur[cKey] = cur.curve || 'exp';
+                cur[`${st === 'a' ? 'attack' : (st === 'd' ? 'decay' : 'release')}Curve`] = curveVal(cur[cKey]);
+            });
+        });
+        m.algorithm = Math.max(1, Math.min(3, Math.round(m.algorithm ?? 1)));
         if (m.rootMidi === undefined) m.rootMidi = 48;
     },
     ports: () => ({
@@ -146,6 +150,42 @@ export const FMx3 = {
             `;
         };
 
+        const renderOperatorRow = (op) => {
+            const opData = m[op.key] || {};
+            const c = op.color;
+            const isCarrier = (op.num === 1);
+            const maxLvl = isCarrier ? 1.0 : 5.0;
+            const stepLvl = isCarrier ? 0.01 : 0.05;
+
+            return `
+                <div class="flex items-center gap-1 p-1 rounded-lg bg-slate-950/70 border border-slate-800/80 h-[74px]">
+                    <div class="flex flex-col items-center ${op.hasWave ? 'justify-between' : 'justify-center'} h-full w-[38px] shrink-0 pr-1 border-r border-slate-800/80">
+                        <div class="flex flex-col items-center">
+                            <span class="text-[8px] font-bold text-${c}-300 uppercase tracking-tight leading-none">${op.label}</span>
+                            <span class="text-[6.5px] font-mono text-slate-400 leading-tight">${op.sub}</span>
+                        </div>
+                        ${op.hasWave ? `
+                        <button id="fm-op3-wave-btn" class="w-full py-0.5 rounded text-[6.5px] font-bold border transition-colors ${isNz ? 'bg-amber-500 text-slate-950 border-amber-300 font-extrabold shadow-sm' : 'bg-slate-900 text-slate-300 border-slate-700'}" title="波形切替 (Sine / White Noise)">
+                            ${isNz ? 'NOISE' : 'SINE'}
+                        </button>` : ''}
+                    </div>
+
+                    <div class="flex items-center justify-around flex-1 h-full gap-0.5">
+                        ${renderMiniVSlider(`fm-${op.key}-level`, 'LEVEL', 0.0, maxLvl, stepLvl, opData.level, c, Number(opData.level).toFixed(2))}
+                        ${renderMiniVSlider(`fm-${op.key}-ratio`, 'RATIO', 0.25, 16.0, 0.25, opData.ratio, c, Number(opData.ratio).toFixed(2))}
+                        ${op.hasFb ? renderMiniVSlider(`fm-${op.key}-fb`, 'FB', 0.0, 1.0, 0.02, opData.feedback || 0, c, Math.round((opData.feedback || 0) * 100) + '%') : renderMiniPlaceholder('FB')}
+                        <div class="w-[1px] h-[52px] bg-slate-800/60 mx-0.5 shrink-0"></div>
+                        ${renderMiniVSlider(`fm-${op.key}-a`, 'A', 0.0005, 2.0, 0.001, opData.attack, c, UIHelpers.formatTime(opData.attack), 2.5)}
+                        ${renderMiniVSlider(`fm-${op.key}-d`, 'D', 0.005, 3.0, 0.005, opData.decay, c, UIHelpers.formatTime(opData.decay), 2.5)}
+                        ${renderMiniVSlider(`fm-${op.key}-s`, 'S', 0.0, 1.0, 0.01, opData.sustain, c, Number(opData.sustain).toFixed(2))}
+                        ${renderMiniVSlider(`fm-${op.key}-r`, 'R', 0.005, 5.0, 0.005, opData.release, c, UIHelpers.formatTime(opData.release), 2.5)}
+                    </div>
+
+                    ${renderCurveBlock(op.num, opData, c)}
+                </div>
+            `;
+        };
+
         return `
             <div class="space-y-1.5 select-none">
                 <!-- Top: Algorithm Selector -->
@@ -169,73 +209,7 @@ export const FMx3 = {
                 <div class="flex gap-1.5 items-stretch">
                     <!-- Operators (Top-to-Bottom: OP3, OP2, OP1) -->
                     <div class="flex flex-col gap-1.5 flex-1 min-w-0">
-                        <!-- OP 3 Row (Modulator 2) -->
-                        <div class="flex items-center gap-1 p-1 rounded-lg bg-slate-950/70 border border-slate-800/80 h-[74px]">
-                            <div class="flex flex-col items-center justify-between h-full w-[38px] shrink-0 pr-1 border-r border-slate-800/80">
-                                <div class="flex flex-col items-center">
-                                    <span class="text-[8px] font-bold text-amber-300 uppercase tracking-tight leading-none">OP 3</span>
-                                    <span class="text-[6.5px] font-mono text-slate-400 leading-tight">MOD 2</span>
-                                </div>
-                                <button id="fm-op3-wave-btn" class="w-full py-0.5 rounded text-[6.5px] font-bold border transition-colors ${isNz ? 'bg-amber-500 text-slate-950 border-amber-300 font-extrabold shadow-sm' : 'bg-slate-900 text-slate-300 border-slate-700'}" title="波形切替 (Sine / White Noise)">
-                                    ${isNz ? 'NOISE' : 'SINE'}
-                                </button>
-                            </div>
-
-                            <div class="flex items-center justify-around flex-1 h-full gap-0.5">
-                                ${renderMiniVSlider('fm-op3-level', 'LEVEL', 0.0, 5.0, 0.05, m.op3.level, 'amber', Number(m.op3.level).toFixed(2))}
-                                ${renderMiniVSlider('fm-op3-ratio', 'RATIO', 0.25, 16.0, 0.25, m.op3.ratio, 'amber', Number(m.op3.ratio).toFixed(2))}
-                                ${renderMiniVSlider('fm-op3-fb', 'FB', 0.0, 1.0, 0.02, m.op3.feedback || 0, 'amber', Math.round((m.op3.feedback || 0) * 100) + '%')}
-                                <div class="w-[1px] h-[52px] bg-slate-800/60 mx-0.5 shrink-0"></div>
-                                ${renderMiniVSlider('fm-op3-a', 'A', 0.0005, 2.0, 0.001, m.op3.attack, 'amber', UIHelpers.formatTime(m.op3.attack), 2.5)}
-                                ${renderMiniVSlider('fm-op3-d', 'D', 0.005, 3.0, 0.005, m.op3.decay, 'amber', UIHelpers.formatTime(m.op3.decay), 2.5)}
-                                ${renderMiniVSlider('fm-op3-s', 'S', 0.0, 1.0, 0.01, m.op3.sustain, 'amber', Number(m.op3.sustain).toFixed(2))}
-                                ${renderMiniVSlider('fm-op3-r', 'R', 0.005, 5.0, 0.005, m.op3.release, 'amber', UIHelpers.formatTime(m.op3.release), 2.5)}
-                            </div>
-
-                            ${renderCurveBlock(3, m.op3, 'amber')}
-                        </div>
-
-                        <!-- OP 2 Row (Modulator 1) -->
-                        <div class="flex items-center gap-1 p-1 rounded-lg bg-slate-950/70 border border-slate-800/80 h-[74px]">
-                            <div class="flex flex-col items-center justify-center h-full w-[38px] shrink-0 pr-1 border-r border-slate-800/80">
-                                <span class="text-[8px] font-bold text-purple-300 uppercase tracking-tight leading-none">OP 2</span>
-                                <span class="text-[6.5px] font-mono text-slate-400 leading-tight">MOD 1</span>
-                            </div>
-
-                            <div class="flex items-center justify-around flex-1 h-full gap-0.5">
-                                ${renderMiniVSlider('fm-op2-level', 'LEVEL', 0.0, 5.0, 0.05, m.op2.level, 'purple', Number(m.op2.level).toFixed(2))}
-                                ${renderMiniVSlider('fm-op2-ratio', 'RATIO', 0.25, 16.0, 0.25, m.op2.ratio, 'purple', Number(m.op2.ratio).toFixed(2))}
-                                ${renderMiniPlaceholder('FB')}
-                                <div class="w-[1px] h-[52px] bg-slate-800/60 mx-0.5 shrink-0"></div>
-                                ${renderMiniVSlider('fm-op2-a', 'A', 0.0005, 2.0, 0.001, m.op2.attack, 'purple', UIHelpers.formatTime(m.op2.attack), 2.5)}
-                                ${renderMiniVSlider('fm-op2-d', 'D', 0.005, 3.0, 0.005, m.op2.decay, 'purple', UIHelpers.formatTime(m.op2.decay), 2.5)}
-                                ${renderMiniVSlider('fm-op2-s', 'S', 0.0, 1.0, 0.01, m.op2.sustain, 'purple', Number(m.op2.sustain).toFixed(2))}
-                                ${renderMiniVSlider('fm-op2-r', 'R', 0.005, 5.0, 0.005, m.op2.release, 'purple', UIHelpers.formatTime(m.op2.release), 2.5)}
-                            </div>
-
-                            ${renderCurveBlock(2, m.op2, 'purple')}
-                        </div>
-
-                        <!-- OP 1 Row (Carrier) -->
-                        <div class="flex items-center gap-1 p-1 rounded-lg bg-slate-950/70 border border-slate-800/80 h-[74px]">
-                            <div class="flex flex-col items-center justify-center h-full w-[38px] shrink-0 pr-1 border-r border-slate-800/80">
-                                <span class="text-[8px] font-bold text-cyan-300 uppercase tracking-tight leading-none">OP 1</span>
-                                <span class="text-[6.5px] font-mono text-slate-400 leading-tight">CARRIER</span>
-                            </div>
-
-                            <div class="flex items-center justify-around flex-1 h-full gap-0.5">
-                                ${renderMiniVSlider('fm-op1-level', 'LEVEL', 0.0, 1.0, 0.01, m.op1.level, 'cyan', Number(m.op1.level).toFixed(2))}
-                                ${renderMiniVSlider('fm-op1-ratio', 'RATIO', 0.25, 16.0, 0.25, m.op1.ratio, 'cyan', Number(m.op1.ratio).toFixed(2))}
-                                ${renderMiniPlaceholder('FB')}
-                                <div class="w-[1px] h-[52px] bg-slate-800/60 mx-0.5 shrink-0"></div>
-                                ${renderMiniVSlider('fm-op1-a', 'A', 0.0005, 2.0, 0.001, m.op1.attack, 'cyan', UIHelpers.formatTime(m.op1.attack), 2.5)}
-                                ${renderMiniVSlider('fm-op1-d', 'D', 0.005, 3.0, 0.005, m.op1.decay, 'cyan', UIHelpers.formatTime(m.op1.decay), 2.5)}
-                                ${renderMiniVSlider('fm-op1-s', 'S', 0.0, 1.0, 0.01, m.op1.sustain, 'cyan', Number(m.op1.sustain).toFixed(2))}
-                                ${renderMiniVSlider('fm-op1-r', 'R', 0.005, 5.0, 0.005, m.op1.release, 'cyan', UIHelpers.formatTime(m.op1.release), 2.5)}
-                            </div>
-
-                            ${renderCurveBlock(1, m.op1, 'cyan')}
-                        </div>
+                        ${FM_OPERATORS.map(op => renderOperatorRow(op)).join('')}
                     </div>
 
                     <!-- Right Column: Vertical ROOT NOTE Slider (Disabled when pitch_in is patched) -->
@@ -286,51 +260,45 @@ export const FMx3 = {
             });
         });
 
-        // Bind Operator Sliders
-        [1, 2, 3].forEach(opNum => {
-            const opKey = `op${opNum}`;
-            const isCarrier = (opNum === 1);
+        // Bind Operator Sliders via FM_OPERATORS loop
+        FM_OPERATORS.forEach(op => {
+            const opData = m[op.key] || (m[op.key] = {});
+            const isCarrier = (op.num === 1);
 
-            // Level / Index
-            UIHelpers.bindSlider(`fm-op${opNum}-level`, v => v.toFixed(2), v => {
-                m[opKey].level = v;
+            UIHelpers.bindSlider(`fm-${op.key}-level`, v => v.toFixed(2), v => {
+                opData.level = v;
                 cb();
             }, 1, 0.0, isCarrier ? 1.0 : 5.0);
 
-            // Ratio
-            UIHelpers.bindSlider(`fm-op${opNum}-ratio`, v => v.toFixed(2), v => {
-                m[opKey].ratio = v;
+            UIHelpers.bindSlider(`fm-${op.key}-ratio`, v => v.toFixed(2), v => {
+                opData.ratio = v;
                 cb();
             }, 1, 0.25, 16.0);
 
-            // ADSR (A, D, S, R)
-            UIHelpers.bindSlider(`fm-op${opNum}-a`, UIHelpers.formatTime, v => {
-                m[opKey].attack = v;
-                cb();
-            }, 2.5, 0.0005, 2.0);
+            if (op.hasFb) {
+                UIHelpers.bindSlider(`fm-${op.key}-fb`, v => Math.round(v * 100) + '%', v => {
+                    opData.feedback = v;
+                    cb();
+                }, 1, 0.0, 1.0);
+            }
 
-            UIHelpers.bindSlider(`fm-op${opNum}-d`, UIHelpers.formatTime, v => {
-                m[opKey].decay = v;
-                cb();
-            }, 2.5, 0.005, 3.0);
+            const envStages = [
+                { id: 'a', prop: 'attack', min: 0.0005, max: 2.0 },
+                { id: 'd', prop: 'decay', min: 0.005, max: 3.0 },
+                { id: 'r', prop: 'release', min: 0.005, max: 5.0 }
+            ];
+            envStages.forEach(st => {
+                UIHelpers.bindSlider(`fm-${op.key}-${st.id}`, UIHelpers.formatTime, v => {
+                    opData[st.prop] = v;
+                    cb();
+                }, 2.5, st.min, st.max);
+            });
 
-            UIHelpers.bindSlider(`fm-op${opNum}-s`, v => v.toFixed(2), v => {
-                m[opKey].sustain = v;
+            UIHelpers.bindSlider(`fm-${op.key}-s`, v => v.toFixed(2), v => {
+                opData.sustain = v;
                 cb();
             }, 1, 0.0, 1.0);
-
-            UIHelpers.bindSlider(`fm-op${opNum}-r`, UIHelpers.formatTime, v => {
-                m[opKey].release = v;
-                cb();
-            }, 2.5, 0.005, 5.0);
         });
-
-        // Op3 Feedback
-        UIHelpers.bindSlider('fm-op3-fb', v => Math.round(v * 100) + '%', v => {
-            if (!m.op3) m.op3 = {};
-            m.op3.feedback = v;
-            cb();
-        }, 1, 0.0, 1.0);
 
         // Vertical Root Midi Slider
         UIHelpers.bindSlider('fm-root-slider', UIHelpers.midiToNoteName, v => {
