@@ -122,7 +122,7 @@ export const MARKOV = {
                         <!-- Stay Slider -->
                         <div class="flex flex-col items-center gap-1 flex-1 min-w-0">
                             <span class="text-[8px] font-bold text-slate-300 uppercase tracking-tight truncate w-full text-center">STAY</span>
-                            <span id="markov-p-stay" class="text-[9px] text-amber-300 font-mono font-bold">${pctStay}%</span>
+                            <span id="markov-p-stay" class="text-[9px] text-amber-300 font-mono font-bold cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 py-0.5 rounded transition-colors leading-tight" title="上下ドラッグで微調整">${pctStay}%</span>
                             <div class="h-12 flex items-center justify-center my-0.5">
                                 <input type="range" id="markov-w-stay" min="0" max="100" step="1" value="${wStay}" class="native-vslider accent-amber-500">
                             </div>
@@ -133,7 +133,7 @@ export const MARKOV = {
                         ${[0, 1, 2, 3].map(idx => `
                             <div class="flex flex-col items-center gap-1 flex-1 min-w-0">
                                 <span class="text-[8px] font-bold text-slate-300 uppercase tracking-tight truncate w-full text-center">OUT ${idx + 1}</span>
-                                <span id="markov-p-${idx}" class="text-[9px] text-amber-300 font-bold font-mono">${pcts[idx]}%</span>
+                                <span id="markov-p-${idx}" class="text-[9px] text-amber-300 font-bold font-mono cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 py-0.5 rounded transition-colors leading-tight" title="上下ドラッグで微調整">${pcts[idx]}%</span>
                                 <div class="h-12 flex items-center justify-center my-0.5">
                                     <input type="range" id="markov-w-${idx}" min="0" max="100" step="1" value="${weights[idx] ?? 0}" class="native-vslider accent-amber-500 markov-w-slider" data-idx="${idx}">
                                 </div>
@@ -218,6 +218,11 @@ export const MARKOV = {
             updatePcts();
             cb();
         });
+        UIHelpers.bindScrubber('markov-p-stay', 'markov-w-stay', null, (val) => {
+            m.stayWeight = Math.round(val);
+            updatePcts();
+            cb();
+        }, 1, 0, 100);
 
         document.querySelectorAll('.markov-w-slider').forEach(sl => {
             sl.addEventListener('input', (e) => {
@@ -227,6 +232,14 @@ export const MARKOV = {
                 updatePcts();
                 cb();
             });
+        });
+        [0, 1, 2, 3].forEach(idx => {
+            UIHelpers.bindScrubber(`markov-p-${idx}`, `markov-w-${idx}`, null, (val) => {
+                if (!m.weights) m.weights = [0, 0, 0, 0];
+                m.weights[idx] = Math.round(val);
+                updatePcts();
+                cb();
+            }, 1, 0, 100);
         });
     },
     updateLive: (cell, readData, isPlaying, modalEl, m) => {
