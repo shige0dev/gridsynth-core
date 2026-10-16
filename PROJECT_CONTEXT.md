@@ -53,15 +53,17 @@ GridSynth は、Web ブラウザ上で動作する **5×8 グリッド型のモ�
 #### ① 音声エンジン (`src/audio/engine.js`, `src/audio/registry.js`)
 - **AudioContext & クロック**: 高精度なハードウェアタイマー基準で動作。マスターテンポ（BPM）を元にクロックパルス・シーケンスステップ・パターンフェーズを計算。
 - **CV（Control Voltage）と Audio の統合**: Web Audio API の `ConstantSourceNode` や `AudioParam` を組み合わせ、1V/oct 相当のピッチCV、0〜1VのエンベロープCV、バイポーラ/ユニポーラ変調をシームレスに処理。
-- **Keepalive 機構 (`silentSink`)**: Web Audio API では、スピーカー（`destination`）に繋がっていないグラフ枝がガベージコレクションや最適化で処理停止する場合があります。`PAT`、`CLK`、`SEQ` などの独立駆動モジュールには無音のゲインノード（`GainNode(0) -> destination`）を接続し、単体動作時でもシーケンスが停止しない設計になっています。
+- **Keepalive 機構 (`silentSink`)**: Web Audio API では、スピーカー（`destination`）に繋がっていないグラフ枝がガベージコレクションや最適化で処理停止する場合があります。`PAT`、`CLK`、`SEQ8`、`SEQ16`、`GATE4`、`ARP` などの独立駆動モジュールには無音のゲインノード（`GainNode(0) -> destination`）を接続し、単体動作時でもシーケンスが停止しない設計になっています。
 
 #### ② モジュール定義システム (`src/modules/registry.js`)
-- 各モジュール（`VCO`, `VCF`, `VCA`, `ADSR`, `CLK`, `SEQ`, `PAT`, `SH`, `DELAY`, `REVERB`, `FOLD`, `MIX`, `SUB`, `SUB_IO`, `SPK`, `KEY` 等）の入出力端子（オーディオ / CV / ゲート）、UIコントロールのパラメータ範囲・デフォルト値を一元管理。
+- 各モジュール（`VCO`, `VCF`, `VCA`, `ADSR`, `CLK`, `SEQ8`, `SEQ16`, `PAT`, `SH`, `DELAY`, `REVERB`, `FOLD`, `MIX`, `SUB`, `SUB_IO`, `SPK`, `KEY`, `FMx3`, `FMCORE`, `GATE4`, `ARP` 等）の入出力端子（オーディオ / CV / ゲート）、UIコントロールのパラメータ範囲・デフォルト値を一元管理。サブパッチ（`SUB` / `SUB_IO`）は表裏対称の12端子（スロット1〜6 送り: `PIN1_in`〜`PIN6_in` / `PIN1_out`〜`PIN6_out`、スロット7〜12 戻り: `PIN7_out`〜`PIN12_out` / `PIN7_in`〜`PIN12_in`）で厳格な `_out > _in` ルーティングによりブリッジされます。左上から下へPIN1〜3、下辺を左から右へPIN4〜9、右辺を下から上へPIN10〜12のU字型に配線端子が並びます。
+- **サブパッチ・マニフェスト＆動的バインダー (`subType`)**: ファクトリー品全11種および配布用サブパッチは自己完結型フォーマット（`format: 'gridsynth-submodule'`, `subType`, `manifest.ports`）を搭載。固定ページ番号（`targetPage`）に依存せず、型番（`subType`）をもとに空きページを自動採番してモジュール群・内部結線を動的展開。親側（`SUB`）・子側（`SUB_IO`）双方で物理ピンに対する機能別名（`pitch_in`, `trig_in`, `wave_out` 等）を共通記述でき、システムが親側/子側の役割に応じて自動的に `_in` / `_out` へ方向解決します。
 
 #### ③ UI コントローラー (`src/ui/controller.js`)
 - **40スロット管理**: `slots`（位置マップ）、`modules`（インスタンス状態）、`connections`（結線リスト）の状態管理。
 - **階層ナビゲーション**: ページ0（メイン）とページ1〜（サブパッチ）のスタック遷移、親ページからのI/Oポートフォワーディング。
 - **マルチ選択 & ドック/ポップアップ**: モジュールをクリックして画面下部ドックで詳細調整、または複数選択による一括移動/削除。
+- **端子トースト表示 & 厳格検証**: マニフェストを持つサブパッチ端子のホバーおよびタップ時、`[${mId}:${aliasUpper} (${pin}_in/_out)]` をシンプルかつ明瞭にトースト表示（冗長な説明文は完全排除）。パネル上には編集UIを露出させず直感的な操作感を維持。結線時は送信元 `_out`、送信先 `_in` を厳格検証。
 
 #### ④ Strudel / Tidal 記法パーサー (`src/core/strudel-parser.js`)
 - mini-notation の文字列（例: `[c2 c2 c2 c2] [c2 c2 c2 c3] [c2 c2 c2 c2] [c2 c2 c2 c4]`）をトークン分解・AST化。
@@ -200,7 +202,19 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
 4. **`gridsynth_compose_strudel`**: 音楽ジャンルや雰囲気に合わせた mini-notation パターンを生成し、`PAT` モジュールへ即時注入。
 5. **`gridsynth_diagnose_patch`**: 「音が鳴らない」「結線がループしている」などのトラブルシューティングを AI が接続グラフを走査して自己診断・修正提案。
 
-### 5.2 外部 Web API / Web MIDI / OSC ロードマップ
+### 5.2 AI プロンプト仕様書 & パッチ生成連携 (AI Spec & Prompt Export)
+- **`GRIDSYNTH_AI_PATCH_SPEC.md`**: 外部LLM（ChatGPT, Claude, Gemini, Cursor等）がGridsynth用JSONパッチを完全自律生成するための包括的プロンプト仕様書。
+- **UI統合 (`src/presets/ai-spec-content.js`, `src/ui/managers/preset-manager.js`)**:
+  - プリセット管理ダイアログ（`#preset-ai-spec-top-btn` `[MD]` ボタン）から1クリックでモーダル起動。
+  - **COPY TO CLIPBOARD**: 即座に仕様書全文をクリップボードにコピー（外部AIチャットへの直接ペーストに最適化）。
+  - **DOWNLOAD .MD**: Claude ProjectsやCustom GPTsへのナレッジ登録用として `.md` ファイルをワンクリックダウンロード。
+  - 生成されたJSONはそのまま `IMPORT` ボタンでペースト・即時音出しが可能。
+- **インポート時のAIエラー自己修復フィードバック (Import Error Diagnostics & Copy)**:
+  - 外部AIが生成したパッチ/サブパッチJSONに構文エラー（不要な末尾カンマ、クォート漏れ等）、構造欠落、または結線規則違反（入力・出力端子の逆指定、未定義端子、未知のモジュールID）が発生した場合、消えてしまうトーストではなく永続的なアラートモーダルを表示。
+  - エラー行・列番号、周辺コードスニペット（ポインター表示）、結線エラー詳細（利用可能な端子一覧）、およびAIへの具体的な修正指示プロンプトを自動生成。
+  - **「COPY ERROR」/「COPY ERRORS」ボタン**（および手動ドラッグ選択）で1クリックコピーでき、AIチャットへ即座に貼り付けて修正パッチを再生成できるシームレスな対話サイクルを実現。
+
+### 5.3 外部 Web API / Web MIDI / OSC ロードマップ
 - **Headless Mode / Audio Worklet API**: ブラウザ UI なしで Node.js や Deno 環境でのバウンス・音声レンダリング。
 - **Web MIDI API**: 外部 MIDI キーボードやハードウェアコントローラー（KORG nanoKONTROL 等）のノブ/鍵盤とのマッピング。
 - **WebRTC / WebSocket によるリモートセッション**: 複数人でのリアルタイム共同パッチング。
@@ -219,11 +233,17 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
 | **`04_RANDOM_SH_DELAY`** | S&H（サンプル＆ホールド）ランダムCV + KEY手動ピッチ加算 + ディレイパッチ |
 | **`05_SUBPATCH_MULTI_GROOVE`** | 4トラック構成（Acid Bass, Kick, Snare, Hi-Hat, Clap）をサブパッチで内包したグルーヴボックス |
 | **`06_STRUDEL_HOUSE_BASSLINE`** | PATモジュール（Strudel mini-notation）を活用した16ステップオクターブベースライン |
+| **`07_DUB_TECHNO_DEEP_SPACE`** | 16拍ロングサイクルコードスタブ、ディープサブベース、S&Hフィルター揺らぎ、サブパッチによる控えめなダブドラム |
+| **`08_MARKOV_GENERATIVE_CHAINS`** | マルコフ連鎖（MARKOV）確率遷移ネットワークによる有機的ジェネラティブ旋律シーケンス |
+| **`09_FM_HEAVY_TECHNO`** | FMx3を多数駆使した重厚なハード・インダストリアル・テクノグルーヴ |
+| **`10_FM_SIMPLE_TEST`** | FMx3（アルゴリズム1〜3）を聴き比べるためのシンプルなテストパッチ |
+| **`11_FMCORE_2OP_DEMO`** | 単機能PMコア（FMCORE）を2基パッチングしたモジュラー2オペレーターFMデモ（キャリア×モジュレータ、エンベロープによる動的インデックス変調） |
+| **`12_CHORD_ARPEGGIO`** | CHORDとARPによる4ボイス・コードアルペジエーター（SEQ8によるコード進行、GATE4によるビートアクセント、ディレイ・リバーブ空間処理） |
 
 ---
 
 ## 7. 開発・保守における留意点 (Important Guidelines for Developers)
 
 1. **LocalStorage クリーンアップの維持**: プリセット名やキー名を変更・削除した際は、`src/ui/controller.js` の `oldLegacyKeys` 配列に旧キーを登録し、ユーザーのブラウザストレージと整合性を保つこと。
-2. **Keepalive の徹底**: 音声信号が常時スピーカーに直結しないトリガー/CV生成モジュール（`PAT`, `CLK`, `SEQ` 等）を追加・改修する際は、必ず `silentSink`（`GainNode(0) -> destination`）への接続を維持すること。
+2. **Keepalive の徹底**: 音声信号が常時スピーカーに直結しないトリガー/CV生成モジュール（`PAT`, `CLK`, `SEQ8`, `SEQ16` 等）を追加・改修する際は、必ず `silentSink`（`GainNode(0) -> destination`）への接続を維持すること。
 3. **Vanilla JS の原則**: 特別な外部バンドラーを必要としない ES Modules（`import/export`）形式を厳守し、ブラウザで `index.html` を開くだけで即座に動作するシンプルさを保つこと。

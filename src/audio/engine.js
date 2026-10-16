@@ -1,6 +1,8 @@
-import { WORKLET_DSP_CODE } from '../dsp/worklet-code.js';
 import { AUDIO_REGISTRY } from './registry.js';
 import { AudioHelpers } from './helpers.js';
+import { parseConn, normalizeSubPort } from '../core/utils.js';
+
+export const WORKLET_MODULE_TYPES = ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'ADSR', 'LFO', 'MATH1', 'MATH2', 'SH', 'FOLD', 'CVDELAY', 'SCOPE', 'MARKOV', 'CHORD', 'FM', 'FM3OP', 'FMx3', 'FMCORE', 'GATE4', 'ARP'];
 
 export class SynthEngine {
     constructor() {
@@ -22,11 +24,9 @@ export class SynthEngine {
 
             if (this.ctx.audioWorklet) {
                 try {
-                    const blob = new Blob([WORKLET_DSP_CODE], { type: 'application/javascript' });
-                    const url = URL.createObjectURL(blob);
-                    await this.ctx.audioWorklet.addModule(url);
+                    const workletUrl = new URL('../dsp/worklet-processors.js?v=136', import.meta.url).href;
+                    await this.ctx.audioWorklet.addModule(workletUrl);
                     this.audioWorkletReady = true;
-                    URL.revokeObjectURL(url);
                 } catch (e) {
                     console.warn('Worklet load error:', e);
                 }
@@ -68,21 +68,34 @@ export class SynthEngine {
 
     resetSequencers() {
         Object.values(this.modules).forEach(m => {
-            if (m.type === 'SEQ' || m.type === 'PAT') {
+            if (m.type === 'SEQ8' || m.type === 'SEQ16' || m.type === 'PAT' || m.type === 'MARKOV' || m.type === 'GATE4' || m.type === 'ARP') {
                 m.resetStep?.();
                 m.nodes.w?.port.postMessage({ type: 'RESET' });
             }
+            m.clear?.();
+            if (m.type === 'CVDELAY' || m.type === 'ADSR') {
+                m.nodes.w?.port?.postMessage({ type: 'RESET' });
+            }
+        });
+    }
+
+    clearAllBuffers() {
+        Object.values(this.modules).forEach(m => {
+            m.clear?.();
+            m.nodes?.w?.port?.postMessage({ type: 'RESET' });
+            if (m.type === 'ADSR') m.resetStage?.();
         });
     }
 
     addModule(id, type, data, patchState) {
         this.removeModule(id);
-        if (!this.ctx || (!this.audioWorkletReady && ['CLK','SEQ','PAT','ADSR','LFO','MATH','SH','FOLD'].includes(type))) return;
+        if (!this.ctx || (!this.audioWorkletReady && WORKLET_MODULE_TYPES.includes(type))) return;
         const def = AUDIO_REGISTRY[type];
         if (def?.create) {
             const inst = def.create(this.ctx, data, patchState, this);
             inst.type = type;
             inst.data = data;
+            inst.manifest = data?.manifest;
             this.modules[id] = inst;
             if (type === 'SUB' || type === 'SUB_IO') {
                 this.linkSubBridges();
@@ -94,6 +107,7 @@ export class SynthEngine {
         const inst = this.modules[id] || this.modules[`0/${id}`];
         if (inst && this.ctx) {
             inst.data = data;
+            inst.manifest = data?.manifest || inst.manifest;
             AUDIO_REGISTRY[inst.type]?.update?.(this.ctx, inst, data, patchState, this);
             if (inst.type === 'SUB') {
                 this.linkSubBridges();
@@ -112,9 +126,13 @@ export class SynthEngine {
     connect(sId, sPort, dId, dPort) {
         const s = this.modules[sId] || this.modules[`0/${sId}`];
         const d = this.modules[dId] || this.modules[`0/${dId}`];
-        if (s?.outputs[sPort] && d?.inputs[dPort]) {
+        const sNorm = (s?.type === 'SUB' || s?.type === 'SUB_IO') ? normalizeSubPort(sPort, s?.type, s?.manifest) : sPort;
+        const dNorm = (d?.type === 'SUB' || d?.type === 'SUB_IO') ? normalizeSubPort(dPort, d?.type, d?.manifest) : dPort;
+        const sOut = s?.outputs[sNorm] || s?.outputs[sPort];
+        const dIn = d?.inputs[dNorm] || d?.inputs[dPort];
+        if (sOut && dIn) {
             try {
-                s.outputs[sPort].connect(d.inputs[dPort]);
+                sOut.connect(dIn);
             } catch (e) {}
         }
     }
@@ -122,49 +140,101 @@ export class SynthEngine {
     disconnect(sId, sPort, dId, dPort) {
         const s = this.modules[sId] || this.modules[`0/${sId}`];
         const d = this.modules[dId] || this.modules[`0/${dId}`];
-        if (s?.outputs[sPort] && d?.inputs[dPort]) {
+        const sNorm = (s?.type === 'SUB' || s?.type === 'SUB_IO') ? normalizeSubPort(sPort, s?.type, s?.manifest) : sPort;
+        const dNorm = (d?.type === 'SUB' || d?.type === 'SUB_IO') ? normalizeSubPort(dPort, d?.type, d?.manifest) : dPort;
+        const sOut = s?.outputs[sNorm] || s?.outputs[sPort];
+        const dIn = d?.inputs[dNorm] || d?.inputs[dPort];
+        if (sOut && dIn) {
             try {
-                s.outputs[sPort].disconnect(d.inputs[dPort]);
+                sOut.disconnect(dIn);
             } catch (e) {}
         }
     }
 
-    setKeyNote(id, midi, isDown) {
+    isRunning() {
+        return this.ctx?.state === 'running';
+    }
+
+    hasModules() {
+        return Object.keys(this.modules).length > 0;
+    }
+
+    sendControlEvent(id, event) {
+        if (!event || !event.type) return;
         const inst = this.modules[id] || this.modules[`0/${id}`];
-        if (inst?.type === 'KEY') {
-            inst.nodes.p.offset.setTargetAtTime((midi - 24) / 12.0, this.ctx.currentTime, 0.005);
-            inst.nodes.g.offset.setTargetAtTime(isDown ? 1.0 : 0.0, this.ctx.currentTime, 0.005);
+        if (!inst) return;
+
+        switch (event.type) {
+            case 'NOTE':
+            case 'NOTE_ON':
+            case 'NOTE_OFF': {
+                const isDown = event.isDown ?? (event.type !== 'NOTE_OFF');
+                const midi = event.midi ?? 60;
+                if (inst.type === 'KEY' && inst.nodes?.p && inst.nodes?.g && this.ctx) {
+                    inst.nodes.p.offset.setTargetAtTime((midi - 24) / 12.0, this.ctx.currentTime, 0.005);
+                    inst.nodes.g.offset.setTargetAtTime(isDown ? 1.0 : 0.0, this.ctx.currentTime, 0.005);
+                }
+                break;
+            }
+            case 'TRIG': {
+                inst.nodes?.w?.port?.postMessage({ type: 'TRIG' });
+                break;
+            }
+            case 'DIAL':
+            case 'VAL': {
+                if (event.param && inst.nodes?.w?.parameters?.get(event.param)) {
+                    AudioHelpers.set(inst.nodes.w.parameters.get(event.param), event.value, this.ctx, 0.02);
+                } else if (inst.nodes?.w?.port) {
+                    inst.nodes.w.port.postMessage({ type: 'SET_DIAL', ...event });
+                }
+                break;
+            }
+            case 'BUTTON': {
+                inst.nodes?.w?.port?.postMessage({ type: 'SET_BUTTON', ...event });
+                break;
+            }
+            default: {
+                inst.nodes?.w?.port?.postMessage(event);
+                break;
+            }
         }
     }
 
+    setKeyNote(id, midi, isDown) {
+        this.sendControlEvent(id, { type: 'NOTE', midi, isDown });
+    }
+
     triggerManualSample(id) {
-        const inst = this.modules[id] || this.modules[`0/${id}`];
-        inst?.nodes?.w?.port.postMessage({ type: 'TRIG' });
+        this.sendControlEvent(id, { type: 'TRIG' });
     }
 
     linkSubBridges() {
         if (!this.ctx) return;
-        const pins = ['L1','L2','L3','L4','R1','R2','R3','R4','B1','B2','B3','B4'];
         Object.entries(this.modules).forEach(([subFullId, subInst]) => {
             if (subInst?.type === 'SUB') {
                 const targetPage = String(subInst.data?.targetPage ?? subInst.targetPage ?? 1);
                 Object.entries(this.modules).forEach(([ioFullId, ioInst]) => {
                     if (ioInst?.type === 'SUB_IO' && ioFullId.startsWith(`${targetPage}/`)) {
-                        pins.forEach(pin => {
-                            const subPin = subInst.nodes[pin];
-                            const ioPin = ioInst.nodes[pin];
-                            if (subPin?.in && subPin?.out && ioPin?.in && ioPin?.out) {
-                                try {
-                                    // Forward bridge: Page 0 SUB In -> Subpage SUB_IO Out
-                                    try { subPin.in.disconnect(ioPin.out); } catch (_) {}
-                                    subPin.in.connect(ioPin.out);
-
-                                    // Return bridge: Subpage SUB_IO In -> Page 0 SUB Out
-                                    try { ioPin.in.disconnect(subPin.out); } catch (_) {}
-                                    ioPin.in.connect(subPin.out);
-                                } catch (err) {}
+                        // Forward bridge: Parent -> Child (Slots 1..6)
+                        // SUB (Parent) PINn_in -> SUB_IO (Child) PINn_out
+                        for (let i = 1; i <= 6; i++) {
+                            const subIn = subInst.inputs[`PIN${i}_in`];
+                            const ioOut = ioInst.outputs[`PIN${i}_out`];
+                            if (subIn && ioOut) {
+                                try { subIn.disconnect(ioOut); } catch (_) {}
+                                try { subIn.connect(ioOut); } catch (err) {}
                             }
-                        });
+                        }
+                        // Return bridge: Child -> Parent (Slots 7..12)
+                        // SUB_IO (Child) PINn_in -> SUB (Parent) PINn_out
+                        for (let i = 7; i <= 12; i++) {
+                            const ioIn = ioInst.inputs[`PIN${i}_in`];
+                            const subOut = subInst.outputs[`PIN${i}_out`];
+                            if (ioIn && subOut) {
+                                try { ioIn.disconnect(subOut); } catch (_) {}
+                                try { ioIn.connect(subOut); } catch (err) {}
+                            }
+                        }
                     }
                 });
             }
@@ -192,21 +262,9 @@ export class SynthEngine {
             Object.entries(pages).forEach(([pageId, pData]) => {
                 const conns = pData.connections || [];
                 conns.forEach(c => {
-                    if (!c) return;
-                    let fromMod = null, fromPort = null, toMod = null, toPort = null;
-                    if (typeof c === 'object' && c.from && c.to) {
-                        fromMod = typeof c.from === 'object' ? c.from.moduleId : c.from.split(':')[0];
-                        fromPort = typeof c.from === 'object' ? c.from.port : c.from.split(':')[1];
-                        toMod = typeof c.to === 'object' ? c.to.moduleId : c.to.split(':')[0];
-                        toPort = typeof c.to === 'object' ? c.to.port : c.to.split(':')[1];
-                    } else if (typeof c === 'string' && c.includes('>')) {
-                        const [f, t] = c.split('>');
-                        const [fM, fP] = f.split(':'), [tM, tP] = t.split(':');
-                        fromMod = fM?.trim(); fromPort = fP?.trim();
-                        toMod = tM?.trim(); toPort = tP?.trim();
-                    }
-                    if (fromMod && fromPort && toMod && toPort) {
-                        this.connect(`${pageId}/${fromMod}`, fromPort, `${pageId}/${toMod}`, toPort);
+                    const parsed = parseConn(c);
+                    if (parsed) {
+                        this.connect(`${pageId}/${parsed.from.moduleId}`, parsed.from.port, `${pageId}/${parsed.to.moduleId}`, parsed.to.port);
                     }
                 });
             });

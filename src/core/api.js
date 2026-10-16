@@ -37,6 +37,18 @@ export function initExternalAPI(ui, synth) {
 
         exportPatch: () => ui.exportCurrentPreset(),
 
+        sendControlEvent: (moduleId, event) => {
+            synth.sendControlEvent(moduleId, event);
+            return { success: true };
+        },
+
+        getLiveStates: () => ui.collectLiveStates(),
+
+        onLiveFrame: (cb) => {
+            ui.onLiveFrame = cb;
+            return { success: true };
+        },
+
         switchPage: (page) => {
             try {
                 ui.switchPage(page);

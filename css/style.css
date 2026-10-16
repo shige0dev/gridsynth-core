@@ -58,6 +58,19 @@ body {
     background: transparent;
 }
 
+.native-vslider-sm {
+    writing-mode: vertical-lr;
+    direction: rtl;
+    appearance: slider-vertical;
+    -webkit-appearance: slider-vertical;
+    width: 14px;
+    height: 48px;
+    cursor: pointer;
+    padding: 0 1px;
+    touch-action: none;
+    background: transparent;
+}
+
 .selected-module .port,
 .has-selected-module .port {
     pointer-events: none !important;
@@ -67,9 +80,18 @@ body {
 .port-selected {
     border: none !important;
     border-color: transparent !important;
-    transform: none !important;
-    box-shadow: 0 0 4px 1.5px rgba(255, 255, 255, 0.9) !important;
+    transform: scale(1.4) !important;
+    box-shadow: 0 0 6px 2.5px rgba(255, 255, 255, 0.95), 0 0 14px 5px rgba(255, 255, 255, 0.75) !important;
     z-index: 30;
+}
+
+.port-connected-highlight {
+    background-color: var(--conn-bright, #ffffff) !important;
+    border: 1px solid rgba(2, 6, 23, 0.9) !important;
+    transform: scale(1.3) !important;
+    box-shadow: none !important;
+    filter: none !important;
+    z-index: 28;
 }
 
 .pat-track-container {
@@ -111,5 +133,63 @@ body {
     z-index: 10;
     transition: none !important;
 }
+
+/* Panel Bar Slots (Default 100ms (0.1s) fadeout for all panel bars) */
+.panel-bar-slot {
+    transition: border-color 100ms cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 100ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.panel-bar-slot.bar-active,
+.panel-bar-slot.bar-active-audio {
+    transition-duration: 25ms !important;
+}
+
+.panel-bar-slot.bar-active {
+    border-color: #fde047 !important;
+    box-shadow: 0 0 8px rgba(251, 191, 36, 0.9), inset 0 0 4px rgba(251, 191, 36, 0.3) !important;
+}
+
+.panel-bar-slot.bar-active-audio {
+    border-color: #67e8f9 !important;
+    box-shadow: 0 0 8px rgba(34, 211, 238, 0.9), inset 0 0 4px rgba(34, 211, 238, 0.3) !important;
+}
+
+/* MARKOV State Box (CV yellow-orange active & idle states matching panel bar) */
+.markov-state-box {
+    transition: all 75ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.markov-state-box.markov-active {
+    background: linear-gradient(to top, #f59e0b, #fbbf24, #fde047) !important;
+    border-color: #fde047 !important;
+    color: #020617 !important;
+    box-shadow: 0 0 10px 2px rgba(251, 191, 36, 0.95),
+                0 0 20px 4px rgba(245, 158, 11, 0.7),
+                inset 0 0 6px rgba(253, 224, 71, 0.6) !important;
+    transform: scale(1.05);
+}
+
+.markov-state-box.markov-idle {
+    background: transparent !important;
+    border-color: rgba(245, 158, 11, 0.45) !important;
+    box-shadow: none !important;
+    transform: scale(1.0);
+}
+
+/* Port Clipping State (e.g. MIX output overload) */
+.port.port-clipping {
+    background-color: #ef4444 !important;
+    border-color: #fca5a5 !important;
+    box-shadow: 0 0 8px 2px rgba(239, 68, 68, 0.95) !important;
+}
+
+/* Selectable Text in Modals / Alerts */
+.selectable-text, .selectable-text * {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    cursor: text;
+}
+
 
 

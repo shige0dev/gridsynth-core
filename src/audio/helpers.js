@@ -33,3 +33,8 @@ export const AudioHelpers = {
         return b;
     }
 };
+
+if (typeof window !== 'undefined') {
+    window.AudioHelpers = AudioHelpers;
+}
+

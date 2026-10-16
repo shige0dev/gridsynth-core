@@ -1,14 +1,25 @@
 export const FACTORY_SUBPATCHES = {
     'FACTORY_VOICE': {
         id: 'FACTORY_VOICE',
+        subType: 'MonoVoice',
+        format: 'gridsynth-submodule',
+        version: '2.1',
         name: 'VOICE',
         category: 'Synth Voice',
         isSystem: true,
         description: 'Standard Mono Synth Voice (VCO + VCF + ADSR + VCA)',
+        manifest: {
+            description: 'Standard Mono Synth Voice (VCO + VCF + ADSR + VCA)',
+            ports: {
+                pitch_in: { pin: 'PIN4', signal: 'cv' },
+                gate_in: { pin: 'PIN3', signal: 'gate' },
+                wave_out: { pin: 'PIN9', signal: 'audio' }
+            }
+        },
         pins: {
-            L1: { label: 'Pitch (1V/Oct)', type: 'cv_in' },
-            L2: { label: 'Gate In', type: 'gate_in' },
-            R1: { label: 'Audio Out', type: 'audio_out' }
+            PIN4: { label: 'Pitch (1V/Oct)', type: 'cv_in' },
+            PIN3: { label: 'Gate In', type: 'gate_in' },
+            PIN9: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
             name: 'VOICE',
@@ -27,26 +38,37 @@ export const FACTORY_SUBPATCHES = {
                 "VCA1": { "type": "VCA", "level": 0.0, "col": 3, "row": 2 }
             },
             connections: [
-                { from: { moduleId: "SUB_IO1", port: "L1" }, to: { moduleId: "VCO1", port: "cv_in" } },
-                { from: { moduleId: "SUB_IO1", port: "L2" }, to: { moduleId: "ADSR1", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "VCO1", port: "cv_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN3_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
                 { from: { moduleId: "VCO1", port: "wave_out" }, to: { moduleId: "VCF1", port: "wave_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCF1", port: "cv_in" } },
                 { from: { moduleId: "VCF1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
-                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "R1" } }
+                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN9_in" } }
             ]
         }
     },
     'FACTORY_ACID': {
         id: 'FACTORY_ACID',
+        subType: 'AcidVoice',
+        format: 'gridsynth-submodule',
+        version: '2.1',
         name: 'ACID BASS',
         category: 'Synth Voice',
         isSystem: true,
         description: '303-style resonant screaming acid bass (Sawtooth + Resonant VCF + Snappy Decay)',
+        manifest: {
+            description: '303スタイルのアシッドベースボイス（VCO + Resonant VCF + Snappy ADSR + VCA）',
+            ports: {
+                pitch_in: { pin: 'PIN4', signal: 'cv' },
+                trig_in: { pin: 'PIN3', signal: 'gate' },
+                wave_out: { pin: 'PIN9', signal: 'audio' }
+            }
+        },
         pins: {
-            L1: { label: 'Pitch (1V/Oct)', type: 'cv_in' },
-            L2: { label: 'Gate In', type: 'gate_in' },
-            R1: { label: 'Audio Out', type: 'audio_out' }
+            PIN4: { label: 'Pitch (1V/Oct)', type: 'cv_in' },
+            PIN3: { label: 'Gate In', type: 'gate_in' },
+            PIN9: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
             name: 'ACID BASS',
@@ -65,26 +87,37 @@ export const FACTORY_SUBPATCHES = {
                 "VCA1": { "type": "VCA", "level": 0.0, "col": 3, "row": 2 }
             },
             connections: [
-                { from: { moduleId: "SUB_IO1", port: "L1" }, to: { moduleId: "VCO1", port: "cv_in" } },
-                { from: { moduleId: "SUB_IO1", port: "L2" }, to: { moduleId: "ADSR1", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "VCO1", port: "cv_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN3_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
                 { from: { moduleId: "VCO1", port: "wave_out" }, to: { moduleId: "VCF1", port: "wave_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCF1", port: "cv_in" } },
                 { from: { moduleId: "VCF1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
-                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "R1" } }
+                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN9_in" } }
             ]
         }
     },
     'FACTORY_DUAL_VCO': {
         id: 'FACTORY_DUAL_VCO',
+        subType: 'DualLead',
+        format: 'gridsynth-submodule',
+        version: '2.1',
         name: 'DUAL LEAD',
         category: 'Synth Voice',
         isSystem: true,
         description: 'Dual detuned oscillators with lowpass filter',
+        manifest: {
+            description: 'デュアル・オシレーター＆ローパスフィルターによるリードボイス',
+            ports: {
+                pitch_in: { pin: 'PIN4', signal: 'cv' },
+                gate_in: { pin: 'PIN3', signal: 'gate' },
+                wave_out: { pin: 'PIN9', signal: 'audio' }
+            }
+        },
         pins: {
-            L1: { label: 'Pitch (1V/Oct)', type: 'cv_in' },
-            L2: { label: 'Gate In', type: 'gate_in' },
-            R1: { label: 'Audio Out', type: 'audio_out' }
+            PIN4: { label: 'Pitch (1V/Oct)', type: 'cv_in' },
+            PIN3: { label: 'Gate In', type: 'gate_in' },
+            PIN9: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
             name: 'DUAL LEAD',
@@ -103,26 +136,36 @@ export const FACTORY_SUBPATCHES = {
                 "VCA1": { "type": "VCA", "level": 0.0, "col": 3, "row": 2 }
             },
             connections: [
-                { from: { moduleId: "SUB_IO1", port: "L1" }, to: { moduleId: "VCO1", port: "cv_in" } },
-                { from: { moduleId: "SUB_IO1", port: "L1" }, to: { moduleId: "VCO1", port: "cv_in2" } },
-                { from: { moduleId: "SUB_IO1", port: "L2" }, to: { moduleId: "ADSR1", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "VCO1", port: "cv_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "VCO1", port: "cv_in2" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN3_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
                 { from: { moduleId: "VCO1", port: "wave_out" }, to: { moduleId: "VCF1", port: "wave_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCF1", port: "cv_in" } },
                 { from: { moduleId: "VCF1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
-                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "R1" } }
+                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN9_in" } }
             ]
         }
     },
     'FACTORY_SPACE_FX': {
         id: 'FACTORY_SPACE_FX',
+        subType: 'SpaceFx',
+        format: 'gridsynth-submodule',
+        version: '2.1',
         name: 'SPACE FX',
         category: 'Effect',
         isSystem: true,
         description: 'Stereo-like Delay & Reverb processing block',
+        manifest: {
+            description: '空間系エフェクト（ディレイ＆ステレオリバーブ）ブロック',
+            ports: {
+                wave_in: { pin: 'PIN4', signal: 'audio' },
+                wave_out: { pin: 'PIN9', signal: 'audio' }
+            }
+        },
         pins: {
-            L1: { label: 'Audio In', type: 'audio_in' },
-            R1: { label: 'Audio Out', type: 'audio_out' }
+            PIN4: { label: 'Audio In', type: 'audio_in' },
+            PIN9: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
             name: 'SPACE FX',
@@ -137,21 +180,31 @@ export const FACTORY_SUBPATCHES = {
                 "REVERB1": { "type": "REVERB", "time": 2.6, "damp": 4000, "mix": 0.35, "col": 3, "row": 1 }
             },
             connections: [
-                { from: { moduleId: "SUB_IO1", port: "L1" }, to: { moduleId: "DELAY1", port: "wave_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "DELAY1", port: "wave_in" } },
                 { from: { moduleId: "DELAY1", port: "wave_out" }, to: { moduleId: "REVERB1", port: "wave_in" } },
-                { from: { moduleId: "REVERB1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "R1" } }
+                { from: { moduleId: "REVERB1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN9_in" } }
             ]
         }
     },
     'FACTORY_KICK': {
         id: 'FACTORY_KICK',
+        subType: 'BassDrum',
+        format: 'gridsynth-submodule',
+        version: '2.1',
         name: 'BASS DRUM',
         category: 'Percussion',
         isSystem: true,
         description: 'Punchy 808/909-style analogue kick with pitch sweep and exponential decay',
+        manifest: {
+            description: 'アナログスタイル・パンチーバスドラム（ピッチスウィープ＋減衰）',
+            ports: {
+                trig_in: { pin: 'PIN4', signal: 'gate' },
+                wave_out: { pin: 'PIN9', signal: 'audio' }
+            }
+        },
         pins: {
-            L1: { label: 'Trig / Gate', type: 'gate_in' },
-            R1: { label: 'Audio Out', type: 'audio_out' }
+            PIN4: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN9: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
             name: 'BASS DRUM',
@@ -172,25 +225,35 @@ export const FACTORY_SUBPATCHES = {
                 "VCA1": { "type": "VCA", "level": 0.0, "col": 0, "row": 2 }
             },
             connections: [
-                { from: { moduleId: "SUB_IO1", port: "L1" }, to: { moduleId: "ADSR1", port: "gate_in" } },
-                { from: { moduleId: "SUB_IO1", port: "L1" }, to: { moduleId: "ADSR2", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR2", port: "gate_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "MATH2_1", port: "a" } },
                 { from: { moduleId: "MATH2_1", port: "cv_out" }, to: { moduleId: "VCO1", port: "cv_in" } },
                 { from: { moduleId: "VCO1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
                 { from: { moduleId: "ADSR2", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
-                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "R1" } }
+                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN9_in" } }
             ]
         }
     },
     'FACTORY_SNARE': {
         id: 'FACTORY_SNARE',
+        subType: 'SnareDrum',
+        format: 'gridsynth-submodule',
+        version: '2.1',
         name: 'SNARE DRUM',
         category: 'Percussion',
         isSystem: true,
         description: 'Dual-layer analogue snare (Triangle body tone + Highpass filtered noise wire)',
+        manifest: {
+            description: 'アナログスタイル・スネアドラム（三角波ボディトーン＋ノイズワイヤー）',
+            ports: {
+                trig_in: { pin: 'PIN4', signal: 'gate' },
+                wave_out: { pin: 'PIN9', signal: 'audio' }
+            }
+        },
         pins: {
-            L1: { label: 'Trig / Gate', type: 'gate_in' },
-            R1: { label: 'Audio Out', type: 'audio_out' }
+            PIN4: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN9: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
             name: 'SNARE DRUM',
@@ -217,8 +280,8 @@ export const FACTORY_SUBPATCHES = {
                 "VCA2": { "type": "VCA", "level": 0.0, "col": 4, "row": 3 }
             },
             connections: [
-                { from: { moduleId: "SUB_IO1", port: "L1" }, to: { moduleId: "ADSR1", port: "gate_in" } },
-                { from: { moduleId: "SUB_IO1", port: "L1" }, to: { moduleId: "ADSR2", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR2", port: "gate_in" } },
                 { from: { moduleId: "VCO1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
                 { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "MIX1", port: "wave_in1" } },
@@ -226,19 +289,29 @@ export const FACTORY_SUBPATCHES = {
                 { from: { moduleId: "VCF1", port: "wave_out" }, to: { moduleId: "VCA2", port: "wave_in" } },
                 { from: { moduleId: "ADSR2", port: "cv_out" }, to: { moduleId: "VCA2", port: "cv_in" } },
                 { from: { moduleId: "VCA2", port: "wave_out" }, to: { moduleId: "MIX1", port: "wave_in2" } },
-                { from: { moduleId: "MIX1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "R1" } }
+                { from: { moduleId: "MIX1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN9_in" } }
             ]
         }
     },
     'FACTORY_KICK2': {
         id: 'FACTORY_KICK2',
+        subType: 'TechnoKick',
+        format: 'gridsynth-submodule',
+        version: '2.1',
         name: 'BASS DRUM 2',
         category: 'Percussion',
         isSystem: true,
         description: 'Hard & Rich Techno Kick (Crisp Attack Click + 50Hz Deep Resonant Sub Rumble)',
+        manifest: {
+            description: 'ハード＆リッチ・テクノキック（アタッククリック＋50Hzサブランブル）',
+            ports: {
+                trig_in: { pin: 'PIN4', signal: 'gate' },
+                wave_out: { pin: 'PIN9', signal: 'audio' }
+            }
+        },
         pins: {
-            L1: { label: 'Trig / Gate', type: 'gate_in' },
-            R1: { label: 'Audio Out', type: 'audio_out' }
+            PIN4: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN9: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
             name: 'BASS DRUM 2',
@@ -269,8 +342,8 @@ export const FACTORY_SUBPATCHES = {
                 "VCF1": { "type": "VCF", "filterType": "highpass", "cutoff": 4500, "q": 2.2, "modDepth": 0, "col": 4, "row": 2 }
             },
             connections: [
-                { from: { moduleId: "SUB_IO1", port: "L1" }, to: { moduleId: "ADSR1", port: "gate_in" } },
-                { from: { moduleId: "SUB_IO1", port: "L1" }, to: { moduleId: "ADSR2", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR2", port: "gate_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "MATH2_1", port: "a" } },
                 { from: { moduleId: "MATH2_1", port: "cv_out" }, to: { moduleId: "MATH2_2", port: "a" } },
                 { from: { moduleId: "MATH2_2", port: "cv_out" }, to: { moduleId: "VCO1", port: "cv_in" } },
@@ -281,19 +354,29 @@ export const FACTORY_SUBPATCHES = {
                 { from: { moduleId: "VCF1", port: "wave_out" }, to: { moduleId: "VCA2", port: "wave_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCA2", port: "cv_in" } },
                 { from: { moduleId: "VCA2", port: "wave_out" }, to: { moduleId: "MIX1", port: "wave_in2" } },
-                { from: { moduleId: "MIX1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "R1" } }
+                { from: { moduleId: "MIX1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN9_in" } }
             ]
         }
     },
     'FACTORY_HIHAT': {
         id: 'FACTORY_HIHAT',
+        subType: 'HiHat',
+        format: 'gridsynth-submodule',
+        version: '2.1',
         name: 'HI-HAT',
         category: 'Percussion',
         isSystem: true,
         description: 'Crisp & Sizzling Techno Hi-Hat (Highpass Filtered Metallic Noise + Ultra-snappy Decay)',
+        manifest: {
+            description: 'ハイパスフィルタード・メタリックノイズによるクリスプなハイハット',
+            ports: {
+                trig_in: { pin: 'PIN4', signal: 'gate' },
+                wave_out: { pin: 'PIN9', signal: 'audio' }
+            }
+        },
         pins: {
-            L1: { label: 'Trig / Gate', type: 'gate_in' },
-            R1: { label: 'Audio Out', type: 'audio_out' }
+            PIN4: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN9: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
             name: 'HI-HAT',
@@ -312,23 +395,33 @@ export const FACTORY_SUBPATCHES = {
                 "VCA1": { "type": "VCA", "level": 0.0, "col": 2, "row": 2 }
             },
             connections: [
-                { from: { moduleId: "SUB_IO1", port: "L1" }, to: { moduleId: "ADSR1", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
                 { from: { moduleId: "NOISE1", port: "wave_out" }, to: { moduleId: "VCF1", port: "wave_in" } },
                 { from: { moduleId: "VCF1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
-                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "R1" } }
+                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN9_in" } }
             ]
         }
     },
     'FACTORY_CLAP': {
         id: 'FACTORY_CLAP',
+        subType: 'HandClap',
+        format: 'gridsynth-submodule',
+        version: '2.1',
         name: 'HAND CLAP',
         category: 'Percussion',
         isSystem: true,
         description: 'Authentic 909 Multi-Burst Hand Clap (Dual CVDELAY + Triple Burst ADSR + Bandpass Resonant Noise)',
+        manifest: {
+            description: '909スタイル・マルチバースト・ハンドクラップ（3連バーストエンベロープ）',
+            ports: {
+                trig_in: { pin: 'PIN4', signal: 'gate' },
+                wave_out: { pin: 'PIN9', signal: 'audio' }
+            }
+        },
         pins: {
-            L1: { label: 'Trig / Gate', type: 'gate_in' },
-            R1: { label: 'Audio Out', type: 'audio_out' }
+            PIN4: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN9: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
             name: 'HAND CLAP',
@@ -355,29 +448,39 @@ export const FACTORY_SUBPATCHES = {
                 "VCA1": { "type": "VCA", "level": 0.0, "col": 2, "row": 2 }
             },
             connections: [
-                { from: { moduleId: "SUB_IO1", port: "L1" }, to: { moduleId: "ADSR1", port: "gate_in" } },
-                { from: { moduleId: "SUB_IO1", port: "L1" }, to: { moduleId: "CVDELAY1", port: "sig_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "CVDELAY1", port: "sig_in" } },
                 { from: { moduleId: "CVDELAY1", port: "cv_out" }, to: { moduleId: "ADSR2", port: "gate_in" } },
-                { from: { moduleId: "SUB_IO1", port: "L1" }, to: { moduleId: "CVDELAY2", port: "sig_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "CVDELAY2", port: "sig_in" } },
                 { from: { moduleId: "CVDELAY2", port: "cv_out" }, to: { moduleId: "ADSR3", port: "gate_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
                 { from: { moduleId: "ADSR2", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
                 { from: { moduleId: "ADSR3", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
                 { from: { moduleId: "NOISE1", port: "wave_out" }, to: { moduleId: "VCF1", port: "wave_in" } },
                 { from: { moduleId: "VCF1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
-                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "R1" } }
+                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN9_in" } }
             ]
         }
     },
     'FACTORY_TOM': {
         id: 'FACTORY_TOM',
+        subType: 'TechnoTom',
+        format: 'gridsynth-submodule',
+        version: '2.1',
         name: 'TECHNO TOM',
         category: 'Percussion',
         isSystem: true,
         description: 'Polyrhythmic Acid/Tribal Tom (Tuned Triangle Pitch-bend + Deep Resonant Body)',
+        manifest: {
+            description: 'テクノタム（ピッチベンド三角波＋深みのあるレゾナンスボディ）',
+            ports: {
+                trig_in: { pin: 'PIN4', signal: 'gate' },
+                wave_out: { pin: 'PIN9', signal: 'audio' }
+            }
+        },
         pins: {
-            L1: { label: 'Trig / Gate', type: 'gate_in' },
-            R1: { label: 'Audio Out', type: 'audio_out' }
+            PIN4: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN9: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
             name: 'TECHNO TOM',
@@ -400,26 +503,36 @@ export const FACTORY_SUBPATCHES = {
                 "VCA1": { "type": "VCA", "level": 0.0, "col": 2, "row": 2 }
             },
             connections: [
-                { from: { moduleId: "SUB_IO1", port: "L1" }, to: { moduleId: "ADSR1", port: "gate_in" } },
-                { from: { moduleId: "SUB_IO1", port: "L1" }, to: { moduleId: "ADSR2", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR2", port: "gate_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "MATH2_1", port: "a" } },
                 { from: { moduleId: "MATH2_1", port: "cv_out" }, to: { moduleId: "MATH2_2", port: "a" } },
                 { from: { moduleId: "MATH2_2", port: "cv_out" }, to: { moduleId: "VCO1", port: "cv_in" } },
                 { from: { moduleId: "VCO1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
                 { from: { moduleId: "ADSR2", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
-                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "R1" } }
+                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN9_in" } }
             ]
         }
     },
     'FACTORY_PERC': {
         id: 'FACTORY_PERC',
+        subType: 'MetallicPerc',
+        format: 'gridsynth-submodule',
+        version: '2.1',
         name: 'METALLIC PERC',
         category: 'Percussion',
         isSystem: true,
         description: 'Hypnotic Modular Metallic Percussion / Rim Shot (Dual Resonant Ring + Snappy Click)',
+        manifest: {
+            description: 'メタリックパーカッション / リムショット（金属的な倍音リングモジュレーション）',
+            ports: {
+                trig_in: { pin: 'PIN4', signal: 'gate' },
+                wave_out: { pin: 'PIN9', signal: 'audio' }
+            }
+        },
         pins: {
-            L1: { label: 'Trig / Gate', type: 'gate_in' },
-            R1: { label: 'Audio Out', type: 'audio_out' }
+            PIN4: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN9: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
             name: 'METALLIC PERC',
@@ -438,12 +551,18 @@ export const FACTORY_SUBPATCHES = {
                 "VCA1": { "type": "VCA", "level": 0.0, "col": 2, "row": 2 }
             },
             connections: [
-                { from: { moduleId: "SUB_IO1", port: "L1" }, to: { moduleId: "ADSR1", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
                 { from: { moduleId: "VCO1", port: "wave_out" }, to: { moduleId: "VCF1", port: "wave_in" } },
                 { from: { moduleId: "VCF1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
-                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "R1" } }
+                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN9_in" } }
             ]
         }
     }
+};
+
+export const findSubpatchTemplate = (idOrSubType) => {
+    if (!idOrSubType) return null;
+    if (FACTORY_SUBPATCHES[idOrSubType]) return FACTORY_SUBPATCHES[idOrSubType];
+    return Object.values(FACTORY_SUBPATCHES).find(s => s.subType === idOrSubType || s.id === idOrSubType) || null;
 };
