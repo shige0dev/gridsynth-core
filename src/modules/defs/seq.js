@@ -1,6 +1,14 @@
 import { UIHelpers } from '../../ui/helpers.js';
 import { CHORD_TYPES, CHORD_VOICINGS, CHORD_ORDER, VOICING_LABELS, VOICING_ORDER } from '../../core/musical.js';
 
+const renderSeqStepButtons = (idx, isAct, isCvAct, isGateAct, isSeq16 = false) => `
+    <div class="flex flex-col gap-0.5 w-full mt-0.5">
+        <button data-act="gate" data-step="${idx}" class="text-[6.5px] font-bold py-0.5 rounded border transition-colors ${!isAct ? 'bg-slate-950 text-slate-600 border-slate-800' : (isGateAct ? 'bg-sky-950 text-sky-300 border-sky-500/80' : 'bg-slate-950 text-slate-600 border-slate-800')}" title="GATE">GATE</button>
+        <button data-act="cvActive" data-step="${idx}" class="text-[7px] font-bold py-0.5 rounded border transition-colors ${!isAct ? 'bg-slate-950 text-slate-600 border-slate-800' : (isCvAct ? 'bg-cyan-950 text-cyan-300 border-cyan-500/80' : 'bg-slate-950 text-slate-600 border-slate-800')}" title="CV">CV</button>
+        <button data-act="active" data-step="${idx}" class="text-[6.5px] font-bold py-0.5 rounded border transition-colors ${isAct ? 'bg-blue-950 text-blue-300 border-blue-500/80' : 'bg-slate-950 text-slate-500 border-slate-800'}" title="STEP ACTIVE">${isSeq16 ? (idx + 1) : 'STEP'}</button>
+    </div>
+`;
+
 export const SEQ8 = {
     color: 'blue',
     defaults: () => ({
@@ -46,7 +54,7 @@ export const SEQ8 = {
             }
         )}
     </div>`,
-    updateLive: (cell, data, isP, modal) => {
+    updateLive: (cell, data, isP, modal, m) => {
         const step = data?.step ?? -1;
         cell.querySelectorAll('[data-step-bar]').forEach((b, i) => {
             const stepIdx = parseInt(b.getAttribute('data-step-bar') ?? i, 10);
@@ -76,11 +84,7 @@ export const SEQ8 = {
                     <div data-step-col="${i}" class="flex flex-col items-center gap-1 flex-1 min-w-[34px] p-1 rounded-lg border transition-all ${isAct ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-950/80 border-slate-800/40 opacity-40 grayscale'}">
                         <span id="seq-slider-${i}-disp" class="text-[8.5px] ${isAct ? 'text-cyan-300' : 'text-slate-500'} font-mono font-bold cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-1 py-0.5 rounded transition-colors" title="上下ドラッグで微調整">${m.quantize!==false?UIHelpers.cvToNoteName(val):val.toFixed(2)}</span>
                         <input type="range" data-seq-slider="${i}" id="seq-slider-${i}" min="0" max="2.0" step="${m.quantize!==false?0.083333:0.01}" value="${val}" class="native-vslider ${isAct ? 'accent-blue-500' : 'accent-slate-600'} !h-12">
-                        <div class="flex flex-col gap-0.5 w-full">
-                            <button data-act="gate" data-step="${i}" class="text-[6.5px] font-bold py-0.5 rounded border transition-colors ${!isAct ? 'bg-slate-950 text-slate-600 border-slate-800' : (isGateAct ? 'bg-sky-950 text-sky-300 border-sky-500/80' : 'bg-slate-950 text-slate-600 border-slate-800')}">GATE</button>
-                            <button data-act="cvActive" data-step="${i}" class="text-[7px] font-bold py-0.5 rounded border transition-colors ${!isAct ? 'bg-slate-950 text-slate-600 border-slate-800' : (isCvAct ? 'bg-cyan-950 text-cyan-300 border-cyan-500/80' : 'bg-slate-950 text-slate-600 border-slate-800')}">CV</button>
-                            <button data-act="active" data-step="${i}" class="text-[6.5px] font-bold py-0.5 rounded border transition-colors ${isAct ? 'bg-blue-950 text-blue-300 border-blue-500/80' : 'bg-slate-950 text-slate-500 border-slate-800'}">STEP</button>
-                        </div>
+                        ${renderSeqStepButtons(i, isAct, isCvAct, isGateAct, false)}
                     </div>`;
                 }).join('')}
             </div>
@@ -210,12 +214,7 @@ export const SEQ16 = {
                     return `
                     <div data-step-col="${idx}" class="flex flex-col items-center gap-0.5 flex-1 min-w-[34px] p-0.5 rounded-lg border transition-all ${isAct ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-950/80 border-slate-800/40 opacity-40 grayscale'}">
                         <span id="seq16-slider-${idx}-disp" class="text-[8px] ${isAct ? 'text-cyan-300' : 'text-slate-500'} font-mono font-bold cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 py-0.5 rounded transition-colors" title="上下ドラッグで微調整">${m.quantize!==false?UIHelpers.cvToNoteName(val):val.toFixed(2)}</span>
-                        <input type="range" data-seq-slider="${idx}" id="seq16-slider-${idx}" min="0" max="2.0" step="${m.quantize!==false?0.083333:0.01}" value="${val}" class="native-vslider ${isAct ? 'accent-blue-500' : 'accent-slate-600'} !h-12">
-                        <div class="flex items-center justify-between gap-0.5 w-full mt-0.5">
-                            <button data-act="gate" data-step="${idx}" class="flex-1 py-0.5 text-[6.5px] font-bold rounded border transition-colors ${!isAct ? 'bg-slate-950 text-slate-600 border-slate-800' : (isGateAct ? 'bg-sky-950 text-sky-300 border-sky-500/80' : 'bg-slate-950 text-slate-600 border-slate-800')}" title="GATE">G</button>
-                            <button data-act="cvActive" data-step="${idx}" class="flex-1 py-0.5 text-[6.5px] font-bold rounded border transition-colors ${!isAct ? 'bg-slate-950 text-slate-600 border-slate-800' : (isCvActive => isCvAct ? 'bg-cyan-950 text-cyan-300 border-cyan-500/80' : 'bg-slate-950 text-slate-600 border-slate-800')(isCvAct)}" title="CV">C</button>
-                            <button data-act="active" data-step="${idx}" class="flex-1 py-0.5 text-[6.5px] font-bold rounded border transition-colors ${isAct ? 'bg-blue-950 text-blue-300 border-blue-500/80' : 'bg-slate-950 text-slate-500 border-slate-800'}" title="STEP ACTIVE">${idx + 1}</button>
-                        </div>
+                        ${renderSeqStepButtons(idx, isAct, isCvAct, isGateAct, true)}
                     </div>`;
                 }).join('')}
             </div>
