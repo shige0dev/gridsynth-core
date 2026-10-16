@@ -45,19 +45,7 @@ body {
     border-width: 2px !important;
 }
 
-.native-vslider {
-    writing-mode: vertical-lr;
-    direction: rtl;
-    appearance: slider-vertical;
-    -webkit-appearance: slider-vertical;
-    width: 20px;
-    height: 96px;
-    cursor: pointer;
-    padding: 0 1px;
-    touch-action: none;
-    background: transparent;
-}
-
+.native-vslider,
 .native-vslider-sm {
     writing-mode: vertical-lr;
     direction: rtl;

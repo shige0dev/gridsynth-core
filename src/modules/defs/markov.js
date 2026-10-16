@@ -117,13 +117,13 @@ export const MARKOV = {
                             : UIHelpers.createVSliderHTML('markov-val', 'VOLTAGE', 0.0, 5.0, 0.05, m.stateVal ?? 1.0, 'V', 'amber', false, (m.stateVal ?? 1.0).toFixed(2) + 'V')
                         }
 
-                        <div class="w-[1px] h-28 bg-slate-800/80 self-center mx-0.5"></div>
+                        <div class="w-[1px] h-14 bg-slate-800/80 self-center mx-0.5"></div>
 
                         <!-- Stay Slider -->
                         <div class="flex flex-col items-center gap-1 flex-1 min-w-0">
                             <span class="text-[8px] font-bold text-slate-300 uppercase tracking-tight truncate w-full text-center">STAY</span>
                             <span id="markov-p-stay" class="text-[9px] text-amber-300 font-mono font-bold">${pctStay}%</span>
-                            <div class="h-24 flex items-center justify-center my-0.5">
+                            <div class="h-12 flex items-center justify-center my-0.5">
                                 <input type="range" id="markov-w-stay" min="0" max="100" step="1" value="${wStay}" class="native-vslider accent-amber-500">
                             </div>
                             <span class="text-[7.5px] font-mono text-slate-400 truncate">自己</span>
@@ -134,7 +134,7 @@ export const MARKOV = {
                             <div class="flex flex-col items-center gap-1 flex-1 min-w-0">
                                 <span class="text-[8px] font-bold text-slate-300 uppercase tracking-tight truncate w-full text-center">OUT ${idx + 1}</span>
                                 <span id="markov-p-${idx}" class="text-[9px] text-amber-300 font-bold font-mono">${pcts[idx]}%</span>
-                                <div class="h-24 flex items-center justify-center my-0.5">
+                                <div class="h-12 flex items-center justify-center my-0.5">
                                     <input type="range" id="markov-w-${idx}" min="0" max="100" step="1" value="${weights[idx] ?? 0}" class="native-vslider accent-amber-500 markov-w-slider" data-idx="${idx}">
                                 </div>
                                 <span class="text-[7.5px] font-mono text-slate-400 truncate">CH ${idx + 1}</span>

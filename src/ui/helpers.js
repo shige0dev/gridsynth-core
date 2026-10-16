@@ -26,7 +26,7 @@ export const UIHelpers = {
             <div class="flex flex-col items-center gap-1 flex-1 min-w-0 ${isPatched ? 'opacity-30 pointer-events-none' : ''}">
                 <span class="text-[8px] font-bold text-slate-400 uppercase tracking-tight truncate w-full text-center leading-none">${label}</span>
                 <span id="${id}-disp" class="text-[9px] text-${accentColor}-300 font-mono font-bold cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 py-0.5 rounded transition-colors leading-tight">${disp}</span>
-                <div class="h-24 flex items-center justify-center my-0.5">
+                <div class="h-12 flex items-center justify-center my-0.5">
                     <input type="range" id="${id}" min="${sMin}" max="${sMax}" step="${sStep}" value="${sVal}" class="native-vslider accent-${accentColor}-500" ${isPatched ? 'disabled' : ''}>
                 </div>
                 <span class="text-[8px] font-mono text-slate-400 truncate min-h-[12px] flex items-center justify-center leading-none">${unitHtml}</span>
