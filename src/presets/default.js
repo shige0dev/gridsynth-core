@@ -21,7 +21,7 @@ export const getDefaultPresets = () => ({
     '07_DUB_TECHNO_DEEP_SPACE': preset07,
     '08_MARKOV_GENERATIVE_CHAINS': preset08,
     '09_FM_HEAVY_TECHNO': preset09,
-    '10_FM_SIMPLE_TEST': preset10,
+    '10_FM_CRYSTAL_GROOVE': preset10,
     '11_FMCORE_2OP_DEMO': preset11,
     '12_CHORD_ARPEGGIO': preset12
 });
