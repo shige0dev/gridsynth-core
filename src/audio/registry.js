@@ -26,17 +26,17 @@ const createMathAudio = (ctx, d, patch, eng, hasTwoInputs) => {
         mode: d.mode || (hasTwoInputs ? 'ADD' : 'ABS'),
         valA: d.valA ?? 0.0,
         valB: hasTwoInputs ? (d.valB ?? 1.0) : 0.0,
-        hasA: patch?.has('a') || false,
-        hasB: hasTwoInputs ? (patch?.has('b') || false) : false
+        hasA: patch?.has('a') || patch?.has('in_a') || false,
+        hasB: hasTwoInputs ? (patch?.has('b') || patch?.has('in_b') || false) : false
     });
     gA.connect(w, 0, 0);
     if (gB) gB.connect(w, 0, 1);
     w.connect(out);
     const buf = new Float32Array(an.frequencyBinCount);
     const nodes = { gA, out, an, w };
-    const inputs = { a: gA };
-    if (gB) { nodes.gB = gB; inputs.b = gB; }
-    return { nodes, inputs, outputs: { cv_out: out }, read: () => { an.getFloatTimeDomainData(buf); return { values: [buf[0] || 0] }; } };
+    const inputs = { a: gA, in_a: gA };
+    if (gB) { nodes.gB = gB; inputs.b = gB; inputs.in_b = gB; }
+    return { nodes, inputs, outputs: { cv_out: out, out }, read: () => { an.getFloatTimeDomainData(buf); return { values: [buf[0] || 0] }; } };
 };
 
 const updateMathAudio = (inst, d, patch, hasTwoInputs) => {
@@ -45,8 +45,8 @@ const updateMathAudio = (inst, d, patch, hasTwoInputs) => {
         mode: d.mode || (hasTwoInputs ? 'ADD' : 'ABS'),
         valA: d.valA ?? 0.0,
         valB: hasTwoInputs ? (d.valB ?? 1.0) : 0.0,
-        hasA: patch?.has('a') || false,
-        hasB: hasTwoInputs ? (patch?.has('b') || false) : false
+        hasA: patch?.has('a') || patch?.has('in_a') || false,
+        hasB: hasTwoInputs ? (patch?.has('b') || patch?.has('in_b') || false) : false
     });
 };
 
@@ -223,8 +223,8 @@ export const AUDIO_REGISTRY = {
             cvIn.connect(w, 0, 1);
             return {
                 nodes: { w, rIn, cvIn },
-                inputs: { reset: rIn, cv_in: cvIn },
-                outputs: { cv_out: w }
+                inputs: { reset: rIn, reset_in: rIn, trig_in: rIn, cv_in: cvIn },
+                outputs: { cv_out: w, out: w }
             };
         },
         update: (ctx, inst, d, patch, eng) => {
@@ -304,8 +304,8 @@ export const AUDIO_REGISTRY = {
 
             return {
                 nodes: { w, sigIn, timeCvIn, out },
-                inputs: { sig_in: sigIn, time_cv: timeCvIn },
-                outputs: { cv_out: out },
+                inputs: { sig_in: sigIn, cv_in: sigIn, time_cv: timeCvIn },
+                outputs: { cv_out: out, out },
                 clear: () => {
                     w.port.postMessage({ type: 'RESET' });
                 }
@@ -386,6 +386,7 @@ export const AUDIO_REGISTRY = {
                 inG.gain.value = d[`lvl${c}`] ?? 1.0;
                 inG.connect(sumBus);
                 inputs[`wave_in${c}`] = inG;
+                inputs[`in${c}`] = inG;
                 nodes[`in${c}`] = inG;
             }
 
@@ -533,16 +534,25 @@ export const AUDIO_REGISTRY = {
 
             return {
                 nodes: { w, g1, g2, gTrig },
-                inputs: { in1: g1, in2: g2, trig: gTrig },
+                inputs: {
+                    in1: g1,
+                    in: g1,
+                    wave_in: g1,
+                    wave_in1: g1,
+                    in2: g2,
+                    wave_in2: g2,
+                    trig: gTrig,
+                    trig_in: gTrig
+                },
                 outputs: {},
-                _hasTrig: patch?.has('trig'),
-                _hasIn2: patch?.has('in2'),
+                _hasTrig: patch?.has('trig') || patch?.has('trig_in'),
+                _hasIn2: patch?.has('in2') || patch?.has('wave_in2'),
                 read: () => ({
                     buf1: latest.buf1,
                     buf2: latest.buf2,
                     trigBuf: latest.trigBuf,
-                    hasTrig: patch?.has('trig'),
-                    hasIn2: patch?.has('in2'),
+                    hasTrig: patch?.has('trig') || patch?.has('trig_in'),
+                    hasIn2: patch?.has('in2') || patch?.has('wave_in2'),
                     sampleRate: latest.sampleRate || ctx.sampleRate
                 })
             };
@@ -808,7 +818,20 @@ export const AUDIO_REGISTRY = {
             return {
                 nodes: { w, inRoot, inType, inVoice, out1, out2, out3, out4 },
                 inputs: { cv_in: inRoot, type_cv: inType, voice_cv: inVoice },
-                outputs: { cv_out1: out1, cv_out2: out2, cv_out3: out3, cv_out4: out4 },
+                outputs: {
+                    cv_out1: out1,
+                    cv_out2: out2,
+                    cv_out3: out3,
+                    cv_out4: out4,
+                    out1,
+                    out2,
+                    out3,
+                    out4,
+                    cv1: out1,
+                    cv2: out2,
+                    cv3: out3,
+                    cv4: out4
+                },
                 read: () => ({ activeChordIdx, activeVoiceIdx })
             };
         },
@@ -869,12 +892,20 @@ export const AUDIO_REGISTRY = {
 
             return {
                 nodes: { w, inGate, out1, out2, out3, out4 },
-                inputs: { gate_in: inGate },
+                inputs: { gate_in: inGate, clk_in: inGate, trig_in: inGate },
                 outputs: {
                     gate_out1: out1,
                     gate_out2: out2,
                     gate_out3: out3,
-                    gate_out4: out4
+                    gate_out4: out4,
+                    out1,
+                    out2,
+                    out3,
+                    out4,
+                    gate1: out1,
+                    gate2: out2,
+                    gate3: out3,
+                    gate4: out4
                 },
                 resetStep: () => {
                     currentStep = -1;
@@ -919,7 +950,7 @@ export const AUDIO_REGISTRY = {
             if (eng?.silentSink) outGate.connect(eng.silentSink);
 
             const activeInputs = [1, 2, 3, 4]
-                .filter(i => patch?.has?.(`cv_in${i}`) || patch?.has?.(`in_${i}`))
+                .filter(i => patch?.has?.(`cv_in${i}`) || patch?.has?.(`in_${i}`) || patch?.has?.(`in${i}`))
                 .map(i => i - 1);
 
             w.port.postMessage({
@@ -941,6 +972,7 @@ export const AUDIO_REGISTRY = {
                 nodes: { w, inClk, in1, in2, in3, in4, outSig, outGate },
                 inputs: {
                     clk_in: inClk,
+                    trig_in: inClk,
                     cv_in1: in1,
                     cv_in2: in2,
                     cv_in3: in3,
@@ -949,9 +981,14 @@ export const AUDIO_REGISTRY = {
                     in_1: in1,
                     in_2: in2,
                     in_3: in3,
-                    in_4: in4
+                    in_4: in4,
+                    in1: in1,
+                    in2: in2,
+                    in3: in3,
+                    in4: in4
                 },
                 outputs: {
+                    cv_out: outSig,
                     out: outSig,
                     gate_out: outGate
                 },
@@ -969,7 +1006,7 @@ export const AUDIO_REGISTRY = {
         },
         update: (ctx, inst, d, patch) => {
             const activeInputs = [1, 2, 3, 4]
-                .filter(i => patch?.has?.(`cv_in${i}`) || patch?.has?.(`in_${i}`))
+                .filter(i => patch?.has?.(`cv_in${i}`) || patch?.has?.(`in_${i}`) || patch?.has?.(`in${i}`))
                 .map(i => i - 1);
 
             inst.activeInputs = activeInputs;

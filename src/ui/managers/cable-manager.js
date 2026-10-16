@@ -1,5 +1,5 @@
 // src/ui/managers/cable-manager.js
-import { parseConn, isSameConn, getPortSignalType, resolveConnectionSignalType, isSubModule, isSubIOModule, normalizeSubPort, getOppositeSubPort } from '../../core/utils.js';
+import { parseConn, isSameConn, getPortSignalType, resolveConnectionSignalType, isSubModule, isSubIOModule, normalizeSubPort, getOppositeSubPort, getPortAliases, isPortMatching } from '../../core/utils.js';
 import { MODULE_REGISTRY } from '../../modules/registry.js';
 
 export class CableManager {
@@ -15,11 +15,21 @@ export class CableManager {
     findPortElement(moduleId, port) {
         if (!moduleId || !port) return null;
         let el = document.querySelector(`[data-module-id="${moduleId}"][data-port="${port}"]`);
-        if (!el && isSubModule(moduleId)) {
+        if (el) return el;
+
+        if (isSubModule(moduleId)) {
             const norm = normalizeSubPort(port, moduleId);
             el = document.querySelector(`[data-module-id="${moduleId}"][data-port="${norm}"]`);
+            if (el) return el;
         }
-        return el;
+
+        const aliases = getPortAliases(port);
+        for (const alt of aliases) {
+            if (alt === port) continue;
+            el = document.querySelector(`[data-module-id="${moduleId}"][data-port="${alt}"]`);
+            if (el) return el;
+        }
+        return null;
     }
 
     updatePortHighlight() {
@@ -47,8 +57,8 @@ export class CableManager {
                 const isToSub = isSubModule(conn.to.moduleId);
                 const isCurSub = isSubModule(moduleId);
 
-                const fromMatch = conn.from.moduleId === moduleId && (conn.from.port === port || (isFromSub && isCurSub && normalizeSubPort(conn.from.port, conn.from.moduleId) === normalizeSubPort(port, moduleId)));
-                const toMatch = conn.to.moduleId === moduleId && (conn.to.port === port || (isToSub && isCurSub && normalizeSubPort(conn.to.port, conn.to.moduleId) === normalizeSubPort(port, moduleId)));
+                const fromMatch = conn.from.moduleId === moduleId && (conn.from.port === port || isPortMatching(conn.from.port, port) || (isFromSub && isCurSub && normalizeSubPort(conn.from.port, conn.from.moduleId) === normalizeSubPort(port, moduleId)));
+                const toMatch = conn.to.moduleId === moduleId && (conn.to.port === port || isPortMatching(conn.to.port, port) || (isToSub && isCurSub && normalizeSubPort(conn.to.port, conn.to.moduleId) === normalizeSubPort(port, moduleId)));
 
                 if (fromMatch) {
                     target = conn.to;

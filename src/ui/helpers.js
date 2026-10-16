@@ -456,12 +456,16 @@ export const UIHelpers = {
 
         let html = '';
 
-        // Left Edge: PIN3, PIN2, PIN1, PIN0 (bottom to top)
-        if (pinSlots[0] || pinSlots[1] || pinSlots[2] || pinSlots[3]) {
-            const leftSlots = [3, 2, 1];
+        // Left Edge: PIN14, PIN3, PIN2, PIN1, PIN0 (bottom to top)
+        if (pinSlots[0] || pinSlots[1] || pinSlots[2] || pinSlots[3] || pinSlots[14]) {
+            const leftSlots = [];
+            if (pinSlots[14]) leftSlots.push(14);
+            leftSlots.push(3, 2, 1);
             if (pinSlots[0]) leftSlots.push(0);
             const leftPins = leftSlots.map(renderSlot).join('');
-            html += `<div class="absolute left-[3px] bottom-[16px] flex flex-col-reverse gap-1.5 items-center pointer-events-auto z-10">${leftPins}</div>`;
+            const isDense = Boolean(pinSlots[14]);
+            const posCls = isDense ? 'bottom-[4px] gap-1' : 'bottom-[16px] gap-1.5';
+            html += `<div class="absolute left-[3px] ${posCls} flex flex-col-reverse items-center pointer-events-auto z-10">${leftPins}</div>`;
         }
 
         // Right Edge: PIN10, PIN11, PIN12, PIN13 (bottom to top)

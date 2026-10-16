@@ -121,7 +121,7 @@ export const preset12 = {
         "CHORD1:cv_out2 > ARP1:cv_in2",
         "CHORD1:cv_out3 > ARP1:cv_in3",
         "CHORD1:cv_out4 > ARP1:cv_in4",
-        "ARP1:out > VCO1:cv_in",
+        "ARP1:cv_out > VCO1:cv_in",
         "ARP1:gate_out > ADSR1:gate_in",
         "GATE4_1:gate_out1 > VCF1:cv_in",
         "VCO1:wave_out > VCF1:wave_in",

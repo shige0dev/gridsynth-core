@@ -1946,14 +1946,14 @@ export const MODULE_REGISTRY = {
         defaults: () => ({ type: 'ARP', mode: 'up' }),
         ports: (m, ctx) => ({
             in: [
-                { port: 'clk_in', pin: 0, color: 'bg-red-500' },
-                { port: 'cv_in4', pin: 1, color: 'bg-yellow-400', dimmed: !ctx?.patched?.has('cv_in4') && !ctx?.patched?.has('in_4') },
-                { port: 'cv_in3', pin: 2, color: 'bg-yellow-400', dimmed: !ctx?.patched?.has('cv_in3') && !ctx?.patched?.has('in_3') },
-                { port: 'cv_in2', pin: 3, color: 'bg-yellow-400', dimmed: !ctx?.patched?.has('cv_in2') && !ctx?.patched?.has('in_2') },
-                { port: 'cv_in1', pin: 4, color: 'bg-yellow-400', dimmed: !ctx?.patched?.has('cv_in1') && !ctx?.patched?.has('in_1') }
+                { port: 'clk_in', pin: 0, alias: 'trig_in', color: 'bg-red-500' },
+                { port: 'cv_in4', pin: 1, color: 'bg-yellow-400', dimmed: !ctx?.patched?.has('cv_in4') && !ctx?.patched?.has('in_4') && !ctx?.patched?.has('in4') },
+                { port: 'cv_in3', pin: 2, color: 'bg-yellow-400', dimmed: !ctx?.patched?.has('cv_in3') && !ctx?.patched?.has('in_3') && !ctx?.patched?.has('in3') },
+                { port: 'cv_in2', pin: 3, color: 'bg-yellow-400', dimmed: !ctx?.patched?.has('cv_in2') && !ctx?.patched?.has('in_2') && !ctx?.patched?.has('in2') },
+                { port: 'cv_in1', pin: 14, color: 'bg-yellow-400', dimmed: !ctx?.patched?.has('cv_in1') && !ctx?.patched?.has('in_1') && !ctx?.patched?.has('in1') }
             ],
             out: [
-                { port: 'out', pin: 9, color: 'bg-yellow-400' },
+                { port: 'cv_out', pin: 9, alias: 'out', color: 'bg-yellow-400' },
                 { port: 'gate_out', pin: 10, color: 'bg-orange-500' }
             ]
         }),
@@ -1962,7 +1962,7 @@ export const MODULE_REGISTRY = {
             const patched = ctx?.patched || new Set();
             return `<div class="flex items-center justify-center w-full h-full pointer-events-none">${UIHelpers.renderPanelBars(
                 [1, 2, 3, 4].map(idx => {
-                    const isP = patched.has(`cv_in${idx}`) || patched.has(`in_${idx}`);
+                    const isP = patched.has(`cv_in${idx}`) || patched.has(`in_${idx}`) || patched.has(`in${idx}`);
                     return {
                         pct: isP ? 100 : 0,
                         innerCls: `arp-bar-${idx - 1} ${!isP ? 'opacity-20' : ''}`,
@@ -1978,7 +1978,7 @@ export const MODULE_REGISTRY = {
         renderModal: (m, ctx) => {
             const curMode = m.mode || 'up';
             const patched = ctx?.patched || new Set();
-            const activeCount = [1, 2, 3, 4].filter(idx => patched.has(`cv_in${idx}`) || patched.has(`in_${idx}`)).length;
+            const activeCount = [1, 2, 3, 4].filter(idx => patched.has(`cv_in${idx}`) || patched.has(`in_${idx}`) || patched.has(`in${idx}`)).length;
             const modes = [
                 { val: 'up', label: 'UP' },
                 { val: 'down', label: 'DOWN' },
@@ -1994,7 +1994,7 @@ export const MODULE_REGISTRY = {
                     </div>
                     <div class="flex items-center justify-around bg-slate-950/80 p-1.5 rounded border border-slate-800">
                         ${[1, 2, 3, 4].map(idx => {
-                            const isP = patched.has(`cv_in${idx}`) || patched.has(`in_${idx}`);
+                            const isP = patched.has(`cv_in${idx}`) || patched.has(`in_${idx}`) || patched.has(`in${idx}`);
                             return `
                                 <div class="flex flex-col items-center gap-0.5">
                                     <span class="text-[6.5px] font-mono text-slate-500">CV ${idx}</span>

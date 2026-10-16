@@ -1,5 +1,3 @@
-import { getSR } from './common.js';
-
 export class Gate4Processor extends AudioWorkletProcessor {
     constructor() {
         super();
