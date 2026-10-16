@@ -55,8 +55,10 @@ GridSynth は、Web ブラウザ上で動作する **5×8 グリッド型のモ�
 - **CV（Control Voltage）と Audio の統合**: Web Audio API の `ConstantSourceNode` や `AudioParam` を組み合わせ、1V/oct 相当のピッチCV、0〜1VのエンベロープCV、バイポーラ/ユニポーラ変調をシームレスに処理。
 - **Keepalive 機構 (`silentSink`)**: Web Audio API では、スピーカー（`destination`）に繋がっていないグラフ枝がガベージコレクションや最適化で処理停止する場合があります。`PAT`、`CLK`、`SEQ8`、`SEQ16`、`GATE4`、`ARP` などの独立駆動モジュールには無音のゲインノード（`GainNode(0) -> destination`）を接続し、単体動作時でもシーケンスが停止しない設計になっています。
 
-#### ② モジュール定義システム (`src/modules/registry.js`)
-- 各モジュール（`VCO`, `VCF`, `VCA`, `ADSR`, `CLK`, `SEQ8`, `SEQ16`, `PAT`, `SH`, `DELAY`, `REVERB`, `FOLD`, `MIX`, `SUB`, `SUB_IO`, `SPK`, `KEY`, `FMx3`, `FMCORE`, `GATE4`, `ARP` 等）の入出力端子（オーディオ / CV / ゲート）、UIコントロールのパラメータ範囲・デフォルト値を一元管理。サブパッチ（`SUB` / `SUB_IO`）は表裏対称の12端子（スロット1〜6 送り: `PIN1_in`〜`PIN6_in` / `PIN1_out`〜`PIN6_out`、スロット7〜12 戻り: `PIN7_out`〜`PIN12_out` / `PIN7_in`〜`PIN12_in`）で厳格な `_out > _in` ルーティングによりブリッジされます。左上から下へPIN1〜3、下辺を左から右へPIN4〜9、右辺を下から上へPIN10〜12のU字型に配線端子が並びます。
+#### ② モジュール定義システム (`src/modules/registry.js`, `src/modules/defs/*.js`)
+- 各モジュール（`VCO`, `VCF`, `VCA`, `ADSR`, `CLK`, `SEQ8`, `SEQ16`, `PAT`, `SH`, `DELAY`, `REVERB`, `FOLD`, `MIX`, `SUB`, `SUB_IO`, `SPK`, `KEY`, `FMx3`, `FMCORE`, `GATE4`, `ARP`, `MARKOV` 等）の入出力端子（オーディオ / CV / ゲート）、UIコントロールのパラメータ範囲・デフォルト値を定義。
+- **機能別サブモジュール分割 (`src/modules/defs/`)**: 大規模化・コード生成遅延を防ぐため、カテゴリ別（`vco.js`, `filter.js`, `amp.js`, `effects.js`, `adsr.js`, `mod.js`, `io.js`, `seq.js`, `pat.js`, `markov.js`, `fm.js`）に11ファイルへ分割管理し、`src/modules/registry.js` を集約バレルエクスポート（`MODULE_REGISTRY`）として統一。外部参照への破壊的変更なしに保守性・高速なAI生成を実現。
+- サブパッチ（`SUB` / `SUB_IO`）は表裏対称の12端子（スロット1〜6 送り: `PIN1_in`〜`PIN6_in` / `PIN1_out`〜`PIN6_out`、スロット7〜12 戻り: `PIN7_out`〜`PIN12_out` / `PIN7_in`〜`PIN12_in`）で厳格な `_out > _in` ルーティングによりブリッジされます。左上から下へPIN1〜3、下辺を左から右へPIN4〜9、右辺を下から上へPIN10〜12のU字型に配線端子が並びます。
 - **サブパッチ・マニフェスト＆動的バインダー (`subType`)**: ファクトリー品全11種および配布用サブパッチは自己完結型フォーマット（`format: 'gridsynth-submodule'`, `subType`, `manifest.ports`）を搭載。固定ページ番号（`targetPage`）に依存せず、型番（`subType`）をもとに空きページを自動採番してモジュール群・内部結線を動的展開。親側（`SUB`）・子側（`SUB_IO`）双方で物理ピンに対する機能別名（`pitch_in`, `trig_in`, `wave_out` 等）を共通記述でき、システムが親側/子側の役割に応じて自動的に `_in` / `_out` へ方向解決します。
 
 #### ③ UI コントローラー (`src/ui/controller.js`)
