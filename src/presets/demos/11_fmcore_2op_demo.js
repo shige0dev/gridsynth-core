@@ -117,8 +117,8 @@ export const preset11 = {
         "FMCORE2:wave_out > VCA1:wave_in",
         "ADSR2:cv_out > VCA1:cv_in",
         "VCA1:wave_out > DELAY1:wave_in",
-        "VCA1:wave_out > SPK1:wave_in_l",
-        "DELAY1:wave_out > SPK1:wave_in_r",
+        "VCA1:wave_out > SPK1:wave_inL",
+        "DELAY1:wave_out > SPK1:wave_inR",
         "VCA1:wave_out > SCOPE1:in1",
         "FMCORE1:wave_out > SCOPE1:in2",
         "CLK1:gate_out > SCOPE1:trig"

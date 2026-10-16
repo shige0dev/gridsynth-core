@@ -19,8 +19,8 @@ export const preset03 = {
                 "FOLD1:wave_out > VCA1:wave_in",
                 "ADSR1:cv_out > VCA1:cv_in",
                 "VCA1:wave_out > REVERB1:wave_in",
-                "REVERB1:wave_out > SPK1:wave_in_l",
-                "REVERB1:wave_out > SPK1:wave_in_r"
+                "REVERB1:wave_out > SPK1:wave_inL",
+                "REVERB1:wave_out > SPK1:wave_inR"
             ]
         }
     }

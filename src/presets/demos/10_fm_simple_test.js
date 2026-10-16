@@ -184,8 +184,8 @@ export const preset10 = {
         "FM2:wave_out > MIX1:wave_in2",
         "FM3:wave_out > MIX1:wave_in3",
 
-        "MIX1:wave_out > SPK1:wave_in_l",
-        "MIX1:wave_out > SPK1:wave_in_r"
+        "MIX1:wave_out > SPK1:wave_inL",
+        "MIX1:wave_out > SPK1:wave_inR"
       ]
     }
   }

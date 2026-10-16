@@ -41,8 +41,8 @@ export const preset05 = {
                 "SUB5:PIN9_out > MIX1:wave_in3",
                 "CLK1:gate_out > SUB4:PIN4_in",
                 "SUB4:PIN9_out > MIX1:wave_in4",
-                "MIX1:wave_out > SPK1:wave_in_l",
-                "MIX1:wave_out > SPK1:wave_in_r"
+                "MIX1:wave_out > SPK1:wave_inL",
+                "MIX1:wave_out > SPK1:wave_inR"
             ]
         },
         "1": {

@@ -98,8 +98,8 @@ export const preset07 = {
                 "VCA6:wave_out > MIX1:wave_in4",
 
                 "MIX1:wave_out > MIX2:wave_in3",
-                "MIX2:wave_out > SPK1:wave_in_l",
-                "MIX2:wave_out > SPK1:wave_in_r"
+                "MIX2:wave_out > SPK1:wave_inL",
+                "MIX2:wave_out > SPK1:wave_inR"
             ]
         }
     }

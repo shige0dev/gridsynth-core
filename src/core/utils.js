@@ -176,62 +176,25 @@ export const isSubPortInput = (port, modIdOrType = null, manifest = null) => {
 };
 
 export const PORT_ALIASES = {
-    // ARP
-    'out': 'cv_out',
-    'in_1': 'cv_in1',
-    'in_2': 'cv_in2',
-    'in_3': 'cv_in3',
-    'in_4': 'cv_in4',
-    'in1': 'cv_in1',
-    'in2': 'cv_in2',
-    'in3': 'cv_in3',
-    'in4': 'cv_in4',
-    // MARKOV
-    'trig_out': 'transition_out',
-    'trig_out1': 'transition_out1',
-    'trig_out2': 'transition_out2',
-    'trig_out3': 'transition_out3',
-    'trig_out4': 'transition_out4',
-    'trig_in': 'transition_in',
-    'step_gate': 'trig_out',
-    'step_gt': 'trig_out',
-    'gt_out': 'gate_out',
-    'state_out': 'cv_out',
-    // GATE4
-    'out1': 'gate_out1',
-    'out2': 'gate_out2',
-    'out3': 'gate_out3',
-    'out4': 'gate_out4',
-    'gate1': 'gate_out1',
-    'gate2': 'gate_out2',
-    'gate3': 'gate_out3',
-    'gate4': 'gate_out4',
-    // CHORD
-    'cv1': 'cv_out1',
-    'cv2': 'cv_out2',
-    'cv3': 'cv_out3',
-    'cv4': 'cv_out4',
-    'out_1': 'cv_out1',
-    'out_2': 'cv_out2',
-    'out_3': 'cv_out3',
-    'out_4': 'cv_out4',
-    // MIX
+    // SPK: legacy wave_in_l / wave_in_r -> canonical wave_inL / wave_inR
+    'wave_in_l': 'wave_inL',
+    'wave_in_r': 'wave_inR',
+
+    // MATH: legacy a / b / cv_out -> canonical CV_inA / CV_inB / CV_OUT
+    'a': 'CV_inA',
+    'in_a': 'CV_inA',
+    'b': 'CV_inB',
+    'in_b': 'CV_inB',
+    'cv_out': 'CV_OUT',
+
+    // IO: legacy in1 / in2 / trig -> canonical wave_in1 / wave_in2 / trig_in
     'in1': 'wave_in1',
     'in2': 'wave_in2',
-    'in3': 'wave_in3',
-    'in4': 'wave_in4',
-    // MATH
-    'in_a': 'a',
-    'in_b': 'b',
-    // SPK
-    'in_l': 'wave_in_l',
-    'in_r': 'wave_in_r',
-    'left': 'wave_in_l',
-    'right': 'wave_in_r',
-    // General
-    'gate': 'gate_in',
-    'clk': 'clk_in',
-    'trig': 'trig_in'
+    'trig': 'trig_in',
+    'reset': 'trig_in',
+
+    // Switched CV
+    'out': 'cv_out'
 };
 
 export const getPortAliases = (port) => {
@@ -246,19 +209,22 @@ export const getPortAliases = (port) => {
         if (canonical === p) {
             set.add(alias);
         }
+        if (canonical.toLowerCase() === p.toLowerCase()) {
+            set.add(canonical);
+            set.add(alias);
+        }
     }
-    if (p === 'cv_out') set.add('out');
-    if (p === 'out') set.add('cv_out');
-    if (p === 'clk_in') { set.add('clk'); set.add('trig_in'); }
-    if (p === 'gate_in') set.add('gate');
     return Array.from(set);
 };
 
 export const isPortMatching = (p1, p2) => {
     if (!p1 || !p2) return false;
     if (p1 === p2) return true;
+    if (p1.toLowerCase() === p2.toLowerCase()) return true;
     const a1 = getPortAliases(p1);
-    return a1.includes(p2);
+    if (a1.includes(p2)) return true;
+    const a1Lower = a1.map(x => x.toLowerCase());
+    return a1Lower.includes(p2.toLowerCase());
 };
 
 export const connKey = (c) => `${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}`;

@@ -18,8 +18,8 @@ export const preset04 = {
                 "SH1:cv_out > VCF1:cv_in",
                 "VCO1:wave_out > VCF1:wave_in",
                 "VCF1:wave_out > DELAY1:wave_in",
-                "DELAY1:wave_out > SPK1:wave_in_l",
-                "DELAY1:wave_out > SPK1:wave_in_r",
+                "DELAY1:wave_out > SPK1:wave_inL",
+                "DELAY1:wave_out > SPK1:wave_inR",
                 "KEY1:cv_out > VCO1:cv_in"
             ]
         }

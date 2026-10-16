@@ -19,7 +19,7 @@ const renderMathModalUI = (m, ctx, modeGroups, valKeys) => {
             <div class="grid grid-cols-${valKeys.length} gap-1.5 pt-0.5">
                 ${valKeys.map(k => {
                     const port = k.toLowerCase();
-                    const p = ctx.patched?.has(port);
+                    const p = ctx.patched?.has('CV_in' + k) || ctx.patched?.has('cv_in' + port) || ctx.patched?.has(port);
                     return `
                         <button id="math-val-${port}" class="py-1 px-1.5 rounded border text-[9px] font-mono font-bold flex items-center justify-between ${p ? 'bg-slate-900 border-slate-800 text-slate-500 cursor-not-allowed' : 'bg-slate-800 border-purple-500/60 text-purple-200 active:bg-purple-900'}">
                             <span class="text-[7.5px] text-slate-400">${valKeys.length > 1 ? k.toUpperCase() : 'CONSTANT ' + k.toUpperCase()}</span>
@@ -40,8 +40,9 @@ const bindMathEventsUI = (m, ctx, cb, valKeys) => {
     });
     valKeys.forEach(k => {
         const port = k.toLowerCase();
+        const isPatched = ctx.patched?.has('CV_in' + k) || ctx.patched?.has('cv_in' + port) || ctx.patched?.has(port);
         const btn = document.getElementById(`math-val-${port}`);
-        if (btn && !ctx.patched?.has(port)) {
+        if (btn && !isPatched) {
             btn.addEventListener('click', async () => {
                 const res = await ctx.prompt(`CONSTANT ${k.toUpperCase()}`, String(m[`val${k}`] ?? (k === 'B' ? 1.0 : 0.0)));
                 if (res !== null && res !== '') {
@@ -78,7 +79,7 @@ export const LFO = {
     defaults: () => ({ type: 'LFO', waveType: 'sine', polarity: 'bipolar', syncMode: 'free', division: '1/4', rate: 2.0, depth: 1.0, phase: 0, duty: 0.5 }),
     ports: () => ({
         in: [
-            { port: 'reset', color: 'bg-orange-500' },
+            { port: 'trig_in', color: 'bg-orange-500' },
             { port: 'cv_in', color: 'bg-yellow-400' }
         ],
         out: [{ port: 'cv_out', color: 'bg-yellow-400' }]
@@ -277,8 +278,8 @@ export const MATH1 = {
     MODES: ['ABS', 'FLOOR', 'CEIL', 'ROUND', 'INT'],
     defaults: () => ({ type: 'MATH1', mode: 'ABS', valA: 0.0 }),
     ports: () => ({
-        in: [{ port: 'a', color: 'bg-yellow-400' }],
-        out: [{ port: 'cv_out', color: 'bg-yellow-400' }]
+        in: [{ port: 'CV_inA', color: 'bg-yellow-400' }],
+        out: [{ port: 'CV_OUT', color: 'bg-yellow-400' }]
     }),
     renderGrid: renderMathGridUI,
     updateLive: updateMathLiveUI,
@@ -293,10 +294,10 @@ export const MATH2 = {
     defaults: () => ({ type: 'MATH2', mode: 'ADD', valA: 0.0, valB: 1.0 }),
     ports: () => ({
         in: [
-            { port: 'a', color: 'bg-yellow-400' },
-            { port: 'b', color: 'bg-yellow-400' }
+            { port: 'CV_inA', color: 'bg-yellow-400' },
+            { port: 'CV_inB', color: 'bg-yellow-400' }
         ],
-        out: [{ port: 'cv_out', color: 'bg-yellow-400' }]
+        out: [{ port: 'CV_OUT', color: 'bg-yellow-400' }]
     }),
     renderGrid: renderMathGridUI,
     updateLive: updateMathLiveUI,

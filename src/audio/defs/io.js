@@ -20,31 +20,30 @@ export const SCOPE = {
         return {
             nodes: { w, g1, g2, gTrig },
             inputs: {
-                in1: g1,
-                in: g1,
-                wave_in: g1,
                 wave_in1: g1,
-                in2: g2,
                 wave_in2: g2,
+                trig_in: gTrig,
+                in1: g1,
+                in2: g2,
                 trig: gTrig,
-                trig_in: gTrig
+                wave_in: g1
             },
             outputs: {},
-            _hasTrig: patch?.has('trig') || patch?.has('trig_in'),
-            _hasIn2: patch?.has('in2') || patch?.has('wave_in2'),
+            _hasTrig: patch?.has('trig_in') || patch?.has('trig'),
+            _hasIn2: patch?.has('wave_in2') || patch?.has('in2'),
             read: () => ({
                 buf1: latest.buf1,
                 buf2: latest.buf2,
                 trigBuf: latest.trigBuf,
-                hasTrig: patch?.has('trig') || patch?.has('trig_in'),
-                hasIn2: patch?.has('in2') || patch?.has('wave_in2'),
+                hasTrig: patch?.has('trig_in') || patch?.has('trig'),
+                hasIn2: patch?.has('wave_in2') || patch?.has('in2'),
                 sampleRate: latest.sampleRate || ctx.sampleRate
             })
         };
     },
     update: (ctx, inst, d, patch) => {
-        inst._hasTrig = patch?.has('trig');
-        inst._hasIn2 = patch?.has('in2');
+        inst._hasTrig = patch?.has('trig_in') || patch?.has('trig');
+        inst._hasIn2 = patch?.has('wave_in2') || patch?.has('in2');
         inst.nodes.w.port.postMessage({ type: 'SET_CONFIG', timeSpan: d.timeSpan ?? 0.1 });
     }
 };
@@ -55,7 +54,7 @@ export const MON = {
         for (let c = 1; c <= 4; c++) {
             const an = ctx.createAnalyser(), inG = ctx.createGain(); an.fftSize = 256; inG.connect(an);
             if (eng?.silentSink) inG.connect(eng.silentSink);
-            inputs[`in${c}`] = inG; nodes[`in${c}`] = inG; nodes[`an${c}`] = an;
+            inputs[`cv_in${c}`] = inG; inputs[`in${c}`] = inG; nodes[`in${c}`] = inG; nodes[`an${c}`] = an;
         }
         return {
             nodes, inputs, outputs: {}, read: () => {
@@ -102,6 +101,8 @@ export const SPK = {
         return {
             nodes: { inL, inR, outL, outR, anL, anR, merger, limiter },
             inputs: {
+                wave_inL: inL,
+                wave_inR: inR,
                 wave_in_l: inL,
                 wave_in_r: inR,
                 wave_in: inL

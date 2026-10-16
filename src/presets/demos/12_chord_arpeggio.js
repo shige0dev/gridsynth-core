@@ -131,8 +131,8 @@ export const preset12 = {
         "VCA1:wave_out > DELAY1:wave_in",
         "DELAY1:wave_out > REVERB1:wave_in",
         "REVERB1:wave_out > SCOPE1:in1",
-        "REVERB1:wave_out > SPK1:wave_in_l",
-        "REVERB1:wave_out > SPK1:wave_in_r"
+        "REVERB1:wave_out > SPK1:wave_inL",
+        "REVERB1:wave_out > SPK1:wave_inR"
       ]
     }
   }

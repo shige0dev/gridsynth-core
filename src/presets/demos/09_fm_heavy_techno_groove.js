@@ -266,8 +266,8 @@ export const preset09 = {
         "CLK1:gate_out > MARKOV3:clk_in",
 
         "CLK2:gate_out > ADSR1:gate_in",
-        "ADSR1:cv_out > MATH2:a",
-        "MATH2:cv_out > FM1:pitch_in",
+        "ADSR1:cv_out > MATH2:CV_inA",
+        "MATH2:CV_OUT > FM1:pitch_in",
         "CLK2:gate_out > FM1:gate_in",
         "FM1:wave_out > MIX1:wave_in1",
 
@@ -309,8 +309,8 @@ export const preset09 = {
 
         "MIX3:wave_out > SCOPE1:in1",
         "CLK2:gate_out > SCOPE1:trig",
-        "MIX3:wave_out > SPK1:wave_in_l",
-        "MIX3:wave_out > SPK1:wave_in_r"
+        "MIX3:wave_out > SPK1:wave_inL",
+        "MIX3:wave_out > SPK1:wave_inR"
       ]
     }
   }

@@ -5,9 +5,9 @@ export const SCOPE = {
     defaults: () => ({ type: 'SCOPE', timeSpan: 0.05, vRange: 5.0, trigMode: 'auto', displayMode: 'time', ySpread: 0.2 }),
     ports: () => ({
         in: [
-            { port: 'in1', pin: 4, color: 'bg-yellow-400' },
-            { port: 'trig', pin: 5, color: 'bg-orange-500' },
-            { port: 'in2', pin: 3, color: 'bg-yellow-400' }
+            { port: 'wave_in1', pin: 4, color: 'bg-yellow-400' },
+            { port: 'trig_in', pin: 5, color: 'bg-orange-500' },
+            { port: 'wave_in2', pin: 3, color: 'bg-yellow-400' }
         ],
         out: []
     }),
@@ -134,10 +134,10 @@ export const MON = {
     defaults: () => ({ type: 'MON' }),
     ports: () => ({
         in: [
-            { port: 'in1', color: 'bg-yellow-400' },
-            { port: 'in2', color: 'bg-yellow-400' },
-            { port: 'in3', color: 'bg-yellow-400' },
-            { port: 'in4', color: 'bg-yellow-400' }
+            { port: 'cv_in1', color: 'bg-yellow-400' },
+            { port: 'cv_in2', color: 'bg-yellow-400' },
+            { port: 'cv_in3', color: 'bg-yellow-400' },
+            { port: 'cv_in4', color: 'bg-yellow-400' }
         ],
         out: []
     }),
@@ -157,8 +157,8 @@ export const SPK = {
     defaults: () => ({ type: 'SPK', masterVol: 0.12 }),
     ports: () => ({
         in: [
-            { port: 'wave_in_l', pin: 4, color: 'bg-blue-500' },
-            { port: 'wave_in_r', pin: 5, color: 'bg-blue-500' }
+            { port: 'wave_inL', pin: 4, color: 'bg-blue-500' },
+            { port: 'wave_inR', pin: 5, color: 'bg-blue-500' }
         ],
         out: []
     }),
