@@ -12,6 +12,7 @@ export const MARKOV = {
         holdClocks: 1,
         stayWeight: 10,
         weights: [0, 0, 0, 0]
+    }),
     onClone: (copy) => {
         copy.initOn = false;
         copy.state = 0;
