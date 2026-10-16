@@ -1,5 +1,5 @@
 import { safeClone, parseConn } from '../../core/utils.js';
-import { parsePatch, exportPatch, createDefaultPatchData, checkMarkovUnconnectedWeights } from '../../core/patch.js';
+import { parsePatch, exportPatch, createDefaultPatchData } from '../../core/patch.js';
 import { getDefaultPresets } from '../../presets/default.js';
 import { AI_PATCH_SPEC_CONTENT } from '../../presets/ai-spec-content.js';
 
@@ -513,21 +513,6 @@ export class PresetManager {
                     }
                 );
             }, 100);
-        }
-
-        // マルコフ連鎖 未結線ウェイトの警告チェック
-        const markovWarnings = checkMarkovUnconnectedWeights(this.ui.pagesData);
-        if (markovWarnings.length > 0) {
-            const details = markovWarnings.map(w =>
-                `${w.moduleId}:${w.port} (weight: ${w.weight})${w.pageName}`
-            );
-            setTimeout(() => {
-                this.ui.openCustomAlert(
-                    'MARKOV 結線警告',
-                    'ウエイトが設定されていますが結線されていない出力端子があります。この枝に遷移すると連鎖が停止（演奏中断）します：',
-                    details
-                );
-            }, parseErrors.length > 0 ? 300 : 100);
         }
     }
 

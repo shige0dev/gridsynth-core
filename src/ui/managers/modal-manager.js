@@ -226,21 +226,8 @@ export class ModalManager {
         const updateModalTitle = () => {
             const titleEl = document.getElementById('modal-title');
             if (!titleEl) return;
-            if (m.type === 'MARKOV') {
-                const weights = Array.isArray(m.weights) ? m.weights : [0, 0, 0, 0];
-                const patched = this.ui.getPatchState(id);
-                const hasUnconnected = weights.some((w, idx) => Number(w) > 0 && !patched.has(`trig_out${idx + 1}`));
-                if (hasUnconnected) {
-                    titleEl.className = "text-[10px] font-bold text-rose-400 uppercase tracking-wider pointer-events-none flex items-center gap-1.5";
-                    titleEl.innerHTML = `<span>MARKOV</span><span class="text-[8px] text-rose-300 bg-rose-950/80 border border-rose-500/50 px-1 py-0.2 rounded font-mono">⚠️ UNCONNECTED</span>`;
-                } else {
-                    titleEl.className = "text-[10px] font-bold text-cyan-300 uppercase tracking-wider pointer-events-none";
-                    titleEl.textContent = "MARKOV";
-                }
-            } else {
-                titleEl.className = "text-[10px] font-bold text-cyan-300 uppercase tracking-wider pointer-events-none";
-                titleEl.textContent = m.type;
-            }
+            titleEl.className = "text-[10px] font-bold text-cyan-300 uppercase tracking-wider pointer-events-none";
+            titleEl.textContent = m.type;
         };
 
         const onChange = () => {

@@ -431,13 +431,6 @@ export class UIController {
         return this.modalManager.reRenderDockModal();
     }
 
-    cleanupMarkovWeights(modId) {
-        const mod = this.modules[modId];
-        if (mod) {
-            MODULE_REGISTRY[mod.type]?.onDisconnect?.(mod, { patchState: this.getPatchState(modId) });
-        }
-    }
-
     removeConnectionsForPort(mId, port) {
         return this.cableManager.removeConnectionsForPort(mId, port);
     }

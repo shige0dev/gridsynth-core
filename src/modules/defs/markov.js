@@ -12,29 +12,6 @@ export const MARKOV = {
         holdClocks: 1,
         stayWeight: 10,
         weights: [0, 0, 0, 0]
-    }),
-    onConnect: (m, { port, isSource }) => {
-        if (isSource && (port.startsWith('transition_out') || port.startsWith('trig_out'))) {
-            const numStr = port.replace(/^(transition_out|trig_out)/, '');
-            if (numStr) {
-                const outIdx = parseInt(numStr, 10) - 1;
-                if (!m.weights) m.weights = [0, 0, 0, 0];
-                if (m.weights[outIdx] === 0 || m.weights[outIdx] === undefined) {
-                    m.weights[outIdx] = 10;
-                }
-            }
-        }
-    },
-    onDisconnect: (m, { patchState }) => {
-        if (m.weights) {
-            for (let idx = 1; idx <= 4; idx++) {
-                const hasConn = patchState?.has(`transition_out${idx}`) || patchState?.has(`trig_out${idx}`);
-                if (!hasConn && m.weights[idx - 1] === 10) {
-                    m.weights[idx - 1] = 0;
-                }
-            }
-        }
-    },
     onClone: (copy) => {
         copy.initOn = false;
         copy.state = 0;
@@ -276,3 +253,4 @@ export const MARKOV = {
 export const markovDefs = {
     MARKOV
 };
+

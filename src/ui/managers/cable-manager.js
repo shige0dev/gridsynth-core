@@ -401,7 +401,6 @@ export class CableManager {
         });
         affectedIds.forEach(id => {
             if (this.ui.modules[id]) {
-                this.ui.cleanupMarkovWeights(id);
                 this.ui.synth.updateModule(`${this.ui.currentPageId}/${id}`, this.ui.modules[id], this.ui.getPatchState(id));
             }
         });
