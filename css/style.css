@@ -53,6 +53,8 @@ body {
     -webkit-appearance: slider-vertical;
     width: 14px;
     height: 48px;
+    min-height: 48px;
+    flex-shrink: 0;
     cursor: pointer;
     padding: 0 1px;
     touch-action: none;

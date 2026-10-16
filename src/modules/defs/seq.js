@@ -1,10 +1,10 @@
 import { UIHelpers } from '../../ui/helpers.js';
 
 const renderSeqStepButtons = (idx, isAct, isCvAct, isGateAct, isSeq16 = false) => `
-    <div class="flex flex-col gap-0.5 w-full mt-0.5">
-        <button data-act="gate" data-step="${idx}" class="text-[6.5px] font-bold py-0.5 rounded border transition-colors ${!isAct ? 'bg-slate-950 text-slate-600 border-slate-800' : (isGateAct ? 'bg-sky-950 text-sky-300 border-sky-500/80' : 'bg-slate-950 text-slate-600 border-slate-800')}" title="GATE">GATE</button>
-        <button data-act="cvActive" data-step="${idx}" class="text-[7px] font-bold py-0.5 rounded border transition-colors ${!isAct ? 'bg-slate-950 text-slate-600 border-slate-800' : (isCvAct ? 'bg-cyan-950 text-cyan-300 border-cyan-500/80' : 'bg-slate-950 text-slate-600 border-slate-800')}" title="CV">CV</button>
-        <button data-act="active" data-step="${idx}" class="text-[6.5px] font-bold py-0.5 rounded border transition-colors ${isAct ? 'bg-blue-950 text-blue-300 border-blue-500/80' : 'bg-slate-950 text-slate-500 border-slate-800'}" title="STEP ACTIVE">${isSeq16 ? (idx + 1) : 'STEP'}</button>
+    <div class="flex flex-col gap-0.5 w-full mt-0.5 shrink-0">
+        <button data-act="gate" data-step="${idx}" class="text-[6.5px] font-bold py-0.5 rounded border transition-colors shrink-0 ${!isAct ? 'bg-slate-950 text-slate-600 border-slate-800' : (isGateAct ? 'bg-sky-950 text-sky-300 border-sky-500/80' : 'bg-slate-950 text-slate-600 border-slate-800')}" title="GATE">GATE</button>
+        <button data-act="cvActive" data-step="${idx}" class="text-[7px] font-bold py-0.5 rounded border transition-colors shrink-0 ${!isAct ? 'bg-slate-950 text-slate-600 border-slate-800' : (isCvAct ? 'bg-cyan-950 text-cyan-300 border-cyan-500/80' : 'bg-slate-950 text-slate-600 border-slate-800')}" title="CV">CV</button>
+        <button data-act="active" data-step="${idx}" class="text-[6.5px] font-bold py-0.5 rounded border transition-colors shrink-0 ${isAct ? 'bg-blue-950 text-blue-300 border-blue-500/80' : 'bg-slate-950 text-slate-500 border-slate-800'}" title="STEP ACTIVE">${isSeq16 ? (idx + 1) : 'STEP'}</button>
     </div>
 `;
 
@@ -80,9 +80,11 @@ export const SEQ8 = {
                     const isCvAct = typeof st === 'object' ? (st.cvActive !== false) : true;
                     const isGateAct = typeof st === 'object' ? (st.gate !== false) : true;
                     return `
-                    <div data-step-col="${i}" class="flex flex-col items-center gap-1 flex-1 min-w-[34px] p-1 rounded-lg border transition-all ${isAct ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-950/80 border-slate-800/40 opacity-40 grayscale'}">
-                        <span id="seq-slider-${i}-disp" class="text-[8.5px] ${isAct ? 'text-cyan-300' : 'text-slate-500'} font-mono font-bold cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-1 py-0.5 rounded transition-colors" title="上下ドラッグで微調整">${m.quantize!==false?UIHelpers.cvToNoteName(val):val.toFixed(2)}</span>
-                        <input type="range" data-seq-slider="${i}" id="seq-slider-${i}" min="0" max="2.0" step="${m.quantize!==false?0.083333:0.01}" value="${val}" class="native-vslider ${isAct ? 'accent-blue-500' : 'accent-slate-600'} !h-12">
+                    <div data-step-col="${i}" class="flex flex-col items-center gap-1 flex-1 min-w-[34px] p-1 rounded-lg border transition-all shrink-0 ${isAct ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-950/80 border-slate-800/40 opacity-40 grayscale'}">
+                        <span id="seq-slider-${i}-disp" class="text-[8.5px] ${isAct ? 'text-cyan-300' : 'text-slate-500'} font-mono font-bold cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-1 py-0.5 rounded transition-colors shrink-0" title="上下ドラッグで微調整">${m.quantize!==false?UIHelpers.cvToNoteName(val):val.toFixed(2)}</span>
+                        <div class="h-12 min-h-[48px] flex items-center justify-center my-0.5 shrink-0">
+                            <input type="range" data-seq-slider="${i}" id="seq-slider-${i}" min="0" max="2.0" step="${m.quantize!==false?0.083333:0.01}" value="${val}" class="native-vslider ${isAct ? 'accent-blue-500' : 'accent-slate-600'} shrink-0">
+                        </div>
                         ${renderSeqStepButtons(i, isAct, isCvAct, isGateAct, false)}
                     </div>`;
                 }).join('')}
@@ -203,7 +205,7 @@ export const SEQ16 = {
     renderModal: (m) => {
         const steps = m.steps || [];
         const renderStepRow = (slice, startIdx) => `
-            <div class="flex items-center justify-between py-0.5 px-1 bg-slate-950/60 rounded-xl border border-slate-800/80 gap-1 overflow-x-auto">
+            <div class="flex items-center justify-between py-1 px-1 bg-slate-950/60 rounded-xl border border-slate-800/80 gap-1 overflow-x-auto">
                 ${slice.map((st, i) => {
                     const idx = startIdx + i;
                     const val = typeof st === 'number' ? st : (st?.cv ?? 0);
@@ -211,8 +213,11 @@ export const SEQ16 = {
                     const isCvAct = typeof st === 'object' ? (st.cvActive !== false) : true;
                     const isGateAct = typeof st === 'object' ? (st.gate !== false) : true;
                     return `
-                    <div data-step-col="${idx}" class="flex flex-col items-center gap-0.5 flex-1 min-w-[34px] p-0.5 rounded-lg border transition-all ${isAct ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-950/80 border-slate-800/40 opacity-40 grayscale'}">
-                        <span id="seq16-slider-${idx}-disp" class="text-[8px] ${isAct ? 'text-cyan-300' : 'text-slate-500'} font-mono font-bold cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 py-0.5 rounded transition-colors" title="上下ドラッグで微調整">${m.quantize!==false?UIHelpers.cvToNoteName(val):val.toFixed(2)}</span>
+                    <div data-step-col="${idx}" class="flex flex-col items-center gap-0.5 flex-1 min-w-[34px] p-1 rounded-lg border transition-all shrink-0 ${isAct ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-950/80 border-slate-800/40 opacity-40 grayscale'}">
+                        <span id="seq16-slider-${idx}-disp" class="text-[8px] ${isAct ? 'text-cyan-300' : 'text-slate-500'} font-mono font-bold cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 py-0.5 rounded transition-colors shrink-0" title="上下ドラッグで微調整">${m.quantize!==false?UIHelpers.cvToNoteName(val):val.toFixed(2)}</span>
+                        <div class="h-12 min-h-[48px] flex items-center justify-center my-0.5 shrink-0">
+                            <input type="range" data-seq-slider="${idx}" id="seq16-slider-${idx}" min="0" max="2.0" step="${m.quantize!==false?0.083333:0.01}" value="${val}" class="native-vslider ${isAct ? 'accent-blue-500' : 'accent-slate-600'} shrink-0">
+                        </div>
                         ${renderSeqStepButtons(idx, isAct, isCvAct, isGateAct, true)}
                     </div>`;
                 }).join('')}

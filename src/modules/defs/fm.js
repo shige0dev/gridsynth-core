@@ -98,21 +98,21 @@ export const FMx3 = {
                 sVal = Math.pow(norm, 1 / power);
             }
             return `
-                <div class="flex flex-col items-center justify-between h-full min-w-[17px] flex-1">
-                    <span class="text-[6.5px] font-bold text-slate-400 uppercase tracking-tight leading-none">${label}</span>
-                    <span id="${id}-disp" class="text-[7.5px] font-mono font-bold text-${accentColor}-300 cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 rounded leading-none py-0.5" title="上下ドラッグで微調整">${formattedDisp}</span>
-                    <div class="flex items-center justify-center my-0.5">
-                        <input type="range" id="${id}" min="${sMin}" max="${sMax}" step="${sStep}" value="${sVal}" class="native-vslider-sm accent-${accentColor}-400">
+                <div class="flex flex-col items-center justify-between h-full min-w-[17px] flex-1 shrink-0">
+                    <span class="text-[6.5px] font-bold text-slate-400 uppercase tracking-tight leading-none shrink-0">${label}</span>
+                    <span id="${id}-disp" class="text-[7.5px] font-mono font-bold text-${accentColor}-300 cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 rounded leading-none py-0.5 shrink-0" title="上下ドラッグで微調整">${formattedDisp}</span>
+                    <div class="h-12 min-h-[48px] flex items-center justify-center my-0.5 shrink-0">
+                        <input type="range" id="${id}" min="${sMin}" max="${sMax}" step="${sStep}" value="${sVal}" class="native-vslider-sm accent-${accentColor}-400 shrink-0">
                     </div>
                 </div>
             `;
         };
 
         const renderMiniPlaceholder = (label = 'FB') => `
-            <div class="flex flex-col items-center justify-between h-full min-w-[17px] flex-1 opacity-20 pointer-events-none">
-                <span class="text-[6.5px] font-bold text-slate-600 uppercase tracking-tight leading-none">${label}</span>
-                <span class="text-[7.5px] font-mono text-slate-600 leading-none py-0.5">—</span>
-                <div class="w-[14px] h-[48px] flex items-center justify-center my-0.5">
+            <div class="flex flex-col items-center justify-between h-full min-w-[17px] flex-1 opacity-20 pointer-events-none shrink-0">
+                <span class="text-[6.5px] font-bold text-slate-600 uppercase tracking-tight leading-none shrink-0">${label}</span>
+                <span class="text-[7.5px] font-mono text-slate-600 leading-none py-0.5 shrink-0">—</span>
+                <div class="w-[14px] h-12 min-h-[48px] flex items-center justify-center my-0.5 shrink-0">
                     <div class="w-[1px] h-full bg-slate-800/60"></div>
                 </div>
             </div>

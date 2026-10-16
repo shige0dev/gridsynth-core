@@ -120,24 +120,24 @@ export const MARKOV = {
                         <div class="w-[1px] h-14 bg-slate-800/80 self-center mx-0.5"></div>
 
                         <!-- Stay Slider -->
-                        <div class="flex flex-col items-center gap-1 flex-1 min-w-0">
-                            <span class="text-[8px] font-bold text-slate-300 uppercase tracking-tight truncate w-full text-center">STAY</span>
-                            <span id="markov-p-stay" class="text-[9px] text-amber-300 font-mono font-bold cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 py-0.5 rounded transition-colors leading-tight" title="上下ドラッグで微調整">${pctStay}%</span>
-                            <div class="h-12 flex items-center justify-center my-0.5">
-                                <input type="range" id="markov-w-stay" min="0" max="100" step="1" value="${wStay}" class="native-vslider accent-amber-500">
+                        <div class="flex flex-col items-center gap-1 flex-1 min-w-0 shrink-0">
+                            <span class="text-[8px] font-bold text-slate-300 uppercase tracking-tight truncate w-full text-center shrink-0">STAY</span>
+                            <span id="markov-p-stay" class="text-[9px] text-amber-300 font-mono font-bold cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 py-0.5 rounded transition-colors leading-tight shrink-0" title="上下ドラッグで微調整">${pctStay}%</span>
+                            <div class="h-12 min-h-[48px] flex items-center justify-center my-0.5 shrink-0">
+                                <input type="range" id="markov-w-stay" min="0" max="100" step="1" value="${wStay}" class="native-vslider accent-amber-500 shrink-0">
                             </div>
-                            <span class="text-[7.5px] font-mono text-slate-400 truncate">自己</span>
+                            <span class="text-[7.5px] font-mono text-slate-400 truncate shrink-0">自己</span>
                         </div>
 
                         <!-- Output 1..4 Sliders (OUT 1 to OUT 4 from left to right, matching bottom PIN6..PIN9) -->
                         ${[0, 1, 2, 3].map(idx => `
-                            <div class="flex flex-col items-center gap-1 flex-1 min-w-0">
-                                <span class="text-[8px] font-bold text-slate-300 uppercase tracking-tight truncate w-full text-center">OUT ${idx + 1}</span>
-                                <span id="markov-p-${idx}" class="text-[9px] text-amber-300 font-bold font-mono cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 py-0.5 rounded transition-colors leading-tight" title="上下ドラッグで微調整">${pcts[idx]}%</span>
-                                <div class="h-12 flex items-center justify-center my-0.5">
-                                    <input type="range" id="markov-w-${idx}" min="0" max="100" step="1" value="${weights[idx] ?? 0}" class="native-vslider accent-amber-500 markov-w-slider" data-idx="${idx}">
+                            <div class="flex flex-col items-center gap-1 flex-1 min-w-0 shrink-0">
+                                <span class="text-[8px] font-bold text-slate-300 uppercase tracking-tight truncate w-full text-center shrink-0">OUT ${idx + 1}</span>
+                                <span id="markov-p-${idx}" class="text-[9px] text-amber-300 font-bold font-mono cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 py-0.5 rounded transition-colors leading-tight shrink-0" title="上下ドラッグで微調整">${pcts[idx]}%</span>
+                                <div class="h-12 min-h-[48px] flex items-center justify-center my-0.5 shrink-0">
+                                    <input type="range" id="markov-w-${idx}" min="0" max="100" step="1" value="${weights[idx] ?? 0}" class="native-vslider accent-amber-500 markov-w-slider shrink-0" data-idx="${idx}">
                                 </div>
-                                <span class="text-[7.5px] font-mono text-slate-400 truncate">CH ${idx + 1}</span>
+                                <span class="text-[7.5px] font-mono text-slate-400 truncate shrink-0">CH ${idx + 1}</span>
                             </div>`
                         ).join('')}
                     </div>

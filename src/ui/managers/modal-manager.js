@@ -5,13 +5,48 @@ import { UIHelpers } from '../helpers.js';
 import { generateModuleId } from '../../core/utils.js';
 
 export const MODAL_WIDTHS = {
-    ADSR: 'w-[195px]',
+    // Complex Synthesizers
     FM: 'w-[390px]',
     FM3OP: 'w-[390px]',
     FMx3: 'w-[390px]',
-    FMCORE: 'w-[245px]',
-    GATE4: 'w-[220px]',
-    ARP: 'w-[220px]'
+    FMCORE: 'w-[250px]',
+
+    // Sequencing & Arpeggiation
+    GATE4: 'w-[230px]',
+    ARP: 'w-[230px]',
+    CHORD: 'w-[240px]',
+    MARKOV: 'w-[260px]',
+
+    // Logic & Math
+    MATH1: 'w-[220px]',
+    MATH2: 'w-[230px]',
+    SH: 'w-[200px]',
+    CLK: 'w-[200px]',
+    THROUGH: 'w-[170px]',
+
+    // Sound Generation & Processing
+    VCO: 'w-[235px]',
+    NOISE: 'w-[185px]',
+    VCF: 'w-[210px]',
+    FOLD: 'w-[220px]',
+    VCA: 'w-[185px]',
+    MIX: 'w-[230px]',
+    SLIDER: 'w-[165px]',
+
+    // Effects
+    DELAY: 'w-[200px]',
+    CVDELAY: 'w-[190px]',
+    REVERB: 'w-[210px]',
+
+    // Modulation & Envelopes
+    ADSR: 'w-[215px]',
+    LFO: 'w-[235px]',
+
+    // IO & Monitoring
+    SCOPE: 'w-[235px]',
+    MON: 'w-[195px]',
+    SPK: 'w-[185px]',
+    SUB: 'w-[240px]'
 };
 
 export class ModalManager {
@@ -210,6 +245,17 @@ export class ModalManager {
         else if (reg.schema) b.innerHTML = UIHelpers.renderSchemaModal(m, ctx, reg.schema);
         if (reg.bindEvents) reg.bindEvents(m, ctx, onChange);
         else if (reg.schema) UIHelpers.bindSchemaEvents(m, ctx, reg.schema, onChange);
+
+        const content = document.getElementById('dock-content');
+        const frame = document.getElementById('phone-frame');
+        if (content && frame) {
+            requestAnimationFrame(() => {
+                const fR = frame.getBoundingClientRect();
+                const cR = content.getBoundingClientRect();
+                content.style.bottom = 'auto';
+                content.style.top = `${Math.max(6, fR.height - cR.height - 52)}px`;
+            });
+        }
     }
 
     reRenderModal() {
