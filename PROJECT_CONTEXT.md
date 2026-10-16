@@ -65,7 +65,15 @@ GridSynth は、Web ブラウザ上で動作する **5×8 グリッド型のモ�
 - **マルチ選択 & ドック/ポップアップ**: モジュールをクリックして画面下部ドックで詳細調整、または複数選択による一括移動/削除。
 - **端子トースト表示 & 厳格検証**: マニフェストを持つサブパッチ端子のホバーおよびタップ時、`[${mId}:${aliasUpper} (${pin}_in/_out)]` をシンプルかつ明瞭にトースト表示（冗長な説明文は完全排除）。パネル上には編集UIを露出させず直感的な操作感を維持。結線時は送信元 `_out`、送信先 `_in` を厳格検証。
 
-#### ④ Strudel / Tidal 記法パーサー (`src/core/strudel-parser.js`)
+#### ④ 双方向ポートエイリアス機構 (`src/core/utils.js`, `src/core/patch.js`, `src/ui/managers/cable-manager.js`)
+- モジュールや外部AIプロンプト、旧プリセットで用いられる多様な端子命名（`ARP:out` ⇔ `cv_out`、`in_1..4` ⇔ `cv_in1..4`、`GATE4:gate_out1` ⇔ `out1`、`MARKOV:transition_out` ⇔ `trig_out`、`MIX:wave_in` ⇔ `in`、`LFO:reset` ⇔ `reset_in` 等）を透過的に相互解決するシステム（`PORT_ALIASES`, `isPortMatching`, `getPortAliases`）を搭載。
+- 接続検証（`validateConnectionDirection`）、ケーブル描画（`CableManager.findPortElement`）、重複検出（`isSameConn`）の各層で一貫してエイリアスを解釈し、構文エラーや描画欠損を防止。
+
+#### ⑤ 物理シャーシ端子ピン配置（15ピンアーキテクチャ, `src/ui/helpers.js`）
+- モジュール枠の端子レイアウトは左辺（入力系：縦列 PIN14, 3, 2, 1, 0）、底辺（水平列 PIN4〜9）、右辺（出力系：縦列 PIN10〜13）の物理メタファに準拠。
+- 5端子入力を持つ `ARP`（アルペジエーター）等では左エッジ最下段 `PIN14` を有効化し、`cv_in1`（下）〜 `cv_in4`（上）および `clk_in`（最上段）の縦一列配置を実現。
+
+#### ⑥ Strudel / Tidal 記法パーサー (`src/core/strudel-parser.js`)
 - mini-notation の文字列（例: `[c2 c2 c2 c2] [c2 c2 c2 c3] [c2 c2 c2 c2] [c2 c2 c2 c4]`）をトークン分解・AST化。
 - `*N`（時間圧縮/連打）、`!N`（ステップ反復）、`~`（休符）、`[ ... ]`（ネスト構造）を正確に計算し、1サイクル内のステップ配列・周波数・ゲート長を生成。リアルタイムに発音中要素のハイライト位置をUIへ通知。
 
@@ -247,3 +255,5 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
 1. **LocalStorage クリーンアップの維持**: プリセット名やキー名を変更・削除した際は、`src/ui/controller.js` の `oldLegacyKeys` 配列に旧キーを登録し、ユーザーのブラウザストレージと整合性を保つこと。
 2. **Keepalive の徹底**: 音声信号が常時スピーカーに直結しないトリガー/CV生成モジュール（`PAT`, `CLK`, `SEQ8`, `SEQ16` 等）を追加・改修する際は、必ず `silentSink`（`GainNode(0) -> destination`）への接続を維持すること。
 3. **Vanilla JS の原則**: 特別な外部バンドラーを必要としない ES Modules（`import/export`）形式を厳守し、ブラウザで `index.html` を開くだけで即座に動作するシンプルさを保つこと。
+4. **端子命名とエイリアスの運用方針**: 内部実装および新プリセットは規格統一名称（CV出力は `cv_out`、オーディオは `wave_out`、ゲートは `gate_out`）を用いつつ、`src/core/utils.js` の `PORT_ALIASES` 定義を維持して既存パッチおよび外部AI出力との後方互換性を保証すること。
+5. **リポジトリ容量の管理**: ブラウザキャッシュや一時生成ファイルは `.gitignore` 対象の `scratch/` フォルダ配下に限定し、Git リポジトリが肥大化しないよう軽量状態（約3MB前後）を維持すること。
