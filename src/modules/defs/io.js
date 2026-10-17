@@ -603,6 +603,7 @@ export const SUB_IO = {
 
 const extractBands = (freqs, numBands, sampleRate = 48000, fMin = 40, fMax = 6400) => {
     const fftSize = freqs.length * 2;
+    const rawBands = new Float32Array(numBands);
     const bands = new Float32Array(numBands);
     let peakVal = 0, peakFreq = 0;
 
@@ -626,13 +627,29 @@ const extractBands = (freqs, numBands, sampleRate = 48000, fMin = 40, fMax = 640
                 maxK = k;
             }
         }
-        const norm = Math.max(0, Math.min(1, max / 255.0));
-        // 2.2乗カーブ + 1.25倍ゲイン補正で裾野を底に落としつつピークは天井まで突き抜ける
-        bands[b] = Math.min(1.0, Math.pow(norm, 2.2) * 1.25);
+        // ゲインブースト付きの正規化 (通常のシンセ演奏音量でもしっかり天井まで届く感度)
+        rawBands[b] = Math.max(0, Math.min(1, (max / 255.0) * 1.35));
 
         if (max > peakVal) {
             peakVal = max;
             peakFreq = (maxK * sampleRate) / fftSize;
+        }
+    }
+
+    // 周波数検知の広がり（リーケージ裾野）を急峻にカットする局所ピーク先鋭化
+    for (let b = 0; b < numBands; b++) {
+        const v = rawBands[b];
+        const prev = b > 0 ? rawBands[b - 1] : 0;
+        const next = b < numBands - 1 ? rawBands[b + 1] : 0;
+        const neighborMax = Math.max(prev, next);
+
+        if (v >= neighborMax) {
+            // 局所山頂（真のピーク）: 鮮明に直立
+            bands[b] = Math.min(1.0, Math.pow(v, 1.8) * 1.15);
+        } else {
+            // ピークの裾野（漏れ成分）: 山頂との比率に応じて急激に底（床）へ減衰
+            const ratio = v / (neighborMax + 0.001);
+            bands[b] = Math.min(1.0, Math.pow(v, 2.5) * Math.pow(ratio, 2.0));
         }
     }
 
@@ -656,7 +673,11 @@ const findGlobalPeak = (freqs, sampleRate = 48000, fMin = 40, fMax = 6400) => {
 const drawSpectrumCanvas = (ctx, w, h, bands, mode, isModal) => {
     ctx.clearRect(0, 0, w, h);
 
-    // Horizontal guidelines (-12dB, -24dB, -48dB)
+    const n = bands.length;
+    const bandsPerOct = n <= 32 ? 3 : 8;
+    const bRef = n <= 32 ? 9 : 27;
+
+    // 1. Horizontal guidelines (-12dB, -24dB, -48dB)
     ctx.strokeStyle = '#1e293b';
     ctx.lineWidth = 0.6;
     const gridY = [h * 0.25, h * 0.5, h * 0.75];
@@ -665,6 +686,59 @@ const drawSpectrumCanvas = (ctx, w, h, bands, mode, isModal) => {
         ctx.moveTo(0, y);
         ctx.lineTo(w, y);
         ctx.stroke();
+    });
+
+    // 2. Vertical Octave Frequency Lines (55, 110, 220, 440, 880, 1.7k, 3.5k, 7k)
+    const octFreqs = [
+        { f: 55, l: '55' },
+        { f: 110, l: '110' },
+        { f: 220, l: '220' },
+        { f: 440, l: '440', isA4: true },
+        { f: 880, l: '880' },
+        { f: 1760, l: '1.7k' },
+        { f: 3520, l: '3.5k' },
+        { f: 7040, l: '7k' }
+    ];
+
+    octFreqs.forEach(item => {
+        const b = bRef + bandsPerOct * Math.log2(item.f / 440);
+        if (b >= 0 && b < n) {
+            let x;
+            if (mode === 'bar') {
+                const gap = isModal ? 1.2 : 1.0;
+                const barW = (w - gap * (n - 1)) / n;
+                x = b * (barW + gap) + barW / 2;
+            } else {
+                x = (b / (n - 1)) * w;
+            }
+
+            ctx.save();
+            if (item.isA4) {
+                // 440Hz基準ライン (ティール系アクセント破線)
+                ctx.strokeStyle = 'rgba(45, 212, 191, 0.4)';
+                ctx.lineWidth = 1.0;
+                ctx.setLineDash([3, 2]);
+            } else {
+                // オクターブライン (薄いスレート系破線)
+                ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
+                ctx.lineWidth = 0.7;
+                ctx.setLineDash([2, 3]);
+            }
+
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, h);
+            ctx.stroke();
+
+            // モーダル拡大時のみ、上部に極小で周波数ラベルを薄く添える
+            if (isModal) {
+                ctx.font = '7px monospace';
+                ctx.fillStyle = item.isA4 ? 'rgba(45, 212, 191, 0.7)' : 'rgba(148, 163, 184, 0.4)';
+                ctx.textAlign = 'center';
+                ctx.fillText(item.l, x, 8);
+            }
+            ctx.restore();
+        }
     });
 
     const n = bands.length;
