@@ -10,7 +10,7 @@
     <title>GRIDSYNTH MOBILE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="./css/style.css?v=199">
+    <link rel="stylesheet" href="./css/style.css?v=200">
 </head>
 <body class="h-screen h-[100dvh] w-screen flex flex-col items-center justify-center bg-gray-950 p-0 sm:p-2 overflow-hidden">
     <div id="phone-frame" class="w-full h-full sm:w-[410px] sm:h-[860px] max-w-[440px] max-h-[920px] sm:max-w-none sm:max-h-none flex flex-col bg-slate-900/90 border border-slate-800 sm:rounded-3xl shadow-2xl relative overflow-hidden bg-grid">
@@ -23,17 +23,17 @@
                 <button id="fullscreen-btn" class="h-5 px-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200 rounded flex items-center gap-1 transition shadow-sm text-[8px] font-bold cursor-pointer" title="全画面表示切替">
                     <i id="fullscreen-icon" data-lucide="maximize" class="w-2.5 h-2.5 pointer-events-none"></i>
                 </button>
-                <span id="app-version-disp" class="font-mono text-[8.5px] font-bold text-cyan-400/90 tracking-tight select-none">v1.0.0199</span>
             </div>
             <div id="page-nav-center-title" class="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div id="page-nav-label" class="font-bold text-slate-300 flex items-center pointer-events-auto">
                     <span id="page-nav-title">MAIN</span>
                 </div>
             </div>
-            <div class="flex items-center gap-1 z-10">
+            <div class="flex items-center gap-1.5 z-10">
                 <button id="page-nav-save-btn" class="h-5 px-1.5 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/70 text-emerald-300 rounded flex items-center gap-1 transition shadow-sm text-[8px] font-bold cursor-pointer" style="display: none;" title="ライブラリにストック">
                     <i data-lucide="archive" class="w-2.5 h-2.5 pointer-events-none"></i><span>STOCK</span>
                 </button>
+                <span id="app-version-disp" class="font-mono text-[8.5px] font-bold text-cyan-400/90 tracking-tight select-none">v1.0.0200</span>
             </div>
         </div>
 
@@ -167,6 +167,6 @@
         <div id="toast" class="absolute bottom-20 left-1/2 -translate-x-1/2 px-3.5 py-1.5 bg-slate-900/95 border border-cyan-400 text-cyan-200 rounded-full text-[11px] font-bold shadow-2xl pointer-events-none opacity-0 transition-opacity duration-200 z-[100] whitespace-nowrap ring-1 ring-cyan-500/40">Message</div>
     </div>
 
-    <script type="module" src="./src/main.js?v=199"></script>
+    <script type="module" src="./src/main.js?v=200"></script>
 </body>
 </html>

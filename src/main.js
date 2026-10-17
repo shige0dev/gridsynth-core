@@ -1,5 +1,5 @@
-import { SynthEngine } from './audio/engine.js?v=199';
-import { UIController } from './ui/controller.js?v=199';
+import { SynthEngine } from './audio/engine.js?v=200';
+import { UIController } from './ui/controller.js?v=200';
 import { initExternalAPI } from './core/api.js';
 
 document.addEventListener('DOMContentLoaded', () => {
