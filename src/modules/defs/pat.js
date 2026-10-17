@@ -67,32 +67,25 @@ export const PAT = {
 
         return `
             <div id="pat-modal-root-${uid}" class="space-y-1.5 p-0.5">
-                <!-- Top Bar: Left Action (Revert), Right Controls (Extended Cycle & Gate) -->
-                <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-2">
-                    <div class="flex items-center gap-1">
-                        <button id="pat-revert-btn-${uid}" disabled class="h-6 px-1.5 shrink-0 rounded text-[9.5px] font-bold border transition flex items-center justify-center opacity-40 pointer-events-none bg-slate-900 text-slate-600 border-slate-800" title="元の文字列に戻す (REVERT)">
-                            ↺ REVERT
-                        </button>
+                <!-- Top Bar: Right Controls (Extended Cycle & Gate) -->
+                <div class="flex items-center justify-end pb-1 border-b border-slate-800 gap-2">
+                    <div class="flex items-center gap-1 bg-slate-950 px-1 py-0.5 rounded border border-slate-800">
+                        <span class="text-[7.5px] text-slate-400 uppercase">CYCLE:</span>
+                        <select id="pat-beats-select-${uid}" class="bg-slate-900 text-cyan-300 font-mono text-[8px] font-bold rounded px-1 py-0.5 border border-slate-700">
+                            <option value="0.25" ${beats === 0.25 ? 'selected' : ''}>1/16 (1/4 B)</option>
+                            <option value="0.5" ${beats === 0.5 ? 'selected' : ''}>1/8 (1/2 B)</option>
+                            <option value="1" ${beats === 1 ? 'selected' : ''}>1/4 (1 BEAT)</option>
+                            <option value="2" ${beats === 2 ? 'selected' : ''}>1/2 (2 BEATS)</option>
+                            <option value="4" ${beats === 4 ? 'selected' : ''}>1 BAR (4 BEATS)</option>
+                            <option value="8" ${beats === 8 ? 'selected' : ''}>2 BARS (8 BEATS)</option>
+                            <option value="16" ${beats === 16 ? 'selected' : ''}>4 BARS (16 BEATS)</option>
+                            <option value="32" ${beats === 32 ? 'selected' : ''}>8 BARS (32 BEATS)</option>
+                        </select>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <div class="flex items-center gap-1 bg-slate-950 px-1 py-0.5 rounded border border-slate-800">
-                            <span class="text-[7.5px] text-slate-400 uppercase">CYCLE:</span>
-                            <select id="pat-beats-select-${uid}" class="bg-slate-900 text-cyan-300 font-mono text-[8px] font-bold rounded px-1 py-0.5 border border-slate-700">
-                                <option value="0.25" ${beats === 0.25 ? 'selected' : ''}>1/16 (1/4 B)</option>
-                                <option value="0.5" ${beats === 0.5 ? 'selected' : ''}>1/8 (1/2 B)</option>
-                                <option value="1" ${beats === 1 ? 'selected' : ''}>1/4 (1 BEAT)</option>
-                                <option value="2" ${beats === 2 ? 'selected' : ''}>1/2 (2 BEATS)</option>
-                                <option value="4" ${beats === 4 ? 'selected' : ''}>1 BAR (4 BEATS)</option>
-                                <option value="8" ${beats === 8 ? 'selected' : ''}>2 BARS (8 BEATS)</option>
-                                <option value="16" ${beats === 16 ? 'selected' : ''}>4 BARS (16 BEATS)</option>
-                                <option value="32" ${beats === 32 ? 'selected' : ''}>8 BARS (32 BEATS)</option>
-                            </select>
-                        </div>
-                        <div class="flex items-center gap-1 bg-slate-950 px-1 py-0.5 rounded border border-slate-800">
-                            <span class="text-[7.5px] text-slate-400 uppercase">GATE:</span>
-                            <input type="range" id="pat-gate-slider-${uid}" min="10" max="95" step="5" value="${gatePct}" class="w-14 h-1 accent-cyan-400 cursor-pointer">
-                            <span id="pat-gate-disp-${uid}" class="text-[8px] font-mono font-bold text-cyan-300 min-w-[24px] text-right">${gatePct}%</span>
-                        </div>
+                    <div class="flex items-center gap-1 bg-slate-950 px-1 py-0.5 rounded border border-slate-800">
+                        <span class="text-[7.5px] text-slate-400 uppercase">GATE:</span>
+                        <input type="range" id="pat-gate-slider-${uid}" min="10" max="95" step="5" value="${gatePct}" class="w-14 h-1 accent-cyan-400 cursor-pointer">
+                        <span id="pat-gate-disp-${uid}" class="text-[8px] font-mono font-bold text-cyan-300 min-w-[24px] text-right">${gatePct}%</span>
                     </div>
                 </div>
 
@@ -100,9 +93,9 @@ export const PAT = {
                 <div class="flex items-center gap-1 w-full min-w-0">
                     <div class="relative flex-1 flex items-center min-w-0 h-7 bg-slate-950 border border-cyan-500/70 rounded-lg shadow-inner overflow-hidden">
                         <!-- Real Text Input (receives typing & pointer events) -->
-                        <input type="text" id="pat-code-input-${uid}" value="${pat}" placeholder="e.g. [c2 ~ c2 ~] [c2 ~ c2 ~] [c2 ~ c2 ~] [c2 ~ c2 eb2]" class="w-full h-full bg-transparent font-mono text-cyan-300 px-2 py-0 text-[9.5px] font-bold tracking-normal leading-7 focus:outline-none focus:ring-1 focus:ring-cyan-400 transition relative z-10 box-border">
+                        <input type="text" id="pat-code-input-${uid}" value="${pat}" placeholder="e.g. [c2 ~ c2 ~] [c2 ~ c2 ~] [c2 ~ c2 ~] [c2 ~ c2 eb2]" class="w-full h-full bg-transparent font-mono text-cyan-300 px-2 py-0 text-[9.5px] font-bold tracking-normal leading-7 focus:outline-none focus:ring-1 focus:ring-cyan-400 transition relative z-10 box-border overflow-hidden">
                         <!-- Live Highlight Overlay (visible when not editing) -->
-                        <div id="pat-highlight-overlay-${uid}" class="absolute inset-0 flex items-center px-2 py-0 font-mono text-[9.5px] font-bold tracking-normal leading-7 bg-slate-950 overflow-x-hidden whitespace-pre pointer-events-none select-none z-20 box-border">
+                        <div id="pat-highlight-overlay-${uid}" class="absolute inset-0 flex items-center px-2 py-0 font-mono text-[9.5px] font-bold tracking-normal leading-7 bg-slate-950 overflow-hidden whitespace-pre pointer-events-none select-none z-20 box-border">
                             <div id="pat-highlight-content-${uid}" class="text-cyan-300 whitespace-pre">
                                 ${renderPatternHighlightedHTML(pat)}
                             </div>
@@ -166,7 +159,6 @@ export const PAT = {
         const input = document.getElementById(`pat-code-input-${uid}`) || root.querySelector?.('input[type="text"]');
         const overlay = document.getElementById(`pat-highlight-overlay-${uid}`);
         const overlayContent = document.getElementById(`pat-highlight-content-${uid}`);
-        const revertBtn = document.getElementById(`pat-revert-btn-${uid}`);
         const applyBtn = document.getElementById(`pat-apply-btn-${uid}`);
         const selectBeats = document.getElementById(`pat-beats-select-${uid}`);
         const gateSlider = document.getElementById(`pat-gate-slider-${uid}`);
@@ -203,20 +195,11 @@ export const PAT = {
         const updateButtonStates = () => {
             const currentSaved = m.pattern || '';
             const isDirty = (input?.value ?? '') !== currentSaved;
-            if (revertBtn) {
-                if (isDirty) {
-                    revertBtn.disabled = false;
-                    revertBtn.className = 'w-6 h-6 shrink-0 rounded text-[11px] font-bold border transition flex items-center justify-center cursor-pointer bg-amber-950/90 hover:bg-amber-900 text-amber-300 border-amber-500/80 shadow-sm';
-                } else {
-                    revertBtn.disabled = true;
-                    revertBtn.className = 'w-6 h-6 shrink-0 rounded text-[11px] font-bold border transition flex items-center justify-center opacity-40 pointer-events-none bg-slate-900 text-slate-600 border-slate-800';
-                }
-            }
             if (applyBtn) {
                 if (isDirty) {
-                    applyBtn.className = 'w-6 h-6 shrink-0 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black rounded text-[11px] border border-cyan-300 shadow-md shadow-cyan-500/40 transition flex items-center justify-center cursor-pointer';
+                    applyBtn.className = 'w-7 h-7 shrink-0 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black rounded-lg text-[12px] border border-cyan-300 shadow-md shadow-cyan-500/40 transition flex items-center justify-center cursor-pointer';
                 } else {
-                    applyBtn.className = 'w-6 h-6 shrink-0 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded text-[11px] font-bold border border-slate-700 transition flex items-center justify-center cursor-pointer';
+                    applyBtn.className = 'w-7 h-7 shrink-0 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded-lg text-[12px] font-bold border border-slate-700 transition flex items-center justify-center cursor-pointer shadow-sm';
                 }
             }
         };
@@ -245,13 +228,6 @@ export const PAT = {
             if (!isDirty) {
                 setEditing(false);
             }
-        });
-
-        revertBtn?.addEventListener('click', () => {
-            if (input) input.value = m.pattern || '';
-            setEditing(false);
-            input?.blur();
-            updateButtonStates();
         });
 
         applyBtn?.addEventListener('click', () => {
