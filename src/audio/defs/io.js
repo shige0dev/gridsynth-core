@@ -199,11 +199,44 @@ export const SUB_IO = {
     }
 };
 
+export const SPEC = {
+    create: (ctx, d, patch, eng) => {
+        const inG = ctx.createGain();
+        const an = ctx.createAnalyser();
+        an.fftSize = 256;
+        an.smoothingTimeConstant = d.smooth ?? 0.8;
+        inG.connect(an);
+        if (eng?.silentSink) {
+            inG.connect(eng.silentSink);
+        }
+        const freqBuf = new Uint8Array(an.frequencyBinCount);
+
+        return {
+            nodes: { inG, an },
+            inputs: {
+                wave_in: inG,
+                in: inG
+            },
+            outputs: {},
+            read: () => {
+                an.getByteFrequencyData(freqBuf);
+                return { freqs: freqBuf };
+            }
+        };
+    },
+    update: (ctx, inst, d) => {
+        if (inst.nodes?.an) {
+            inst.nodes.an.smoothingTimeConstant = d.smooth ?? 0.8;
+        }
+    }
+};
+
 export const ioAudioDefs = {
     SCOPE,
     MON,
     SPK,
     KEY,
     SUB,
-    SUB_IO
+    SUB_IO,
+    SPEC
 };

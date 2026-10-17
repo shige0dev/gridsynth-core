@@ -44,6 +44,7 @@ export const MODAL_WIDTHS = {
 
     // IO & Monitoring
     SCOPE: 'w-[235px]',
+    SPEC: 'w-[235px]',
     MON: 'w-[195px]',
     SPK: 'w-[185px]',
     SUB: 'w-[240px]'

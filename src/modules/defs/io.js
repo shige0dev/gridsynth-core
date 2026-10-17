@@ -429,12 +429,221 @@ export const SUB_IO = {
     }
 };
 
+const drawSpectrumCanvas = (ctx, w, h, bands, mode, isModal) => {
+    ctx.clearRect(0, 0, w, h);
+
+    // Horizontal guideline (-12dB, -24dB, -36dB)
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 0.6;
+    const gridY = [h * 0.25, h * 0.5, h * 0.75];
+    gridY.forEach(y => {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+    });
+
+    const n = bands.length;
+    if (mode === 'bar') {
+        const gap = isModal ? 2 : 1.5;
+        const barW = (w - gap * (n - 1)) / n;
+        for (let i = 0; i < n; i++) {
+            const v = Math.max(0, Math.min(1, bands[i]));
+            const barH = Math.max(1, v * (h - 2));
+            const x = i * (barW + gap);
+            const y = h - barH;
+
+            const grad = ctx.createLinearGradient(0, h, 0, 0);
+            grad.addColorStop(0, '#0d9488');
+            grad.addColorStop(0.7, '#2dd4bf');
+            grad.addColorStop(1, '#facc15');
+
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            if (typeof ctx.roundRect === 'function') {
+                ctx.roundRect(x, y, barW, barH, [1, 1, 0, 0]);
+            } else {
+                ctx.rect(x, y, barW, barH);
+            }
+            ctx.fill();
+        }
+    } else {
+        // Curve mode (折れ線・スペクトル曲線)
+        const pts = [];
+        for (let i = 0; i < n; i++) {
+            const x = (i / (n - 1)) * w;
+            const v = Math.max(0, Math.min(1, bands[i]));
+            const y = h - (v * (h - 4)) - 2;
+            pts.push({ x, y });
+        }
+
+        // Fill under curve
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, 'rgba(45, 212, 191, 0.45)');
+        grad.addColorStop(0.7, 'rgba(13, 148, 136, 0.15)');
+        grad.addColorStop(1, 'rgba(13, 148, 136, 0.0)');
+
+        ctx.beginPath();
+        ctx.moveTo(0, h);
+        ctx.lineTo(pts[0].x, pts[0].y);
+        for (let i = 1; i < pts.length; i++) {
+            const midX = (pts[i - 1].x + pts[i].x) / 2;
+            const midY = (pts[i - 1].y + pts[i].y) / 2;
+            ctx.quadraticCurveTo(pts[i - 1].x, pts[i - 1].y, midX, midY);
+        }
+        ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+        ctx.lineTo(w, h);
+        ctx.closePath();
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // Stroke line
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (let i = 1; i < pts.length; i++) {
+            const midX = (pts[i - 1].x + pts[i].x) / 2;
+            const midY = (pts[i - 1].y + pts[i].y) / 2;
+            ctx.quadraticCurveTo(pts[i - 1].x, pts[i - 1].y, midX, midY);
+        }
+        ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+        ctx.strokeStyle = '#2dd4bf';
+        ctx.lineWidth = isModal ? 2 : 1.5;
+        ctx.stroke();
+    }
+};
+
+export const SPEC = {
+    color: 'teal',
+    defaults: () => ({ type: 'SPEC', mode: 'bar', speed: 'med', smooth: 0.8 }),
+    ports: () => ({
+        in: [{ port: 'wave_in', pin: 4, color: 'bg-blue-500' }],
+        out: []
+    }),
+    renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
+    renderGrid: (m) => `
+        <div class="absolute inset-0.5 bg-slate-950 rounded-sm border border-slate-800/90 overflow-hidden z-0 pointer-events-none flex flex-col justify-between p-1">
+            <div class="flex items-center justify-between z-10 pointer-events-none">
+                <span class="text-[7.5px] font-bold text-teal-400 font-mono">SPEC</span>
+                <span class="spec-mode-badge text-[6.5px] font-mono font-bold text-teal-300/80 uppercase">${(m.mode || 'bar').toUpperCase()}</span>
+            </div>
+            <canvas class="spec-canvas w-full h-[74px] block rounded" width="120" height="74"></canvas>
+            <div class="flex items-center justify-between text-[6.5px] font-mono text-slate-500 px-0.5 z-10">
+                <span>50Hz</span>
+                <span>1k</span>
+                <span>16k</span>
+            </div>
+        </div>`,
+    updateLive: (cell, data, isP, modal, m) => {
+        if (!data?.freqs) return;
+        const freqs = data.freqs;
+        const numBands = 20;
+        const bands = new Float32Array(numBands);
+        let maxVal = 0, peakIdx = 0;
+        for (let b = 0; b < numBands; b++) {
+            const start = Math.floor(Math.pow(b / numBands, 2.2) * 127);
+            const end = Math.max(start + 1, Math.floor(Math.pow((b + 1) / numBands, 2.2) * 127));
+            let max = 0;
+            for (let k = start; k < end && k < 128; k++) {
+                if (freqs[k] > max) max = freqs[k];
+            }
+            bands[b] = max / 255.0;
+            if (max > maxVal) {
+                maxVal = max;
+                peakIdx = b;
+            }
+        }
+
+        const mode = m.mode || 'bar';
+
+        // Draw cell canvas
+        const cvs = cell.querySelector('.spec-canvas');
+        if (cvs) {
+            const ctx = cvs.getContext('2d');
+            drawSpectrumCanvas(ctx, cvs.width, cvs.height, bands, mode, false);
+        }
+
+        // Draw modal canvas if modal is open
+        const modalCvs = modal?.querySelector('#spec-modal-canvas');
+        if (modalCvs) {
+            const mCtx = modalCvs.getContext('2d');
+            drawSpectrumCanvas(mCtx, modalCvs.width, modalCvs.height, bands, mode, true);
+
+            const peakEl = modal?.querySelector('#spec-peak-disp');
+            if (peakEl) {
+                // Approximate center frequency for peak band
+                const centerHz = Math.round(50 * Math.pow(16000 / 50, (peakIdx + 0.5) / numBands));
+                const hzStr = centerHz >= 1000 ? `${(centerHz / 1000).toFixed(1)}kHz` : `${centerHz}Hz`;
+                peakEl.textContent = maxVal > 15 ? `PEAK: ${hzStr}` : 'PEAK: ---';
+            }
+        }
+    },
+    renderModal: (m) => {
+        const curMode = m.mode || 'bar';
+        const curSpeed = m.speed || 'med';
+        return `
+            <div class="space-y-2 p-0.5">
+                <!-- Mode & Speed Controls -->
+                <div class="flex items-center justify-between pb-1 border-b border-slate-800">
+                    <div class="flex items-center gap-1">
+                        <span class="text-[8px] text-slate-400 font-bold uppercase mr-0.5">MODE:</span>
+                        <button id="spec-mode-bar" class="px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${curMode === 'bar' ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">BAR (棒)</button>
+                        <button id="spec-mode-curve" class="px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${curMode === 'curve' ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">CURVE (線)</button>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="text-[8px] text-slate-400 font-bold uppercase mr-0.5">SPEED:</span>
+                        ${['fast', 'med', 'slow'].map(sp => `
+                            <button class="spec-speed-btn px-1.5 py-0.5 rounded text-[7.5px] font-bold border transition-colors ${curSpeed === sp ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}" data-speed="${sp}">${sp.toUpperCase()}</button>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- Expanded Modal Spectrum Display -->
+                <div class="bg-slate-950/80 p-2 rounded-xl border border-slate-800 flex flex-col gap-1">
+                    <div class="flex items-center justify-between px-1">
+                        <span class="text-[7.5px] font-bold text-teal-400 uppercase tracking-wider">SPECTRUM (0〜20kHz)</span>
+                        <span id="spec-peak-disp" class="text-[7.5px] font-mono font-bold text-yellow-300">PEAK: ---</span>
+                    </div>
+                    <canvas id="spec-modal-canvas" class="w-full h-28 block rounded" width="220" height="110"></canvas>
+                    <div class="flex items-center justify-between text-[7px] font-mono text-slate-500 px-1 border-t border-slate-800/80 pt-0.5">
+                        <span>50Hz</span>
+                        <span>250Hz</span>
+                        <span>1kHz</span>
+                        <span>4kHz</span>
+                        <span>16kHz</span>
+                    </div>
+                </div>
+            </div>`;
+    },
+    bindEvents: (m, ctx, cb) => {
+        document.getElementById('spec-mode-bar')?.addEventListener('click', () => {
+            m.mode = 'bar';
+            ctx.reRenderModal();
+            cb();
+        });
+        document.getElementById('spec-mode-curve')?.addEventListener('click', () => {
+            m.mode = 'curve';
+            ctx.reRenderModal();
+            cb();
+        });
+        document.querySelectorAll('.spec-speed-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const sp = e.currentTarget.dataset.speed;
+                m.speed = sp;
+                m.smooth = sp === 'fast' ? 0.5 : (sp === 'slow' ? 0.92 : 0.8);
+                ctx.reRenderModal();
+                cb();
+            });
+        });
+    }
+};
+
 export const ioDefs = {
     SCOPE,
     MON,
     SPK,
     KEY,
     SUB,
-    SUB_IO
+    SUB_IO,
+    SPEC
 };
 

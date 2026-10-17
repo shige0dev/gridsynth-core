@@ -10,7 +10,7 @@ import { CableManager } from './managers/cable-manager.js';
 import { PageManager } from './managers/page-manager.js';
 import { InteractionManager } from './managers/interaction-manager.js';
 
-export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'MON', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP'];
+export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'SPEC', 'MON', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP'];
 
 export class UIController {
     constructor(synth) {
