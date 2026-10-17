@@ -27,6 +27,8 @@ export const MODAL_WIDTHS = {
 
     // Sound Generation & Processing
     VCO: 'w-[235px]',
+    TAPE: 'w-[360px]',
+    CUE: 'w-[260px]',
     NOISE: 'w-[185px]',
     VCF: 'w-[210px]',
     FOLD: 'w-[220px]',
@@ -80,7 +82,9 @@ export const DOCK_TITLES = {
     GATE4: '4-CHANNEL GATE',
     ARP: 'ARPEGGIATOR',
     MARKOV: 'MARKOV GENERATOR',
-    SCALE: 'SCALE QUANTIZER'
+    SCALE: 'SCALE QUANTIZER',
+    TAPE: '16S TAPE SAMPLER',
+    CUE: 'CUE CONTROLLER'
 };
 
 export const DOCK_ICONS = {
@@ -93,6 +97,8 @@ export const DOCK_ICONS = {
     SCOPE: 'activity',
     MON: 'eye',
     VCO: 'activity',
+    TAPE: 'disc',
+    CUE: 'play-circle',
     VCF: 'filter',
     VCA: 'volume-2',
     ADSR: 'trending-up',
@@ -601,7 +607,7 @@ export class ModalManager {
                         name: 'SOUND',
                         sub: 'サウンド (音源・音響・出力)',
                         color: 'cyan',
-                        types: ['VCO', 'NOISE', 'FMx3', 'FMCORE', 'FOLD', 'VCF', 'VCA', 'MIX', 'DELAY', 'REVERB', 'SPK', 'SCOPE', 'SPEC']
+                        types: ['VCO', 'TAPE', 'NOISE', 'FMx3', 'FMCORE', 'FOLD', 'VCF', 'VCA', 'MIX', 'DELAY', 'REVERB', 'SPK', 'SCOPE', 'SPEC']
                     },
                     {
                         name: 'TRIGGER',
@@ -613,7 +619,7 @@ export class ModalManager {
                         name: 'CV',
                         sub: 'CV (変調・演算・エンベロープ)',
                         color: 'purple',
-                        types: ['LFO', 'ADSR', 'RF', 'AR', 'CHORD', 'SCALE', 'MATH1', 'MATH2', 'SH', 'CVDELAY', 'SLIDER', 'THROUGH', 'MON', 'SUB_IO']
+                        types: ['CUE', 'LFO', 'ADSR', 'RF', 'AR', 'CHORD', 'SCALE', 'MATH1', 'MATH2', 'SH', 'CVDELAY', 'SLIDER', 'THROUGH', 'MON', 'SUB_IO']
                     }
                 ];
 

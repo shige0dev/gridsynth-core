@@ -1,7 +1,7 @@
 import { preset01 } from './demos/01_delay_techno.js';
 import { preset02 } from './demos/02_keyboard_lead.js';
-import { preset03 } from './demos/03_wavefold_ar_fr.js?v=216';
-import { preset04 } from './demos/04_random_sh_delay.js?v=216';
+import { preset03 } from './demos/03_wavefold_ar_fr.js?v=217';
+import { preset04 } from './demos/04_random_sh_delay.js?v=217';
 import { preset05 } from './demos/05_subpatch_multi_groove.js';
 import { preset06 } from './demos/06_strudel_house_bassline.js';
 import { preset07 } from './demos/07_dub_techno_deep_space.js';
@@ -10,6 +10,7 @@ import { preset09 } from './demos/09_fm_heavy_techno_groove.js';
 import { preset10 } from './demos/10_fm_simple_test.js';
 import { preset11 } from './demos/11_fmcore_2op_demo.js';
 import { preset12 } from './demos/12_chord_arpeggio.js';
+import { preset13 } from './demos/13_tape_cue_chop.js?v=217';
 
 export const getDefaultPresets = () => ({
     '01_DELAY_TECHNO': preset01,
@@ -23,5 +24,6 @@ export const getDefaultPresets = () => ({
     '09_FM_HEAVY_TECHNO': preset09,
     '10_FM_CRYSTAL_GROOVE': preset10,
     '11_FMCORE_2OP_DEMO': preset11,
-    '12_CHORD_ARPEGGIO': preset12
+    '12_CHORD_ARPEGGIO': preset12,
+    '13_TAPE_CUE_CHOP': preset13
 });

@@ -13,12 +13,14 @@ import { ioDefs } from './defs/io.js?v=185';
 import { seqDefs } from './defs/seq.js';
 import { chordDefs } from './defs/chord.js';
 import { arpDefs } from './defs/arp.js';
-import { patDefs } from './defs/pat.js?v=216';
+import { patDefs } from './defs/pat.js?v=217';
 import { markovDefs } from './defs/markov.js';
 import { fmDefs } from './defs/fm.js?v=187';
-import { scaleDefs } from './defs/scale.js?v=216';
-import { rfDefs } from './defs/rf.js?v=216';
-import { arDefs } from './defs/ar.js?v=216';
+import { scaleDefs } from './defs/scale.js?v=217';
+import { rfDefs } from './defs/rf.js?v=217';
+import { arDefs } from './defs/ar.js?v=217';
+import { tapeDefs } from './defs/tape.js?v=217';
+import { cueDefs } from './defs/cue.js?v=217';
 
 export const MODULE_REGISTRY = {
     ...vcoDefs,
@@ -36,7 +38,9 @@ export const MODULE_REGISTRY = {
     ...fmDefs,
     ...scaleDefs,
     ...rfDefs,
-    ...arDefs
+    ...arDefs,
+    ...tapeDefs,
+    ...cueDefs
 };
 
 export { ADSR_CURVES };

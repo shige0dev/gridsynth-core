@@ -200,7 +200,12 @@ export const PORT_ALIASES = {
     'a_cv': 'attack_in',
     'attack_cv': 'attack_in',
     'r_cv': 'release_in',
-    'release_cv': 'release_in'
+    'release_cv': 'release_in',
+
+    // TAPE & CUE
+    'cv_start': 'start_cv',
+    'cv_end': 'end_cv',
+    'cv_speed': 'speed_cv'
 };
 
 export const getPortAliases = (port) => {
