@@ -315,21 +315,68 @@ export class ModalManager {
                 const userSubs = Object.values(this.ui.getUserSubpatches());
                 const factorySubs = Object.values(FACTORY_SUBPATCHES);
 
+                const CATEGORIES = [
+                    {
+                        name: 'SOUND',
+                        sub: 'サウンド (音源・音響・出力)',
+                        color: 'cyan',
+                        types: ['VCO', 'NOISE', 'FMx3', 'FMCORE', 'FOLD', 'VCF', 'VCA', 'MIX', 'DELAY', 'REVERB', 'SPK', 'SCOPE', 'SPEC']
+                    },
+                    {
+                        name: 'TRIGGER',
+                        sub: 'トリガ (クロック・シーケンサー)',
+                        color: 'rose',
+                        types: ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'MARKOV', 'GATE4', 'ARP', 'KEY']
+                    },
+                    {
+                        name: 'CV',
+                        sub: 'CV (変調・演算・エンベロープ)',
+                        color: 'purple',
+                        types: ['LFO', 'ADSR', 'CHORD', 'MATH1', 'MATH2', 'SH', 'CVDELAY', 'SLIDER', 'THROUGH', 'MON', 'SUB_IO']
+                    }
+                ];
+
+                const categorizedSet = new Set(CATEGORIES.flatMap(c => c.types));
+                const uncategorized = basicTypes.filter(t => !categorizedSet.has(t));
+                if (uncategorized.length > 0) {
+                    CATEGORIES.push({
+                        name: 'OTHER',
+                        sub: 'その他',
+                        color: 'slate',
+                        types: uncategorized
+                    });
+                }
+
+                const categorySectionsHtml = CATEGORIES.map((cat, catIdx) => {
+                    const items = cat.types.filter(t => basicTypes.includes(t));
+                    if (items.length === 0) return '';
+                    return `
+                        <div class="${catIdx > 0 ? 'border-t border-slate-800/80 pt-1.5 mt-0.5' : ''}">
+                            <div class="text-[8.5px] font-bold text-${cat.color}-400 uppercase tracking-wider mb-1 px-0.5 flex items-center justify-between">
+                                <span class="flex items-center gap-1.5">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-${cat.color}-400"></span>
+                                    <span>${cat.name}</span>
+                                    <span class="text-[7.5px] text-slate-400 font-normal">/ ${cat.sub}</span>
+                                </span>
+                                <div class="flex items-center gap-1">
+                                    ${!isMain && cat.name === 'CV' ? '<span class="text-[7px] text-emerald-400 font-mono">SUBPAGE</span>' : ''}
+                                    <span class="text-[7px] text-slate-500 font-mono">${items.length}</span>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-8 gap-1">
+                                ${items.map(type => {
+                                    const col = MODULE_REGISTRY[type]?.color || 'cyan';
+                                    return `<button data-type="${type}" class="h-6 py-0.5 px-0.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-${col}-500/60 rounded text-center text-${col}-300 text-[7.5px] font-bold tracking-tight transition truncate flex items-center justify-center">${type}</button>`;
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
                 body.className = "flex flex-col gap-2 mt-0.5 max-h-[78vh] overflow-y-auto pr-0.5";
                 body.innerHTML = `
-                    <!-- 1. BASIC MODULES (8-column Grid) -->
-                    <div>
-                        <div class="text-[8.5px] font-bold text-slate-400 uppercase tracking-wider mb-1 px-0.5 flex items-center justify-between">
-                            <span>BASIC MODULES</span>
-                            ${!isMain ? '<span class="text-[7.5px] text-emerald-400 font-mono">SUBPAGE</span>' : ''}
-                        </div>
-                        <div class="grid grid-cols-8 gap-1">
-                            ${basicTypes.map(type => {
-                                const col = MODULE_REGISTRY[type]?.color || 'cyan';
-                                return `<button data-type="${type}" class="h-6 py-0.5 px-0.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-${col}-500/60 rounded text-center text-${col}-300 text-[7.5px] font-bold tracking-tight transition truncate flex items-center justify-center">${type}</button>`;
-                            }).join('')}
-                        </div>
-                    </div>
+                    <!-- 1. CATEGORIZED BASIC MODULES (SOUND, TRIGGER, CV) -->
+                    ${categorySectionsHtml}
 
                     <!-- 2. FACTORY SUBPATCHES (4-column Grid, 2x width of basic modules) -->
                     ${allowSub ? `
