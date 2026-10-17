@@ -255,9 +255,12 @@ export const UIHelpers = {
             html += `<div class="flex items-center justify-around py-1 bg-slate-950/60 p-1 rounded-xl border border-slate-800/80 gap-1 mt-1">`;
             sliders.forEach(sl => {
                 const isP = sl.cvPort && ctx.patched?.has(sl.cvPort);
+                const isReqMissing = sl.requirePort && !ctx.patched?.has(sl.requirePort);
+                const isDisabled = !!(isP || isReqMissing || (typeof sl.disabled === 'function' ? sl.disabled(mod, ctx) : sl.disabled));
                 const curRaw = sl.getVal ? sl.getVal(mod) : (mod[sl.key] ?? sl.default ?? sl.min);
                 const v = isP ? (sl.patchedVal ?? sl.min) : curRaw;
-                const customText = isP ? (sl.patchedText || 'EXT') : (sl.format ? sl.format(v) : null);
+                const customText = isP ? (sl.patchedText || 'EXT') : (isReqMissing && sl.unpatchedText ? sl.unpatchedText : (sl.format ? sl.format(v) : null));
+                const unitText = isP ? 'PATCHED' : (isReqMissing && sl.unpatchedUnit ? sl.unpatchedUnit : (sl.unit || ''));
                 html += UIHelpers.createVSliderHTML(
                     `schema-slider-${sl.key}`,
                     sl.label,
@@ -265,9 +268,9 @@ export const UIHelpers = {
                     sl.max,
                     sl.step,
                     v,
-                    isP ? 'PATCHED' : (sl.unit || ''),
+                    unitText,
                     sl.color || s.color,
-                    isP,
+                    isDisabled,
                     customText,
                     sl.power || 1
                 );
@@ -353,7 +356,10 @@ export const UIHelpers = {
         // 3. Body Sliders
         const sliders = typeof s.sliders === 'function' ? s.sliders(mod, ctx) : (s.sliders || []);
         sliders.forEach(sl => {
-            if (sl.cvPort && ctx.patched?.has(sl.cvPort)) return;
+            const isP = sl.cvPort && ctx.patched?.has(sl.cvPort);
+            const isReqMissing = sl.requirePort && !ctx.patched?.has(sl.requirePort);
+            const isDisabled = !!(isP || isReqMissing || (typeof sl.disabled === 'function' ? sl.disabled(mod, ctx) : sl.disabled));
+            if (isDisabled) return;
             const setter = sl.setVal || ((m, v) => { m[sl.key] = v; });
             const fmt = sl.format || (v => Math.round(v));
 

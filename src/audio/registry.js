@@ -5,7 +5,7 @@
 
 import { vcoAudioDefs } from './defs/vco.js';
 import { filterAudioDefs } from './defs/filter.js';
-import { ampAudioDefs } from './defs/amp.js?v=185';
+import { ampAudioDefs } from './defs/amp.js?v=186';
 import { effectsAudioDefs } from './defs/effects.js';
 import { adsrAudioDefs } from './defs/adsr.js';
 import { modAudioDefs } from './defs/mod.js';

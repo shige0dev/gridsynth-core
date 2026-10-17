@@ -1,4 +1,4 @@
-import { UIHelpers } from '../../ui/helpers.js';
+import { UIHelpers } from '../../ui/helpers.js?v=186';
 
 export const VCA = {
     color: 'emerald',
@@ -14,7 +14,7 @@ export const VCA = {
         color: 'emerald',
         sliders: [
             { key: 'level', label: 'LEVEL', min: 0, max: 1.0, step: 0.01, default: 1.0, unit: 'BIAS', cvPort: 'cv_in', patchedVal: 0, patchedText: 'EXT', format: v => v.toFixed(2) },
-            { key: 'cvDepth', label: 'CV MOD', min: 0, max: 2.0, step: 0.05, default: 1.0, unit: 'xDEPTH', color: 'amber', format: v => v.toFixed(2) }
+            { key: 'cvDepth', label: 'CV MOD', min: 0, max: 2.0, step: 0.05, default: 1.0, unit: 'xDEPTH', color: 'amber', requirePort: 'cv_in', format: v => v.toFixed(2) }
         ]
     },
     renderGrid: (m, ctx) => `<div class="flex items-center justify-center w-full h-full pointer-events-none">${UIHelpers.renderPanelBars([{

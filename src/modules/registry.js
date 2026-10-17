@@ -5,7 +5,7 @@
 
 import { vcoDefs } from './defs/vco.js';
 import { filterDefs } from './defs/filter.js';
-import { ampDefs } from './defs/amp.js?v=185';
+import { ampDefs } from './defs/amp.js?v=186';
 import { effectsDefs } from './defs/effects.js';
 import { adsrDefs, ADSR_CURVES } from './defs/adsr.js';
 import { modDefs } from './defs/mod.js';

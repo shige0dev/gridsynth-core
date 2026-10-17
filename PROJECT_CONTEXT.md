@@ -341,18 +341,23 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
      - ガイドライン: オクターブ破線を `rgba(148, 163, 184, 0.45)`、440Hz基準線を鮮やかな `rgba(45, 212, 191, 0.85)`。
      - モーダル周波数ラベル: `55`, `110`, `220`, `440`, `880`, `1.7k`, `3.5k`, `7k`, `14k` を `bold 8.5px ui-monospace` ＋ 黒ドロップシャドウ付きで明瞭に描画。
    - **再帰的キャッシュバスターチェーン（GitHub Pages トラップ解消）**:
-     - `index.html` → `main.js` → `controller.js` / `engine.js` → `registry.js` → `defs/io.js` / `defs/amp.js` の全階層にクエリパラメータ（`?v=185`）を付与し、キャッシュを完全バイパスして即座に最新コードが反映される仕組みを確立。
-8. **VCA（アンプ）モジュール 端子接続時のLEVELディゼーブル＆手動ベースレベル加算ゼロ化**:
+     - `index.html` → `main.js` → `controller.js` / `engine.js` → `registry.js` → `defs/io.js` / `defs/amp.js` の全階層にクエリパラメータ（`?v=186`）を付与し、キャッシュを完全バイパスして即座に最新コードが反映される仕組みを確立。
+8. **VCA（アンプ）モジュール 端子接続時のLEVELディゼーブル＆未接続時のCV MODディゼーブル（排他活性化UI）**:
    - **仕様と課題**:
-     - VCA は手動レベル（LEVEL / BIAS）と外部 CV変調（CV MOD）の2系統のゲイン制御を備える。
-     - 従来の動作では `cv_in` 端子にケーブルを接続しても、オーディオ側インスタンスでパッチ状態の参照更新が遅延・不整合を起こす場合があり、手動バイアスが加算されたまま音が鳴り止まない（あるいは手動スライダーが非活性表示にならない）現象が発生していた。
+     - VCA は手動レベル（LEVEL / BIAS）と外部 CV変調（CV MOD / cvDepth）の2系統のゲイン制御を備える。
+     - **CV未接続時**: 外部CVが来ていない状態では CV MOD（CV変調深度）スライダーを操作しても効果がないため、ディゼーブル（`disabled`、半透明・非活性）にして無効化。手動 LEVEL スライダーのみを活性化。
+     - **CV接続時 (`cv_in`)**: 手動 LEVEL スライダーをディゼーブル（`0.00` / `EXT` / 加算バイアス 0.0）にし、代わりに CV MOD スライダーを活性化（操作可能）にして外部CVの入力深度を調整可能に切り替え。
+     - ケーブル着脱に応じて、2本のスライダーが相互に美しく排他活性化（有効/無効）が切り替わる直感的なシンセUIを実現。
    - **改修内容**:
+     - **UI基盤側（`src/ui/helpers.js`）**:
+       - スライダー定義に `requirePort`（指定ポート未接続時にディゼーブル化）および汎用 `disabled` 判定をサポート。
+       - `isReqMissing = sl.requirePort && !ctx.patched?.has(sl.requirePort)` を判定し、`renderSchemaModal` でスライダー要素を `disabled` ＋ `opacity-30 pointer-events-none` に設定。`bindSchemaEvents` でも未接続時はイベントリスナーを安全にバイパス。
+     - **UI定義側（`src/modules/defs/amp.js`）**:
+       - LEVEL スライダー: `cvPort: 'cv_in'`, `patchedVal: 0`, `patchedText: 'EXT'`（パッチ時ディゼーブル）。
+       - CV MOD スライダー: `requirePort: 'cv_in'`（未接続時ディゼーブル）。
      - **オーディオ側（`src/audio/defs/amp.js`）**:
        - `inst.patch` をインスタンス自身に保持し、`create` および `update` 時に常に最新のパッチ状態（Set）を追跡。
        - `read()` 内のクロージャでも `inst.patch?.has?.('cv_in')` を参照させ、`hasCvIn` フラグを動的に更新。
        - `cv_in` 接続時は、手動バイアスゲイン `vca.gain.value` を確実に `0.0` に設定（手動 LEVEL の加算を完全カット）。外部 CV（エンベロープ等）の入力信号のみでダイナミックレンジ全域を正確にゲインコントロール。ケーブル切断時は即座に手動スライダー値 `d.level ?? 1.0` に復帰。
-     - **UI定義側（`src/modules/defs/amp.js`）**:
-       - `level` スライダーの定義を他モジュール（FOLD, VCF 等）のパッチ連動仕様と統一。`cvPort: 'cv_in'`, `patchedVal: 0`, `patchedText: 'EXT'` を設定し、`cv_in` 接続時はスライダーを完全に `disabled`（半透明非活性・操作不可）とし、数値表示を `EXT`、単位を `PATCHED` に切り替え。
-       - グリッドセル表示（`updateLive`）でも `hasCvIn` と `isP` の整合性を高め、パッチ時は手動値ではなくリアルタイム波形値を確実に反映。
      - **モーダル/ドック即時連動（`cable-manager.js`, `interaction-manager.js`）**:
-       - 結線・切断時に開いているすべてのドックおよびポップアップモーダルを検査し、VCA のダイアログが開いている場合は即座に再描画してディゼーブル状態・スライダー表示を切り替えるよう強化。
+       - 結線・切断時に開いているすべてのドックおよびポップアップモーダルを検査し、VCA のダイアログが開いている場合は即座に再描画してディゼーブル状態・スライダー表示をリアルタイム切り替え。
