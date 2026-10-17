@@ -1,7 +1,7 @@
 import { preset01 } from './demos/01_delay_techno.js';
 import { preset02 } from './demos/02_keyboard_lead.js';
 import { preset03 } from './demos/03_wavefold_verb.js';
-import { preset04 } from './demos/04_random_sh_delay.js';
+import { preset04 } from './demos/04_random_sh_delay.js?v=206';
 import { preset05 } from './demos/05_subpatch_multi_groove.js';
 import { preset06 } from './demos/06_strudel_house_bassline.js';
 import { preset07 } from './demos/07_dub_techno_deep_space.js';

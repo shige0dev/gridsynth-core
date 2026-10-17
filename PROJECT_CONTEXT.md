@@ -490,5 +490,9 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
       - パネル幅 `w-[50px]` の中に 12本のバー（1本あたり約3.25px）を描画する際、入れ子コンテナの border(2px) ＋ padding(2px) によって内幅が0px（マイナス）に潰れ、黄色の塗りつぶし背景が不可視となっていた問題を解決。
       - `src/modules/defs/scale.js`: `renderPanelBars` の入れ子を廃止し、バー要素自身が背景を持つソリッドバー構造（`div.scale-bar-item`）へ刷新。通過音は `bg-gradient-to-t from-amber-500 via-amber-400 to-yellow-300` で幅 3.2px 全体を隙間なく 100% 黄色（CVイエロー）でソリッド塗りつぶし。
       - `css/style.css`: 該当出力音の枠発光も内側 border ではなく外側アウトライン（`outline: 1.5px solid #ffffff; outline-offset: 1px; box-shadow: 0 0 10px 2px #fde047;`）に改修し、バーの内部幅を1pxも削らずに白＆ゴールドで鮮明に発光。
-    - バージョンを `v1.0.0205`、キャッシュバスターを `v=205` に更新。
+    - **デモプリセット `04_RANDOM_SH_DELAY`（`04_randomCV`）を `SCALE` モジュール連動パッチへ刷新**:
+      - `src/presets/demos/04_random_sh_delay.js`: 新モジュール `SCALE1`（`scale: "CUSTOM", mask: [1,0,0,0,1,0,0,1,0,1,0,1]`）を組み込んだパッチへ全面置換。
+      - スロット配置: `0: CLK1, 1: SH1, 2: VCO1, 3: VCF1, 4: SPK1, 6: SCALE1, 8: DELAY1, 11: KEY1`。
+      - シグナルフロー: `CLK1 > SH1(trig_in)`, `SH1(cv_out) > SCALE1(cv_in)`, `SCALE1(cv_out) > VCO1(cv_in)`, `KEY1(cv_out) > VCO1(cv_in)`, `VCO1 > VCF1 > DELAY1 > SPK1(L/R)`。S&HからのランダムCVがSCALE1で均等クオンタイズされてVCOへ送られる美しいジェネラティブ構成に。
+    - バージョンを `v1.0.0206`、キャッシュバスターを `v=206` に更新。
 
