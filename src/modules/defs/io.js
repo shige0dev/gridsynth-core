@@ -741,7 +741,6 @@ const drawSpectrumCanvas = (ctx, w, h, bands, mode, isModal) => {
         }
     });
 
-    const n = bands.length;
     if (mode === 'bar') {
         const gap = isModal ? 1.2 : 1.0;
         const barW = (w - gap * (n - 1)) / n;
