@@ -115,6 +115,20 @@ export const TAPE = {
             </svg>
         `;
     },
+    formatSpeed: (v) => {
+        if (Math.abs(v) < 0.02) return 'x1';
+        if (Math.abs(v - (-2.0)) < 0.02) return '/4';
+        if (Math.abs(v - (-1.0)) < 0.02) return '/2';
+        if (Math.abs(v - 1.0) < 0.02) return 'x2';
+        if (Math.abs(v - 2.0) < 0.02) return 'x4';
+        const mult = Math.pow(2.0, v);
+        if (v < 0) {
+            const denom = Math.pow(2.0, -v);
+            return `/${denom < 10 ? denom.toFixed(1) : denom.toFixed(0)}`;
+        } else {
+            return `x${mult.toFixed(1)}`;
+        }
+    },
     renderGrid: (m) => {
         const startPct = Math.max(5, Math.min(100, Math.round((m.start ?? 0) * 100)));
         const endPct = Math.max(5, Math.min(100, Math.round((m.end ?? 1) * 100)));
@@ -132,7 +146,8 @@ export const TAPE = {
 
         const startDisp = isStartPatched ? 'EXT' : `${Math.round((m.start ?? 0) * 100)}%`;
         const endDisp = isEndPatched ? 'EXT' : `${Math.round((m.end ?? 1) * 100)}%`;
-        const speedDisp = isSpeedPatched ? 'EXT' : `${(m.speed ?? 1.0).toFixed(2)}x`;
+        const speedCvVal = m.speedCv !== undefined ? m.speedCv : Math.log2(m.speed || 1.0);
+        const speedDisp = isSpeedPatched ? 'EXT' : TAPE.formatSpeed(speedCvVal);
 
         const isRev = (m.start ?? 0.0) > (m.end ?? 1.0);
         const durStr = `${(m.duration ?? 1.5).toFixed(2)}s`;
@@ -199,18 +214,25 @@ export const TAPE = {
 
                     <div class="w-[1px] h-6 bg-slate-800/90 shrink-0"></div>
 
-                    <!-- SPEED (Horizontal Slider) -->
+                    <!-- SPEED (Horizontal Exponential Slider: /4, /2, x1, x2, x4) -->
                     <div class="flex-1 min-w-0 flex flex-col gap-0.5 ${isSpeedPatched ? 'opacity-30 pointer-events-none' : ''}">
                         <div class="flex items-center justify-between text-[8px] font-mono font-bold leading-tight">
                             <span class="text-cyan-400">SPEED</span>
                             <span id="tape-slider-speed-disp" class="text-cyan-300 font-mono text-[8.5px] cursor-ns-resize hover:bg-slate-800/80 px-1 py-0.5 rounded leading-none">${speedDisp}</span>
                         </div>
-                        <input type="range" id="tape-slider-speed" min="0.1" max="4.0" step="0.05" value="${m.speed ?? 1.0}" class="w-full h-1.5 bg-slate-800 rounded-lg accent-cyan-400 cursor-pointer" ${isSpeedPatched ? 'disabled' : ''} title="再生速度 (倍率)">
+                        <input type="range" id="tape-slider-speed" min="-2.0" max="2.0" step="0.05" value="${speedCvVal}" class="w-full h-1.5 bg-slate-800 rounded-lg accent-cyan-400 cursor-pointer" ${isSpeedPatched ? 'disabled' : ''} title="再生速度 (指数: /4, /2, x1, x2, x4)">
+                        <div class="flex justify-between px-0.5 text-[6.5px] font-mono text-slate-500 font-bold select-none pointer-events-none -mt-0.5">
+                            <span>/4</span>
+                            <span>/2</span>
+                            <span class="text-cyan-400">x1</span>
+                            <span>x2</span>
+                            <span>x4</span>
+                        </div>
                     </div>
                 </div>
 
                 <div class="text-[7.5px] text-slate-500 px-1 text-center italic">
-                    * ネオン緑線: START(太) / END(細) | 黄線: 再生位置 | SPEEDCV: -2V〜+2V
+                    * SPEED: 指数移動 (/4, /2, x1, x2, x4) | ループ: ゲート持続でリピート / 1周目ワンショット保証
                 </div>
             </div>
         `;
@@ -347,8 +369,18 @@ export const TAPE = {
         }
 
         if (!isSpeedPatched) {
-            UIHelpers.bindSlider('tape-slider-speed', v => `${v.toFixed(2)}x`, v => { m.speed = v; onSliderChange(); }, 2, 0.1, 4.0);
-            UIHelpers.bindScrubber('tape-slider-speed-disp', 'tape-slider-speed', v => `${v.toFixed(2)}x`, v => { m.speed = v; onSliderChange(); }, 2, 0.1, 4.0);
+            UIHelpers.bindSlider('tape-slider-speed', TAPE.formatSpeed, v => {
+                m.speedCv = v;
+                m.speed = Math.pow(2.0, v);
+                inst?.update?.(ctx.synth.ctx, inst, m);
+                onSliderChange();
+            }, 1, -2.0, 2.0);
+            UIHelpers.bindScrubber('tape-slider-speed-disp', 'tape-slider-speed', TAPE.formatSpeed, v => {
+                m.speedCv = v;
+                m.speed = Math.pow(2.0, v);
+                inst?.update?.(ctx.synth.ctx, inst, m);
+                onSliderChange();
+            }, 1, -2.0, 2.0);
         }
     },
     updateLive: (cell, data, isPlaying, targetModal, m) => {

@@ -15,6 +15,8 @@ export class TapeProcessor extends AudioWorkletProcessor {
         this.pointer = 0.0;
         this.isPlaying = false;
         this.lastGateHi = false;
+        this.firstPass = true;
+        this.isManualPlay = false;
 
         this.lastReportedPos = 0.0;
         this.lastReportedPlaying = false;
@@ -36,13 +38,21 @@ export class TapeProcessor extends AudioWorkletProcessor {
                 if (data.end !== undefined) this.end = Math.max(0.0, Math.min(1.0, data.end));
                 if (data.speed !== undefined) this.speed = Math.max(0.05, Math.min(8.0, data.speed));
                 if (data.loop !== undefined) this.loop = Boolean(data.loop);
-            } else if (data.type === 'TRIGGER' || data.type === 'PLAY') {
+            } else if (data.type === 'PLAY') {
+                this.isManualPlay = true;
+                this.triggerPlay();
+            } else if (data.type === 'TRIGGER') {
+                this.isManualPlay = false;
                 this.triggerPlay();
             } else if (data.type === 'STOP') {
                 this.isPlaying = false;
+                this.firstPass = false;
+                this.isManualPlay = false;
                 this.reportState();
             } else if (data.type === 'RESET') {
                 this.isPlaying = false;
+                this.firstPass = false;
+                this.isManualPlay = false;
                 this.pointer = Math.max(0, Math.min(this.bufferLength - 1, this.start * this.bufferLength));
                 this.lastGateHi = false;
                 this.reportState();
@@ -55,6 +65,7 @@ export class TapeProcessor extends AudioWorkletProcessor {
         const effStart = Math.max(0.0, Math.min(1.0, this.start + cvStart)) * this.bufferLength;
         this.pointer = Math.max(0, Math.min(this.bufferLength - 1, effStart));
         this.isPlaying = true;
+        this.firstPass = true;
     }
 
     reportState() {
@@ -102,6 +113,13 @@ export class TapeProcessor extends AudioWorkletProcessor {
                 continue;
             }
 
+            // If not manual play, not first pass (subsequent loop passes), and gate is cut off -> stop immediately
+            if (!this.isManualPlay && !this.firstPass && !isGateHi) {
+                this.isPlaying = false;
+                out[i] = 0.0;
+                continue;
+            }
+
             // Current CV modulation inputs
             const cvS = startCvIn ? startCvIn[i] : 0.0;
             const cvE = endCvIn ? endCvIn[i] : 0.0;
@@ -136,23 +154,18 @@ export class TapeProcessor extends AudioWorkletProcessor {
             this.pointer += step;
 
             // Boundary check and loop
-            if (direction > 0) {
-                if (this.pointer >= effEnd) {
-                    if (this.loop) {
-                        this.pointer = effStart;
-                    } else {
-                        this.pointer = effEnd;
-                        this.isPlaying = false;
-                    }
-                }
-            } else {
-                if (this.pointer <= effEnd) {
-                    if (this.loop) {
-                        this.pointer = effStart;
-                    } else {
-                        this.pointer = effEnd;
-                        this.isPlaying = false;
-                    }
+            // "初めての再生はワンショットでも最後まで再生する"
+            // "ループオンはゲートがENDにたどり着いたときオンのままならループを繰り返し ゲートが切れればすぐに再生停止"
+            const reachedEnd = (direction > 0) ? (this.pointer >= effEnd) : (this.pointer <= effEnd);
+            if (reachedEnd) {
+                const shouldLoop = this.loop && (this.isManualPlay || isGateHi);
+                if (shouldLoop) {
+                    this.pointer = effStart;
+                    this.firstPass = false; // Finished 1st pass
+                } else {
+                    this.pointer = effEnd;
+                    this.isPlaying = false;
+                    this.firstPass = false;
                 }
             }
         }

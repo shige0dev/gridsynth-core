@@ -19,7 +19,7 @@ import { fmAudioDefs } from './defs/fm.js';
 import { scaleAudioDefs } from './defs/scale.js?v=217';
 import { rfAudioDefs } from './defs/rf.js?v=217';
 import { arAudioDefs } from './defs/ar.js?v=217';
-import { tapeAudioDefs } from './defs/tape.js?v=219';
+import { tapeAudioDefs } from './defs/tape.js?v=222';
 import { cueAudioDefs } from './defs/cue.js?v=218';
 
 export const AUDIO_REGISTRY = {
