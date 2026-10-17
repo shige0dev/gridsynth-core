@@ -601,13 +601,12 @@ export const SUB_IO = {
     }
 };
 
-const extractBands = (freqs, numBands = 84, sampleRate = 48000) => {
+const extractBands = (freqs, numBands = 96, sampleRate = 48000) => {
     const fftSize = freqs.length * 2;
-    const rawBands = new Float32Array(numBands);
     const bands = new Float32Array(numBands);
     let peakVal = 0, peakFreq = 0;
 
-    // 1オクターブ12セミトーン（半音単位）、全84バンド（7オクターブ: 55Hz〜7040Hz）
+    // 1オクターブ12セミトーン（半音単位）、全96バンド（8オクターブ: 55Hz〜14080Hz / 約14kHz）
     // 55Hz (A1) を起点(b=0)とし、各半音の中心周波数は 55 * 2^(b / 12)
     const bandsPerOct = 12;
     const f0 = 55;
@@ -617,21 +616,27 @@ const extractBands = (freqs, numBands = 84, sampleRate = 48000) => {
         const fStart = f0 * Math.pow(2, (b - 0.5) / bandsPerOct);
         const fEnd = f0 * Math.pow(2, (b + 0.5) / bandsPerOct);
 
-        // 中心周波数の直近ビンを確実に含める（低音域でのビン境界こぼれ落ち防止）
-        const kCenter = Math.round(fCenter * fftSize / sampleRate);
-        const kStart = Math.max(0, Math.min(kCenter, Math.floor(fStart * fftSize / sampleRate)));
-        const kEnd = Math.min(freqs.length, Math.max(kCenter + 1, Math.ceil(fEnd * fftSize / sampleRate)));
+        // 1. 各半音の中心周波数における連続スペクトル値を線形補間で高精度にサンプリング
+        const kCenterFloat = fCenter * fftSize / sampleRate;
+        const k0 = Math.max(0, Math.min(freqs.length - 1, Math.floor(kCenterFloat)));
+        const k1 = Math.min(freqs.length - 1, k0 + 1);
+        const t = kCenterFloat - k0;
+        let max = (1 - t) * freqs[k0] + t * freqs[k1];
+        let maxK = Math.round(kCenterFloat);
 
-        let max = 0;
-        let maxK = kCenter;
+        // 2. 高音域で半音幅が広く複数のビンを含む場合は、区間内の最大ピークも拾う
+        const kStart = Math.max(0, Math.floor(fStart * fftSize / sampleRate));
+        const kEnd = Math.min(freqs.length, Math.ceil(fEnd * fftSize / sampleRate));
         for (let k = kStart; k < kEnd; k++) {
             if (freqs[k] > max) {
                 max = freqs[k];
                 maxK = k;
             }
         }
-        // 飽和・クリッピング防止: 過剰な乗算を排し、自然な振幅スケール(0.0〜1.0)に正規化
-        rawBands[b] = Math.max(0, Math.min(1.0, max / 255.0));
+
+        // 3. 表示上の小細工（近接比率による谷底削り等）を全廃し、素直で自然なダイナミックレンジカーブで出力
+        const v = Math.max(0, Math.min(1.0, max / 255.0));
+        bands[b] = Math.pow(v, 1.4);
 
         if (max > peakVal) {
             peakVal = max;
@@ -639,27 +644,10 @@ const extractBands = (freqs, numBands = 84, sampleRate = 48000) => {
         }
     }
 
-    // 局所ピーク先鋭化 (クリッピングのない急峻な立ち上がりと漏れ裾野の急激な減衰)
-    for (let b = 0; b < numBands; b++) {
-        const v = rawBands[b];
-        const prev = b > 0 ? rawBands[b - 1] : 0;
-        const next = b < numBands - 1 ? rawBands[b + 1] : 0;
-        const neighborMax = Math.max(prev, next);
-
-        if (v >= neighborMax) {
-            // 主ピーク: クリッピング倍率を排し、1.8乗カーブで山頂の丸み・尖りを保つ
-            bands[b] = Math.pow(v, 1.8);
-        } else {
-            // 漏れ裾野成分: 隣接山頂との比率に応じて急激にフロアへ減衰
-            const ratio = v / (neighborMax + 0.0001);
-            bands[b] = Math.pow(v, 2.5) * Math.pow(ratio, 2.5);
-        }
-    }
-
     return { bands, peakVal, peakFreq };
 };
 
-const findGlobalPeak = (freqs, sampleRate = 48000, fMin = 40, fMax = 6400) => {
+const findGlobalPeak = (freqs, sampleRate = 48000, fMin = 40, fMax = 14000) => {
     const fftSize = freqs.length * 2;
     const kMin = Math.max(1, Math.floor(fMin * fftSize / sampleRate));
     const kMax = Math.min(freqs.length - 1, Math.ceil(fMax * fftSize / sampleRate));
@@ -693,7 +681,7 @@ const drawSpectrumCanvas = (ctx, w, h, bands, mode, isModal) => {
     const gap = isModal ? 1.0 : 0.3;
     const barW = (w - gap * (n - 1)) / n;
 
-    // 2. Vertical Octave Frequency Lines (55, 110, 220, 440, 880, 1.7k, 3.5k, 7k)
+    // 2. Vertical Octave Frequency Lines (55, 110, 220, 440, 880, 1.7k, 3.5k, 7k, 14k)
     const octFreqs = [
         { f: 55, l: '55' },
         { f: 110, l: '110' },
@@ -702,7 +690,8 @@ const drawSpectrumCanvas = (ctx, w, h, bands, mode, isModal) => {
         { f: 880, l: '880' },
         { f: 1760, l: '1.7k' },
         { f: 3520, l: '3.5k' },
-        { f: 7040, l: '7k' }
+        { f: 7040, l: '7k' },
+        { f: 14080, l: '14k' }
     ];
 
     octFreqs.forEach(item => {
@@ -837,18 +826,18 @@ export const SPEC = {
         const sampleRate = data.sampleRate || 48000;
         const mode = m.mode || 'bar';
 
-        // 1. Draw cell canvas (84 bands, 1オクターブ12セミトーン, 55Hz〜7040Hz)
+        // 1. Draw cell canvas (96 bands, 1オクターブ12セミトーン, 55Hz〜14080Hz)
         const cvs = cell.querySelector('.spec-canvas');
         if (cvs) {
-            const cellRes = extractBands(freqs, 84, sampleRate);
+            const cellRes = extractBands(freqs, 96, sampleRate);
             const ctx = cvs.getContext('2d');
             drawSpectrumCanvas(ctx, cvs.width, cvs.height, cellRes.bands, mode, false);
         }
 
-        // 2. Draw modal canvas if modal is open (84 bands, 1オクターブ12セミトーン, 55Hz〜7040Hz)
+        // 2. Draw modal canvas if modal is open (96 bands, 1オクターブ12セミトーン, 55Hz〜14080Hz)
         const modalCvs = modal?.querySelector('#spec-modal-canvas');
         if (modalCvs) {
-            const modalRes = extractBands(freqs, 84, sampleRate);
+            const modalRes = extractBands(freqs, 96, sampleRate);
             const mCtx = modalCvs.getContext('2d');
             drawSpectrumCanvas(mCtx, modalCvs.width, modalCvs.height, modalRes.bands, mode, true);
         }
