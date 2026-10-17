@@ -84,3 +84,4 @@ export class ArProcessor extends AudioWorkletProcessor {
 }
 
 registerProcessor('ar-processor', ArProcessor);
+
