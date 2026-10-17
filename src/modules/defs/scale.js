@@ -32,7 +32,7 @@ export const SCALE = {
     }),
     renderGrid: (m) => {
         const root = m.root ?? 0;
-        const mask = m.mask || SCALE_PRESETS[m.scale] || SCALE_PRESETS['PENT.MIN'];
+        const mask = Array.isArray(m.mask) ? m.mask : (SCALE_PRESETS[m.scale] || SCALE_PRESETS['PENT.MIN'] || [1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0]);
         const rootName = NOTE_NAMES[root] || 'C';
         const scaleName = m.scale || 'PENT.MIN';
 
@@ -42,30 +42,15 @@ export const SCALE = {
                 <div class="flex items-center justify-center w-[50px] px-0.5 pointer-events-none text-center">
                     <span class="text-[8px] font-mono font-bold text-amber-400 truncate tracking-tight">${rootName} ${scaleName}</span>
                 </div>
-                <!-- 12本バー：通過音は100%黄色塗りつぶし・通常時は枠は光らない -->
-                <div class="flex items-center justify-center w-full pointer-events-none">
-                    ${UIHelpers.renderPanelBars(
-                        Array.from({ length: 12 }, (_, i) => {
-                            const isMasked = (mask[i] ?? 1) === 1;
-                            const h = isMasked ? 100 : 0;
-                            const barColor = isMasked
-                                ? 'bg-gradient-to-t from-amber-600 via-amber-500 to-yellow-400'
-                                : 'bg-transparent';
-                            const borderCls = isMasked ? 'border-slate-800' : 'border-slate-900/60';
-                            return {
-                                pct: h,
-                                color: barColor,
-                                width: 'flex-1',
-                                outerCls: borderCls,
-                                attrs: `data-scale-bar="${i}"`
-                            };
-                        }),
-                        {
-                            gapCls: 'gap-px',
-                            containerCls: 'w-[50px]',
-                            theme: 'cv'
-                        }
-                    )}
+                <!-- 12本バー：通過音は100%黄色塗りつぶし・細くても潰れないソリッドバー構造 -->
+                <div class="flex items-center justify-between w-[50px] h-6 gap-[1.5px] p-0 pointer-events-none">
+                    ${Array.from({ length: 12 }, (_, i) => {
+                        const isMasked = (mask[i] ?? 1) === 1;
+                        const barBg = isMasked
+                            ? 'bg-gradient-to-t from-amber-500 via-amber-400 to-yellow-300 shadow-[0_0_3px_rgba(251,191,36,0.6)]'
+                            : 'bg-slate-900/90 border border-slate-800/60';
+                        return `<div data-scale-bar="${i}" class="scale-bar-item flex-1 h-full rounded-[1px] relative ${barBg}"></div>`;
+                    }).join('')}
                 </div>
             </div>`;
     },

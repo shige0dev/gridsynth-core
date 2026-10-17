@@ -486,5 +486,9 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
       - **下部説明行（出力音名・変換電圧の説明）を完全削除**し、よりコンパクトで洗練されたダイアログUIへ純化。
     - **モジュール登録・インテグレーション**:
       - `src/dsp/worklet-processors.js`, `src/audio/defs/scale.js`, `src/audio/registry.js`, `src/modules/defs/scale.js`, `src/modules/registry.js`, `src/audio/engine.js` (`WORKLET_MODULE_TYPES`), `src/ui/controller.js` (`LIVE_TYPES`), `src/ui/managers/modal-manager.js`（カテゴリ `CV`）へ完全登録。
-    - バージョンを `v1.0.0204`、キャッシュバスターを `v=204` に更新。
+    - **SCALEモジュール パネル12本バーのソリッドバー構造化（幅潰れ解消・100%黄色塗りつぶし確実化 ＆ 外枠発光）**:
+      - パネル幅 `w-[50px]` の中に 12本のバー（1本あたり約3.25px）を描画する際、入れ子コンテナの border(2px) ＋ padding(2px) によって内幅が0px（マイナス）に潰れ、黄色の塗りつぶし背景が不可視となっていた問題を解決。
+      - `src/modules/defs/scale.js`: `renderPanelBars` の入れ子を廃止し、バー要素自身が背景を持つソリッドバー構造（`div.scale-bar-item`）へ刷新。通過音は `bg-gradient-to-t from-amber-500 via-amber-400 to-yellow-300` で幅 3.2px 全体を隙間なく 100% 黄色（CVイエロー）でソリッド塗りつぶし。
+      - `css/style.css`: 該当出力音の枠発光も内側 border ではなく外側アウトライン（`outline: 1.5px solid #ffffff; outline-offset: 1px; box-shadow: 0 0 10px 2px #fde047;`）に改修し、バーの内部幅を1pxも削らずに白＆ゴールドで鮮明に発光。
+    - バージョンを `v1.0.0205`、キャッシュバスターを `v=205` に更新。
 
