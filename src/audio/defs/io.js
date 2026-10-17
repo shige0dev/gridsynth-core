@@ -204,8 +204,8 @@ export const SPEC = {
         const inG = ctx.createGain();
         const an = ctx.createAnalyser();
         an.fftSize = 2048;
-        an.minDecibels = -70;
-        an.maxDecibels = -16;
+        an.minDecibels = -65;
+        an.maxDecibels = -6;
         an.smoothingTimeConstant = d.smooth ?? 0.75;
         inG.connect(an);
         if (eng?.silentSink) {

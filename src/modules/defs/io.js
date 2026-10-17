@@ -601,17 +601,16 @@ export const SUB_IO = {
     }
 };
 
-const extractBands = (freqs, numBands, sampleRate = 48000, fMin = 40, fMax = 6400) => {
+const extractBands = (freqs, numBands = 84, sampleRate = 48000) => {
     const fftSize = freqs.length * 2;
     const rawBands = new Float32Array(numBands);
     const bands = new Float32Array(numBands);
     let peakVal = 0, peakFreq = 0;
 
-    // A4 = 440Hz を基準点に設定し、オクターブ階層に厳密一致した対数バンドを生成
-    // numBands = 24 (セル): 1オクターブ3バンド (長3度刻み、b=9が440Hz、55Hz〜11.1kHz)
-    // numBands = 64 (モーダル): 1オクターブ8バンド (全音刻み、b=27が440Hz、36Hz〜15kHz)
-    const bandsPerOct = numBands <= 32 ? 3 : 8;
-    const bRef = numBands <= 32 ? 9 : 27;
+    // 1オクターブ12セミトーン（半音単位）、全84バンド（7オクターブ: 55Hz〜7040Hz）
+    // A4 (440Hz) は bRef = 36 (12 * 3)
+    const bandsPerOct = 12;
+    const bRef = 36;
 
     for (let b = 0; b < numBands; b++) {
         const fStart = 440 * Math.pow(2, (b - 0.5 - bRef) / bandsPerOct);
@@ -627,8 +626,8 @@ const extractBands = (freqs, numBands, sampleRate = 48000, fMin = 40, fMax = 640
                 maxK = k;
             }
         }
-        // ゲインブースト付きの正規化 (通常のシンセ演奏音量でもしっかり天井まで届く感度)
-        rawBands[b] = Math.max(0, Math.min(1, (max / 255.0) * 1.35));
+        // 飽和・クリッピング防止: 過剰な乗算を排し、自然な振幅スケール(0.0〜1.0)に正規化
+        rawBands[b] = Math.max(0, Math.min(1.0, max / 255.0));
 
         if (max > peakVal) {
             peakVal = max;
@@ -636,7 +635,7 @@ const extractBands = (freqs, numBands, sampleRate = 48000, fMin = 40, fMax = 640
         }
     }
 
-    // 周波数検知の広がり（リーケージ裾野）を急峻にカットする局所ピーク先鋭化
+    // 局所ピーク先鋭化 (クリッピングのない急峻な立ち上がりと漏れ裾野の急激な減衰)
     for (let b = 0; b < numBands; b++) {
         const v = rawBands[b];
         const prev = b > 0 ? rawBands[b - 1] : 0;
@@ -644,12 +643,12 @@ const extractBands = (freqs, numBands, sampleRate = 48000, fMin = 40, fMax = 640
         const neighborMax = Math.max(prev, next);
 
         if (v >= neighborMax) {
-            // 局所山頂（真のピーク）: 鮮明に直立
-            bands[b] = Math.min(1.0, Math.pow(v, 1.8) * 1.15);
+            // 主ピーク: クリッピング倍率を排し、1.8乗カーブで山頂の丸み・尖りを保つ
+            bands[b] = Math.pow(v, 1.8);
         } else {
-            // ピークの裾野（漏れ成分）: 山頂との比率に応じて急激に底（床）へ減衰
-            const ratio = v / (neighborMax + 0.001);
-            bands[b] = Math.min(1.0, Math.pow(v, 2.5) * Math.pow(ratio, 2.0));
+            // 漏れ裾野成分: 隣接山頂との比率に応じて急激にフロアへ減衰
+            const ratio = v / (neighborMax + 0.0001);
+            bands[b] = Math.pow(v, 2.5) * Math.pow(ratio, 2.5);
         }
     }
 
@@ -674,8 +673,8 @@ const drawSpectrumCanvas = (ctx, w, h, bands, mode, isModal) => {
     ctx.clearRect(0, 0, w, h);
 
     const n = bands.length;
-    const bandsPerOct = n <= 32 ? 3 : 8;
-    const bRef = n <= 32 ? 9 : 27;
+    const bandsPerOct = 12;
+    const bRef = 36;
 
     // 1. Horizontal guidelines (-12dB, -24dB, -48dB)
     ctx.strokeStyle = '#1e293b';
@@ -687,6 +686,9 @@ const drawSpectrumCanvas = (ctx, w, h, bands, mode, isModal) => {
         ctx.lineTo(w, y);
         ctx.stroke();
     });
+
+    const gap = isModal ? 1.0 : 0.3;
+    const barW = (w - gap * (n - 1)) / n;
 
     // 2. Vertical Octave Frequency Lines (55, 110, 220, 440, 880, 1.7k, 3.5k, 7k)
     const octFreqs = [
@@ -702,27 +704,29 @@ const drawSpectrumCanvas = (ctx, w, h, bands, mode, isModal) => {
 
     octFreqs.forEach(item => {
         const b = bRef + bandsPerOct * Math.log2(item.f / 440);
-        if (b >= 0 && b < n) {
+        if (b >= 0 && b <= n) {
             let x;
             if (mode === 'bar') {
-                const gap = isModal ? 1.2 : 1.0;
-                const barW = (w - gap * (n - 1)) / n;
-                x = b * (barW + gap) + barW / 2;
+                if (b < n) {
+                    x = b * (barW + gap) + barW / 2;
+                } else {
+                    x = w - 1;
+                }
             } else {
                 x = (b / (n - 1)) * w;
             }
 
             ctx.save();
             if (item.isA4) {
-                // 440Hz基準ライン (ティール系アクセント破線)
-                ctx.strokeStyle = 'rgba(45, 212, 191, 0.4)';
-                ctx.lineWidth = 1.0;
+                // 440Hz基準ライン (鮮やかなティール系アクセント破線)
+                ctx.strokeStyle = 'rgba(45, 212, 191, 0.85)';
+                ctx.lineWidth = 1.2;
                 ctx.setLineDash([3, 2]);
             } else {
-                // オクターブライン (薄いスレート系破線)
-                ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
-                ctx.lineWidth = 0.7;
-                ctx.setLineDash([2, 3]);
+                // オクターブライン (明るく視認性の高いスレート系破線)
+                ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
+                ctx.lineWidth = 0.8;
+                ctx.setLineDash([2, 2]);
             }
 
             ctx.beginPath();
@@ -730,20 +734,23 @@ const drawSpectrumCanvas = (ctx, w, h, bands, mode, isModal) => {
             ctx.lineTo(x, h);
             ctx.stroke();
 
-            // モーダル拡大時のみ、上部に極小で周波数ラベルを薄く添える
+            // モーダル拡大時: 周波数ラベルを明るくくっきり表示
             if (isModal) {
-                ctx.font = '7px monospace';
-                ctx.fillStyle = item.isA4 ? 'rgba(45, 212, 191, 0.7)' : 'rgba(148, 163, 184, 0.4)';
+                ctx.font = 'bold 8.5px ui-monospace, monospace';
+                ctx.fillStyle = item.isA4 ? '#2dd4bf' : '#cbd5e1';
                 ctx.textAlign = 'center';
-                ctx.fillText(item.l, x, 8);
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+                ctx.shadowBlur = 3;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 1;
+                const clampedX = Math.max(10, Math.min(w - 10, x));
+                ctx.fillText(item.l, clampedX, 10);
             }
             ctx.restore();
         }
     });
 
     if (mode === 'bar') {
-        const gap = isModal ? 1.2 : 1.0;
-        const barW = (w - gap * (n - 1)) / n;
         for (let i = 0; i < n; i++) {
             const v = Math.max(0, Math.min(1, bands[i]));
             const barH = Math.max(1, v * (h - 4));
@@ -757,7 +764,7 @@ const drawSpectrumCanvas = (ctx, w, h, bands, mode, isModal) => {
 
             ctx.fillStyle = grad;
             ctx.beginPath();
-            if (typeof ctx.roundRect === 'function') {
+            if (typeof ctx.roundRect === 'function' && barW >= 2) {
                 ctx.roundRect(x, y, barW, barH, [1, 1, 0, 0]);
             } else {
                 ctx.rect(x, y, barW, barH);
@@ -827,18 +834,18 @@ export const SPEC = {
         const sampleRate = data.sampleRate || 48000;
         const mode = m.mode || 'bar';
 
-        // 1. Draw cell canvas (24 bands, 40Hz〜6.4kHz)
+        // 1. Draw cell canvas (84 bands, 1オクターブ12セミトーン, 55Hz〜7040Hz)
         const cvs = cell.querySelector('.spec-canvas');
         if (cvs) {
-            const cellRes = extractBands(freqs, 24, sampleRate, 40, 6400);
+            const cellRes = extractBands(freqs, 84, sampleRate);
             const ctx = cvs.getContext('2d');
             drawSpectrumCanvas(ctx, cvs.width, cvs.height, cellRes.bands, mode, false);
         }
 
-        // 2. Draw modal canvas if modal is open (64 bands, 40Hz〜16kHz) - 10kHz以上に対応
+        // 2. Draw modal canvas if modal is open (84 bands, 1オクターブ12セミトーン, 55Hz〜7040Hz)
         const modalCvs = modal?.querySelector('#spec-modal-canvas');
         if (modalCvs) {
-            const modalRes = extractBands(freqs, 64, sampleRate, 40, 16000);
+            const modalRes = extractBands(freqs, 84, sampleRate);
             const mCtx = modalCvs.getContext('2d');
             drawSpectrumCanvas(mCtx, modalCvs.width, modalCvs.height, modalRes.bands, mode, true);
         }

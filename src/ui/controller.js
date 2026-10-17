@@ -1,6 +1,6 @@
 import { safeClone, parseConn, connKey, isSameConn, generateModuleId, HIGHLIGHT_CLASSES, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js';
 import { parsePatch, exportPatch, resolveSubpatchTemplate } from '../core/patch.js';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=179';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=180';
 import { UIHelpers } from './helpers.js';
 import { getDefaultPresets } from '../presets/default.js';
 import { FACTORY_SUBPATCHES, findSubpatchTemplate } from '../presets/subpatches.js';
