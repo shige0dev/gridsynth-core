@@ -385,3 +385,9 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
     - VCF モーダル内のフィルターモード選択ボタン（LP / HP / BP / NOTCH）を従来の 2行2列（`cols: 2`）から 1行4列（`cols: 4`）へ横並びレイアウトに変更。
     - キャッシュバスターを `v=188` に更新。
 
+ 11. **Strudel（PAT）複数ダイアログ固定（LOCK）時のID衝突・表示上書きバグの解消**:
+    - **原因**: PAT モジュールの `renderModal` および `bindEvents` が固定の DOM ID（`pat-code-input`, `pat-highlight-overlay` 等）および `document.getElementById(...)` を使用していたため、PAT モジュールを複数ドック固定した際に後発のモジュールによって先発モジュールの DOM 要素が上書き取得・操作されていた。
+    - **対策**: `renderModal` と `bindEvents` でモジュール固有の `uid`（`ctx.id` / `m.id`）をサフィックスとして全要素 ID に付与（`pat-code-input-${uid}` 等）。さらに `createModuleContext` で `getDialogElement` を提供し、スコープ限定の安全な要素取得を保証。複数 PAT を同時にピン留め・固定しても各々の内容が完全に独立して表示・編集可能に。
+    - キャッシュバスターを `v=189` に更新。
+
+

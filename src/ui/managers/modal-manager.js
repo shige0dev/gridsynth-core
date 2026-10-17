@@ -482,6 +482,7 @@ export class ModalManager {
             patched: this.ui.getPatchState(id),
             bpm: this.ui.synth.masterBPM,
             currentPageId: this.ui.currentPageId,
+            getDialogElement: () => this.getDialogElement(id),
             showToast: (msg) => this.showToast(msg),
             reRenderModal: isDock ? () => this.reRenderDockModal(id) : () => this.reRenderModal(),
             rebuildModule: () => this.ui.rebuildModule(id),

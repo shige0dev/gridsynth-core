@@ -46,7 +46,8 @@ export const PAT = {
             });
         }
     },
-    renderModal: (m) => {
+    renderModal: (m, ctx) => {
+        const uid = ctx?.id || m?.id || 'pat';
         const pat = m.pattern || 'c2 c2 c2 c2';
         const beats = m.cycleBeats || 4;
         const gatePct = Math.round((m.gateLen ?? 0.8) * 100);
@@ -54,21 +55,21 @@ export const PAT = {
         const showHints = m._showHints === true;
 
         return `
-            <div id="pat-modal-root" class="space-y-1.5 p-0.5">
+            <div id="pat-modal-root-${uid}" class="space-y-1.5 p-0.5">
                 <!-- Top Bar: Left Action Buttons (Revert & Send), Right Controls (Cycle & Gate) -->
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-2">
                     <div class="flex items-center gap-1">
-                        <button id="pat-revert-btn" disabled class="w-6 h-6 shrink-0 rounded text-[11px] font-bold border transition flex items-center justify-center opacity-40 pointer-events-none bg-slate-900 text-slate-600 border-slate-800" title="元の文字列に戻す (REVERT)">
+                        <button id="pat-revert-btn-${uid}" disabled class="w-6 h-6 shrink-0 rounded text-[11px] font-bold border transition flex items-center justify-center opacity-40 pointer-events-none bg-slate-900 text-slate-600 border-slate-800" title="元の文字列に戻す (REVERT)">
                             ↺
                         </button>
-                        <button id="pat-apply-btn" class="w-6 h-6 shrink-0 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded text-[11px] font-bold border border-slate-700 transition flex items-center justify-center cursor-pointer" title="流し込み (SEND / Enter)">
+                        <button id="pat-apply-btn-${uid}" class="w-6 h-6 shrink-0 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded text-[11px] font-bold border border-slate-700 transition flex items-center justify-center cursor-pointer" title="流し込み (SEND / Enter)">
                             ↵
                         </button>
                     </div>
                     <div class="flex items-center gap-2">
                         <div class="flex items-center gap-1 bg-slate-950 px-1 py-0.5 rounded border border-slate-800">
                             <span class="text-[7.5px] text-slate-400 uppercase">CYCLE:</span>
-                            <select id="pat-beats-select" class="bg-slate-900 text-cyan-300 font-mono text-[8px] font-bold rounded px-1 py-0.5 border border-slate-700">
+                            <select id="pat-beats-select-${uid}" class="bg-slate-900 text-cyan-300 font-mono text-[8px] font-bold rounded px-1 py-0.5 border border-slate-700">
                                 <option value="1" ${beats === 1 ? 'selected' : ''}>1 BEAT (1/4)</option>
                                 <option value="2" ${beats === 2 ? 'selected' : ''}>2 BEATS (2/4)</option>
                                 <option value="4" ${beats === 4 ? 'selected' : ''}>4 BEATS (1 BAR)</option>
@@ -77,8 +78,8 @@ export const PAT = {
                         </div>
                         <div class="flex items-center gap-1 bg-slate-950 px-1 py-0.5 rounded border border-slate-800">
                             <span class="text-[7.5px] text-slate-400 uppercase">GATE:</span>
-                            <input type="range" id="pat-gate-slider" min="10" max="95" step="5" value="${gatePct}" class="w-14 h-1 accent-cyan-400 cursor-pointer">
-                            <span id="pat-gate-disp" class="text-[8px] font-mono font-bold text-cyan-300 min-w-[24px] text-right">${gatePct}%</span>
+                            <input type="range" id="pat-gate-slider-${uid}" min="10" max="95" step="5" value="${gatePct}" class="w-14 h-1 accent-cyan-400 cursor-pointer">
+                            <span id="pat-gate-disp-${uid}" class="text-[8px] font-mono font-bold text-cyan-300 min-w-[24px] text-right">${gatePct}%</span>
                         </div>
                     </div>
                 </div>
@@ -86,10 +87,10 @@ export const PAT = {
                 <!-- Pattern Text Input (Full Width) with Inverted Live Highlight Overlay -->
                 <div class="relative w-full flex items-center min-w-0 h-7 bg-slate-950 border border-cyan-500/70 rounded-lg shadow-inner overflow-hidden">
                     <!-- Real Text Input (receives pointer events & typing) -->
-                    <input type="text" id="pat-code-input" value="${pat}" placeholder="e.g. [c2 ~ c2 ~] [c2 ~ c2 ~] [c2 ~ c2 ~] [c2 ~ c2 eb2]" class="w-full h-full bg-transparent font-mono text-cyan-300 px-2 text-[9.5px] font-bold tracking-tight focus:outline-none focus:ring-1 focus:ring-cyan-400 transition relative z-10">
+                    <input type="text" id="pat-code-input-${uid}" value="${pat}" placeholder="e.g. [c2 ~ c2 ~] [c2 ~ c2 ~] [c2 ~ c2 ~] [c2 ~ c2 eb2]" class="w-full h-full bg-transparent font-mono text-cyan-300 px-2 text-[9.5px] font-bold tracking-tight focus:outline-none focus:ring-1 focus:ring-cyan-400 transition relative z-10">
                     <!-- Live Highlight Overlay (on top when not editing, pointer-events-none) -->
-                    <div id="pat-highlight-overlay" class="absolute inset-0 flex items-center px-2 font-mono text-[9.5px] font-bold tracking-tight bg-slate-950 overflow-x-auto whitespace-nowrap pointer-events-none select-none z-20">
-                        <div id="pat-highlight-content" class="inline-flex items-center gap-1 text-cyan-300">
+                    <div id="pat-highlight-overlay-${uid}" class="absolute inset-0 flex items-center px-2 font-mono text-[9.5px] font-bold tracking-tight bg-slate-950 overflow-x-auto whitespace-nowrap pointer-events-none select-none z-20">
+                        <div id="pat-highlight-content-${uid}" class="inline-flex items-center gap-1 text-cyan-300">
                             ${renderPatternHighlightedHTML(pat)}
                         </div>
                     </div>
@@ -97,11 +98,11 @@ export const PAT = {
 
                 <!-- Accordion Toggle Headers -->
                 <div class="flex items-center justify-between pt-0.5 border-t border-slate-800/80 px-0.5">
-                    <button id="pat-toggle-presets" class="flex items-center gap-1 text-[7.5px] font-bold text-slate-400 hover:text-cyan-300 uppercase tracking-wider transition">
+                    <button id="pat-toggle-presets-${uid}" class="flex items-center gap-1 text-[7.5px] font-bold text-slate-400 hover:text-cyan-300 uppercase tracking-wider transition">
                         <span class="text-[6.5px] font-mono text-cyan-400">${showPresets ? '▼' : '▶'}</span>
                         <span>PRESETS</span>
                     </button>
-                    <button id="pat-toggle-hints" class="flex items-center gap-1 text-[7.5px] font-bold text-slate-400 hover:text-cyan-300 uppercase tracking-wider transition">
+                    <button id="pat-toggle-hints-${uid}" class="flex items-center gap-1 text-[7.5px] font-bold text-slate-400 hover:text-cyan-300 uppercase tracking-wider transition">
                         <span class="text-[6.5px] font-mono text-cyan-400">${showHints ? '▼' : '▶'}</span>
                         <span>HINTS</span>
                     </button>
@@ -132,17 +133,20 @@ export const PAT = {
             </div>`;
     },
     bindEvents: (m, ctx, cb) => {
-        const root = document.getElementById('pat-modal-root');
+        const uid = ctx?.id || m?.id || 'pat';
+        const root = document.getElementById(`pat-modal-root-${uid}`) || (ctx?.getDialogElement ? ctx.getDialogElement() : null) || document;
         if (!root) return;
 
-        const input = document.getElementById('pat-code-input');
-        const overlay = document.getElementById('pat-highlight-overlay');
-        const overlayContent = document.getElementById('pat-highlight-content');
-        const revertBtn = document.getElementById('pat-revert-btn');
-        const applyBtn = document.getElementById('pat-apply-btn');
-        const selectBeats = document.getElementById('pat-beats-select');
-        const gateSlider = document.getElementById('pat-gate-slider');
-        const gateDisp = document.getElementById('pat-gate-disp');
+        const input = document.getElementById(`pat-code-input-${uid}`) || root.querySelector?.('input[type="text"]');
+        const overlay = document.getElementById(`pat-highlight-overlay-${uid}`);
+        const overlayContent = document.getElementById(`pat-highlight-content-${uid}`);
+        const revertBtn = document.getElementById(`pat-revert-btn-${uid}`);
+        const applyBtn = document.getElementById(`pat-apply-btn-${uid}`);
+        const selectBeats = document.getElementById(`pat-beats-select-${uid}`);
+        const gateSlider = document.getElementById(`pat-gate-slider-${uid}`);
+        const gateDisp = document.getElementById(`pat-gate-disp-${uid}`);
+        const togglePresets = document.getElementById(`pat-toggle-presets-${uid}`);
+        const toggleHints = document.getElementById(`pat-toggle-hints-${uid}`);
 
         const setEditing = (editing) => {
             if (overlay) {
@@ -240,13 +244,13 @@ export const PAT = {
         });
 
         // Toggle presets accordion
-        document.getElementById('pat-toggle-presets')?.addEventListener('click', () => {
+        togglePresets?.addEventListener('click', () => {
             m._showPresets = !m._showPresets;
             ctx.reRenderModal();
         });
 
         // Toggle hints accordion
-        document.getElementById('pat-toggle-hints')?.addEventListener('click', () => {
+        toggleHints?.addEventListener('click', () => {
             m._showHints = !m._showHints;
             ctx.reRenderModal();
         });
