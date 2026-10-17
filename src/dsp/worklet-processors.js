@@ -14,5 +14,4 @@ import './processors/fm.js';
 import './processors/fm-core.js';
 import './processors/gate4.js';
 import './processors/arp.js';
-
-
+import './processors/scale.js';

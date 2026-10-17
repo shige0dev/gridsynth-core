@@ -462,4 +462,23 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
     - **垂直スライダー（`native-vslider`）のタッチターゲット改善**:
       - `css/style.css`: 幅を `18px` に拡張し、指で一発で掴みやすく調整。
     - キャッシュバスターを `v=200` に更新。
+ 16. **新モジュール `SCALE`（完全均等確率スケール・クオンタイザー ＆ 横一列12棒グラフパネル表示）新設**:
+    - **完全均等確率スケール・クオンタイザー（Equal Probability Quantization）**:
+      - `src/dsp/processors/scale.js`: 従来の最近傍吸着による「音程の離れ（インターバル）に起因する特定音の出現確率の偏り」を完全解消。
+      - 選択されたスケールの有効音数 $N$ でオクターブ内電圧領域（0.0〜1.0）を $N$ 等分し、どのスケール（ペンタトニックやドリアン等）であっても各構成音が 100% 均等に出現するインデックス・マッピングアルゴリズムを導入。
+      - `CHROMATIC`（全12半音）選択時は自然に「12等分の素通し半音クオンタイザー」として動作。
+      - `cv_in`（入力CV）、`trig_in`（クロックラッチ、未接続時は連続追従）、`cv_out`（1V/octピッチCV）、`gate_out`（音程変化/トリガーパルス）を完備。
+    - **パネル表示（renderGrid）の横一列12棒グラフ（SEQ8幅統一仕様）**:
+      - 5×8グリッドのセル表示において、SEQ8 と同じ全体幅（`w-[50px]`）を厳格に維持。
+      - 12本のバー（C〜B）を横一列に均等分割（`flex-1`）配置。
+      - 有効音は鮮やかなエメラルド（高さ80%）、無効音は暗いスレート（高さ15%）で表示。
+      - 上段にルート音（例: `C`）と現在出力中の音名（例: `Eb3`）を明瞭に配置。
+      - `updateLive` により、現在選ばれている半音のバーがリアルタイムに `.bar-active`（ゴールドグロー）でピカッと点灯発光。
+    - **モーダル設定UI（インタラクティブ12音フィルター ＆ プリセットセレクタ）**:
+      - `ROOT`（C〜B）および `SCALE`（`CHROMATIC`, `MAJOR`, `MINOR`, `PENT.MAJ`, `PENT.MIN`, `DORIAN`, `PHRYGIAN`, `BLUES`, `HARM.MIN`）の選択。
+      - 12本の縦バーを指で直接タップして個別に ON/OFF トグル可能（カスタムスケール作成対応）。
+      - リアルタイム出力音名・電圧・トリガー状態（`TRIG LATCH` / `AUTO`）をモニター表示。
+    - **モジュール登録・インテグレーション**:
+      - `src/dsp/worklet-processors.js`, `src/audio/defs/scale.js`, `src/audio/registry.js`, `src/modules/defs/scale.js`, `src/modules/registry.js`, `src/audio/engine.js` (`WORKLET_MODULE_TYPES`), `src/ui/controller.js` (`LIVE_TYPES`), `src/ui/managers/modal-manager.js`（カテゴリ `CV`）へ完全登録。
+    - バージョンを `v1.0.0201`、キャッシュバスターを `v=201` に更新。
 

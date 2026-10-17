@@ -167,9 +167,19 @@ body {
     box-shadow: 0 0 8px rgba(251, 191, 36, 0.9), inset 0 0 4px rgba(251, 191, 36, 0.3) !important;
 }
 
+.panel-bar-slot.bar-active > div {
+    background: #fde047 !important;
+    box-shadow: 0 0 6px rgba(253, 224, 71, 0.9) !important;
+}
+
 .panel-bar-slot.bar-active-audio {
     border-color: #67e8f9 !important;
     box-shadow: 0 0 8px rgba(34, 211, 238, 0.9), inset 0 0 4px rgba(34, 211, 238, 0.3) !important;
+}
+
+.panel-bar-slot.bar-active-audio > div {
+    background: #67e8f9 !important;
+    box-shadow: 0 0 6px rgba(103, 232, 249, 0.9) !important;
 }
 
 /* MARKOV State Box (CV yellow-orange active & idle states matching panel bar) */

@@ -18,6 +18,7 @@ export const MODAL_WIDTHS = {
     MARKOV: 'w-[260px]',
 
     // Logic & Math
+    SCALE: 'w-[260px]',
     MATH1: 'w-[220px]',
     MATH2: 'w-[230px]',
     SH: 'w-[200px]',
@@ -74,11 +75,13 @@ export const DOCK_TITLES = {
     CHORD: 'CHORD GENERATOR',
     GATE4: '4-CHANNEL GATE',
     ARP: 'ARPEGGIATOR',
-    MARKOV: 'MARKOV GENERATOR'
+    MARKOV: 'MARKOV GENERATOR',
+    SCALE: 'SCALE QUANTIZER'
 };
 
 export const DOCK_ICONS = {
     KEY: 'music',
+    SCALE: 'music',
     PAT: 'code',
     SEQ16: 'sliders',
     SEQ8: 'sliders',
@@ -604,7 +607,7 @@ export class ModalManager {
                         name: 'CV',
                         sub: 'CV (変調・演算・エンベロープ)',
                         color: 'purple',
-                        types: ['LFO', 'ADSR', 'CHORD', 'MATH1', 'MATH2', 'SH', 'CVDELAY', 'SLIDER', 'THROUGH', 'MON', 'SUB_IO']
+                        types: ['LFO', 'ADSR', 'CHORD', 'SCALE', 'MATH1', 'MATH2', 'SH', 'CVDELAY', 'SLIDER', 'THROUGH', 'MON', 'SUB_IO']
                     }
                 ];
 
