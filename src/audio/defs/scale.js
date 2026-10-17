@@ -19,7 +19,7 @@ export const SCALE = {
         // Keepalive (無接続時でもWorkletが停止しないように)
         if (eng?.silentSink) cvOut.connect(eng.silentSink);
 
-        let liveData = { activeSemi: -1, activeRelSemi: -1, cv: 0 };
+        let liveData = { activeSemi: -1, cv: 0 };
         w.port.onmessage = (e) => {
             if (e.data.type === 'STATE') {
                 liveData = e.data;

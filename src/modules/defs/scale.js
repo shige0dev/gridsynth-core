@@ -1,5 +1,3 @@
-import { UIHelpers } from '../../ui/helpers.js';
-
 export const SCALE_PRESETS = {
     'CHROMATIC': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     'MAJOR':     [1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1],
@@ -32,7 +30,7 @@ export const SCALE = {
     }),
     renderGrid: (m) => {
         const root = m.root ?? 0;
-        const mask = Array.isArray(m.mask) ? m.mask : (SCALE_PRESETS[m.scale] || SCALE_PRESETS['PENT.MIN'] || [1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0]);
+        const relMask = Array.isArray(m.mask) ? m.mask : (SCALE_PRESETS[m.scale] || SCALE_PRESETS['PENT.MIN'] || [1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0]);
         const rootName = NOTE_NAMES[root] || 'C';
         const scaleName = m.scale || 'PENT.MIN';
 
@@ -42,35 +40,33 @@ export const SCALE = {
                 <div class="flex items-center justify-center w-[50px] px-0.5 pointer-events-none text-center">
                     <span class="text-[8px] font-mono font-bold text-amber-400 truncate tracking-tight">${rootName} ${scaleName}</span>
                 </div>
-                <!-- 12本バー：通過音は100%黄色塗りつぶし・細くても潰れないソリッドバー構造 -->
+                <!-- 12本バー：C〜B固定。ルート音変更で通過音の黄色位置がシフト -->
                 <div class="flex items-center justify-between w-[50px] h-6 gap-[1.5px] p-0 pointer-events-none">
-                    ${Array.from({ length: 12 }, (_, i) => {
-                        const isMasked = (mask[i] ?? 1) === 1;
+                    ${Array.from({ length: 12 }, (_, semi) => {
+                        const rel = (semi - root + 12) % 12;
+                        const isMasked = (relMask[rel] ?? 1) === 1;
                         const barBg = isMasked
                             ? 'bg-gradient-to-t from-amber-500 via-amber-400 to-yellow-300 shadow-[0_0_3px_rgba(251,191,36,0.6)]'
                             : 'bg-slate-900/90 border border-slate-800/60';
-                        return `<div data-scale-bar="${i}" class="scale-bar-item flex-1 h-full rounded-[1px] relative ${barBg}"></div>`;
+                        return `<div data-scale-bar="${semi}" class="scale-bar-item flex-1 h-full rounded-[1px] relative ${barBg}"></div>`;
                     }).join('')}
                 </div>
             </div>`;
     },
     updateLive: (cell, data, isP, modal) => {
-        const relSemi = (data?.activeRelSemi !== undefined && data.activeRelSemi >= 0)
-            ? data.activeRelSemi
-            : (data?.activeSemi ?? -1);
+        const semi = data?.activeSemi ?? -1;
 
-        // 該当出力のバーだけ枠が光る（0〜11のスケール内相対位置）
-        cell.querySelectorAll('[data-scale-bar]').forEach((b, i) => {
-            const barIdx = parseInt(b.getAttribute('data-scale-bar') ?? i, 10);
-            const isAct = (barIdx === relSemi);
-            b.classList.toggle('scale-active', isAct);
+        // 該当出力のバーだけ枠が光る（0〜11の絶対半音 C〜B）
+        cell.querySelectorAll('[data-scale-bar]').forEach((b) => {
+            const barSemi = parseInt(b.getAttribute('data-scale-bar'), 10);
+            b.classList.toggle('scale-active', barSemi === semi);
         });
 
         // モーダルが開いていればモーダル内のバー枠もハイライト
         if (modal) {
-            modal.querySelectorAll('[data-modal-bar]').forEach((b, i) => {
-                const barIdx = parseInt(b.getAttribute('data-modal-bar') ?? i, 10);
-                const isAct = (barIdx === relSemi);
+            modal.querySelectorAll('[data-modal-bar]').forEach((b) => {
+                const barSemi = parseInt(b.getAttribute('data-modal-bar'), 10);
+                const isAct = (barSemi === semi);
                 b.classList.toggle('ring-2', isAct);
                 b.classList.toggle('ring-yellow-300', isAct);
                 b.classList.toggle('shadow-[0_0_8px_#fde047]', isAct);
@@ -80,7 +76,7 @@ export const SCALE = {
     renderModal: (m) => {
         const root = m.root ?? 0;
         const scaleKey = m.scale || 'PENT.MIN';
-        const mask = m.mask || SCALE_PRESETS[scaleKey] || SCALE_PRESETS['PENT.MIN'];
+        const relMask = m.mask || SCALE_PRESETS[scaleKey] || SCALE_PRESETS['PENT.MIN'];
         const presetKeys = Object.keys(SCALE_PRESETS);
 
         return `
@@ -111,26 +107,31 @@ export const SCALE = {
                 <div class="flex flex-col gap-1 bg-slate-950/80 p-2 rounded-xl border border-slate-800">
                     <div class="flex items-center justify-between text-[7.5px] font-bold text-slate-400 tracking-wider">
                         <span>12-NOTE EQUAL PROBABILITY FILTER</span>
-                        <span class="text-amber-400 font-mono">${mask.filter(x => x === 1).length} ACTIVE</span>
+                        <span class="text-amber-400 font-mono">${relMask.filter(x => x === 1).length} ACTIVE</span>
                     </div>
 
-                    <!-- 12 Bars: ルート音を左端（0番目）として音名を表示 -->
+                    <!-- 12 Bars: C〜B 完全固定。ルート変更で黄色バーと光る位置がシフト -->
                     <div class="flex items-end justify-between gap-1 h-16 pt-1 pb-0.5">
-                        ${Array.from({ length: 12 }, (_, i) => {
-                            const noteIdx = (root + i) % 12;
-                            const n = NOTE_NAMES[noteIdx] || 'C';
-                            const isOn = (mask[i] ?? 1) === 1;
+                        ${NOTE_NAMES.map((n, semi) => {
+                            const rel = (semi - root + 12) % 12;
+                            const isOn = (relMask[rel] ?? 1) === 1;
+                            const isRoot = (semi === root);
                             const isBlack = n.includes('#');
                             const barBg = isOn
-                                ? 'bg-gradient-to-t from-amber-600 via-amber-500 to-yellow-300 border-amber-400/80'
+                                ? (isRoot
+                                    ? 'bg-gradient-to-t from-amber-600 via-amber-400 to-yellow-200 border-yellow-300 shadow-[0_0_6px_rgba(253,224,71,0.5)]'
+                                    : 'bg-gradient-to-t from-amber-600 via-amber-500 to-yellow-300 border-amber-400/80')
                                 : 'bg-slate-900 border-slate-800 text-slate-600';
                             const barHeight = isOn ? 'h-full' : 'h-3';
+                            const textCls = isOn
+                                ? (isRoot ? 'text-amber-300 font-black underline' : (isBlack ? 'text-amber-300/90' : 'text-yellow-200'))
+                                : 'text-slate-600';
                             return `
-                                <div class="flex-1 flex flex-col items-center justify-end h-full cursor-pointer group" data-note-toggle="${i}" title="${n} ON/OFF">
-                                    <div data-modal-bar="${i}" class="w-full ${barHeight} rounded-t-sm border ${barBg} transition-all duration-75 flex items-center justify-center relative overflow-hidden">
+                                <div class="flex-1 flex flex-col items-center justify-end h-full cursor-pointer group" data-note-toggle="${semi}" title="${n}">
+                                    <div data-modal-bar="${semi}" class="w-full ${barHeight} rounded-t-sm border ${barBg} transition-all duration-75 flex items-center justify-center relative overflow-hidden">
                                         <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
                                     </div>
-                                    <span class="text-[8px] font-mono font-bold mt-1 ${isOn ? (isBlack ? 'text-amber-300' : 'text-yellow-200') : 'text-slate-600'}">${n}</span>
+                                    <span class="text-[8px] font-mono font-bold mt-1 ${textCls}">${n}</span>
                                 </div>`;
                         }).join('')}
                     </div>
@@ -162,14 +163,17 @@ export const SCALE = {
             });
         }
 
-        // Interactive Note Bar Toggles
+        // Interactive Note Bar Toggles (C〜Bの各バーをタップ)
         document.querySelectorAll('[data-note-toggle]').forEach(el => {
             el.addEventListener('click', () => {
-                const idx = parseInt(el.dataset.noteToggle, 10);
+                const semi = parseInt(el.dataset.noteToggle, 10);
+                const root = m.root ?? 0;
+                const rel = (semi - root + 12) % 12;
+
                 if (!Array.isArray(m.mask)) {
                     m.mask = [1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0];
                 }
-                m.mask[idx] = m.mask[idx] === 1 ? 0 : 1;
+                m.mask[rel] = m.mask[rel] === 1 ? 0 : 1;
 
                 // Match preset or mark custom
                 let matchedKey = 'CUSTOM';
