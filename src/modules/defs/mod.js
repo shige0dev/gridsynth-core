@@ -11,7 +11,7 @@ const renderMathModalUI = (m, ctx, modeGroups, valKeys) => {
                     <div class="text-[7.5px] font-bold text-slate-400 mb-0.5 uppercase tracking-wider">${g.label}</div>
                     <div class="grid grid-cols-${g.cols} gap-0.5">
                         ${g.modes.map(md => `
-                            <button class="math-mode-btn py-0.5 rounded text-[8px] font-bold border transition-colors ${curMode === md ? 'bg-purple-600 text-white border-purple-500 shadow-sm shadow-purple-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}" data-mode="${md}">${md === '<' ? '&lt;' : (md === '<=' ? '&lt;=' : md)}</button>
+                            <button class="math-mode-btn h-4 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${curMode === md ? 'bg-purple-600 text-white border-purple-500 shadow-sm shadow-purple-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}" data-mode="${md}">${md === '<' ? '&lt;' : (md === '<=' ? '&lt;=' : md)}</button>
                         `).join('')}
                     </div>
                 </div>
@@ -331,7 +331,7 @@ export const SH = {
     renderModal: (m, ctx) => `
         <div class="flex items-center justify-between pb-1 border-b border-slate-800 px-1">
             <span class="text-[8px] font-mono text-fuchsia-300 font-bold">${ctx.patched?.has('sig_in')?'EXT SIGNAL':'INTERNAL NOISE'}</span>
-            <button id="sh-trig-btn" class="px-2 py-0.5 rounded text-[8.5px] font-bold bg-fuchsia-600 text-white border border-fuchsia-400">TRIG</button>
+            <button id="sh-trig-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center bg-fuchsia-600 text-white border-fuchsia-400">TRIG</button>
         </div>${UIHelpers.renderSchemaModal(m, ctx, SH.schema)}`,
     bindEvents: (m, ctx, cb) => {
         UIHelpers.bindSchemaEvents(m, ctx, SH.schema, cb);

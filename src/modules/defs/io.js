@@ -149,9 +149,9 @@ export const SCOPE = {
                 <!-- Top Menu Bar (上段 各種設定メニュー) -->
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-1 select-none">
                     <div class="flex items-center gap-1 shrink-0">
-                        <button id="scope-mode-time" class="px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${!isLiss ? 'bg-cyan-600 text-white border-cyan-500 shadow-sm shadow-cyan-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">DUAL</button>
-                        <button id="scope-mode-liss" class="px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${isLiss ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm shadow-emerald-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">LISS</button>
-                        <button id="scope-trig-btn" class="px-1.5 py-0.5 rounded text-[7.5px] font-bold border transition-colors ${m.trigMode === 'free' ? 'bg-amber-600 text-white border-amber-500' : 'bg-cyan-600 text-white border-cyan-500'}">TRIG: ${(m.trigMode || 'auto').toUpperCase()}</button>
+                        <button id="scope-mode-time" class="h-4 px-1.5 rounded text-[8px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${!isLiss ? 'bg-cyan-600 text-white border-cyan-500 shadow-sm shadow-cyan-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">DUAL</button>
+                        <button id="scope-mode-liss" class="h-4 px-1.5 rounded text-[8px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${isLiss ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm shadow-emerald-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">LISS</button>
+                        <button id="scope-trig-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${m.trigMode === 'free' ? 'bg-amber-600 text-white border-amber-500' : 'bg-cyan-600 text-white border-cyan-500'}">TRIG: ${(m.trigMode || 'auto').toUpperCase()}</button>
                     </div>
 
                     <!-- X-Axis Time Span Slider in Menu Bar (X軸の時間幅はメニュー領域にスライダで配置) -->
@@ -487,7 +487,7 @@ export const SUB_IO = {
             <div class="space-y-2 p-1">
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800">
                     <span class="text-[8px] text-slate-400 font-semibold uppercase">SUBPATCH NAME</span>
-                    <button id="sub-io-rename-btn" class="px-2 py-0.5 rounded text-[8.5px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-500/60 hover:bg-emerald-900 transition flex items-center gap-1">
+                    <button id="sub-io-rename-btn" class="h-4 px-1.5 rounded text-[8px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-500/60 hover:bg-emerald-900 transition leading-none inline-flex items-center gap-1">
                         <span class="font-mono font-bold">${pageName}</span>
                         <span class="text-[8px]">✏️</span>
                     </button>
@@ -729,13 +729,13 @@ export const SPEC = {
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800 select-none">
                     <div class="flex items-center gap-1">
                         <span class="text-[8px] text-slate-400 font-bold uppercase tracking-tight">MODE:</span>
-                        <button id="spec-mode-bar" class="px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${curMode === 'bar' ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">BAR</button>
-                        <button id="spec-mode-curve" class="px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${curMode === 'curve' ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">CURVE</button>
+                        <button id="spec-mode-bar" class="h-4 px-1.5 rounded text-[8px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${curMode === 'bar' ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">BAR</button>
+                        <button id="spec-mode-curve" class="h-4 px-1.5 rounded text-[8px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${curMode === 'curve' ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">CURVE</button>
                     </div>
                     <div class="flex items-center gap-1">
                         <span class="text-[8px] text-slate-400 font-bold uppercase tracking-tight">SPEED:</span>
                         ${['fast', 'med', 'slow'].map(sp => `
-                            <button class="spec-speed-btn px-2 py-0.5 rounded text-[7.5px] font-bold border transition-colors ${curSpeed === sp ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}" data-speed="${sp}">${sp.toUpperCase()}</button>
+                            <button class="spec-speed-btn h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${curSpeed === sp ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}" data-speed="${sp}">${sp.toUpperCase()}</button>
                         `).join('')}
                     </div>
                 </div>

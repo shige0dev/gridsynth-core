@@ -71,7 +71,7 @@ export const SEQ8 = {
         <div id="seq-modal-root" class="space-y-1.5">
             <div class="flex items-center justify-between pb-1 border-b border-slate-800">
                 <span class="text-[8px] text-slate-400 uppercase font-semibold">8-STEP SEQUENCER</span>
-                <button id="seq-qlz-btn" class="px-2 py-0.5 rounded text-[8.5px] font-bold border transition-colors ${m.quantize!==false?'bg-cyan-600 text-white border-cyan-500':'bg-slate-800 text-slate-400 border-slate-700'}">QLZ: ${m.quantize!==false?'ON':'OFF'}</button>
+                <button id="seq-qlz-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${m.quantize!==false?'bg-cyan-600 text-white border-cyan-500':'bg-slate-800 text-slate-400 border-slate-700'}">QLZ: ${m.quantize!==false?'ON':'OFF'}</button>
             </div>
             <div class="flex items-center justify-between py-1 bg-slate-950/60 p-1 rounded-xl border border-slate-800/80 gap-1 overflow-x-auto">
                 ${(m.steps||[]).map((st, i) => {
@@ -227,7 +227,7 @@ export const SEQ16 = {
             <div id="seq16-modal-root" class="space-y-1">
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800">
                     <span class="text-[8px] text-slate-400 uppercase font-semibold">16-STEP SEQUENCER</span>
-                    <button id="seq16-qlz-btn" class="px-2 py-0.5 rounded text-[8.5px] font-bold border transition-colors ${m.quantize!==false?'bg-cyan-600 text-white border-cyan-500':'bg-slate-800 text-slate-400 border-slate-700'}">QLZ: ${m.quantize!==false?'ON':'OFF'}</button>
+                    <button id="seq16-qlz-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${m.quantize!==false?'bg-cyan-600 text-white border-cyan-500':'bg-slate-800 text-slate-400 border-slate-700'}">QLZ: ${m.quantize!==false?'ON':'OFF'}</button>
                 </div>
                 ${renderStepRow(steps.slice(0, 8), 0)}
                 ${renderStepRow(steps.slice(8, 16), 8)}

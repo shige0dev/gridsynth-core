@@ -209,7 +209,7 @@ export const UIHelpers = {
                 const t = h.toggle;
                 const isVal = mod[t.key] !== false;
                 const tColor = t.color || 'cyan';
-                rightHtml = `<button id="schema-header-toggle-${t.key}" class="px-2 py-0.5 rounded text-[8.5px] font-bold border transition-colors ${isVal ? `bg-${tColor}-600 text-white border-${tColor}-500` : 'bg-slate-800 text-slate-400 border-slate-700'}">${t.label}: ${isVal ? (t.onText || 'ON') : (t.offText || 'OFF')}</button>`;
+                rightHtml = `<button id="schema-header-toggle-${t.key}" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${isVal ? `bg-${tColor}-600 text-white border-${tColor}-500` : 'bg-slate-800 text-slate-400 border-slate-700'}">${t.label}: ${isVal ? (t.onText || 'ON') : (t.offText || 'OFF')}</button>`;
             }
 
             // Header button groups: e.g. [ { key: 'syncMode', options: [...] }, { key: 'polarity', options: [...] } ]
@@ -217,7 +217,7 @@ export const UIHelpers = {
                 const renderHGroup = (g) => {
                     const cur = mod[g.key] ?? g.options[0].val;
                     return `<div class="flex items-center gap-0.5">${g.options.map(o => `
-                        <button class="schema-header-btn-${g.key} px-1.5 py-0.5 rounded text-[7.5px] font-bold border transition-colors ${cur === o.val ? `bg-${s.color}-600 text-white border-${s.color}-500 shadow-sm shadow-${s.color}-500/30` : 'bg-slate-800 text-slate-400 border-slate-700'}" data-val="${o.val}">${o.label}</button>
+                        <button class="schema-header-btn-${g.key} h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${cur === o.val ? `bg-${s.color}-600 text-white border-${s.color}-500 shadow-sm shadow-${s.color}-500/30` : 'bg-slate-800 text-slate-400 border-slate-700'}" data-val="${o.val}">${o.label}</button>
                     `).join('')}</div>`;
                 };
 
@@ -244,7 +244,7 @@ export const UIHelpers = {
                 html += `
                     <div class="my-1.5"><label class="block text-[8px] text-slate-400 mb-0.5 uppercase tracking-wider font-semibold">${g.label}</label>
                     <div class="grid grid-cols-${g.cols || g.options.length} gap-0.5">${g.options.map(o => `
-                        <button class="schema-btn-${g.key} py-0.5 rounded text-[8px] font-bold border transition-colors ${cur === o.val ? `bg-${s.color}-600 text-white border-${s.color}-500 shadow-sm shadow-${s.color}-500/30` : 'bg-slate-800 text-slate-400 border-slate-700'}" data-val="${o.val}">${o.label}</button>`).join('')}
+                        <button class="schema-btn-${g.key} h-4 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${cur === o.val ? `bg-${s.color}-600 text-white border-${s.color}-500 shadow-sm shadow-${s.color}-500/30` : 'bg-slate-800 text-slate-400 border-slate-700'}" data-val="${o.val}">${o.label}</button>`).join('')}
                     </div></div>`;
             });
         }

@@ -89,8 +89,8 @@ export const MARKOV = {
             <div class="space-y-1.5">
                 <!-- Top Buttons: RESET & QLZ -->
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800">
-                    <button id="markov-init-btn" class="px-2.5 py-1 rounded text-[8.5px] font-bold border transition-colors ${isInit ? 'bg-amber-700 text-white border-amber-400 shadow-sm' : 'bg-slate-800 text-slate-400 border-slate-700'}">RESET: ${isInit ? 'ON' : 'OFF'}</button>
-                    <button id="markov-qlz-btn" class="px-2.5 py-1 rounded text-[8.5px] font-bold border transition-colors ${isQ ? 'bg-amber-600 text-white border-amber-400' : 'bg-slate-800 text-slate-400 border-slate-700'}">QLZ: ${isQ ? 'ON' : 'OFF'}</button>
+                    <button id="markov-init-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${isInit ? 'bg-amber-700 text-white border-amber-400 shadow-sm' : 'bg-slate-800 text-slate-400 border-slate-700'}">RESET: ${isInit ? 'ON' : 'OFF'}</button>
+                    <button id="markov-qlz-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${isQ ? 'bg-amber-600 text-white border-amber-400' : 'bg-slate-800 text-slate-400 border-slate-700'}">QLZ: ${isQ ? 'ON' : 'OFF'}</button>
                 </div>
 
                 <!-- Hold Clocks Stepper Row (Dropped below buttons) -->
