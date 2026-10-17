@@ -179,11 +179,11 @@ export const SCOPE = {
 
                     <!-- Center: Oscilloscope Waveform Display -->
                     <div class="flex-1 min-w-0 h-[108px] bg-slate-950 p-1 rounded-lg border border-slate-800 flex flex-col justify-between overflow-hidden shadow-sm">
-                        <div class="flex items-center justify-between px-1">
+                        <div class="flex items-center justify-between px-1 shrink-0">
                             <span class="text-[7.5px] font-bold text-cyan-400 uppercase tracking-wider font-mono">${isLiss ? 'XY LISSAJOUS' : 'DUAL TRACE OSCILLOSCOPE'}</span>
                             <span class="text-[6.5px] font-mono text-slate-500">CH1:CYAN / CH2:PURPLE</span>
                         </div>
-                        <canvas id="scope-modal-canvas" class="w-full flex-1 block rounded bg-slate-950" width="300" height="80"></canvas>
+                        <canvas id="scope-modal-canvas" class="w-full flex-1 min-h-0 block rounded bg-slate-950" width="300" height="78"></canvas>
                     </div>
 
                     <!-- Right: 2-Waveform Separation (2波形の分離) -->
@@ -741,13 +741,13 @@ export const SPEC = {
                 </div>
 
                 <!-- Expanded Modal Spectrum Display (キーボードと共通の縦幅: h-[108px] / 40Hz〜16kHz) -->
-                <div class="h-[108px] bg-slate-950 p-1.5 rounded-lg border border-slate-800 flex flex-col justify-between select-none shadow-sm">
-                    <div class="flex items-center justify-between px-1">
+                <div class="h-[108px] bg-slate-950 p-1.5 rounded-lg border border-slate-800 flex flex-col justify-between select-none shadow-sm overflow-hidden">
+                    <div class="flex items-center justify-between px-1 shrink-0">
                         <span class="text-[7.5px] font-bold text-teal-400 uppercase tracking-wider font-mono">REALTIME SPECTRUM (40Hz〜16kHz)</span>
                         <span id="spec-peak-disp" class="text-[7.5px] font-mono font-bold text-yellow-300">PEAK: ---</span>
                     </div>
-                    <canvas id="spec-modal-canvas" class="w-full flex-1 block rounded bg-slate-950" width="360" height="70"></canvas>
-                    <div class="flex items-center justify-between text-[7px] font-mono text-slate-500 px-1 border-t border-slate-800/80 pt-0.5">
+                    <canvas id="spec-modal-canvas" class="w-full flex-1 min-h-0 block rounded bg-slate-950" width="360" height="64"></canvas>
+                    <div class="flex items-center justify-between text-[7px] font-mono text-slate-500 px-1 border-t border-slate-800/80 pt-0.5 shrink-0">
                         <span>40Hz</span>
                         <span>200Hz</span>
                         <span>1kHz</span>

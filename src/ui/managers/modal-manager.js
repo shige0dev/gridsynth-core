@@ -257,7 +257,7 @@ export class ModalManager {
         const dialogEl = document.createElement('div');
         dialogEl.id = `dock-dialog-${mId}`;
         dialogEl.dataset.moduleId = mId;
-        dialogEl.className = "dock-dialog absolute bg-slate-900/95 border border-cyan-500/70 rounded-xl p-2 shadow-2xl backdrop-blur-md pointer-events-auto transition-none left-2 right-2 w-[calc(100%-16px)] max-h-[calc(100%-58px)] overflow-y-auto";
+        dialogEl.className = "dock-dialog absolute bg-slate-900/95 border border-cyan-500/70 rounded-xl p-2 shadow-2xl backdrop-blur-md pointer-events-auto transition-none left-2 right-2 w-[calc(100%-16px)] max-h-[calc(100%-58px)] overflow-hidden";
 
         dialogEl.innerHTML = `
             <div class="dock-dialog-header border-b border-slate-800 pb-1 flex items-center justify-between cursor-move touch-none select-none">
@@ -270,8 +270,9 @@ export class ModalManager {
                         <i data-lucide="pin" class="w-2.5 h-2.5 pointer-events-none"></i>
                         <span class="pointer-events-none">LOCK</span>
                     </button>
-                    <button class="dock-close-btn w-5 h-5 rounded flex items-center justify-center text-slate-400 hover:text-red-300 hover:bg-red-950/80 border border-slate-700/60 hover:border-red-500/60 transition active:scale-95 cursor-pointer" title="中止" aria-label="中止">
-                        <i data-lucide="x" class="w-3.5 h-3.5 pointer-events-none"></i>
+                    <button class="dock-close-btn h-5 px-1.5 rounded text-[8.5px] font-bold flex items-center gap-1 border transition-colors bg-slate-800 text-slate-300 hover:text-red-300 hover:bg-red-950/80 border-slate-700 hover:border-red-500/60 active:scale-95 cursor-pointer" title="中止" aria-label="中止">
+                        <i data-lucide="x" class="w-2.5 h-2.5 pointer-events-none"></i>
+                        <span class="pointer-events-none font-bold">中止</span>
                     </button>
                 </div>
             </div>
@@ -284,7 +285,8 @@ export class ModalManager {
             moduleId: mId,
             element: dialogEl,
             isLocked: false,
-            zIndex: ++this.highestZIndex
+            zIndex: ++this.highestZIndex,
+            snapshot: JSON.parse(JSON.stringify(m))
         };
         dialogEl.style.zIndex = dockInfo.zIndex;
         this.openDocks.set(mId, dockInfo);
@@ -299,16 +301,18 @@ export class ModalManager {
 
         // Lock button toggle
         const lockBtn = dialogEl.querySelector('.dock-lock-btn');
+        lockBtn?.addEventListener('pointerdown', (e) => e.stopPropagation());
         lockBtn?.addEventListener('click', (e) => {
             e.stopPropagation();
             this.toggleDockLock(mId);
         });
 
-        // Close button ("ロックボタンの横にある×ボタンは共通で中止")
+        // Close/Cancel button ("ロックボタンの横にある×ボタンは共通で中止")
         const closeBtn = dialogEl.querySelector('.dock-close-btn');
+        closeBtn?.addEventListener('pointerdown', (e) => e.stopPropagation());
         closeBtn?.addEventListener('click', (e) => {
             e.stopPropagation();
-            this.closeDockModal(mId);
+            this.closeDockModal(mId, true);
         });
 
         // Header draggable
@@ -398,16 +402,36 @@ export class ModalManager {
         });
     }
 
-    closeDockModal(mId = null) {
+    closeDockModal(mId = null, isCancel = false) {
         if (mId) {
             const info = this.openDocks.get(mId);
             if (info) {
+                if (isCancel && info.snapshot) {
+                    const m = this.ui.modules[mId];
+                    if (m) {
+                        Object.assign(m, JSON.parse(JSON.stringify(info.snapshot)));
+                        this.ui.synth.updateModule(`${this.ui.currentPageId}/${mId}`, m, this.ui.getPatchState(mId));
+                        this.ui.renderCell(m.row * this.ui.COLS + m.col);
+                        this.showToast('変更を中止しました');
+                    }
+                }
                 info.element.remove();
                 this.openDocks.delete(mId);
             }
         } else {
-            this.openDocks.forEach(info => info.element.remove());
+            this.openDocks.forEach((info, id) => {
+                if (isCancel && info.snapshot) {
+                    const m = this.ui.modules[id];
+                    if (m) {
+                        Object.assign(m, JSON.parse(JSON.stringify(info.snapshot)));
+                        this.ui.synth.updateModule(`${this.ui.currentPageId}/${id}`, m, this.ui.getPatchState(id));
+                        this.ui.renderCell(m.row * this.ui.COLS + m.col);
+                    }
+                }
+                info.element.remove();
+            });
             this.openDocks.clear();
+            if (isCancel) this.showToast('変更を中止しました');
         }
         if (this.openDocks.size === 0) {
             document.getElementById('dock-modal')?.classList.add('hidden');
@@ -430,6 +454,10 @@ export class ModalManager {
         const info = this.openDocks.get(mId);
         if (!info) return;
         info.isLocked = !info.isLocked;
+        if (info.isLocked) {
+            const m = this.ui.modules[mId];
+            if (m) info.snapshot = JSON.parse(JSON.stringify(m));
+        }
         this.updateDockLockUI(mId);
         this.updateBackdrop();
     }
