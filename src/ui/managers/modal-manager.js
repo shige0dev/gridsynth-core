@@ -270,10 +270,6 @@ export class ModalManager {
                         <i data-lucide="pin" class="w-2.5 h-2.5 pointer-events-none"></i>
                         <span class="pointer-events-none">LOCK</span>
                     </button>
-                    <button class="dock-close-btn h-5 px-1.5 rounded text-[8.5px] font-bold flex items-center gap-1 border transition-colors bg-slate-800 text-slate-300 hover:text-red-300 hover:bg-red-950/80 border-slate-700 hover:border-red-500/60 active:scale-95 cursor-pointer" title="中止" aria-label="中止">
-                        <i data-lucide="x" class="w-2.5 h-2.5 pointer-events-none"></i>
-                        <span class="pointer-events-none font-bold">中止</span>
-                    </button>
                 </div>
             </div>
             <div class="dock-dialog-body text-xs mt-1"></div>
@@ -305,14 +301,6 @@ export class ModalManager {
         lockBtn?.addEventListener('click', (e) => {
             e.stopPropagation();
             this.toggleDockLock(mId);
-        });
-
-        // Close/Cancel button ("ロックボタンの横にある×ボタンは共通で中止")
-        const closeBtn = dialogEl.querySelector('.dock-close-btn');
-        closeBtn?.addEventListener('pointerdown', (e) => e.stopPropagation());
-        closeBtn?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.closeDockModal(mId, true);
         });
 
         // Header draggable
@@ -359,7 +347,7 @@ export class ModalManager {
         if (!headerEl || !dialogEl || !frame) return;
         let drag = false, dY = 0, initT = 0;
         headerEl.addEventListener('pointerdown', (e) => {
-            if (e.target.closest('.dock-lock-btn') || e.target.closest('.dock-close-btn')) return;
+            if (e.target.closest('.dock-lock-btn')) return;
             e.preventDefault();
             drag = true;
             headerEl.setPointerCapture(e.pointerId);
@@ -477,6 +465,7 @@ export class ModalManager {
         const btn = info.element.querySelector('.dock-lock-btn');
         if (btn) {
             btn.className = `dock-lock-btn h-5 px-1.5 rounded text-[8.5px] font-bold flex items-center gap-1 border transition-colors ${info.isLocked ? 'bg-cyan-600 text-white border-cyan-400 shadow-sm shadow-cyan-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}`;
+            btn.title = info.isLocked ? '固定中（クリックでロック解除）' : 'ロック/ピン留め';
         }
     }
 

@@ -536,8 +536,22 @@ export class UIController {
             this.activePopupModuleId = null;
         });
 
+        document.getElementById('dock-backdrop')?.addEventListener('pointerdown', () => {
+            this.modalManager.closeUnlockedDocks();
+        });
         document.getElementById('dock-backdrop')?.addEventListener('click', () => {
             this.modalManager.closeUnlockedDocks();
+        });
+
+        // Global outside-tap dismiss for unlocked dock dialogs (Method 1)
+        document.addEventListener('pointerdown', (e) => {
+            if (this.modalManager.openDocks.size === 0) return;
+            const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
+            if (targetEl?.closest?.('.dock-dialog') || targetEl?.closest?.('#custom-prompt-modal') || targetEl?.closest?.('#alert-modal')) return;
+            const hasUnlocked = Array.from(this.modalManager.openDocks.values()).some(d => !d.isLocked);
+            if (hasUnlocked) {
+                this.modalManager.closeUnlockedDocks();
+            }
         });
 
         const frame = document.getElementById('phone-frame');
@@ -545,8 +559,7 @@ export class UIController {
             if (!headerEl || !contentEl || !frame) return;
             let drag = false, dX = 0, dY = 0, initL = 0, initT = 0;
             headerEl.addEventListener('pointerdown', (e) => {
-                if (e.target.closest('#dock-lock-btn') || e.target.closest('#dock-close-btn') ||
-                    e.target.closest('.dock-lock-btn') || e.target.closest('.dock-close-btn')) return;
+                if (e.target.closest('#dock-lock-btn') || e.target.closest('.dock-lock-btn')) return;
                 e.preventDefault();
                 drag = true;
                 headerEl.setPointerCapture(e.pointerId);
