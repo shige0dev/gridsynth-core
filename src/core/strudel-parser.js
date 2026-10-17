@@ -134,6 +134,12 @@ function countLeafTokens(tokens) {
             count += countLeafTokens(splitTopLevelTokens(token.slice(1, -1).trim()));
             return;
         }
+        const repMatch = token.match(/^(.*?)!(\d+)$/);
+        if (repMatch) {
+            const num = Math.max(1, Math.min(32, parseInt(repMatch[2], 10)));
+            count += countLeafTokens([repMatch[1].trim()]) * num;
+            return;
+        }
         const multMatch = token.match(/^(.*?)\*(\d+)$/);
         if (multMatch) {
             const num = Math.max(1, Math.min(32, parseInt(multMatch[2], 10)));
