@@ -1,5 +1,32 @@
 import { STRUDEL_PRESETS, renderPatternHighlightedHTML } from '../../core/strudel-parser.js';
 
+const NOTE_SEMITONES_MAP = {
+    'c': 0, 'c#': 1, 'db': 1,
+    'd': 2, 'd#': 3, 'eb': 3,
+    'e': 4,
+    'f': 5, 'f#': 6, 'gb': 6,
+    'g': 7, 'g#': 8, 'ab': 8,
+    'a': 9, 'a#': 10, 'bb': 10,
+    'b': 11
+};
+const SEMITONE_NOTES = ['c', 'c#', 'd', 'eb', 'e', 'f', 'f#', 'g', 'ab', 'a', 'bb', 'b'];
+
+function noteToMidiNum(noteStr) {
+    const match = String(noteStr).trim().toLowerCase().match(/^([a-g][#b]?)(-?\d+)?$/);
+    if (!match) return null;
+    const semi = NOTE_SEMITONES_MAP[match[1]];
+    if (semi === undefined) return null;
+    const oct = match[2] !== undefined ? parseInt(match[2], 10) : 2;
+    return (oct + 1) * 12 + semi;
+}
+
+function midiNumToNote(midi) {
+    const m = Math.max(12, Math.min(108, Math.round(midi)));
+    const oct = Math.floor(m / 12) - 1;
+    const semi = m % 12;
+    return `${SEMITONE_NOTES[semi]}${oct}`;
+}
+
 export const PAT = {
     color: 'sky',
     defaults: () => ({
@@ -66,56 +93,63 @@ export const PAT = {
         const showHints = m._showHints === true;
 
         return `
-            <div id="pat-modal-root-${uid}" class="space-y-1.5 p-0.5">
-                <!-- Top Bar: Right Controls (Extended Cycle & Gate) -->
-                <div class="flex items-center justify-end pb-1 border-b border-slate-800 gap-2">
-                    <div class="flex items-center gap-1 bg-slate-950 px-1 py-0.5 rounded border border-slate-800">
-                        <span class="text-[7.5px] text-slate-400 uppercase">CYCLE:</span>
-                        <select id="pat-beats-select-${uid}" class="bg-slate-900 text-cyan-300 font-mono text-[8px] font-bold rounded px-1 py-0.5 border border-slate-700">
-                            <option value="0.25" ${beats === 0.25 ? 'selected' : ''}>1/16 (1/4 B)</option>
-                            <option value="0.5" ${beats === 0.5 ? 'selected' : ''}>1/8 (1/2 B)</option>
-                            <option value="1" ${beats === 1 ? 'selected' : ''}>1/4 (1 BEAT)</option>
-                            <option value="2" ${beats === 2 ? 'selected' : ''}>1/2 (2 BEATS)</option>
-                            <option value="4" ${beats === 4 ? 'selected' : ''}>1 BAR (4 BEATS)</option>
-                            <option value="8" ${beats === 8 ? 'selected' : ''}>2 BARS (8 BEATS)</option>
-                            <option value="16" ${beats === 16 ? 'selected' : ''}>4 BARS (16 BEATS)</option>
-                            <option value="32" ${beats === 32 ? 'selected' : ''}>8 BARS (32 BEATS)</option>
-                        </select>
+            <div id="pat-modal-root-${uid}" class="space-y-1 p-0.5">
+                <!-- Top Row: Left Controls (CYCLE & GATE), Right Toggles (PRESET & HINT) -->
+                <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-1.5">
+                    <!-- Left: CYCLE & GATE -->
+                    <div class="flex items-center gap-1.5">
+                        <div class="flex items-center gap-1 bg-slate-950 px-1 py-0.5 rounded border border-slate-800">
+                            <span class="text-[7.5px] text-slate-400 uppercase">CYCLE:</span>
+                            <select id="pat-beats-select-${uid}" class="bg-slate-900 text-cyan-300 font-mono text-[8px] font-bold rounded px-1 py-0.5 border border-slate-700">
+                                <option value="0.25" ${beats === 0.25 ? 'selected' : ''}>1/16 (1/4 B)</option>
+                                <option value="0.5" ${beats === 0.5 ? 'selected' : ''}>1/8 (1/2 B)</option>
+                                <option value="1" ${beats === 1 ? 'selected' : ''}>1/4 (1 BEAT)</option>
+                                <option value="2" ${beats === 2 ? 'selected' : ''}>1/2 (2 BEATS)</option>
+                                <option value="4" ${beats === 4 ? 'selected' : ''}>1 BAR (4 BEATS)</option>
+                                <option value="8" ${beats === 8 ? 'selected' : ''}>2 BARS (8 BEATS)</option>
+                                <option value="16" ${beats === 16 ? 'selected' : ''}>4 BARS (16 BEATS)</option>
+                                <option value="32" ${beats === 32 ? 'selected' : ''}>8 BARS (32 BEATS)</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center gap-1 bg-slate-950 px-1 py-0.5 rounded border border-slate-800">
+                            <span class="text-[7.5px] text-slate-400 uppercase">GATE:</span>
+                            <input type="range" id="pat-gate-slider-${uid}" min="10" max="95" step="5" value="${gatePct}" class="w-12 h-1 accent-cyan-400 cursor-pointer">
+                            <span id="pat-gate-disp-${uid}" class="text-[8px] font-mono font-bold text-cyan-300 min-w-[22px] text-right">${gatePct}%</span>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-1 bg-slate-950 px-1 py-0.5 rounded border border-slate-800">
-                        <span class="text-[7.5px] text-slate-400 uppercase">GATE:</span>
-                        <input type="range" id="pat-gate-slider-${uid}" min="10" max="95" step="5" value="${gatePct}" class="w-14 h-1 accent-cyan-400 cursor-pointer">
-                        <span id="pat-gate-disp-${uid}" class="text-[8px] font-mono font-bold text-cyan-300 min-w-[24px] text-right">${gatePct}%</span>
+
+                    <!-- Right: PRESET & HINT Accordion Toggles -->
+                    <div class="flex items-center gap-1 shrink-0">
+                        <button id="pat-toggle-presets-${uid}" class="flex items-center gap-0.5 text-[7.5px] font-bold text-slate-400 hover:text-cyan-300 uppercase tracking-wider transition bg-slate-950 px-1 py-0.5 rounded border border-slate-800/80">
+                            <span class="text-[6.5px] font-mono text-cyan-400">${showPresets ? '▼' : '▶'}</span>
+                            <span>PRESET</span>
+                        </button>
+                        <button id="pat-toggle-hints-${uid}" class="flex items-center gap-0.5 text-[7.5px] font-bold text-slate-400 hover:text-cyan-300 uppercase tracking-wider transition bg-slate-950 px-1 py-0.5 rounded border border-slate-800/80">
+                            <span class="text-[6.5px] font-mono text-cyan-400">${showHints ? '▼' : '▶'}</span>
+                            <span>HINT</span>
+                        </button>
                     </div>
                 </div>
 
-                <!-- Pattern Text Input with Return Button on the Right -->
+                <!-- Second Row: Pattern Text Input with Revert [↺] and Return [↵] on the Right -->
                 <div class="flex items-center gap-1 w-full min-w-0">
                     <div class="relative flex-1 flex items-center min-w-0 h-7 bg-slate-950 border border-cyan-500/70 rounded-lg shadow-inner overflow-hidden">
                         <!-- Real Text Input (receives typing & pointer events) -->
                         <input type="text" id="pat-code-input-${uid}" value="${pat}" placeholder="e.g. [c2 ~ c2 ~] [c2 ~ c2 ~] [c2 ~ c2 ~] [c2 ~ c2 eb2]" class="w-full h-full bg-transparent font-mono text-cyan-300 px-2 py-0 text-[9.5px] font-bold tracking-normal leading-7 focus:outline-none focus:ring-1 focus:ring-cyan-400 transition relative z-10 box-border overflow-hidden">
                         <!-- Live Highlight Overlay (visible when not editing) -->
-                        <div id="pat-highlight-overlay-${uid}" class="absolute inset-0 flex items-center px-2 py-0 font-mono text-[9.5px] font-bold tracking-normal leading-7 bg-slate-950 overflow-hidden whitespace-pre pointer-events-none select-none z-20 box-border">
+                        <div id="pat-highlight-overlay-${uid}" class="absolute inset-0 flex items-center px-2 py-0 font-mono text-[9.5px] font-bold tracking-normal leading-7 bg-slate-950 overflow-hidden whitespace-pre select-none z-20 box-border">
                             <div id="pat-highlight-content-${uid}" class="text-cyan-300 whitespace-pre">
                                 ${renderPatternHighlightedHTML(pat)}
                             </div>
                         </div>
                     </div>
-                    <!-- Return / Apply Button at Right End of Input Row -->
+                    <!-- Revert [↺] Button (Placed next to Return) -->
+                    <button id="pat-revert-btn-${uid}" disabled class="w-7 h-7 shrink-0 rounded-lg text-[11px] font-bold border transition flex items-center justify-center opacity-40 pointer-events-none bg-slate-900 text-slate-600 border-slate-800 shadow-sm cursor-pointer" title="元の文字列に戻す (REVERT)">
+                        ↺
+                    </button>
+                    <!-- Return [↵] Button -->
                     <button id="pat-apply-btn-${uid}" class="w-7 h-7 shrink-0 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded-lg text-[12px] font-bold border border-slate-700 transition flex items-center justify-center cursor-pointer shadow-sm" title="流し込み (SEND / Enter)">
                         ↵
-                    </button>
-                </div>
-
-                <!-- Accordion Toggle Headers -->
-                <div class="flex items-center justify-between pt-0.5 border-t border-slate-800/80 px-0.5">
-                    <button id="pat-toggle-presets-${uid}" class="flex items-center gap-1 text-[7.5px] font-bold text-slate-400 hover:text-cyan-300 uppercase tracking-wider transition">
-                        <span class="text-[6.5px] font-mono text-cyan-400">${showPresets ? '▼' : '▶'}</span>
-                        <span>PRESETS</span>
-                    </button>
-                    <button id="pat-toggle-hints-${uid}" class="flex items-center gap-1 text-[7.5px] font-bold text-slate-400 hover:text-cyan-300 uppercase tracking-wider transition">
-                        <span class="text-[6.5px] font-mono text-cyan-400">${showHints ? '▼' : '▶'}</span>
-                        <span>HINTS</span>
                     </button>
                 </div>
 
@@ -159,6 +193,7 @@ export const PAT = {
         const input = document.getElementById(`pat-code-input-${uid}`) || root.querySelector?.('input[type="text"]');
         const overlay = document.getElementById(`pat-highlight-overlay-${uid}`);
         const overlayContent = document.getElementById(`pat-highlight-content-${uid}`);
+        const revertBtn = document.getElementById(`pat-revert-btn-${uid}`);
         const applyBtn = document.getElementById(`pat-apply-btn-${uid}`);
         const selectBeats = document.getElementById(`pat-beats-select-${uid}`);
         const gateSlider = document.getElementById(`pat-gate-slider-${uid}`);
@@ -172,6 +207,69 @@ export const PAT = {
             }
         };
 
+        const setupPitchDrag = () => {
+            if (!overlayContent) return;
+            overlayContent.querySelectorAll('[data-pat-note]').forEach(el => {
+                el.onpointerdown = (e) => {
+                    e.stopPropagation();
+                    const startY = e.clientY;
+                    const initialNote = el.dataset.patNote;
+                    const initialMidi = noteToMidiNum(initialNote);
+                    if (initialMidi === null) return;
+
+                    const pos = parseInt(el.dataset.strPos, 10);
+                    if (isNaN(pos)) return;
+
+                    let hasMoved = false;
+                    let lastMidi = initialMidi;
+                    el.setPointerCapture(e.pointerId);
+
+                    const onPointerMove = (me) => {
+                        const dy = startY - me.clientY;
+                        if (Math.abs(dy) >= 6) {
+                            hasMoved = true;
+                            const semitoneDiff = Math.trunc(dy / 10);
+                            const curMidi = Math.max(12, Math.min(108, initialMidi + semitoneDiff));
+                            if (curMidi !== lastMidi) {
+                                lastMidi = curMidi;
+                                const newNote = midiNumToNote(curMidi);
+                                const curPat = m.pattern || '';
+                                const before = curPat.slice(0, pos);
+                                const after = curPat.slice(pos + initialNote.length);
+                                const updatedPat = before + newNote + after;
+                                m.pattern = updatedPat;
+                                if (input) input.value = updatedPat;
+                                cb();
+                                if (overlayContent) {
+                                    overlayContent.innerHTML = renderPatternHighlightedHTML(updatedPat);
+                                    setupPitchDrag();
+                                }
+                            }
+                        }
+                    };
+
+                    const onPointerUp = () => {
+                        el.onpointermove = null;
+                        el.onpointerup = null;
+                        el.onpointercancel = null;
+                        try { el.releasePointerCapture(e.pointerId); } catch (_) {}
+
+                        if (!hasMoved) {
+                            setEditing(true);
+                            input?.focus();
+                        } else {
+                            updateButtonStates();
+                            cb();
+                        }
+                    };
+
+                    el.onpointermove = onPointerMove;
+                    el.onpointerup = onPointerUp;
+                    el.onpointercancel = onPointerUp;
+                };
+            });
+        };
+
         const setEditing = (editing) => {
             if (overlay) {
                 if (editing) {
@@ -182,6 +280,7 @@ export const PAT = {
                     overlay.classList.remove('hidden');
                     if (overlayContent) {
                         overlayContent.innerHTML = renderPatternHighlightedHTML(m.pattern || '');
+                        setupPitchDrag();
                     }
                     if (input) input.style.color = 'transparent';
                 }
@@ -189,12 +288,22 @@ export const PAT = {
         };
 
         setEditing(false);
+        setupPitchDrag();
 
         input?.addEventListener('scroll', syncScroll);
 
         const updateButtonStates = () => {
             const currentSaved = m.pattern || '';
             const isDirty = (input?.value ?? '') !== currentSaved;
+            if (revertBtn) {
+                if (isDirty) {
+                    revertBtn.disabled = false;
+                    revertBtn.className = 'w-7 h-7 shrink-0 rounded-lg text-[11px] font-bold border transition flex items-center justify-center cursor-pointer bg-amber-950/90 hover:bg-amber-900 text-amber-300 border-amber-500/80 shadow-sm';
+                } else {
+                    revertBtn.disabled = true;
+                    revertBtn.className = 'w-7 h-7 shrink-0 rounded-lg text-[11px] font-bold border transition flex items-center justify-center opacity-40 pointer-events-none bg-slate-900 text-slate-600 border-slate-800 shadow-sm';
+                }
+            }
             if (applyBtn) {
                 if (isDirty) {
                     applyBtn.className = 'w-7 h-7 shrink-0 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black rounded-lg text-[12px] border border-cyan-300 shadow-md shadow-cyan-500/40 transition flex items-center justify-center cursor-pointer';
@@ -228,6 +337,13 @@ export const PAT = {
             if (!isDirty) {
                 setEditing(false);
             }
+        });
+
+        revertBtn?.addEventListener('click', () => {
+            if (input) input.value = m.pattern || '';
+            setEditing(false);
+            input?.blur();
+            updateButtonStates();
         });
 
         applyBtn?.addEventListener('click', () => {

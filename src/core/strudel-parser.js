@@ -374,14 +374,17 @@ export function renderPatternHighlightedHTML(patternStr) {
         }
 
         const isRest = base === '~' || base === '-' || base === '_' || base === '';
+        const isNote = !isRest && /^[a-gA-G][#b]?-?\d*$/.test(base);
         const baseColor = isRest ? 'text-cyan-400/40' : 'text-cyan-300 font-bold';
+        const noteAttr = isNote ? ` data-pat-note="${escapePatHtml(base)}" data-str-pos="${match.index}"` : '';
+        const cursorCls = isNote ? ' cursor-ns-resize pointer-events-auto select-none hover:text-white' : '';
 
         let inner = `<span class="${baseColor}">${escapePatHtml(base)}</span>`;
         if (modifier) {
             inner += `<span class="text-amber-400 font-bold">${escapePatHtml(modifier)}</span>`;
         }
 
-        html += `<span data-tok-start="${startIdx}" data-tok-end="${endIdx}" data-pat-tok="${startIdx}" class="pat-tok">${inner}</span>`;
+        html += `<span data-tok-start="${startIdx}" data-tok-end="${endIdx}" data-pat-tok="${startIdx}"${noteAttr} class="pat-tok${cursorCls}">${inner}</span>`;
     }
 
     return html;
