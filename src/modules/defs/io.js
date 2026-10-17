@@ -1,5 +1,108 @@
 import { UIHelpers } from '../../ui/helpers.js';
 
+const drawScopeCanvas = (ctx2d, w, h, data, m, isModal = false) => {
+    ctx2d.clearRect(0, 0, w, h);
+
+    // Graticule grid
+    if (isModal) {
+        ctx2d.strokeStyle = '#1e293b';
+        ctx2d.lineWidth = 0.5;
+        // 8 horizontal divisions
+        for (let i = 1; i < 8; i++) {
+            const y = (h / 8) * i;
+            ctx2d.beginPath();
+            ctx2d.moveTo(0, y);
+            ctx2d.lineTo(w, y);
+            ctx2d.stroke();
+        }
+        // 10 vertical divisions
+        for (let i = 1; i < 10; i++) {
+            const x = (w / 10) * i;
+            ctx2d.beginPath();
+            ctx2d.moveTo(x, 0);
+            ctx2d.lineTo(x, h);
+            ctx2d.stroke();
+        }
+    }
+
+    // Center crosshair axes
+    ctx2d.strokeStyle = isModal ? '#334155' : '#1e293b';
+    ctx2d.lineWidth = isModal ? 1.0 : 0.8;
+    ctx2d.beginPath();
+    ctx2d.moveTo(0, h / 2); ctx2d.lineTo(w, h / 2);
+    ctx2d.moveTo(w / 2, 0); ctx2d.lineTo(w / 2, h);
+    ctx2d.stroke();
+
+    const vR = m.vRange || 5.0;
+    const b1 = data.buf1, b2 = data.buf2, trg = data.trigBuf;
+    if (!b1) return;
+    const len = b1.length;
+
+    if (m.displayMode === 'xy') {
+        // Lissajous XY Mode (X = in1, Y = in2)
+        ctx2d.lineWidth = isModal ? 1.8 : 1.4;
+        ctx2d.strokeStyle = '#10b981';
+        ctx2d.beginPath();
+        let lastX = w / 2, lastY = h / 2;
+        for (let i = 0; i < len; i++) {
+            const x = Math.max(1, Math.min(w - 1, (w / 2) + ((b1[i] / vR) * (w * 0.44))));
+            const y = Math.max(1, Math.min(h - 1, (h / 2) - (((b2 ? b2[i] : 0) / vR) * (h * 0.44))));
+            if (i === 0) ctx2d.moveTo(x, y);
+            else ctx2d.lineTo(x, y);
+            if (i === len - 1) {
+                lastX = x;
+                lastY = y;
+            }
+        }
+        ctx2d.stroke();
+
+        // High-luminance phosphor beam spot
+        ctx2d.save();
+        ctx2d.shadowColor = '#00ffaa';
+        ctx2d.shadowBlur = isModal ? 8 : 6;
+        ctx2d.fillStyle = '#ffffff';
+        ctx2d.beginPath();
+        ctx2d.arc(lastX, lastY, isModal ? 2.2 : 1.4, 0, Math.PI * 2);
+        ctx2d.fill();
+        ctx2d.restore();
+    } else {
+        // Dual Trace Time Domain Mode
+        let startIdx = 0;
+        if ((m.trigMode || 'auto') === 'auto' && trg) {
+            for (let i = 0; i < Math.min(trg.length - 2, 128); i++) {
+                if (trg[i] < 0 && trg[i + 1] >= 0) { startIdx = i; break; }
+            }
+        }
+        const drawPts = len - startIdx;
+        const sW = w / Math.max(1, drawPts - 1);
+        const sp = m.ySpread ?? 0.2;
+
+        // Upper terminal (in2 / b2 - Purple) - shifts UP
+        if (b2) {
+            ctx2d.lineWidth = isModal ? 1.6 : 1.2;
+            ctx2d.strokeStyle = '#c084fc';
+            ctx2d.beginPath();
+            for (let i = 0; i < drawPts; i++) {
+                const idx = startIdx + i;
+                const y = Math.max(1, Math.min(h - 1, (h / 2) - (((b2[idx] / vR) + sp) * (h * 0.44))));
+                i === 0 ? ctx2d.moveTo(i * sW, y) : ctx2d.lineTo(i * sW, y);
+            }
+            ctx2d.stroke();
+        }
+
+        // Lower terminal (in1 / b1 - Cyan) - shifts DOWN
+        ctx2d.lineWidth = isModal ? 1.8 : 1.4;
+        ctx2d.strokeStyle = '#22d3ee';
+        ctx2d.beginPath();
+        for (let i = 0; i < drawPts; i++) {
+            const idx = startIdx + i;
+            const y = Math.max(1, Math.min(h - 1, (h / 2) - (((b1[idx] / vR) - sp) * (h * 0.44))));
+            i === 0 ? ctx2d.moveTo(i * sW, y) : ctx2d.lineTo(i * sW, y);
+        }
+        ctx2d.stroke();
+    }
+};
+
 export const SCOPE = {
     color: 'cyan',
     defaults: () => ({ type: 'SCOPE', timeSpan: 0.05, vRange: 5.0, trigMode: 'auto', displayMode: 'time', ySpread: 0.2 }),
@@ -20,74 +123,17 @@ export const SCOPE = {
         </div>`,
     updateLive: (cell, data, isP, modal, m) => {
         if (!data?.buf1) return;
-        const cvs = cell.querySelector('.scope-canvas'); if (!cvs) return;
-        const ctx2d = cvs.getContext('2d'), w = cvs.width, h = cvs.height;
-        ctx2d.clearRect(0, 0, w, h);
-
-        // Center grid
-        ctx2d.strokeStyle = '#1e293b'; ctx2d.lineWidth = 0.8; ctx2d.beginPath();
-        ctx2d.moveTo(0, h / 2); ctx2d.lineTo(w, h / 2);
-        ctx2d.moveTo(w / 2, 0); ctx2d.lineTo(w / 2, h);
-        ctx2d.stroke();
-
-        const vR = m.vRange || 5.0;
-        const b1 = data.buf1, b2 = data.buf2, trg = data.trigBuf;
-        const len = b1.length;
-
-        if (m.displayMode === 'xy') {
-            // Lissajous XY Mode (X = in1, Y = in2)
-            ctx2d.lineWidth = 1.4; ctx2d.strokeStyle = '#10b981'; ctx2d.beginPath();
-            let lastX = w / 2, lastY = h / 2;
-            for (let i = 0; i < len; i++) {
-                const x = Math.max(1, Math.min(w - 1, (w / 2) + ((b1[i] / vR) * (w * 0.44))));
-                const y = Math.max(1, Math.min(h - 1, (h / 2) - ((b2[i] / vR) * (h * 0.44))));
-                if (i === 0) ctx2d.moveTo(x, y);
-                else ctx2d.lineTo(x, y);
-                if (i === len - 1) {
-                    lastX = x;
-                    lastY = y;
-                }
-            }
-            ctx2d.stroke();
-
-            // High-luminance, high-saturation phosphor beam spot
-            ctx2d.save();
-            ctx2d.shadowColor = '#00ffaa';
-            ctx2d.shadowBlur = 6;
-            ctx2d.fillStyle = '#ffffff';
-            ctx2d.beginPath();
-            ctx2d.arc(lastX, lastY, 1.4, 0, Math.PI * 2);
-            ctx2d.fill();
-            ctx2d.restore();
-        } else {
-            // Dual Trace Time Domain Mode
-            let startIdx = 0;
-            if ((m.trigMode || 'auto') === 'auto' && trg) {
-                for (let i = 0; i < Math.min(trg.length - 2, 128); i++) {
-                    if (trg[i] < 0 && trg[i + 1] >= 0) { startIdx = i; break; }
-                }
-            }
-            const drawPts = len - startIdx;
-            const sW = w / Math.max(1, drawPts - 1);
-            const sp = m.ySpread ?? 0.2;
-
-            // Upper terminal (in2 / b2) - shifts UP
-            ctx2d.lineWidth = 1.2; ctx2d.strokeStyle = '#c084fc'; ctx2d.beginPath();
-            for (let i = 0; i < drawPts; i++) {
-                const idx = startIdx + i;
-                const y = Math.max(1, Math.min(h - 1, (h / 2) - (((b2[idx] / vR) + sp) * (h * 0.44))));
-                i === 0 ? ctx2d.moveTo(i * sW, y) : ctx2d.lineTo(i * sW, y);
-            }
-            ctx2d.stroke();
-
-            // Lower terminal (in1 / b1) - shifts DOWN
-            ctx2d.lineWidth = 1.4; ctx2d.strokeStyle = '#22d3ee'; ctx2d.beginPath();
-            for (let i = 0; i < drawPts; i++) {
-                const idx = startIdx + i;
-                const y = Math.max(1, Math.min(h - 1, (h / 2) - (((b1[idx] / vR) - sp) * (h * 0.44))));
-                i === 0 ? ctx2d.moveTo(i * sW, y) : ctx2d.lineTo(i * sW, y);
-            }
-            ctx2d.stroke();
+        // 1. Draw cell mini-canvas
+        const cvs = cell.querySelector('.scope-canvas');
+        if (cvs) {
+            const ctx2d = cvs.getContext('2d');
+            drawScopeCanvas(ctx2d, cvs.width, cvs.height, data, m, false);
+        }
+        // 2. Draw modal/dock expanded canvas if open
+        const modalCvs = modal?.querySelector('#scope-modal-canvas');
+        if (modalCvs) {
+            const mCtx = modalCvs.getContext('2d');
+            drawScopeCanvas(mCtx, modalCvs.width, modalCvs.height, data, m, true);
         }
     },
     renderModal: (m) => {
@@ -99,13 +145,31 @@ export const SCOPE = {
         const curSpread = m.ySpread ?? 0.2;
         return `
             <div class="space-y-1.5 p-0.5">
+                <!-- Top Controls Bar -->
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800">
                     <div class="flex items-center gap-1">
-                        <button id="scope-mode-time" class="px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${!isLiss ? 'bg-cyan-600 text-white border-cyan-500' : 'bg-slate-800 text-slate-400 border-slate-700'}">DUAL</button>
-                        <button id="scope-mode-liss" class="px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${isLiss ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm shadow-emerald-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">LISS (XY)</button>
+                        <button id="scope-mode-time" class="px-2.5 py-0.5 rounded text-[8px] font-bold border transition-colors ${!isLiss ? 'bg-cyan-600 text-white border-cyan-500 shadow-sm shadow-cyan-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">DUAL (CH1+CH2)</button>
+                        <button id="scope-mode-liss" class="px-2.5 py-0.5 rounded text-[8px] font-bold border transition-colors ${isLiss ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm shadow-emerald-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">LISS (XY)</button>
                     </div>
-                    <button id="scope-trig-btn" class="px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${m.trigMode === 'free' ? 'bg-amber-600 text-white border-amber-500' : 'bg-cyan-600 text-white border-cyan-500'}">TRIG: ${(m.trigMode || 'auto').toUpperCase()}</button>
+                    <div class="flex items-center gap-2">
+                        <button id="scope-trig-btn" class="px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${m.trigMode === 'free' ? 'bg-amber-600 text-white border-amber-500' : 'bg-cyan-600 text-white border-cyan-500'}">TRIG: ${(m.trigMode || 'auto').toUpperCase()}</button>
+                        <span class="text-[7.5px] font-mono text-slate-400 flex items-center gap-2">
+                            <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>CH1(in1)</span>
+                            <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>CH2(in2)</span>
+                        </span>
+                    </div>
                 </div>
+
+                <!-- Expanded Live Oscilloscope Display (Full-Width) -->
+                <div class="bg-slate-950 p-2 rounded-xl border border-slate-800 flex flex-col gap-1">
+                    <div class="flex items-center justify-between px-1">
+                        <span class="text-[7.5px] font-bold text-cyan-400 uppercase tracking-wider font-mono">${isLiss ? 'XY LISSAJOUS PHOSPHOR DISPLAY' : 'DUAL TRACE OSCILLOSCOPE'}</span>
+                        <span class="text-[7px] font-mono text-slate-500">REALTIME ANALYSIS</span>
+                    </div>
+                    <canvas id="scope-modal-canvas" class="w-full h-32 block rounded bg-slate-950" width="360" height="130"></canvas>
+                </div>
+
+                <!-- Sliders Bar -->
                 <div class="flex items-center justify-around py-1 bg-slate-950/60 p-1 rounded-xl border border-slate-800 gap-1">
                     ${UIHelpers.createVSliderHTML('scope-time-step', 'TIME', 0, T.length - 1, 1, tIdx, 'SPAN', 'cyan', false, fmtT(T[tIdx]))}
                     ${UIHelpers.createVSliderHTML('scope-volt', 'SCALE', 0.5, 10.0, 0.5, m.vRange || 5.0, 'v', 'cyan')}
@@ -591,10 +655,10 @@ export const SPEC = {
             drawSpectrumCanvas(ctx, cvs.width, cvs.height, cellRes.bands, mode, false);
         }
 
-        // 2. Draw modal canvas if modal is open (48 bands, 40Hz〜6.4kHz)
+        // 2. Draw modal canvas if modal is open (64 bands, 40Hz〜6.4kHz)
         const modalCvs = modal?.querySelector('#spec-modal-canvas');
         if (modalCvs) {
-            const modalRes = extractBands(freqs, 48, sampleRate, 40, 6400);
+            const modalRes = extractBands(freqs, 64, sampleRate, 40, 6400);
             const mCtx = modalCvs.getContext('2d');
             drawSpectrumCanvas(mCtx, modalCvs.width, modalCvs.height, modalRes.bands, mode, true);
 
@@ -635,13 +699,13 @@ export const SPEC = {
                     </div>
                 </div>
 
-                <!-- Expanded Modal Spectrum Display -->
-                <div class="bg-slate-950/80 p-2 rounded-xl border border-slate-800 flex flex-col gap-1">
+                <!-- Expanded Modal Spectrum Display (Full-Width) -->
+                <div class="bg-slate-950 p-2 rounded-xl border border-slate-800 flex flex-col gap-1">
                     <div class="flex items-center justify-between px-1">
-                        <span class="text-[7.5px] font-bold text-teal-400 uppercase tracking-wider">SPECTRUM (40Hz〜6.4kHz)</span>
+                        <span class="text-[7.5px] font-bold text-teal-400 uppercase tracking-wider font-mono">REALTIME SPECTRUM (40Hz〜6.4kHz)</span>
                         <span id="spec-peak-disp" class="text-[7.5px] font-mono font-bold text-yellow-300">PEAK: ---</span>
                     </div>
-                    <canvas id="spec-modal-canvas" class="w-full h-28 block rounded" width="220" height="110"></canvas>
+                    <canvas id="spec-modal-canvas" class="w-full h-32 block rounded bg-slate-950" width="360" height="130"></canvas>
                     <div class="flex items-center justify-between text-[7px] font-mono text-slate-500 px-1 border-t border-slate-800/80 pt-0.5">
                         <span>40Hz</span>
                         <span>150Hz</span>

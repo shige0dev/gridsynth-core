@@ -136,7 +136,7 @@ export class ModalManager {
     openSettingsModal(mId) {
         const m = this.ui.modules[mId];
         if (!m || m.type === 'SUB_IO') return;
-        if (['KEY', 'SEQ8', 'SEQ16', 'PAT'].includes(m.type)) {
+        if (['KEY', 'SEQ8', 'SEQ16', 'PAT', 'SPEC', 'SCOPE'].includes(m.type)) {
             this.openDockModal(mId);
             return;
         }
@@ -155,8 +155,20 @@ export class ModalManager {
         const icon = document.getElementById('dock-icon');
         const frame = document.getElementById('phone-frame');
 
-        if (title) title.textContent = m.type === 'KEY' ? 'KEYBOARD' : (m.type === 'PAT' ? 'STRUDEL PATTERN' : (m.type === 'SEQ16' ? '16-STEP SEQUENCER' : '8-STEP SEQUENCER'));
-        if (icon) icon.setAttribute('data-lucide', m.type === 'KEY' ? 'music' : (m.type === 'PAT' ? 'code' : 'sliders'));
+        if (title) {
+            title.textContent = m.type === 'KEY' ? 'KEYBOARD' : 
+                (m.type === 'PAT' ? 'STRUDEL PATTERN' : 
+                (m.type === 'SEQ16' ? '16-STEP SEQUENCER' : 
+                (m.type === 'SEQ8' ? '8-STEP SEQUENCER' : 
+                (m.type === 'SPEC' ? 'SPECTRUM ANALYZER' : 
+                (m.type === 'SCOPE' ? 'OSCILLOSCOPE' : m.type)))));
+        }
+        if (icon) {
+            icon.setAttribute('data-lucide', m.type === 'KEY' ? 'music' : 
+                (m.type === 'PAT' ? 'code' : 
+                (m.type === 'SPEC' ? 'bar-chart-2' : 
+                (m.type === 'SCOPE' ? 'activity' : 'sliders'))));
+        }
         modal?.classList.remove('hidden');
         this.reRenderDockModal();
         if (typeof lucide !== 'undefined') lucide.createIcons();
