@@ -620,7 +620,8 @@ const extractBands = (freqs, numBands, sampleRate = 48000, fMin = 40, fMax = 640
                 maxK = k;
             }
         }
-        bands[b] = Math.max(0, Math.min(1, max / 255.0));
+        const norm = Math.max(0, Math.min(1, max / 255.0));
+        bands[b] = norm * norm;
 
         if (max > peakVal) {
             peakVal = max;
