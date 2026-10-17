@@ -24,12 +24,10 @@ export const SCALE = {
     }),
     ports: () => ({
         in: [
-            { port: 'cv_in', color: 'bg-yellow-400' },
-            { port: 'trig_in', color: 'bg-rose-500' }
+            { port: 'cv_in', color: 'bg-yellow-400' }
         ],
         out: [
-            { port: 'cv_out', color: 'bg-yellow-400' },
-            { port: 'gate_out', color: 'bg-orange-500' }
+            { port: 'cv_out', color: 'bg-yellow-400' }
         ]
     }),
     renderGrid: (m) => {
@@ -115,8 +113,6 @@ export const SCALE = {
         const mask = m.mask || SCALE_PRESETS[scaleKey] || SCALE_PRESETS['PENT.MIN'];
         const presetKeys = Object.keys(SCALE_PRESETS);
 
-        const isTrigPatched = ctx.patched?.has('trig_in');
-
         return `
             <div class="flex flex-col gap-2 p-1 select-none">
                 <!-- Top Row: Root & Scale Preset -->
@@ -175,8 +171,8 @@ export const SCALE = {
                         <span id="scale-modal-live-note" class="text-yellow-300 font-bold tracking-wide">—</span>
                     </div>
                     <div class="flex items-center gap-1.5">
-                        <span class="text-[7.5px] px-1 py-0.2 rounded font-bold ${isTrigPatched ? 'bg-rose-950/80 text-rose-300 border border-rose-500/60' : 'bg-cyan-950/80 text-cyan-300 border border-cyan-500/60'}">
-                            ${isTrigPatched ? 'TRIG LATCH' : 'AUTO / CONT'}
+                        <span class="text-[7.5px] px-1.5 py-0.5 rounded font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-500/60">
+                            0〜1V ➔ C1〜C2
                         </span>
                     </div>
                 </div>
@@ -233,3 +229,4 @@ export const SCALE = {
 };
 
 export const scaleDefs = { SCALE };
+
