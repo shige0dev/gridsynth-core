@@ -266,11 +266,11 @@ export class ModalManager {
                     <h3 class="dock-dialog-title text-[10px] font-bold text-cyan-300 uppercase tracking-wider">${titleText}</h3>
                 </div>
                 <div class="flex items-center gap-1">
-                    <button class="dock-lock-btn h-5 px-1.5 rounded text-[8.5px] font-bold flex items-center gap-1 border transition-colors bg-slate-800 text-slate-400 border-slate-700" title="ロック/ピン留め">
+                    <button class="dock-lock-btn h-5 px-1.5 rounded text-[8.5px] font-bold flex items-center gap-1 border transition-colors bg-slate-800 text-slate-400 border-slate-700 cursor-pointer" title="ロック/ピン留め">
                         <i data-lucide="pin" class="w-2.5 h-2.5 pointer-events-none"></i>
                         <span class="pointer-events-none">LOCK</span>
                     </button>
-                    <button class="dock-close-btn w-5 h-5 rounded flex items-center justify-center text-slate-400 hover:text-white bg-slate-800/80 transition" title="閉じる">
+                    <button class="dock-close-btn w-5 h-5 rounded flex items-center justify-center text-slate-400 hover:text-red-300 hover:bg-red-950/80 border border-slate-700/60 hover:border-red-500/60 transition active:scale-95 cursor-pointer" title="中止" aria-label="中止">
                         <i data-lucide="x" class="w-3.5 h-3.5 pointer-events-none"></i>
                     </button>
                 </div>

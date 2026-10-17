@@ -545,7 +545,8 @@ export class UIController {
             if (!headerEl || !contentEl || !frame) return;
             let drag = false, dX = 0, dY = 0, initL = 0, initT = 0;
             headerEl.addEventListener('pointerdown', (e) => {
-                if (e.target.closest('#dock-lock-btn') || e.target.closest('#dock-close-btn')) return;
+                if (e.target.closest('#dock-lock-btn') || e.target.closest('#dock-close-btn') ||
+                    e.target.closest('.dock-lock-btn') || e.target.closest('.dock-close-btn')) return;
                 e.preventDefault();
                 drag = true;
                 headerEl.setPointerCapture(e.pointerId);
