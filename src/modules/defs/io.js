@@ -608,18 +608,22 @@ const extractBands = (freqs, numBands = 84, sampleRate = 48000) => {
     let peakVal = 0, peakFreq = 0;
 
     // 1オクターブ12セミトーン（半音単位）、全84バンド（7オクターブ: 55Hz〜7040Hz）
-    // A4 (440Hz) は bRef = 36 (12 * 3)
+    // 55Hz (A1) を起点(b=0)とし、各半音の中心周波数は 55 * 2^(b / 12)
     const bandsPerOct = 12;
-    const bRef = 36;
+    const f0 = 55;
 
     for (let b = 0; b < numBands; b++) {
-        const fStart = 440 * Math.pow(2, (b - 0.5 - bRef) / bandsPerOct);
-        const fEnd = 440 * Math.pow(2, (b + 0.5 - bRef) / bandsPerOct);
-        const kStart = Math.max(0, Math.floor(fStart * fftSize / sampleRate));
-        const kEnd = Math.min(freqs.length, Math.max(kStart + 1, Math.ceil(fEnd * fftSize / sampleRate)));
+        const fCenter = f0 * Math.pow(2, b / bandsPerOct);
+        const fStart = f0 * Math.pow(2, (b - 0.5) / bandsPerOct);
+        const fEnd = f0 * Math.pow(2, (b + 0.5) / bandsPerOct);
+
+        // 中心周波数の直近ビンを確実に含める（低音域でのビン境界こぼれ落ち防止）
+        const kCenter = Math.round(fCenter * fftSize / sampleRate);
+        const kStart = Math.max(0, Math.min(kCenter, Math.floor(fStart * fftSize / sampleRate)));
+        const kEnd = Math.min(freqs.length, Math.max(kCenter + 1, Math.ceil(fEnd * fftSize / sampleRate)));
 
         let max = 0;
-        let maxK = kStart;
+        let maxK = kCenter;
         for (let k = kStart; k < kEnd; k++) {
             if (freqs[k] > max) {
                 max = freqs[k];
@@ -674,7 +678,6 @@ const drawSpectrumCanvas = (ctx, w, h, bands, mode, isModal) => {
 
     const n = bands.length;
     const bandsPerOct = 12;
-    const bRef = 36;
 
     // 1. Horizontal guidelines (-12dB, -24dB, -48dB)
     ctx.strokeStyle = '#1e293b';
@@ -703,7 +706,7 @@ const drawSpectrumCanvas = (ctx, w, h, bands, mode, isModal) => {
     ];
 
     octFreqs.forEach(item => {
-        const b = bRef + bandsPerOct * Math.log2(item.f / 440);
+        const b = bandsPerOct * Math.log2(item.f / 55);
         if (b >= 0 && b <= n) {
             let x;
             if (mode === 'bar') {
