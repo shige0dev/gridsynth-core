@@ -94,13 +94,25 @@ export const PAT = {
 
         return `
             <div id="pat-modal-root-${uid}" class="space-y-1 p-0.5">
-                <!-- Top Row: Left Controls (CYCLE & GATE), Right Toggles (PRESET & HINT) -->
-                <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-1.5">
-                    <!-- Left: CYCLE & GATE -->
-                    <div class="flex items-center gap-1.5">
-                        <div class="flex items-center gap-1 bg-slate-950 px-1 py-0.5 rounded border border-slate-800">
-                            <span class="text-[7.5px] text-slate-400 uppercase">CYCLE:</span>
-                            <select id="pat-beats-select-${uid}" class="bg-slate-900 text-cyan-300 font-mono text-[8px] font-bold rounded px-1 py-0.5 border border-slate-700">
+                <!-- Top Row: Left (PRESET & HINT), Middle (CYCLE & GATE), Right Small Actions (↺ & ↵) -->
+                <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-1">
+                    <!-- Left: PRESET & HINT Toggles -->
+                    <div class="flex items-center gap-1 shrink-0">
+                        <button id="pat-toggle-presets-${uid}" class="flex items-center gap-0.5 text-[7px] font-bold text-slate-400 hover:text-cyan-300 uppercase tracking-wider transition bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800/80">
+                            <span class="text-[6px] font-mono text-cyan-400">${showPresets ? '▼' : '▶'}</span>
+                            <span>PRESET</span>
+                        </button>
+                        <button id="pat-toggle-hints-${uid}" class="flex items-center gap-0.5 text-[7px] font-bold text-slate-400 hover:text-cyan-300 uppercase tracking-wider transition bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800/80">
+                            <span class="text-[6px] font-mono text-cyan-400">${showHints ? '▼' : '▶'}</span>
+                            <span>HINT</span>
+                        </button>
+                    </div>
+
+                    <!-- Middle: CYCLE & GATE -->
+                    <div class="flex items-center gap-1 min-w-0">
+                        <div class="flex items-center gap-0.5 bg-slate-950 px-1 py-0.5 rounded border border-slate-800">
+                            <span class="text-[7px] text-slate-400 uppercase">CYCLE:</span>
+                            <select id="pat-beats-select-${uid}" class="bg-slate-900 text-cyan-300 font-mono text-[7.5px] font-bold rounded px-0.5 py-0.5 border border-slate-700">
                                 <option value="0.25" ${beats === 0.25 ? 'selected' : ''}>1/16 (1/4 B)</option>
                                 <option value="0.5" ${beats === 0.5 ? 'selected' : ''}>1/8 (1/2 B)</option>
                                 <option value="1" ${beats === 1 ? 'selected' : ''}>1/4 (1 BEAT)</option>
@@ -111,28 +123,32 @@ export const PAT = {
                                 <option value="32" ${beats === 32 ? 'selected' : ''}>8 BARS (32 BEATS)</option>
                             </select>
                         </div>
-                        <div class="flex items-center gap-1 bg-slate-950 px-1 py-0.5 rounded border border-slate-800">
-                            <span class="text-[7.5px] text-slate-400 uppercase">GATE:</span>
-                            <input type="range" id="pat-gate-slider-${uid}" min="10" max="95" step="5" value="${gatePct}" class="w-12 h-1 accent-cyan-400 cursor-pointer">
-                            <span id="pat-gate-disp-${uid}" class="text-[8px] font-mono font-bold text-cyan-300 min-w-[22px] text-right">${gatePct}%</span>
+                        <div class="flex items-center gap-0.5 bg-slate-950 px-1 py-0.5 rounded border border-slate-800">
+                            <span class="text-[7px] text-slate-400 uppercase">GATE:</span>
+                            <input type="range" id="pat-gate-slider-${uid}" min="10" max="95" step="5" value="${gatePct}" class="w-10 h-1 accent-cyan-400 cursor-pointer">
+                            <span id="pat-gate-disp-${uid}" class="text-[7.5px] font-mono font-bold text-cyan-300 min-w-[20px] text-right">${gatePct}%</span>
                         </div>
                     </div>
 
-                    <!-- Right: PRESET & HINT Accordion Toggles -->
+                    <!-- Right: Small Action Buttons [ ↺ ] and [ ↵ ] -->
                     <div class="flex items-center gap-1 shrink-0">
-                        <button id="pat-toggle-presets-${uid}" class="flex items-center gap-0.5 text-[7.5px] font-bold text-slate-400 hover:text-cyan-300 uppercase tracking-wider transition bg-slate-950 px-1 py-0.5 rounded border border-slate-800/80">
-                            <span class="text-[6.5px] font-mono text-cyan-400">${showPresets ? '▼' : '▶'}</span>
-                            <span>PRESET</span>
+                        <button id="pat-revert-btn-${uid}" disabled class="w-6 h-5 shrink-0 rounded text-[9.5px] font-bold border transition flex items-center justify-center opacity-40 pointer-events-none bg-slate-900 text-slate-600 border-slate-800 shadow-sm cursor-pointer" title="元の文字列に戻す (REVERT)">
+                            ↺
                         </button>
-                        <button id="pat-toggle-hints-${uid}" class="flex items-center gap-0.5 text-[7.5px] font-bold text-slate-400 hover:text-cyan-300 uppercase tracking-wider transition bg-slate-950 px-1 py-0.5 rounded border border-slate-800/80">
-                            <span class="text-[6.5px] font-mono text-cyan-400">${showHints ? '▼' : '▶'}</span>
-                            <span>HINT</span>
+                        <button id="pat-apply-btn-${uid}" class="w-6 h-5 shrink-0 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded text-[10px] font-bold border border-slate-700 transition flex items-center justify-center cursor-pointer shadow-sm" title="流し込み (SEND / Enter)">
+                            ↵
                         </button>
                     </div>
                 </div>
 
-                <!-- Second Row: Pattern Text Input with Revert [↺] and Return [↵] on the Right -->
+                <!-- Second Row: Scroll Left [ ◀ ], Maximized Text Display & Input, Scroll Right [ ▶ ] -->
                 <div class="flex items-center gap-1 w-full min-w-0">
+                    <!-- Scroll Left Button -->
+                    <button id="pat-scroll-left-${uid}" class="w-5 h-7 shrink-0 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 rounded text-[8px] font-bold border border-slate-800 flex items-center justify-center transition cursor-pointer select-none active:bg-cyan-950/80 active:text-cyan-200" title="左へスクロール">
+                        ◀
+                    </button>
+
+                    <!-- Real Text Input with Full Width Highlight -->
                     <div class="relative flex-1 flex items-center min-w-0 h-7 bg-slate-950 border border-cyan-500/70 rounded-lg shadow-inner overflow-hidden">
                         <!-- Real Text Input (receives typing & pointer events) -->
                         <input type="text" id="pat-code-input-${uid}" value="${pat}" placeholder="e.g. [c2 ~ c2 ~] [c2 ~ c2 ~] [c2 ~ c2 ~] [c2 ~ c2 eb2]" class="w-full h-full bg-transparent font-mono text-cyan-300 px-2 py-0 text-[9.5px] font-bold tracking-normal leading-7 focus:outline-none focus:ring-1 focus:ring-cyan-400 transition relative z-10 box-border overflow-hidden">
@@ -143,13 +159,10 @@ export const PAT = {
                             </div>
                         </div>
                     </div>
-                    <!-- Revert [↺] Button (Placed next to Return) -->
-                    <button id="pat-revert-btn-${uid}" disabled class="w-7 h-7 shrink-0 rounded-lg text-[11px] font-bold border transition flex items-center justify-center opacity-40 pointer-events-none bg-slate-900 text-slate-600 border-slate-800 shadow-sm cursor-pointer" title="元の文字列に戻す (REVERT)">
-                        ↺
-                    </button>
-                    <!-- Return [↵] Button -->
-                    <button id="pat-apply-btn-${uid}" class="w-7 h-7 shrink-0 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded-lg text-[12px] font-bold border border-slate-700 transition flex items-center justify-center cursor-pointer shadow-sm" title="流し込み (SEND / Enter)">
-                        ↵
+
+                    <!-- Scroll Right Button -->
+                    <button id="pat-scroll-right-${uid}" class="w-5 h-7 shrink-0 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 rounded text-[8px] font-bold border border-slate-800 flex items-center justify-center transition cursor-pointer select-none active:bg-cyan-950/80 active:text-cyan-200" title="右へスクロール">
+                        ▶
                     </button>
                 </div>
 
@@ -193,6 +206,8 @@ export const PAT = {
         const overlayContent = document.getElementById(`pat-highlight-content-${uid}`);
         const revertBtn = document.getElementById(`pat-revert-btn-${uid}`);
         const applyBtn = document.getElementById(`pat-apply-btn-${uid}`);
+        const scrollLeftBtn = document.getElementById(`pat-scroll-left-${uid}`);
+        const scrollRightBtn = document.getElementById(`pat-scroll-right-${uid}`);
         const selectBeats = document.getElementById(`pat-beats-select-${uid}`);
         const gateSlider = document.getElementById(`pat-gate-slider-${uid}`);
         const gateDisp = document.getElementById(`pat-gate-disp-${uid}`);
@@ -204,6 +219,42 @@ export const PAT = {
                 overlay.scrollLeft = input.scrollLeft;
             }
         };
+
+        const doScroll = (delta) => {
+            if (!input) return;
+            input.scrollLeft += delta;
+            syncScroll();
+        };
+
+        const setupScrollBtn = (btn, delta) => {
+            if (!btn) return;
+            let timer = null;
+            let interval = null;
+
+            const startScroll = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                doScroll(delta);
+                timer = setTimeout(() => {
+                    interval = setInterval(() => {
+                        doScroll(delta);
+                    }, 50);
+                }, 250);
+            };
+
+            const stopScroll = () => {
+                if (timer) { clearTimeout(timer); timer = null; }
+                if (interval) { clearInterval(interval); interval = null; }
+            };
+
+            btn.addEventListener('pointerdown', startScroll);
+            btn.addEventListener('pointerup', stopScroll);
+            btn.addEventListener('pointercancel', stopScroll);
+            btn.addEventListener('pointerleave', stopScroll);
+        };
+
+        setupScrollBtn(scrollLeftBtn, -60);
+        setupScrollBtn(scrollRightBtn, 60);
 
         const setupPitchDrag = () => {
             if (!overlayContent) return;
@@ -302,17 +353,17 @@ export const PAT = {
             if (revertBtn) {
                 if (isDirty) {
                     revertBtn.disabled = false;
-                    revertBtn.className = 'w-7 h-7 shrink-0 rounded-lg text-[11px] font-bold border transition flex items-center justify-center cursor-pointer bg-amber-950/90 hover:bg-amber-900 text-amber-300 border-amber-500/80 shadow-sm';
+                    revertBtn.className = 'w-6 h-5 shrink-0 rounded text-[9.5px] font-bold border transition flex items-center justify-center cursor-pointer bg-amber-950/90 hover:bg-amber-900 text-amber-300 border-amber-500/80 shadow-sm';
                 } else {
                     revertBtn.disabled = true;
-                    revertBtn.className = 'w-7 h-7 shrink-0 rounded-lg text-[11px] font-bold border transition flex items-center justify-center opacity-40 pointer-events-none bg-slate-900 text-slate-600 border-slate-800 shadow-sm';
+                    revertBtn.className = 'w-6 h-5 shrink-0 rounded text-[9.5px] font-bold border transition flex items-center justify-center opacity-40 pointer-events-none bg-slate-900 text-slate-600 border-slate-800 shadow-sm';
                 }
             }
             if (applyBtn) {
                 if (isDirty) {
-                    applyBtn.className = 'w-7 h-7 shrink-0 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black rounded-lg text-[12px] border border-cyan-300 shadow-md shadow-cyan-500/40 transition flex items-center justify-center cursor-pointer';
+                    applyBtn.className = 'w-6 h-5 shrink-0 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black rounded text-[10px] border border-cyan-300 shadow-md shadow-cyan-500/40 transition flex items-center justify-center cursor-pointer';
                 } else {
-                    applyBtn.className = 'w-7 h-7 shrink-0 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded-lg text-[12px] font-bold border border-slate-700 transition flex items-center justify-center cursor-pointer shadow-sm';
+                    applyBtn.className = 'w-6 h-5 shrink-0 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded text-[10px] font-bold border border-slate-700 transition flex items-center justify-center cursor-pointer shadow-sm';
                 }
             }
         };
