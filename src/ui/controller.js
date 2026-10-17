@@ -585,6 +585,41 @@ export class UIController {
             return titleEl?.textContent === 'ADD MODULE';
         });
 
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        if (fullscreenBtn) {
+            fullscreenBtn.addEventListener('click', async () => {
+                const root = document.documentElement;
+                const isFs = !!document.fullscreenElement || !!document.webkitFullscreenElement;
+                if (!isFs) {
+                    if (root.requestFullscreen) {
+                        try { await root.requestFullscreen(); this.showToast('FULLSCREEN'); } catch (_) {}
+                    } else if (root.webkitRequestFullscreen) {
+                        try { root.webkitRequestFullscreen(); this.showToast('FULLSCREEN'); } catch (_) {}
+                    } else {
+                        this.showToast('iOS: 共有メニューの「ホーム画面に追加」で全画面化できます', 3000);
+                    }
+                } else {
+                    if (document.exitFullscreen) {
+                        try { await document.exitFullscreen(); this.showToast('WINDOW MODE'); } catch (_) {}
+                    } else if (document.webkitExitFullscreen) {
+                        try { document.webkitExitFullscreen(); this.showToast('WINDOW MODE'); } catch (_) {}
+                    }
+                }
+            });
+
+            const onFsChange = () => {
+                const isFs = !!document.fullscreenElement || !!document.webkitFullscreenElement;
+                const icon = document.getElementById('fullscreen-icon');
+                if (icon) {
+                    icon.setAttribute('data-lucide', isFs ? 'minimize' : 'maximize');
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                }
+                setTimeout(() => this.renderCables(), 100);
+            };
+            document.addEventListener('fullscreenchange', onFsChange);
+            document.addEventListener('webkitfullscreenchange', onFsChange);
+        }
+
         document.getElementById('cable-opacity-btn')?.addEventListener('click', () => {
             const steps = [1.0, 0.2];
             let idx = steps.findIndex(s => Math.abs(s - this.cableOpacity) < 0.05);
