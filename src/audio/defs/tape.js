@@ -47,9 +47,15 @@ export const TAPE = {
         const outWave = ctx.createGain();
         w.connect(outWave, 0, 0);
 
+        // Preview direct monitor gain (direct to speakers destination, bypassing wave_out)
+        const previewGain = ctx.createGain();
+        previewGain.gain.value = 0.0;
+        w.connect(previewGain, 0, 0);
+        previewGain.connect(ctx.destination);
+
         const an = ctx.createAnalyser();
         an.fftSize = 256;
-        outWave.connect(an);
+        w.connect(an, 0, 0);
 
         if (eng?.silentSink) {
             outWave.connect(eng.silentSink);
@@ -58,16 +64,28 @@ export const TAPE = {
         const buf = new Float32Array(an.frequencyBinCount);
         let curPlayhead = 0.0;
         let isPlaying = false;
+        let isTestPlaying = false;
+
+        const resetGains = () => {
+            isTestPlaying = false;
+            try {
+                previewGain.gain.setValueAtTime(0.0, ctx.currentTime);
+                outWave.gain.setValueAtTime(1.0, ctx.currentTime);
+            } catch (_) {}
+        };
 
         w.port.onmessage = (e) => {
             if (e.data?.type === 'STATE') {
                 curPlayhead = e.data.pos ?? 0.0;
                 isPlaying = Boolean(e.data.isPlaying);
+                if (!isPlaying && isTestPlaying) {
+                    resetGains();
+                }
             }
         };
 
         return {
-            nodes: { w, gateIn, cvStartIn, cvEndIn, cvSpeedIn, outWave, an },
+            nodes: { w, gateIn, cvStartIn, cvEndIn, cvSpeedIn, outWave, previewGain, an },
             inputs: {
                 gate_in: gateIn,
                 trig_in: gateIn,
@@ -86,15 +104,27 @@ export const TAPE = {
                 sendBufferToWorklet(float32Buf, sRate);
             },
             trigger: () => {
+                resetGains();
                 w.port.postMessage({ type: 'TRIGGER' });
             },
+            testPlay: () => {
+                isTestPlaying = true;
+                try {
+                    outWave.gain.setValueAtTime(0.0, ctx.currentTime);
+                    previewGain.gain.setValueAtTime(0.7, ctx.currentTime);
+                } catch (_) {}
+                w.port.postMessage({ type: 'PLAY' });
+            },
             play: () => {
+                resetGains();
                 w.port.postMessage({ type: 'PLAY' });
             },
             stop: () => {
+                resetGains();
                 w.port.postMessage({ type: 'STOP' });
             },
             reset: () => {
+                resetGains();
                 curPlayhead = 0.0;
                 isPlaying = false;
                 w.port.postMessage({ type: 'RESET' });

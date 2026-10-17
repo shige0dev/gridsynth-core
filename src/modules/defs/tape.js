@@ -191,51 +191,26 @@ export const TAPE = {
                     </div>
                 </div>
 
-                <!-- Playback Control (Trigger Play & Loop Toggle) -->
-                <div class="flex items-center justify-between px-2 py-1 bg-slate-950/70 rounded-lg border border-slate-800 text-[8.5px]">
-                    <div class="flex items-center gap-2">
-                        <button id="tape-play-btn" class="px-2.5 py-1 rounded bg-cyan-600 hover:bg-cyan-500 text-white font-bold transition flex items-center gap-1 shadow-sm text-[8.5px] active:scale-95 cursor-pointer">
-                            <i data-lucide="play" class="w-3 h-3"></i>
-                            <span id="tape-play-text">TRIG PLAY</span>
+                <!-- Row 1: TEST PLAY Button, LOOP Button, and SPEED Slider -->
+                <div class="flex items-center justify-between gap-2.5 px-2.5 py-1.5 bg-slate-950/70 rounded-xl border border-slate-800 text-[8.5px]">
+                    <!-- Buttons: TEST PLAY & LOOP -->
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <button id="tape-play-btn" class="h-6 px-2 rounded bg-cyan-600 hover:bg-cyan-500 text-white font-bold transition flex items-center gap-1 shadow-sm text-[8px] active:scale-95 cursor-pointer shrink-0">
+                            <i data-lucide="play" class="w-2.5 h-2.5"></i>
+                            <span id="tape-play-text">TEST PLAY</span>
                         </button>
-                        <button id="tape-loop-btn" class="px-2 py-1 rounded border ${loopActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition text-[8.5px] cursor-pointer">
+                        <button id="tape-loop-btn" class="h-6 px-2 rounded border ${loopActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition text-[8px] cursor-pointer shrink-0">
                             LOOP: <span id="tape-loop-text">${loopActive ? 'ON' : 'OFF'}</span>
                         </button>
                     </div>
-                    <div class="text-[7.5px] font-mono text-slate-500 font-bold select-none">
-                        16s SAMPLER
-                    </div>
-                </div>
 
-                <!-- Time-axis Horizontal Sliders: START, END, SPEED in 1 Single Row -->
-                <div class="flex items-center justify-between gap-2 px-2 py-1.5 bg-slate-950/70 rounded-xl border border-slate-800 shadow-sm">
-                    <!-- START (Horizontal Slider) -->
-                    <div class="flex-1 min-w-0 flex flex-col gap-0.5 ${isStartPatched ? 'opacity-30 pointer-events-none' : ''}">
-                        <div class="flex items-center justify-between text-[8px] font-mono font-bold leading-tight">
-                            <span class="text-emerald-400">START</span>
-                            <span id="tape-slider-start-disp" class="text-emerald-300 font-mono text-[8.5px] cursor-ns-resize hover:bg-slate-800/80 px-1 py-0.5 rounded leading-none">${startDisp}</span>
-                        </div>
-                        <input type="range" id="tape-slider-start" min="0.0" max="1.0" step="0.01" value="${m.start ?? 0.0}" class="w-full h-1.5 bg-slate-800 rounded-lg accent-emerald-400 cursor-pointer" ${isStartPatched ? 'disabled' : ''} title="開始位置 (時間軸)">
-                    </div>
+                    <div class="w-[1px] h-6 bg-slate-800 shrink-0"></div>
 
-                    <div class="w-[1px] h-6 bg-slate-800/90 shrink-0"></div>
-
-                    <!-- END (Horizontal Slider) -->
-                    <div class="flex-1 min-w-0 flex flex-col gap-0.5 ${isEndPatched ? 'opacity-30 pointer-events-none' : ''}">
-                        <div class="flex items-center justify-between text-[8px] font-mono font-bold leading-tight">
-                            <span class="text-emerald-400">END</span>
-                            <span id="tape-slider-end-disp" class="text-emerald-300 font-mono text-[8.5px] cursor-ns-resize hover:bg-slate-800/80 px-1 py-0.5 rounded leading-none">${endDisp}</span>
-                        </div>
-                        <input type="range" id="tape-slider-end" min="0.0" max="1.0" step="0.01" value="${m.end ?? 1.0}" class="w-full h-1.5 bg-slate-800 rounded-lg accent-emerald-400 cursor-pointer" ${isEndPatched ? 'disabled' : ''} title="終了位置 (時間軸)">
-                    </div>
-
-                    <div class="w-[1px] h-6 bg-slate-800/90 shrink-0"></div>
-
-                    <!-- SPEED (Horizontal Exponential Slider: /4, /2, x1, x2, x4) -->
-                    <div class="flex-1 min-w-0 flex flex-col gap-0.5 ${isSpeedPatched ? 'opacity-30 pointer-events-none' : ''}">
+                    <!-- SPEED Horizontal Slider (Exponential: /4, /2, x1, x2, x4) -->
+                    <div class="flex-1 min-w-[120px] flex flex-col justify-center gap-0.5 ${isSpeedPatched ? 'opacity-30 pointer-events-none' : ''}">
                         <div class="flex items-center justify-between text-[8px] font-mono font-bold leading-tight">
                             <span class="text-cyan-400">SPEED</span>
-                            <span id="tape-slider-speed-disp" class="text-cyan-300 font-mono text-[8.5px] cursor-ns-resize hover:bg-slate-800/80 px-1 py-0.5 rounded leading-none">${speedDisp}</span>
+                            <span id="tape-slider-speed-disp" class="text-cyan-300 font-mono text-[8.5px] cursor-ns-resize hover:bg-slate-800/80 px-1 rounded leading-none">${speedDisp}</span>
                         </div>
                         <input type="range" id="tape-slider-speed" min="-2.0" max="2.0" step="0.05" value="${speedCvVal}" class="w-full h-1.5 bg-slate-800 rounded-lg accent-cyan-400 cursor-pointer" ${isSpeedPatched ? 'disabled' : ''} title="再生速度 (指数: /4, /2, x1, x2, x4)">
                         <div class="flex justify-between px-0.5 text-[6.5px] font-mono text-slate-500 font-bold select-none pointer-events-none -mt-0.5">
@@ -248,8 +223,37 @@ export const TAPE = {
                     </div>
                 </div>
 
+                <!-- Row 2: Large START & END Sliders (Spacious 2-column format) -->
+                <div class="flex items-center justify-between gap-3 px-3 py-2 bg-slate-950/70 rounded-xl border border-slate-800 shadow-sm">
+                    <!-- START (Large Horizontal Slider) -->
+                    <div class="flex-1 min-w-0 flex flex-col gap-1 ${isStartPatched ? 'opacity-30 pointer-events-none' : ''}">
+                        <div class="flex items-center justify-between text-[8.5px] font-mono font-bold leading-tight">
+                            <div class="flex items-center gap-1 text-emerald-400">
+                                <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(34,197,94,0.8)]"></span>
+                                <span>START</span>
+                            </div>
+                            <span id="tape-slider-start-disp" class="text-emerald-300 font-mono text-[9px] font-bold cursor-ns-resize hover:bg-slate-800/80 px-1.5 py-0.5 rounded leading-none">${startDisp}</span>
+                        </div>
+                        <input type="range" id="tape-slider-start" min="0.0" max="1.0" step="0.005" value="${m.start ?? 0.0}" class="w-full h-2.5 bg-slate-800 rounded-lg accent-emerald-400 cursor-pointer" ${isStartPatched ? 'disabled' : ''} title="開始位置 (0%〜100%)">
+                    </div>
+
+                    <div class="w-[1px] h-8 bg-slate-800/90 shrink-0"></div>
+
+                    <!-- END (Large Horizontal Slider) -->
+                    <div class="flex-1 min-w-0 flex flex-col gap-1 ${isEndPatched ? 'opacity-30 pointer-events-none' : ''}">
+                        <div class="flex items-center justify-between text-[8.5px] font-mono font-bold leading-tight">
+                            <div class="flex items-center gap-1 text-emerald-400">
+                                <span class="inline-block w-2 h-2 rounded-full border border-emerald-500 bg-emerald-950 shadow-[0_0_4px_rgba(34,197,94,0.5)]"></span>
+                                <span>END</span>
+                            </div>
+                            <span id="tape-slider-end-disp" class="text-emerald-300 font-mono text-[9px] font-bold cursor-ns-resize hover:bg-slate-800/80 px-1.5 py-0.5 rounded leading-none">${endDisp}</span>
+                        </div>
+                        <input type="range" id="tape-slider-end" min="0.0" max="1.0" step="0.005" value="${m.end ?? 1.0}" class="w-full h-2.5 bg-slate-800 rounded-lg accent-emerald-400 cursor-pointer" ${isEndPatched ? 'disabled' : ''} title="終了位置 (0%〜100%)">
+                    </div>
+                </div>
+
                 <div class="text-[7.5px] text-slate-500 px-1 text-center italic">
-                    * SPEED: 指数移動 (/4, /2, x1, x2, x4) | ループ: ゲート持続でリピート / 1周目ワンショット保証
+                    * TEST PLAY: 単体直接試聴（スピーカー未接続でも発音 / WAVE_OUT未送出） | START/END: 区間指定
                 </div>
             </div>
         `;
@@ -388,12 +392,12 @@ export const TAPE = {
 
                 if (st?.isPlaying) {
                     activeInst.stop?.();
-                    if (playText) playText.textContent = 'TRIG PLAY';
+                    if (playText) playText.textContent = 'TEST PLAY';
                     if (playheadLine) playheadLine.style.display = 'none';
                     if (progressFill) progressFill.style.opacity = '0';
                     if (progressDot) progressDot.style.display = 'none';
                 } else {
-                    activeInst.play?.();
+                    activeInst.testPlay?.();
                     if (playText) playText.textContent = 'STOP';
                     if (playheadLine) playheadLine.style.display = 'block';
                 }
@@ -482,10 +486,10 @@ export const TAPE = {
                 }
             }
 
-            // 3. Trigger Play Button Label
+            // 3. Trigger / Test Play Button Label
             const playText = targetModal.querySelector('#tape-play-text');
             if (playText) {
-                playText.textContent = isTapePlaying ? 'STOP' : 'TRIG PLAY';
+                playText.textContent = isTapePlaying ? 'STOP' : 'TEST PLAY';
             }
         }
 
