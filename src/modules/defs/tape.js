@@ -160,6 +160,7 @@ export const TAPE = {
 
         const rangeLeft = (Math.min(m.start ?? 0, m.end ?? 1) * 100).toFixed(1);
         const rangeWidth = (Math.abs((m.end ?? 1) - (m.start ?? 0)) * 100).toFixed(1);
+        const startPct = Math.max(0, Math.min(1, m.start ?? 0.0));
 
         return `
             <div class="space-y-2 p-1 text-slate-200 w-full">
@@ -182,12 +183,15 @@ export const TAPE = {
                     ${TAPE.renderWaveformSVG(m, 0.0, false)}
                 </div>
 
-                <!-- Dynamic Progress Bar (Tracks live playback position) -->
-                <div class="w-full px-0.5">
-                    <div class="w-full h-1.5 bg-slate-950 rounded-full border border-slate-800 overflow-hidden relative shadow-inner">
-                        <div id="tape-progress-range" class="absolute top-0 bottom-0 bg-slate-800/80" style="left: ${rangeLeft}%; width: ${rangeWidth}%;"></div>
-                        <div id="tape-progress-fill" class="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-cyan-500 via-emerald-400 to-amber-400 rounded-full transition-none" style="width: 0%; opacity: 0;"></div>
-                        <div id="tape-progress-dot" class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-amber-300 shadow-[0_0_6px_rgba(253,224,71,1)] transition-none" style="left: 0%; display: none;"></div>
+                <!-- Dynamic Progress Bar (Clearly visible at all times, including silence) -->
+                <div class="w-full py-1">
+                    <div class="w-full h-2.5 bg-slate-900 rounded-full border border-slate-700 relative shadow-inner overflow-visible">
+                        <!-- Start - End Range Band (Clearly visible emerald zone) -->
+                        <div id="tape-progress-range" class="absolute top-0 bottom-0 bg-emerald-500/30 border-l border-r border-emerald-400/90 rounded-sm" style="left: ${rangeLeft}%; width: ${rangeWidth}%;"></div>
+                        <!-- Live Playback Fill -->
+                        <div id="tape-progress-fill" class="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-cyan-500 via-emerald-400 to-amber-300 rounded-full transition-none opacity-0" style="width: 0%;"></div>
+                        <!-- Playhead Pin / Dot (Always visible, initially at START position) -->
+                        <div id="tape-progress-dot" class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-amber-300 border-2 border-slate-950 shadow-[0_0_8px_rgba(253,224,71,1)] transition-none z-10" style="left: ${(startPct * 100).toFixed(1)}%; display: block;"></div>
                     </div>
                 </div>
 
@@ -223,14 +227,14 @@ export const TAPE = {
                     </div>
                 </div>
 
-                <!-- Row 2: Large START & END Sliders (Spacious 2-column format) -->
+                <!-- Row 2: Enlarge START & END Sliders (Spacious & High Precision) -->
                 <div class="flex items-center justify-between gap-3 px-3 py-2 bg-slate-950/70 rounded-xl border border-slate-800 shadow-sm">
                     <!-- START (Large Horizontal Slider) -->
                     <div class="flex-1 min-w-0 flex flex-col gap-1 ${isStartPatched ? 'opacity-30 pointer-events-none' : ''}">
                         <div class="flex items-center justify-between text-[8.5px] font-mono font-bold leading-tight">
                             <div class="flex items-center gap-1 text-emerald-400">
-                                <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(34,197,94,0.8)]"></span>
-                                <span>START</span>
+                                <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(34,197,94,0.8)]"></span>
+                                <span class="text-[9px]">START</span>
                             </div>
                             <span id="tape-slider-start-disp" class="text-emerald-300 font-mono text-[9px] font-bold cursor-ns-resize hover:bg-slate-800/80 px-1.5 py-0.5 rounded leading-none">${startDisp}</span>
                         </div>
@@ -243,8 +247,8 @@ export const TAPE = {
                     <div class="flex-1 min-w-0 flex flex-col gap-1 ${isEndPatched ? 'opacity-30 pointer-events-none' : ''}">
                         <div class="flex items-center justify-between text-[8.5px] font-mono font-bold leading-tight">
                             <div class="flex items-center gap-1 text-emerald-400">
-                                <span class="inline-block w-2 h-2 rounded-full border border-emerald-500 bg-emerald-950 shadow-[0_0_4px_rgba(34,197,94,0.5)]"></span>
-                                <span>END</span>
+                                <span class="inline-block w-2.5 h-2.5 rounded-full border border-emerald-500 bg-emerald-950 shadow-[0_0_4px_rgba(34,197,94,0.5)]"></span>
+                                <span class="text-[9px]">END</span>
                             </div>
                             <span id="tape-slider-end-disp" class="text-emerald-300 font-mono text-[9px] font-bold cursor-ns-resize hover:bg-slate-800/80 px-1.5 py-0.5 rounded leading-none">${endDisp}</span>
                         </div>
@@ -258,25 +262,55 @@ export const TAPE = {
             </div>
         `;
     },
+    getActiveInst: (ctx, m) => {
+        const s = ctx?.synth || window.__GS_SYNTH__;
+        if (!s || !s.modules) return null;
+        const pId = ctx?.currentPageId ?? '0';
+        const keys = [`${pId}/${m.id}`, m.id, `0/${m.id}`];
+        for (const k of keys) {
+            if (s.modules[k]) return s.modules[k];
+        }
+        for (const k in s.modules) {
+            const inst = s.modules[k];
+            if (inst && typeof inst.setAudioBuffer === 'function') {
+                return inst;
+            }
+        }
+        return null;
+    },
     bindEvents: (m, ctx, cb) => {
-        const fullId = `${ctx.currentPageId || '0'}/${m.id}`;
         const dialogEl = document.getElementById(`dock-dialog-${m.id}`);
         const root = dialogEl || document;
         const svgWrap = root.querySelector('#tape-waveform-wrap');
 
+        // Restore PCM buffer to AudioWorklet if already in memory
+        const initialInst = TAPE.getActiveInst(ctx, m);
+        if (m._buffer && initialInst?.setAudioBuffer) {
+            initialInst.setAudioBuffer(m._buffer, m.sampleRate || 48000);
+        }
+
         const redrawSvg = () => {
-            const activeInst = ctx.synth?.modules?.[fullId] || ctx.synth?.modules?.[m.id];
+            const activeInst = TAPE.getActiveInst(ctx, m);
             const st = activeInst?.read?.();
             if (svgWrap) svgWrap.innerHTML = TAPE.renderWaveformSVG(m, st?.playhead ?? 0.0, Boolean(st?.isPlaying));
         };
 
         const onSliderChange = () => {
             redrawSvg();
+            const startP = Math.max(0, Math.min(1, m.start ?? 0.0));
+            const endP = Math.max(0, Math.min(1, m.end ?? 1.0));
             // Update progress bar range bounds
             const rangeEl = root.querySelector('#tape-progress-range');
             if (rangeEl) {
-                rangeEl.style.left = `${(Math.min(m.start ?? 0, m.end ?? 1) * 100).toFixed(1)}%`;
-                rangeEl.style.width = `${(Math.abs((m.end ?? 1) - (m.start ?? 0)) * 100).toFixed(1)}%`;
+                rangeEl.style.left = `${(Math.min(startP, endP) * 100).toFixed(1)}%`;
+                rangeEl.style.width = `${(Math.abs(endP - startP) * 100).toFixed(1)}%`;
+            }
+            // Update playhead pin to current start if stopped
+            const dotEl = root.querySelector('#tape-progress-dot');
+            const activeInst = TAPE.getActiveInst(ctx, m);
+            const st = activeInst?.read?.();
+            if (dotEl && !st?.isPlaying) {
+                dotEl.style.left = `${(startP * 100).toFixed(1)}%`;
             }
             cb();
         };
@@ -291,19 +325,19 @@ export const TAPE = {
                 try {
                     ctx.showToast?.('DECODING AUDIO / MP4...');
 
-                    // 1. Ensure synth audio engine is initialized and running
-                    if (ctx.synth && !ctx.synth.ctx) {
-                        await ctx.synth.init();
+                    const synth = ctx?.synth || window.__GS_SYNTH__;
+                    if (synth && !synth.ctx) {
+                        await synth.init();
                     }
-                    if (ctx.synth?.ctx && ctx.synth.ctx.state === 'suspended') {
+                    if (synth?.ctx && synth.ctx.state === 'suspended') {
                         try {
-                            await ctx.synth.ctx.resume();
+                            await synth.ctx.resume();
                         } catch (resErr) {
                             console.warn('[TAPE] Synth context resume failed:', resErr);
                         }
                     }
-                    if (ctx.synth && !ctx.synth.hasModules()) {
-                        ctx.synth.rebuildAll(ctx.pagesData, (pId, id) => ctx.getPatchState(id, pId));
+                    if (synth && !synth.hasModules()) {
+                        synth.rebuildAll(ctx.pagesData, (pId, id) => ctx.getPatchState(id, pId));
                     }
 
                     // Turn audio power button indicator active if currently idle
@@ -313,7 +347,7 @@ export const TAPE = {
                     }
 
                     // 2. Decode Audio / MP4
-                    const audioCtx = ctx.synth?.ctx || null;
+                    const audioCtx = synth?.ctx || null;
                     const res = await TapeCodec.loadAudioFromFile(file, audioCtx);
 
                     // Update module properties
@@ -321,12 +355,13 @@ export const TAPE = {
                     m.duration = res.duration;
                     m.sampleRate = res.sampleRate;
                     m._peaks = TAPE.extractPeaks(res.buffer, 64);
+                    m._buffer = res.buffer; // Persist PCM in memory!
 
-                    // Re-acquire active module instance
-                    const activeInst = ctx.synth?.modules?.[fullId] || ctx.synth?.modules?.[m.id];
-
-                    // Transfer PCM to AudioWorklet immediately for zero-latency playing
-                    activeInst?.setAudioBuffer?.(res.buffer, res.sampleRate);
+                    // Re-acquire active module instance and transfer PCM immediately
+                    const activeInst = TAPE.getActiveInst(ctx, m);
+                    if (activeInst && activeInst.setAudioBuffer) {
+                        activeInst.setAudioBuffer(res.buffer, res.sampleRate);
+                    }
 
                     redrawSvg();
                     ctx.reRenderModal?.();
@@ -334,7 +369,7 @@ export const TAPE = {
                     ctx.showToast?.(`LOADED: ${res.duration.toFixed(1)}s`);
 
                     // Encode to Opus Base64 in background for patch JSON persistence
-                    TapeCodec.encodeToOpusBase64(res.buffer, res.sampleRate, ctx.synth?.ctx).then(b64 => {
+                    TapeCodec.encodeToOpusBase64(res.buffer, res.sampleRate, synth?.ctx).then(b64 => {
                         m.data = b64;
                         cb();
                     }).catch(err => {
@@ -350,24 +385,24 @@ export const TAPE = {
             });
         }
 
-        // Trigger Play / Stop preview button
+        // Trigger / Test Play button
         const playBtn = root.querySelector('#tape-play-btn');
         const playText = root.querySelector('#tape-play-text');
         if (playBtn) {
             playBtn.addEventListener('click', async () => {
-                // Ensure audio engine is initialized and alive
-                if (ctx.synth && !ctx.synth.ctx) {
-                    await ctx.synth.init();
+                const synth = ctx?.synth || window.__GS_SYNTH__;
+                if (synth && !synth.ctx) {
+                    await synth.init();
                 }
-                if (ctx.synth?.ctx && ctx.synth.ctx.state === 'suspended') {
+                if (synth?.ctx && synth.ctx.state === 'suspended') {
                     try {
-                        await ctx.synth.ctx.resume();
+                        await synth.ctx.resume();
                     } catch (resErr) {
                         console.warn('[TAPE] Synth context resume failed:', resErr);
                     }
                 }
-                if (ctx.synth && !ctx.synth.hasModules()) {
-                    ctx.synth.rebuildAll(ctx.pagesData, (pId, id) => ctx.getPatchState(id, pId));
+                if (synth && !synth.hasModules()) {
+                    synth.rebuildAll(ctx.pagesData, (pId, id) => ctx.getPatchState(id, pId));
                 }
 
                 const pwrBtn = document.getElementById('audio-power-btn');
@@ -375,11 +410,20 @@ export const TAPE = {
                     pwrBtn.className = "h-7 w-7 bg-red-950 text-red-400 rounded-lg border border-red-500 shadow-md shadow-red-500/40 flex items-center justify-center shrink-0";
                 }
 
-                const activeInst = ctx.synth?.modules?.[fullId] || ctx.synth?.modules?.[m.id];
-                if (!activeInst) return;
+                const activeInst = TAPE.getActiveInst(ctx, m);
+                if (!activeInst) {
+                    console.error('[TAPE] No active synth instance found for', m.id);
+                    ctx.showToast?.('ENGINE NOT READY');
+                    return;
+                }
+
+                // Ensure PCM buffer is in worklet
+                if (m._buffer && activeInst.setAudioBuffer) {
+                    activeInst.setAudioBuffer(m._buffer, m.sampleRate || 48000);
+                }
 
                 const peaks = m._peaks || [];
-                const hasAudio = peaks.length > 0 && peaks.some(p => p > 0.005);
+                const hasAudio = (peaks.length > 0 && peaks.some(p => p > 0.005)) || (m._buffer && m._buffer.length > 0);
                 if (!hasAudio) {
                     ctx.showToast?.('NO AUDIO LOADED (PLEASE LOAD FILE)');
                     return;
@@ -389,13 +433,14 @@ export const TAPE = {
                 const playheadLine = root.querySelector('#tape-playhead-line');
                 const progressFill = root.querySelector('#tape-progress-fill');
                 const progressDot = root.querySelector('#tape-progress-dot');
+                const startP = Math.max(0, Math.min(1, m.start ?? 0.0));
 
                 if (st?.isPlaying) {
                     activeInst.stop?.();
                     if (playText) playText.textContent = 'TEST PLAY';
                     if (playheadLine) playheadLine.style.display = 'none';
                     if (progressFill) progressFill.style.opacity = '0';
-                    if (progressDot) progressDot.style.display = 'none';
+                    if (progressDot) progressDot.style.left = `${(startP * 100).toFixed(1)}%`;
                 } else {
                     activeInst.testPlay?.();
                     if (playText) playText.textContent = 'STOP';
@@ -410,10 +455,11 @@ export const TAPE = {
         if (loopBtn) {
             loopBtn.addEventListener('click', () => {
                 m.loop = !m.loop;
-                const activeInst = ctx.synth?.modules?.[fullId] || ctx.synth?.modules?.[m.id];
-                activeInst?.update?.(ctx.synth.ctx, activeInst, m);
+                const activeInst = TAPE.getActiveInst(ctx, m);
+                const synth = ctx?.synth || window.__GS_SYNTH__;
+                activeInst?.update?.(synth?.ctx, activeInst, m);
                 if (loopText) loopText.textContent = m.loop ? 'ON' : 'OFF';
-                loopBtn.className = `px-2 py-1 rounded border ${m.loop ? 'bg-cyan-950 text-cyan-300 border-cyan-500' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition text-[8.5px] cursor-pointer`;
+                loopBtn.className = `h-6 px-2 rounded border ${m.loop ? 'bg-cyan-950 text-cyan-300 border-cyan-500' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition text-[8px] cursor-pointer shrink-0`;
                 cb();
             });
         }
@@ -437,15 +483,17 @@ export const TAPE = {
             UIHelpers.bindSlider('tape-slider-speed', TAPE.formatSpeed, v => {
                 m.speedCv = v;
                 m.speed = Math.pow(2.0, v);
-                const activeInst = ctx.synth?.modules?.[fullId] || ctx.synth?.modules?.[m.id];
-                activeInst?.update?.(ctx.synth.ctx, activeInst, m);
+                const activeInst = TAPE.getActiveInst(ctx, m);
+                const synth = ctx?.synth || window.__GS_SYNTH__;
+                activeInst?.update?.(synth?.ctx, activeInst, m);
                 onSliderChange();
             }, 1, -2.0, 2.0);
             UIHelpers.bindScrubber('tape-slider-speed-disp', 'tape-slider-speed', TAPE.formatSpeed, v => {
                 m.speedCv = v;
                 m.speed = Math.pow(2.0, v);
-                const activeInst = ctx.synth?.modules?.[fullId] || ctx.synth?.modules?.[m.id];
-                activeInst?.update?.(ctx.synth.ctx, activeInst, m);
+                const activeInst = TAPE.getActiveInst(ctx, m);
+                const synth = ctx?.synth || window.__GS_SYNTH__;
+                activeInst?.update?.(synth?.ctx, activeInst, m);
                 onSliderChange();
             }, 1, -2.0, 2.0);
         }
@@ -453,6 +501,7 @@ export const TAPE = {
     updateLive: (cell, data, isPlaying, targetModal, m) => {
         const playhead = data?.playhead ?? 0.0;
         const isTapePlaying = Boolean(data?.isPlaying);
+        const startP = Math.max(0, Math.min(1, m.start ?? 0.0));
 
         // Update modal playhead line and progress bar in real-time
         if (targetModal) {
@@ -470,19 +519,27 @@ export const TAPE = {
                 }
             }
 
-            // 2. Horizontal Progress Bar (Fill & Playhead Dot)
+            // 2. Horizontal Progress Bar (Fill & Playhead Dot - ALWAYS VISIBLE!)
             const progressFill = targetModal.querySelector('#tape-progress-fill');
             const progressDot = targetModal.querySelector('#tape-progress-dot');
-            if (progressFill && progressDot) {
+            if (progressDot) {
+                progressDot.style.display = 'block';
                 if (isTapePlaying) {
                     const pct = (Math.max(0, Math.min(1, playhead)) * 100).toFixed(1);
-                    progressFill.style.opacity = '1';
-                    progressFill.style.width = `${pct}%`;
-                    progressDot.style.display = 'block';
                     progressDot.style.left = `${pct}%`;
+                    if (progressFill) {
+                        progressFill.style.opacity = '1';
+                        const fillLeft = Math.min(startP, playhead) * 100;
+                        const fillW = Math.abs(playhead - startP) * 100;
+                        progressFill.style.left = `${fillLeft.toFixed(1)}%`;
+                        progressFill.style.width = `${fillW.toFixed(1)}%`;
+                    }
                 } else {
-                    progressFill.style.opacity = '0';
-                    progressDot.style.display = 'none';
+                    // Position at start when silent or stopped
+                    progressDot.style.left = `${(startP * 100).toFixed(1)}%`;
+                    if (progressFill) {
+                        progressFill.style.opacity = '0';
+                    }
                 }
             }
 

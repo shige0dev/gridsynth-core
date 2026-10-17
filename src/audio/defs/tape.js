@@ -110,8 +110,11 @@ export const TAPE = {
             testPlay: () => {
                 isTestPlaying = true;
                 try {
+                    if (ctx.state === 'suspended') ctx.resume();
+                    outWave.gain.cancelScheduledValues(ctx.currentTime);
                     outWave.gain.setValueAtTime(0.0, ctx.currentTime);
-                    previewGain.gain.setValueAtTime(0.7, ctx.currentTime);
+                    previewGain.gain.cancelScheduledValues(ctx.currentTime);
+                    previewGain.gain.setValueAtTime(0.8, ctx.currentTime);
                 } catch (_) {}
                 w.port.postMessage({ type: 'PLAY' });
             },

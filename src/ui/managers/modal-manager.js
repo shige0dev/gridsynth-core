@@ -494,6 +494,8 @@ export class ModalManager {
     createModuleContext(id, isDock = false) {
         return {
             id,
+            synth: this.ui.synth,
+            ui: this.ui,
             patched: this.ui.getPatchState(id),
             bpm: this.ui.synth.masterBPM,
             currentPageId: this.ui.currentPageId,
