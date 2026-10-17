@@ -16,10 +16,10 @@ export class AdsrCore {
         this.attack = 0.02;
         this.attackCurve = 0.0;
         this.decay = 0.2;
-        this.decayCurve = -0.75;
+        this.decayCurve = 0.0;
         this.sustain = 0.6;
         this.release = 0.4;
-        this.releaseCurve = -0.75;
+        this.releaseCurve = 0.0;
 
         this.aK = 0;
         this.aInv = 1;

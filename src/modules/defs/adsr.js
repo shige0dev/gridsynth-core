@@ -14,26 +14,26 @@ export const ADSR = {
         decay: 0.2,
         sustain: 0.6,
         release: 0.4,
-        aCurve: 'exp',
-        dCurve: 'exp',
-        rCurve: 'exp',
+        aCurve: 'lin',
+        dCurve: 'lin',
+        rCurve: 'lin',
         attackCurve: 0.0,
-        decayCurve: -0.75,
-        releaseCurve: -0.75
+        decayCurve: 0.0,
+        releaseCurve: 0.0
     }),
     onNormalize: (m) => {
         const curveVal = (c) => c === 'log' ? 0.75 : (c === 'exp' ? -0.75 : 0.0);
         if (!m.aCurve) {
             if (m.attackCurve !== undefined) m.aCurve = m.attackCurve > 0.15 ? 'log' : (m.attackCurve < -0.15 ? 'exp' : 'lin');
-            else m.aCurve = m.curve || 'exp';
+            else m.aCurve = m.curve || 'lin';
         }
         if (!m.dCurve) {
             if (m.decayCurve !== undefined) m.dCurve = m.decayCurve > 0.15 ? 'log' : (m.decayCurve < -0.15 ? 'exp' : 'lin');
-            else m.dCurve = m.curve || 'exp';
+            else m.dCurve = m.curve || 'lin';
         }
         if (!m.rCurve) {
             if (m.releaseCurve !== undefined) m.rCurve = m.releaseCurve > 0.15 ? 'log' : (m.releaseCurve < -0.15 ? 'exp' : 'lin');
-            else m.rCurve = m.curve || 'exp';
+            else m.rCurve = m.curve || 'lin';
         }
         m.attackCurve = curveVal(m.aCurve);
         m.decayCurve = curveVal(m.dCurve);
@@ -64,7 +64,7 @@ export const ADSR = {
         const wS = holdTime * pxPerSec;
         const wR = rel * pxPerSec;
 
-        const curvePreset = ADSR_CURVES[m.curve || 'exp'] || ADSR_CURVES.exp;
+        const curvePreset = ADSR_CURVES[m.curve || 'lin'] || ADSR_CURVES.lin;
         const attCurve = m.attackCurve ?? curvePreset.attackCurve;
         const decCurve = m.decayCurve ?? curvePreset.decayCurve;
         const relCurve = m.releaseCurve ?? curvePreset.releaseCurve;
@@ -187,9 +187,9 @@ export const ADSR = {
         const vTime = m._viewTime ?? 1.0;
         const sliderVal = Math.pow(Math.max(0, Math.min(1, (vTime - 0.02) / 9.98)), 1 / 2.5);
 
-        const aCurve = m.aCurve || 'exp';
-        const dCurve = m.dCurve || 'exp';
-        const rCurve = m.rCurve || 'exp';
+        const aCurve = m.aCurve || 'lin';
+        const dCurve = m.dCurve || 'lin';
+        const rCurve = m.rCurve || 'lin';
 
         const renderCurveCol = (stageKey, curVal, label) => {
             const options = ['log', 'lin', 'exp'];

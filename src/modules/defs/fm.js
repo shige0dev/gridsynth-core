@@ -17,9 +17,9 @@ export const FMx3 = {
         type: 'FMx3',
         algorithm: 1,
         rootMidi: 48,
-        op1: { ratio: 1.0, level: 0.85, attack: 0.005, decay: 0.4, sustain: 0.0, release: 0.1, aCurve: 'exp', dCurve: 'exp', rCurve: 'exp' },
-        op2: { ratio: 2.0, level: 1.5, attack: 0.005, decay: 0.15, sustain: 0.0, release: 0.05, aCurve: 'exp', dCurve: 'exp', rCurve: 'exp' },
-        op3: { ratio: 3.5, level: 1.8, feedback: 0.0, wave: 'sine', attack: 0.005, decay: 0.05, sustain: 0.0, release: 0.02, aCurve: 'exp', dCurve: 'exp', rCurve: 'exp' }
+        op1: { ratio: 1.0, level: 0.85, attack: 0.005, decay: 0.4, sustain: 0.0, release: 0.1, aCurve: 'lin', dCurve: 'lin', rCurve: 'lin' },
+        op2: { ratio: 2.0, level: 1.5, attack: 0.005, decay: 0.15, sustain: 0.0, release: 0.05, aCurve: 'lin', dCurve: 'lin', rCurve: 'lin' },
+        op3: { ratio: 3.5, level: 1.8, feedback: 0.0, wave: 'sine', attack: 0.005, decay: 0.05, sustain: 0.0, release: 0.02, aCurve: 'lin', dCurve: 'lin', rCurve: 'lin' }
     }),
     onNormalize: (m) => {
         const curveVal = (c) => c === 'log' ? 0.75 : (c === 'exp' ? -0.75 : 0.0);
@@ -37,7 +37,7 @@ export const FMx3 = {
             });
             ['a', 'd', 'r'].forEach(st => {
                 const cKey = `${st}Curve`;
-                if (!cur[cKey]) cur[cKey] = cur.curve || 'exp';
+                if (!cur[cKey]) cur[cKey] = cur.curve || 'lin';
                 cur[`${st === 'a' ? 'attack' : (st === 'd' ? 'decay' : 'release')}Curve`] = curveVal(cur[cKey]);
             });
         });
@@ -120,9 +120,9 @@ export const FMx3 = {
 
         const renderCurveBlock = (opNum, opData, accentColor) => {
             const stages = [
-                { key: 'a', label: 'A', cur: opData.aCurve || 'exp' },
-                { key: 'd', label: 'D', cur: opData.dCurve || 'exp' },
-                { key: 'r', label: 'R', cur: opData.rCurve || 'exp' }
+                { key: 'a', label: 'A', cur: opData.aCurve || 'lin' },
+                { key: 'd', label: 'D', cur: opData.dCurve || 'lin' },
+                { key: 'r', label: 'R', cur: opData.rCurve || 'lin' }
             ];
             const opts = ['log', 'lin', 'exp'];
 
