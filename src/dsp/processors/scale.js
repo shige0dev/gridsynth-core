@@ -6,7 +6,8 @@ export class ScaleProcessor extends AudioWorkletProcessor {
         this.validSemis = [0, 3, 5, 7, 10]; // relative semitones
 
         this.heldCv = 0.0;
-        this.heldSemi = 0; // 0〜11
+        this.heldSemi = 0; // 0〜11 (absolute semitone)
+        this.heldRelSemi = 0; // 0〜11 (relative to root)
         this.sampleCount = 0;
 
         this.port.onmessage = (e) => {
@@ -30,7 +31,7 @@ export class ScaleProcessor extends AudioWorkletProcessor {
 
     quantizeEqual(inV) {
         const N = this.validSemis.length;
-        if (N === 0) return { cv: inV, semi: 0 };
+        if (N === 0) return { cv: inV, semi: 0, relSemi: 0 };
 
         // 0〜1V（および各オクターブ）の入力値をN等分してスケール音へ均等より分け
         const oct = Math.floor(inV);
@@ -50,7 +51,7 @@ export class ScaleProcessor extends AudioWorkletProcessor {
         const outOct = oct + addOct;
         const outCv = outOct + (absSemi / 12.0);
 
-        return { cv: outCv, semi: absSemi };
+        return { cv: outCv, semi: absSemi, relSemi: relSemi };
     }
 
     process(ins, outs) {
@@ -65,6 +66,7 @@ export class ScaleProcessor extends AudioWorkletProcessor {
             const q = this.quantizeEqual(rawV);
             this.heldCv = q.cv;
             this.heldSemi = q.semi;
+            this.heldRelSemi = q.relSemi;
 
             cvOut[i] = this.heldCv;
             this.sampleCount++;
@@ -76,6 +78,7 @@ export class ScaleProcessor extends AudioWorkletProcessor {
             this.port.postMessage({
                 type: 'STATE',
                 activeSemi: this.heldSemi,
+                activeRelSemi: this.heldRelSemi,
                 cv: this.heldCv
             });
         }

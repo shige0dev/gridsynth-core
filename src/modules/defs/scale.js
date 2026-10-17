@@ -55,20 +55,22 @@ export const SCALE = {
             </div>`;
     },
     updateLive: (cell, data, isP, modal) => {
-        const semi = data?.activeSemi ?? -1;
+        const relSemi = (data?.activeRelSemi !== undefined && data.activeRelSemi >= 0)
+            ? data.activeRelSemi
+            : (data?.activeSemi ?? -1);
 
-        // 該当出力のバーだけ枠が光る
+        // 該当出力のバーだけ枠が光る（0〜11のスケール内相対位置）
         cell.querySelectorAll('[data-scale-bar]').forEach((b, i) => {
-            const barSemi = parseInt(b.getAttribute('data-scale-bar') ?? i, 10);
-            const isAct = (barSemi === semi);
+            const barIdx = parseInt(b.getAttribute('data-scale-bar') ?? i, 10);
+            const isAct = (barIdx === relSemi);
             b.classList.toggle('scale-active', isAct);
         });
 
         // モーダルが開いていればモーダル内のバー枠もハイライト
         if (modal) {
             modal.querySelectorAll('[data-modal-bar]').forEach((b, i) => {
-                const barSemi = parseInt(b.getAttribute('data-modal-bar') ?? i, 10);
-                const isAct = (barSemi === semi);
+                const barIdx = parseInt(b.getAttribute('data-modal-bar') ?? i, 10);
+                const isAct = (barIdx === relSemi);
                 b.classList.toggle('ring-2', isAct);
                 b.classList.toggle('ring-yellow-300', isAct);
                 b.classList.toggle('shadow-[0_0_8px_#fde047]', isAct);
@@ -112,9 +114,11 @@ export const SCALE = {
                         <span class="text-amber-400 font-mono">${mask.filter(x => x === 1).length} ACTIVE</span>
                     </div>
 
-                    <!-- 12 Bars -->
+                    <!-- 12 Bars: ルート音を左端（0番目）として音名を表示 -->
                     <div class="flex items-end justify-between gap-1 h-16 pt-1 pb-0.5">
-                        ${NOTE_NAMES.map((n, i) => {
+                        ${Array.from({ length: 12 }, (_, i) => {
+                            const noteIdx = (root + i) % 12;
+                            const n = NOTE_NAMES[noteIdx] || 'C';
                             const isOn = (mask[i] ?? 1) === 1;
                             const isBlack = n.includes('#');
                             const barBg = isOn
@@ -139,6 +143,7 @@ export const SCALE = {
         if (rootSel) {
             rootSel.addEventListener('change', (e) => {
                 m.root = parseInt(e.target.value, 10);
+                ctx.reRenderModal();
                 cb();
             });
         }

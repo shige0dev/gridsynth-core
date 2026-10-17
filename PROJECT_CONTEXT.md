@@ -493,9 +493,10 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
     - **デモプリセット `04_RANDOM_SH_DELAY`（`04_randomCV`）を `SCALE` モジュール連動パッチへ刷新**:
       - `src/presets/demos/04_random_sh_delay.js`: 新モジュール `SCALE1`（`scale: "CUSTOM", mask: [1,0,0,0,1,0,0,1,0,1,0,1]`）を組み込んだパッチへ全面置換。
       - スロット配置: `0: CLK1, 1: SH1, 2: VCO1, 3: VCF1, 4: SPK1, 6: SCALE1, 8: DELAY1, 11: KEY1`。
-    - **ケーブル透明度/彩度切替ボタンの右上移動 ＆ 全画面ボタン同サイズ化（パッチケーブルSVGアイコン・トースト連携）**:
-      - `index.html`: 下部コントロールバーにあった細長スリット型ボタン（`#cable-opacity-btn`）を撤去し、上部ナビゲーションバー（`#page-nav-bar`）右側の全画面ボタン（`#fullscreen-btn`）の隣へ移動。全画面ボタンと同一サイズ（`h-5 px-1.5`）に統一。
-      - アイコンにパッチケーブルSVG（両端プラグ＋S字ベジェ曲線）を採用し、`setCableOpacity` に応じてアイコン自身の透明度・ボタン枠線がリアルタイムに連動。
-      - `src/ui/controller.js`: タップ時に `CABLE: BRIGHT (100%)` / `CABLE: DIM (20%)` のトースト通知を追加。
-    - バージョンを `v1.0.0207`、キャッシュバスターを `v=207` に更新。
+    - **全画面ボタン ＆ ケーブル明るさボタンの左上配置 ＆ SCALEモジュール ルート連動音名表示・光る位置ロジック修正**:
+      - `index.html`: 全画面ボタン（`#fullscreen-btn`）とケーブル明るさ切替ボタン（`#cable-opacity-btn`）を上部ナビゲーションバーの**左上（`#page-nav-back-btn` の隣）** へ配置。右上はバージョン表示（`#app-version-disp`）とストックボタンに整理。
+      - `src/modules/defs/scale.js` & `src/dsp/processors/scale.js`:
+        - **ルート音連動の音名表示**: ダイアログ下の12音名を固定のCからではなく、選択されたルート音を左端（0番目）とする `NOTE_NAMES[(root + i) % 12]` に連動。ルート選択変更時に `ctx.reRenderModal()` でダイアログ内の音名表示を即座に再描画。
+        - **光る位置のロジック修正**: DSPからスケール内相対位置 `activeRelSemi`（0〜11）を送信し、パネル（`renderGrid`）およびモーダル（`renderModal`）の各バーのハイライト判定に適用。ROOTがC以外（DやF#等）であっても、発音中のスケール構成音バー（ルートなら1本目、短3度なら4本目など）が完全一致して光るよう論理破綻を解消。
+    - バージョンを `v1.0.0208`、キャッシュバスターを `v=208` に更新。
 
