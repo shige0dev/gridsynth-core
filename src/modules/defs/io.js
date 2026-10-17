@@ -737,17 +737,8 @@ export const SPEC = {
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
     renderGrid: (m) => `
-        <div class="absolute inset-0.5 bg-slate-950 rounded-sm border border-slate-800/90 overflow-hidden z-0 pointer-events-none flex flex-col justify-between p-1">
-            <div class="flex items-center justify-between z-10 pointer-events-none">
-                <span class="text-[7.5px] font-bold text-teal-400 font-mono">SPEC</span>
-                <span class="spec-mode-badge text-[6.5px] font-mono font-bold text-teal-300/80 uppercase">${(m.mode || 'bar').toUpperCase()}</span>
-            </div>
-            <canvas class="spec-canvas w-full h-[74px] block rounded" width="120" height="74"></canvas>
-            <div class="flex items-center justify-between text-[6.5px] font-mono text-slate-500 px-0.5 z-10">
-                <span>40Hz</span>
-                <span>500Hz</span>
-                <span>6.4k</span>
-            </div>
+        <div class="absolute inset-0.5 bg-slate-950 rounded-sm border border-slate-800/90 overflow-hidden z-0 pointer-events-none">
+            <canvas class="spec-canvas w-full h-full block" width="120" height="120"></canvas>
         </div>`,
     updateLive: (cell, data, isP, modal, m) => {
         if (!data?.freqs) return;
@@ -769,18 +760,6 @@ export const SPEC = {
             const modalRes = extractBands(freqs, 64, sampleRate, 40, 16000);
             const mCtx = modalCvs.getContext('2d');
             drawSpectrumCanvas(mCtx, modalCvs.width, modalCvs.height, modalRes.bands, mode, true);
-
-            const peakEl = modal?.querySelector('#spec-peak-disp');
-            if (peakEl) {
-                const peak = findGlobalPeak(freqs, sampleRate, 40, 16000);
-                if (peak.peakVal > 25 && peak.peakFreq >= 35) {
-                    const hz = peak.peakFreq;
-                    const hzStr = hz >= 1000 ? `${(hz / 1000).toFixed(2)}kHz` : `${Math.round(hz)}Hz`;
-                    peakEl.textContent = `PEAK: ${hzStr}`;
-                } else {
-                    peakEl.textContent = 'PEAK: ---';
-                }
-            }
         }
     },
     renderModal: (m) => {
@@ -803,21 +782,9 @@ export const SPEC = {
                     </div>
                 </div>
 
-                <!-- Expanded Modal Spectrum Display (キーボードと共通の縦幅: h-[108px] / 40Hz〜16kHz) -->
-                <div class="h-[108px] bg-slate-950 p-1.5 rounded-lg border border-slate-800 flex flex-col justify-between select-none shadow-sm overflow-hidden">
-                    <div class="flex items-center justify-between px-1 shrink-0">
-                        <span class="text-[7.5px] font-bold text-teal-400 uppercase tracking-wider font-mono">REALTIME SPECTRUM (40Hz〜16kHz)</span>
-                        <span id="spec-peak-disp" class="text-[7.5px] font-mono font-bold text-yellow-300">PEAK: ---</span>
-                    </div>
-                    <canvas id="spec-modal-canvas" class="w-full flex-1 min-h-0 block rounded bg-slate-950" width="360" height="64"></canvas>
-                    <div class="flex items-center justify-between text-[7px] font-mono text-slate-500 px-1 border-t border-slate-800/80 pt-0.5 shrink-0">
-                        <span>40Hz</span>
-                        <span>200Hz</span>
-                        <span>1kHz</span>
-                        <span>4kHz</span>
-                        <span>10kHz</span>
-                        <span>16kHz</span>
-                    </div>
+                <!-- Expanded Modal Spectrum Display (オシロスコープ同様、文字表示なしのフルキャンバス) -->
+                <div class="h-[108px] bg-slate-950 p-1 rounded-lg border border-slate-800 select-none shadow-sm overflow-hidden">
+                    <canvas id="spec-modal-canvas" class="w-full h-full block rounded bg-slate-950" width="360" height="106"></canvas>
                 </div>
             </div>`;
     },
