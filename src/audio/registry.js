@@ -9,7 +9,7 @@ import { ampAudioDefs } from './defs/amp.js';
 import { effectsAudioDefs } from './defs/effects.js';
 import { adsrAudioDefs } from './defs/adsr.js';
 import { modAudioDefs } from './defs/mod.js';
-import { ioAudioDefs } from './defs/io.js';
+import { ioAudioDefs } from './defs/io.js?v=179';
 import { seqAudioDefs } from './defs/seq.js';
 import { chordAudioDefs } from './defs/chord.js';
 import { arpAudioDefs } from './defs/arp.js';
