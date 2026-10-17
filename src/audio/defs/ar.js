@@ -45,6 +45,8 @@ export const AR = {
             inputs: {
                 gate_in: gateIn,
                 trig_in: gateIn,
+                attack_in: cvAIn,
+                release_in: cvRIn,
                 a_cv: cvAIn,
                 cv_a: cvAIn,
                 attack_cv: cvAIn,

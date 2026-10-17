@@ -11,8 +11,8 @@ export const AR = {
     ports: () => ({
         in: [
             { port: 'gate_in', color: 'bg-orange-500' },
-            { port: 'a_cv', color: 'bg-sky-400' },
-            { port: 'r_cv', color: 'bg-indigo-400' }
+            { port: 'attack_in', color: 'bg-sky-400' },
+            { port: 'release_in', color: 'bg-indigo-400' }
         ],
         out: [
             { port: 'cv_out', color: 'bg-yellow-400' }
@@ -87,8 +87,8 @@ export const AR = {
         ], { gapCls: 'gap-2', theme: 'cv' })}</div>`;
     },
     renderModal: (m, ctx) => {
-        const isAPatched = ctx?.patched?.has('a_cv') || ctx?.patched?.has('cv_a') || ctx?.patched?.has('attack_cv');
-        const isRPatched = ctx?.patched?.has('r_cv') || ctx?.patched?.has('cv_r') || ctx?.patched?.has('release_cv');
+        const isAPatched = ctx?.patched?.has('attack_in') || ctx?.patched?.has('a_cv') || ctx?.patched?.has('cv_a') || ctx?.patched?.has('attack_cv');
+        const isRPatched = ctx?.patched?.has('release_in') || ctx?.patched?.has('r_cv') || ctx?.patched?.has('cv_r') || ctx?.patched?.has('release_cv');
 
         const attDisp = isAPatched ? 'EXT' : AR.formatTime(m.attack ?? 0.05);
         const relDisp = isRPatched ? 'EXT' : AR.formatTime(m.release ?? 0.2);
@@ -128,8 +128,8 @@ export const AR = {
             cb();
         };
 
-        const isAPatched = ctx?.patched?.has('a_cv') || ctx?.patched?.has('cv_a') || ctx?.patched?.has('attack_cv');
-        const isRPatched = ctx?.patched?.has('r_cv') || ctx?.patched?.has('cv_r') || ctx?.patched?.has('release_cv');
+        const isAPatched = ctx?.patched?.has('attack_in') || ctx?.patched?.has('a_cv') || ctx?.patched?.has('cv_a') || ctx?.patched?.has('attack_cv');
+        const isRPatched = ctx?.patched?.has('release_in') || ctx?.patched?.has('r_cv') || ctx?.patched?.has('cv_r') || ctx?.patched?.has('release_cv');
 
         if (!isAPatched) {
             UIHelpers.bindSlider('ar-slider-attack', AR.formatTime, v => { m.attack = v; onSliderChange(); }, 2.5, 0.005, 2.0);

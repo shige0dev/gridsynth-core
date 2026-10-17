@@ -194,7 +194,13 @@ export const PORT_ALIASES = {
     'reset': 'trig_in',
 
     // Switched CV
-    'out': 'cv_out'
+    'out': 'cv_out',
+
+    // AR: attack_in / release_in
+    'a_cv': 'attack_in',
+    'attack_cv': 'attack_in',
+    'r_cv': 'release_in',
+    'release_cv': 'release_in'
 };
 
 export const getPortAliases = (port) => {
@@ -335,7 +341,7 @@ export const getPortSignalType = (portName = '', modId = '') => {
     if (p.includes('gate')) {
         return SIGNAL_TYPES.GATE;
     }
-    if (p.includes('cv') || p.includes('pitch') || p === 'a' || p === 'b' || p.startsWith('time') || p.startsWith('fold') || (p.startsWith('in') && !p.startsWith('wave'))) {
+    if (p.includes('cv') || p.includes('pitch') || p === 'a' || p === 'b' || p.startsWith('time') || p.startsWith('fold') || p.includes('attack') || p.includes('release') || p.includes('peak') || (p.startsWith('in') && !p.startsWith('wave'))) {
         return SIGNAL_TYPES.CV;
     }
     if (p.includes('wave') || p.startsWith('out') || p.startsWith('audio')) {
