@@ -164,22 +164,20 @@ export const PAT = {
                 </div>
                 ` : ''}
 
-                <!-- Mini Cheat Sheet (2-Line Extended Notation Hints) -->
+                <!-- Mini Cheat Sheet (2-Line Extended Notation Hints: 4x2 Grid) -->
                 ${showHints ? `
-                <div class="bg-slate-950/80 p-1.5 rounded border border-slate-800/80 text-[7px] font-mono text-slate-300 space-y-1 animate-fadeIn select-none">
-                    <div class="grid grid-cols-5 gap-1 text-center">
-                        <div><b class="text-cyan-300">c2 eb2</b> 音名</div>
+                <div class="bg-slate-950/80 p-1.5 rounded border border-slate-800/80 text-[7.5px] font-mono text-slate-300 space-y-1 animate-fadeIn select-none">
+                    <div class="grid grid-cols-4 gap-1 text-center">
                         <div><b class="text-cyan-300">~</b> 休符</div>
                         <div><b class="text-cyan-300">[a b]</b> 分割</div>
                         <div><b class="text-cyan-300">&lt;a b&gt;</b> 周期交代</div>
                         <div><b class="text-cyan-300">a!3</b> 複製</div>
                     </div>
-                    <div class="grid grid-cols-5 gap-1 pt-0.5 border-t border-slate-800/50 text-center">
+                    <div class="grid grid-cols-4 gap-1 pt-0.5 border-t border-slate-800/50 text-center">
                         <div><b class="text-cyan-300">a*4</b> 連打</div>
                         <div><b class="text-cyan-300">a(3,8)</b> ユークリッド</div>
                         <div><b class="text-cyan-300">a?0.7</b> 確率</div>
-                        <div><b class="text-cyan-300">a^1</b> オクターブ上</div>
-                        <div><b class="text-cyan-300">a^-1</b> オクターブ下</div>
+                        <div><b class="text-cyan-300">a^1</b> オクターブ変更</div>
                     </div>
                 </div>
                 ` : ''}
