@@ -143,124 +143,97 @@ export const SCOPE = {
         const isLiss = m.displayMode === 'xy';
         const fmtT = SCOPE.formatTime;
         const curSpread = m.ySpread ?? 0.2;
+        const curV = m.vRange || 5.0;
         return `
-            <div class="space-y-1 p-0.5">
-                <!-- Top Menu Bar (上段 各種設定部分) -->
-                <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-1.5">
+            <div class="space-y-1.5">
+                <!-- Top Menu Bar (上段 各種設定メニュー) -->
+                <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-1 select-none">
                     <div class="flex items-center gap-1 shrink-0">
                         <button id="scope-mode-time" class="px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${!isLiss ? 'bg-cyan-600 text-white border-cyan-500 shadow-sm shadow-cyan-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">DUAL</button>
                         <button id="scope-mode-liss" class="px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${isLiss ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm shadow-emerald-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">LISS</button>
                         <button id="scope-trig-btn" class="px-1.5 py-0.5 rounded text-[7.5px] font-bold border transition-colors ${m.trigMode === 'free' ? 'bg-amber-600 text-white border-amber-500' : 'bg-cyan-600 text-white border-cyan-500'}">TRIG: ${(m.trigMode || 'auto').toUpperCase()}</button>
                     </div>
 
-                    <!-- Y-Separation Horizontal Slider in Menu Bar -->
-                    <div class="flex items-center gap-1 ${isLiss ? 'opacity-30 pointer-events-none' : ''} shrink-0">
-                        <span class="text-[7.5px] font-mono text-purple-300 font-bold uppercase tracking-tight">Y-SEP:</span>
-                        <input type="range" id="scope-spread-h" min="0.0" max="0.8" step="0.02" value="${curSpread}" class="w-14 h-1 bg-slate-800 rounded accent-purple-500 cursor-pointer">
-                        <span id="scope-spread-val" class="text-[7.5px] font-mono text-purple-300 font-bold min-w-[18px] text-right">${curSpread.toFixed(2)}</span>
+                    <!-- X-Axis Time Span Slider in Menu Bar (X軸の時間幅はメニュー領域にスライダで配置) -->
+                    <div class="flex items-center gap-1 shrink-0">
+                        <span class="text-[7.5px] font-mono text-cyan-300 font-bold uppercase tracking-tight">TIME:</span>
+                        <input type="range" id="scope-time-slider" min="0" max="${T.length - 1}" step="1" value="${tIdx}" class="w-16 h-1 bg-slate-800 rounded accent-cyan-400 cursor-pointer" title="X軸時間幅">
+                        <span id="scope-time-val" class="text-[7.5px] font-mono text-cyan-300 font-bold min-w-[24px] text-right">${fmtT(T[tIdx])}</span>
                     </div>
 
                     <!-- Channel Indicators -->
-                    <div class="flex items-center gap-1.5 text-[7px] font-mono text-slate-400 shrink-0">
+                    <div class="flex items-center gap-1 text-[7px] font-mono text-slate-400 shrink-0">
                         <span class="flex items-center gap-0.5"><span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>CH1</span>
                         <span class="flex items-center gap-0.5"><span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>CH2</span>
                     </div>
                 </div>
 
-                <!-- Core Functional Area: Oscilloscope Display (時間・倍率を表示内に統合) -->
-                <div class="bg-slate-950 p-1.5 rounded-xl border border-slate-800 flex flex-col gap-1">
-                    <div class="flex items-center justify-between px-1">
-                        <span class="text-[7.5px] font-bold text-cyan-400 uppercase tracking-wider font-mono">${isLiss ? 'XY LISSAJOUS' : 'DUAL TRACE OSCILLOSCOPE'}</span>
-                        
-                        <!-- Embedded TIME & SCALE controls inside display -->
-                        <div class="flex items-center gap-1.5">
-                            <!-- TIME Stepper -->
-                            <div class="flex items-center gap-0.5 bg-slate-900/90 border border-slate-800 rounded px-1 py-0.5 shadow-sm">
-                                <span class="text-[7px] text-slate-400 font-bold mr-0.5">TIME:</span>
-                                <button id="scope-time-prev" class="w-3.5 h-3.5 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-[9px] active:scale-95 leading-none">◀</button>
-                                <span id="scope-time-disp" class="text-[7.5px] font-mono font-bold text-cyan-300 min-w-[26px] text-center">${fmtT(T[tIdx])}</span>
-                                <button id="scope-time-next" class="w-3.5 h-3.5 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-[9px] active:scale-95 leading-none">▶</button>
-                            </div>
-
-                            <!-- VOLT SCALE Stepper -->
-                            <div class="flex items-center gap-0.5 bg-slate-900/90 border border-slate-800 rounded px-1 py-0.5 shadow-sm">
-                                <span class="text-[7px] text-slate-400 font-bold mr-0.5">SCALE:</span>
-                                <button id="scope-volt-prev" class="w-3.5 h-3.5 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-[9px] active:scale-95 leading-none">◀</button>
-                                <span id="scope-volt-disp" class="text-[7.5px] font-mono font-bold text-cyan-300 min-w-[22px] text-center">${(m.vRange || 5.0).toFixed(1)}v</span>
-                                <button id="scope-volt-next" class="w-3.5 h-3.5 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-[9px] active:scale-95 leading-none">▶</button>
-                            </div>
-                        </div>
+                <!-- Core Display Area flanked by Left and Right Sliders (Y軸倍率/2波形分離は表示域の左右にスライダ配置・オシロスコープとは分離) -->
+                <div class="flex items-center gap-1.5 h-[108px]">
+                    <!-- Left: Y-Axis Scale / Magnification (Y軸倍率) -->
+                    <div class="flex flex-col items-center justify-between shrink-0 w-8 h-[108px] bg-slate-950 py-1 px-0.5 rounded-lg border border-slate-800 select-none shadow-sm">
+                        <span class="text-[6.5px] font-mono text-cyan-400 font-bold tracking-tight">SCALE</span>
+                        <input type="range" id="scope-volt-slider" min="0.5" max="10.0" step="0.5" value="${curV}" class="scope-vslider accent-cyan-400 cursor-pointer" title="Y軸倍率 (V/Range)">
+                        <span id="scope-volt-val" class="text-[7px] font-mono text-cyan-300 font-bold min-w-[22px] text-center">${curV.toFixed(1)}v</span>
                     </div>
-                    <canvas id="scope-modal-canvas" class="w-full h-24 block rounded bg-slate-950" width="360" height="96"></canvas>
+
+                    <!-- Center: Oscilloscope Waveform Display -->
+                    <div class="flex-1 min-w-0 h-[108px] bg-slate-950 p-1 rounded-lg border border-slate-800 flex flex-col justify-between overflow-hidden shadow-sm">
+                        <div class="flex items-center justify-between px-1">
+                            <span class="text-[7.5px] font-bold text-cyan-400 uppercase tracking-wider font-mono">${isLiss ? 'XY LISSAJOUS' : 'DUAL TRACE OSCILLOSCOPE'}</span>
+                            <span class="text-[6.5px] font-mono text-slate-500">CH1:CYAN / CH2:PURPLE</span>
+                        </div>
+                        <canvas id="scope-modal-canvas" class="w-full flex-1 block rounded bg-slate-950" width="300" height="80"></canvas>
+                    </div>
+
+                    <!-- Right: 2-Waveform Separation (2波形の分離) -->
+                    <div class="flex flex-col items-center justify-between shrink-0 w-8 h-[108px] bg-slate-950 py-1 px-0.5 rounded-lg border border-slate-800 select-none shadow-sm ${isLiss ? 'opacity-30 pointer-events-none' : ''}">
+                        <span class="text-[6.5px] font-mono text-purple-400 font-bold tracking-tight">Y-SEP</span>
+                        <input type="range" id="scope-spread-slider" min="0.0" max="0.8" step="0.02" value="${curSpread}" class="scope-vslider accent-purple-500 cursor-pointer" title="2波形分離">
+                        <span id="scope-spread-val" class="text-[7px] font-mono text-purple-300 font-bold min-w-[22px] text-center">${curSpread.toFixed(2)}</span>
+                    </div>
                 </div>
             </div>`;
     },
     bindEvents: (m, ctx, cb) => {
         const T = SCOPE.T_STEPS;
         const fmtT = SCOPE.formatTime;
-        const V_STEPS = [0.5, 1.0, 2.0, 3.0, 5.0, 8.0, 10.0];
 
         // Mode switch
         document.getElementById('scope-mode-time')?.addEventListener('click', () => { m.displayMode = 'time'; ctx.reRenderModal(); cb(); });
         document.getElementById('scope-mode-liss')?.addEventListener('click', () => { m.displayMode = 'xy'; ctx.reRenderModal(); cb(); });
         document.getElementById('scope-trig-btn')?.addEventListener('click', () => { m.trigMode = m.trigMode === 'free' ? 'auto' : 'free'; ctx.reRenderModal(); cb(); });
 
-        // Y-Separation horizontal slider in menu bar
-        const ySlider = document.getElementById('scope-spread-h');
-        const yVal = document.getElementById('scope-spread-val');
-        ySlider?.addEventListener('input', (e) => {
-            const v = parseFloat(e.target.value);
-            m.ySpread = v;
-            if (yVal) yVal.textContent = v.toFixed(2);
+        // X-Axis Time Slider in Menu Bar
+        const tSlider = document.getElementById('scope-time-slider');
+        const tVal = document.getElementById('scope-time-val');
+        tSlider?.addEventListener('input', (e) => {
+            const idx = parseInt(e.target.value, 10);
+            if (idx >= 0 && idx < T.length) {
+                m.timeSpan = T[idx];
+                if (tVal) tVal.textContent = fmtT(T[idx]);
+                cb();
+            }
+        });
+
+        // Left: Y-Axis Scale / Magnification vertical slider
+        const vSlider = document.getElementById('scope-volt-slider');
+        const vVal = document.getElementById('scope-volt-val');
+        vSlider?.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            m.vRange = val;
+            if (vVal) vVal.textContent = `${val.toFixed(1)}v`;
             cb();
         });
 
-        // Embedded TIME stepper
-        const tDisp = document.getElementById('scope-time-disp');
-        document.getElementById('scope-time-prev')?.addEventListener('click', () => {
-            let idx = T.findIndex(t => Math.abs(t - (m.timeSpan || 0.05)) < 0.0005);
-            if (idx === -1) idx = 4;
-            if (idx > 0) {
-                idx--;
-                m.timeSpan = T[idx];
-                if (tDisp) tDisp.textContent = fmtT(T[idx]);
-                cb();
-            }
-        });
-        document.getElementById('scope-time-next')?.addEventListener('click', () => {
-            let idx = T.findIndex(t => Math.abs(t - (m.timeSpan || 0.05)) < 0.0005);
-            if (idx === -1) idx = 4;
-            if (idx < T.length - 1) {
-                idx++;
-                m.timeSpan = T[idx];
-                if (tDisp) tDisp.textContent = fmtT(T[idx]);
-                cb();
-            }
-        });
-
-        // Embedded VOLT SCALE stepper
-        const vDisp = document.getElementById('scope-volt-disp');
-        document.getElementById('scope-volt-prev')?.addEventListener('click', () => {
-            const curV = m.vRange || 5.0;
-            let idx = V_STEPS.findIndex(v => Math.abs(v - curV) < 0.05);
-            if (idx === -1) idx = 4;
-            if (idx > 0) {
-                idx--;
-                m.vRange = V_STEPS[idx];
-                if (vDisp) vDisp.textContent = `${V_STEPS[idx].toFixed(1)}v`;
-                cb();
-            }
-        });
-        document.getElementById('scope-volt-next')?.addEventListener('click', () => {
-            const curV = m.vRange || 5.0;
-            let idx = V_STEPS.findIndex(v => Math.abs(v - curV) < 0.05);
-            if (idx === -1) idx = 4;
-            if (idx < V_STEPS.length - 1) {
-                idx++;
-                m.vRange = V_STEPS[idx];
-                if (vDisp) vDisp.textContent = `${V_STEPS[idx].toFixed(1)}v`;
-                cb();
-            }
+        // Right: 2-Waveform Separation vertical slider
+        const spSlider = document.getElementById('scope-spread-slider');
+        const spVal = document.getElementById('scope-spread-val');
+        spSlider?.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            m.ySpread = val;
+            if (spVal) spVal.textContent = val.toFixed(2);
+            cb();
         });
     }
 };
@@ -727,16 +700,16 @@ export const SPEC = {
             drawSpectrumCanvas(ctx, cvs.width, cvs.height, cellRes.bands, mode, false);
         }
 
-        // 2. Draw modal canvas if modal is open (64 bands, 40Hz〜6.4kHz)
+        // 2. Draw modal canvas if modal is open (64 bands, 40Hz〜16kHz) - 10kHz以上に対応
         const modalCvs = modal?.querySelector('#spec-modal-canvas');
         if (modalCvs) {
-            const modalRes = extractBands(freqs, 64, sampleRate, 40, 6400);
+            const modalRes = extractBands(freqs, 64, sampleRate, 40, 16000);
             const mCtx = modalCvs.getContext('2d');
             drawSpectrumCanvas(mCtx, modalCvs.width, modalCvs.height, modalRes.bands, mode, true);
 
             const peakEl = modal?.querySelector('#spec-peak-disp');
             if (peakEl) {
-                const peak = findGlobalPeak(freqs, sampleRate, 40, 6400);
+                const peak = findGlobalPeak(freqs, sampleRate, 40, 16000);
                 if (peak.peakVal > 25 && peak.peakFreq >= 35) {
                     const hz = peak.peakFreq;
                     const hzStr = hz >= 1000 ? `${(hz / 1000).toFixed(2)}kHz` : `${Math.round(hz)}Hz`;
@@ -751,9 +724,9 @@ export const SPEC = {
         const curMode = m.mode || 'bar';
         const curSpeed = m.speed || 'med';
         return `
-            <div class="space-y-1 p-0.5">
+            <div class="space-y-1.5">
                 <!-- Single-Row Top Menu Bar (1段設定メニュー) -->
-                <div class="flex items-center justify-between pb-1 border-b border-slate-800">
+                <div class="flex items-center justify-between pb-1 border-b border-slate-800 select-none">
                     <div class="flex items-center gap-1">
                         <span class="text-[8px] text-slate-400 font-bold uppercase tracking-tight">MODE:</span>
                         <button id="spec-mode-bar" class="px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${curMode === 'bar' ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">BAR</button>
@@ -767,19 +740,20 @@ export const SPEC = {
                     </div>
                 </div>
 
-                <!-- Expanded Modal Spectrum Display (Compact Full-Width) -->
-                <div class="bg-slate-950 p-1.5 rounded-xl border border-slate-800 flex flex-col gap-1">
+                <!-- Expanded Modal Spectrum Display (キーボードと共通の縦幅: h-[108px] / 40Hz〜16kHz) -->
+                <div class="h-[108px] bg-slate-950 p-1.5 rounded-lg border border-slate-800 flex flex-col justify-between select-none shadow-sm">
                     <div class="flex items-center justify-between px-1">
-                        <span class="text-[7.5px] font-bold text-teal-400 uppercase tracking-wider font-mono">REALTIME SPECTRUM (40Hz〜6.4kHz)</span>
+                        <span class="text-[7.5px] font-bold text-teal-400 uppercase tracking-wider font-mono">REALTIME SPECTRUM (40Hz〜16kHz)</span>
                         <span id="spec-peak-disp" class="text-[7.5px] font-mono font-bold text-yellow-300">PEAK: ---</span>
                     </div>
-                    <canvas id="spec-modal-canvas" class="w-full h-24 block rounded bg-slate-950" width="360" height="96"></canvas>
+                    <canvas id="spec-modal-canvas" class="w-full flex-1 block rounded bg-slate-950" width="360" height="70"></canvas>
                     <div class="flex items-center justify-between text-[7px] font-mono text-slate-500 px-1 border-t border-slate-800/80 pt-0.5">
                         <span>40Hz</span>
-                        <span>150Hz</span>
-                        <span>500Hz</span>
-                        <span>1.8k</span>
-                        <span>6.4kHz</span>
+                        <span>200Hz</span>
+                        <span>1kHz</span>
+                        <span>4kHz</span>
+                        <span>10kHz</span>
+                        <span>16kHz</span>
                     </div>
                 </div>
             </div>`;

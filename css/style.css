@@ -70,6 +70,19 @@ body {
     background: transparent;
 }
 
+.scope-vslider {
+    writing-mode: vertical-lr;
+    direction: rtl;
+    appearance: slider-vertical;
+    -webkit-appearance: slider-vertical;
+    width: 16px;
+    height: 68px;
+    flex-shrink: 0;
+    cursor: pointer;
+    touch-action: none;
+    background: transparent;
+}
+
 .selected-module .port,
 .has-selected-module .port {
     pointer-events: none !important;
