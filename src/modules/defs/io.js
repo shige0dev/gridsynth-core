@@ -315,7 +315,16 @@ export const KEY = {
         ]
     }),
     WHITE_KEYS: [{n:'B',s:-1},{n:'C',s:0},{n:'D',s:2},{n:'E',s:4},{n:'F',s:5},{n:'G',s:7},{n:'A',s:9},{n:'B',s:11},{n:'C',s:12},{n:'D',s:14}],
-    BLACK_KEYS: [{s:-2,l:0},{s:1,l:20},{s:3,l:30},{s:6,l:50},{s:8,l:60},{s:10,l:70},{s:13,l:90},{s:15,l:100}],
+    BLACK_KEYS: [
+        { s: -2, l: -1.667 },
+        { s: 1, l: 15.833 },
+        { s: 3, l: 27.5 },
+        { s: 6, l: 45.0 },
+        { s: 8, l: 56.667 },
+        { s: 10, l: 68.333 },
+        { s: 13, l: 85.833 },
+        { s: 15, l: 97.5 }
+    ],
     renderGrid: (m) => `<div class="flex flex-col items-center justify-center leading-tight gap-0.5 pointer-events-none text-cyan-400"><span class="text-[9px] font-bold text-sky-300">KEYBOARD</span><span class="text-[14px] font-mono font-bold text-white">${m.lastNote||'C4'}</span></div>`,
     renderModal: (m) => {
         const W = KEY.WHITE_KEYS, B = KEY.BLACK_KEYS;
@@ -329,8 +338,8 @@ export const KEY = {
                     <span class="text-[9px] font-mono font-bold text-sky-300" id="key-active-note">${m.lastNote||'C4'}</span>
                 </div>
                 <div class="relative h-28 bg-slate-950 rounded-lg border border-slate-800 flex select-none touch-none overflow-hidden" id="kb-box">
-                    ${W.map(k => `<div class="flex-1 bg-slate-200 active:bg-cyan-300 border border-slate-400 rounded-b flex flex-col justify-end items-center pb-1 cursor-pointer" data-semi="${k.s}"><span class="text-[7.5px] font-bold text-slate-700 pointer-events-none">${k.n}</span></div>`).join('')}
-                    <div class="absolute inset-0 pointer-events-none">${B.map(bk => `<div class="absolute h-16 bg-slate-900 border border-slate-700 rounded-b pointer-events-auto cursor-pointer active:bg-cyan-600 shadow-md" style="left:${bk.l}%;width:6.8%;transform:translateX(-50%);" data-semi="${bk.s}"></div>`).join('')}</div>
+                    ${W.map(k => `<div class="key-white flex-1 bg-slate-200 border border-slate-400 rounded-b flex flex-col justify-end items-center pb-1 cursor-pointer select-none transition-colors" data-semi="${k.s}"><span class="text-[7.5px] font-bold text-slate-700 pointer-events-none">${k.n}</span></div>`).join('')}
+                    <div class="absolute inset-0 pointer-events-none">${B.map(bk => `<div class="key-black absolute h-16 bg-slate-900 border border-slate-700 rounded-b pointer-events-auto cursor-pointer shadow-md select-none transition-colors" style="left:${bk.l}%;width:5.833%;" data-semi="${bk.s}"></div>`).join('')}</div>
                 </div>
             </div>`;
     },
@@ -344,18 +353,73 @@ export const KEY = {
             m.lastNote = name; if (nD && isDown) nD.textContent = name;
             ctx.sendKeyNote?.(midi, isDown); if (isDown) cb();
         };
+        const setKeyHighlight = (el, isPressed) => {
+            if (!el) return;
+            const isBlack = el.classList.contains('key-black');
+            if (isBlack) {
+                el.classList.toggle('!bg-cyan-600', isPressed);
+                el.classList.toggle('shadow-cyan-500/50', isPressed);
+            } else {
+                el.classList.toggle('!bg-cyan-300', isPressed);
+            }
+        };
         const kb = document.getElementById('kb-box');
         if (kb) {
             let activeKey = null;
+            let activePointerId = null;
+
+            const getKeyFromPoint = (x, y) => {
+                const el = document.elementFromPoint(x, y);
+                return (el && kb.contains(el)) ? el.closest('[data-semi]') : null;
+            };
+
             kb.onpointerdown = (e) => {
-                const k = e.target.closest('[data-semi]'); if (!k) return;
-                activeKey = k; kb.setPointerCapture(e.pointerId); play(parseInt(k.dataset.semi), true);
+                const k = getKeyFromPoint(e.clientX, e.clientY) || e.target.closest('[data-semi]');
+                if (!k) return;
+                if (activeKey) {
+                    setKeyHighlight(activeKey, false);
+                    play(parseInt(activeKey.dataset.semi), false);
+                }
+                activePointerId = e.pointerId;
+                activeKey = k;
+                try { kb.setPointerCapture(e.pointerId); } catch(err){}
+                setKeyHighlight(k, true);
+                play(parseInt(k.dataset.semi), true);
             };
+
+            kb.onpointermove = (e) => {
+                if (activePointerId === null || e.pointerId !== activePointerId) return;
+                const k = getKeyFromPoint(e.clientX, e.clientY);
+                if (k !== activeKey) {
+                    if (activeKey) {
+                        setKeyHighlight(activeKey, false);
+                        play(parseInt(activeKey.dataset.semi), false);
+                    }
+                    if (k) {
+                        setKeyHighlight(k, true);
+                        play(parseInt(k.dataset.semi), true);
+                    }
+                    activeKey = k;
+                }
+            };
+
             const stop = (e) => {
-                if (activeKey) { play(parseInt(activeKey.dataset.semi), false); activeKey = null; }
-                try { kb.releasePointerCapture(e.pointerId); } catch(err){}
+                if (activePointerId !== null && e && e.pointerId !== activePointerId) return;
+                if (activeKey) {
+                    setKeyHighlight(activeKey, false);
+                    play(parseInt(activeKey.dataset.semi), false);
+                    activeKey = null;
+                }
+                activePointerId = null;
+                try {
+                    if (e && kb.hasPointerCapture?.(e.pointerId)) {
+                        kb.releasePointerCapture(e.pointerId);
+                    }
+                } catch(err){}
             };
-            kb.onpointerup = stop; kb.onpointercancel = stop;
+
+            kb.onpointerup = stop;
+            kb.onpointercancel = stop;
         }
     }
 };
