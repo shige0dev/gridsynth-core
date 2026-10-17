@@ -29,9 +29,9 @@ export const TAPE = {
         ]
     }),
     /**
-     * Compute 64-bin peak array from Float32Array for lightweight SVG waveform drawing.
+     * Compute 96-bin peak array from Float32Array for high-res oscilloscope-like waveform.
      */
-    extractPeaks(buffer, numBins = 64) {
+    extractPeaks(buffer, numBins = 96) {
         if (!buffer || buffer.length === 0) return null;
         const peaks = new Float32Array(numBins);
         const step = Math.floor(buffer.length / numBins);
@@ -48,57 +48,70 @@ export const TAPE = {
         return Array.from(peaks);
     },
     renderWaveformSVG: (m, playhead = 0.0) => {
-        const W = 280, H = 56;
-        const padX = 4, padY = 4;
-        const innerW = W - padX * 2, innerH = H - padY * 2;
+        const W = 320, H = 100;
+        const padX = 6, padY = 6;
+        const innerW = W - padX * 2;
+        const innerH = H - padY * 2;
         const midY = padY + innerH / 2;
 
         const startPct = Math.max(0, Math.min(1, m.start ?? 0.0));
         const endPct = Math.max(0, Math.min(1, m.end ?? 1.0));
-        const isReverse = startPct > endPct;
 
-        // Selection highlight box
-        const x1 = padX + Math.min(startPct, endPct) * innerW;
-        const x2 = padX + Math.max(startPct, endPct) * innerW;
-        const boxW = Math.max(2, x2 - x1);
+        // Oscilloscope reticle background grid
+        let gridSvg = '';
+        for (let gx = 1; gx <= 7; gx++) {
+            const x = padX + (innerW / 8) * gx;
+            gridSvg += `<line x1="${x.toFixed(1)}" y1="${padY}" x2="${x.toFixed(1)}" y2="${padY + innerH}" stroke="#1e293b" stroke-width="0.8" stroke-dasharray="2,2"/>`;
+        }
+        for (let gy = 1; gy <= 3; gy++) {
+            const y = padY + (innerH / 4) * gy;
+            gridSvg += `<line x1="${padX}" y1="${y.toFixed(1)}" x2="${padX + innerW}" y2="${y.toFixed(1)}" stroke="#1e293b" stroke-width="0.8" stroke-dasharray="2,2"/>`;
+        }
 
-        const highlightColor = isReverse ? 'rgba(244, 63, 94, 0.25)' : 'rgba(56, 189, 248, 0.25)';
-        const borderColor = isReverse ? '#f43f5e' : '#38bdf8';
-
-        // Waveform bars
+        // Waveform peaks (sharp cyan oscilloscope trace)
         const peaks = m._peaks || [];
-        const numBars = peaks.length > 0 ? peaks.length : 48;
+        const numBars = peaks.length > 0 ? peaks.length : 64;
         const barW = innerW / numBars;
 
         let barsSvg = '';
         for (let i = 0; i < numBars; i++) {
-            const bx = padX + i * barW;
+            const bx = padX + i * barW + barW * 0.5;
             const val = peaks[i] !== undefined ? peaks[i] : (0.2 + 0.6 * Math.sin((i / numBars) * Math.PI));
-            const barH = Math.max(2, val * (innerH / 2));
-            barsSvg += `<line x1="${bx.toFixed(1)}" y1="${(midY - barH).toFixed(1)}" x2="${bx.toFixed(1)}" y2="${(midY + barH).toFixed(1)}" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/>`;
+            const barH = Math.max(1.5, val * (innerH * 0.46));
+            barsSvg += `<line x1="${bx.toFixed(1)}" y1="${(midY - barH).toFixed(1)}" x2="${bx.toFixed(1)}" y2="${(midY + barH).toFixed(1)}" stroke="#06b6d4" stroke-width="1.8" stroke-linecap="round" opacity="0.85"/>`;
         }
 
-        // Playhead position line
+        // Neon Green (#22c55e) markers for Start & End
+        // Start is slightly thicker (stroke-width: 3.0) than End (stroke-width: 1.6)
+        const startX = padX + startPct * innerW;
+        const endX = padX + endPct * innerW;
+
+        // Dynamic playhead position line
         const playX = padX + Math.max(0, Math.min(1, playhead)) * innerW;
 
         return `
-            <svg id="tape-waveform-svg" viewBox="0 0 ${W} ${H}" class="w-full h-14 select-none bg-slate-950 rounded-lg border border-slate-800 shadow-inner overflow-hidden relative">
-                <!-- Center zero line -->
-                <line x1="${padX}" y1="${midY}" x2="${padX + innerW}" y2="${midY}" stroke="#1e293b" stroke-width="1"/>
+            <svg id="tape-waveform-svg" viewBox="0 0 ${W} ${H}" class="w-full h-28 select-none bg-slate-950 rounded-xl border border-slate-800 shadow-inner overflow-hidden relative">
+                <!-- Center zero axis -->
+                <line x1="${padX}" y1="${midY}" x2="${padX + innerW}" y2="${midY}" stroke="#334155" stroke-width="1"/>
                 
-                <!-- Waveform Peaks -->
+                <!-- Oscilloscope Reticle Grid -->
+                ${gridSvg}
+
+                <!-- Audio Waveform -->
                 ${barsSvg}
 
-                <!-- Active Window Highlight Region -->
-                <rect x="${x1.toFixed(1)}" y="${padY}" width="${boxW.toFixed(1)}" height="${innerH}" fill="${highlightColor}" stroke="${borderColor}" stroke-width="1" stroke-dasharray="${isReverse ? '2,2' : 'none'}"/>
+                <!-- End Line: Neon Green (same color), normal stroke (1.6px) -->
+                <line x1="${endX.toFixed(1)}" y1="${padY}" x2="${endX.toFixed(1)}" y2="${padY + innerH}" stroke="#22c55e" stroke-width="1.6" class="drop-shadow-[0_0_4px_rgba(34,197,94,0.85)]"/>
+                <rect x="${(endX - 5).toFixed(1)}" y="${padY}" width="10" height="9" rx="1.5" fill="#14532d" stroke="#22c55e" stroke-width="1"/>
+                <text x="${endX.toFixed(1)}" y="${padY + 7}" fill="#4ade80" font-size="6.5" font-family="monospace" font-weight="bold" text-anchor="middle">E</text>
 
-                <!-- Start marker line -->
-                <line x1="${(padX + startPct * innerW).toFixed(1)}" y1="${padY}" x2="${(padX + startPct * innerW).toFixed(1)}" y2="${padY + innerH}" stroke="#38bdf8" stroke-width="2"/>
-                <!-- End marker line -->
-                <line x1="${(padX + endPct * innerW).toFixed(1)}" y1="${padY}" x2="${(padX + endPct * innerW).toFixed(1)}" y2="${padY + innerH}" stroke="#f43f5e" stroke-width="2"/>
+                <!-- Start Line: Neon Green (same color), THICKER (3.0px) -->
+                <line x1="${startX.toFixed(1)}" y1="${padY}" x2="${startX.toFixed(1)}" y2="${padY + innerH}" stroke="#22c55e" stroke-width="3.0" class="drop-shadow-[0_0_6px_rgba(34,197,94,0.95)]"/>
+                <rect x="${(startX - 6).toFixed(1)}" y="${padY}" width="12" height="9" rx="1.5" fill="#14532d" stroke="#22c55e" stroke-width="1.2"/>
+                <text x="${startX.toFixed(1)}" y="${padY + 7}" fill="#4ade80" font-size="6.5" font-family="monospace" font-weight="bold" text-anchor="middle">S</text>
 
-                <!-- Dynamic Playhead Indicator -->
-                <line id="tape-playhead-line" x1="${playX.toFixed(1)}" y1="${padY}" x2="${playX.toFixed(1)}" y2="${padY + innerH}" stroke="#fde047" stroke-width="2" class="drop-shadow-[0_0_6px_rgba(253,224,71,0.9)]"/>
+                <!-- Dynamic Playhead Indicator Line -->
+                <line id="tape-playhead-line" x1="${playX.toFixed(1)}" y1="${padY}" x2="${playX.toFixed(1)}" y2="${padY + innerH}" stroke="#fde047" stroke-width="2.2" class="drop-shadow-[0_0_8px_rgba(253,224,71,1)]"/>
             </svg>
         `;
     },
@@ -125,52 +138,52 @@ export const TAPE = {
         const durStr = `${(m.duration ?? 1.5).toFixed(2)}s`;
 
         return `
-            <div class="space-y-2 p-1 text-slate-200">
+            <div class="space-y-2 p-1.5 text-slate-200 w-[310px] sm:w-[330px]">
                 <!-- Header / File Loader -->
-                <div class="flex items-center justify-between px-1">
+                <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-1 select-none">
                     <div class="flex items-center gap-1.5 overflow-hidden">
                         <i data-lucide="disc" class="w-3.5 h-3.5 text-cyan-400 shrink-0"></i>
-                        <span class="text-[9px] font-bold text-cyan-300 truncate">${m.name || 'Tape 1'}</span>
-                        <span class="text-[8px] font-mono text-slate-500">(${durStr})</span>
+                        <span class="text-[9.5px] font-bold text-cyan-300 truncate max-w-[120px]">${m.name || 'Tape 1'}</span>
+                        <span class="text-[8px] font-mono text-slate-400 font-bold">(${durStr})</span>
                     </div>
-                    <label class="px-2 py-0.5 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500/60 text-cyan-300 rounded text-[8px] font-bold cursor-pointer transition shadow-sm flex items-center gap-1">
+                    <label class="px-2 py-1 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500/70 text-cyan-200 rounded text-[8px] font-bold cursor-pointer transition shadow-sm flex items-center gap-1">
                         <i data-lucide="upload" class="w-2.5 h-2.5"></i>
                         <span>LOAD AUDIO/MP4</span>
                         <input type="file" id="tape-file-input" accept="audio/*, video/mp4, video/*" class="hidden">
                     </label>
                 </div>
 
-                <!-- Waveform Canvas Container -->
+                <!-- Oscilloscope-sized Waveform Display (Large format) -->
                 <div id="tape-waveform-wrap" class="w-full">
                     ${TAPE.renderWaveformSVG(m, 0.0)}
                 </div>
 
                 <!-- Playback Mode & Direction Status -->
-                <div class="flex items-center justify-between px-1 py-0.5 bg-slate-950/60 rounded border border-slate-800 text-[8px]">
-                    <div class="flex items-center gap-1.5">
-                        <button id="tape-play-btn" class="px-2 py-0.5 rounded bg-blue-600 hover:bg-blue-500 text-white font-bold transition flex items-center gap-1">
-                            <i data-lucide="play" class="w-2.5 h-2.5"></i>
+                <div class="flex items-center justify-between px-2 py-1 bg-slate-950/70 rounded-lg border border-slate-800 text-[8.5px]">
+                    <div class="flex items-center gap-2">
+                        <button id="tape-play-btn" class="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white font-bold transition flex items-center gap-1 shadow-sm">
+                            <i data-lucide="play" class="w-3 h-3"></i>
                             <span id="tape-play-text">PLAY</span>
                         </button>
-                        <button id="tape-loop-btn" class="px-2 py-0.5 rounded border ${m.loop ? 'bg-cyan-950 text-cyan-300 border-cyan-500' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition">
+                        <button id="tape-loop-btn" class="px-2 py-1 rounded border ${m.loop ? 'bg-cyan-950 text-cyan-300 border-cyan-500' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition">
                             LOOP: ${m.loop ? 'ON' : 'OFF'}
                         </button>
                     </div>
-                    <div class="flex items-center gap-1 font-mono font-bold">
+                    <div class="flex items-center gap-1.5 font-mono font-bold text-[9px]">
                         <span class="text-slate-400">DIR:</span>
-                        <span class="${isRev ? 'text-rose-400' : 'text-emerald-400'}">${isRev ? 'REVERSE ◀' : 'FORWARD ▶'}</span>
+                        <span id="tape-dir-disp" class="${isRev ? 'text-rose-400' : 'text-emerald-400'}">${isRev ? 'REVERSE ◀' : 'FORWARD ▶'}</span>
                     </div>
                 </div>
 
-                <!-- Vertical Sliders: START, END, SPEED (Standard GridSynth Rule) -->
-                <div class="flex items-center justify-around py-1 bg-slate-950/60 p-1 rounded-xl border border-slate-800/80 gap-1">
-                    ${UIHelpers.createVSliderHTML('tape-slider-start', 'START', 0.0, 1.0, 0.01, m.start ?? 0.0, 'start', 'cyan', isStartPatched, startDisp, 1)}
-                    ${UIHelpers.createVSliderHTML('tape-slider-end', 'END', 0.0, 1.0, 0.01, m.end ?? 1.0, 'end', 'cyan', isEndPatched, endDisp, 1)}
+                <!-- Vertical Sliders: START, END, SPEED (Placed below waveform display) -->
+                <div class="flex items-center justify-around py-1.5 bg-slate-950/60 p-1.5 rounded-xl border border-slate-800/80 gap-2">
+                    ${UIHelpers.createVSliderHTML('tape-slider-start', 'START', 0.0, 1.0, 0.01, m.start ?? 0.0, 'start', 'emerald', isStartPatched, startDisp, 1)}
+                    ${UIHelpers.createVSliderHTML('tape-slider-end', 'END', 0.0, 1.0, 0.01, m.end ?? 1.0, 'end', 'emerald', isEndPatched, endDisp, 1)}
                     ${UIHelpers.createVSliderHTML('tape-slider-speed', 'SPEED', 0.1, 4.0, 0.05, m.speed ?? 1.0, 'spd', 'cyan', isSpeedPatched, speedDisp, 2)}
                 </div>
 
                 <div class="text-[7.5px] text-slate-500 px-1 text-center italic">
-                    * START &gt; END で自動逆再生 / SPEEDCVは-2V〜+2V (0.25x〜4.0x)
+                    * ネオン緑線: START(太) / END(細) | 黄線: 再生位置 | SPEEDCV: -2V〜+2V
                 </div>
             </div>
         `;
@@ -186,6 +199,12 @@ export const TAPE = {
 
         const onSliderChange = () => {
             redrawSvg();
+            const dirEl = document.getElementById('tape-dir-disp');
+            if (dirEl) {
+                const isRev = (m.start ?? 0.0) > (m.end ?? 1.0);
+                dirEl.className = isRev ? 'text-rose-400' : 'text-emerald-400';
+                dirEl.textContent = isRev ? 'REVERSE ◀' : 'FORWARD ▶';
+            }
             cb();
         };
 
@@ -313,7 +332,7 @@ export const TAPE = {
         if (targetModal) {
             const playheadLine = targetModal.querySelector('#tape-playhead-line');
             if (playheadLine) {
-                const W = 280, padX = 4, innerW = W - padX * 2;
+                const W = 320, padX = 6, innerW = W - padX * 2;
                 const px = padX + Math.max(0, Math.min(1, playhead)) * innerW;
                 playheadLine.setAttribute('x1', px.toFixed(1));
                 playheadLine.setAttribute('x2', px.toFixed(1));
