@@ -606,9 +606,15 @@ const extractBands = (freqs, numBands, sampleRate = 48000, fMin = 40, fMax = 640
     const bands = new Float32Array(numBands);
     let peakVal = 0, peakFreq = 0;
 
+    // A4 = 440Hz を基準点に設定し、オクターブ階層に厳密一致した対数バンドを生成
+    // numBands = 24 (セル): 1オクターブ3バンド (長3度刻み、b=9が440Hz、55Hz〜11.1kHz)
+    // numBands = 64 (モーダル): 1オクターブ8バンド (全音刻み、b=27が440Hz、36Hz〜15kHz)
+    const bandsPerOct = numBands <= 32 ? 3 : 8;
+    const bRef = numBands <= 32 ? 9 : 27;
+
     for (let b = 0; b < numBands; b++) {
-        const fStart = fMin * Math.pow(fMax / fMin, b / numBands);
-        const fEnd = fMin * Math.pow(fMax / fMin, (b + 1) / numBands);
+        const fStart = 440 * Math.pow(2, (b - 0.5 - bRef) / bandsPerOct);
+        const fEnd = 440 * Math.pow(2, (b + 0.5 - bRef) / bandsPerOct);
         const kStart = Math.max(0, Math.floor(fStart * fftSize / sampleRate));
         const kEnd = Math.min(freqs.length, Math.max(kStart + 1, Math.ceil(fEnd * fftSize / sampleRate)));
 
@@ -621,7 +627,8 @@ const extractBands = (freqs, numBands, sampleRate = 48000, fMin = 40, fMax = 640
             }
         }
         const norm = Math.max(0, Math.min(1, max / 255.0));
-        bands[b] = norm * norm;
+        // 2.2乗カーブ + 1.25倍ゲイン補正で裾野を底に落としつつピークは天井まで突き抜ける
+        bands[b] = Math.min(1.0, Math.pow(norm, 2.2) * 1.25);
 
         if (max > peakVal) {
             peakVal = max;
