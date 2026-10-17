@@ -1,6 +1,6 @@
 import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js';
 import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=190';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=191';
 import { UIHelpers } from './helpers.js?v=187';
 import { PresetManager } from './managers/preset-manager.js';
 import { ModalManager } from './managers/modal-manager.js';
@@ -473,6 +473,16 @@ export class UIController {
         }
         if (pId === this.currentPageId) {
             this.syncGridMap();
+        }
+
+        // 5. Automatically remove open pinned dock dialog or popup modal for this module
+        if (this.modalManager) {
+            if (this.modalManager.openDocks?.has(moduleId)) {
+                this.modalManager.closeDockModal(moduleId);
+            }
+            if (this.modalManager.activeModuleId === moduleId) {
+                this.modalManager.closeModal();
+            }
         }
 
         this._destroyCount = (this._destroyCount || 0) + 1;

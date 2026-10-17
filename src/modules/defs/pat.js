@@ -17,17 +17,9 @@ export const PAT = {
         ]
     }),
     renderGrid: (m) => {
-        const beats = m.cycleBeats || 4;
-        const gatePct = Math.round((m.gateLen ?? 0.8) * 100);
         return `
-            <div class="flex flex-col items-center justify-center leading-tight pointer-events-none text-cyan-300 w-full h-full select-none">
-                <span class="text-[7.5px] font-bold uppercase tracking-wider text-slate-400">PAT (STRUDEL)</span>
-                <span class="pat-state-disp text-[13.5px] font-mono font-bold text-slate-500 tracking-tight my-0.5">—</span>
-                <div class="flex items-center gap-1 text-[7px] font-mono text-cyan-400/80">
-                    <span class="pat-cycle-disp font-bold">${beats}B</span>
-                    <span class="text-slate-600">•</span>
-                    <span class="pat-gate-disp">${gatePct}%G</span>
-                </div>
+            <div class="flex items-center justify-center w-full h-full pointer-events-none select-none">
+                <span class="pat-state-disp text-[17px] font-mono font-bold text-slate-500 tracking-wider">—</span>
             </div>`;
     },
     updateLive: (cell, data, isP, modal, m) => {
@@ -35,27 +27,20 @@ export const PAT = {
         if (stateEl) {
             if (!isP || !data) {
                 stateEl.textContent = '—';
-                stateEl.className = 'pat-state-disp text-[13.5px] font-mono font-bold text-slate-500 tracking-tight my-0.5';
+                stateEl.className = 'pat-state-disp text-[17px] font-mono font-bold text-slate-600 tracking-wider';
             } else {
                 const label = data.activeLabel || (data.activeIdx >= 0 ? `STEP ${data.activeIdx + 1}` : '—');
                 const isGateOn = !!data.gate;
                 const isRest = data.isRest || label === '~' || label === '—';
                 stateEl.textContent = label;
                 if (isRest) {
-                    stateEl.className = 'pat-state-disp text-[13.5px] font-mono font-bold text-cyan-400/30 tracking-tight my-0.5';
+                    stateEl.className = 'pat-state-disp text-[17px] font-mono font-bold text-cyan-400/30 tracking-wider';
                 } else if (isGateOn) {
-                    stateEl.className = 'pat-state-disp text-[13.5px] font-mono font-black text-yellow-300 tracking-tight my-0.5 drop-shadow-[0_0_6px_rgba(250,204,21,0.8)]';
+                    stateEl.className = 'pat-state-disp text-[17px] font-mono font-black text-yellow-300 tracking-wider drop-shadow-[0_0_8px_rgba(250,204,21,0.85)]';
                 } else {
-                    stateEl.className = 'pat-state-disp text-[13.5px] font-mono font-bold text-cyan-300 tracking-tight my-0.5';
+                    stateEl.className = 'pat-state-disp text-[17px] font-mono font-bold text-cyan-300 tracking-wider';
                 }
             }
-        }
-
-        if (m) {
-            const cycleEl = cell?.querySelector('.pat-cycle-disp');
-            if (cycleEl) cycleEl.textContent = `${m.cycleBeats || 4}B`;
-            const gateEl = cell?.querySelector('.pat-gate-disp');
-            if (gateEl) gateEl.textContent = `${Math.round((m.gateLen ?? 0.8) * 100)}%G`;
         }
 
         const activeIdx = isP ? (data?.activeIdx ?? -1) : -1;
@@ -82,24 +67,25 @@ export const PAT = {
 
         return `
             <div id="pat-modal-root-${uid}" class="space-y-1.5 p-0.5">
-                <!-- Top Bar: Left Action Buttons (Revert & Send), Right Controls (Cycle & Gate) -->
+                <!-- Top Bar: Left Action (Revert), Right Controls (Extended Cycle & Gate) -->
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-2">
                     <div class="flex items-center gap-1">
-                        <button id="pat-revert-btn-${uid}" disabled class="w-6 h-6 shrink-0 rounded text-[11px] font-bold border transition flex items-center justify-center opacity-40 pointer-events-none bg-slate-900 text-slate-600 border-slate-800" title="元の文字列に戻す (REVERT)">
-                            ↺
-                        </button>
-                        <button id="pat-apply-btn-${uid}" class="w-6 h-6 shrink-0 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded text-[11px] font-bold border border-slate-700 transition flex items-center justify-center cursor-pointer" title="流し込み (SEND / Enter)">
-                            ↵
+                        <button id="pat-revert-btn-${uid}" disabled class="h-6 px-1.5 shrink-0 rounded text-[9.5px] font-bold border transition flex items-center justify-center opacity-40 pointer-events-none bg-slate-900 text-slate-600 border-slate-800" title="元の文字列に戻す (REVERT)">
+                            ↺ REVERT
                         </button>
                     </div>
                     <div class="flex items-center gap-2">
                         <div class="flex items-center gap-1 bg-slate-950 px-1 py-0.5 rounded border border-slate-800">
                             <span class="text-[7.5px] text-slate-400 uppercase">CYCLE:</span>
                             <select id="pat-beats-select-${uid}" class="bg-slate-900 text-cyan-300 font-mono text-[8px] font-bold rounded px-1 py-0.5 border border-slate-700">
-                                <option value="1" ${beats === 1 ? 'selected' : ''}>1 BEAT (1/4)</option>
-                                <option value="2" ${beats === 2 ? 'selected' : ''}>2 BEATS (2/4)</option>
-                                <option value="4" ${beats === 4 ? 'selected' : ''}>4 BEATS (1 BAR)</option>
-                                <option value="8" ${beats === 8 ? 'selected' : ''}>8 BEATS (2 BARS)</option>
+                                <option value="0.25" ${beats === 0.25 ? 'selected' : ''}>1/16 (1/4 B)</option>
+                                <option value="0.5" ${beats === 0.5 ? 'selected' : ''}>1/8 (1/2 B)</option>
+                                <option value="1" ${beats === 1 ? 'selected' : ''}>1/4 (1 BEAT)</option>
+                                <option value="2" ${beats === 2 ? 'selected' : ''}>1/2 (2 BEATS)</option>
+                                <option value="4" ${beats === 4 ? 'selected' : ''}>1 BAR (4 BEATS)</option>
+                                <option value="8" ${beats === 8 ? 'selected' : ''}>2 BARS (8 BEATS)</option>
+                                <option value="16" ${beats === 16 ? 'selected' : ''}>4 BARS (16 BEATS)</option>
+                                <option value="32" ${beats === 32 ? 'selected' : ''}>8 BARS (32 BEATS)</option>
                             </select>
                         </div>
                         <div class="flex items-center gap-1 bg-slate-950 px-1 py-0.5 rounded border border-slate-800">
@@ -110,16 +96,22 @@ export const PAT = {
                     </div>
                 </div>
 
-                <!-- Pattern Text Input (Full Width) with Inverted Live Highlight Overlay -->
-                <div class="relative w-full flex items-center min-w-0 h-7 bg-slate-950 border border-cyan-500/70 rounded-lg shadow-inner overflow-hidden">
-                    <!-- Real Text Input (receives pointer events & typing) -->
-                    <input type="text" id="pat-code-input-${uid}" value="${pat}" placeholder="e.g. [c2 ~ c2 ~] [c2 ~ c2 ~] [c2 ~ c2 ~] [c2 ~ c2 eb2]" class="w-full h-full bg-transparent font-mono text-cyan-300 px-2 py-0 text-[9.5px] font-bold tracking-normal leading-7 focus:outline-none focus:ring-1 focus:ring-cyan-400 transition relative z-10 box-border">
-                    <!-- Live Highlight Overlay (on top when not editing, pointer-events-none) -->
-                    <div id="pat-highlight-overlay-${uid}" class="absolute inset-0 flex items-center px-2 py-0 font-mono text-[9.5px] font-bold tracking-normal leading-7 bg-slate-950 overflow-x-hidden whitespace-pre pointer-events-none select-none z-20 box-border">
-                        <div id="pat-highlight-content-${uid}" class="text-cyan-300 whitespace-pre">
-                            ${renderPatternHighlightedHTML(pat)}
+                <!-- Pattern Text Input with Return Button on the Right -->
+                <div class="flex items-center gap-1 w-full min-w-0">
+                    <div class="relative flex-1 flex items-center min-w-0 h-7 bg-slate-950 border border-cyan-500/70 rounded-lg shadow-inner overflow-hidden">
+                        <!-- Real Text Input (receives typing & pointer events) -->
+                        <input type="text" id="pat-code-input-${uid}" value="${pat}" placeholder="e.g. [c2 ~ c2 ~] [c2 ~ c2 ~] [c2 ~ c2 ~] [c2 ~ c2 eb2]" class="w-full h-full bg-transparent font-mono text-cyan-300 px-2 py-0 text-[9.5px] font-bold tracking-normal leading-7 focus:outline-none focus:ring-1 focus:ring-cyan-400 transition relative z-10 box-border">
+                        <!-- Live Highlight Overlay (visible when not editing) -->
+                        <div id="pat-highlight-overlay-${uid}" class="absolute inset-0 flex items-center px-2 py-0 font-mono text-[9.5px] font-bold tracking-normal leading-7 bg-slate-950 overflow-x-hidden whitespace-pre pointer-events-none select-none z-20 box-border">
+                            <div id="pat-highlight-content-${uid}" class="text-cyan-300 whitespace-pre">
+                                ${renderPatternHighlightedHTML(pat)}
+                            </div>
                         </div>
                     </div>
+                    <!-- Return / Apply Button at Right End of Input Row -->
+                    <button id="pat-apply-btn-${uid}" class="w-7 h-7 shrink-0 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded-lg text-[12px] font-bold border border-slate-700 transition flex items-center justify-center cursor-pointer shadow-sm" title="流し込み (SEND / Enter)">
+                        ↵
+                    </button>
                 </div>
 
                 <!-- Accordion Toggle Headers -->
@@ -145,15 +137,23 @@ export const PAT = {
                 </div>
                 ` : ''}
 
-                <!-- Mini Cheat Sheet (Collapsible) -->
+                <!-- Mini Cheat Sheet (2-Line Extended Notation Hints) -->
                 ${showHints ? `
-                <div class="flex items-center justify-between bg-slate-950/60 px-2 py-0.5 rounded border border-slate-800/60 text-[6.5px] font-mono text-slate-400 pt-0.5 animate-fadeIn">
-                    <span><b class="text-cyan-300">c2 eb2</b> 音名</span>
-                    <span><b class="text-cyan-300">~</b> 休符</span>
-                    <span><b class="text-cyan-300">[c2 e2 g2]</b> 3連符/分割</span>
-                    <span><b class="text-cyan-300">c2*4</b> 連打</span>
-                    <span><b class="text-cyan-300">c2(3,8)</b> ユークリッド</span>
-                    <span><b class="text-cyan-300">c2?0.7</b> 確率</span>
+                <div class="bg-slate-950/80 p-1.5 rounded border border-slate-800/80 text-[7px] font-mono text-slate-300 space-y-1 animate-fadeIn select-none">
+                    <div class="grid grid-cols-5 gap-1 text-center">
+                        <div><b class="text-cyan-300">c2 eb2</b> 音名</div>
+                        <div><b class="text-cyan-300">~</b> 休符</div>
+                        <div><b class="text-cyan-300">[a b]</b> 分割</div>
+                        <div><b class="text-cyan-300">&lt;a b&gt;</b> 周期交代</div>
+                        <div><b class="text-cyan-300">a!3</b> 複製</div>
+                    </div>
+                    <div class="grid grid-cols-5 gap-1 pt-0.5 border-t border-slate-800/50 text-center">
+                        <div><b class="text-cyan-300">a*4</b> 連打</div>
+                        <div><b class="text-cyan-300">a(3,8)</b> ユークリッド</div>
+                        <div><b class="text-cyan-300">a?0.7</b> 確率</div>
+                        <div><b class="text-cyan-300">[a,b]</b> 同時発音</div>
+                        <div><b class="text-cyan-300">a^1</b> オクターブ</div>
+                    </div>
                 </div>
                 ` : ''}
             </div>`;
@@ -266,7 +266,7 @@ export const PAT = {
         });
 
         selectBeats?.addEventListener('change', (e) => {
-            m.cycleBeats = parseInt(e.target.value, 10) || 4;
+            m.cycleBeats = parseFloat(e.target.value) || 4;
             ctx.reRenderModal();
             cb();
         });

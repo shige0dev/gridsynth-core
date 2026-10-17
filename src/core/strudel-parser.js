@@ -17,18 +17,25 @@ export const NOTE_SEMITONES = {
  */
 export function noteToCv(str) {
     if (typeof str === 'number') return str;
-    const s = String(str).trim().toLowerCase();
+    let s = String(str).trim().toLowerCase();
     
     // Check if it's already a direct floating point voltage number (e.g. "0.25")
     if (!isNaN(parseFloat(s)) && !/[a-g]/i.test(s)) {
         return parseFloat(s);
     }
 
+    let octShift = 0;
+    const shiftMatch = s.match(/^(.*?)\^([+-]?\d+)$/);
+    if (shiftMatch) {
+        s = shiftMatch[1];
+        octShift = parseInt(shiftMatch[2], 10) || 0;
+    }
+
     const match = s.match(/^([a-g][#b]?)(-?\d+)?$/);
     if (!match) return 0.0;
 
     const noteName = match[1];
-    const oct = match[2] !== undefined ? parseInt(match[2], 10) : 2; // Default to octave 2
+    const oct = (match[2] !== undefined ? parseInt(match[2], 10) : 2) + octShift; // Default to octave 2 + shift
     const semi = NOTE_SEMITONES[noteName] ?? 0;
 
     // 0V = C1 (octave 1, semi 0)
@@ -286,7 +293,6 @@ export const STRUDEL_PRESETS = [
     { name: 'Syncopated Clap', pattern: '~ [c3 ~] ~ [c3 <~ c3*2>]', desc: '2・4拍バックビートと変則ゴーストショット' }
 ];
 
-/**
 function escapePatHtml(str) {
     if (!str) return '';
     return str
@@ -345,12 +351,20 @@ export function renderPatternHighlightedHTML(patternStr) {
         let modifier = '';
 
         const multMatch = part.match(/^(.*?)(\*\d+)$/);
+        const repMatch = part.match(/^(.*?)(!\d+)$/);
+        const shiftMatch = part.match(/^(.*?)(\^[+-]?\d+)$/);
         const eucMatch = part.match(/^(.*?)(\(\d+\s*,\s*\d+\))$/);
         const probMatch = part.match(/^(.*?)(\?[0-9.]*)$/);
 
         if (multMatch) {
             base = multMatch[1];
             modifier = multMatch[2];
+        } else if (repMatch) {
+            base = repMatch[1];
+            modifier = repMatch[2];
+        } else if (shiftMatch) {
+            base = shiftMatch[1];
+            modifier = shiftMatch[2];
         } else if (eucMatch) {
             base = eucMatch[1];
             modifier = eucMatch[2];
