@@ -13,10 +13,10 @@ export const TAPE = {
             start: d.start ?? 0.0,
             end: d.end ?? 1.0,
             speed: d.speed ?? 1.0,
-            loop: d.loop ?? true
+            loop: d.loop ?? false
         });
 
-        // Initialize Audio Buffer from Base64 or fallback default sound
+        // Initialize Audio Buffer from Base64
         const sendBufferToWorklet = (float32Buf, sRate) => {
             if (!float32Buf || float32Buf.length === 0) return;
             w.port.postMessage({
@@ -30,17 +30,8 @@ export const TAPE = {
             TapeCodec.decodeFromBase64(d.data, ctx).then(res => {
                 if (res?.buffer) {
                     sendBufferToWorklet(res.buffer, res.sampleRate);
-                } else {
-                    const defBuf = TapeCodec.createDefaultSample(ctx.sampleRate);
-                    sendBufferToWorklet(defBuf, ctx.sampleRate);
                 }
-            }).catch(() => {
-                const defBuf = TapeCodec.createDefaultSample(ctx.sampleRate);
-                sendBufferToWorklet(defBuf, ctx.sampleRate);
-            });
-        } else {
-            const defBuf = TapeCodec.createDefaultSample(ctx.sampleRate);
-            sendBufferToWorklet(defBuf, ctx.sampleRate);
+            }).catch(() => {});
         }
 
         const gateIn = ctx.createGain();
@@ -125,7 +116,7 @@ export const TAPE = {
             start: d.start ?? 0.0,
             end: d.end ?? 1.0,
             speed: d.speed ?? 1.0,
-            loop: d.loop ?? true
+            loop: d.loop ?? false
         });
     }
 };

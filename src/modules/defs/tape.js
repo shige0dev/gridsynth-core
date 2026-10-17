@@ -14,7 +14,7 @@ export const TAPE = {
         start: 0.0,
         end: 1.0,
         speed: 1.0,
-        loop: true,
+        loop: false,
         data: ''
     }),
     ports: () => ({
@@ -69,16 +69,23 @@ export const TAPE = {
         }
 
         // Waveform peaks (sharp cyan oscilloscope trace)
+        // If initial silence / no audio loaded, do NOT render dummy waveform
         const peaks = m._peaks || [];
-        const numBars = peaks.length > 0 ? peaks.length : 64;
-        const barW = innerW / numBars;
-
+        const hasAudio = peaks.length > 0 && peaks.some(p => p > 0.005);
         let barsSvg = '';
-        for (let i = 0; i < numBars; i++) {
-            const bx = padX + i * barW + barW * 0.5;
-            const val = peaks[i] !== undefined ? peaks[i] : (0.2 + 0.6 * Math.sin((i / numBars) * Math.PI));
-            const barH = Math.max(1.5, val * (innerH * 0.46));
-            barsSvg += `<line x1="${bx.toFixed(1)}" y1="${(midY - barH).toFixed(1)}" x2="${bx.toFixed(1)}" y2="${(midY + barH).toFixed(1)}" stroke="#06b6d4" stroke-width="1.8" stroke-linecap="round" opacity="0.85"/>`;
+        if (hasAudio) {
+            const numBars = peaks.length;
+            const barW = innerW / numBars;
+            for (let i = 0; i < numBars; i++) {
+                const bx = padX + i * barW + barW * 0.5;
+                const val = peaks[i] || 0.0;
+                if (val > 0.005) {
+                    const barH = Math.max(1.5, val * (innerH * 0.46));
+                    barsSvg += `<line x1="${bx.toFixed(1)}" y1="${(midY - barH).toFixed(1)}" x2="${bx.toFixed(1)}" y2="${(midY + barH).toFixed(1)}" stroke="#06b6d4" stroke-width="1.8" stroke-linecap="round" opacity="0.85"/>`;
+                }
+            }
+        } else {
+            barsSvg = `<text x="${(W / 2).toFixed(1)}" y="${(midY + 3.5).toFixed(1)}" fill="#334155" font-size="8.5" font-family="monospace" font-weight="bold" text-anchor="middle" letter-spacing="1">NO AUDIO LOADED</text>`;
         }
 
         // Neon Green (#22c55e) markers for Start & End
@@ -97,7 +104,7 @@ export const TAPE = {
                 <!-- Oscilloscope Reticle Grid -->
                 ${gridSvg}
 
-                <!-- Audio Waveform -->
+                <!-- Audio Waveform (Empty if silent) -->
                 ${barsSvg}
 
                 <!-- End Line: Neon Green (same color), normal stroke (1.6px) -->
@@ -148,9 +155,11 @@ export const TAPE = {
         const endDisp = isEndPatched ? 'EXT' : `${Math.round((m.end ?? 1) * 100)}%`;
         const speedCvVal = m.speedCv !== undefined ? m.speedCv : Math.log2(m.speed || 1.0);
         const speedDisp = isSpeedPatched ? 'EXT' : TAPE.formatSpeed(speedCvVal);
-
-        const isRev = (m.start ?? 0.0) > (m.end ?? 1.0);
         const durStr = `${(m.duration ?? 1.5).toFixed(2)}s`;
+        const loopActive = Boolean(m.loop);
+
+        const rangeLeft = (Math.min(m.start ?? 0, m.end ?? 1) * 100).toFixed(1);
+        const rangeWidth = (Math.abs((m.end ?? 1) - (m.start ?? 0)) * 100).toFixed(1);
 
         return `
             <div class="space-y-2 p-1 text-slate-200 w-full">
@@ -170,23 +179,31 @@ export const TAPE = {
 
                 <!-- Oscilloscope-sized Waveform Display (Large format) -->
                 <div id="tape-waveform-wrap" class="w-full">
-                    ${TAPE.renderWaveformSVG(m, 0.0)}
+                    ${TAPE.renderWaveformSVG(m, 0.0, false)}
                 </div>
 
-                <!-- Playback Mode & Direction Status -->
+                <!-- Dynamic Progress Bar (Tracks live playback position) -->
+                <div class="w-full px-0.5">
+                    <div class="w-full h-1.5 bg-slate-950 rounded-full border border-slate-800 overflow-hidden relative shadow-inner">
+                        <div id="tape-progress-range" class="absolute top-0 bottom-0 bg-slate-800/80" style="left: ${rangeLeft}%; width: ${rangeWidth}%;"></div>
+                        <div id="tape-progress-fill" class="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-cyan-500 via-emerald-400 to-amber-400 rounded-full transition-none" style="width: 0%; opacity: 0;"></div>
+                        <div id="tape-progress-dot" class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-amber-300 shadow-[0_0_6px_rgba(253,224,71,1)] transition-none" style="left: 0%; display: none;"></div>
+                    </div>
+                </div>
+
+                <!-- Playback Control (Trigger Play & Loop Toggle) -->
                 <div class="flex items-center justify-between px-2 py-1 bg-slate-950/70 rounded-lg border border-slate-800 text-[8.5px]">
                     <div class="flex items-center gap-2">
-                        <button id="tape-play-btn" class="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white font-bold transition flex items-center gap-1 shadow-sm">
+                        <button id="tape-play-btn" class="px-2.5 py-1 rounded bg-cyan-600 hover:bg-cyan-500 text-white font-bold transition flex items-center gap-1 shadow-sm text-[8.5px] active:scale-95 cursor-pointer">
                             <i data-lucide="play" class="w-3 h-3"></i>
-                            <span id="tape-play-text">PLAY</span>
+                            <span id="tape-play-text">TRIG PLAY</span>
                         </button>
-                        <button id="tape-loop-btn" class="px-2 py-1 rounded border ${m.loop ? 'bg-cyan-950 text-cyan-300 border-cyan-500' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition">
-                            LOOP: ${m.loop ? 'ON' : 'OFF'}
+                        <button id="tape-loop-btn" class="px-2 py-1 rounded border ${loopActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition text-[8.5px] cursor-pointer">
+                            LOOP: <span id="tape-loop-text">${loopActive ? 'ON' : 'OFF'}</span>
                         </button>
                     </div>
-                    <div class="flex items-center gap-1.5 font-mono font-bold text-[9px]">
-                        <span class="text-slate-400">DIR:</span>
-                        <span id="tape-dir-disp" class="${isRev ? 'text-rose-400' : 'text-emerald-400'}">${isRev ? 'REVERSE ◀' : 'FORWARD ▶'}</span>
+                    <div class="text-[7.5px] font-mono text-slate-500 font-bold select-none">
+                        16s SAMPLER
                     </div>
                 </div>
 
@@ -239,27 +256,29 @@ export const TAPE = {
     },
     bindEvents: (m, ctx, cb) => {
         const fullId = `${ctx.currentPageId || '0'}/${m.id}`;
-        const inst = ctx.synth?.modules?.[fullId] || ctx.synth?.modules?.[m.id];
-        const svgWrap = document.getElementById('tape-waveform-wrap');
+        const dialogEl = document.getElementById(`dock-dialog-${m.id}`);
+        const root = dialogEl || document;
+        const svgWrap = root.querySelector('#tape-waveform-wrap');
 
         const redrawSvg = () => {
-            const st = inst?.read?.();
+            const activeInst = ctx.synth?.modules?.[fullId] || ctx.synth?.modules?.[m.id];
+            const st = activeInst?.read?.();
             if (svgWrap) svgWrap.innerHTML = TAPE.renderWaveformSVG(m, st?.playhead ?? 0.0, Boolean(st?.isPlaying));
         };
 
         const onSliderChange = () => {
             redrawSvg();
-            const dirEl = document.getElementById('tape-dir-disp');
-            if (dirEl) {
-                const isRev = (m.start ?? 0.0) > (m.end ?? 1.0);
-                dirEl.className = isRev ? 'text-rose-400' : 'text-emerald-400';
-                dirEl.textContent = isRev ? 'REVERSE ◀' : 'FORWARD ▶';
+            // Update progress bar range bounds
+            const rangeEl = root.querySelector('#tape-progress-range');
+            if (rangeEl) {
+                rangeEl.style.left = `${(Math.min(m.start ?? 0, m.end ?? 1) * 100).toFixed(1)}%`;
+                rangeEl.style.width = `${(Math.abs((m.end ?? 1) - (m.start ?? 0)) * 100).toFixed(1)}%`;
             }
             cb();
         };
 
         // File Input Handler
-        const fileInput = document.getElementById('tape-file-input');
+        const fileInput = root.querySelector('#tape-file-input');
         if (fileInput) {
             fileInput.addEventListener('change', async (e) => {
                 const file = e.target.files?.[0];
@@ -300,7 +319,7 @@ export const TAPE = {
                     m._peaks = TAPE.extractPeaks(res.buffer, 64);
 
                     // Re-acquire active module instance
-                    const activeInst = ctx.synth?.modules?.[fullId] || ctx.synth?.modules?.[m.id] || inst;
+                    const activeInst = ctx.synth?.modules?.[fullId] || ctx.synth?.modules?.[m.id];
 
                     // Transfer PCM to AudioWorklet immediately for zero-latency playing
                     activeInst?.setAudioBuffer?.(res.buffer, res.sampleRate);
@@ -327,19 +346,54 @@ export const TAPE = {
             });
         }
 
-        // Play / Stop preview button
-        const playBtn = document.getElementById('tape-play-btn');
-        const playText = document.getElementById('tape-play-text');
+        // Trigger Play / Stop preview button
+        const playBtn = root.querySelector('#tape-play-btn');
+        const playText = root.querySelector('#tape-play-text');
         if (playBtn) {
-            playBtn.addEventListener('click', () => {
-                const st = inst?.read?.();
-                const playheadLine = document.getElementById('tape-playhead-line');
+            playBtn.addEventListener('click', async () => {
+                // Ensure audio engine is initialized and alive
+                if (ctx.synth && !ctx.synth.ctx) {
+                    await ctx.synth.init();
+                }
+                if (ctx.synth?.ctx && ctx.synth.ctx.state === 'suspended') {
+                    try {
+                        await ctx.synth.ctx.resume();
+                    } catch (resErr) {
+                        console.warn('[TAPE] Synth context resume failed:', resErr);
+                    }
+                }
+                if (ctx.synth && !ctx.synth.hasModules()) {
+                    ctx.synth.rebuildAll(ctx.pagesData, (pId, id) => ctx.getPatchState(id, pId));
+                }
+
+                const pwrBtn = document.getElementById('audio-power-btn');
+                if (pwrBtn && !pwrBtn.classList.contains('border-red-500')) {
+                    pwrBtn.className = "h-7 w-7 bg-red-950 text-red-400 rounded-lg border border-red-500 shadow-md shadow-red-500/40 flex items-center justify-center shrink-0";
+                }
+
+                const activeInst = ctx.synth?.modules?.[fullId] || ctx.synth?.modules?.[m.id];
+                if (!activeInst) return;
+
+                const peaks = m._peaks || [];
+                const hasAudio = peaks.length > 0 && peaks.some(p => p > 0.005);
+                if (!hasAudio) {
+                    ctx.showToast?.('NO AUDIO LOADED (PLEASE LOAD FILE)');
+                    return;
+                }
+
+                const st = activeInst.read?.();
+                const playheadLine = root.querySelector('#tape-playhead-line');
+                const progressFill = root.querySelector('#tape-progress-fill');
+                const progressDot = root.querySelector('#tape-progress-dot');
+
                 if (st?.isPlaying) {
-                    inst?.stop?.();
-                    if (playText) playText.textContent = 'PLAY';
+                    activeInst.stop?.();
+                    if (playText) playText.textContent = 'TRIG PLAY';
                     if (playheadLine) playheadLine.style.display = 'none';
+                    if (progressFill) progressFill.style.opacity = '0';
+                    if (progressDot) progressDot.style.display = 'none';
                 } else {
-                    inst?.play?.();
+                    activeInst.play?.();
                     if (playText) playText.textContent = 'STOP';
                     if (playheadLine) playheadLine.style.display = 'block';
                 }
@@ -347,12 +401,15 @@ export const TAPE = {
         }
 
         // Loop Toggle
-        const loopBtn = document.getElementById('tape-loop-btn');
+        const loopBtn = root.querySelector('#tape-loop-btn');
+        const loopText = root.querySelector('#tape-loop-text');
         if (loopBtn) {
             loopBtn.addEventListener('click', () => {
                 m.loop = !m.loop;
-                inst?.update?.(ctx.synth.ctx, inst, m);
-                ctx.reRenderModal?.();
+                const activeInst = ctx.synth?.modules?.[fullId] || ctx.synth?.modules?.[m.id];
+                activeInst?.update?.(ctx.synth.ctx, activeInst, m);
+                if (loopText) loopText.textContent = m.loop ? 'ON' : 'OFF';
+                loopBtn.className = `px-2 py-1 rounded border ${m.loop ? 'bg-cyan-950 text-cyan-300 border-cyan-500' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition text-[8.5px] cursor-pointer`;
                 cb();
             });
         }
@@ -376,13 +433,15 @@ export const TAPE = {
             UIHelpers.bindSlider('tape-slider-speed', TAPE.formatSpeed, v => {
                 m.speedCv = v;
                 m.speed = Math.pow(2.0, v);
-                inst?.update?.(ctx.synth.ctx, inst, m);
+                const activeInst = ctx.synth?.modules?.[fullId] || ctx.synth?.modules?.[m.id];
+                activeInst?.update?.(ctx.synth.ctx, activeInst, m);
                 onSliderChange();
             }, 1, -2.0, 2.0);
             UIHelpers.bindScrubber('tape-slider-speed-disp', 'tape-slider-speed', TAPE.formatSpeed, v => {
                 m.speedCv = v;
                 m.speed = Math.pow(2.0, v);
-                inst?.update?.(ctx.synth.ctx, inst, m);
+                const activeInst = ctx.synth?.modules?.[fullId] || ctx.synth?.modules?.[m.id];
+                activeInst?.update?.(ctx.synth.ctx, activeInst, m);
                 onSliderChange();
             }, 1, -2.0, 2.0);
         }
@@ -391,8 +450,9 @@ export const TAPE = {
         const playhead = data?.playhead ?? 0.0;
         const isTapePlaying = Boolean(data?.isPlaying);
 
-        // Update modal playhead line in real-time
+        // Update modal playhead line and progress bar in real-time
         if (targetModal) {
+            // 1. Playhead vertical line inside SVG
             const playheadLine = targetModal.querySelector('#tape-playhead-line');
             if (playheadLine) {
                 if (isTapePlaying) {
@@ -405,9 +465,27 @@ export const TAPE = {
                     playheadLine.style.display = 'none';
                 }
             }
+
+            // 2. Horizontal Progress Bar (Fill & Playhead Dot)
+            const progressFill = targetModal.querySelector('#tape-progress-fill');
+            const progressDot = targetModal.querySelector('#tape-progress-dot');
+            if (progressFill && progressDot) {
+                if (isTapePlaying) {
+                    const pct = (Math.max(0, Math.min(1, playhead)) * 100).toFixed(1);
+                    progressFill.style.opacity = '1';
+                    progressFill.style.width = `${pct}%`;
+                    progressDot.style.display = 'block';
+                    progressDot.style.left = `${pct}%`;
+                } else {
+                    progressFill.style.opacity = '0';
+                    progressDot.style.display = 'none';
+                }
+            }
+
+            // 3. Trigger Play Button Label
             const playText = targetModal.querySelector('#tape-play-text');
             if (playText) {
-                playText.textContent = isTapePlaying ? 'STOP' : 'PLAY';
+                playText.textContent = isTapePlaying ? 'STOP' : 'TRIG PLAY';
             }
         }
 
