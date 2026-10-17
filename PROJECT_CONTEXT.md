@@ -493,6 +493,9 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
     - **デモプリセット `04_RANDOM_SH_DELAY`（`04_randomCV`）を `SCALE` モジュール連動パッチへ刷新**:
       - `src/presets/demos/04_random_sh_delay.js`: 新モジュール `SCALE1`（`scale: "CUSTOM", mask: [1,0,0,0,1,0,0,1,0,1,0,1]`）を組み込んだパッチへ全面置換。
       - スロット配置: `0: CLK1, 1: SH1, 2: VCO1, 3: VCF1, 4: SPK1, 6: SCALE1, 8: DELAY1, 11: KEY1`。
-      - シグナルフロー: `CLK1 > SH1(trig_in)`, `SH1(cv_out) > SCALE1(cv_in)`, `SCALE1(cv_out) > VCO1(cv_in)`, `KEY1(cv_out) > VCO1(cv_in)`, `VCO1 > VCF1 > DELAY1 > SPK1(L/R)`。S&HからのランダムCVがSCALE1で均等クオンタイズされてVCOへ送られる美しいジェネラティブ構成に。
-    - バージョンを `v1.0.0206`、キャッシュバスターを `v=206` に更新。
+    - **ケーブル透明度/彩度切替ボタンの右上移動 ＆ 全画面ボタン同サイズ化（パッチケーブルSVGアイコン・トースト連携）**:
+      - `index.html`: 下部コントロールバーにあった細長スリット型ボタン（`#cable-opacity-btn`）を撤去し、上部ナビゲーションバー（`#page-nav-bar`）右側の全画面ボタン（`#fullscreen-btn`）の隣へ移動。全画面ボタンと同一サイズ（`h-5 px-1.5`）に統一。
+      - アイコンにパッチケーブルSVG（両端プラグ＋S字ベジェ曲線）を採用し、`setCableOpacity` に応じてアイコン自身の透明度・ボタン枠線がリアルタイムに連動。
+      - `src/ui/controller.js`: タップ時に `CABLE: BRIGHT (100%)` / `CABLE: DIM (20%)` のトースト通知を追加。
+    - バージョンを `v1.0.0207`、キャッシュバスターを `v=207` に更新。
 

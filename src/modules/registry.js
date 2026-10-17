@@ -13,10 +13,10 @@ import { ioDefs } from './defs/io.js?v=185';
 import { seqDefs } from './defs/seq.js';
 import { chordDefs } from './defs/chord.js';
 import { arpDefs } from './defs/arp.js';
-import { patDefs } from './defs/pat.js?v=206';
+import { patDefs } from './defs/pat.js?v=207';
 import { markovDefs } from './defs/markov.js';
 import { fmDefs } from './defs/fm.js?v=187';
-import { scaleDefs } from './defs/scale.js?v=206';
+import { scaleDefs } from './defs/scale.js?v=207';
 
 export const MODULE_REGISTRY = {
     ...vcoDefs,

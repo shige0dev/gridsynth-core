@@ -1,8 +1,8 @@
 import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js';
 import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=206';
-import { UIHelpers } from './helpers.js?v=206';
-import { PresetManager } from './managers/preset-manager.js?v=206';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=207';
+import { UIHelpers } from './helpers.js?v=207';
+import { PresetManager } from './managers/preset-manager.js?v=207';
 import { ModalManager } from './managers/modal-manager.js';
 import { CableManager } from './managers/cable-manager.js';
 import { PageManager } from './managers/page-manager.js';
@@ -124,6 +124,16 @@ export class UIController {
         const ind = document.getElementById('cable-opacity-indicator');
         if (ind) {
             ind.style.opacity = String(op);
+        }
+        const btn = document.getElementById('cable-opacity-btn');
+        if (btn) {
+            if (op < 0.5) {
+                btn.classList.add('text-slate-600', 'border-slate-800');
+                btn.classList.remove('text-slate-400', 'hover:text-slate-200', 'border-slate-700');
+            } else {
+                btn.classList.remove('text-slate-600', 'border-slate-800');
+                btn.classList.add('text-slate-400', 'hover:text-slate-200', 'border-slate-700');
+            }
         }
         localStorage.setItem('gridsynth_cable_opacity', String(op));
         this.renderCables();
@@ -642,7 +652,9 @@ export class UIController {
             let idx = steps.findIndex(s => Math.abs(s - this.cableOpacity) < 0.05);
             if (idx === -1) idx = 0;
             const nextIdx = (idx + 1) % steps.length;
-            this.setCableOpacity(steps[nextIdx]);
+            const nextOp = steps[nextIdx];
+            this.setCableOpacity(nextOp);
+            this.showToast(nextOp < 0.5 ? 'CABLE: DIM (20%)' : 'CABLE: BRIGHT (100%)');
         });
 
         document.getElementById('audio-power-btn')?.addEventListener('click', async () => {
