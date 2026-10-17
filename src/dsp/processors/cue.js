@@ -22,7 +22,7 @@ export class CueProcessor extends AudioWorkletProcessor {
             if (data.type === 'SET_PARAMS') {
                 if (data.start !== undefined) this.start = Math.max(0.0, Math.min(1.0, data.start));
                 if (data.end !== undefined) this.end = Math.max(0.0, Math.min(1.0, data.end));
-                if (data.speedCv !== undefined) this.speedCv = Math.max(-4.0, Math.min(4.0, data.speedCv));
+                if (data.speedCv !== undefined) this.speedCv = Math.max(-2.0, Math.min(2.0, data.speedCv));
             } else if (data.type === 'TRIGGER') {
                 this.fireTrigger();
             } else if (data.type === 'RESET') {
@@ -78,3 +78,4 @@ export class CueProcessor extends AudioWorkletProcessor {
 }
 
 registerProcessor('cue-processor', CueProcessor);
+

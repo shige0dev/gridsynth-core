@@ -19,8 +19,8 @@ import { fmDefs } from './defs/fm.js?v=187';
 import { scaleDefs } from './defs/scale.js?v=217';
 import { rfDefs } from './defs/rf.js?v=217';
 import { arDefs } from './defs/ar.js?v=217';
-import { tapeDefs } from './defs/tape.js?v=217';
-import { cueDefs } from './defs/cue.js?v=217';
+import { tapeDefs } from './defs/tape.js?v=218';
+import { cueDefs } from './defs/cue.js?v=218';
 
 export const MODULE_REGISTRY = {
     ...vcoDefs,

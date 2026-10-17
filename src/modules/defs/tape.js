@@ -1,5 +1,5 @@
 // src/modules/defs/tape.js
-import { UIHelpers } from '../../ui/helpers.js?v=216';
+import { UIHelpers } from '../../ui/helpers.js?v=218';
 import { TapeCodec } from '../../audio/tape-codec.js';
 
 export const TAPE = {
@@ -170,7 +170,7 @@ export const TAPE = {
                 </div>
 
                 <div class="text-[7.5px] text-slate-500 px-1 text-center italic">
-                    * START &gt; END で自動逆再生 / SPEEDCVは-4V〜+4V (1V/oct)
+                    * START &gt; END で自動逆再生 / SPEEDCVは-2V〜+2V (0.25x〜4.0x)
                 </div>
             </div>
         `;
@@ -303,3 +303,4 @@ export const TAPE = {
 };
 
 export const tapeDefs = { TAPE };
+

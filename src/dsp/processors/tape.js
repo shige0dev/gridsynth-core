@@ -105,7 +105,6 @@ export class TapeProcessor extends AudioWorkletProcessor {
             // Current CV modulation inputs
             const cvS = startCvIn ? startCvIn[i] : 0.0;
             const cvE = endCvIn ? endCvIn[i] : 0.0;
-            const cvSpd = speedCvIn ? Math.max(-4.0, Math.min(4.0, speedCvIn[i])) : 0.0;
 
             const effStartNorm = Math.max(0.0, Math.min(1.0, this.start + cvS));
             const effEndNorm = Math.max(0.0, Math.min(1.0, this.end + cvE));
@@ -113,11 +112,16 @@ export class TapeProcessor extends AudioWorkletProcessor {
             const effStart = effStartNorm * (bufLen - 1);
             const effEnd = effEndNorm * (bufLen - 1);
 
-            // Direction: if start <= end -> +1.0 (forward), if start > end -> -1.0 (reverse)
+            // Direction: purely determined by start <= end (+1.0 forward) vs start > end (-1.0 reverse)
             const direction = (effStart <= effEnd) ? 1.0 : -1.0;
 
-            // Playback rate: 1V/oct pitch scaling (2^cvSpd)
-            const rate = this.speed * Math.pow(2.0, cvSpd);
+            // Speed CV: -2.0V ~ +2.0V (CV=2 => 2^2 = 4x, CV=0 => 1x, CV=-2 => 2^-2 = 0.25x)
+            let rate = this.speed;
+            if (speedCvIn) {
+                const clampedCv = Math.max(-2.0, Math.min(2.0, speedCvIn[i]));
+                const cvMultiplier = Math.pow(2.0, clampedCv);
+                rate = this.speed * cvMultiplier;
+            }
             const step = direction * rate * rateRatio;
 
             // Read sample using linear interpolation (lerp)
@@ -161,3 +165,4 @@ export class TapeProcessor extends AudioWorkletProcessor {
 }
 
 registerProcessor('tape-processor', TapeProcessor);
+

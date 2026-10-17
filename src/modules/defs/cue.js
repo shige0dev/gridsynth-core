@@ -1,5 +1,5 @@
 // src/modules/defs/cue.js
-import { UIHelpers } from '../../ui/helpers.js?v=216';
+import { UIHelpers } from '../../ui/helpers.js?v=218';
 
 export const CUE = {
     color: 'amber',
@@ -23,7 +23,7 @@ export const CUE = {
     renderGrid: (m) => {
         const startPct = Math.max(5, Math.min(100, Math.round((m.start ?? 0.0) * 100)));
         const endPct = Math.max(5, Math.min(100, Math.round((m.end ?? 1.0) * 100)));
-        const spdPct = Math.max(5, Math.min(100, Math.round((((m.speedCv ?? 0.0) + 4.0) / 8.0) * 100)));
+        const spdPct = Math.max(5, Math.min(100, Math.round((((m.speedCv ?? 0.0) + 2.0) / 4.0) * 100)));
         return `<div class="flex items-center justify-center w-full h-full pointer-events-none">${UIHelpers.renderPanelBars([
             { pct: startPct, innerCls: 'cue-bar-start', attrs: 'data-cue-bar="start"', width: 'w-2' },
             { pct: endPct, innerCls: 'cue-bar-end', attrs: 'data-cue-bar="end"', width: 'w-2' },
@@ -32,8 +32,10 @@ export const CUE = {
     },
     renderModal: (m, ctx) => {
         const isRev = (m.start ?? 0.0) > (m.end ?? 1.0);
-        const spdSign = (m.speedCv ?? 0.0) >= 0 ? '+' : '';
-        const spdDisp = `${spdSign}${(m.speedCv ?? 0.0).toFixed(1)}V`;
+        const spdVal = m.speedCv ?? 0.0;
+        const spdSign = spdVal >= 0 ? '+' : '';
+        const spdMult = Math.pow(2.0, spdVal);
+        const spdDisp = `${spdSign}${spdVal.toFixed(1)}V (${spdMult.toFixed(2)}x)`;
 
         return `
             <div class="space-y-2 p-1 text-slate-200">
@@ -53,7 +55,7 @@ export const CUE = {
                 <div class="flex items-center justify-around py-1 bg-slate-950/60 p-1 rounded-xl border border-slate-800/80 gap-1">
                     ${UIHelpers.createVSliderHTML('cue-slider-start', 'START', 0.0, 1.0, 0.01, m.start ?? 0.0, 'start', 'amber', false, `${Math.round((m.start ?? 0) * 100)}%`, 1)}
                     ${UIHelpers.createVSliderHTML('cue-slider-end', 'END', 0.0, 1.0, 0.01, m.end ?? 1.0, 'end', 'amber', false, `${Math.round((m.end ?? 1) * 100)}%`, 1)}
-                    ${UIHelpers.createVSliderHTML('cue-slider-speed', 'SPEED CV', -4.0, 4.0, 0.1, m.speedCv ?? 0.0, 'spd', 'amber', false, spdDisp, 1)}
+                    ${UIHelpers.createVSliderHTML('cue-slider-speed', 'SPEED CV', -2.0, 2.0, 0.1, spdVal, 'spd', 'amber', false, spdDisp, 1)}
                 </div>
 
                 <div class="text-[7.5px] text-slate-500 px-1 text-center italic">
@@ -85,8 +87,9 @@ export const CUE = {
         UIHelpers.bindSlider('cue-slider-end', v => `${Math.round(v * 100)}%`, v => { m.end = v; onSliderChange(); }, 1, 0.0, 1.0);
         UIHelpers.bindScrubber('cue-slider-end-disp', 'cue-slider-end', v => `${Math.round(v * 100)}%`, v => { m.end = v; onSliderChange(); }, 1, 0.0, 1.0);
 
-        UIHelpers.bindSlider('cue-slider-speed', v => `${v >= 0 ? '+' : ''}${v.toFixed(1)}V`, v => { m.speedCv = v; onSliderChange(); }, 1, -4.0, 4.0);
-        UIHelpers.bindScrubber('cue-slider-speed-disp', 'cue-slider-speed', v => `${v >= 0 ? '+' : ''}${v.toFixed(1)}V`, v => { m.speedCv = v; onSliderChange(); }, 1, -4.0, 4.0);
+        const formatSpd = v => `${v >= 0 ? '+' : ''}${v.toFixed(1)}V (${Math.pow(2.0, v).toFixed(2)}x)`;
+        UIHelpers.bindSlider('cue-slider-speed', formatSpd, v => { m.speedCv = v; onSliderChange(); }, 1, -2.0, 2.0);
+        UIHelpers.bindScrubber('cue-slider-speed-disp', 'cue-slider-speed', formatSpd, v => { m.speedCv = v; onSliderChange(); }, 1, -2.0, 2.0);
     },
     updateLive: (cell, data) => {
         const triggered = Boolean(data?.triggered);
@@ -104,3 +107,4 @@ export const CUE = {
 };
 
 export const cueDefs = { CUE };
+
