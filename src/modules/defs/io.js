@@ -145,51 +145,123 @@ export const SCOPE = {
         const curSpread = m.ySpread ?? 0.2;
         return `
             <div class="space-y-1 p-0.5">
-                <!-- Top Controls Bar -->
-                <div class="flex items-center justify-between pb-1 border-b border-slate-800">
-                    <div class="flex items-center gap-1">
-                        <button id="scope-mode-time" class="px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${!isLiss ? 'bg-cyan-600 text-white border-cyan-500 shadow-sm shadow-cyan-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">DUAL (CH1+CH2)</button>
-                        <button id="scope-mode-liss" class="px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${isLiss ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm shadow-emerald-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">LISS (XY)</button>
-                    </div>
-                    <div class="flex items-center gap-1.5">
+                <!-- Top Menu Bar (上段 各種設定部分) -->
+                <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-1.5">
+                    <div class="flex items-center gap-1 shrink-0">
+                        <button id="scope-mode-time" class="px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${!isLiss ? 'bg-cyan-600 text-white border-cyan-500 shadow-sm shadow-cyan-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">DUAL</button>
+                        <button id="scope-mode-liss" class="px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${isLiss ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm shadow-emerald-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">LISS</button>
                         <button id="scope-trig-btn" class="px-1.5 py-0.5 rounded text-[7.5px] font-bold border transition-colors ${m.trigMode === 'free' ? 'bg-amber-600 text-white border-amber-500' : 'bg-cyan-600 text-white border-cyan-500'}">TRIG: ${(m.trigMode || 'auto').toUpperCase()}</button>
-                        <span class="text-[7.5px] font-mono text-slate-400 flex items-center gap-1.5">
-                            <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>CH1</span>
-                            <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>CH2</span>
-                        </span>
+                    </div>
+
+                    <!-- Y-Separation Horizontal Slider in Menu Bar -->
+                    <div class="flex items-center gap-1 ${isLiss ? 'opacity-30 pointer-events-none' : ''} shrink-0">
+                        <span class="text-[7.5px] font-mono text-purple-300 font-bold uppercase tracking-tight">Y-SEP:</span>
+                        <input type="range" id="scope-spread-h" min="0.0" max="0.8" step="0.02" value="${curSpread}" class="w-14 h-1 bg-slate-800 rounded accent-purple-500 cursor-pointer">
+                        <span id="scope-spread-val" class="text-[7.5px] font-mono text-purple-300 font-bold min-w-[18px] text-right">${curSpread.toFixed(2)}</span>
+                    </div>
+
+                    <!-- Channel Indicators -->
+                    <div class="flex items-center gap-1.5 text-[7px] font-mono text-slate-400 shrink-0">
+                        <span class="flex items-center gap-0.5"><span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>CH1</span>
+                        <span class="flex items-center gap-0.5"><span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>CH2</span>
                     </div>
                 </div>
 
-                <!-- Expanded Live Oscilloscope Display (Compact Full-Width) -->
+                <!-- Core Functional Area: Oscilloscope Display (時間・倍率を表示内に統合) -->
                 <div class="bg-slate-950 p-1.5 rounded-xl border border-slate-800 flex flex-col gap-1">
                     <div class="flex items-center justify-between px-1">
-                        <span class="text-[7.5px] font-bold text-cyan-400 uppercase tracking-wider font-mono">${isLiss ? 'XY LISSAJOUS PHOSPHOR DISPLAY' : 'DUAL TRACE OSCILLOSCOPE'}</span>
-                        <span class="text-[7px] font-mono text-slate-500">REALTIME ANALYSIS</span>
+                        <span class="text-[7.5px] font-bold text-cyan-400 uppercase tracking-wider font-mono">${isLiss ? 'XY LISSAJOUS' : 'DUAL TRACE OSCILLOSCOPE'}</span>
+                        
+                        <!-- Embedded TIME & SCALE controls inside display -->
+                        <div class="flex items-center gap-1.5">
+                            <!-- TIME Stepper -->
+                            <div class="flex items-center gap-0.5 bg-slate-900/90 border border-slate-800 rounded px-1 py-0.5 shadow-sm">
+                                <span class="text-[7px] text-slate-400 font-bold mr-0.5">TIME:</span>
+                                <button id="scope-time-prev" class="w-3.5 h-3.5 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-[9px] active:scale-95 leading-none">◀</button>
+                                <span id="scope-time-disp" class="text-[7.5px] font-mono font-bold text-cyan-300 min-w-[26px] text-center">${fmtT(T[tIdx])}</span>
+                                <button id="scope-time-next" class="w-3.5 h-3.5 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-[9px] active:scale-95 leading-none">▶</button>
+                            </div>
+
+                            <!-- VOLT SCALE Stepper -->
+                            <div class="flex items-center gap-0.5 bg-slate-900/90 border border-slate-800 rounded px-1 py-0.5 shadow-sm">
+                                <span class="text-[7px] text-slate-400 font-bold mr-0.5">SCALE:</span>
+                                <button id="scope-volt-prev" class="w-3.5 h-3.5 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-[9px] active:scale-95 leading-none">◀</button>
+                                <span id="scope-volt-disp" class="text-[7.5px] font-mono font-bold text-cyan-300 min-w-[22px] text-center">${(m.vRange || 5.0).toFixed(1)}v</span>
+                                <button id="scope-volt-next" class="w-3.5 h-3.5 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-[9px] active:scale-95 leading-none">▶</button>
+                            </div>
+                        </div>
                     </div>
                     <canvas id="scope-modal-canvas" class="w-full h-24 block rounded bg-slate-950" width="360" height="96"></canvas>
-                </div>
-
-                <!-- Sliders Bar -->
-                <div class="flex items-center justify-around py-0.5 bg-slate-950/60 p-1 rounded-xl border border-slate-800 gap-1">
-                    ${UIHelpers.createVSliderHTML('scope-time-step', 'TIME', 0, T.length - 1, 1, tIdx, 'SPAN', 'cyan', false, fmtT(T[tIdx]))}
-                    ${UIHelpers.createVSliderHTML('scope-volt', 'SCALE', 0.5, 10.0, 0.5, m.vRange || 5.0, 'v', 'cyan')}
-                    ${UIHelpers.createVSliderHTML('scope-spread', 'Y SPREAD', 0.0, 1.0, 0.02, curSpread, 'sep', 'purple', isLiss, curSpread.toFixed(2))}
                 </div>
             </div>`;
     },
     bindEvents: (m, ctx, cb) => {
         const T = SCOPE.T_STEPS;
         const fmtT = SCOPE.formatTime;
+        const V_STEPS = [0.5, 1.0, 2.0, 3.0, 5.0, 8.0, 10.0];
+
+        // Mode switch
         document.getElementById('scope-mode-time')?.addEventListener('click', () => { m.displayMode = 'time'; ctx.reRenderModal(); cb(); });
         document.getElementById('scope-mode-liss')?.addEventListener('click', () => { m.displayMode = 'xy'; ctx.reRenderModal(); cb(); });
         document.getElementById('scope-trig-btn')?.addEventListener('click', () => { m.trigMode = m.trigMode === 'free' ? 'auto' : 'free'; ctx.reRenderModal(); cb(); });
 
-        UIHelpers.bindSlider('scope-time-step', v => fmtT(T[Math.min(T.length - 1, Math.max(0, Math.round(v)))]), v => {
-            m.timeSpan = T[Math.min(T.length - 1, Math.max(0, Math.round(v)))] || 0.05;
+        // Y-Separation horizontal slider in menu bar
+        const ySlider = document.getElementById('scope-spread-h');
+        const yVal = document.getElementById('scope-spread-val');
+        ySlider?.addEventListener('input', (e) => {
+            const v = parseFloat(e.target.value);
+            m.ySpread = v;
+            if (yVal) yVal.textContent = v.toFixed(2);
             cb();
-        }, 1, 0, T.length - 1);
-        UIHelpers.bindSlider('scope-volt', v => v.toFixed(1), v => { m.vRange = v; cb(); }, 1, 0.5, 10.0);
-        UIHelpers.bindSlider('scope-spread', v => v.toFixed(2), v => { m.ySpread = v; cb(); }, 1, 0.0, 1.0);
+        });
+
+        // Embedded TIME stepper
+        const tDisp = document.getElementById('scope-time-disp');
+        document.getElementById('scope-time-prev')?.addEventListener('click', () => {
+            let idx = T.findIndex(t => Math.abs(t - (m.timeSpan || 0.05)) < 0.0005);
+            if (idx === -1) idx = 4;
+            if (idx > 0) {
+                idx--;
+                m.timeSpan = T[idx];
+                if (tDisp) tDisp.textContent = fmtT(T[idx]);
+                cb();
+            }
+        });
+        document.getElementById('scope-time-next')?.addEventListener('click', () => {
+            let idx = T.findIndex(t => Math.abs(t - (m.timeSpan || 0.05)) < 0.0005);
+            if (idx === -1) idx = 4;
+            if (idx < T.length - 1) {
+                idx++;
+                m.timeSpan = T[idx];
+                if (tDisp) tDisp.textContent = fmtT(T[idx]);
+                cb();
+            }
+        });
+
+        // Embedded VOLT SCALE stepper
+        const vDisp = document.getElementById('scope-volt-disp');
+        document.getElementById('scope-volt-prev')?.addEventListener('click', () => {
+            const curV = m.vRange || 5.0;
+            let idx = V_STEPS.findIndex(v => Math.abs(v - curV) < 0.05);
+            if (idx === -1) idx = 4;
+            if (idx > 0) {
+                idx--;
+                m.vRange = V_STEPS[idx];
+                if (vDisp) vDisp.textContent = `${V_STEPS[idx].toFixed(1)}v`;
+                cb();
+            }
+        });
+        document.getElementById('scope-volt-next')?.addEventListener('click', () => {
+            const curV = m.vRange || 5.0;
+            let idx = V_STEPS.findIndex(v => Math.abs(v - curV) < 0.05);
+            if (idx === -1) idx = 4;
+            if (idx < V_STEPS.length - 1) {
+                idx++;
+                m.vRange = V_STEPS[idx];
+                if (vDisp) vDisp.textContent = `${V_STEPS[idx].toFixed(1)}v`;
+                cb();
+            }
+        });
     }
 };
 
@@ -680,22 +752,18 @@ export const SPEC = {
         const curSpeed = m.speed || 'med';
         return `
             <div class="space-y-1 p-0.5">
-                <!-- 2-Row Controls: MODE & SPEED (はみだし防止) -->
-                <div class="space-y-1 pb-1 border-b border-slate-800">
-                    <div class="flex items-center justify-between">
-                        <span class="text-[8px] text-slate-400 font-bold uppercase">MODE:</span>
-                        <div class="flex items-center gap-1">
-                            <button id="spec-mode-bar" class="px-2.5 py-0.5 rounded text-[8px] font-bold border transition-colors ${curMode === 'bar' ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">BAR (棒グラフ)</button>
-                            <button id="spec-mode-curve" class="px-2.5 py-0.5 rounded text-[8px] font-bold border transition-colors ${curMode === 'curve' ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">CURVE (折れ線)</button>
-                        </div>
+                <!-- Single-Row Top Menu Bar (1段設定メニュー) -->
+                <div class="flex items-center justify-between pb-1 border-b border-slate-800">
+                    <div class="flex items-center gap-1">
+                        <span class="text-[8px] text-slate-400 font-bold uppercase tracking-tight">MODE:</span>
+                        <button id="spec-mode-bar" class="px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${curMode === 'bar' ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">BAR</button>
+                        <button id="spec-mode-curve" class="px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${curMode === 'curve' ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">CURVE</button>
                     </div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-[8px] text-slate-400 font-bold uppercase">SPEED:</span>
-                        <div class="flex items-center gap-1">
-                            ${['fast', 'med', 'slow'].map(sp => `
-                                <button class="spec-speed-btn px-2 py-0.5 rounded text-[7.5px] font-bold border transition-colors ${curSpeed === sp ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}" data-speed="${sp}">${sp.toUpperCase()}</button>
-                            `).join('')}
-                        </div>
+                    <div class="flex items-center gap-1">
+                        <span class="text-[8px] text-slate-400 font-bold uppercase tracking-tight">SPEED:</span>
+                        ${['fast', 'med', 'slow'].map(sp => `
+                            <button class="spec-speed-btn px-2 py-0.5 rounded text-[7.5px] font-bold border transition-colors ${curSpeed === sp ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}" data-speed="${sp}">${sp.toUpperCase()}</button>
+                        `).join('')}
                     </div>
                 </div>
 
