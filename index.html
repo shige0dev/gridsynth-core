@@ -145,29 +145,12 @@
 
         <div id="dock-modal" class="absolute inset-0 hidden z-40 pointer-events-none">
             <div id="dock-backdrop" class="absolute inset-0 bg-black/25 backdrop-blur-[1px] cursor-pointer pointer-events-auto transition-opacity duration-200"></div>
-            <div id="dock-content" class="absolute bg-slate-900/95 border border-cyan-500/70 rounded-xl p-2.5 shadow-2xl backdrop-blur-md pointer-events-auto transition-none left-2 right-2 w-[calc(100%-16px)] max-h-[calc(100%-58px)] overflow-y-auto">
-                <div id="dock-header" class="border-b border-slate-800 pb-1.5 flex items-center justify-between cursor-move touch-none select-none">
-                    <div class="flex items-center gap-1.5 pointer-events-none">
-                        <i id="dock-icon" data-lucide="music" class="w-3.5 h-3.5 text-cyan-400"></i>
-                        <h3 id="dock-title" class="text-[10px] font-bold text-cyan-300 uppercase tracking-wider">KEYBOARD</h3>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <button id="dock-lock-btn" class="h-5 px-1.5 rounded text-[8.5px] font-bold flex items-center gap-1 border transition-colors bg-slate-800 text-slate-400 border-slate-700" title="ロック/ピン留め">
-                            <i data-lucide="pin" class="w-2.5 h-2.5 pointer-events-none"></i>
-                            <span id="dock-lock-label" class="pointer-events-none">LOCK</span>
-                        </button>
-                        <button id="dock-close-btn" class="w-5 h-5 rounded flex items-center justify-center text-slate-400 hover:text-white bg-slate-800/80 transition" title="閉じる">
-                            <i data-lucide="x" class="w-3.5 h-3.5 pointer-events-none"></i>
-                        </button>
-                    </div>
-                </div>
-                <div id="dock-body" class="text-xs mt-1"></div>
-            </div>
+            <div id="dock-container" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
         </div>
 
         <div id="toast" class="absolute bottom-20 left-1/2 -translate-x-1/2 px-3.5 py-1.5 bg-slate-900/95 border border-cyan-400 text-cyan-200 rounded-full text-[11px] font-bold shadow-2xl pointer-events-none opacity-0 transition-opacity duration-200 z-[100] whitespace-nowrap ring-1 ring-cyan-500/40">Message</div>
     </div>
 
-    <script type="module" src="./src/main.js?v=160"></script>
+    <script type="module" src="./src/main.js?v=161"></script>
 </body>
 </html>

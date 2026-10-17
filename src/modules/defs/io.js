@@ -144,33 +144,33 @@ export const SCOPE = {
         const fmtT = SCOPE.formatTime;
         const curSpread = m.ySpread ?? 0.2;
         return `
-            <div class="space-y-1.5 p-0.5">
+            <div class="space-y-1 p-0.5">
                 <!-- Top Controls Bar -->
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800">
                     <div class="flex items-center gap-1">
-                        <button id="scope-mode-time" class="px-2.5 py-0.5 rounded text-[8px] font-bold border transition-colors ${!isLiss ? 'bg-cyan-600 text-white border-cyan-500 shadow-sm shadow-cyan-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">DUAL (CH1+CH2)</button>
-                        <button id="scope-mode-liss" class="px-2.5 py-0.5 rounded text-[8px] font-bold border transition-colors ${isLiss ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm shadow-emerald-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">LISS (XY)</button>
+                        <button id="scope-mode-time" class="px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${!isLiss ? 'bg-cyan-600 text-white border-cyan-500 shadow-sm shadow-cyan-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">DUAL (CH1+CH2)</button>
+                        <button id="scope-mode-liss" class="px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${isLiss ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm shadow-emerald-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">LISS (XY)</button>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <button id="scope-trig-btn" class="px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${m.trigMode === 'free' ? 'bg-amber-600 text-white border-amber-500' : 'bg-cyan-600 text-white border-cyan-500'}">TRIG: ${(m.trigMode || 'auto').toUpperCase()}</button>
-                        <span class="text-[7.5px] font-mono text-slate-400 flex items-center gap-2">
-                            <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>CH1(in1)</span>
-                            <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>CH2(in2)</span>
+                    <div class="flex items-center gap-1.5">
+                        <button id="scope-trig-btn" class="px-1.5 py-0.5 rounded text-[7.5px] font-bold border transition-colors ${m.trigMode === 'free' ? 'bg-amber-600 text-white border-amber-500' : 'bg-cyan-600 text-white border-cyan-500'}">TRIG: ${(m.trigMode || 'auto').toUpperCase()}</button>
+                        <span class="text-[7.5px] font-mono text-slate-400 flex items-center gap-1.5">
+                            <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>CH1</span>
+                            <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>CH2</span>
                         </span>
                     </div>
                 </div>
 
-                <!-- Expanded Live Oscilloscope Display (Full-Width) -->
-                <div class="bg-slate-950 p-2 rounded-xl border border-slate-800 flex flex-col gap-1">
+                <!-- Expanded Live Oscilloscope Display (Compact Full-Width) -->
+                <div class="bg-slate-950 p-1.5 rounded-xl border border-slate-800 flex flex-col gap-1">
                     <div class="flex items-center justify-between px-1">
                         <span class="text-[7.5px] font-bold text-cyan-400 uppercase tracking-wider font-mono">${isLiss ? 'XY LISSAJOUS PHOSPHOR DISPLAY' : 'DUAL TRACE OSCILLOSCOPE'}</span>
                         <span class="text-[7px] font-mono text-slate-500">REALTIME ANALYSIS</span>
                     </div>
-                    <canvas id="scope-modal-canvas" class="w-full h-32 block rounded bg-slate-950" width="360" height="130"></canvas>
+                    <canvas id="scope-modal-canvas" class="w-full h-24 block rounded bg-slate-950" width="360" height="96"></canvas>
                 </div>
 
                 <!-- Sliders Bar -->
-                <div class="flex items-center justify-around py-1 bg-slate-950/60 p-1 rounded-xl border border-slate-800 gap-1">
+                <div class="flex items-center justify-around py-0.5 bg-slate-950/60 p-1 rounded-xl border border-slate-800 gap-1">
                     ${UIHelpers.createVSliderHTML('scope-time-step', 'TIME', 0, T.length - 1, 1, tIdx, 'SPAN', 'cyan', false, fmtT(T[tIdx]))}
                     ${UIHelpers.createVSliderHTML('scope-volt', 'SCALE', 0.5, 10.0, 0.5, m.vRange || 5.0, 'v', 'cyan')}
                     ${UIHelpers.createVSliderHTML('scope-spread', 'Y SPREAD', 0.0, 1.0, 0.02, curSpread, 'sep', 'purple', isLiss, curSpread.toFixed(2))}
@@ -679,9 +679,9 @@ export const SPEC = {
         const curMode = m.mode || 'bar';
         const curSpeed = m.speed || 'med';
         return `
-            <div class="space-y-2 p-0.5">
+            <div class="space-y-1 p-0.5">
                 <!-- 2-Row Controls: MODE & SPEED (はみだし防止) -->
-                <div class="space-y-1.5 pb-1.5 border-b border-slate-800">
+                <div class="space-y-1 pb-1 border-b border-slate-800">
                     <div class="flex items-center justify-between">
                         <span class="text-[8px] text-slate-400 font-bold uppercase">MODE:</span>
                         <div class="flex items-center gap-1">
@@ -699,13 +699,13 @@ export const SPEC = {
                     </div>
                 </div>
 
-                <!-- Expanded Modal Spectrum Display (Full-Width) -->
-                <div class="bg-slate-950 p-2 rounded-xl border border-slate-800 flex flex-col gap-1">
+                <!-- Expanded Modal Spectrum Display (Compact Full-Width) -->
+                <div class="bg-slate-950 p-1.5 rounded-xl border border-slate-800 flex flex-col gap-1">
                     <div class="flex items-center justify-between px-1">
                         <span class="text-[7.5px] font-bold text-teal-400 uppercase tracking-wider font-mono">REALTIME SPECTRUM (40Hz〜6.4kHz)</span>
                         <span id="spec-peak-disp" class="text-[7.5px] font-mono font-bold text-yellow-300">PEAK: ---</span>
                     </div>
-                    <canvas id="spec-modal-canvas" class="w-full h-32 block rounded bg-slate-950" width="360" height="130"></canvas>
+                    <canvas id="spec-modal-canvas" class="w-full h-24 block rounded bg-slate-950" width="360" height="96"></canvas>
                     <div class="flex items-center justify-between text-[7px] font-mono text-slate-500 px-1 border-t border-slate-800/80 pt-0.5">
                         <span>40Hz</span>
                         <span>150Hz</span>

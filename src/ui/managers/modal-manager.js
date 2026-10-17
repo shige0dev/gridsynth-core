@@ -50,13 +50,104 @@ export const MODAL_WIDTHS = {
     SUB: 'w-[240px]'
 };
 
+export const DOCK_TITLES = {
+    KEY: 'KEYBOARD',
+    PAT: 'STRUDEL PATTERN',
+    SEQ16: '16-STEP SEQUENCER',
+    SEQ8: '8-STEP SEQUENCER',
+    SPEC: 'SPECTRUM ANALYZER',
+    SCOPE: 'OSCILLOSCOPE',
+    MON: 'MONITOR',
+    VCO: 'VCO OSCILLATOR',
+    VCF: 'VCF FILTER',
+    VCA: 'VCA AMPLIFIER',
+    ADSR: 'ADSR ENVELOPE',
+    LFO: 'LFO MODULATOR',
+    CLK: 'CLOCK GENERATOR',
+    DELAY: 'STEREO DELAY',
+    REVERB: 'REVERB FX',
+    FOLD: 'WAVEFOLDER',
+    MIX: 'AUDIO MIXER',
+    SH: 'SAMPLE & HOLD',
+    FMx3: 'FM 3-OPERATOR',
+    FMCORE: 'FM OPERATOR CORE',
+    CHORD: 'CHORD GENERATOR',
+    GATE4: '4-CHANNEL GATE',
+    ARP: 'ARPEGGIATOR',
+    MARKOV: 'MARKOV GENERATOR'
+};
+
+export const DOCK_ICONS = {
+    KEY: 'music',
+    PAT: 'code',
+    SEQ16: 'sliders',
+    SEQ8: 'sliders',
+    SPEC: 'bar-chart-2',
+    SCOPE: 'activity',
+    MON: 'eye',
+    VCO: 'activity',
+    VCF: 'filter',
+    VCA: 'volume-2',
+    ADSR: 'trending-up',
+    LFO: 'radio',
+    CLK: 'clock',
+    DELAY: 'repeat',
+    REVERB: 'wind',
+    FOLD: 'zap',
+    MIX: 'sliders',
+    SH: 'shuffle',
+    FMx3: 'cpu',
+    FMCORE: 'cpu',
+    CHORD: 'layers',
+    GATE4: 'grid',
+    ARP: 'play-circle',
+    MARKOV: 'git-branch'
+};
+
 export class ModalManager {
     constructor(ui) {
         this.ui = ui;
         this.activePopupModuleId = null;
-        this.activeDockModuleId = null;
-        this.isDockLocked = false;
+        this.openDocks = new Map(); // moduleId -> { element, isLocked, zIndex }
+        this.highestZIndex = 40;
         this._toastTimer = null;
+    }
+
+    get activeDockModuleId() {
+        let topId = null, maxZ = -1;
+        this.openDocks.forEach((info, id) => {
+            if (info.zIndex > maxZ) {
+                maxZ = info.zIndex;
+                topId = id;
+            }
+        });
+        return topId;
+    }
+
+    set activeDockModuleId(id) {
+        if (id && this.openDocks.has(id)) {
+            this.bringToFront(id);
+        }
+    }
+
+    get isDockLocked() {
+        if (this.openDocks.size === 0) return false;
+        return Array.from(this.openDocks.values()).some(d => d.isLocked);
+    }
+
+    set isDockLocked(lock) {
+        this.setDockLock(lock);
+    }
+
+    getDialogElement(mId) {
+        if (!mId) return null;
+        if (this.openDocks.has(mId)) {
+            return this.openDocks.get(mId).element;
+        }
+        if (this.activePopupModuleId === mId) {
+            return document.getElementById('modal-content');
+        }
+        return null;
     }
 
     showToast(msg, duration = 1800) {
@@ -148,66 +239,224 @@ export class ModalManager {
     openDockModal(mId) {
         const m = this.ui.modules[mId];
         if (!m) return;
-        this.activeDockModuleId = mId;
+
+        // If dialog for this module is already open, bring to front
+        if (this.openDocks.has(mId)) {
+            this.bringToFront(mId);
+            return;
+        }
+
         const modal = document.getElementById('dock-modal');
-        const content = document.getElementById('dock-content');
-        const title = document.getElementById('dock-title');
-        const icon = document.getElementById('dock-icon');
+        const container = document.getElementById('dock-container') || modal;
         const frame = document.getElementById('phone-frame');
-
-        if (title) {
-            title.textContent = m.type === 'KEY' ? 'KEYBOARD' : 
-                (m.type === 'PAT' ? 'STRUDEL PATTERN' : 
-                (m.type === 'SEQ16' ? '16-STEP SEQUENCER' : 
-                (m.type === 'SEQ8' ? '8-STEP SEQUENCER' : 
-                (m.type === 'SPEC' ? 'SPECTRUM ANALYZER' : 
-                (m.type === 'SCOPE' ? 'OSCILLOSCOPE' : m.type)))));
-        }
-        if (icon) {
-            icon.setAttribute('data-lucide', m.type === 'KEY' ? 'music' : 
-                (m.type === 'PAT' ? 'code' : 
-                (m.type === 'SPEC' ? 'bar-chart-2' : 
-                (m.type === 'SCOPE' ? 'activity' : 'sliders'))));
-        }
         modal?.classList.remove('hidden');
-        this.reRenderDockModal();
+
+        const titleText = DOCK_TITLES[m.type] || m.type;
+        const iconName = DOCK_ICONS[m.type] || 'sliders';
+
+        const dialogEl = document.createElement('div');
+        dialogEl.id = `dock-dialog-${mId}`;
+        dialogEl.dataset.moduleId = mId;
+        dialogEl.className = "dock-dialog absolute bg-slate-900/95 border border-cyan-500/70 rounded-xl p-2 shadow-2xl backdrop-blur-md pointer-events-auto transition-none left-2 right-2 w-[calc(100%-16px)] max-h-[calc(100%-58px)] overflow-y-auto";
+
+        dialogEl.innerHTML = `
+            <div class="dock-dialog-header border-b border-slate-800 pb-1 flex items-center justify-between cursor-move touch-none select-none">
+                <div class="flex items-center gap-1.5 pointer-events-none">
+                    <i data-lucide="${iconName}" class="w-3.5 h-3.5 text-cyan-400"></i>
+                    <h3 class="dock-dialog-title text-[10px] font-bold text-cyan-300 uppercase tracking-wider">${titleText}</h3>
+                </div>
+                <div class="flex items-center gap-1">
+                    <button class="dock-lock-btn h-5 px-1.5 rounded text-[8.5px] font-bold flex items-center gap-1 border transition-colors bg-slate-800 text-slate-400 border-slate-700" title="ロック/ピン留め">
+                        <i data-lucide="pin" class="w-2.5 h-2.5 pointer-events-none"></i>
+                        <span class="pointer-events-none">LOCK</span>
+                    </button>
+                    <button class="dock-close-btn w-5 h-5 rounded flex items-center justify-center text-slate-400 hover:text-white bg-slate-800/80 transition" title="閉じる">
+                        <i data-lucide="x" class="w-3.5 h-3.5 pointer-events-none"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="dock-dialog-body text-xs mt-1"></div>
+        `;
+
+        container.appendChild(dialogEl);
+
+        const dockInfo = {
+            moduleId: mId,
+            element: dialogEl,
+            isLocked: false,
+            zIndex: ++this.highestZIndex
+        };
+        dialogEl.style.zIndex = dockInfo.zIndex;
+        this.openDocks.set(mId, dockInfo);
+
+        // Render content
+        this.reRenderDockModal(mId);
+
+        // Bring to front on pointerdown anywhere on this dialog
+        dialogEl.addEventListener('pointerdown', () => {
+            this.bringToFront(mId);
+        });
+
+        // Lock button toggle
+        const lockBtn = dialogEl.querySelector('.dock-lock-btn');
+        lockBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleDockLock(mId);
+        });
+
+        // Close button ("ロックボタンの横にある×ボタンは共通で中止")
+        const closeBtn = dialogEl.querySelector('.dock-close-btn');
+        closeBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.closeDockModal(mId);
+        });
+
+        // Header draggable
+        const headerEl = dialogEl.querySelector('.dock-dialog-header');
+        this.makeDialogDraggable(headerEl, dialogEl);
+
+        // Position dialog
+        dialogEl.style.left = '8px';
+        dialogEl.style.right = '8px';
+        dialogEl.style.width = 'calc(100% - 16px)';
+        dialogEl.style.maxWidth = 'none';
+        dialogEl.style.margin = '0';
+        dialogEl.style.bottom = 'auto';
+
+        requestAnimationFrame(() => {
+            if (!frame) return;
+            const fR = frame.getBoundingClientRect();
+            const cR = dialogEl.getBoundingClientRect();
+            dialogEl.style.bottom = 'auto';
+
+            const otherDocks = Array.from(this.openDocks.values()).filter(d => d.element !== dialogEl);
+            if (otherDocks.length === 0) {
+                dialogEl.style.top = `${Math.max(6, fR.height - cR.height - 52)}px`;
+            } else {
+                const lastOther = otherDocks[otherDocks.length - 1];
+                const lastTop = parseFloat(lastOther.element.style.top) || lastOther.element.offsetTop;
+                const targetTop = lastTop - cR.height - 8;
+                if (targetTop >= 6) {
+                    dialogEl.style.top = `${targetTop}px`;
+                } else {
+                    const cascadeTop = Math.max(6, Math.min(fR.height - cR.height - 52, lastTop + 28));
+                    dialogEl.style.top = `${cascadeTop}px`;
+                }
+            }
+        });
+
+        this.bringToFront(mId);
+        this.updateBackdrop();
         if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
 
-        if (content) {
-            content.style.left = '8px';
-            content.style.right = '8px';
-            content.style.width = 'calc(100% - 16px)';
-            content.style.maxWidth = 'none';
-            content.style.margin = '0';
-            content.style.bottom = 'auto';
+    makeDialogDraggable(headerEl, dialogEl) {
+        const frame = document.getElementById('phone-frame');
+        if (!headerEl || !dialogEl || !frame) return;
+        let drag = false, dY = 0, initT = 0;
+        headerEl.addEventListener('pointerdown', (e) => {
+            if (e.target.closest('.dock-lock-btn') || e.target.closest('.dock-close-btn')) return;
+            e.preventDefault();
+            drag = true;
+            headerEl.setPointerCapture(e.pointerId);
+            dY = e.clientY;
+            dialogEl.style.bottom = 'auto';
+            initT = parseFloat(dialogEl.style.top) || dialogEl.offsetTop;
+        });
+        headerEl.addEventListener('pointermove', (e) => {
+            if (!drag) return;
+            const fR = frame.getBoundingClientRect(), cR = dialogEl.getBoundingClientRect();
+            dialogEl.style.top = `${Math.max(4, Math.min(fR.height - cR.height - 4, initT + e.clientY - dY))}px`;
+            dialogEl.style.bottom = 'auto';
+        });
+        const stop = (e) => {
+            if (drag) {
+                drag = false;
+                try { headerEl.releasePointerCapture(e.pointerId); } catch (_) {}
+            }
+        };
+        headerEl.addEventListener('pointerup', stop);
+        headerEl.addEventListener('pointercancel', stop);
+    }
 
-            requestAnimationFrame(() => {
-                if (!frame) return;
-                const fR = frame.getBoundingClientRect();
-                const cR = content.getBoundingClientRect();
-                content.style.bottom = 'auto';
-                content.style.top = `${Math.max(6, fR.height - cR.height - 52)}px`;
-            });
+    bringToFront(mId) {
+        const info = this.openDocks.get(mId);
+        if (!info) return;
+        this.highestZIndex++;
+        info.zIndex = this.highestZIndex;
+        info.element.style.zIndex = this.highestZIndex;
+
+        // Visual distinction for the frontmost dialog
+        this.openDocks.forEach((d, id) => {
+            if (id === mId) {
+                d.element.classList.remove('border-slate-700/80', 'shadow-xl');
+                d.element.classList.add('border-cyan-400', 'shadow-2xl', 'ring-1', 'ring-cyan-500/40');
+            } else {
+                d.element.classList.remove('border-cyan-400', 'shadow-2xl', 'ring-1', 'ring-cyan-500/40');
+                d.element.classList.add('border-slate-700/80', 'shadow-xl');
+            }
+        });
+    }
+
+    closeDockModal(mId = null) {
+        if (mId) {
+            const info = this.openDocks.get(mId);
+            if (info) {
+                info.element.remove();
+                this.openDocks.delete(mId);
+            }
+        } else {
+            this.openDocks.forEach(info => info.element.remove());
+            this.openDocks.clear();
         }
+        if (this.openDocks.size === 0) {
+            document.getElementById('dock-modal')?.classList.add('hidden');
+        } else {
+            const topId = this.activeDockModuleId;
+            if (topId) this.bringToFront(topId);
+        }
+        this.updateBackdrop();
     }
 
-    closeDockModal() {
-        const modal = document.getElementById('dock-modal');
-        modal?.classList.add('hidden');
-        this.activeDockModuleId = null;
-        this.setDockLock(false);
+    closeUnlockedDocks() {
+        const unlocked = [];
+        this.openDocks.forEach((info, id) => {
+            if (!info.isLocked) unlocked.push(id);
+        });
+        unlocked.forEach(id => this.closeDockModal(id));
     }
 
-    setDockLock(lock) {
-        this.isDockLocked = lock;
-        const btn = document.getElementById('dock-lock-btn');
-        const backdrop = document.getElementById('dock-backdrop');
+    toggleDockLock(mId) {
+        const info = this.openDocks.get(mId);
+        if (!info) return;
+        info.isLocked = !info.isLocked;
+        this.updateDockLockUI(mId);
+        this.updateBackdrop();
+    }
+
+    setDockLock(lock, mId = null) {
+        const targetId = mId || this.activeDockModuleId;
+        if (targetId && this.openDocks.has(targetId)) {
+            this.openDocks.get(targetId).isLocked = lock;
+            this.updateDockLockUI(targetId);
+        }
+        this.updateBackdrop();
+    }
+
+    updateDockLockUI(mId) {
+        const info = this.openDocks.get(mId);
+        if (!info) return;
+        const btn = info.element.querySelector('.dock-lock-btn');
         if (btn) {
-            btn.className = `h-5 px-1.5 rounded text-[8.5px] font-bold flex items-center gap-1 border transition-colors ${lock ? 'bg-cyan-600 text-white border-cyan-400' : 'bg-slate-800 text-slate-400 border-slate-700'}`;
+            btn.className = `dock-lock-btn h-5 px-1.5 rounded text-[8.5px] font-bold flex items-center gap-1 border transition-colors ${info.isLocked ? 'bg-cyan-600 text-white border-cyan-400 shadow-sm shadow-cyan-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}`;
         }
-        if (backdrop) {
-            backdrop.style.display = lock ? 'none' : 'block';
-        }
+    }
+
+    updateBackdrop() {
+        const backdrop = document.getElementById('dock-backdrop');
+        if (!backdrop) return;
+        const hasUnlocked = Array.from(this.openDocks.values()).some(d => !d.isLocked);
+        backdrop.style.display = hasUnlocked ? 'block' : 'none';
     }
 
     createModuleContext(id, isDock = false) {
@@ -217,7 +466,7 @@ export class ModalManager {
             bpm: this.ui.synth.masterBPM,
             currentPageId: this.ui.currentPageId,
             showToast: (msg) => this.showToast(msg),
-            reRenderModal: isDock ? () => this.reRenderDockModal() : () => this.reRenderModal(),
+            reRenderModal: isDock ? () => this.reRenderDockModal(id) : () => this.reRenderModal(),
             rebuildModule: () => this.ui.rebuildModule(id),
             removeConnectionsForPort: (p) => this.ui.removeConnectionsForPort(id, p),
             sendControl: (event) => this.ui.synth.sendControlEvent(id, event),
@@ -240,35 +489,28 @@ export class ModalManager {
         };
     }
 
-    reRenderDockModal() {
-        const id = this.activeDockModuleId;
-        const m = this.ui.modules[id];
-        if (!m) return;
-        const reg = MODULE_REGISTRY[m.type];
-        const b = document.getElementById('dock-body');
-        if (!reg || !b) return;
+    reRenderDockModal(mId = null) {
+        const targetIds = mId ? [mId] : Array.from(this.openDocks.keys());
+        targetIds.forEach(id => {
+            const info = this.openDocks.get(id);
+            const m = this.ui.modules[id];
+            if (!info || !m) return;
+            const reg = MODULE_REGISTRY[m.type];
+            const bodyEl = info.element.querySelector('.dock-dialog-body');
+            if (!reg || !bodyEl) return;
 
-        b.className = "text-xs mt-1";
-        const ctx = this.createModuleContext(id, true);
-        const onChange = () => {
-            this.ui.synth.updateModule(`${this.ui.currentPageId}/${id}`, m, this.ui.getPatchState(id));
-            this.ui.renderCell(m.row * this.ui.COLS + m.col);
-        };
-        if (reg.renderModal) b.innerHTML = reg.renderModal(m, ctx);
-        else if (reg.schema) b.innerHTML = UIHelpers.renderSchemaModal(m, ctx, reg.schema);
-        if (reg.bindEvents) reg.bindEvents(m, ctx, onChange);
-        else if (reg.schema) UIHelpers.bindSchemaEvents(m, ctx, reg.schema, onChange);
-
-        const content = document.getElementById('dock-content');
-        const frame = document.getElementById('phone-frame');
-        if (content && frame) {
-            requestAnimationFrame(() => {
-                const fR = frame.getBoundingClientRect();
-                const cR = content.getBoundingClientRect();
-                content.style.bottom = 'auto';
-                content.style.top = `${Math.max(6, fR.height - cR.height - 52)}px`;
-            });
-        }
+            bodyEl.className = "dock-dialog-body text-xs mt-1";
+            const ctx = this.createModuleContext(id, true);
+            const onChange = () => {
+                this.ui.synth.updateModule(`${this.ui.currentPageId}/${id}`, m, this.ui.getPatchState(id));
+                this.ui.renderCell(m.row * this.ui.COLS + m.col);
+            };
+            if (reg.renderModal) bodyEl.innerHTML = reg.renderModal(m, ctx);
+            else if (reg.schema) bodyEl.innerHTML = UIHelpers.renderSchemaModal(m, ctx, reg.schema);
+            if (reg.bindEvents) reg.bindEvents(m, ctx, onChange);
+            else if (reg.schema) UIHelpers.bindSchemaEvents(m, ctx, reg.schema, onChange);
+        });
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
     reRenderModal() {

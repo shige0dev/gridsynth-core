@@ -404,12 +404,12 @@ export class UIController {
         return this.modalManager.openDockModal(mId);
     }
 
-    closeDockModal() {
-        return this.modalManager.closeDockModal();
+    closeDockModal(mId = null) {
+        return this.modalManager.closeDockModal(mId);
     }
 
-    setDockLock(lock) {
-        return this.modalManager.setDockLock(lock);
+    setDockLock(lock, mId = null) {
+        return this.modalManager.setDockLock(lock, mId);
     }
 
     rebuildModule(id) {
@@ -536,12 +536,8 @@ export class UIController {
             this.activePopupModuleId = null;
         });
 
-        document.getElementById('dock-close-btn')?.addEventListener('click', () => this.closeDockModal());
         document.getElementById('dock-backdrop')?.addEventListener('click', () => {
-            if (!this.isDockLocked) this.closeDockModal();
-        });
-        document.getElementById('dock-lock-btn')?.addEventListener('click', () => {
-            this.setDockLock(!this.isDockLocked);
+            this.modalManager.closeUnlockedDocks();
         });
 
         const frame = document.getElementById('phone-frame');
@@ -579,7 +575,6 @@ export class UIController {
             headerEl.addEventListener('pointercancel', stop);
         };
 
-        makeDraggable(document.getElementById('dock-header'), document.getElementById('dock-content'), 4, true);
         makeDraggable(document.getElementById('modal-header'), document.getElementById('modal-content'), 6, () => {
             const titleEl = document.getElementById('modal-title');
             return titleEl?.textContent === 'ADD MODULE';
@@ -818,9 +813,6 @@ export class UIController {
     }
 
     renderLiveGrid(liveStates) {
-        const modalEl = this.activePopupModuleId ? document.getElementById('modal-content') : null;
-        const dockEl = this.activeDockModuleId ? document.getElementById('dock-content') : null;
-
         Object.values(this.modules).forEach(m => {
             const readData = liveStates[m.id];
             if (!readData) return;
@@ -828,7 +820,7 @@ export class UIController {
             if (reg?.updateLive) {
                 const idx = m.row * this.COLS + m.col;
                 const cell = this.cells[idx] || document.getElementById(`cell-${idx}`);
-                const targetModal = m.id === this.activeDockModuleId ? dockEl : modalEl;
+                const targetModal = this.modalManager.getDialogElement(m.id);
                 if (cell) reg.updateLive(cell, readData, this.synth.isPlaying, targetModal, m);
             }
         });
