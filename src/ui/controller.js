@@ -1,8 +1,8 @@
 import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js';
 import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=211';
-import { UIHelpers } from './helpers.js?v=211';
-import { PresetManager } from './managers/preset-manager.js?v=211';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=212';
+import { UIHelpers } from './helpers.js?v=212';
+import { PresetManager } from './managers/preset-manager.js?v=212';
 import { ModalManager } from './managers/modal-manager.js';
 import { CableManager } from './managers/cable-manager.js';
 import { PageManager } from './managers/page-manager.js';

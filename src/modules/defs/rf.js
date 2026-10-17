@@ -75,11 +75,12 @@ export const RF = {
         `;
     },
     renderModal: (m, ctx) => {
-        const timeSec = Math.max(0.02, Math.min(2.0, m.time ?? 0.2));
-        // Exponential slider value [0, 1] mapped to [0.02, 2.0]
-        const normTime = Math.log10(timeSec / 0.02) / 2.0;
-        const peakPct = Math.round((m.peak ?? 0.5) * 100);
-        const lvlPct = Math.round((m.level ?? 1.0) * 100);
+        const isTimePatched = ctx?.patched?.has('time_cv') || ctx?.patched?.has('cv_time');
+        const isPeakPatched = ctx?.patched?.has('peak_cv') || ctx?.patched?.has('cv_peak');
+
+        const timeDisp = isTimePatched ? 'EXT' : RF.formatTime(m.time ?? 0.2);
+        const peakDisp = isPeakPatched ? 'EXT' : `${Math.round((m.peak ?? 0.5) * 100)}%`;
+        const lvlDisp = `${Math.round((m.level ?? 1.0) * 100)}%`;
 
         return `
             <div class="space-y-2 p-1 text-slate-200">
@@ -94,49 +95,16 @@ export const RF = {
                     <span id="rf-modal-live-val" class="text-[10px] font-mono font-bold text-amber-400">0.00 V</span>
                 </div>
 
-                <!-- Parameters Controls -->
-                <div class="space-y-1.5 bg-slate-950/60 p-2 rounded-xl border border-slate-800/80">
-                    <!-- TIME (20ms ~ 2000ms Exponential) -->
-                    <div class="space-y-0.5">
-                        <div class="flex justify-between text-[8px] font-bold">
-                            <span class="text-amber-400 tracking-wider">TOTAL TIME (CYCLE)</span>
-                            <span id="rf-time-disp" class="font-mono text-amber-300 font-bold">${RF.formatTime(timeSec)}</span>
-                        </div>
-                        <input type="range" id="rf-slider-time" min="0" max="1" step="0.005" value="${normTime.toFixed(3)}" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500">
-                        <div class="flex justify-between text-[7px] text-slate-500 font-mono">
-                            <span>20ms</span>
-                            <span>200ms</span>
-                            <span>2.0s</span>
-                        </div>
-                    </div>
-
-                    <!-- PEAK POSITION (1% ~ 99%) -->
-                    <div class="space-y-0.5 pt-1 border-t border-slate-800/60">
-                        <div class="flex justify-between text-[8px] font-bold">
-                            <span class="text-amber-400 tracking-wider">PEAK POSITION (SHAPE)</span>
-                            <span id="rf-peak-disp" class="font-mono text-amber-300 font-bold">${peakPct}%</span>
-                        </div>
-                        <input type="range" id="rf-slider-peak" min="0.01" max="0.99" step="0.01" value="${(m.peak ?? 0.5).toFixed(2)}" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500">
-                        <div class="flex justify-between text-[7px] text-slate-500 font-mono">
-                            <span>RISE 1% (SAW)</span>
-                            <span>50% (TRI)</span>
-                            <span>FALL 1% (RAMP)</span>
-                        </div>
-                    </div>
-
-                    <!-- OUTPUT LEVEL (0% ~ 100%) -->
-                    <div class="space-y-0.5 pt-1 border-t border-slate-800/60">
-                        <div class="flex justify-between text-[8px] font-bold">
-                            <span class="text-amber-400 tracking-wider">OUTPUT LEVEL</span>
-                            <span id="rf-level-disp" class="font-mono text-amber-300 font-bold">${lvlPct}%</span>
-                        </div>
-                        <input type="range" id="rf-slider-level" min="0" max="1" step="0.01" value="${(m.level ?? 1.0).toFixed(2)}" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500">
-                    </div>
+                <!-- Vertical Sliders: TIME, PEAK, LEVEL (Standard GridSynth VSlider Rule) -->
+                <div class="flex items-center justify-around py-1 bg-slate-950/60 p-1 rounded-xl border border-slate-800/80 gap-1">
+                    ${UIHelpers.createVSliderHTML('rf-slider-time', 'TIME', 0.02, 2.0, 0.005, m.time ?? 0.2, 'time', 'amber', isTimePatched, timeDisp, 2.5)}
+                    ${UIHelpers.createVSliderHTML('rf-slider-peak', 'PEAK', 0.01, 0.99, 0.01, m.peak ?? 0.5, 'shape', 'amber', isPeakPatched, peakDisp, 1)}
+                    ${UIHelpers.createVSliderHTML('rf-slider-level', 'LEVEL', 0.0, 1.0, 0.01, m.level ?? 1.0, 'lvl', 'amber', false, lvlDisp, 1)}
                 </div>
 
                 <!-- Manual Trigger Button -->
                 <div class="pt-0.5">
-                    <button id="rf-btn-trigger" class="w-full py-1.5 bg-gradient-to-r from-amber-600 to-rose-600 hover:from-amber-500 hover:to-rose-500 active:from-amber-700 active:to-rose-700 text-white font-bold text-[9px] rounded-lg shadow-sm border border-amber-400/30 flex items-center justify-center gap-1.5 transition-all">
+                    <button id="rf-btn-trigger" class="w-full py-1.5 bg-gradient-to-r from-amber-600 to-rose-600 hover:from-amber-500 hover:to-rose-500 active:from-amber-700 active:to-rose-700 text-white font-bold text-[9px] rounded-lg shadow-sm border border-amber-400/30 flex items-center justify-center gap-1.5 transition-all cursor-pointer">
                         <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
                         <span>MANUAL TRIGGER</span>
                     </button>
@@ -145,45 +113,29 @@ export const RF = {
         `;
     },
     bindEvents: (m, ctx, cb) => {
-        const timeSlider = document.getElementById('rf-slider-time');
-        const timeDisp = document.getElementById('rf-time-disp');
-        const peakSlider = document.getElementById('rf-slider-peak');
-        const peakDisp = document.getElementById('rf-peak-disp');
-        const levelSlider = document.getElementById('rf-slider-level');
-        const levelDisp = document.getElementById('rf-level-disp');
-        const trigBtn = document.getElementById('rf-btn-trigger');
         const svgWrap = document.getElementById('rf-svg-wrap');
+        const trigBtn = document.getElementById('rf-btn-trigger');
 
-        const updateSvg = () => {
+        const onSliderChange = () => {
             if (svgWrap) svgWrap.innerHTML = RF.renderSvgCurve(m);
+            cb();
         };
 
-        if (timeSlider) {
-            timeSlider.addEventListener('input', (e) => {
-                const norm = parseFloat(e.target.value);
-                const sec = 0.02 * Math.pow(100.0, norm);
-                m.time = Math.max(0.02, Math.min(2.0, sec));
-                if (timeDisp) timeDisp.textContent = RF.formatTime(m.time);
-                cb();
-            });
+        const isTimePatched = ctx?.patched?.has('time_cv') || ctx?.patched?.has('cv_time');
+        const isPeakPatched = ctx?.patched?.has('peak_cv') || ctx?.patched?.has('cv_peak');
+
+        if (!isTimePatched) {
+            UIHelpers.bindSlider('rf-slider-time', RF.formatTime, v => { m.time = v; onSliderChange(); }, 2.5, 0.02, 2.0);
+            UIHelpers.bindScrubber('rf-slider-time-disp', 'rf-slider-time', RF.formatTime, v => { m.time = v; onSliderChange(); }, 2.5, 0.02, 2.0);
         }
 
-        if (peakSlider) {
-            peakSlider.addEventListener('input', (e) => {
-                m.peak = parseFloat(e.target.value);
-                if (peakDisp) peakDisp.textContent = `${Math.round(m.peak * 100)}%`;
-                updateSvg();
-                cb();
-            });
+        if (!isPeakPatched) {
+            UIHelpers.bindSlider('rf-slider-peak', v => `${Math.round(v * 100)}%`, v => { m.peak = v; onSliderChange(); }, 1, 0.01, 0.99);
+            UIHelpers.bindScrubber('rf-slider-peak-disp', 'rf-slider-peak', v => `${Math.round(v * 100)}%`, v => { m.peak = v; onSliderChange(); }, 1, 0.01, 0.99);
         }
 
-        if (levelSlider) {
-            levelSlider.addEventListener('input', (e) => {
-                m.level = parseFloat(e.target.value);
-                if (levelDisp) levelDisp.textContent = `${Math.round(m.level * 100)}%`;
-                cb();
-            });
-        }
+        UIHelpers.bindSlider('rf-slider-level', v => `${Math.round(v * 100)}%`, v => { m.level = v; onSliderChange(); }, 1, 0.0, 1.0);
+        UIHelpers.bindScrubber('rf-slider-level-disp', 'rf-slider-level', v => `${Math.round(v * 100)}%`, v => { m.level = v; onSliderChange(); }, 1, 0.0, 1.0);
 
         if (trigBtn) {
             trigBtn.addEventListener('click', () => {

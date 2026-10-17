@@ -98,13 +98,12 @@ export const AR = {
         `;
     },
     renderModal: (m, ctx) => {
-        const attSec = Math.max(0.005, Math.min(2.0, m.attack ?? 0.05));
-        const relSec = Math.max(0.005, Math.min(3.0, m.release ?? 0.2));
+        const isAPatched = ctx?.patched?.has('a_cv') || ctx?.patched?.has('cv_a') || ctx?.patched?.has('attack_cv');
+        const isRPatched = ctx?.patched?.has('r_cv') || ctx?.patched?.has('cv_r') || ctx?.patched?.has('release_cv');
 
-        // Exponential mapping normalized 0..1
-        const normA = Math.log(attSec / 0.005) / Math.log(400.0);
-        const normR = Math.log(relSec / 0.005) / Math.log(600.0);
-        const lvlPct = Math.round((m.level ?? 1.0) * 100);
+        const attDisp = isAPatched ? 'EXT' : AR.formatTime(m.attack ?? 0.05);
+        const relDisp = isRPatched ? 'EXT' : AR.formatTime(m.release ?? 0.2);
+        const lvlDisp = `${Math.round((m.level ?? 1.0) * 100)}%`;
 
         return `
             <div class="space-y-2 p-1 text-slate-200">
@@ -119,87 +118,42 @@ export const AR = {
                     <span id="ar-modal-live-val" class="text-[10px] font-mono font-bold text-sky-400">0.00 V</span>
                 </div>
 
-                <!-- Parameters Controls -->
-                <div class="space-y-1.5 bg-slate-950/60 p-2 rounded-xl border border-slate-800/80">
-                    <!-- ATTACK (5ms ~ 2000ms Exponential) -->
-                    <div class="space-y-0.5">
-                        <div class="flex justify-between text-[8px] font-bold">
-                            <span class="text-sky-400 tracking-wider">ATTACK TIME (RC CHARGE)</span>
-                            <span id="ar-att-disp" class="font-mono text-sky-300 font-bold">${AR.formatTime(attSec)}</span>
-                        </div>
-                        <input type="range" id="ar-slider-attack" min="0" max="1" step="0.005" value="${normA.toFixed(3)}" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-500">
-                        <div class="flex justify-between text-[7px] text-slate-500 font-mono">
-                            <span>5ms</span>
-                            <span>50ms</span>
-                            <span>2.0s</span>
-                        </div>
-                    </div>
-
-                    <!-- RELEASE (5ms ~ 3000ms Exponential) -->
-                    <div class="space-y-0.5 pt-1 border-t border-slate-800/60">
-                        <div class="flex justify-between text-[8px] font-bold">
-                            <span class="text-sky-400 tracking-wider">RELEASE TIME (RC DISCHARGE)</span>
-                            <span id="ar-rel-disp" class="font-mono text-sky-300 font-bold">${AR.formatTime(relSec)}</span>
-                        </div>
-                        <input type="range" id="ar-slider-release" min="0" max="1" step="0.005" value="${normR.toFixed(3)}" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-500">
-                        <div class="flex justify-between text-[7px] text-slate-500 font-mono">
-                            <span>5ms</span>
-                            <span>200ms</span>
-                            <span>3.0s</span>
-                        </div>
-                    </div>
-
-                    <!-- OUTPUT LEVEL (0% ~ 100%) -->
-                    <div class="space-y-0.5 pt-1 border-t border-slate-800/60">
-                        <div class="flex justify-between text-[8px] font-bold">
-                            <span class="text-sky-400 tracking-wider">OUTPUT LEVEL</span>
-                            <span id="ar-level-disp" class="font-mono text-sky-300 font-bold">${lvlPct}%</span>
-                        </div>
-                        <input type="range" id="ar-slider-level" min="0" max="1" step="0.01" value="${(m.level ?? 1.0).toFixed(2)}" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-500">
-                    </div>
+                <!-- Vertical Sliders: ATTACK, RELEASE, LEVEL (Standard GridSynth VSlider Rule) -->
+                <div class="flex items-center justify-around py-1 bg-slate-950/60 p-1 rounded-xl border border-slate-800/80 gap-1">
+                    ${UIHelpers.createVSliderHTML('ar-slider-attack', 'ATTACK', 0.005, 2.0, 0.001, m.attack ?? 0.05, 'time', 'sky', isAPatched, attDisp, 2.5)}
+                    ${UIHelpers.createVSliderHTML('ar-slider-release', 'RELEASE', 0.005, 3.0, 0.005, m.release ?? 0.2, 'time', 'sky', isRPatched, relDisp, 2.5)}
+                    ${UIHelpers.createVSliderHTML('ar-slider-level', 'LEVEL', 0.0, 1.0, 0.01, m.level ?? 1.0, 'lvl', 'sky', false, lvlDisp, 1)}
                 </div>
 
-                <div class="text-[7.5px] text-slate-500 px-1 italic">
-                    * Gate入力がHighの間は1.0Vまで充電しホールドします。Gate Lowで指数減衰します。
+                <div class="text-[7.5px] text-slate-500 px-1 italic text-center">
+                    * Gate入力がHighの間ホールド、Lowで指数減衰します
                 </div>
             </div>
         `;
     },
     bindEvents: (m, ctx, cb) => {
-        const attSlider = document.getElementById('ar-slider-attack');
-        const attDisp = document.getElementById('ar-att-disp');
-        const relSlider = document.getElementById('ar-slider-release');
-        const relDisp = document.getElementById('ar-rel-disp');
-        const levelSlider = document.getElementById('ar-slider-level');
-        const levelDisp = document.getElementById('ar-level-disp');
+        const svgWrap = document.getElementById('ar-svg-wrap');
 
-        if (attSlider) {
-            attSlider.addEventListener('input', (e) => {
-                const norm = parseFloat(e.target.value);
-                const sec = 0.005 * Math.pow(400.0, norm);
-                m.attack = Math.max(0.005, Math.min(2.0, sec));
-                if (attDisp) attDisp.textContent = AR.formatTime(m.attack);
-                cb();
-            });
+        const onSliderChange = () => {
+            if (svgWrap) svgWrap.innerHTML = AR.renderSvgCurve(m);
+            cb();
+        };
+
+        const isAPatched = ctx?.patched?.has('a_cv') || ctx?.patched?.has('cv_a') || ctx?.patched?.has('attack_cv');
+        const isRPatched = ctx?.patched?.has('r_cv') || ctx?.patched?.has('cv_r') || ctx?.patched?.has('release_cv');
+
+        if (!isAPatched) {
+            UIHelpers.bindSlider('ar-slider-attack', AR.formatTime, v => { m.attack = v; onSliderChange(); }, 2.5, 0.005, 2.0);
+            UIHelpers.bindScrubber('ar-slider-attack-disp', 'ar-slider-attack', AR.formatTime, v => { m.attack = v; onSliderChange(); }, 2.5, 0.005, 2.0);
         }
 
-        if (relSlider) {
-            relSlider.addEventListener('input', (e) => {
-                const norm = parseFloat(e.target.value);
-                const sec = 0.005 * Math.pow(600.0, norm);
-                m.release = Math.max(0.005, Math.min(3.0, sec));
-                if (relDisp) relDisp.textContent = AR.formatTime(m.release);
-                cb();
-            });
+        if (!isRPatched) {
+            UIHelpers.bindSlider('ar-slider-release', AR.formatTime, v => { m.release = v; onSliderChange(); }, 2.5, 0.005, 3.0);
+            UIHelpers.bindScrubber('ar-slider-release-disp', 'ar-slider-release', AR.formatTime, v => { m.release = v; onSliderChange(); }, 2.5, 0.005, 3.0);
         }
 
-        if (levelSlider) {
-            levelSlider.addEventListener('input', (e) => {
-                m.level = parseFloat(e.target.value);
-                if (levelDisp) levelDisp.textContent = `${Math.round(m.level * 100)}%`;
-                cb();
-            });
-        }
+        UIHelpers.bindSlider('ar-slider-level', v => `${Math.round(v * 100)}%`, v => { m.level = v; onSliderChange(); }, 1, 0.0, 1.0);
+        UIHelpers.bindScrubber('ar-slider-level-disp', 'ar-slider-level', v => `${Math.round(v * 100)}%`, v => { m.level = v; onSliderChange(); }, 1, 0.0, 1.0);
     },
     updateLive: (cell, data, isPlaying, targetModal, m) => {
         const val = data?.values?.[0] ?? 0.0;
@@ -220,4 +174,3 @@ export const AR = {
 };
 
 export const arDefs = { AR };
-
