@@ -13,7 +13,7 @@ import { ioAudioDefs } from './defs/io.js?v=185';
 import { seqAudioDefs } from './defs/seq.js';
 import { chordAudioDefs } from './defs/chord.js';
 import { arpAudioDefs } from './defs/arp.js';
-import { patAudioDefs } from './defs/pat.js?v=194';
+import { patAudioDefs } from './defs/pat.js?v=195';
 import { markovAudioDefs } from './defs/markov.js';
 import { fmAudioDefs } from './defs/fm.js';
 

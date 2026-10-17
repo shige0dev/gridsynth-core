@@ -211,6 +211,7 @@ export const PAT = {
             if (!overlayContent) return;
             overlayContent.querySelectorAll('[data-pat-note]').forEach(el => {
                 el.onpointerdown = (e) => {
+                    e.preventDefault();
                     e.stopPropagation();
                     const startY = e.clientY;
                     const initialNote = el.dataset.patNote;
@@ -220,9 +221,15 @@ export const PAT = {
                     const pos = parseInt(el.dataset.strPos, 10);
                     if (isNaN(pos)) return;
 
+                    const startPat = m.pattern || '';
+                    const noteLen = initialNote.length;
+                    const noteSpan = el.querySelector('span') || el;
                     let hasMoved = false;
                     let lastMidi = initialMidi;
-                    el.setPointerCapture(e.pointerId);
+
+                    try {
+                        el.setPointerCapture(e.pointerId);
+                    } catch (_) {}
 
                     const onPointerMove = (me) => {
                         const dy = startY - me.clientY;
@@ -233,17 +240,12 @@ export const PAT = {
                             if (curMidi !== lastMidi) {
                                 lastMidi = curMidi;
                                 const newNote = midiNumToNote(curMidi);
-                                const curPat = m.pattern || '';
-                                const before = curPat.slice(0, pos);
-                                const after = curPat.slice(pos + initialNote.length);
-                                const updatedPat = before + newNote + after;
+                                const updatedPat = startPat.slice(0, pos) + newNote + startPat.slice(pos + noteLen);
                                 m.pattern = updatedPat;
                                 if (input) input.value = updatedPat;
+                                noteSpan.textContent = newNote;
+                                noteSpan.className = 'text-yellow-300 font-black drop-shadow-[0_0_6px_rgba(250,204,21,0.9)]';
                                 cb();
-                                if (overlayContent) {
-                                    overlayContent.innerHTML = renderPatternHighlightedHTML(updatedPat);
-                                    setupPitchDrag();
-                                }
                             }
                         }
                     };
@@ -258,6 +260,10 @@ export const PAT = {
                             setEditing(true);
                             input?.focus();
                         } else {
+                            if (overlayContent) {
+                                overlayContent.innerHTML = renderPatternHighlightedHTML(m.pattern || '');
+                                setupPitchDrag();
+                            }
                             updateButtonStates();
                             cb();
                         }
