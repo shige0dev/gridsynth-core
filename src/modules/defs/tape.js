@@ -47,7 +47,7 @@ export const TAPE = {
         }
         return Array.from(peaks);
     },
-    renderWaveformSVG: (m, playhead = 0.0) => {
+    renderWaveformSVG: (m, playhead = 0.0, isPlaying = false) => {
         const W = 320, H = 100;
         const padX = 6, padY = 6;
         const innerW = W - padX * 2;
@@ -110,8 +110,8 @@ export const TAPE = {
                 <rect x="${(startX - 6).toFixed(1)}" y="${padY}" width="12" height="9" rx="1.5" fill="#14532d" stroke="#22c55e" stroke-width="1.2"/>
                 <text x="${startX.toFixed(1)}" y="${padY + 7}" fill="#4ade80" font-size="6.5" font-family="monospace" font-weight="bold" text-anchor="middle">S</text>
 
-                <!-- Dynamic Playhead Indicator Line -->
-                <line id="tape-playhead-line" x1="${playX.toFixed(1)}" y1="${padY}" x2="${playX.toFixed(1)}" y2="${padY + innerH}" stroke="#fde047" stroke-width="2.2" class="drop-shadow-[0_0_8px_rgba(253,224,71,1)]"/>
+                <!-- Dynamic Playhead Indicator Line (Shown ONLY while playing) -->
+                <line id="tape-playhead-line" x1="${playX.toFixed(1)}" y1="${padY}" x2="${playX.toFixed(1)}" y2="${padY + innerH}" stroke="#fde047" stroke-width="2.2" class="drop-shadow-[0_0_8px_rgba(253,224,71,1)]" style="display: ${isPlaying ? 'block' : 'none'};"/>
             </svg>
         `;
     },
@@ -153,7 +153,7 @@ export const TAPE = {
         const durStr = `${(m.duration ?? 1.5).toFixed(2)}s`;
 
         return `
-            <div class="space-y-2 p-1.5 text-slate-200 w-[310px] sm:w-[330px]">
+            <div class="space-y-2 p-1 text-slate-200 w-full">
                 <!-- Header / File Loader -->
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-1 select-none">
                     <div class="flex items-center gap-1.5 overflow-hidden">
@@ -243,7 +243,8 @@ export const TAPE = {
         const svgWrap = document.getElementById('tape-waveform-wrap');
 
         const redrawSvg = () => {
-            if (svgWrap) svgWrap.innerHTML = TAPE.renderWaveformSVG(m, inst?.read?.()?.playhead ?? 0.0);
+            const st = inst?.read?.();
+            if (svgWrap) svgWrap.innerHTML = TAPE.renderWaveformSVG(m, st?.playhead ?? 0.0, Boolean(st?.isPlaying));
         };
 
         const onSliderChange = () => {
@@ -332,12 +333,15 @@ export const TAPE = {
         if (playBtn) {
             playBtn.addEventListener('click', () => {
                 const st = inst?.read?.();
+                const playheadLine = document.getElementById('tape-playhead-line');
                 if (st?.isPlaying) {
                     inst?.stop?.();
                     if (playText) playText.textContent = 'PLAY';
+                    if (playheadLine) playheadLine.style.display = 'none';
                 } else {
                     inst?.play?.();
                     if (playText) playText.textContent = 'STOP';
+                    if (playheadLine) playheadLine.style.display = 'block';
                 }
             });
         }
@@ -391,10 +395,15 @@ export const TAPE = {
         if (targetModal) {
             const playheadLine = targetModal.querySelector('#tape-playhead-line');
             if (playheadLine) {
-                const W = 320, padX = 6, innerW = W - padX * 2;
-                const px = padX + Math.max(0, Math.min(1, playhead)) * innerW;
-                playheadLine.setAttribute('x1', px.toFixed(1));
-                playheadLine.setAttribute('x2', px.toFixed(1));
+                if (isTapePlaying) {
+                    playheadLine.style.display = 'block';
+                    const W = 320, padX = 6, innerW = W - padX * 2;
+                    const px = padX + Math.max(0, Math.min(1, playhead)) * innerW;
+                    playheadLine.setAttribute('x1', px.toFixed(1));
+                    playheadLine.setAttribute('x2', px.toFixed(1));
+                } else {
+                    playheadLine.style.display = 'none';
+                }
             }
             const playText = targetModal.querySelector('#tape-play-text');
             if (playText) {

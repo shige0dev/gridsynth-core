@@ -1,14 +1,14 @@
 import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js';
 import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=217';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=223';
 import { UIHelpers } from './helpers.js?v=217';
 import { PresetManager } from './managers/preset-manager.js?v=217';
-import { ModalManager } from './managers/modal-manager.js';
+import { ModalManager } from './managers/modal-manager.js?v=223';
 import { CableManager } from './managers/cable-manager.js';
 import { PageManager } from './managers/page-manager.js';
 import { InteractionManager } from './managers/interaction-manager.js';
 
-export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'SPEC', 'MON', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR'];
+export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'SPEC', 'MON', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'TAPE'];
 
 export class UIController {
     constructor(synth) {
