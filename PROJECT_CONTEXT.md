@@ -200,6 +200,13 @@ Samsung Galaxy S25 等の最新ハイエンドスマートフォン（超高解�
     - ダイアログでの表示周波数を **40Hz〜16kHz**（10kHz超過）へ拡張。10kHzおよび16kHzの周波数軸ガイドおよびPEAK検出に対応。
   - **ダイアログ内設定ボタンの高さスリム化・標準化 (全高 16px / `h-4`)**:
     - `SCOPE` (`DUAL`, `LISS`, `TRIG`)、`SPEC` (`BAR`, `CURVE`, `FAST/MED/SLOW`)、`SEQ8/SEQ16` (`QLZ`)、`MARKOV` (`RESET`, `QLZ`) 等、ダイアログ内上段メニューバーやグループに配置される同種ボタンのサイズをすべて **16px** (`h-4 leading-none inline-flex items-center justify-center`) に統一。余分な上下余白や行高を排除し、縦方向を大幅にスリム化。
+- **プリセットメニュー内 ABOUT ボタン (`[ i ]`) & 作成者情報ダイアログ**:
+  - プリセットダイアログ下部のボタンスペースを確保するため、`EXPORT` / `IMPORT` を **`EXP`** / **`IMP`** に短縮。
+  - 右端に余計な塗り潰しのない枠線スタイルで **`[ i ]`** ボタン（`#preset-about-btn`）を新設。
+  - `[ i ]` タップ時に「**ABOUT GRIDSYNTH**」モーダルを展開：
+    - アプリ名: `GridSynth Mobile v1.0.0`
+    - 作成者: `CREATOR: SHIG`
+    - ×ボタンは完全廃止し、背景（バックドロップ）タップで即座に終了するシンプルかつミニマルな設計。
 - **パネル（ビジュアライズ）× 複数ダイアログ（詳細分析）の同時リアルタイム描画**:
   - `updateLive` ループは `ModalManager.getDialogElement(m.id)` を介し、開いているすべてのダイアログ（SPEC, SCOPE等）に対して毎フレーム同時にリアルタイム描画を実行。
 

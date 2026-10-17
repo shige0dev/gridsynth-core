@@ -547,7 +547,7 @@ export class UIController {
         document.addEventListener('pointerdown', (e) => {
             if (this.modalManager.openDocks.size === 0) return;
             const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
-            if (targetEl?.closest?.('.dock-dialog') || targetEl?.closest?.('#custom-prompt-modal') || targetEl?.closest?.('#alert-modal')) return;
+            if (targetEl?.closest?.('.dock-dialog') || targetEl?.closest?.('#custom-prompt-modal') || targetEl?.closest?.('#alert-modal') || targetEl?.closest?.('#about-modal')) return;
             const hasUnlocked = Array.from(this.modalManager.openDocks.values()).some(d => !d.isLocked);
             if (hasUnlocked) {
                 this.modalManager.closeUnlockedDocks();
@@ -763,6 +763,13 @@ export class UIController {
         document.getElementById('preset-import-top-btn')?.addEventListener('click', () => this.openJsonImportModal());
         document.getElementById('preset-ai-spec-top-btn')?.addEventListener('click', () => this.openAiSpecModal());
         document.getElementById('main-ai-spec-btn')?.addEventListener('click', () => this.openAiSpecModal());
+        document.getElementById('preset-about-btn')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('about-modal')?.classList.remove('hidden');
+        });
+        const closeAboutModal = () => document.getElementById('about-modal')?.classList.add('hidden');
+        document.getElementById('about-backdrop')?.addEventListener('click', closeAboutModal);
+        document.getElementById('about-backdrop')?.addEventListener('pointerdown', closeAboutModal);
         document.getElementById('json-io-backdrop')?.addEventListener('click', () => document.getElementById('json-io-modal')?.classList.add('hidden'));
         document.getElementById('close-json-io-btn')?.addEventListener('click', () => document.getElementById('json-io-modal')?.classList.add('hidden'));
     }
