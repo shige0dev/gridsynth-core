@@ -144,8 +144,8 @@ export const PAT = {
                         <div><b class="text-cyan-300">a*4</b> 連打</div>
                         <div><b class="text-cyan-300">a(3,8)</b> ユークリッド</div>
                         <div><b class="text-cyan-300">a?0.7</b> 確率</div>
-                        <div><b class="text-cyan-300">[a,b]</b> 同時発音</div>
-                        <div><b class="text-cyan-300">a^1</b> オクターブ</div>
+                        <div><b class="text-cyan-300">a^1</b> オクターブ上</div>
+                        <div><b class="text-cyan-300">a^-1</b> オクターブ下</div>
                     </div>
                 </div>
                 ` : ''}
