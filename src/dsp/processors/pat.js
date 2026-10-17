@@ -19,6 +19,8 @@ export class PatProcessor extends AudioWorkletProcessor {
         this.gate = 0;
         this.gap = 0;
         this.activeIdx = -1;
+        this.activeLabel = '—';
+        this.activeIsRest = true;
         this.postCounter = 0;
 
         this.port.onmessage = e => {
@@ -37,6 +39,8 @@ export class PatProcessor extends AudioWorkletProcessor {
                         this.cycleCount = 0;
                         this.gap = 0;
                         this.activeIdx = -1;
+                        this.activeLabel = '—';
+                        this.activeIsRest = true;
                     }
                     this.running = e.data.running;
                 }
@@ -45,6 +49,8 @@ export class PatProcessor extends AudioWorkletProcessor {
                 this.cycleCount = 0;
                 this.gap = 0;
                 this.activeIdx = -1;
+                this.activeLabel = '—';
+                this.activeIsRest = true;
             }
         };
     }
@@ -91,9 +97,16 @@ export class PatProcessor extends AudioWorkletProcessor {
                     if (trigger) {
                         this.cv = curEv.cv ?? 0;
                         this.gap = minGapSamples;
+                        this.activeLabel = curEv.label || 'NOTE';
+                        this.activeIsRest = false;
                     } else {
                         curEv = null;
+                        this.activeLabel = '~';
+                        this.activeIsRest = true;
                     }
+                } else {
+                    this.activeLabel = curEv ? curEv.label : '~';
+                    this.activeIsRest = true;
                 }
             }
 
@@ -120,7 +133,10 @@ export class PatProcessor extends AudioWorkletProcessor {
                 type: 'PLAYHEAD',
                 phase: this.phase,
                 cycleCount: this.cycleCount,
-                activeIdx: this.activeIdx
+                activeIdx: this.activeIdx,
+                activeLabel: this.activeLabel,
+                isRest: this.activeIsRest,
+                gate: this.gate > 0
             });
         }
 

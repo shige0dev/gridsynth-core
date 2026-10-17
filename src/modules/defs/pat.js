@@ -17,30 +17,56 @@ export const PAT = {
         ]
     }),
     renderGrid: (m) => {
-        const pat = m.pattern || 'c2 c2 c2 c2';
-        const renderedHtml = renderPatternHighlightedHTML(pat);
+        const beats = m.cycleBeats || 4;
+        const gatePct = Math.round((m.gateLen ?? 0.8) * 100);
         return `
-            <div class="flex flex-col items-center justify-center w-full h-full px-0.5 overflow-hidden pointer-events-none">
-                <div class="pat-track-container w-full overflow-hidden flex items-center justify-start h-5">
-                    <div class="pat-marquee-track text-[9.5px] font-mono font-bold text-cyan-300">
-                        <span class="mr-6 inline-flex items-center gap-1">${renderedHtml}</span>
-                        <span class="mr-6 inline-flex items-center gap-1">${renderedHtml}</span>
-                    </div>
+            <div class="flex flex-col items-center justify-center leading-tight pointer-events-none text-cyan-300 w-full h-full select-none">
+                <span class="text-[7.5px] font-bold uppercase tracking-wider text-slate-400">PAT (STRUDEL)</span>
+                <span class="pat-state-disp text-[13.5px] font-mono font-bold text-slate-500 tracking-tight my-0.5">—</span>
+                <div class="flex items-center gap-1 text-[7px] font-mono text-cyan-400/80">
+                    <span class="pat-cycle-disp font-bold">${beats}B</span>
+                    <span class="text-slate-600">•</span>
+                    <span class="pat-gate-disp">${gatePct}%G</span>
                 </div>
             </div>`;
     },
-    updateLive: (cell, data, isP, modal) => {
+    updateLive: (cell, data, isP, modal, m) => {
+        const stateEl = cell?.querySelector('.pat-state-disp');
+        if (stateEl) {
+            if (!isP || !data) {
+                stateEl.textContent = '—';
+                stateEl.className = 'pat-state-disp text-[13.5px] font-mono font-bold text-slate-500 tracking-tight my-0.5';
+            } else {
+                const label = data.activeLabel || (data.activeIdx >= 0 ? `STEP ${data.activeIdx + 1}` : '—');
+                const isGateOn = !!data.gate;
+                const isRest = data.isRest || label === '~' || label === '—';
+                stateEl.textContent = label;
+                if (isRest) {
+                    stateEl.className = 'pat-state-disp text-[13.5px] font-mono font-bold text-cyan-400/30 tracking-tight my-0.5';
+                } else if (isGateOn) {
+                    stateEl.className = 'pat-state-disp text-[13.5px] font-mono font-black text-yellow-300 tracking-tight my-0.5 drop-shadow-[0_0_6px_rgba(250,204,21,0.8)]';
+                } else {
+                    stateEl.className = 'pat-state-disp text-[13.5px] font-mono font-bold text-cyan-300 tracking-tight my-0.5';
+                }
+            }
+        }
+
+        if (m) {
+            const cycleEl = cell?.querySelector('.pat-cycle-disp');
+            if (cycleEl) cycleEl.textContent = `${m.cycleBeats || 4}B`;
+            const gateEl = cell?.querySelector('.pat-gate-disp');
+            if (gateEl) gateEl.textContent = `${Math.round((m.gateLen ?? 0.8) * 100)}%G`;
+        }
+
         const activeIdx = isP ? (data?.activeIdx ?? -1) : -1;
-
-        // Real-time highlight in grid cell marquee
-        cell.querySelectorAll('[data-pat-tok]').forEach(el => {
-            const idx = parseInt(el.dataset.patTok, 10);
-            el.classList.toggle('pat-tok-active', idx === activeIdx);
-        });
-
-        // Real-time highlight in modal preview / input overlay
         if (modal) {
-            modal.querySelectorAll('[data-pat-tok]').forEach(el => {
+            modal.querySelectorAll('[data-tok-start]').forEach(el => {
+                const s = parseInt(el.dataset.tokStart, 10);
+                const e = parseInt(el.dataset.tokEnd, 10);
+                const isActive = activeIdx >= s && activeIdx <= e;
+                el.classList.toggle('pat-tok-active', isActive);
+            });
+            modal.querySelectorAll('[data-pat-tok]:not([data-tok-start])').forEach(el => {
                 const idx = parseInt(el.dataset.patTok, 10);
                 el.classList.toggle('pat-tok-active', idx === activeIdx);
             });
@@ -87,10 +113,10 @@ export const PAT = {
                 <!-- Pattern Text Input (Full Width) with Inverted Live Highlight Overlay -->
                 <div class="relative w-full flex items-center min-w-0 h-7 bg-slate-950 border border-cyan-500/70 rounded-lg shadow-inner overflow-hidden">
                     <!-- Real Text Input (receives pointer events & typing) -->
-                    <input type="text" id="pat-code-input-${uid}" value="${pat}" placeholder="e.g. [c2 ~ c2 ~] [c2 ~ c2 ~] [c2 ~ c2 ~] [c2 ~ c2 eb2]" class="w-full h-full bg-transparent font-mono text-cyan-300 px-2 text-[9.5px] font-bold tracking-tight focus:outline-none focus:ring-1 focus:ring-cyan-400 transition relative z-10">
+                    <input type="text" id="pat-code-input-${uid}" value="${pat}" placeholder="e.g. [c2 ~ c2 ~] [c2 ~ c2 ~] [c2 ~ c2 ~] [c2 ~ c2 eb2]" class="w-full h-full bg-transparent font-mono text-cyan-300 px-2 py-0 text-[9.5px] font-bold tracking-normal leading-7 focus:outline-none focus:ring-1 focus:ring-cyan-400 transition relative z-10 box-border">
                     <!-- Live Highlight Overlay (on top when not editing, pointer-events-none) -->
-                    <div id="pat-highlight-overlay-${uid}" class="absolute inset-0 flex items-center px-2 font-mono text-[9.5px] font-bold tracking-tight bg-slate-950 overflow-x-auto whitespace-nowrap pointer-events-none select-none z-20">
-                        <div id="pat-highlight-content-${uid}" class="inline-flex items-center gap-1 text-cyan-300">
+                    <div id="pat-highlight-overlay-${uid}" class="absolute inset-0 flex items-center px-2 py-0 font-mono text-[9.5px] font-bold tracking-normal leading-7 bg-slate-950 overflow-x-hidden whitespace-pre pointer-events-none select-none z-20 box-border">
+                        <div id="pat-highlight-content-${uid}" class="text-cyan-300 whitespace-pre">
                             ${renderPatternHighlightedHTML(pat)}
                         </div>
                     </div>
@@ -148,12 +174,19 @@ export const PAT = {
         const togglePresets = document.getElementById(`pat-toggle-presets-${uid}`);
         const toggleHints = document.getElementById(`pat-toggle-hints-${uid}`);
 
+        const syncScroll = () => {
+            if (overlay && input) {
+                overlay.scrollLeft = input.scrollLeft;
+            }
+        };
+
         const setEditing = (editing) => {
             if (overlay) {
                 if (editing) {
                     overlay.classList.add('hidden');
                     if (input) input.style.color = '#67e8f9';
                 } else {
+                    syncScroll();
                     overlay.classList.remove('hidden');
                     if (overlayContent) {
                         overlayContent.innerHTML = renderPatternHighlightedHTML(m.pattern || '');
@@ -164,6 +197,8 @@ export const PAT = {
         };
 
         setEditing(false);
+
+        input?.addEventListener('scroll', syncScroll);
 
         const updateButtonStates = () => {
             const currentSaved = m.pattern || '';

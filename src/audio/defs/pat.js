@@ -29,12 +29,15 @@ export const PAT = {
             gt.connect(eng.silentSink);
         }
 
-        let latestPhase = 0, latestIdx = -1, latestCycle = 0;
+        let latestPhase = 0, latestIdx = -1, latestCycle = 0, latestLabel = '—', latestIsRest = true, latestGate = false;
         w.port.onmessage = e => {
             if (e.data.type === 'PLAYHEAD') {
                 latestPhase = e.data.phase;
                 latestIdx = e.data.activeIdx;
                 latestCycle = e.data.cycleCount || 0;
+                latestLabel = e.data.activeLabel || '—';
+                latestIsRest = !!e.data.isRest;
+                latestGate = !!e.data.gate;
             }
         };
 
@@ -42,8 +45,22 @@ export const PAT = {
             nodes: { w, cv, gt },
             inputs: {},
             outputs: { cv_out: cv, gate_out: gt },
-            resetStep: () => { latestPhase = 0; latestIdx = -1; latestCycle = 0; },
-            read: () => ({ phase: latestPhase, activeIdx: latestIdx, cycleCount: latestCycle })
+            resetStep: () => {
+                latestPhase = 0;
+                latestIdx = -1;
+                latestCycle = 0;
+                latestLabel = '—';
+                latestIsRest = true;
+                latestGate = false;
+            },
+            read: () => ({
+                phase: latestPhase,
+                activeIdx: latestIdx,
+                cycleCount: latestCycle,
+                activeLabel: latestLabel,
+                isRest: latestIsRest,
+                gate: latestGate
+            })
         };
     },
     update: (ctx, inst, d, patch, eng) => {
