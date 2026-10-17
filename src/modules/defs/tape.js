@@ -175,11 +175,38 @@ export const TAPE = {
                     </div>
                 </div>
 
-                <!-- Vertical Sliders: START, END, SPEED (Placed below waveform display) -->
-                <div class="flex items-center justify-around py-1.5 bg-slate-950/60 p-1.5 rounded-xl border border-slate-800/80 gap-2">
-                    ${UIHelpers.createVSliderHTML('tape-slider-start', 'START', 0.0, 1.0, 0.01, m.start ?? 0.0, 'start', 'emerald', isStartPatched, startDisp, 1)}
-                    ${UIHelpers.createVSliderHTML('tape-slider-end', 'END', 0.0, 1.0, 0.01, m.end ?? 1.0, 'end', 'emerald', isEndPatched, endDisp, 1)}
-                    ${UIHelpers.createVSliderHTML('tape-slider-speed', 'SPEED', 0.1, 4.0, 0.05, m.speed ?? 1.0, 'spd', 'cyan', isSpeedPatched, speedDisp, 2)}
+                <!-- Time-axis Horizontal Sliders: START, END, SPEED in 1 Single Row -->
+                <div class="flex items-center justify-between gap-2 px-2 py-1.5 bg-slate-950/70 rounded-xl border border-slate-800 shadow-sm">
+                    <!-- START (Horizontal Slider) -->
+                    <div class="flex-1 min-w-0 flex flex-col gap-0.5 ${isStartPatched ? 'opacity-30 pointer-events-none' : ''}">
+                        <div class="flex items-center justify-between text-[8px] font-mono font-bold leading-tight">
+                            <span class="text-emerald-400">START</span>
+                            <span id="tape-slider-start-disp" class="text-emerald-300 font-mono text-[8.5px] cursor-ns-resize hover:bg-slate-800/80 px-1 py-0.5 rounded leading-none">${startDisp}</span>
+                        </div>
+                        <input type="range" id="tape-slider-start" min="0.0" max="1.0" step="0.01" value="${m.start ?? 0.0}" class="w-full h-1.5 bg-slate-800 rounded-lg accent-emerald-400 cursor-pointer" ${isStartPatched ? 'disabled' : ''} title="開始位置 (時間軸)">
+                    </div>
+
+                    <div class="w-[1px] h-6 bg-slate-800/90 shrink-0"></div>
+
+                    <!-- END (Horizontal Slider) -->
+                    <div class="flex-1 min-w-0 flex flex-col gap-0.5 ${isEndPatched ? 'opacity-30 pointer-events-none' : ''}">
+                        <div class="flex items-center justify-between text-[8px] font-mono font-bold leading-tight">
+                            <span class="text-emerald-400">END</span>
+                            <span id="tape-slider-end-disp" class="text-emerald-300 font-mono text-[8.5px] cursor-ns-resize hover:bg-slate-800/80 px-1 py-0.5 rounded leading-none">${endDisp}</span>
+                        </div>
+                        <input type="range" id="tape-slider-end" min="0.0" max="1.0" step="0.01" value="${m.end ?? 1.0}" class="w-full h-1.5 bg-slate-800 rounded-lg accent-emerald-400 cursor-pointer" ${isEndPatched ? 'disabled' : ''} title="終了位置 (時間軸)">
+                    </div>
+
+                    <div class="w-[1px] h-6 bg-slate-800/90 shrink-0"></div>
+
+                    <!-- SPEED (Horizontal Slider) -->
+                    <div class="flex-1 min-w-0 flex flex-col gap-0.5 ${isSpeedPatched ? 'opacity-30 pointer-events-none' : ''}">
+                        <div class="flex items-center justify-between text-[8px] font-mono font-bold leading-tight">
+                            <span class="text-cyan-400">SPEED</span>
+                            <span id="tape-slider-speed-disp" class="text-cyan-300 font-mono text-[8.5px] cursor-ns-resize hover:bg-slate-800/80 px-1 py-0.5 rounded leading-none">${speedDisp}</span>
+                        </div>
+                        <input type="range" id="tape-slider-speed" min="0.1" max="4.0" step="0.05" value="${m.speed ?? 1.0}" class="w-full h-1.5 bg-slate-800 rounded-lg accent-cyan-400 cursor-pointer" ${isSpeedPatched ? 'disabled' : ''} title="再生速度 (倍率)">
+                    </div>
                 </div>
 
                 <div class="text-[7.5px] text-slate-500 px-1 text-center italic">
