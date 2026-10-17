@@ -429,10 +429,54 @@ export const SUB_IO = {
     }
 };
 
+const extractBands = (freqs, numBands, sampleRate = 48000, fMin = 40, fMax = 6400) => {
+    const fftSize = freqs.length * 2;
+    const bands = new Float32Array(numBands);
+    let peakVal = 0, peakFreq = 0;
+
+    for (let b = 0; b < numBands; b++) {
+        const fStart = fMin * Math.pow(fMax / fMin, b / numBands);
+        const fEnd = fMin * Math.pow(fMax / fMin, (b + 1) / numBands);
+        const kStart = Math.max(0, Math.floor(fStart * fftSize / sampleRate));
+        const kEnd = Math.min(freqs.length, Math.max(kStart + 1, Math.ceil(fEnd * fftSize / sampleRate)));
+
+        let max = 0;
+        let maxK = kStart;
+        for (let k = kStart; k < kEnd; k++) {
+            if (freqs[k] > max) {
+                max = freqs[k];
+                maxK = k;
+            }
+        }
+        bands[b] = Math.max(0, Math.min(1, max / 255.0));
+
+        if (max > peakVal) {
+            peakVal = max;
+            peakFreq = (maxK * sampleRate) / fftSize;
+        }
+    }
+
+    return { bands, peakVal, peakFreq };
+};
+
+const findGlobalPeak = (freqs, sampleRate = 48000, fMin = 40, fMax = 6400) => {
+    const fftSize = freqs.length * 2;
+    const kMin = Math.max(1, Math.floor(fMin * fftSize / sampleRate));
+    const kMax = Math.min(freqs.length - 1, Math.ceil(fMax * fftSize / sampleRate));
+    let max = 0, maxK = 0;
+    for (let k = kMin; k <= kMax; k++) {
+        if (freqs[k] > max) {
+            max = freqs[k];
+            maxK = k;
+        }
+    }
+    return { peakVal: max, peakFreq: (maxK * sampleRate) / fftSize };
+};
+
 const drawSpectrumCanvas = (ctx, w, h, bands, mode, isModal) => {
     ctx.clearRect(0, 0, w, h);
 
-    // Horizontal guideline (-12dB, -24dB, -36dB)
+    // Horizontal guidelines (-12dB, -24dB, -48dB)
     ctx.strokeStyle = '#1e293b';
     ctx.lineWidth = 0.6;
     const gridY = [h * 0.25, h * 0.5, h * 0.75];
@@ -445,17 +489,17 @@ const drawSpectrumCanvas = (ctx, w, h, bands, mode, isModal) => {
 
     const n = bands.length;
     if (mode === 'bar') {
-        const gap = isModal ? 2 : 1.5;
+        const gap = isModal ? 1.2 : 1.0;
         const barW = (w - gap * (n - 1)) / n;
         for (let i = 0; i < n; i++) {
             const v = Math.max(0, Math.min(1, bands[i]));
-            const barH = Math.max(1, v * (h - 2));
+            const barH = Math.max(1, v * (h - 4));
             const x = i * (barW + gap);
             const y = h - barH;
 
             const grad = ctx.createLinearGradient(0, h, 0, 0);
             grad.addColorStop(0, '#0d9488');
-            grad.addColorStop(0.7, '#2dd4bf');
+            grad.addColorStop(0.65, '#2dd4bf');
             grad.addColorStop(1, '#facc15');
 
             ctx.fillStyle = grad;
@@ -473,7 +517,7 @@ const drawSpectrumCanvas = (ctx, w, h, bands, mode, isModal) => {
         for (let i = 0; i < n; i++) {
             const x = (i / (n - 1)) * w;
             const v = Math.max(0, Math.min(1, bands[i]));
-            const y = h - (v * (h - 4)) - 2;
+            const y = h - (v * (h - 6)) - 2;
             pts.push({ x, y });
         }
 
@@ -514,7 +558,7 @@ const drawSpectrumCanvas = (ctx, w, h, bands, mode, isModal) => {
 
 export const SPEC = {
     color: 'teal',
-    defaults: () => ({ type: 'SPEC', mode: 'bar', speed: 'med', smooth: 0.8 }),
+    defaults: () => ({ type: 'SPEC', mode: 'bar', speed: 'med', smooth: 0.75 }),
     ports: () => ({
         in: [{ port: 'wave_in', pin: 4, color: 'bg-blue-500' }],
         out: []
@@ -528,52 +572,42 @@ export const SPEC = {
             </div>
             <canvas class="spec-canvas w-full h-[74px] block rounded" width="120" height="74"></canvas>
             <div class="flex items-center justify-between text-[6.5px] font-mono text-slate-500 px-0.5 z-10">
-                <span>50Hz</span>
-                <span>1k</span>
-                <span>16k</span>
+                <span>40Hz</span>
+                <span>500Hz</span>
+                <span>6.4k</span>
             </div>
         </div>`,
     updateLive: (cell, data, isP, modal, m) => {
         if (!data?.freqs) return;
         const freqs = data.freqs;
-        const numBands = 20;
-        const bands = new Float32Array(numBands);
-        let maxVal = 0, peakIdx = 0;
-        for (let b = 0; b < numBands; b++) {
-            const start = Math.floor(Math.pow(b / numBands, 2.2) * 127);
-            const end = Math.max(start + 1, Math.floor(Math.pow((b + 1) / numBands, 2.2) * 127));
-            let max = 0;
-            for (let k = start; k < end && k < 128; k++) {
-                if (freqs[k] > max) max = freqs[k];
-            }
-            bands[b] = max / 255.0;
-            if (max > maxVal) {
-                maxVal = max;
-                peakIdx = b;
-            }
-        }
-
+        const sampleRate = data.sampleRate || 48000;
         const mode = m.mode || 'bar';
 
-        // Draw cell canvas
+        // 1. Draw cell canvas (24 bands, 40Hz〜6.4kHz)
         const cvs = cell.querySelector('.spec-canvas');
         if (cvs) {
+            const cellRes = extractBands(freqs, 24, sampleRate, 40, 6400);
             const ctx = cvs.getContext('2d');
-            drawSpectrumCanvas(ctx, cvs.width, cvs.height, bands, mode, false);
+            drawSpectrumCanvas(ctx, cvs.width, cvs.height, cellRes.bands, mode, false);
         }
 
-        // Draw modal canvas if modal is open
+        // 2. Draw modal canvas if modal is open (48 bands, 40Hz〜6.4kHz)
         const modalCvs = modal?.querySelector('#spec-modal-canvas');
         if (modalCvs) {
+            const modalRes = extractBands(freqs, 48, sampleRate, 40, 6400);
             const mCtx = modalCvs.getContext('2d');
-            drawSpectrumCanvas(mCtx, modalCvs.width, modalCvs.height, bands, mode, true);
+            drawSpectrumCanvas(mCtx, modalCvs.width, modalCvs.height, modalRes.bands, mode, true);
 
             const peakEl = modal?.querySelector('#spec-peak-disp');
             if (peakEl) {
-                // Approximate center frequency for peak band
-                const centerHz = Math.round(50 * Math.pow(16000 / 50, (peakIdx + 0.5) / numBands));
-                const hzStr = centerHz >= 1000 ? `${(centerHz / 1000).toFixed(1)}kHz` : `${centerHz}Hz`;
-                peakEl.textContent = maxVal > 15 ? `PEAK: ${hzStr}` : 'PEAK: ---';
+                const peak = findGlobalPeak(freqs, sampleRate, 40, 6400);
+                if (peak.peakVal > 25 && peak.peakFreq >= 35) {
+                    const hz = peak.peakFreq;
+                    const hzStr = hz >= 1000 ? `${(hz / 1000).toFixed(2)}kHz` : `${Math.round(hz)}Hz`;
+                    peakEl.textContent = `PEAK: ${hzStr}`;
+                } else {
+                    peakEl.textContent = 'PEAK: ---';
+                }
             }
         }
     },
@@ -582,34 +616,38 @@ export const SPEC = {
         const curSpeed = m.speed || 'med';
         return `
             <div class="space-y-2 p-0.5">
-                <!-- Mode & Speed Controls -->
-                <div class="flex items-center justify-between pb-1 border-b border-slate-800">
-                    <div class="flex items-center gap-1">
-                        <span class="text-[8px] text-slate-400 font-bold uppercase mr-0.5">MODE:</span>
-                        <button id="spec-mode-bar" class="px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${curMode === 'bar' ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">BAR (棒)</button>
-                        <button id="spec-mode-curve" class="px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${curMode === 'curve' ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">CURVE (線)</button>
+                <!-- 2-Row Controls: MODE & SPEED (はみだし防止) -->
+                <div class="space-y-1.5 pb-1.5 border-b border-slate-800">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[8px] text-slate-400 font-bold uppercase">MODE:</span>
+                        <div class="flex items-center gap-1">
+                            <button id="spec-mode-bar" class="px-2.5 py-0.5 rounded text-[8px] font-bold border transition-colors ${curMode === 'bar' ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">BAR (棒グラフ)</button>
+                            <button id="spec-mode-curve" class="px-2.5 py-0.5 rounded text-[8px] font-bold border transition-colors ${curMode === 'curve' ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">CURVE (折れ線)</button>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-1">
-                        <span class="text-[8px] text-slate-400 font-bold uppercase mr-0.5">SPEED:</span>
-                        ${['fast', 'med', 'slow'].map(sp => `
-                            <button class="spec-speed-btn px-1.5 py-0.5 rounded text-[7.5px] font-bold border transition-colors ${curSpeed === sp ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}" data-speed="${sp}">${sp.toUpperCase()}</button>
-                        `).join('')}
+                    <div class="flex items-center justify-between">
+                        <span class="text-[8px] text-slate-400 font-bold uppercase">SPEED:</span>
+                        <div class="flex items-center gap-1">
+                            ${['fast', 'med', 'slow'].map(sp => `
+                                <button class="spec-speed-btn px-2 py-0.5 rounded text-[7.5px] font-bold border transition-colors ${curSpeed === sp ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}" data-speed="${sp}">${sp.toUpperCase()}</button>
+                            `).join('')}
+                        </div>
                     </div>
                 </div>
 
                 <!-- Expanded Modal Spectrum Display -->
                 <div class="bg-slate-950/80 p-2 rounded-xl border border-slate-800 flex flex-col gap-1">
                     <div class="flex items-center justify-between px-1">
-                        <span class="text-[7.5px] font-bold text-teal-400 uppercase tracking-wider">SPECTRUM (0〜20kHz)</span>
+                        <span class="text-[7.5px] font-bold text-teal-400 uppercase tracking-wider">SPECTRUM (40Hz〜6.4kHz)</span>
                         <span id="spec-peak-disp" class="text-[7.5px] font-mono font-bold text-yellow-300">PEAK: ---</span>
                     </div>
                     <canvas id="spec-modal-canvas" class="w-full h-28 block rounded" width="220" height="110"></canvas>
                     <div class="flex items-center justify-between text-[7px] font-mono text-slate-500 px-1 border-t border-slate-800/80 pt-0.5">
-                        <span>50Hz</span>
-                        <span>250Hz</span>
-                        <span>1kHz</span>
-                        <span>4kHz</span>
-                        <span>16kHz</span>
+                        <span>40Hz</span>
+                        <span>150Hz</span>
+                        <span>500Hz</span>
+                        <span>1.8k</span>
+                        <span>6.4kHz</span>
                     </div>
                 </div>
             </div>`;
@@ -629,7 +667,7 @@ export const SPEC = {
             btn.addEventListener('click', (e) => {
                 const sp = e.currentTarget.dataset.speed;
                 m.speed = sp;
-                m.smooth = sp === 'fast' ? 0.5 : (sp === 'slow' ? 0.92 : 0.8);
+                m.smooth = sp === 'fast' ? 0.4 : (sp === 'slow' ? 0.90 : 0.75);
                 ctx.reRenderModal();
                 cb();
             });

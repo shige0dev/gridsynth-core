@@ -203,8 +203,10 @@ export const SPEC = {
     create: (ctx, d, patch, eng) => {
         const inG = ctx.createGain();
         const an = ctx.createAnalyser();
-        an.fftSize = 256;
-        an.smoothingTimeConstant = d.smooth ?? 0.8;
+        an.fftSize = 2048;
+        an.minDecibels = -85;
+        an.maxDecibels = 0;
+        an.smoothingTimeConstant = d.smooth ?? 0.75;
         inG.connect(an);
         if (eng?.silentSink) {
             inG.connect(eng.silentSink);
@@ -220,13 +222,13 @@ export const SPEC = {
             outputs: {},
             read: () => {
                 an.getByteFrequencyData(freqBuf);
-                return { freqs: freqBuf };
+                return { freqs: freqBuf, sampleRate: ctx.sampleRate };
             }
         };
     },
     update: (ctx, inst, d) => {
         if (inst.nodes?.an) {
-            inst.nodes.an.smoothingTimeConstant = d.smooth ?? 0.8;
+            inst.nodes.an.smoothingTimeConstant = d.smooth ?? 0.75;
         }
     }
 };
