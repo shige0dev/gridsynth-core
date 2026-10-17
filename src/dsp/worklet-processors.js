@@ -15,3 +15,5 @@ import './processors/fm-core.js';
 import './processors/gate4.js';
 import './processors/arp.js';
 import './processors/scale.js';
+import './processors/rf.js';
+import './processors/ar.js';

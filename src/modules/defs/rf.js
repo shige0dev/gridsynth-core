@@ -1,0 +1,219 @@
+import { UIHelpers } from '../../ui/helpers.js';
+
+export const RF = {
+    color: 'amber',
+    defaults: () => ({
+        type: 'RF',
+        time: 0.2, // seconds: 0.02s (20ms) ~ 2.0s (2000ms)
+        peak: 0.5, // 0.01 ~ 0.99
+        level: 1.0 // 0.0 ~ 1.0
+    }),
+    ports: () => ({
+        in: [
+            { port: 'trig_in', color: 'bg-rose-500' },
+            { port: 'time_cv', color: 'bg-amber-400' },
+            { port: 'peak_cv', color: 'bg-purple-400' }
+        ],
+        out: [
+            { port: 'cv_out', color: 'bg-yellow-400' },
+            { port: 'trig_out', color: 'bg-red-500' }
+        ]
+    }),
+    formatTime: (sec) => {
+        const ms = sec * 1000;
+        if (ms < 1000) return `${Math.round(ms)}ms`;
+        return `${(ms / 1000).toFixed(2)}s`;
+    },
+    renderSvgCurve: (m) => {
+        const padX = 8, padY = 6, W = 160 - padX * 2, H = 40 - padY * 2;
+        const yTop = padY, yBot = padY + H;
+        const peak = Math.max(0.01, Math.min(0.99, m.peak ?? 0.5));
+        const xPeak = padX + W * peak;
+
+        const pathD = `M ${padX} ${yBot} L ${xPeak.toFixed(1)} ${yTop} L ${(padX + W).toFixed(1)} ${yBot}`;
+        const fillD = `M ${padX} ${yBot} L ${xPeak.toFixed(1)} ${yTop} L ${(padX + W).toFixed(1)} ${yBot} Z`;
+
+        return `
+            <svg viewBox="0 0 160 40" class="w-full h-10 select-none">
+                <defs>
+                    <linearGradient id="rf-curve-grad-${m.id || 'def'}" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.5"/>
+                        <stop offset="100%" stop-color="#d97706" stop-opacity="0.05"/>
+                    </linearGradient>
+                </defs>
+                <!-- Baseline -->
+                <line x1="${padX}" y1="${yBot}" x2="${padX + W}" y2="${yBot}" stroke="#334155" stroke-width="1"/>
+                <!-- Peak separator -->
+                <line x1="${xPeak.toFixed(1)}" y1="${yTop}" x2="${xPeak.toFixed(1)}" y2="${yBot}" stroke="#475569" stroke-width="0.75" stroke-dasharray="2,2"/>
+                <!-- Triangle Curve -->
+                <path d="${fillD}" fill="url(#rf-curve-grad-${m.id || 'def'})" />
+                <path d="${pathD}" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <!-- Peak Dot -->
+                <circle cx="${xPeak.toFixed(1)}" cy="${yTop}" r="2.5" fill="#fbbf24" stroke="#78350f" stroke-width="0.75"/>
+                <!-- End Trig Pulse Indicator -->
+                <path d="M ${(padX + W - 3).toFixed(1)} ${yBot} L ${(padX + W).toFixed(1)} ${yTop + 10} L ${(padX + W + 3).toFixed(1)} ${yBot}" fill="none" stroke="#ef4444" stroke-width="1.2"/>
+            </svg>
+        `;
+    },
+    renderGrid: (m) => {
+        const timeStr = RF.formatTime(m.time ?? 0.2);
+        const peakPct = Math.round((m.peak ?? 0.5) * 100);
+        return `
+            <div class="flex flex-col items-center justify-center w-full px-1 gap-1 text-amber-300 pointer-events-none select-none">
+                <div class="flex items-center justify-between w-full text-[8.5px] font-mono leading-none">
+                    <span class="text-amber-400/90 font-bold tracking-tight">${timeStr}</span>
+                    <span class="text-amber-500/80 font-bold">${peakPct}%</span>
+                </div>
+                <!-- Dynamic Waveform & CV Bar -->
+                <div class="w-full h-4 bg-slate-950/80 rounded border border-amber-950/60 overflow-hidden relative flex items-center">
+                    <div class="rf-live-bar h-full bg-gradient-to-r from-amber-600 to-amber-400 transition-all duration-75 w-0 opacity-80"></div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <span class="rf-live-val text-[8px] font-mono font-bold text-amber-200/90 drop-shadow">0.00V</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+    renderModal: (m, ctx) => {
+        const timeSec = Math.max(0.02, Math.min(2.0, m.time ?? 0.2));
+        // Exponential slider value [0, 1] mapped to [0.02, 2.0]
+        const normTime = Math.log10(timeSec / 0.02) / 2.0;
+        const peakPct = Math.round((m.peak ?? 0.5) * 100);
+        const lvlPct = Math.round((m.level ?? 1.0) * 100);
+
+        return `
+            <div class="space-y-2 p-1 text-slate-200">
+                <!-- SVG Waveform Display -->
+                <div id="rf-svg-wrap" class="p-1.5 bg-slate-950/80 rounded-xl border border-slate-800/80 flex flex-col items-center justify-center shadow-inner">
+                    ${RF.renderSvgCurve(m)}
+                </div>
+
+                <!-- Live Voltage Output Monitor -->
+                <div class="flex items-center justify-between px-2 py-1 bg-slate-950/60 rounded-lg border border-slate-800/80">
+                    <span class="text-[8px] font-bold text-slate-400 uppercase tracking-wider">OUTPUT VOLTAGE</span>
+                    <span id="rf-modal-live-val" class="text-[10px] font-mono font-bold text-amber-400">0.00 V</span>
+                </div>
+
+                <!-- Parameters Controls -->
+                <div class="space-y-1.5 bg-slate-950/60 p-2 rounded-xl border border-slate-800/80">
+                    <!-- TIME (20ms ~ 2000ms Exponential) -->
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[8px] font-bold">
+                            <span class="text-amber-400 tracking-wider">TOTAL TIME (CYCLE)</span>
+                            <span id="rf-time-disp" class="font-mono text-amber-300 font-bold">${RF.formatTime(timeSec)}</span>
+                        </div>
+                        <input type="range" id="rf-slider-time" min="0" max="1" step="0.005" value="${normTime.toFixed(3)}" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500">
+                        <div class="flex justify-between text-[7px] text-slate-500 font-mono">
+                            <span>20ms</span>
+                            <span>200ms</span>
+                            <span>2.0s</span>
+                        </div>
+                    </div>
+
+                    <!-- PEAK POSITION (1% ~ 99%) -->
+                    <div class="space-y-0.5 pt-1 border-t border-slate-800/60">
+                        <div class="flex justify-between text-[8px] font-bold">
+                            <span class="text-amber-400 tracking-wider">PEAK POSITION (SHAPE)</span>
+                            <span id="rf-peak-disp" class="font-mono text-amber-300 font-bold">${peakPct}%</span>
+                        </div>
+                        <input type="range" id="rf-slider-peak" min="0.01" max="0.99" step="0.01" value="${(m.peak ?? 0.5).toFixed(2)}" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500">
+                        <div class="flex justify-between text-[7px] text-slate-500 font-mono">
+                            <span>RISE 1% (SAW)</span>
+                            <span>50% (TRI)</span>
+                            <span>FALL 1% (RAMP)</span>
+                        </div>
+                    </div>
+
+                    <!-- OUTPUT LEVEL (0% ~ 100%) -->
+                    <div class="space-y-0.5 pt-1 border-t border-slate-800/60">
+                        <div class="flex justify-between text-[8px] font-bold">
+                            <span class="text-amber-400 tracking-wider">OUTPUT LEVEL</span>
+                            <span id="rf-level-disp" class="font-mono text-amber-300 font-bold">${lvlPct}%</span>
+                        </div>
+                        <input type="range" id="rf-slider-level" min="0" max="1" step="0.01" value="${(m.level ?? 1.0).toFixed(2)}" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500">
+                    </div>
+                </div>
+
+                <!-- Manual Trigger Button -->
+                <div class="pt-0.5">
+                    <button id="rf-btn-trigger" class="w-full py-1.5 bg-gradient-to-r from-amber-600 to-rose-600 hover:from-amber-500 hover:to-rose-500 active:from-amber-700 active:to-rose-700 text-white font-bold text-[9px] rounded-lg shadow-sm border border-amber-400/30 flex items-center justify-center gap-1.5 transition-all">
+                        <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                        <span>MANUAL TRIGGER</span>
+                    </button>
+                </div>
+            </div>
+        `;
+    },
+    bindEvents: (m, ctx, cb) => {
+        const timeSlider = document.getElementById('rf-slider-time');
+        const timeDisp = document.getElementById('rf-time-disp');
+        const peakSlider = document.getElementById('rf-slider-peak');
+        const peakDisp = document.getElementById('rf-peak-disp');
+        const levelSlider = document.getElementById('rf-slider-level');
+        const levelDisp = document.getElementById('rf-level-disp');
+        const trigBtn = document.getElementById('rf-btn-trigger');
+        const svgWrap = document.getElementById('rf-svg-wrap');
+
+        const updateSvg = () => {
+            if (svgWrap) svgWrap.innerHTML = RF.renderSvgCurve(m);
+        };
+
+        if (timeSlider) {
+            timeSlider.addEventListener('input', (e) => {
+                const norm = parseFloat(e.target.value);
+                const sec = 0.02 * Math.pow(100.0, norm);
+                m.time = Math.max(0.02, Math.min(2.0, sec));
+                if (timeDisp) timeDisp.textContent = RF.formatTime(m.time);
+                cb();
+            });
+        }
+
+        if (peakSlider) {
+            peakSlider.addEventListener('input', (e) => {
+                m.peak = parseFloat(e.target.value);
+                if (peakDisp) peakDisp.textContent = `${Math.round(m.peak * 100)}%`;
+                updateSvg();
+                cb();
+            });
+        }
+
+        if (levelSlider) {
+            levelSlider.addEventListener('input', (e) => {
+                m.level = parseFloat(e.target.value);
+                if (levelDisp) levelDisp.textContent = `${Math.round(m.level * 100)}%`;
+                cb();
+            });
+        }
+
+        if (trigBtn) {
+            trigBtn.addEventListener('click', () => {
+                if (ctx?.sendControl) {
+                    ctx.sendControl({ type: 'TRIG' });
+                }
+                const fullId = `${ctx.currentPageId || '0'}/${m.id}`;
+                const inst = ctx.synth?.modules?.[fullId] || ctx.synth?.modules?.[m.id];
+                if (inst?.trigger) {
+                    inst.trigger();
+                }
+            });
+        }
+    },
+    updateLive: (cell, data, isPlaying, targetModal, m) => {
+        const val = data?.values?.[0] ?? 0.0;
+        const clampedVal = Math.max(0.0, Math.min(1.0, val));
+
+        // Grid Cell updates
+        const bar = cell?.querySelector('.rf-live-bar');
+        if (bar) bar.style.width = `${(clampedVal * 100).toFixed(1)}%`;
+        const valText = cell?.querySelector('.rf-live-val');
+        if (valText) valText.textContent = `${clampedVal.toFixed(2)}V`;
+
+        // Modal updates if open
+        if (targetModal) {
+            const modalVal = targetModal.querySelector('#rf-modal-live-val');
+            if (modalVal) modalVal.textContent = `${clampedVal.toFixed(2)} V`;
+        }
+    }
+};
+
+export const rfDefs = { RF };

@@ -13,10 +13,12 @@ import { ioAudioDefs } from './defs/io.js?v=185';
 import { seqAudioDefs } from './defs/seq.js';
 import { chordAudioDefs } from './defs/chord.js';
 import { arpAudioDefs } from './defs/arp.js';
-import { patAudioDefs } from './defs/pat.js?v=209';
+import { patAudioDefs } from './defs/pat.js?v=210';
 import { markovAudioDefs } from './defs/markov.js';
 import { fmAudioDefs } from './defs/fm.js';
-import { scaleAudioDefs } from './defs/scale.js?v=209';
+import { scaleAudioDefs } from './defs/scale.js?v=210';
+import { rfAudioDefs } from './defs/rf.js?v=210';
+import { arAudioDefs } from './defs/ar.js?v=210';
 
 export const AUDIO_REGISTRY = {
     ...vcoAudioDefs,
@@ -32,7 +34,9 @@ export const AUDIO_REGISTRY = {
     ...patAudioDefs,
     ...markovAudioDefs,
     ...fmAudioDefs,
-    ...scaleAudioDefs
+    ...scaleAudioDefs,
+    ...rfAudioDefs,
+    ...arAudioDefs
 };
 
 export default AUDIO_REGISTRY;

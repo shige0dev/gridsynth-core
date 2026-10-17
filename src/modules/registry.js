@@ -13,10 +13,12 @@ import { ioDefs } from './defs/io.js?v=185';
 import { seqDefs } from './defs/seq.js';
 import { chordDefs } from './defs/chord.js';
 import { arpDefs } from './defs/arp.js';
-import { patDefs } from './defs/pat.js?v=209';
+import { patDefs } from './defs/pat.js?v=210';
 import { markovDefs } from './defs/markov.js';
 import { fmDefs } from './defs/fm.js?v=187';
-import { scaleDefs } from './defs/scale.js?v=209';
+import { scaleDefs } from './defs/scale.js?v=210';
+import { rfDefs } from './defs/rf.js?v=210';
+import { arDefs } from './defs/ar.js?v=210';
 
 export const MODULE_REGISTRY = {
     ...vcoDefs,
@@ -32,7 +34,9 @@ export const MODULE_REGISTRY = {
     ...patDefs,
     ...markovDefs,
     ...fmDefs,
-    ...scaleDefs
+    ...scaleDefs,
+    ...rfDefs,
+    ...arDefs
 };
 
 export { ADSR_CURVES };

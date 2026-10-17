@@ -41,6 +41,8 @@ export const MODAL_WIDTHS = {
 
     // Modulation & Envelopes
     ADSR: 'w-[215px]',
+    RF: 'w-[210px]',
+    AR: 'w-[210px]',
     LFO: 'w-[235px]',
 
     // IO & Monitoring
@@ -63,6 +65,8 @@ export const DOCK_TITLES = {
     VCF: 'VCF FILTER',
     VCA: 'VCA AMPLIFIER',
     ADSR: 'ADSR ENVELOPE',
+    RF: 'RISE-FALL / FUNCTION',
+    AR: 'AR ENVELOPE',
     LFO: 'LFO MODULATOR',
     CLK: 'CLOCK GENERATOR',
     DELAY: 'STEREO DELAY',
@@ -92,6 +96,8 @@ export const DOCK_ICONS = {
     VCF: 'filter',
     VCA: 'volume-2',
     ADSR: 'trending-up',
+    RF: 'trending-up',
+    AR: 'trending-up',
     LFO: 'radio',
     CLK: 'clock',
     DELAY: 'repeat',
@@ -607,7 +613,7 @@ export class ModalManager {
                         name: 'CV',
                         sub: 'CV (変調・演算・エンベロープ)',
                         color: 'purple',
-                        types: ['LFO', 'ADSR', 'CHORD', 'SCALE', 'MATH1', 'MATH2', 'SH', 'CVDELAY', 'SLIDER', 'THROUGH', 'MON', 'SUB_IO']
+                        types: ['LFO', 'ADSR', 'RF', 'AR', 'CHORD', 'SCALE', 'MATH1', 'MATH2', 'SH', 'CVDELAY', 'SLIDER', 'THROUGH', 'MON', 'SUB_IO']
                     }
                 ];
 
