@@ -383,7 +383,7 @@ export function renderPatternHighlightedHTML(patternStr) {
         const isNote = !isRest && /^[a-gA-G][#b]?-?\d*$/.test(base);
         const baseColor = isRest ? 'text-cyan-400/40' : 'text-cyan-300 font-bold';
         const noteAttr = isNote ? ` data-pat-note="${escapePatHtml(base)}" data-str-pos="${match.index}"` : '';
-        const cursorCls = isNote ? ' cursor-ns-resize pointer-events-auto select-none touch-none hover:text-white' : '';
+        const cursorCls = isNote ? ' cursor-ns-resize pointer-events-auto select-none touch-none inline-block hover:text-white' : '';
 
         let inner = `<span class="${baseColor}">${escapePatHtml(base)}</span>`;
         if (modifier) {

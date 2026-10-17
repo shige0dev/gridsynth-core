@@ -1,7 +1,7 @@
 import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js';
 import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=198';
-import { UIHelpers } from './helpers.js?v=187';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=199';
+import { UIHelpers } from './helpers.js?v=199';
 import { PresetManager } from './managers/preset-manager.js';
 import { ModalManager } from './managers/modal-manager.js';
 import { CableManager } from './managers/cable-manager.js';
@@ -687,14 +687,10 @@ export class UIController {
 
         const bpmBox = document.getElementById('master-bpm-container'), bpmDisp = document.getElementById('master-bpm-disp');
         let bpmDrag = false, startY = 0, startBpm = 120;
-        bpmBox?.addEventListener('pointerdown', (e) => {
-            bpmDrag = true;
-            startY = e.clientY;
-            startBpm = this.synth.masterBPM || 120;
-            bpmBox.setPointerCapture(e.pointerId);
-        });
-        bpmBox?.addEventListener('pointermove', (e) => {
+
+        const onBpmMove = (e) => {
             if (!bpmDrag) return;
+            e.preventDefault();
             const delta = Math.round((startY - e.clientY) / 5);
             const n = Math.max(40, Math.min(260, startBpm + delta));
             bpmDisp.textContent = n;
@@ -705,15 +701,29 @@ export class UIController {
             if (this.activePopupModuleId && this.modules[this.activePopupModuleId]?.type === 'CLK') {
                 this.reRenderModal();
             }
-        });
+        };
+
         const stopBpm = (e) => {
             if (bpmDrag) {
                 bpmDrag = false;
+                window.removeEventListener('pointermove', onBpmMove);
+                window.removeEventListener('pointerup', stopBpm);
+                window.removeEventListener('pointercancel', stopBpm);
                 try { bpmBox.releasePointerCapture(e.pointerId); } catch(err){}
             }
         };
-        bpmBox?.addEventListener('pointerup', stopBpm);
-        bpmBox?.addEventListener('pointercancel', stopBpm);
+
+        bpmBox?.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            bpmDrag = true;
+            startY = e.clientY;
+            startBpm = this.synth.masterBPM || 120;
+            try { bpmBox.setPointerCapture(e.pointerId); } catch(_) {}
+            window.addEventListener('pointermove', onBpmMove, { passive: false });
+            window.addEventListener('pointerup', stopBpm);
+            window.addEventListener('pointercancel', stopBpm);
+        });
 
         this.interactionManager.bindGridEvents();
 

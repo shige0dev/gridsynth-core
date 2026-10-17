@@ -444,3 +444,22 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
         - **文字表示領域の最大化**: 2行目右端にあったボタンを1行目に引き上げたことで、パターン入力・表示欄の横幅を極限まで拡大。
         - **左右スクロールボタン（◀ / ▶）**: 長いパターン表記のスクロール・閲覧用として、入力欄の左に `[ ◀ ]`、右に `[ ▶ ]` を新設。ワンタップで 60px、長押しで滑らかな連続スクロールが可能。
     - キャッシュバスターを `v=198` に更新。
+ 15. **スマートフォン（Galaxy S25等）タッチ完全最適化・Strudelメニュー幅スリム化・BPM＆数値微調整ドラッグ対応・全画面ボタン左移動＆バージョン表示（v1.0.nnnn）**:
+    - **アップデート確認用 バージョン表示（`v1.0.nnnn`）＆ 全画面ボタン左移動**:
+      - `index.html`: メイン画面一番上のナビゲーションバー（`#page-nav-bar`）右端にあった全画面ボタン（`#fullscreen-btn`）を左端へ移動。
+      - 全画面ボタンの右隣に現在のバージョン（`#app-version-disp`: `v1.0.0199`）を常時表示。ブラウザのリロード時にキャッシュクリア・最新コード適用が一目で確認可能に。
+    - **Strudel（PAT）メニュー幅のスリム化（Galaxy S25の横幅超過解消）**:
+      - `src/modules/defs/pat.js`: `CYCLE` セレクタの各 option 表記を長文から簡潔な表記（`1/16`, `1/8`, `1/4`, `1/2`, `1 BAR`, `2 BARS`, `4 BARS`, `8 BARS`）へ短縮。ラベルも `CYC:`, `GATE:` に整理し、スライダー幅を `w-8`（32px）に最適化。
+      - 必要横幅を 345px から約 260px へ削減し、Galaxy S25（ダイアログ幅約 340px）でも 70px 以上のゆとりを確保。要素の押し合い・見切れを完全解消。
+    - **Strudel（PAT）音名ドラッグのタッチ完全対応**:
+      - `css/style.css` & `src/core/strudel-parser.js`: 音名トークン（`.pat-tok`）に `display: inline-block; vertical-align: baseline; touch-action: none;` を設定し、CSS仕様上 `touch-action` を有効化。
+      - `src/modules/defs/pat.js`: ポインターリスナを `window` にバインドし、Android Chrome のスクロール誤判定による `pointercancel` を排除。
+    - **全モジュールの数値ドラッグ微調整（`UIHelpers.bindScrubber`）のスマホ対応**:
+      - `src/ui/helpers.js`: 数値表示 `<span id="${id}-disp">` を `inline-flex` 化して `touch-action: none` を有効化し、ヒットエリアを拡大（`min-w-[28px] min-h-[18px]`）。
+      - ポインター移動リスナを `window` に `{ passive: false }` でバインドし、`e.preventDefault()` によりスマホで指を滑らせて高精度微調整が可能に。
+    - **マスター BPM ドラッグ（`master-bpm-container`）のスマホ対応**:
+      - `src/ui/controller.js`: `bpmBox` の `pointerdown` に `preventDefault()` を追加し、`window` リスナで追跡。画面上部のプルダウン/リロード誤作動を防止。
+    - **垂直スライダー（`native-vslider`）のタッチターゲット改善**:
+      - `css/style.css`: 幅を `18px` に拡張し、指で一発で掴みやすく調整。
+    - キャッシュバスターを `v=199` に更新。
+

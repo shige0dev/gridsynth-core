@@ -60,12 +60,12 @@ body {
     direction: rtl;
     appearance: slider-vertical;
     -webkit-appearance: slider-vertical;
-    width: 14px;
+    width: 18px;
     height: 48px;
     min-height: 48px;
     flex-shrink: 0;
     cursor: pointer;
-    padding: 0 1px;
+    padding: 0 2px;
     touch-action: none;
     background: transparent;
 }
@@ -129,7 +129,9 @@ body {
 }
 
 .pat-tok {
-    display: inline;
+    display: inline-block;
+    vertical-align: baseline;
+    touch-action: none;
     padding: 0;
     line-height: inherit;
     font-weight: inherit;

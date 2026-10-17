@@ -13,7 +13,7 @@ import { ioDefs } from './defs/io.js?v=185';
 import { seqDefs } from './defs/seq.js';
 import { chordDefs } from './defs/chord.js';
 import { arpDefs } from './defs/arp.js';
-import { patDefs } from './defs/pat.js?v=198';
+import { patDefs } from './defs/pat.js?v=199';
 import { markovDefs } from './defs/markov.js';
 import { fmDefs } from './defs/fm.js?v=187';
 

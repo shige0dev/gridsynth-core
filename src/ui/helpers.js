@@ -25,8 +25,8 @@ export const UIHelpers = {
         return `
             <div class="flex flex-col items-center gap-1 flex-1 min-w-0 ${isPatched ? 'opacity-30 pointer-events-none' : ''}">
                 <span class="text-[8px] font-bold text-slate-400 uppercase tracking-tight truncate w-full text-center leading-none">${label}</span>
-                <span id="${id}-disp" class="text-[9px] text-${accentColor}-300 font-mono font-bold cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 py-0.5 rounded transition-colors leading-tight">${disp}</span>
-                <div class="h-12 min-h-[48px] flex items-center justify-center my-0.5 shrink-0">
+                <span id="${id}-disp" class="inline-flex items-center justify-center min-w-[28px] min-h-[18px] text-[9px] text-${accentColor}-300 font-mono font-bold cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-1 py-0.5 rounded transition-colors leading-none">${disp}</span>
+                <div class="h-12 min-h-[48px] flex items-center justify-center my-0.5 shrink-0 touch-none">
                     <input type="range" id="${id}" min="${sMin}" max="${sMax}" step="${sStep}" value="${sVal}" class="native-vslider accent-${accentColor}-500 shrink-0" ${isPatched ? 'disabled' : ''}>
                 </div>
                 <span class="text-[8px] font-mono text-slate-400 truncate min-h-[12px] flex items-center justify-center leading-none">${unitHtml}</span>
@@ -40,14 +40,10 @@ export const UIHelpers = {
         disp._hasScrubber = true;
 
         let isScrub = false, startY = 0, startVal = 0;
-        disp.addEventListener('pointerdown', (e) => {
-            if (slider.disabled) return;
-            e.preventDefault(); e.stopPropagation(); isScrub = true;
-            disp.setPointerCapture(e.pointerId); startY = e.clientY; startVal = parseFloat(slider.value) || 0;
-            disp.classList.add('ring-1', 'ring-yellow-400/80', 'bg-yellow-950/60', 'text-yellow-200');
-        });
-        disp.addEventListener('pointermove', (e) => {
+
+        const onPointerMove = (e) => {
             if (!isScrub) return;
+            e.preventDefault();
             const sMin = (min !== null && min !== undefined) ? min : (parseFloat(slider.min) || 0);
             const sMax = (max !== null && max !== undefined) ? max : (parseFloat(slider.max) || 100);
             const sStep = parseFloat(slider.step) || 1;
@@ -71,13 +67,32 @@ export const UIHelpers = {
                 disp.textContent = formatter ? formatter(n) : n.toFixed(fineStep < 0.1 ? 2 : 1);
                 cb(n);
             }
-        });
+        };
+
         const stop = (e) => {
-            if (!isScrub) return; isScrub = false;
+            if (!isScrub) return;
+            isScrub = false;
+            window.removeEventListener('pointermove', onPointerMove);
+            window.removeEventListener('pointerup', stop);
+            window.removeEventListener('pointercancel', stop);
             try { disp.releasePointerCapture(e.pointerId); } catch(err){}
             disp.classList.remove('ring-1', 'ring-yellow-400/80', 'bg-yellow-950/60', 'text-yellow-200');
         };
-        disp.addEventListener('pointerup', stop); disp.addEventListener('pointercancel', stop);
+
+        disp.addEventListener('pointerdown', (e) => {
+            if (slider.disabled) return;
+            e.preventDefault();
+            e.stopPropagation();
+            isScrub = true;
+            try { disp.setPointerCapture(e.pointerId); } catch(_) {}
+            startY = e.clientY;
+            startVal = parseFloat(slider.value) || 0;
+            disp.classList.add('ring-1', 'ring-yellow-400/80', 'bg-yellow-950/60', 'text-yellow-200');
+
+            window.addEventListener('pointermove', onPointerMove, { passive: false });
+            window.addEventListener('pointerup', stop);
+            window.addEventListener('pointercancel', stop);
+        });
     },
     bindSlider: (id, formatter, cb, power = 1, min = null, max = null) => {
         const el = document.getElementById(id);

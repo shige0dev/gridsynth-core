@@ -111,22 +111,22 @@ export const PAT = {
                     <!-- Middle: CYCLE & GATE -->
                     <div class="flex items-center gap-1 min-w-0">
                         <div class="flex items-center gap-0.5 bg-slate-950 px-1 py-0.5 rounded border border-slate-800">
-                            <span class="text-[7px] text-slate-400 uppercase">CYCLE:</span>
+                            <span class="text-[7px] text-slate-400 uppercase font-mono">CYC:</span>
                             <select id="pat-beats-select-${uid}" class="bg-slate-900 text-cyan-300 font-mono text-[7.5px] font-bold rounded px-0.5 py-0.5 border border-slate-700">
-                                <option value="0.25" ${beats === 0.25 ? 'selected' : ''}>1/16 (1/4 B)</option>
-                                <option value="0.5" ${beats === 0.5 ? 'selected' : ''}>1/8 (1/2 B)</option>
-                                <option value="1" ${beats === 1 ? 'selected' : ''}>1/4 (1 BEAT)</option>
-                                <option value="2" ${beats === 2 ? 'selected' : ''}>1/2 (2 BEATS)</option>
-                                <option value="4" ${beats === 4 ? 'selected' : ''}>1 BAR (4 BEATS)</option>
-                                <option value="8" ${beats === 8 ? 'selected' : ''}>2 BARS (8 BEATS)</option>
-                                <option value="16" ${beats === 16 ? 'selected' : ''}>4 BARS (16 BEATS)</option>
-                                <option value="32" ${beats === 32 ? 'selected' : ''}>8 BARS (32 BEATS)</option>
+                                <option value="0.25" ${beats === 0.25 ? 'selected' : ''}>1/16</option>
+                                <option value="0.5" ${beats === 0.5 ? 'selected' : ''}>1/8</option>
+                                <option value="1" ${beats === 1 ? 'selected' : ''}>1/4</option>
+                                <option value="2" ${beats === 2 ? 'selected' : ''}>1/2</option>
+                                <option value="4" ${beats === 4 ? 'selected' : ''}>1 BAR</option>
+                                <option value="8" ${beats === 8 ? 'selected' : ''}>2 BARS</option>
+                                <option value="16" ${beats === 16 ? 'selected' : ''}>4 BARS</option>
+                                <option value="32" ${beats === 32 ? 'selected' : ''}>8 BARS</option>
                             </select>
                         </div>
                         <div class="flex items-center gap-0.5 bg-slate-950 px-1 py-0.5 rounded border border-slate-800">
-                            <span class="text-[7px] text-slate-400 uppercase">GATE:</span>
-                            <input type="range" id="pat-gate-slider-${uid}" min="10" max="95" step="5" value="${gatePct}" class="w-10 h-1 accent-cyan-400 cursor-pointer">
-                            <span id="pat-gate-disp-${uid}" class="text-[7.5px] font-mono font-bold text-cyan-300 min-w-[20px] text-right">${gatePct}%</span>
+                            <span class="text-[7px] text-slate-400 uppercase font-mono">GATE:</span>
+                            <input type="range" id="pat-gate-slider-${uid}" min="10" max="95" step="5" value="${gatePct}" class="w-8 h-1 accent-cyan-400 cursor-pointer touch-none">
+                            <span id="pat-gate-disp-${uid}" class="text-[7.5px] font-mono font-bold text-cyan-300 min-w-[18px] text-right">${gatePct}%</span>
                         </div>
                     </div>
 
@@ -144,24 +144,24 @@ export const PAT = {
                 <!-- Second Row: Scroll Left [ ◀ ], Maximized Text Display & Input, Scroll Right [ ▶ ] -->
                 <div class="flex items-center gap-1 w-full min-w-0">
                     <!-- Scroll Left Button -->
-                    <button id="pat-scroll-left-${uid}" class="w-5 h-7 shrink-0 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 rounded text-[8px] font-bold border border-slate-800 flex items-center justify-center transition cursor-pointer select-none active:bg-cyan-950/80 active:text-cyan-200" title="左へスクロール">
+                    <button id="pat-scroll-left-${uid}" class="w-5 h-7 shrink-0 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 rounded text-[8px] font-bold border border-slate-800 flex items-center justify-center transition cursor-pointer select-none active:bg-cyan-950/80 active:text-cyan-200 touch-none" title="左へスクロール">
                         ◀
                     </button>
 
                     <!-- Real Text Input with Full Width Highlight -->
-                    <div class="relative flex-1 flex items-center min-w-0 h-7 bg-slate-950 border border-cyan-500/70 rounded-lg shadow-inner overflow-hidden">
+                    <div class="relative flex-1 flex items-center min-w-0 h-7 bg-slate-950 border border-cyan-500/70 rounded-lg shadow-inner overflow-hidden touch-none">
                         <!-- Real Text Input (receives typing & pointer events) -->
-                        <input type="text" id="pat-code-input-${uid}" value="${pat}" placeholder="e.g. [c2 ~ c2 ~] [c2 ~ c2 ~] [c2 ~ c2 ~] [c2 ~ c2 eb2]" class="w-full h-full bg-transparent font-mono text-cyan-300 px-2 py-0 text-[9.5px] font-bold tracking-normal leading-7 focus:outline-none focus:ring-1 focus:ring-cyan-400 transition relative z-10 box-border overflow-hidden">
+                        <input type="text" id="pat-code-input-${uid}" value="${pat}" placeholder="e.g. [c2 ~ c2 ~] [c2 ~ c2 ~] [c2 ~ c2 ~] [c2 ~ c2 eb2]" class="w-full h-full bg-transparent font-mono text-cyan-300 px-2 py-0 text-[9.5px] font-bold tracking-normal leading-7 focus:outline-none focus:ring-1 focus:ring-cyan-400 transition relative z-10 box-border overflow-hidden touch-none">
                         <!-- Live Highlight Overlay (visible when not editing) -->
-                        <div id="pat-highlight-overlay-${uid}" class="absolute inset-0 flex items-center px-2 py-0 font-mono text-[9.5px] font-bold tracking-normal leading-7 bg-slate-950 overflow-hidden whitespace-pre select-none z-20 box-border">
-                            <div id="pat-highlight-content-${uid}" class="text-cyan-300 whitespace-pre">
+                        <div id="pat-highlight-overlay-${uid}" class="absolute inset-0 flex items-center px-2 py-0 font-mono text-[9.5px] font-bold tracking-normal leading-7 bg-slate-950 overflow-hidden whitespace-pre select-none z-20 box-border touch-none">
+                            <div id="pat-highlight-content-${uid}" class="text-cyan-300 whitespace-pre touch-none">
                                 ${renderPatternHighlightedHTML(pat)}
                             </div>
                         </div>
                     </div>
 
                     <!-- Scroll Right Button -->
-                    <button id="pat-scroll-right-${uid}" class="w-5 h-7 shrink-0 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 rounded text-[8px] font-bold border border-slate-800 flex items-center justify-center transition cursor-pointer select-none active:bg-cyan-950/80 active:text-cyan-200" title="右へスクロール">
+                    <button id="pat-scroll-right-${uid}" class="w-5 h-7 shrink-0 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 rounded text-[8px] font-bold border border-slate-800 flex items-center justify-center transition cursor-pointer select-none active:bg-cyan-950/80 active:text-cyan-200 touch-none" title="右へスクロール">
                         ▶
                     </button>
                 </div>
@@ -281,6 +281,7 @@ export const PAT = {
                     } catch (_) {}
 
                     const onPointerMove = (me) => {
+                        me.preventDefault();
                         const dy = startY - me.clientY;
                         if (Math.abs(dy) >= 6) {
                             hasMoved = true;
@@ -300,9 +301,9 @@ export const PAT = {
                     };
 
                     const onPointerUp = () => {
-                        el.onpointermove = null;
-                        el.onpointerup = null;
-                        el.onpointercancel = null;
+                        window.removeEventListener('pointermove', onPointerMove);
+                        window.removeEventListener('pointerup', onPointerUp);
+                        window.removeEventListener('pointercancel', onPointerUp);
                         try { el.releasePointerCapture(e.pointerId); } catch (_) {}
 
                         if (!hasMoved) {
@@ -318,9 +319,9 @@ export const PAT = {
                         }
                     };
 
-                    el.onpointermove = onPointerMove;
-                    el.onpointerup = onPointerUp;
-                    el.onpointercancel = onPointerUp;
+                    window.addEventListener('pointermove', onPointerMove, { passive: false });
+                    window.addEventListener('pointerup', onPointerUp);
+                    window.addEventListener('pointercancel', onPointerUp);
                 };
             });
         };
