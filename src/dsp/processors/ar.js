@@ -8,6 +8,7 @@ export class ArProcessor extends AudioWorkletProcessor {
         this.attackParam = 0.38; // normalized 0..1 (default ~0.05s)
         this.releaseParam = 0.57; // normalized 0..1 (default ~0.2s)
         this.level = 1.0;
+        this.lastReportedStage = -1;
 
         this.port.onmessage = (e) => {
             if (e.data.type === 'SET_PARAMS') {
@@ -77,6 +78,13 @@ export class ArProcessor extends AudioWorkletProcessor {
             }
 
             out[i] = this.val * this.level;
+        }
+
+        const isLastGateHi = (gateIn ? gateIn[len - 1] : 0.0) > 0.3;
+        const curStage = isLastGateHi ? 0 : (this.val > 0.005 ? 1 : -1);
+        if (curStage !== this.lastReportedStage) {
+            this.lastReportedStage = curStage;
+            this.port.postMessage({ type: 'STAGE', stage: curStage });
         }
 
         return true;

@@ -56,23 +56,13 @@ export const RF = {
         `;
     },
     renderGrid: (m) => {
-        const timeStr = RF.formatTime(m.time ?? 0.2);
-        const peakPct = Math.round((m.peak ?? 0.5) * 100);
-        return `
-            <div class="flex flex-col items-center justify-center w-full px-1 gap-1 text-amber-300 pointer-events-none select-none">
-                <div class="flex items-center justify-between w-full text-[8.5px] font-mono leading-none">
-                    <span class="text-amber-400/90 font-bold tracking-tight">${timeStr}</span>
-                    <span class="text-amber-500/80 font-bold">${peakPct}%</span>
-                </div>
-                <!-- Dynamic Waveform & CV Bar -->
-                <div class="w-full h-4 bg-slate-950/80 rounded border border-amber-950/60 overflow-hidden relative flex items-center">
-                    <div class="rf-live-bar h-full bg-gradient-to-r from-amber-600 to-amber-400 transition-all duration-75 w-0 opacity-80"></div>
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <span class="rf-live-val text-[8px] font-mono font-bold text-amber-200/90 drop-shadow">0.00V</span>
-                    </div>
-                </div>
-            </div>
-        `;
+        const peak = Math.max(0.01, Math.min(0.99, m.peak ?? 0.5));
+        const risePct = Math.max(5, Math.min(100, Math.round(peak * 100)));
+        const fallPct = Math.max(5, Math.min(100, Math.round((1.0 - peak) * 100)));
+        return `<div class="flex items-center justify-center w-full h-full pointer-events-none">${UIHelpers.renderPanelBars([
+            { pct: risePct, innerCls: 'rf-bar-0', attrs: 'data-rf-bar="0"', width: 'w-2.5' },
+            { pct: fallPct, innerCls: 'rf-bar-1', attrs: 'data-rf-bar="1"', width: 'w-2.5' }
+        ], { gapCls: 'gap-2', theme: 'cv' })}</div>`;
     },
     renderModal: (m, ctx) => {
         const isTimePatched = ctx?.patched?.has('time_cv') || ctx?.patched?.has('cv_time');
@@ -151,16 +141,25 @@ export const RF = {
         }
     },
     updateLive: (cell, data, isPlaying, targetModal, m) => {
+        const stage = data?.stage ?? -1;
         const val = data?.values?.[0] ?? 0.0;
         const clampedVal = Math.max(0.0, Math.min(1.0, val));
 
-        // Grid Cell updates
-        const bar = cell?.querySelector('.rf-live-bar');
-        if (bar) bar.style.width = `${(clampedVal * 100).toFixed(1)}%`;
-        const valText = cell?.querySelector('.rf-live-val');
-        if (valText) valText.textContent = `${clampedVal.toFixed(2)}V`;
+        const now = performance.now();
+        if (!cell._rfState) cell._rfState = { lastStage: -1, riseFlashUntil: 0 };
+        if (stage === 0 && cell._rfState.lastStage !== 0) {
+            cell._rfState.riseFlashUntil = now + 60;
+        }
+        cell._rfState.lastStage = stage;
+        const isRiseActive = (stage === 0) || (now < cell._rfState.riseFlashUntil);
 
-        // Modal updates if open
+        // Grid Cell Panel Bars
+        cell.querySelectorAll('[data-rf-bar]').forEach((bar, i) => {
+            const isAct = (i === 0) ? isRiseActive : (stage === 1);
+            bar.classList.toggle('bar-active', isAct);
+        });
+
+        // Modal Output Voltage Display
         if (targetModal) {
             const modalVal = targetModal.querySelector('#rf-modal-live-val');
             if (modalVal) modalVal.textContent = `${clampedVal.toFixed(2)} V`;

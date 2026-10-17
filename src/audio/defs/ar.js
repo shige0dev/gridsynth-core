@@ -33,6 +33,12 @@ export const AR = {
         }
 
         const buf = new Float32Array(an.frequencyBinCount);
+        let curStage = -1;
+        w.port.onmessage = (e) => {
+            if (e.data.type === 'STAGE') {
+                curStage = e.data.stage;
+            }
+        };
 
         return {
             nodes: { w, gateIn, cvAIn, cvRIn, outCv, an },
@@ -51,11 +57,12 @@ export const AR = {
                 out: outCv
             },
             reset: () => {
+                curStage = -1;
                 w.port.postMessage({ type: 'RESET' });
             },
             read: () => {
                 an.getFloatTimeDomainData(buf);
-                return { values: [buf[0] || 0.0] };
+                return { values: [buf[0] || 0.0], stage: curStage };
             }
         };
     },

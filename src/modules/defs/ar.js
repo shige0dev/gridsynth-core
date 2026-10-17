@@ -79,23 +79,12 @@ export const AR = {
         `;
     },
     renderGrid: (m) => {
-        const aStr = AR.formatTime(m.attack ?? 0.05);
-        const rStr = AR.formatTime(m.release ?? 0.2);
-        return `
-            <div class="flex flex-col items-center justify-center w-full px-1 gap-1 text-sky-300 pointer-events-none select-none">
-                <div class="flex items-center justify-between w-full text-[8.5px] font-mono leading-none">
-                    <span class="text-sky-400 font-bold tracking-tight">A:${aStr}</span>
-                    <span class="text-sky-400 font-bold tracking-tight">R:${rStr}</span>
-                </div>
-                <!-- Dynamic Waveform & CV Bar -->
-                <div class="w-full h-4 bg-slate-950/80 rounded border border-sky-950/60 overflow-hidden relative flex items-center">
-                    <div class="ar-live-bar h-full bg-gradient-to-r from-sky-600 to-sky-400 transition-all duration-75 w-0 opacity-80"></div>
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <span class="ar-live-val text-[8px] font-mono font-bold text-sky-200/90 drop-shadow">0.00V</span>
-                    </div>
-                </div>
-            </div>
-        `;
+        const attPct = Math.max(5, Math.min(100, Math.round(((m.attack ?? 0.05) / 2.0) * 100)));
+        const relPct = Math.max(5, Math.min(100, Math.round(((m.release ?? 0.2) / 3.0) * 100)));
+        return `<div class="flex items-center justify-center w-full h-full pointer-events-none">${UIHelpers.renderPanelBars([
+            { pct: attPct, innerCls: 'ar-bar-0', attrs: 'data-ar-bar="0"', width: 'w-2.5' },
+            { pct: relPct, innerCls: 'ar-bar-1', attrs: 'data-ar-bar="1"', width: 'w-2.5' }
+        ], { gapCls: 'gap-2', theme: 'cv' })}</div>`;
     },
     renderModal: (m, ctx) => {
         const isAPatched = ctx?.patched?.has('a_cv') || ctx?.patched?.has('cv_a') || ctx?.patched?.has('attack_cv');
@@ -156,16 +145,25 @@ export const AR = {
         UIHelpers.bindScrubber('ar-slider-level-disp', 'ar-slider-level', v => `${Math.round(v * 100)}%`, v => { m.level = v; onSliderChange(); }, 1, 0.0, 1.0);
     },
     updateLive: (cell, data, isPlaying, targetModal, m) => {
+        const stage = data?.stage ?? -1;
         const val = data?.values?.[0] ?? 0.0;
         const clampedVal = Math.max(0.0, Math.min(1.0, val));
 
-        // Grid Cell updates
-        const bar = cell?.querySelector('.ar-live-bar');
-        if (bar) bar.style.width = `${(clampedVal * 100).toFixed(1)}%`;
-        const valText = cell?.querySelector('.ar-live-val');
-        if (valText) valText.textContent = `${clampedVal.toFixed(2)}V`;
+        const now = performance.now();
+        if (!cell._arState) cell._arState = { lastStage: -1, attFlashUntil: 0 };
+        if (stage === 0 && cell._arState.lastStage !== 0) {
+            cell._arState.attFlashUntil = now + 60;
+        }
+        cell._arState.lastStage = stage;
+        const isAttActive = (stage === 0) || (now < cell._arState.attFlashUntil);
 
-        // Modal updates if open
+        // Grid Cell Panel Bars
+        cell.querySelectorAll('[data-ar-bar]').forEach((bar, i) => {
+            const isAct = (i === 0) ? isAttActive : (stage === 1);
+            bar.classList.toggle('bar-active', isAct);
+        });
+
+        // Modal Output Voltage Display
         if (targetModal) {
             const modalVal = targetModal.querySelector('#ar-modal-live-val');
             if (modalVal) modalVal.textContent = `${clampedVal.toFixed(2)} V`;

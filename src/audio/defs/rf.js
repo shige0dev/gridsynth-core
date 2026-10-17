@@ -37,6 +37,12 @@ export const RF = {
         }
 
         const buf = new Float32Array(an.frequencyBinCount);
+        let curStage = -1;
+        w.port.onmessage = (e) => {
+            if (e.data.type === 'STAGE') {
+                curStage = e.data.stage;
+            }
+        };
 
         return {
             nodes: { w, trigIn, cvTimeIn, cvPeakIn, outCv, outTrig, an },
@@ -57,11 +63,12 @@ export const RF = {
                 w.port.postMessage({ type: 'TRIGGER' });
             },
             reset: () => {
+                curStage = -1;
                 w.port.postMessage({ type: 'RESET' });
             },
             read: () => {
                 an.getFloatTimeDomainData(buf);
-                return { values: [buf[0] || 0.0] };
+                return { values: [buf[0] || 0.0], stage: curStage };
             }
         };
     },

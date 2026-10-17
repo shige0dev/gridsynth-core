@@ -16,6 +16,7 @@ export class RfProcessor extends AudioWorkletProcessor {
 
         this.lastTrigHi = false;
         this.trigOutSamples = 0;
+        this.lastReportedStage = -1;
 
         this.port.onmessage = (e) => {
             if (e.data.type === 'SET_PARAMS') {
@@ -119,6 +120,12 @@ export class RfProcessor extends AudioWorkletProcessor {
                     outTrig[i] = 0.0;
                 }
             }
+        }
+
+        const curStage = !this.running ? -1 : (this.sampleIndex < this.riseSamples ? 0 : 1);
+        if (curStage !== this.lastReportedStage) {
+            this.lastReportedStage = curStage;
+            this.port.postMessage({ type: 'STAGE', stage: curStage });
         }
 
         return true;
