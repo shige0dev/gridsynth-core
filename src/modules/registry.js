@@ -5,11 +5,11 @@
 
 import { vcoDefs } from './defs/vco.js';
 import { filterDefs } from './defs/filter.js';
-import { ampDefs } from './defs/amp.js';
+import { ampDefs } from './defs/amp.js?v=185';
 import { effectsDefs } from './defs/effects.js';
 import { adsrDefs, ADSR_CURVES } from './defs/adsr.js';
 import { modDefs } from './defs/mod.js';
-import { ioDefs } from './defs/io.js?v=184';
+import { ioDefs } from './defs/io.js?v=185';
 import { seqDefs } from './defs/seq.js';
 import { chordDefs } from './defs/chord.js';
 import { arpDefs } from './defs/arp.js';

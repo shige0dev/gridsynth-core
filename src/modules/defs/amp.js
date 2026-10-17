@@ -13,7 +13,7 @@ export const VCA = {
     schema: {
         color: 'emerald',
         sliders: [
-            { key: 'level', label: 'LEVEL', min: 0, max: 1.0, step: 0.01, default: 1.0, unit: 'BIAS', cvPort: 'cv_in', patchedVal: 0, patchedText: '0.00', format: v => v.toFixed(2) },
+            { key: 'level', label: 'LEVEL', min: 0, max: 1.0, step: 0.01, default: 1.0, unit: 'BIAS', cvPort: 'cv_in', patchedVal: 0, patchedText: 'EXT', format: v => v.toFixed(2) },
             { key: 'cvDepth', label: 'CV MOD', min: 0, max: 2.0, step: 0.05, default: 1.0, unit: 'xDEPTH', color: 'amber', format: v => v.toFixed(2) }
         ]
     },
@@ -24,7 +24,11 @@ export const VCA = {
     }], { theme: 'cv' })}</div>`,
     updateLive: (cell, data, isP, modal, m) => {
         const b = cell.querySelector('.vca-meter-bar');
-        if (b) b.style.height = `${Math.max(0, Math.min(100, Math.round(((data?.hasCvIn ? data.values[0] : (m?.level ?? 1))) * 100)))}%`;
+        if (b) {
+            const hasCv = data?.hasCvIn ?? isP ?? false;
+            const val = hasCv ? (data?.values?.[0] || 0) : (m?.level ?? 1);
+            b.style.height = `${Math.max(0, Math.min(100, Math.round(val * 100)))}%`;
+        }
     }
 };
 

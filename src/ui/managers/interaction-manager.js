@@ -233,7 +233,8 @@ export class InteractionManager {
                             const mod = this.ui.modules[id];
                             if (mod) this.ui.renderCell(mod.row * this.ui.COLS + mod.col);
                         });
-                        if (this.ui.activeDockModuleId && affectedIds.has(this.ui.activeDockModuleId)) this.ui.reRenderDockModal();
+                        const isDockAffected = Array.from(this.ui.modalManager?.openDocks?.keys() || []).some(id => affectedIds.has(id)) || (this.ui.activeDockModuleId && affectedIds.has(this.ui.activeDockModuleId));
+                        if (isDockAffected) this.ui.reRenderDockModal();
                         if (this.ui.activePopupModuleId && affectedIds.has(this.ui.activePopupModuleId)) this.ui.reRenderModal();
                         this.ui.updatePortHighlight();
                         this.ui.showToast('端子の結線を切断しました');

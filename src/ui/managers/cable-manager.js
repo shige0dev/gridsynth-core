@@ -369,8 +369,8 @@ export class CableManager {
                     this.ui.persistCurrentPage();
                     this.cleanupOrphanSubConnections(this.ui.currentPageId);
                     this.ui.updateAllCells();
-                    this.renderCables();
-                    if (this.ui.activeDockModuleId === src.moduleId || this.ui.activeDockModuleId === dst.moduleId) this.ui.reRenderDockModal();
+                    const isDockAffected = this.ui.modalManager?.openDocks?.has(src.moduleId) || this.ui.modalManager?.openDocks?.has(dst.moduleId) || this.ui.activeDockModuleId === src.moduleId || this.ui.activeDockModuleId === dst.moduleId;
+                    if (isDockAffected) this.ui.reRenderDockModal();
                     if (this.ui.activePopupModuleId === src.moduleId || this.ui.activePopupModuleId === dst.moduleId) this.ui.reRenderModal();
                     this.ui.showToast('結線しました');
                 }
@@ -408,7 +408,8 @@ export class CableManager {
         this.cleanupOrphanSubConnections(this.ui.currentPageId);
         this.renderCables();
         this.ui.updateAllCells();
-        if (this.ui.activeDockModuleId && affectedIds.has(this.ui.activeDockModuleId)) this.ui.reRenderDockModal();
+        const isDockAffected = Array.from(this.ui.modalManager?.openDocks?.keys() || []).some(id => affectedIds.has(id)) || (this.ui.activeDockModuleId && affectedIds.has(this.ui.activeDockModuleId));
+        if (isDockAffected) this.ui.reRenderDockModal();
         if (this.ui.activePopupModuleId && affectedIds.has(this.ui.activePopupModuleId)) this.ui.reRenderModal();
     }
 }

@@ -15,21 +15,31 @@ const getSoftClipCurve = () => {
 export const VCA = {
     create: (ctx, d, patch) => {
         const vca = ctx.createGain(), cv = ctx.createGain(), an = ctx.createAnalyser(); an.fftSize = 256;
-        vca.gain.value = patch.has('cv_in') ? 0.0 : (d.level ?? 1.0); cv.gain.value = d.cvDepth ?? 1.0;
-        cv.connect(vca.gain); cv.connect(an);
+        const isCvPatched = !!(patch?.has?.('cv_in'));
+        vca.gain.value = isCvPatched ? 0.0 : (d.level ?? 1.0);
+        cv.gain.value = d.cvDepth ?? 1.0;
+        cv.connect(vca.gain);
+        cv.connect(an);
         const buf = new Float32Array(an.frequencyBinCount);
-        return {
+        const inst = {
             nodes: { vca, cv, an },
             inputs: { wave_in: vca, cv_in: cv },
             outputs: { wave_out: vca },
+            patch: patch,
             read: () => {
                 an.getFloatTimeDomainData(buf);
-                return { values: [buf[0] || 0], hasCvIn: patch.has('cv_in') };
+                const hasCvIn = !!(inst.patch?.has?.('cv_in'));
+                return { values: [buf[0] || 0], hasCvIn };
             }
         };
+        return inst;
     },
     update: (ctx, inst, d, patch) => {
-        AudioHelpers.set(inst.nodes.vca.gain, patch.has('cv_in') ? 0.0 : (d.level ?? 1.0), ctx);
+        if (patch !== undefined) {
+            inst.patch = patch;
+        }
+        const isCvPatched = !!(inst.patch?.has?.('cv_in'));
+        AudioHelpers.set(inst.nodes.vca.gain, isCvPatched ? 0.0 : (d.level ?? 1.0), ctx);
         AudioHelpers.set(inst.nodes.cv.gain, d.cvDepth ?? 1.0, ctx);
     }
 };

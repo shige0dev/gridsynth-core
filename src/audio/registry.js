@@ -5,11 +5,11 @@
 
 import { vcoAudioDefs } from './defs/vco.js';
 import { filterAudioDefs } from './defs/filter.js';
-import { ampAudioDefs } from './defs/amp.js';
+import { ampAudioDefs } from './defs/amp.js?v=185';
 import { effectsAudioDefs } from './defs/effects.js';
 import { adsrAudioDefs } from './defs/adsr.js';
 import { modAudioDefs } from './defs/mod.js';
-import { ioAudioDefs } from './defs/io.js?v=184';
+import { ioAudioDefs } from './defs/io.js?v=185';
 import { seqAudioDefs } from './defs/seq.js';
 import { chordAudioDefs } from './defs/chord.js';
 import { arpAudioDefs } from './defs/arp.js';
