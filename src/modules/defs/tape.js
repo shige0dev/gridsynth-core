@@ -198,7 +198,31 @@ export const TAPE = {
 
                 try {
                     ctx.showToast?.('DECODING AUDIO / MP4...');
-                    const res = await TapeCodec.loadAudioFromFile(file, ctx.synth.ctx);
+
+                    // 1. Ensure synth audio engine is initialized and running
+                    if (ctx.synth && !ctx.synth.ctx) {
+                        await ctx.synth.init();
+                    }
+                    if (ctx.synth?.ctx && ctx.synth.ctx.state === 'suspended') {
+                        try {
+                            await ctx.synth.ctx.resume();
+                        } catch (resErr) {
+                            console.warn('[TAPE] Synth context resume failed:', resErr);
+                        }
+                    }
+                    if (ctx.synth && !ctx.synth.hasModules()) {
+                        ctx.synth.rebuildAll(ctx.pagesData, (pId, id) => ctx.getPatchState(id, pId));
+                    }
+
+                    // Turn audio power button indicator active if currently idle
+                    const pwrBtn = document.getElementById('audio-power-btn');
+                    if (pwrBtn && !pwrBtn.classList.contains('border-red-500')) {
+                        pwrBtn.className = "h-7 w-7 bg-red-950 text-red-400 rounded-lg border border-red-500 shadow-md shadow-red-500/40 flex items-center justify-center shrink-0";
+                    }
+
+                    // 2. Decode Audio / MP4
+                    const audioCtx = ctx.synth?.ctx || null;
+                    const res = await TapeCodec.loadAudioFromFile(file, audioCtx);
 
                     // Update module properties
                     m.name = file.name.replace(/\.[^/.]+$/, '').slice(0, 24);
@@ -206,25 +230,30 @@ export const TAPE = {
                     m.sampleRate = res.sampleRate;
                     m._peaks = TAPE.extractPeaks(res.buffer, 64);
 
+                    // Re-acquire active module instance
+                    const activeInst = ctx.synth?.modules?.[fullId] || ctx.synth?.modules?.[m.id] || inst;
+
                     // Transfer PCM to AudioWorklet immediately for zero-latency playing
-                    inst?.setAudioBuffer?.(res.buffer, res.sampleRate);
+                    activeInst?.setAudioBuffer?.(res.buffer, res.sampleRate);
 
                     redrawSvg();
                     ctx.reRenderModal?.();
                     cb();
-                    ctx.showToast?.(`LOADED: ${res.duration.toFixed(1)}s (ENCODING OPUS...)`);
+                    ctx.showToast?.(`LOADED: ${res.duration.toFixed(1)}s`);
 
                     // Encode to Opus Base64 in background for patch JSON persistence
-                    TapeCodec.encodeToOpusBase64(res.buffer, res.sampleRate, ctx.synth.ctx).then(b64 => {
+                    TapeCodec.encodeToOpusBase64(res.buffer, res.sampleRate, ctx.synth?.ctx).then(b64 => {
                         m.data = b64;
                         cb();
-                        ctx.showToast?.('TAPE SAVED TO PATCH');
                     }).catch(err => {
                         console.warn('[TAPE] Opus background encoding warning:', err);
                     });
                 } catch (err) {
                     console.error('[TAPE] Load failed:', err);
-                    ctx.showToast?.('LOAD FAILED');
+                    const errMsg = err?.message || err?.name || String(err);
+                    ctx.showToast?.(`LOAD FAILED: ${errMsg.slice(0, 32)}`);
+                } finally {
+                    fileInput.value = ''; // Reset so the user can re-select the same file
                 }
             });
         }

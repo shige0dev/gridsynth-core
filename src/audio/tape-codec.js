@@ -8,18 +8,9 @@ export const TapeCodec = {
     MAX_DURATION: 16.0,
 
     /**
-     * Loads an audio or video (MP4) file and decodes it to a mono Float32Array (max 16s).
-     * @param {File} file
-     * @param {AudioContext} audioCtx
-     * @returns {Promise<{ buffer: Float32Array, sampleRate: number, duration: number }>}
+     * Helper to downmix AudioBuffer to mono Float32Array (max 16s) and peak-normalize.
      */
-    async loadAudioFromFile(file, audioCtx) {
-        if (!file) throw new Error('No file provided');
-        const arrayBuffer = await file.arrayBuffer();
-
-        // decodeAudioData automatically extracts audio tracks from MP4, WebM, MP3, WAV, etc.
-        const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-
+    processAudioBuffer(audioBuffer) {
         const targetDuration = Math.min(audioBuffer.duration, TapeCodec.MAX_DURATION);
         const targetSamples = Math.floor(targetDuration * audioBuffer.sampleRate);
         const monoData = new Float32Array(targetSamples);
@@ -58,6 +49,182 @@ export const TapeCodec = {
     },
 
     /**
+     * Loads an audio or video (MP4) file and decodes it to a mono Float32Array (max 16s).
+     * Handles mobile browser restrictions, null AudioContexts, and falls back to HTMLVideoElement extraction.
+     * @param {File} file
+     * @param {AudioContext} [audioCtx]
+     * @returns {Promise<{ buffer: Float32Array, sampleRate: number, duration: number }>}
+     */
+    async loadAudioFromFile(file, audioCtx) {
+        if (!file) throw new Error('No file provided');
+
+        // Ensure valid AudioContext
+        let ctx = audioCtx;
+        if (!ctx) {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            ctx = new AC();
+        }
+
+        // Resume if suspended (critical on iOS Safari & mobile Chrome)
+        if (ctx.state === 'suspended') {
+            try {
+                await ctx.resume();
+            } catch (e) {
+                console.warn('[TapeCodec] AudioContext resume failed:', e);
+            }
+        }
+
+        const arrayBuffer = await file.arrayBuffer();
+
+        // 1. Primary Attempt: decodeAudioData with Promise/Callback wrapper
+        try {
+            const copy = arrayBuffer.slice(0);
+            const audioBuffer = await new Promise((resolve, reject) => {
+                let resolved = false;
+                const p = ctx.decodeAudioData(copy, (ab) => {
+                    if (!resolved) { resolved = true; resolve(ab); }
+                }, (err) => {
+                    if (!resolved) { resolved = true; reject(err || new Error('decodeAudioData rejected')); }
+                });
+                if (p && typeof p.then === 'function') {
+                    p.then(ab => { if (!resolved) { resolved = true; resolve(ab); } })
+                     .catch(err => { if (!resolved) { resolved = true; reject(err); } });
+                }
+            });
+
+            return TapeCodec.processAudioBuffer(audioBuffer);
+        } catch (decodeErr) {
+            console.warn('[TapeCodec] Direct decodeAudioData failed, attempting MediaElement extraction fallback:', decodeErr);
+        }
+
+        // 2. Secondary Fallback: Use HTMLVideoElement / HTMLAudioElement playback capture
+        // (Guarantees decoding on mobile browsers where decodeAudioData does not support video/mp4 containers)
+        return await TapeCodec.extractAudioViaMediaElement(file, ctx);
+    },
+
+    /**
+     * Fallback extractor using HTMLVideoElement and Web Audio API streaming capture.
+     * This works on all mobile platforms that can natively play the MP4 video.
+     */
+    async extractAudioViaMediaElement(file, audioCtx) {
+        return new Promise((resolve, reject) => {
+            const video = document.createElement('video');
+            video.preload = 'auto';
+            video.playsInline = true;
+            video.muted = false; // Must be false for createMediaElementSource to capture audio
+
+            const objectUrl = URL.createObjectURL(file);
+            video.src = objectUrl;
+
+            let source = null;
+            let recorderNode = null;
+            let zeroGain = null;
+            let checkInterval = null;
+            let timeoutId = null;
+            let isCleanedUp = false;
+
+            const cleanup = () => {
+                if (isCleanedUp) return;
+                isCleanedUp = true;
+                if (checkInterval) clearInterval(checkInterval);
+                if (timeoutId) clearTimeout(timeoutId);
+                try { video.pause(); } catch (e) {}
+                video.removeAttribute('src');
+                video.load();
+                URL.revokeObjectURL(objectUrl);
+                try { source?.disconnect(); } catch (e) {}
+                try { recorderNode?.disconnect(); } catch (e) {}
+                try { zeroGain?.disconnect(); } catch (e) {}
+            };
+
+            video.onerror = () => {
+                cleanup();
+                reject(new Error('HTMLVideoElement cannot play this media file'));
+            };
+
+            video.onloadedmetadata = async () => {
+                try {
+                    if (audioCtx.state === 'suspended') {
+                        await audioCtx.resume();
+                    }
+
+                    const duration = Math.min(video.duration || 16.0, TapeCodec.MAX_DURATION);
+                    const sRate = audioCtx.sampleRate;
+                    const totalSamples = Math.floor(duration * sRate);
+                    const captured = new Float32Array(totalSamples);
+                    let capturedOffset = 0;
+
+                    source = audioCtx.createMediaElementSource(video);
+
+                    // Silent sink so audio is processed without blasting to speakers during extraction
+                    zeroGain = audioCtx.createGain();
+                    zeroGain.gain.value = 0.0;
+                    zeroGain.connect(audioCtx.destination);
+
+                    // Capture PCM samples using ScriptProcessorNode
+                    recorderNode = audioCtx.createScriptProcessor(4096, 1, 1);
+                    recorderNode.onaudioprocess = (evt) => {
+                        if (capturedOffset >= totalSamples) return;
+                        const input = evt.inputBuffer.getChannelData(0);
+                        const remaining = totalSamples - capturedOffset;
+                        const toCopy = Math.min(input.length, remaining);
+                        captured.set(input.subarray(0, toCopy), capturedOffset);
+                        capturedOffset += toCopy;
+                    };
+
+                    source.connect(recorderNode);
+                    recorderNode.connect(zeroGain);
+
+                    // 4x speed playback for fast extraction (16s takes ~4s)
+                    video.playbackRate = 4.0;
+                    await video.play();
+
+                    checkInterval = setInterval(() => {
+                        if (capturedOffset >= totalSamples || video.ended || video.currentTime >= duration) {
+                            cleanup();
+                            const finalSamples = captured.subarray(0, capturedOffset);
+                            // Normalize peak
+                            let maxPeak = 0;
+                            for (let i = 0; i < finalSamples.length; i++) {
+                                const abs = Math.abs(finalSamples[i]);
+                                if (abs > maxPeak) maxPeak = abs;
+                            }
+                            if (maxPeak > 0.001) {
+                                const normScale = 0.95 / maxPeak;
+                                for (let i = 0; i < finalSamples.length; i++) finalSamples[i] *= normScale;
+                            }
+                            resolve({
+                                buffer: finalSamples,
+                                sampleRate: sRate,
+                                duration: capturedOffset / sRate
+                            });
+                        }
+                    }, 100);
+
+                    // 12s safety timeout
+                    timeoutId = setTimeout(() => {
+                        if (!isCleanedUp) {
+                            cleanup();
+                            if (capturedOffset > 0) {
+                                resolve({
+                                    buffer: captured.subarray(0, capturedOffset),
+                                    sampleRate: sRate,
+                                    duration: capturedOffset / sRate
+                                });
+                            } else {
+                                reject(new Error('MediaElement extraction timed out (no audio track?)'));
+                            }
+                        }
+                    }, 12000);
+                } catch (err) {
+                    cleanup();
+                    reject(err);
+                }
+            };
+        });
+    },
+
+    /**
      * Decodes Base64 string into Float32Array PCM data.
      * Supports Opus WebM Base64 or raw PCM Base64.
      * @param {string} base64Str
@@ -68,6 +235,12 @@ export const TapeCodec = {
         if (!base64Str || typeof base64Str !== 'string') return null;
 
         try {
+            let ctx = audioCtx;
+            if (!ctx) {
+                const AC = window.AudioContext || window.webkitAudioContext;
+                ctx = new AC();
+            }
+
             // Remove data URI prefix if present
             const cleanStr = base64Str.replace(/^data:[^;]+;base64,/, '').trim();
             const binaryString = atob(cleanStr);
@@ -77,26 +250,20 @@ export const TapeCodec = {
                 bytes[i] = binaryString.charCodeAt(i);
             }
 
-            const audioBuffer = await audioCtx.decodeAudioData(bytes.buffer);
-            const targetDuration = Math.min(audioBuffer.duration, TapeCodec.MAX_DURATION);
-            const targetSamples = Math.floor(targetDuration * audioBuffer.sampleRate);
-            const monoData = new Float32Array(targetSamples);
-
-            if (audioBuffer.numberOfChannels === 1) {
-                monoData.set(audioBuffer.getChannelData(0).subarray(0, targetSamples));
-            } else {
-                const ch0 = audioBuffer.getChannelData(0);
-                const ch1 = audioBuffer.getChannelData(1);
-                for (let i = 0; i < targetSamples; i++) {
-                    monoData[i] = (ch0[i] + ch1[i]) * 0.5;
+            const audioBuffer = await new Promise((resolve, reject) => {
+                let resolved = false;
+                const p = ctx.decodeAudioData(bytes.buffer, (ab) => {
+                    if (!resolved) { resolved = true; resolve(ab); }
+                }, (err) => {
+                    if (!resolved) { resolved = true; reject(err || new Error('decodeAudioData rejected')); }
+                });
+                if (p && typeof p.then === 'function') {
+                    p.then(ab => { if (!resolved) { resolved = true; resolve(ab); } })
+                     .catch(err => { if (!resolved) { resolved = true; reject(err); } });
                 }
-            }
+            });
 
-            return {
-                buffer: monoData,
-                sampleRate: audioBuffer.sampleRate,
-                duration: targetDuration
-            };
+            return TapeCodec.processAudioBuffer(audioBuffer);
         } catch (err) {
             console.warn('[TapeCodec] Failed to decode base64 audio:', err);
             return null;
@@ -107,15 +274,23 @@ export const TapeCodec = {
      * Encodes a mono Float32Array into Opus WebM Base64 string (24kbps).
      * @param {Float32Array} float32Array
      * @param {number} sampleRate
-     * @param {AudioContext} audioCtx
+     * @param {AudioContext} [audioCtx]
      * @returns {Promise<string>} Base64 encoded Opus audio
      */
     async encodeToOpusBase64(float32Array, sampleRate, audioCtx) {
         if (!float32Array || float32Array.length === 0) return '';
 
-        // If MediaRecorder or WebM is not supported, fallback to simple 16-bit WAV Base64
+        let ctx = audioCtx;
+        if (!ctx) {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            ctx = new AC();
+        }
+
+        // If MediaRecorder or WebM is not supported or createMediaStreamDestination missing, fallback to simple 16-bit WAV Base64
         const mimeType = 'audio/webm; codecs=opus';
-        if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported?.(mimeType)) {
+        if (typeof MediaRecorder === 'undefined' ||
+            !MediaRecorder.isTypeSupported?.(mimeType) ||
+            typeof ctx.createMediaStreamDestination !== 'function') {
             return TapeCodec.encodeToWavBase64(float32Array, sampleRate);
         }
 
