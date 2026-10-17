@@ -34,22 +34,24 @@ export const SCALE = {
         const root = m.root ?? 0;
         const mask = m.mask || SCALE_PRESETS[m.scale] || SCALE_PRESETS['PENT.MIN'];
         const rootName = NOTE_NAMES[root] || 'C';
+        const scaleName = m.scale || 'PENT.MIN';
+
         return `
             <div class="flex flex-col items-center justify-center w-full h-full pointer-events-none leading-none gap-1">
-                <div class="flex items-center justify-between w-[50px] px-0.5 pointer-events-none">
-                    <span class="text-[7.5px] font-mono font-bold text-amber-400/90 truncate">${rootName}</span>
-                    <span class="scale-note-disp text-[9px] font-mono font-bold text-white tracking-tight">—</span>
+                <!-- ルート音 ＋ スケール名 -->
+                <div class="flex items-center justify-center w-[50px] px-0.5 pointer-events-none text-center">
+                    <span class="text-[8px] font-mono font-bold text-amber-400 truncate tracking-tight">${rootName} ${scaleName}</span>
                 </div>
+                <!-- 12本バー：通過音は100%黄色塗りつぶし・通常時は枠は光らない -->
                 <div class="flex items-center justify-center w-full pointer-events-none">
                     ${UIHelpers.renderPanelBars(
                         Array.from({ length: 12 }, (_, i) => {
                             const isMasked = (mask[i] ?? 1) === 1;
-                            const h = isMasked ? 85 : 4;
-                            // 通過させる音は CVカラーの黄色（amber〜yellow）、通過させない音は消灯（暗いslate）
+                            const h = isMasked ? 100 : 0;
                             const barColor = isMasked
-                                ? 'bg-gradient-to-t from-amber-600 via-amber-500 to-yellow-300'
-                                : 'bg-slate-800/40';
-                            const borderCls = isMasked ? 'border-amber-500/60' : 'border-slate-800/60';
+                                ? 'bg-gradient-to-t from-amber-600 via-amber-500 to-yellow-400'
+                                : 'bg-transparent';
+                            const borderCls = isMasked ? 'border-slate-800' : 'border-slate-900/60';
                             return {
                                 pct: h,
                                 color: barColor,
@@ -67,50 +69,28 @@ export const SCALE = {
                 </div>
             </div>`;
     },
-    updateLive: (cell, data, isP, modal, m) => {
+    updateLive: (cell, data, isP, modal) => {
         const semi = data?.activeSemi ?? -1;
-        const cv = data?.cv ?? 0;
 
-        // 盤面グリッドの12本バーのうち、現在鳴っている音を強烈に白〜ゴールド発光
+        // 該当出力のバーだけ枠が光る
         cell.querySelectorAll('[data-scale-bar]').forEach((b, i) => {
             const barSemi = parseInt(b.getAttribute('data-scale-bar') ?? i, 10);
             const isAct = (barSemi === semi);
             b.classList.toggle('scale-active', isAct);
         });
 
-        // 盤面グリッドの現在音名表示
-        const noteDisp = cell.querySelector('.scale-note-disp');
-        if (noteDisp) {
-            if (semi >= 0 && isFinite(cv)) {
-                const oct = Math.floor(cv) + 1; // 1V/oct C1=0V -> 1V=C2
-                noteDisp.textContent = `${NOTE_NAMES[semi]}${oct}`;
-            } else {
-                noteDisp.textContent = '—';
-            }
-        }
-
-        // モーダルが開いていればモーダル内のバーと音名も更新
+        // モーダルが開いていればモーダル内のバー枠もハイライト
         if (modal) {
             modal.querySelectorAll('[data-modal-bar]').forEach((b, i) => {
                 const barSemi = parseInt(b.getAttribute('data-modal-bar') ?? i, 10);
                 const isAct = (barSemi === semi);
                 b.classList.toggle('ring-2', isAct);
-                b.classList.toggle('ring-white', isAct);
-                b.classList.toggle('shadow-[0_0_12px_#ffffff]', isAct);
+                b.classList.toggle('ring-yellow-300', isAct);
+                b.classList.toggle('shadow-[0_0_8px_#fde047]', isAct);
             });
-            const liveNote = modal.querySelector('#scale-modal-live-note');
-            if (liveNote) {
-                if (semi >= 0 && isFinite(cv)) {
-                    const oct = Math.floor(cv) + 1;
-                    const sign = cv >= 0 ? '+' : '';
-                    liveNote.textContent = `${NOTE_NAMES[semi]}${oct} (${sign}${cv.toFixed(2)}V)`;
-                } else {
-                    liveNote.textContent = '—';
-                }
-            }
         }
     },
-    renderModal: (m, ctx) => {
+    renderModal: (m) => {
         const root = m.root ?? 0;
         const scaleKey = m.scale || 'PENT.MIN';
         const mask = m.mask || SCALE_PRESETS[scaleKey] || SCALE_PRESETS['PENT.MIN'];
@@ -164,19 +144,6 @@ export const SCALE = {
                                     <span class="text-[8px] font-mono font-bold mt-1 ${isOn ? (isBlack ? 'text-amber-300' : 'text-yellow-200') : 'text-slate-600'}">${n}</span>
                                 </div>`;
                         }).join('')}
-                    </div>
-                </div>
-
-                <!-- Bottom Status Banner -->
-                <div class="flex items-center justify-between bg-slate-950/60 px-2 py-1 rounded-lg border border-slate-800/80 text-[8.5px] font-mono">
-                    <div class="flex items-center gap-1 text-slate-400">
-                        <span>OUT:</span>
-                        <span id="scale-modal-live-note" class="text-yellow-300 font-bold tracking-wide">—</span>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        <span class="text-[7.5px] px-1.5 py-0.5 rounded font-bold bg-amber-950/80 text-amber-300 border border-amber-500/60">
-                            0〜1V ➔ C1〜C2
-                        </span>
                     </div>
                 </div>
             </div>`;
