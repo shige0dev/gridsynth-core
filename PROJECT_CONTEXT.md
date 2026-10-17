@@ -380,3 +380,8 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
         - オーディオ側（`src/audio/defs/effects.js`）でも `patch` を保持し、`cv_in` 接続時は手動 WET を 0.0 にクリア、`cvG.gain` に `d.cvDepth ?? 1.0` を反映して VCA と全く同一の基本ルールで動作。
     - **キャッシュバスター更新（`?v=187`）**:
       - `index.html`, `main.js`, `controller.js`, `engine.js`, `modal-manager.js`, `registry.js`, `amp.js`, `filter.js`, `fm.js`, `effects.js` 全体のクエリパラメータを `v=187` に更新。
+
+ 10. **VCF モードセレクタの横並び配置（`cols: 4`）**:
+    - VCF モーダル内のフィルターモード選択ボタン（LP / HP / BP / NOTCH）を従来の 2行2列（`cols: 2`）から 1行4列（`cols: 4`）へ横並びレイアウトに変更。
+    - キャッシュバスターを `v=188` に更新。
+

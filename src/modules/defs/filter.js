@@ -1,4 +1,4 @@
-import { UIHelpers } from '../../ui/helpers.js?v=187';
+import { UIHelpers } from '../../ui/helpers.js?v=188';
 
 export const VCF = {
     color: 'indigo',
@@ -12,7 +12,7 @@ export const VCF = {
     }),
     schema: {
         color: 'indigo',
-        groups: [{ key: 'filterType', label: 'Mode', cols: 2, options: [{ val: 'lowpass', label: 'LP' }, { val: 'highpass', label: 'HP' }, { val: 'bandpass', label: 'BP' }, { val: 'notch', label: 'NOTCH' }] }],
+        groups: [{ key: 'filterType', label: 'Mode', cols: 4, options: [{ val: 'lowpass', label: 'LP' }, { val: 'highpass', label: 'HP' }, { val: 'bandpass', label: 'BP' }, { val: 'notch', label: 'NOTCH' }] }],
         sliders: [
             { key: 'cutoff', label: 'CUTOFF', min: 30, max: 12000, step: 10, default: 1800, unit: 'hz', format: v => Math.round(v) + 'hz' },
             { key: 'q', label: 'RES (Q)', min: 0.1, max: 18, step: 0.1, default: 2.5, unit: 'q', format: v => v.toFixed(1) },
