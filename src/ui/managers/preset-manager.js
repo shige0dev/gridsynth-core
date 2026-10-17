@@ -470,6 +470,10 @@ export class PresetManager {
             this.presets[name] = p;
         }
 
+        // パッチ切り替え時は開いているすべてのドックダイアログ（LOCK中含む）とポップアップを閉じる
+        this.ui.closeDockModal();
+        this.ui.modalManager?.closeModal();
+
         const parseErrors = [];
         const parsed = parsePatch(p, this.ui.COLS, this.ui.userSubpatches, parseErrors);
         if (parsed.bpm) {

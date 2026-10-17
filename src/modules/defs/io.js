@@ -339,7 +339,7 @@ export const KEY = {
                 </div>
                 <div class="relative h-28 bg-slate-950 rounded-lg border border-slate-800 flex select-none touch-none overflow-hidden" id="kb-box">
                     ${W.map(k => `<div class="key-white flex-1 bg-slate-200 border border-slate-400 rounded-b flex flex-col justify-end items-center pb-1 cursor-pointer select-none transition-colors" data-semi="${k.s}"><span class="text-[7.5px] font-bold text-slate-700 pointer-events-none">${k.n}</span></div>`).join('')}
-                    <div class="absolute inset-0 pointer-events-none">${B.map(bk => `<div class="key-black absolute h-16 bg-slate-900 border border-slate-700 rounded-b pointer-events-auto cursor-pointer shadow-md select-none transition-colors" style="left:${bk.l}%;width:5.833%;" data-semi="${bk.s}"></div>`).join('')}</div>
+                    <div class="absolute inset-0 pointer-events-none">${B.map(bk => `<div class="key-black absolute h-16 bg-white border border-slate-400 rounded-b pointer-events-auto cursor-pointer select-none transition-colors" style="left:${bk.l}%;width:5.833%;" data-semi="${bk.s}"></div>`).join('')}</div>
                 </div>
             </div>`;
     },
@@ -357,8 +357,7 @@ export const KEY = {
             if (!el) return;
             const isBlack = el.classList.contains('key-black');
             if (isBlack) {
-                el.classList.toggle('!bg-cyan-600', isPressed);
-                el.classList.toggle('shadow-cyan-500/50', isPressed);
+                el.classList.toggle('!bg-cyan-400', isPressed);
             } else {
                 el.classList.toggle('!bg-cyan-300', isPressed);
             }
