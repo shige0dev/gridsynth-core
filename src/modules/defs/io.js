@@ -337,9 +337,15 @@ export const KEY = {
                     <button id="key-oct-up" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold">＋</button></div>
                     <span class="text-[9px] font-mono font-bold text-sky-300" id="key-active-note">${m.lastNote||'C4'}</span>
                 </div>
-                <div class="relative h-28 bg-slate-950 rounded-lg border border-slate-800 flex select-none touch-none overflow-hidden" id="kb-box">
-                    ${W.map(k => `<div class="key-white flex-1 bg-slate-200 border border-slate-400 rounded-b flex flex-col justify-end items-center pb-1 cursor-pointer select-none transition-colors" data-semi="${k.s}"><span class="text-[7.5px] font-bold text-slate-700 pointer-events-none">${k.n}</span></div>`).join('')}
-                    <div class="absolute inset-0 pointer-events-none">${B.map(bk => `<div class="key-black absolute h-16 bg-white border border-slate-400 rounded-b pointer-events-auto cursor-pointer select-none transition-colors" style="left:${bk.l}%;width:5.833%;" data-semi="${bk.s}"></div>`).join('')}</div>
+                <div class="relative h-28 bg-slate-950 rounded-lg border-2 border-slate-400 flex select-none touch-none overflow-hidden" id="kb-box">
+                    ${W.map(k => `<div class="key-white flex-1 bg-slate-200 border-r-2 border-slate-400 last:border-r-0 flex flex-col justify-end items-center pb-1 cursor-pointer select-none transition-colors" data-semi="${k.s}"><span class="text-[7.5px] font-bold text-slate-700 pointer-events-none">${k.n}</span></div>`).join('')}
+                    <div class="absolute inset-0 pointer-events-none">
+                        <!-- Upper E4/F4 stems (12-TET strict seam at 39.167%) -->
+                        <div class="key-upper absolute h-16 bg-slate-200 border-r-2 border-slate-400 pointer-events-auto cursor-pointer select-none transition-colors" style="left:33.333%;width:5.833%;" data-semi="4"></div>
+                        <div class="key-upper absolute h-16 bg-slate-200 pointer-events-auto cursor-pointer select-none transition-colors" style="left:39.167%;width:5.833%;" data-semi="5"></div>
+                        <!-- Former black keys (accidentals) with uniform 2px border and bg-slate-200 -->
+                        ${B.map(bk => `<div class="key-black absolute h-16 bg-slate-200 border-2 border-slate-400 border-t-0 rounded-b pointer-events-auto cursor-pointer select-none transition-colors" style="left:${bk.l}%;width:5.833%;" data-semi="${bk.s}"></div>`).join('')}
+                    </div>
                 </div>
             </div>`;
     },
@@ -353,61 +359,58 @@ export const KEY = {
             m.lastNote = name; if (nD && isDown) nD.textContent = name;
             ctx.sendKeyNote?.(midi, isDown); if (isDown) cb();
         };
-        const setKeyHighlight = (el, isPressed) => {
-            if (!el) return;
-            const isBlack = el.classList.contains('key-black');
-            if (isBlack) {
-                el.classList.toggle('!bg-cyan-400', isPressed);
-            } else {
-                el.classList.toggle('!bg-cyan-300', isPressed);
-            }
-        };
         const kb = document.getElementById('kb-box');
+        const setKeyHighlight = (semi, isPressed) => {
+            if (semi === null || semi === undefined || isNaN(semi) || !kb) return;
+            const elements = kb.querySelectorAll(`[data-semi="${semi}"]`);
+            elements.forEach(el => el.classList.toggle('!bg-cyan-300', isPressed));
+        };
         if (kb) {
-            let activeKey = null;
+            let activeSemi = null;
             let activePointerId = null;
 
-            const getKeyFromPoint = (x, y) => {
+            const getSemiFromPoint = (x, y) => {
                 const el = document.elementFromPoint(x, y);
-                return (el && kb.contains(el)) ? el.closest('[data-semi]') : null;
+                const k = (el && kb.contains(el)) ? el.closest('[data-semi]') : null;
+                return (k && k.dataset.semi !== undefined) ? parseInt(k.dataset.semi, 10) : null;
             };
 
             kb.onpointerdown = (e) => {
-                const k = getKeyFromPoint(e.clientX, e.clientY) || e.target.closest('[data-semi]');
-                if (!k) return;
-                if (activeKey) {
-                    setKeyHighlight(activeKey, false);
-                    play(parseInt(activeKey.dataset.semi), false);
+                const semi = getSemiFromPoint(e.clientX, e.clientY);
+                if (semi === null || isNaN(semi)) return;
+                if (activeSemi !== null) {
+                    setKeyHighlight(activeSemi, false);
+                    play(activeSemi, false);
                 }
                 activePointerId = e.pointerId;
-                activeKey = k;
+                activeSemi = semi;
                 try { kb.setPointerCapture(e.pointerId); } catch(err){}
-                setKeyHighlight(k, true);
-                play(parseInt(k.dataset.semi), true);
+                setKeyHighlight(semi, true);
+                play(semi, true);
             };
 
             kb.onpointermove = (e) => {
                 if (activePointerId === null || e.pointerId !== activePointerId) return;
-                const k = getKeyFromPoint(e.clientX, e.clientY);
-                if (k !== activeKey) {
-                    if (activeKey) {
-                        setKeyHighlight(activeKey, false);
-                        play(parseInt(activeKey.dataset.semi), false);
+                const semi = getSemiFromPoint(e.clientX, e.clientY);
+                if (semi !== activeSemi) {
+                    if (activeSemi !== null) {
+                        setKeyHighlight(activeSemi, false);
+                        play(activeSemi, false);
                     }
-                    if (k) {
-                        setKeyHighlight(k, true);
-                        play(parseInt(k.dataset.semi), true);
+                    if (semi !== null && !isNaN(semi)) {
+                        setKeyHighlight(semi, true);
+                        play(semi, true);
                     }
-                    activeKey = k;
+                    activeSemi = semi;
                 }
             };
 
             const stop = (e) => {
                 if (activePointerId !== null && e && e.pointerId !== activePointerId) return;
-                if (activeKey) {
-                    setKeyHighlight(activeKey, false);
-                    play(parseInt(activeKey.dataset.semi), false);
-                    activeKey = null;
+                if (activeSemi !== null) {
+                    setKeyHighlight(activeSemi, false);
+                    play(activeSemi, false);
+                    activeSemi = null;
                 }
                 activePointerId = null;
                 try {
