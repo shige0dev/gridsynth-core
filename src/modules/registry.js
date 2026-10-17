@@ -9,7 +9,7 @@ import { ampDefs } from './defs/amp.js';
 import { effectsDefs } from './defs/effects.js';
 import { adsrDefs, ADSR_CURVES } from './defs/adsr.js';
 import { modDefs } from './defs/mod.js';
-import { ioDefs } from './defs/io.js?v=182';
+import { ioDefs } from './defs/io.js?v=183';
 import { seqDefs } from './defs/seq.js';
 import { chordDefs } from './defs/chord.js';
 import { arpDefs } from './defs/arp.js';

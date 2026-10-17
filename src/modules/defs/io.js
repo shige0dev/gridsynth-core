@@ -613,34 +613,21 @@ const extractBands = (freqs, numBands = 96, sampleRate = 48000) => {
 
     for (let b = 0; b < numBands; b++) {
         const fCenter = f0 * Math.pow(2, b / bandsPerOct);
-        const fStart = f0 * Math.pow(2, (b - 0.5) / bandsPerOct);
-        const fEnd = f0 * Math.pow(2, (b + 0.5) / bandsPerOct);
 
-        // 1. 各半音の中心周波数における連続スペクトル値を線形補間で高精度にサンプリング
+        // 各半音の中心周波数のスペクトル値を前後のビンから純粋に線形補間でサンプリング（区間max探索の重複を完全排除）
         const kCenterFloat = fCenter * fftSize / sampleRate;
         const k0 = Math.max(0, Math.min(freqs.length - 1, Math.floor(kCenterFloat)));
         const k1 = Math.min(freqs.length - 1, k0 + 1);
         const t = kCenterFloat - k0;
-        let max = (1 - t) * freqs[k0] + t * freqs[k1];
-        let maxK = Math.round(kCenterFloat);
+        const val = (1 - t) * freqs[k0] + t * freqs[k1];
 
-        // 2. 高音域で半音幅が広く複数のビンを含む場合は、区間内の最大ピークも拾う
-        const kStart = Math.max(0, Math.floor(fStart * fftSize / sampleRate));
-        const kEnd = Math.min(freqs.length, Math.ceil(fEnd * fftSize / sampleRate));
-        for (let k = kStart; k < kEnd; k++) {
-            if (freqs[k] > max) {
-                max = freqs[k];
-                maxK = k;
-            }
-        }
-
-        // 3. 表示上の小細工（近接比率による谷底削り等）を全廃し、素直で自然なダイナミックレンジカーブで出力
-        const v = Math.max(0, Math.min(1.0, max / 255.0));
+        // 自然な正規化（0.0〜1.0）とガンマカーブ（台形化を防ぎ、正規分布カーブを描画）
+        const v = Math.max(0, Math.min(1.0, val / 255.0));
         bands[b] = Math.pow(v, 1.4);
 
-        if (max > peakVal) {
-            peakVal = max;
-            peakFreq = (maxK * sampleRate) / fftSize;
+        if (val > peakVal) {
+            peakVal = val;
+            peakFreq = (kCenterFloat * sampleRate) / fftSize;
         }
     }
 
