@@ -15,7 +15,7 @@ export const SCALE_PRESETS = {
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
 export const SCALE = {
-    color: 'emerald',
+    color: 'amber',
     defaults: () => ({
         type: 'SCALE',
         root: 0, // C
@@ -37,28 +37,31 @@ export const SCALE = {
         return `
             <div class="flex flex-col items-center justify-center w-full h-full pointer-events-none leading-none gap-1">
                 <div class="flex items-center justify-between w-[50px] px-0.5 pointer-events-none">
-                    <span class="text-[7.5px] font-mono font-bold text-emerald-400/90 truncate">${rootName}</span>
+                    <span class="text-[7.5px] font-mono font-bold text-amber-400/90 truncate">${rootName}</span>
                     <span class="scale-note-disp text-[9px] font-mono font-bold text-white tracking-tight">—</span>
                 </div>
                 <div class="flex items-center justify-center w-full pointer-events-none">
                     ${UIHelpers.renderPanelBars(
                         Array.from({ length: 12 }, (_, i) => {
                             const isMasked = (mask[i] ?? 1) === 1;
-                            const h = isMasked ? 80 : 15;
+                            const h = isMasked ? 85 : 4;
+                            // 通過させる音は CVカラーの黄色（amber〜yellow）、通過させない音は消灯（暗いslate）
                             const barColor = isMasked
-                                ? 'bg-gradient-to-t from-emerald-600 to-teal-300'
-                                : 'bg-slate-800/80';
+                                ? 'bg-gradient-to-t from-amber-600 via-amber-500 to-yellow-300'
+                                : 'bg-slate-800/40';
+                            const borderCls = isMasked ? 'border-amber-500/60' : 'border-slate-800/60';
                             return {
                                 pct: h,
                                 color: barColor,
                                 width: 'flex-1',
+                                outerCls: borderCls,
                                 attrs: `data-scale-bar="${i}"`
                             };
                         }),
                         {
                             gapCls: 'gap-px',
                             containerCls: 'w-[50px]',
-                            theme: 'audio'
+                            theme: 'cv'
                         }
                     )}
                 </div>
@@ -68,11 +71,11 @@ export const SCALE = {
         const semi = data?.activeSemi ?? -1;
         const cv = data?.cv ?? 0;
 
-        // 盤面グリッドの12本バーのアクティブ表示切替
+        // 盤面グリッドの12本バーのうち、現在鳴っている音を強烈に白〜ゴールド発光
         cell.querySelectorAll('[data-scale-bar]').forEach((b, i) => {
             const barSemi = parseInt(b.getAttribute('data-scale-bar') ?? i, 10);
             const isAct = (barSemi === semi);
-            b.classList.toggle('bar-active', isAct);
+            b.classList.toggle('scale-active', isAct);
         });
 
         // 盤面グリッドの現在音名表示
@@ -92,8 +95,8 @@ export const SCALE = {
                 const barSemi = parseInt(b.getAttribute('data-modal-bar') ?? i, 10);
                 const isAct = (barSemi === semi);
                 b.classList.toggle('ring-2', isAct);
-                b.classList.toggle('ring-yellow-300', isAct);
-                b.classList.toggle('shadow-[0_0_8px_#fde047]', isAct);
+                b.classList.toggle('ring-white', isAct);
+                b.classList.toggle('shadow-[0_0_12px_#ffffff]', isAct);
             });
             const liveNote = modal.querySelector('#scale-modal-live-note');
             if (liveNote) {
@@ -119,7 +122,7 @@ export const SCALE = {
                 <div class="flex items-center justify-between gap-1.5 bg-slate-950/70 p-1.5 rounded-lg border border-slate-800">
                     <div class="flex items-center gap-1">
                         <span class="text-[8px] font-bold text-slate-400 uppercase tracking-tight">ROOT:</span>
-                        <select id="scale-root-sel" class="bg-slate-900 border border-slate-700 text-emerald-300 font-mono font-bold text-[9.5px] rounded px-1.5 py-0.5 cursor-pointer outline-none hover:border-emerald-500">
+                        <select id="scale-root-sel" class="bg-slate-900 border border-slate-700 text-amber-300 font-mono font-bold text-[9.5px] rounded px-1.5 py-0.5 cursor-pointer outline-none hover:border-amber-500">
                             ${NOTE_NAMES.map((name, idx) => `
                                 <option value="${idx}" ${idx === root ? 'selected' : ''}>${name}</option>
                             `).join('')}
@@ -128,7 +131,7 @@ export const SCALE = {
 
                     <div class="flex items-center gap-1 flex-1 justify-end min-w-0">
                         <span class="text-[8px] font-bold text-slate-400 uppercase tracking-tight">SCALE:</span>
-                        <select id="scale-preset-sel" class="bg-slate-900 border border-slate-700 text-cyan-300 font-mono font-bold text-[9px] rounded px-1.5 py-0.5 cursor-pointer outline-none hover:border-cyan-500 truncate max-w-[130px]">
+                        <select id="scale-preset-sel" class="bg-slate-900 border border-slate-700 text-yellow-300 font-mono font-bold text-[9px] rounded px-1.5 py-0.5 cursor-pointer outline-none hover:border-yellow-500 truncate max-w-[130px]">
                             ${presetKeys.map(k => `
                                 <option value="${k}" ${k === scaleKey ? 'selected' : ''}>${k}</option>
                             `).join('')}
@@ -141,7 +144,7 @@ export const SCALE = {
                 <div class="flex flex-col gap-1 bg-slate-950/80 p-2 rounded-xl border border-slate-800">
                     <div class="flex items-center justify-between text-[7.5px] font-bold text-slate-400 tracking-wider">
                         <span>12-NOTE EQUAL PROBABILITY FILTER</span>
-                        <span class="text-emerald-400 font-mono">${mask.filter(x => x === 1).length} ACTIVE</span>
+                        <span class="text-amber-400 font-mono">${mask.filter(x => x === 1).length} ACTIVE</span>
                     </div>
 
                     <!-- 12 Bars -->
@@ -150,7 +153,7 @@ export const SCALE = {
                             const isOn = (mask[i] ?? 1) === 1;
                             const isBlack = n.includes('#');
                             const barBg = isOn
-                                ? 'bg-gradient-to-t from-emerald-600 via-emerald-500 to-teal-300 border-emerald-400/80'
+                                ? 'bg-gradient-to-t from-amber-600 via-amber-500 to-yellow-300 border-amber-400/80'
                                 : 'bg-slate-900 border-slate-800 text-slate-600';
                             const barHeight = isOn ? 'h-full' : 'h-3';
                             return `
@@ -158,7 +161,7 @@ export const SCALE = {
                                     <div data-modal-bar="${i}" class="w-full ${barHeight} rounded-t-sm border ${barBg} transition-all duration-75 flex items-center justify-center relative overflow-hidden">
                                         <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
                                     </div>
-                                    <span class="text-[8px] font-mono font-bold mt-1 ${isOn ? (isBlack ? 'text-cyan-300' : 'text-slate-200') : 'text-slate-600'}">${n}</span>
+                                    <span class="text-[8px] font-mono font-bold mt-1 ${isOn ? (isBlack ? 'text-amber-300' : 'text-yellow-200') : 'text-slate-600'}">${n}</span>
                                 </div>`;
                         }).join('')}
                     </div>
@@ -171,7 +174,7 @@ export const SCALE = {
                         <span id="scale-modal-live-note" class="text-yellow-300 font-bold tracking-wide">—</span>
                     </div>
                     <div class="flex items-center gap-1.5">
-                        <span class="text-[7.5px] px-1.5 py-0.5 rounded font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-500/60">
+                        <span class="text-[7.5px] px-1.5 py-0.5 rounded font-bold bg-amber-950/80 text-amber-300 border border-amber-500/60">
                             0〜1V ➔ C1〜C2
                         </span>
                     </div>
@@ -229,4 +232,3 @@ export const SCALE = {
 };
 
 export const scaleDefs = { SCALE };
-
