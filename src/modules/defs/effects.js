@@ -43,7 +43,7 @@ export const CVDELAY = {
 
 export const REVERB = {
     color: 'violet',
-    defaults: () => ({ type: 'REVERB', time: 1.8, damp: 4500, mix: 0.4, mode: 'hall' }),
+    defaults: () => ({ type: 'REVERB', time: 1.8, damp: 4500, mix: 0.4, cvDepth: 1.0, mode: 'hall' }),
     ports: () => ({
         in: [
             { port: 'wave_in', color: 'bg-blue-500' },
@@ -57,7 +57,8 @@ export const REVERB = {
         sliders: [
             { key: 'time', label: 'TIME', min: 0.2, max: 6.0, step: 0.1, default: 1.8, unit: 's', format: v => v.toFixed(1) + 's' },
             { key: 'damp', label: 'DAMP', min: 500, max: 16000, step: 100, default: 4500, unit: 'hz', format: v => (v>=1000?`${(v/1000).toFixed(1)}k`:Math.round(v))+'hz' },
-            { key: 'mix', label: 'MIX', min: 0, max: 1.0, step: 0.02, default: 0.4, unit: 'wet', format: v => v.toFixed(2) }
+            { key: 'mix', label: 'MIX', min: 0, max: 1.0, step: 0.02, default: 0.4, unit: 'wet', cvPort: 'cv_in', patchedVal: 0, patchedText: 'EXT', format: v => v.toFixed(2) },
+            { key: 'cvDepth', label: 'CV MOD', min: 0, max: 2.0, step: 0.05, default: 1.0, unit: 'depth', color: 'amber', requirePort: 'cv_in', format: v => v.toFixed(2) }
         ]
     },
     renderGrid: (m) => `<div class="flex flex-col items-center justify-center leading-none gap-0.5 pointer-events-none text-cyan-400"><span class="text-[8px] font-bold uppercase">${m.mode||'HALL'}</span><span class="text-[13px] font-mono font-bold">${(m.time??1.8).toFixed(1)}s</span></div>`

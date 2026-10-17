@@ -1,4 +1,4 @@
-import { UIHelpers } from '../../ui/helpers.js';
+import { UIHelpers } from '../../ui/helpers.js?v=187';
 
 const FM_OPERATORS = [
     { num: 3, key: 'op3', label: 'OP 3', sub: 'MOD 2', color: 'amber', hasWave: true, hasFb: true },
@@ -362,11 +362,25 @@ export const FMCORE = {
     },
     renderModal: (m, ctx) => {
         FMCORE.onNormalize?.(m);
-        const rootM = m.rootMidi ?? 48;
-        const rootName = UIHelpers.midiToNoteName(rootM);
-        const isPitchPatched = ctx?.patched?.has('pitch_in') || ctx?.patched?.has('cv_in');
-        const isIdxPatched = ctx?.patched?.has('index_cv') || ctx?.patched?.has('idx_cv');
         const isModPatched = ctx?.patched?.has('mod_in') || ctx?.patched?.has('wave_in');
+
+        const rootState = UIHelpers.resolveSliderState({
+            key: 'rootMidi',
+            min: 24, max: 72, default: 48,
+            cvPort: ['pitch_in', 'cv_in'],
+            patchedText: 'EXT',
+            format: v => UIHelpers.midiToNoteName(Math.round(v))
+        }, m, ctx);
+
+        const idxState = UIHelpers.resolveSliderState({
+            key: 'index',
+            min: 0.0, max: 5.0, default: 1.0,
+            unit: 'idx',
+            requirePort: ['mod_in', 'wave_in'],
+            cvPort: ['index_cv', 'idx_cv'],
+            patchedText: 'EXT CV',
+            format: v => Number(v).toFixed(2)
+        }, m, ctx);
 
         return `
             <div class="space-y-1.5 select-none">
@@ -381,10 +395,10 @@ export const FMCORE = {
 
                 <!-- 6 Vertical Sliders: ROOT -> LEVEL -> RATIO -> INDEX -> FB -> FINE -->
                 <div class="flex items-center justify-around py-1 bg-slate-950/60 p-1 rounded-xl border border-slate-800/80 gap-1">
-                    ${UIHelpers.createVSliderHTML('fmcore-root', 'ROOT', 24, 72, 1, rootM, 'note', 'yellow', isPitchPatched, isPitchPatched ? 'EXT' : rootName)}
+                    ${UIHelpers.createVSliderHTML('fmcore-root', 'ROOT', 24, 72, 1, rootState.val, 'note', 'yellow', rootState.isDisabled, rootState.customText)}
                     ${UIHelpers.createVSliderHTML('fmcore-level', 'LEVEL', 0.0, 1.0, 0.01, m.level ?? 0.85, 'lvl', 'cyan', false, Number(m.level ?? 0.85).toFixed(2))}
                     ${UIHelpers.createVSliderHTML('fmcore-ratio', 'RATIO', 0.25, 16.0, 0.25, m.ratio ?? 1.0, 'rat', 'cyan', false, Number(m.ratio ?? 1.0).toFixed(2))}
-                    ${UIHelpers.createVSliderHTML('fmcore-index', 'INDEX', 0.0, 5.0, 0.05, m.index ?? 1.0, 'idx', 'amber', isIdxPatched, isIdxPatched ? 'EXT CV' : Number(m.index ?? 1.0).toFixed(2))}
+                    ${UIHelpers.createVSliderHTML('fmcore-index', 'INDEX', 0.0, 5.0, 0.05, idxState.val, idxState.unitText, 'amber', idxState.isDisabled, idxState.customText)}
                     ${UIHelpers.createVSliderHTML('fmcore-fb', 'FB', 0.0, 1.0, 0.01, m.feedback ?? 0.0, 'fb', 'amber', false, Math.round((m.feedback ?? 0) * 100) + '%')}
                     ${UIHelpers.createVSliderHTML('fmcore-fine', 'FINE', -50, 50, 1, m.fine ?? 0, 'cent', 'cyan', false, ((m.fine ?? 0) > 0 ? '+' : '') + Math.round(m.fine ?? 0) + 'c')}
                 </div>
@@ -392,10 +406,25 @@ export const FMCORE = {
         `;
     },
     bindEvents: (m, ctx, cb) => {
-        UIHelpers.bindSlider('fmcore-root', UIHelpers.midiToNoteName, v => { m.rootMidi = Math.round(v); cb(); }, 1, 24, 72);
+        const rootState = UIHelpers.resolveSliderState({
+            key: 'rootMidi',
+            cvPort: ['pitch_in', 'cv_in']
+        }, m, ctx);
+
+        const idxState = UIHelpers.resolveSliderState({
+            key: 'index',
+            requirePort: ['mod_in', 'wave_in'],
+            cvPort: ['index_cv', 'idx_cv']
+        }, m, ctx);
+
+        if (!rootState.isDisabled) {
+            UIHelpers.bindSlider('fmcore-root', UIHelpers.midiToNoteName, v => { m.rootMidi = Math.round(v); cb(); }, 1, 24, 72);
+        }
         UIHelpers.bindSlider('fmcore-level', v => v.toFixed(2), v => { m.level = v; cb(); }, 1, 0.0, 1.0);
         UIHelpers.bindSlider('fmcore-ratio', v => v.toFixed(2), v => { m.ratio = v; cb(); }, 1, 0.25, 16.0);
-        UIHelpers.bindSlider('fmcore-index', v => v.toFixed(2), v => { m.index = v; cb(); }, 1, 0.0, 5.0);
+        if (!idxState.isDisabled) {
+            UIHelpers.bindSlider('fmcore-index', v => v.toFixed(2), v => { m.index = v; cb(); }, 1, 0.0, 5.0);
+        }
         UIHelpers.bindSlider('fmcore-fb', v => Math.round(v * 100) + '%', v => { m.feedback = v; cb(); }, 1, 0.0, 1.0);
         UIHelpers.bindSlider('fmcore-fine', v => ((v > 0 ? '+' : '') + Math.round(v) + 'c'), v => { m.fine = Math.round(v); cb(); }, 1, -50, 50);
     }

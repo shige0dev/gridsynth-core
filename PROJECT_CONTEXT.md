@@ -1,4 +1,4 @@
-﻿# GridSynth - プロジェクト概要・設計思想・内部アーキテクチャ & ロードマップ
+# GridSynth - プロジェクト概要・設計思想・内部アーキテクチャ & ロードマップ
 
 本ドキュメントは、**GridSynth (Grid Modular Synthesizer)** の設計思想、内部アーキテクチャ、データモデル、実装経緯、モバイル（Galaxy S25等）対応方針、および今後のAPI / MCP（Model Context Protocol）拡張ロードマップを網羅した開発引継ぎ用総合リファレンスです。
 
@@ -361,3 +361,22 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
        - `cv_in` 接続時は、手動バイアスゲイン `vca.gain.value` を確実に `0.0` に設定（手動 LEVEL の加算を完全カット）。外部 CV（エンベロープ等）の入力信号のみでダイナミックレンジ全域を正確にゲインコントロール。ケーブル切断時は即座に手動スライダー値 `d.level ?? 1.0` に復帰。
      - **モーダル/ドック即時連動（`cable-manager.js`, `interaction-manager.js`）**:
        - 結線・切断時に開いているすべてのドックおよびポップアップモーダルを検査し、VCA のダイアログが開いている場合は即座に再描画してディゼーブル状態・スライダー表示をリアルタイム切り替え。
+
+ 9. **全体ルーチンによるディゼーブル基本ルールの統一＆全モジュール標準化（VCF / MIX / FMCORE / REVERB）**:
+    - **設計思想・基本ルールの確立**:
+      - **【ルールA】未接続時にディゼーブル（`requirePort`）**: 外部端子からの信号入力があって初めて意味を持つパラメータ（外部CV変調深度、外部変調波インデックス、各CHミキサーフェーダーなど）。未接続時は誤操作・無意味な設定を防ぐためディゼーブル（薄暗く非活性）。ケーブル接続により自動的に活性化。
+      - **【ルールB】接続時にディゼーブル（`cvPort`）**: 外部信号により手動パラメータが乗っ取られる／上書きされるパラメータ（手動周波数、手動バイアスレベルなど）。未接続時は手動操作可能。ケーブル接続時は外部信号がフルコントロールするためディゼーブル（`EXT` 表示、手動加算0など）。
+    - **全体基盤ルーチンの整備（`src/ui/helpers.js`）**:
+      - `UIHelpers.resolveSliderState(sl, mod, ctx)` を新設。
+      - 単一ポート名文字列だけでなく、ポート配列（例: `['mod_in', 'wave_in']`, `['pitch_in', 'cv_in']`）によるエイリアス判定にも完全対応。
+      - `renderSchemaModal` および `bindSchemaEvents` でこの共通関数を使用するようリファクタリングし、カスタムモーダルでも一元的に利用可能に整備。
+    - **各モジュールへの改変適用**:
+      - **① VCF（フィルター）**: `modDepth`（CV MOD）スライダーに付いていた `cvPort: 'cv_in'`（接続時ディゼーブルというねじれ・不具合）を解消し、`requirePort: 'cv_in'` に変更。`cv_in` 未接続時はディゼーブル、接続時に活性化。
+      - **② MIX（ミキサー）**: 各チャンネル音量スライダー（`lvl1`〜`lvl4`）に `requirePort: 'wave_in' + (i + 1)` を設定。ケーブルが刺さっていないチャンネルは自動的にディゼーブル、接続されたチャンネルのみ活性化。
+      - **③ FMCORE（PMコア）**: `index`（INDEX）スライダーに `requirePort: ['mod_in', 'wave_in']` と `cvPort: ['index_cv', 'idx_cv']` を複合適用。外部変調波形が未接続の時はディゼーブル、外部CV接続時は `EXT CV` でディゼーブル。さらに `rootMidi` スライダーも `cvPort: ['pitch_in', 'cv_in']`（1V/OCT）で統一定義。
+      - **④ REVERB（リバーブ）**:
+        - スライダーに `CV MOD`（`cvDepth`, `requirePort: 'cv_in'`）を追加。未接続時はディゼーブル、接続時に変調深度を操作可能に。
+        - 手動 `MIX` スライダーに `cvPort: 'cv_in', patchedVal: 0, patchedText: 'EXT'` を設定し、`cv_in` 接続時は手動ベースミックスが 0.0（EXT）になり外部CVがリバーブ量をコントロール。
+        - オーディオ側（`src/audio/defs/effects.js`）でも `patch` を保持し、`cv_in` 接続時は手動 WET を 0.0 にクリア、`cvG.gain` に `d.cvDepth ?? 1.0` を反映して VCA と全く同一の基本ルールで動作。
+    - **キャッシュバスター更新（`?v=187`）**:
+      - `index.html`, `main.js`, `controller.js`, `engine.js`, `modal-manager.js`, `registry.js`, `amp.js`, `filter.js`, `fm.js`, `effects.js` 全体のクエリパラメータを `v=187` に更新。

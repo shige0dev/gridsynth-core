@@ -1,4 +1,4 @@
-import { UIHelpers } from '../../ui/helpers.js?v=186';
+import { UIHelpers } from '../../ui/helpers.js?v=187';
 
 export const VCA = {
     color: 'emerald',
@@ -68,6 +68,7 @@ export const MIX = {
                 label: `CH${i + 1}`,
                 min: 0, max: 1.0, step: 0.01, default: 1.0,
                 unit: 'lvl',
+                requirePort: `wave_in${i + 1}`,
                 format: v => v.toFixed(2)
             }));
         }

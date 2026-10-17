@@ -80,16 +80,18 @@ export const CVDELAY = {
 };
 
 export const REVERB = {
-    create: (ctx, d) => {
+    create: (ctx, d, patch) => {
         const inp = ctx.createGain(), out = ctx.createGain(), dry = ctx.createGain(), wet = ctx.createGain(), conv = ctx.createConvolver(), damp = ctx.createBiquadFilter(), cvG = ctx.createGain();
-        const mix = d.mix ?? 0.4;
-        damp.type = 'lowpass'; damp.frequency.value = d.damp ?? 4500; dry.gain.value = 1.0 - mix; wet.gain.value = mix; cvG.gain.value = 0.5;
+        const isCvPatched = !!(patch?.has?.('cv_in'));
+        const mix = isCvPatched ? 0.0 : (d.mix ?? 0.4);
+        damp.type = 'lowpass'; damp.frequency.value = d.damp ?? 4500; dry.gain.value = 1.0 - mix; wet.gain.value = mix; cvG.gain.value = d.cvDepth ?? 1.0;
         conv.buffer = AudioHelpers.buildReverbBuffer(ctx, d.time ?? 1.8, d.mode || 'hall');
         inp.connect(dry); dry.connect(out); inp.connect(damp); damp.connect(conv); conv.connect(wet); wet.connect(out); cvG.connect(wet.gain);
         const inst = {
             nodes: { inp, out, dry, wet, conv, damp, cvG },
             inputs: { wave_in: inp, cv_in: cvG },
             outputs: { wave_out: out },
+            patch: patch,
             _time: d.time ?? 1.8,
             _mode: d.mode || 'hall',
             clear: () => {
@@ -97,15 +99,21 @@ export const REVERB = {
                     const curTime = ctx.currentTime;
                     wet.gain.cancelScheduledValues(curTime);
                     wet.gain.setValueAtTime(0, curTime);
-                    wet.gain.setValueAtTime(d.mix ?? 0.4, curTime + 0.05);
+                    wet.gain.setValueAtTime(isCvPatched ? 0.0 : (d.mix ?? 0.4), curTime + 0.05);
                 } catch (e) {}
             }
         };
         return inst;
     },
-    update: (ctx, inst, d) => {
-        const mix = d.mix ?? 0.4;
-        AudioHelpers.set(inst.nodes.wet.gain, mix, ctx); AudioHelpers.set(inst.nodes.dry.gain, 1.0 - mix, ctx);
+    update: (ctx, inst, d, patch) => {
+        if (patch !== undefined) {
+            inst.patch = patch;
+        }
+        const isCvPatched = !!(inst.patch?.has?.('cv_in'));
+        const mix = isCvPatched ? 0.0 : (d.mix ?? 0.4);
+        AudioHelpers.set(inst.nodes.wet.gain, mix, ctx);
+        AudioHelpers.set(inst.nodes.dry.gain, 1.0 - mix, ctx);
+        AudioHelpers.set(inst.nodes.cvG.gain, d.cvDepth ?? 1.0, ctx);
         AudioHelpers.set(inst.nodes.damp.frequency, d.damp ?? 4500, ctx);
         if (Math.abs((d.time ?? 1.8) - inst._time) > 0.1 || (d.mode || 'hall') !== inst._mode) {
             inst._time = d.time ?? 1.8; inst._mode = d.mode || 'hall';

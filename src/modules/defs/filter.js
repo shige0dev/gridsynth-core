@@ -1,4 +1,4 @@
-import { UIHelpers } from '../../ui/helpers.js';
+import { UIHelpers } from '../../ui/helpers.js?v=187';
 
 export const VCF = {
     color: 'indigo',
@@ -16,7 +16,7 @@ export const VCF = {
         sliders: [
             { key: 'cutoff', label: 'CUTOFF', min: 30, max: 12000, step: 10, default: 1800, unit: 'hz', format: v => Math.round(v) + 'hz' },
             { key: 'q', label: 'RES (Q)', min: 0.1, max: 18, step: 0.1, default: 2.5, unit: 'q', format: v => v.toFixed(1) },
-            { key: 'modDepth', label: 'CV MOD', min: 0, max: 3600, step: 50, default: 1200, unit: 'depth', color: 'amber', cvPort: 'cv_in', patchedVal: 0, patchedText: 'EXT', format: v => Math.round(v) }
+            { key: 'modDepth', label: 'CV MOD', min: 0, max: 3600, step: 50, default: 1200, unit: 'depth', color: 'amber', requirePort: 'cv_in', format: v => Math.round(v) }
         ]
     },
     renderGrid: (m) => `<div class="flex flex-col items-center justify-center leading-none gap-0.5 pointer-events-none text-cyan-400"><span class="text-[9px] font-bold uppercase">${m.filterType?.toUpperCase() || 'LP'}</span><span class="text-[13px] font-mono font-bold tracking-tight">${Math.round(m.cutoff || 1800)}<span class="text-[9px] ml-0.5">hz</span></span></div>`

@@ -180,6 +180,38 @@ export const UIHelpers = {
             }
         }
     },
+    resolveSliderState: (sl, mod, ctx) => {
+        const hasPatched = (portDef) => {
+            if (!portDef || !ctx?.patched) return false;
+            return Array.isArray(portDef) ? portDef.some(p => ctx.patched.has(p)) : ctx.patched.has(portDef);
+        };
+
+        const isP = sl.cvPort ? hasPatched(sl.cvPort) : false;
+        const isReqMissing = sl.requirePort ? !hasPatched(sl.requirePort) : false;
+        const customDisabled = typeof sl.disabled === 'function' ? sl.disabled(mod, ctx) : !!sl.disabled;
+        const isDisabled = !!(isP || isReqMissing || customDisabled);
+
+        const curRaw = sl.getVal ? sl.getVal(mod) : (mod[sl.key] ?? sl.default ?? sl.min);
+        const val = isP ? (sl.patchedVal ?? sl.min) : curRaw;
+
+        let customText = null;
+        if (isP) {
+            customText = sl.patchedText || 'EXT';
+        } else if (isReqMissing && sl.unpatchedText) {
+            customText = sl.unpatchedText;
+        } else if (sl.format) {
+            customText = sl.format(val);
+        }
+
+        let unitText = sl.unit || '';
+        if (isP) {
+            unitText = sl.patchedUnit || 'PATCHED';
+        } else if (isReqMissing && sl.unpatchedUnit) {
+            unitText = sl.unpatchedUnit;
+        }
+
+        return { isP, isReqMissing, isDisabled, val, customText, unitText };
+    },
     renderSchemaModal: (mod, ctx, schemaDef) => {
         const s = typeof schemaDef === 'function' ? schemaDef(mod, ctx) : schemaDef;
         let html = '';
@@ -254,24 +286,18 @@ export const UIHelpers = {
         if (sliders.length > 0) {
             html += `<div class="flex items-center justify-around py-1 bg-slate-950/60 p-1 rounded-xl border border-slate-800/80 gap-1 mt-1">`;
             sliders.forEach(sl => {
-                const isP = sl.cvPort && ctx.patched?.has(sl.cvPort);
-                const isReqMissing = sl.requirePort && !ctx.patched?.has(sl.requirePort);
-                const isDisabled = !!(isP || isReqMissing || (typeof sl.disabled === 'function' ? sl.disabled(mod, ctx) : sl.disabled));
-                const curRaw = sl.getVal ? sl.getVal(mod) : (mod[sl.key] ?? sl.default ?? sl.min);
-                const v = isP ? (sl.patchedVal ?? sl.min) : curRaw;
-                const customText = isP ? (sl.patchedText || 'EXT') : (isReqMissing && sl.unpatchedText ? sl.unpatchedText : (sl.format ? sl.format(v) : null));
-                const unitText = isP ? 'PATCHED' : (isReqMissing && sl.unpatchedUnit ? sl.unpatchedUnit : (sl.unit || ''));
+                const state = UIHelpers.resolveSliderState(sl, mod, ctx);
                 html += UIHelpers.createVSliderHTML(
                     `schema-slider-${sl.key}`,
                     sl.label,
                     sl.min,
                     sl.max,
                     sl.step,
-                    v,
-                    unitText,
+                    state.val,
+                    state.unitText,
                     sl.color || s.color,
-                    isDisabled,
-                    customText,
+                    state.isDisabled,
+                    state.customText,
                     sl.power || 1
                 );
             });
@@ -356,10 +382,8 @@ export const UIHelpers = {
         // 3. Body Sliders
         const sliders = typeof s.sliders === 'function' ? s.sliders(mod, ctx) : (s.sliders || []);
         sliders.forEach(sl => {
-            const isP = sl.cvPort && ctx.patched?.has(sl.cvPort);
-            const isReqMissing = sl.requirePort && !ctx.patched?.has(sl.requirePort);
-            const isDisabled = !!(isP || isReqMissing || (typeof sl.disabled === 'function' ? sl.disabled(mod, ctx) : sl.disabled));
-            if (isDisabled) return;
+            const state = UIHelpers.resolveSliderState(sl, mod, ctx);
+            if (state.isDisabled) return;
             const setter = sl.setVal || ((m, v) => { m[sl.key] = v; });
             const fmt = sl.format || (v => Math.round(v));
 
