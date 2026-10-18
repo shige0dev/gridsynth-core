@@ -42,6 +42,13 @@ export const WaveView = {
         return `x${mult.toFixed(1)}`;
     },
 
+    formatPitch(v) {
+        const st = Math.round(v * 120) / 10;
+        if (Math.abs(st) < 0.05) return '0st';
+        const sign = st > 0 ? '+' : '';
+        return Number.isInteger(st) ? `${sign}${st}st` : `${sign}${st.toFixed(1)}st`;
+    },
+
     /**
      * Convert raw Start/End CV values (0.0~1.0) into effective Start/End playback positions.
      */

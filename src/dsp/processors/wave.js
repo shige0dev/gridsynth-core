@@ -1,4 +1,5 @@
 // src/dsp/processors/wave.js
+import { WaveGrainShifter } from '../wave-grain-shifter.js?v=251';
 
 export class WaveProcessor extends AudioWorkletProcessor {
     constructor() {
@@ -10,6 +11,7 @@ export class WaveProcessor extends AudioWorkletProcessor {
         this.start = 0.0;
         this.end = 1.0;
         this.speed = 1.0;
+        this.pitchMode = false;
         this.loop = false;
         this.retrigger = true;
         this.startPatched = false;
@@ -18,6 +20,7 @@ export class WaveProcessor extends AudioWorkletProcessor {
         this.chops = [];
 
         this.pointer = 0.0;
+        this.shifter = new WaveGrainShifter(0.036);
         this.isPlaying = false;
         this.lastGateHi = false;
         this.firstPass = true;
@@ -48,11 +51,13 @@ export class WaveProcessor extends AudioWorkletProcessor {
                     this.bufferSampleRate = data.sampleRate || 48000;
                     const eff = this.getEffectiveStartEnd(this.lastCvS, this.lastCvE);
                     this.pointer = Math.max(0, Math.min(this.bufferLength - 1, eff.effStart * (this.bufferLength - 1)));
+                    this.shifter.reset(this.pointer);
                 }
             } else if (data.type === 'SET_PARAMS') {
                 if (data.start !== undefined) this.start = Math.max(0.0, Math.min(1.0, data.start));
                 if (data.end !== undefined) this.end = Math.max(0.0, Math.min(1.0, data.end));
                 if (data.speed !== undefined) this.speed = Math.max(0.05, Math.min(8.0, data.speed));
+                if (data.pitchMode !== undefined) this.pitchMode = Boolean(data.pitchMode);
                 if (data.loop !== undefined) this.loop = Boolean(data.loop);
                 if (data.retrigger !== undefined) this.retrigger = Boolean(data.retrigger);
                 if (data.startPatched !== undefined) this.startPatched = Boolean(data.startPatched);
@@ -82,6 +87,7 @@ export class WaveProcessor extends AudioWorkletProcessor {
                 this.isManualPlay = false;
                 const eff = this.getEffectiveStartEnd(this.lastCvS, this.lastCvE);
                 this.pointer = Math.max(0, Math.min(this.bufferLength - 1, eff.effStart * (this.bufferLength - 1)));
+                this.shifter.reset(this.pointer);
                 this.lastGateHi = false;
                 this.reportState();
             }
@@ -153,6 +159,7 @@ export class WaveProcessor extends AudioWorkletProcessor {
         }
         const eff = this.getEffectiveStartEnd(cvStart, cvEnd);
         this.pointer = Math.max(0, Math.min(this.bufferLength - 1, eff.effStart * (this.bufferLength - 1)));
+        this.shifter.reset(this.pointer);
         this.isPlaying = true;
         this.firstPass = true;
     }
@@ -253,25 +260,23 @@ export class WaveProcessor extends AudioWorkletProcessor {
             // Direction: purely determined by start <= end (+1.0 forward) vs start > end (-1.0 reverse)
             const direction = (effStart <= effEnd) ? 1.0 : -1.0;
 
-            // Speed CV: -2.0V ~ +2.0V (CV=2 => 2^2 = 4x, CV=0 => 1x, CV=-2 => 2^-2 = 0.25x)
+            // Speed/Pitch CV: -2.0V ~ +2.0V (CV=2 => 2^2 = 4x, CV=0 => 1x, CV=-2 => 2^-2 = 0.25x)
             let rate = this.speed;
             if (speedCvIn) {
                 const clampedCv = Math.max(-2.0, Math.min(2.0, speedCvIn[i]));
                 const cvMultiplier = Math.pow(2.0, clampedCv);
                 rate = this.speed * cvMultiplier;
             }
-            const step = direction * rate * rateRatio;
 
-            // Read sample using linear interpolation (lerp)
-            const p = Math.max(0, Math.min(bufLen - 1, this.pointer));
-            const idx = Math.floor(p);
-            const frac = p - idx;
-            const s0 = buf[idx];
-            const s1 = (idx + 1 < bufLen) ? buf[idx + 1] : s0;
-            out[i] = s0 * (1.0 - frac) + s1 * frac;
-
-            // Advance pointer
-            this.pointer += step;
+            if (this.pitchMode) {
+                // Fixed-time pitch shift: playhead advances at 1.0x while grains shift pitch by `rate`
+                out[i] = this.shifter.processSample(buf, bufLen, this.pointer, rate, direction, rateRatio, effStart, effEnd, sr);
+                this.pointer += direction * rateRatio;
+            } else {
+                // Varispeed playback: linear interpolation and pointer scaled by `rate`
+                out[i] = this.shifter.readLerp(buf, bufLen, this.pointer);
+                this.pointer += direction * rate * rateRatio;
+            }
 
             // Boundary check and loop
             const reachedEnd = (direction > 0) ? (this.pointer >= effEnd) : (this.pointer <= effEnd);

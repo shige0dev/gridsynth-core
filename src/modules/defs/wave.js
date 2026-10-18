@@ -1,8 +1,8 @@
 // src/modules/defs/wave.js
-import { UIHelpers } from '../../ui/helpers.js?v=250';
-import { WaveCodec } from '../../audio/wave-codec.js?v=250';
-import { WaveView } from '../../ui/wave-view.js?v=250';
-import { WaveModal } from '../../ui/wave-modal.js?v=250';
+import { UIHelpers } from '../../ui/helpers.js?v=251';
+import { WaveCodec } from '../../audio/wave-codec.js?v=251';
+import { WaveView } from '../../ui/wave-view.js?v=251';
+import { WaveModal } from '../../ui/wave-modal.js?v=251';
 
 export const WAVE = {
     color: 'cyan',
@@ -16,6 +16,7 @@ export const WAVE = {
         start: 0.0,
         end: 1.0,
         speed: 1.0,
+        pitchMode: false,
         loop: false,
         retrigger: true,
         chopMode: 'off',
@@ -31,6 +32,7 @@ export const WAVE = {
         if (!Array.isArray(m.chops)) m.chops = [];
         if (m.snapMode === undefined) m.snapMode = false;
         if (m.rangeLock === undefined) m.rangeLock = false;
+        if (m.pitchMode === undefined) m.pitchMode = false;
     },
     onExport: (cloned, m) => {
         if (m?._isLinked) {
