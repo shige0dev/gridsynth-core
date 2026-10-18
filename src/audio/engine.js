@@ -1,4 +1,4 @@
-import { AUDIO_REGISTRY } from './registry.js?v=228';
+import { AUDIO_REGISTRY } from './registry.js?v=229';
 import { AudioHelpers } from './helpers.js';
 import { parseConn, normalizeSubPort } from '../core/utils.js';
 
@@ -24,7 +24,7 @@ export class SynthEngine {
 
             if (this.ctx.audioWorklet) {
                 try {
-                    const workletUrl = new URL('../dsp/worklet-processors.js?v=228', import.meta.url).href;
+                    const workletUrl = new URL('../dsp/worklet-processors.js?v=229', import.meta.url).href;
                     await this.ctx.audioWorklet.addModule(workletUrl);
                     this.audioWorkletReady = true;
                 } catch (e) {

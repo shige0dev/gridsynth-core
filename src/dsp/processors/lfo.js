@@ -3,7 +3,7 @@ import { getSR } from './common.js';
 export class LfoProcessor extends AudioWorkletProcessor {
     static get parameterDescriptors() {
         return [
-            { name: 'rate', defaultValue: 2.0, minValue: 0.001, maxValue: 100.0 },
+            { name: 'rate', defaultValue: 2.0, minValue: 0.001, maxValue: 200.0 },
             { name: 'depth', defaultValue: 1.0, minValue: 0.0, maxValue: 10.0 },
             { name: 'duty', defaultValue: 0.5, minValue: 0.01, maxValue: 0.99 },
             { name: 'phase', defaultValue: 0.0, minValue: 0.0, maxValue: 360.0 }
@@ -83,7 +83,7 @@ export class LfoProcessor extends AudioWorkletProcessor {
                 if (rateCvIn) {
                     effRate = Math.max(0.001, effRate * Math.pow(2, rateCvIn[i]));
                 }
-                effRate = Math.max(0.001, Math.min(100.0, effRate));
+                effRate = Math.max(0.001, Math.min(200.0, effRate));
 
                 this.ph = (this.ph + effRate / sr) % 1.0;
                 const rawP = this.ph + phaseOffset;

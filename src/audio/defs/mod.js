@@ -60,11 +60,12 @@ const updateMathAudio = (inst, d, patch, hasTwoInputs) => {
 
 export const LFO = {
     create: (ctx, d, patch, eng) => {
+        const effRate = d.period !== undefined ? (1.0 / Math.max(0.001, d.period)) : (d.rate ?? 2.0);
         const w = new AudioWorkletNode(ctx, 'lfo-processor', {
             numberOfInputs: 2,
             numberOfOutputs: 1,
             parameterData: {
-                rate: d.rate ?? 2.0,
+                rate: effRate,
                 depth: d.depth ?? 1.0,
                 duty: d.duty ?? 0.5,
                 phase: d.phase ?? 0.0
@@ -88,7 +89,9 @@ export const LFO = {
         };
     },
     update: (ctx, inst, d, patch, eng) => {
-        ['rate', 'depth', 'duty', 'phase'].forEach(p => {
+        const effRate = d.period !== undefined ? (1.0 / Math.max(0.001, d.period)) : (d.rate ?? 2.0);
+        AudioHelpers.set(inst.nodes.w.parameters.get('rate'), effRate, ctx);
+        ['depth', 'duty', 'phase'].forEach(p => {
             if (d[p] !== undefined) AudioHelpers.set(inst.nodes.w.parameters.get(p), d[p], ctx);
         });
         inst.nodes.w.port.postMessage({

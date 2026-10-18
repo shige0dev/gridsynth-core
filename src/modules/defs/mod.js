@@ -76,7 +76,26 @@ const updateMathLiveUI = (cell, data) => {
 export const LFO = {
     color: 'indigo',
     DIVISIONS: ['4/1', '2/1', '1/1', '1/2', '1/4', '1/8', '1/16', '1/32', '1/4T', '1/8T', '1/4D', '1/8D'],
-    defaults: () => ({ type: 'LFO', waveType: 'sine', polarity: 'bipolar', syncMode: 'free', division: '1/4', rate: 2.0, depth: 1.0, phase: 0, duty: 0.5 }),
+    defaults: () => ({
+        type: 'LFO',
+        waveType: 'sine',
+        polarity: 'bipolar',
+        syncMode: 'free',
+        division: '1/4',
+        period: 0.5,
+        rate: 2.0,
+        depth: 1.0,
+        phase: 0,
+        duty: 0.5
+    }),
+    onNormalize: (m) => {
+        if (m.period === undefined) {
+            m.period = m.rate ? (1.0 / Math.max(0.001, m.rate)) : 0.5;
+        }
+        if (m.rate === undefined) {
+            m.rate = m.period ? (1.0 / Math.max(0.001, m.period)) : 2.0;
+        }
+    },
     ports: () => ({
         in: [
             { port: 'trig_in', color: 'bg-orange-500' },
@@ -84,14 +103,41 @@ export const LFO = {
         ],
         out: [{ port: 'cv_out', color: 'bg-yellow-400' }]
     }),
+    formatTime: (sec) => {
+        const s = Math.max(0.001, Number(sec) || 0.001);
+        if (s >= 10.0) {
+            return `${s.toFixed(1)}s`;
+        }
+        if (s >= 1.0) {
+            return `${s.toFixed(2)}s`;
+        }
+        const ms = s * 1000;
+        const hz = 1.0 / s;
+        const hzStr = hz >= 10 ? Math.round(hz) : hz.toFixed(1);
+        if (ms < 10) {
+            return `${ms.toFixed(1)}ms (${hzStr}Hz)`;
+        }
+        return `${Math.round(ms)}ms (${hzStr}Hz)`;
+    },
     renderGrid: (m) => {
         const isSync = m.syncMode === 'sync';
         const sp = m.polarity === 'unipolar' ? 'UNI' : 'BI';
-        const rateDisp = isSync ? (m.division || '1/4') : `${(m.rate ?? 2).toFixed(1)}hz`;
+        const period = m.period ?? (m.rate ? (1.0 / Math.max(0.001, m.rate)) : 0.5);
+        let rateDisp = '';
+        if (isSync) {
+            rateDisp = m.division || '1/4';
+        } else if (period >= 1.0) {
+            rateDisp = period >= 10 ? `${Math.round(period)}s` : `${period.toFixed(1)}s`;
+        } else {
+            rateDisp = `${Math.round(period * 1000)}ms`;
+        }
+        const subDisp = isSync
+            ? `φ:${Math.round(m.phase || 0)}°`
+            : (period < 1.0 ? `${(1.0 / period).toFixed(period <= 0.1 ? 0 : 1)}Hz` : `φ:${Math.round(m.phase || 0)}°`);
         return `<div class="flex flex-col items-center justify-center leading-none gap-0.5 pointer-events-none text-indigo-300">
             <span class="text-[8px] font-bold uppercase text-indigo-400">${(m.waveType || 'sin').substring(0,3)} (${sp})</span>
             <span class="text-[13px] font-mono font-bold text-white tracking-tight">${rateDisp}</span>
-            <span class="text-[7.5px] font-mono text-indigo-400/80">φ:${Math.round(m.phase || 0)}°</span>
+            <span class="text-[7.5px] font-mono text-indigo-400/80">${subDisp}</span>
         </div>`;
     },
     schema: {
@@ -102,7 +148,7 @@ export const LFO = {
                     key: 'syncMode',
                     reRender: true,
                     options: [
-                        { val: 'free', label: 'FREE (Hz)' },
+                        { val: 'free', label: 'FREE (Time)' },
                         { val: 'sync', label: 'SYNC (BPM)' }
                     ]
                 },
@@ -146,11 +192,22 @@ export const LFO = {
                 },
                 format: (v) => divs[Math.round(v)] || '1/4'
             } : {
-                key: 'rate',
-                label: 'RATE',
-                min: 0.05, max: 30.0, step: 0.05, default: 2.0,
-                unit: 'hz',
-                format: (v) => `${Number(v).toFixed(2)}hz`
+                key: 'period',
+                label: 'TIME',
+                min: 0.01, max: 60.0, step: 0.001, default: 0.5,
+                unit: 's',
+                power: 3.0,
+                getVal: (mod) => {
+                    if (mod.period !== undefined) return mod.period;
+                    if (mod.rate) return 1.0 / Math.max(0.001, mod.rate);
+                    return 0.5;
+                },
+                setVal: (mod, v) => {
+                    const sec = Math.max(0.01, Math.min(60.0, v));
+                    mod.period = sec;
+                    mod.rate = 1.0 / sec;
+                },
+                format: (v) => LFO.formatTime(v)
             };
             return [
                 rateSlider,

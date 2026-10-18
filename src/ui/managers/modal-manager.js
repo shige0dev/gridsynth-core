@@ -45,7 +45,7 @@ export const MODAL_WIDTHS = {
     ADSR: 'w-[215px]',
     RF: 'w-[210px]',
     AR: 'w-[210px]',
-    LFO: 'w-[235px]',
+    LFO: 'w-[250px]',
 
     // IO & Monitoring
     SCOPE: 'w-[235px]',

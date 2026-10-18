@@ -8,7 +8,7 @@ import { filterDefs } from './defs/filter.js?v=188';
 import { ampDefs } from './defs/amp.js?v=187';
 import { effectsDefs } from './defs/effects.js?v=187';
 import { adsrDefs, ADSR_CURVES } from './defs/adsr.js';
-import { modDefs } from './defs/mod.js';
+import { modDefs } from './defs/mod.js?v=229';
 import { ioDefs } from './defs/io.js?v=185';
 import { seqDefs } from './defs/seq.js';
 import { chordDefs } from './defs/chord.js';
