@@ -1,8 +1,8 @@
 // src/ui/wave-modal.js
-import { UIHelpers } from './helpers.js?v=256';
-import { WaveCodec } from '../audio/wave-codec.js?v=256';
-import { WaveView } from './wave-view.js?v=256';
-import { JsonIoDialog } from './json-io-dialog.js?v=256';
+import { UIHelpers } from './helpers.js?v=257';
+import { WaveCodec } from '../audio/wave-codec.js?v=257';
+import { WaveView } from './wave-view.js?v=257';
+import { JsonIoDialog } from './json-io-dialog.js?v=257';
 
 /**
  * WAVE Module Modal Renderer & Event Controller
@@ -429,33 +429,41 @@ export const WaveModal = {
                 </div>
 
                 <!-- Unified Controls: PLAY/LOOP/RETRIG (Left) + SPEED Slider (Center) + CHOP & SNAP (Right) -->
-                <div class="flex items-center justify-between gap-2 px-2 py-1.5 bg-slate-950/70 rounded-xl border border-slate-800 text-[8.5px]">
-                    <!-- Left: Playback buttons (tall buttons matching two-tier height) -->
+                <div class="flex items-center justify-between gap-1.5 px-2 py-1.5 bg-slate-950/70 rounded-xl border border-slate-800 text-[8.5px]">
+                    <!-- Left: Playback controls (Text on top, Small buttons on bottom) -->
                     <div class="flex items-center gap-1 shrink-0">
-                        <button id="wave-play-btn" class="h-[34px] w-7 rounded ${curIsPlaying ? 'bg-red-600 hover:bg-red-500' : 'bg-cyan-600 hover:bg-cyan-500'} text-white font-bold transition flex items-center justify-center shadow-sm active:scale-95 cursor-pointer shrink-0" title="PLAY / STOP">
-                            <i id="wave-play-icon" data-lucide="${curIsPlaying ? 'square' : 'play'}" class="w-3.5 h-3.5"></i>
-                        </button>
-                        <button id="wave-loop-btn" class="h-[34px] w-7 rounded border ${loopActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0" title="LOOP (ループ再生 ON/OFF)">
-                            <i data-lucide="repeat" class="w-3.5 h-3.5"></i>
-                        </button>
-                        <button id="wave-retrigger-btn" class="h-[34px] w-7 rounded border ${retriggerActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0" title="RETRIGGER (ON: 毎回先頭から再生 / OFF: 完走するまでトリガー無視)">
-                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
-                        </button>
+                        <div class="flex flex-col items-center gap-1">
+                            <span class="text-[7px] font-mono font-bold leading-tight text-slate-400">PLAY</span>
+                            <button id="wave-play-btn" class="h-5 w-6 rounded ${curIsPlaying ? 'bg-red-600 hover:bg-red-500' : 'bg-cyan-600 hover:bg-cyan-500'} text-white font-bold transition flex items-center justify-center shadow-sm active:scale-95 cursor-pointer shrink-0" title="PLAY / STOP">
+                                <i id="wave-play-icon" data-lucide="${curIsPlaying ? 'square' : 'play'}" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                        <div class="flex flex-col items-center gap-1">
+                            <span class="text-[7px] font-mono font-bold leading-tight text-slate-400">LOOP</span>
+                            <button id="wave-loop-btn" class="h-5 w-6 rounded border ${loopActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0" title="LOOP (ループ再生 ON/OFF)">
+                                <i data-lucide="repeat" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                        <div class="flex flex-col items-center gap-1">
+                            <span class="text-[7px] font-mono font-bold leading-tight text-slate-400">RETR</span>
+                            <button id="wave-retrigger-btn" class="h-5 w-6 rounded border ${retriggerActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0" title="RETRIGGER (ON: 毎回先頭から再生 / OFF: 完走するまでトリガー無視)">
+                                <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="w-[1px] h-8 bg-slate-800 shrink-0"></div>
 
-                    <!-- Center: SPEED & Pitch Mode / Semi Quantize Slider (Two-tier) -->
-                    <div class="flex-1 min-w-[110px] flex flex-col justify-center gap-1">
+                    <!-- Center: SPEED & Pitch Mode / QTZ Quantize Slider (Two-tier) -->
+                    <div class="flex-1 min-w-[105px] flex flex-col justify-center gap-1">
                         <!-- Top Text Area -->
                         <div class="flex items-center justify-between text-[8px] font-mono font-bold leading-tight">
                             <div class="flex items-center gap-1">
-                                <span class="text-slate-400 text-[7px] font-mono font-bold">MODE:</span>
-                                <button id="wave-pitch-mode-btn" class="px-1.5 py-0.5 rounded border ${pitchActive ? 'bg-purple-950 text-purple-300 border-purple-500 shadow-sm shadow-purple-500/20' : 'bg-slate-900 text-cyan-400 border-slate-700 hover:border-cyan-500/60'} text-[7.5px] font-mono font-bold transition cursor-pointer leading-none" title="クリックでモード切替: SPEED (再生速度＆ピッチ連動) ⇔ PITCH (WSOLA位相合わせグレイン・再生時間固定)">
-                                    ${pitchActive ? 'PITCH (GRAIN)' : 'SPEED (VARI)'}
+                                <button id="wave-pitch-mode-btn" class="px-1.5 py-0.5 rounded border ${pitchActive ? 'bg-purple-950 text-purple-300 border-purple-500 shadow-sm shadow-purple-500/20' : 'bg-slate-900 text-cyan-400 border-slate-700 hover:border-cyan-500/60'} text-[7.5px] font-mono font-bold transition cursor-pointer leading-none" title="クリックでモード切替: normal (再生速度＆ピッチ連動) ⇔ PITCH (WSOLA位相合わせグレイン・再生時間固定)">
+                                    ${pitchActive ? 'PITCH' : 'normal'}
                                 </button>
-                                <button id="wave-semi-mode-btn" class="px-1.5 py-0.5 rounded border ${semiActive ? 'bg-amber-950 text-amber-300 border-amber-500 shadow-sm shadow-amber-500/20' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-amber-500/60'} text-[7.5px] font-mono font-bold transition cursor-pointer leading-none" title="SEMI クオンタイズ (ON: 半音=1/12oct単位でステップ調整 / OFF: 無段階調整)">
-                                    SEMI
+                                <button id="wave-semi-mode-btn" class="px-1.5 py-0.5 rounded border ${semiActive ? 'bg-amber-950 text-amber-300 border-amber-500 shadow-sm shadow-amber-500/20' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-amber-500/60'} text-[7.5px] font-mono font-bold transition cursor-pointer leading-none" title="クオンタイズ (ON: 半音=1/12oct単位でステップ調整 / OFF: 無段階調整)">
+                                    QTZ
                                 </button>
                             </div>
                             <span id="wave-slider-speed-disp" class="${semiActive ? 'text-amber-300' : (pitchActive ? 'text-purple-300' : 'text-cyan-300')} font-mono text-[8.5px] ${isSpeedPatched ? 'opacity-40 pointer-events-none' : 'cursor-ns-resize hover:bg-slate-800/80'} px-1 rounded leading-none">${speedDisp}</span>
