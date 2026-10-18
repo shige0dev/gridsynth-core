@@ -1,7 +1,7 @@
 // src/ui/wave-modal.js
-import { UIHelpers } from './helpers.js?v=245';
-import { WaveCodec } from '../audio/wave-codec.js?v=245';
-import { WaveView } from './wave-view.js?v=245';
+import { UIHelpers } from './helpers.js?v=246';
+import { WaveCodec } from '../audio/wave-codec.js?v=246';
+import { WaveView } from './wave-view.js?v=246';
 
 /**
  * WAVE Module Modal Renderer & Event Controller

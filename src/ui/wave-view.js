@@ -303,9 +303,29 @@ export const WaveView = {
                 effEnd: data?.effEnd
             });
         }
-        cell?.querySelectorAll('[data-wave-bar]').forEach(bar => {
-            bar.classList.toggle('bar-active-audio', Boolean(data?.isPlaying));
-        });
+        if (cell) {
+            const playheadEl = cell.querySelector('[data-wave-panel-playhead]');
+            if (playheadEl) {
+                const isWavePlaying = Boolean(data?.isPlaying);
+                if (isWavePlaying) {
+                    playheadEl.style.display = 'block';
+                    const pct = Math.max(0, Math.min(1, data?.playhead ?? 0.0)) * 100;
+                    playheadEl.style.left = `${pct.toFixed(1)}%`;
+                } else {
+                    playheadEl.style.display = 'none';
+                }
+            }
+
+            const rangeEl = cell.querySelector('[data-wave-panel-range]');
+            if (rangeEl && m) {
+                const effS = data?.effStart !== undefined ? data.effStart : (m.start ?? 0.0);
+                const effE = data?.effEnd !== undefined ? data.effEnd : (m.end ?? 1.0);
+                const rMin = Math.max(0, Math.min(1, Math.min(effS, effE))) * 100;
+                const rWidth = Math.max(0, Math.min(100, Math.abs(effE - effS) * 100));
+                rangeEl.style.left = `${rMin.toFixed(1)}%`;
+                rangeEl.style.width = `${rWidth.toFixed(1)}%`;
+            }
+        }
     }
 };
 

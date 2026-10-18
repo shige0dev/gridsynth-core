@@ -1,8 +1,8 @@
 // src/modules/defs/wave.js
-import { UIHelpers } from '../../ui/helpers.js?v=245';
-import { WaveCodec } from '../../audio/wave-codec.js?v=245';
-import { WaveView } from '../../ui/wave-view.js?v=245';
-import { WaveModal } from '../../ui/wave-modal.js?v=245';
+import { UIHelpers } from '../../ui/helpers.js?v=246';
+import { WaveCodec } from '../../audio/wave-codec.js?v=246';
+import { WaveView } from '../../ui/wave-view.js?v=246';
+import { WaveModal } from '../../ui/wave-modal.js?v=246';
 
 export const WAVE = {
     color: 'cyan',
@@ -44,14 +44,16 @@ export const WAVE = {
         ]
     }),
     renderGrid: (m) => {
-        const startPct = Math.max(5, Math.min(100, Math.round((m.start ?? 0) * 100)));
-        const endPct = Math.max(5, Math.min(100, Math.round((m.end ?? 1) * 100)));
-        const spdPct = Math.max(5, Math.min(100, Math.round(((m.speed ?? 1.0) / 4.0) * 100)));
-        return `<div class="flex items-center justify-center w-full h-full pointer-events-none">${UIHelpers.renderPanelBars([
-            { pct: startPct, innerCls: 'wave-bar-start', attrs: 'data-wave-bar="start"', width: 'w-2' },
-            { pct: endPct, innerCls: 'wave-bar-end', attrs: 'data-wave-bar="end"', width: 'w-2' },
-            { pct: spdPct, innerCls: 'wave-bar-spd', attrs: 'data-wave-bar="spd"', width: 'w-2' }
-        ], { gapCls: 'gap-1.5', theme: 'audio' })}</div>`;
+        const bounds = WaveView.resolveEffectiveBounds(m);
+        const rMin = Math.min(bounds.effStart, bounds.effEnd) * 100;
+        const rWidth = Math.abs(bounds.effEnd - bounds.effStart) * 100;
+        return `<div class="flex items-center justify-center w-full h-full pointer-events-none">
+            <div class="w-14 h-7 rounded border border-slate-700/80 bg-slate-950 p-[1px] relative overflow-hidden flex items-center justify-center shadow-inner">
+                <div class="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 border-t border-slate-800/80"></div>
+                <div data-wave-panel-range class="absolute top-0 bottom-0 bg-cyan-500/20 border-x border-cyan-500/40" style="left: ${rMin.toFixed(1)}%; width: ${rWidth.toFixed(1)}%;"></div>
+                <div data-wave-panel-playhead class="absolute top-0 bottom-0 w-[1.5px] bg-yellow-400 drop-shadow-[0_0_3px_rgba(250,204,21,1)] z-10" style="left: 0%; display: none;"></div>
+            </div>
+        </div>`;
     },
     renderModal: (m, ctx) => WaveModal.renderModal(m, ctx),
     bindEvents: (m, ctx, onChange) => WaveModal.bindEvents(m, ctx, onChange),
