@@ -1,5 +1,5 @@
 import { safeClone, parseConn, isSubModule, normalizeSubPort, isPortMatching } from './utils.js?v=236';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=237';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=238';
 import { findSubpatchTemplate, FACTORY_SUBPATCHES } from '../presets/subpatches.js';
 
 /**

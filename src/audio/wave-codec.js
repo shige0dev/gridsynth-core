@@ -408,6 +408,29 @@ export const WaveCodec = {
             buf[i] = Math.sin(2 * Math.PI * freq * t) * 0.7 * env;
         }
         return buf;
+    },
+
+    /**
+     * Downsample Float32Array to an array of peak amplitudes (0.0 - 1.0) for waveform display.
+     * @param {Float32Array} buffer
+     * @param {number} [numBins=64]
+     * @returns {number[]}
+     */
+    extractPeaks(buffer, numBins = 64) {
+        const peaks = new Float32Array(numBins);
+        if (!buffer || buffer.length === 0) return Array.from(peaks);
+        const step = Math.max(1, Math.floor(buffer.length / numBins));
+        for (let b = 0; b < numBins; b++) {
+            let max = 0;
+            const start = b * step;
+            const end = Math.min(buffer.length, start + step);
+            for (let i = start; i < end; i++) {
+                const abs = Math.abs(buffer[i]);
+                if (abs > max) max = abs;
+            }
+            peaks[b] = Math.min(1.0, max);
+        }
+        return Array.from(peaks);
     }
 };
 

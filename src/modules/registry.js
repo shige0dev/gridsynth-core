@@ -19,7 +19,7 @@ import { fmDefs } from './defs/fm.js?v=187';
 import { scaleDefs } from './defs/scale.js?v=217';
 import { rfDefs } from './defs/rf.js?v=217';
 import { arDefs } from './defs/ar.js?v=217';
-import { waveDefs, tapeDefs } from './defs/wave.js?v=237';
+import { waveDefs, tapeDefs } from './defs/wave.js?v=238';
 
 export const MODULE_REGISTRY = {
     ...vcoDefs,

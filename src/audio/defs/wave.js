@@ -1,5 +1,5 @@
 // src/audio/defs/wave.js
-import { WaveCodec, TapeCodec } from '../wave-codec.js';
+import { WaveCodec, TapeCodec } from '../wave-codec.js?v=238';
 
 export const WAVE = {
     create: (ctx, d, patch, eng) => {
@@ -50,20 +50,7 @@ export const WAVE = {
                     d.duration = res.duration;
                     d.sampleRate = res.sampleRate;
                     if (!d.peaks || d.peaks.length === 0) {
-                        const numBins = 64;
-                        const peaks = new Float32Array(numBins);
-                        const step = Math.floor(res.buffer.length / numBins);
-                        for (let b = 0; b < numBins; b++) {
-                            let max = 0;
-                            const st = b * step;
-                            const ed = Math.min(res.buffer.length, st + step);
-                            for (let i = st; i < ed; i++) {
-                                const abs = Math.abs(res.buffer[i]);
-                                if (abs > max) max = abs;
-                            }
-                            peaks[b] = Math.min(1.0, max);
-                        }
-                        d.peaks = Array.from(peaks);
+                        d.peaks = WaveCodec.extractPeaks(res.buffer, 64);
                     }
                     d._peaks = d.peaks;
                 }
