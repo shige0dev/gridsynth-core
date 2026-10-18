@@ -47,7 +47,7 @@ export class WaveProcessor extends AudioWorkletProcessor {
                     this.bufferLength = this.buffer.length;
                     this.bufferSampleRate = data.sampleRate || 48000;
                     const eff = this.getEffectiveStartEnd(this.lastCvS, this.lastCvE);
-                    this.pointer = Math.max(0, Math.min(this.bufferLength - 1, eff.start * (this.bufferLength - 1)));
+                    this.pointer = Math.max(0, Math.min(this.bufferLength - 1, eff.effStart * (this.bufferLength - 1)));
                 }
             } else if (data.type === 'SET_PARAMS') {
                 if (data.start !== undefined) this.start = Math.max(0.0, Math.min(1.0, data.start));
@@ -60,8 +60,8 @@ export class WaveProcessor extends AudioWorkletProcessor {
                 if (data.snapMode !== undefined) this.snapMode = Boolean(data.snapMode);
                 if (Array.isArray(data.chops)) this.chops = data.chops.map(x => Math.max(0.0, Math.min(1.0, x)));
                 const eff = this.getEffectiveStartEnd(this.lastCvS, this.lastCvE);
-                this.lastEffStart = eff.start;
-                this.lastEffEnd = eff.end;
+                this.lastEffStart = eff.effStart;
+                this.lastEffEnd = eff.effEnd;
                 this.reportState();
             } else if (data.type === 'PLAY') {
                 this.isManualPlay = true;
@@ -81,7 +81,7 @@ export class WaveProcessor extends AudioWorkletProcessor {
                 this.firstPass = false;
                 this.isManualPlay = false;
                 const eff = this.getEffectiveStartEnd(this.lastCvS, this.lastCvE);
-                this.pointer = Math.max(0, Math.min(this.bufferLength - 1, eff.start * (this.bufferLength - 1)));
+                this.pointer = Math.max(0, Math.min(this.bufferLength - 1, eff.effStart * (this.bufferLength - 1)));
                 this.lastGateHi = false;
                 this.reportState();
             }
@@ -132,11 +132,17 @@ export class WaveProcessor extends AudioWorkletProcessor {
             }
         }
 
+        const effStart = Math.max(0.0, Math.min(1.0, s));
+        const effEnd = Math.max(0.0, Math.min(1.0, e));
+
         return {
-            start: Math.max(0.0, Math.min(1.0, s)),
-            end: Math.max(0.0, Math.min(1.0, e)),
+            effStart,
+            effEnd,
             rawStart: rawS,
-            rawEnd: rawE
+            rawEnd: rawE,
+            // Keep start/end as aliases for compatibility
+            start: effStart,
+            end: effEnd
         };
     }
 
@@ -146,7 +152,7 @@ export class WaveProcessor extends AudioWorkletProcessor {
             return;
         }
         const eff = this.getEffectiveStartEnd(cvStart, cvEnd);
-        this.pointer = Math.max(0, Math.min(this.bufferLength - 1, eff.start * (this.bufferLength - 1)));
+        this.pointer = Math.max(0, Math.min(this.bufferLength - 1, eff.effStart * (this.bufferLength - 1)));
         this.isPlaying = true;
         this.firstPass = true;
     }

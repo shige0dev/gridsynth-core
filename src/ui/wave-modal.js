@@ -1,7 +1,7 @@
 // src/ui/wave-modal.js
-import { UIHelpers } from './helpers.js?v=244';
-import { WaveCodec } from '../audio/wave-codec.js?v=244';
-import { WaveView } from './wave-view.js?v=244';
+import { UIHelpers } from './helpers.js?v=245';
+import { WaveCodec } from '../audio/wave-codec.js?v=245';
+import { WaveView } from './wave-view.js?v=245';
 
 /**
  * WAVE Module Modal Renderer & Event Controller
@@ -55,8 +55,8 @@ export const WaveModal = {
         const lockActive = Boolean(m.rangeLock) && !isAnyRangePatched;
 
         const bounds = WaveView.resolveEffectiveBounds(m);
-        const startDisp = WaveView.formatBoundDisp(m, bounds.rawStart, bounds.start, isStartPatched);
-        const endDisp = WaveView.formatBoundDisp(m, bounds.rawEnd, bounds.end, isEndPatched);
+        const startDisp = WaveView.formatBoundDisp(m, bounds.rawStart, bounds.effStart, isStartPatched);
+        const endDisp = WaveView.formatBoundDisp(m, bounds.rawEnd, bounds.effEnd, isEndPatched);
         const speedCvVal = m.speedCv !== undefined ? m.speedCv : Math.log2(m.speed || 1.0);
         const speedDisp = isSpeedPatched ? 'EXT' : WaveView.formatSpeed(speedCvVal);
         const durStr = `${(m.duration ?? 1.5).toFixed(2)}s`;
@@ -176,7 +176,7 @@ export const WaveModal = {
             const rawE = isEndPatched ? (st?.rawEnd ?? m.end ?? 1.0) : (m.end ?? 1.0);
             const bounds = WaveView.resolveEffectiveBounds(m, rawS, rawE);
             if (svgWrap) {
-                svgWrap.innerHTML = WaveView.renderWaveformSVG(m, st?.playhead ?? 0.0, Boolean(st?.isPlaying), bounds.start, bounds.end, bounds.rawStart, bounds.rawEnd);
+                svgWrap.innerHTML = WaveView.renderWaveformSVG(m, st?.playhead ?? 0.0, Boolean(st?.isPlaying), bounds.effStart, bounds.effEnd, bounds.rawStart, bounds.rawEnd);
             }
         };
 

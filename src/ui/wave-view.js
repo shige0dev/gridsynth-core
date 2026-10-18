@@ -78,11 +78,17 @@ export const WaveView = {
             }
         }
 
+        const effStart = Math.max(0.0, Math.min(1.0, s));
+        const effEnd = Math.max(0.0, Math.min(1.0, e));
+
         return {
-            start: Math.max(0.0, Math.min(1.0, s)),
-            end: Math.max(0.0, Math.min(1.0, e)),
+            effStart,
+            effEnd,
             rawStart: rawS,
-            rawEnd: rawE
+            rawEnd: rawE,
+            // Keep start/end as aliases for compatibility
+            start: effStart,
+            end: effEnd
         };
     },
 
@@ -98,8 +104,8 @@ export const WaveView = {
         const durMs = (m.duration || 1.5) * 1000;
 
         const bounds = this.resolveEffectiveBounds(m, rawStartVal, rawEndVal);
-        const startPct = Math.max(0, Math.min(1, effStartVal !== null ? effStartVal : bounds.start));
-        const endPct = Math.max(0, Math.min(1, effEndVal !== null ? effEndVal : bounds.end));
+        const startPct = Math.max(0, Math.min(1, effStartVal !== null ? effStartVal : bounds.effStart));
+        const endPct = Math.max(0, Math.min(1, effEndVal !== null ? effEndVal : bounds.effEnd));
         const cvStartX = PAD_X + bounds.rawStart * INNER_W;
         const cvEndX = PAD_X + bounds.rawEnd * INNER_W;
 
@@ -176,16 +182,16 @@ export const WaveView = {
                 ${timeLabelsSvg}
                 ${barsSvg}
                 ${chopsSvg}
-                <line id="wave-end-line" x1="${endX.toFixed(1)}" y1="${PAD_Y}" x2="${endX.toFixed(1)}" y2="${PAD_Y + INNER_H}" stroke="#22c55e" stroke-width="2.0" class="drop-shadow-[0_0_4px_rgba(34,197,94,0.85)]"/>
-                <line id="wave-start-line" x1="${startX.toFixed(1)}" y1="${PAD_Y}" x2="${startX.toFixed(1)}" y2="${PAD_Y + INNER_H}" stroke="#22c55e" stroke-width="2.0" class="drop-shadow-[0_0_4px_rgba(34,197,94,0.85)]"/>
-                <rect id="wave-end-badge" x="${(endX - 5).toFixed(1)}" y="${PAD_Y + 7}" width="10" height="9" rx="1.5" fill="#14532d" stroke="#22c55e" stroke-width="1"/>
-                <text id="wave-end-text" x="${endX.toFixed(1)}" y="${PAD_Y + 14}" fill="#4ade80" font-size="6.5" font-family="monospace" font-weight="bold" text-anchor="middle">E</text>
-                <rect id="wave-start-badge" x="${(startX - 5).toFixed(1)}" y="${PAD_Y + 7}" width="10" height="9" rx="1.5" fill="#14532d" stroke="#22c55e" stroke-width="1"/>
-                <text id="wave-start-text" x="${startX.toFixed(1)}" y="${PAD_Y + 14}" fill="#4ade80" font-size="6.5" font-family="monospace" font-weight="bold" text-anchor="middle">S</text>
-                <line id="wave-cv-start-line" x1="${cvStartX.toFixed(1)}" y1="${PAD_Y}" x2="${cvStartX.toFixed(1)}" y2="${PAD_Y + INNER_H}" stroke="#ffffff" stroke-width="1.3" class="drop-shadow-[0_0_4px_rgba(255,255,255,0.9)]"/>
-                <polygon id="wave-cv-start-notch" points="${startNotchPts}" fill="#ffffff"/>
-                <line id="wave-cv-end-line" x1="${cvEndX.toFixed(1)}" y1="${PAD_Y}" x2="${cvEndX.toFixed(1)}" y2="${PAD_Y + INNER_H}" stroke="#ffffff" stroke-width="1.3" class="drop-shadow-[0_0_4px_rgba(255,255,255,0.9)]"/>
-                <polygon id="wave-cv-end-notch" points="${endNotchPts}" fill="#ffffff"/>
+                <line id="wave-eff-end-line" x1="${endX.toFixed(1)}" y1="${PAD_Y}" x2="${endX.toFixed(1)}" y2="${PAD_Y + INNER_H}" stroke="#22c55e" stroke-width="2.0" class="drop-shadow-[0_0_4px_rgba(34,197,94,0.85)]"/>
+                <line id="wave-eff-start-line" x1="${startX.toFixed(1)}" y1="${PAD_Y}" x2="${startX.toFixed(1)}" y2="${PAD_Y + INNER_H}" stroke="#22c55e" stroke-width="2.0" class="drop-shadow-[0_0_4px_rgba(34,197,94,0.85)]"/>
+                <rect id="wave-eff-end-badge" x="${(endX - 5).toFixed(1)}" y="${PAD_Y + 7}" width="10" height="9" rx="1.5" fill="#14532d" stroke="#22c55e" stroke-width="1"/>
+                <text id="wave-eff-end-text" x="${endX.toFixed(1)}" y="${PAD_Y + 14}" fill="#4ade80" font-size="6.5" font-family="monospace" font-weight="bold" text-anchor="middle">E</text>
+                <rect id="wave-eff-start-badge" x="${(startX - 5).toFixed(1)}" y="${PAD_Y + 7}" width="10" height="9" rx="1.5" fill="#14532d" stroke="#22c55e" stroke-width="1"/>
+                <text id="wave-eff-start-text" x="${startX.toFixed(1)}" y="${PAD_Y + 14}" fill="#4ade80" font-size="6.5" font-family="monospace" font-weight="bold" text-anchor="middle">S</text>
+                <line id="wave-raw-start-line" x1="${cvStartX.toFixed(1)}" y1="${PAD_Y}" x2="${cvStartX.toFixed(1)}" y2="${PAD_Y + INNER_H}" stroke="#ffffff" stroke-width="1.3" class="drop-shadow-[0_0_4px_rgba(255,255,255,0.9)]"/>
+                <polygon id="wave-raw-start-notch" points="${startNotchPts}" fill="#ffffff"/>
+                <line id="wave-raw-end-line" x1="${cvEndX.toFixed(1)}" y1="${PAD_Y}" x2="${cvEndX.toFixed(1)}" y2="${PAD_Y + INNER_H}" stroke="#ffffff" stroke-width="1.3" class="drop-shadow-[0_0_4px_rgba(255,255,255,0.9)]"/>
+                <polygon id="wave-raw-end-notch" points="${endNotchPts}" fill="#ffffff"/>
                 <line id="wave-playhead-line" x1="${playX.toFixed(1)}" y1="${PAD_Y}" x2="${playX.toFixed(1)}" y2="${PAD_Y + INNER_H}" stroke="#fde047" stroke-width="2.2" class="drop-shadow-[0_0_8px_rgba(253,224,71,1)]" style="display: ${isPlaying ? 'block' : 'none'};"/>
             </svg>
         `;
@@ -202,22 +208,22 @@ export const WaveView = {
         const rawStart = state.rawStart ?? m.start ?? 0.0;
         const rawEnd = state.rawEnd ?? m.end ?? 1.0;
         const bounds = this.resolveEffectiveBounds(m, rawStart, rawEnd);
-        const effStart = (startPatched || endPatched) && state.effStart !== undefined ? state.effStart : bounds.start;
-        const effEnd = (startPatched || endPatched) && state.effEnd !== undefined ? state.effEnd : bounds.end;
+        const effStart = (startPatched || endPatched) && state.effStart !== undefined ? state.effStart : bounds.effStart;
+        const effEnd = (startPatched || endPatched) && state.effEnd !== undefined ? state.effEnd : bounds.effEnd;
 
         const startX = PAD_X + Math.max(0, Math.min(1, effStart)) * INNER_W;
         const endX = PAD_X + Math.max(0, Math.min(1, effEnd)) * INNER_W;
 
-        const startLine = targetModal.querySelector('#wave-start-line');
-        const startBadge = targetModal.querySelector('#wave-start-badge');
-        const startText = targetModal.querySelector('#wave-start-text');
+        const startLine = targetModal.querySelector('#wave-eff-start-line') || targetModal.querySelector('#wave-start-line');
+        const startBadge = targetModal.querySelector('#wave-eff-start-badge') || targetModal.querySelector('#wave-start-badge');
+        const startText = targetModal.querySelector('#wave-eff-start-text') || targetModal.querySelector('#wave-start-text');
         if (startLine) { startLine.setAttribute('x1', startX.toFixed(1)); startLine.setAttribute('x2', startX.toFixed(1)); }
         if (startBadge) startBadge.setAttribute('x', (startX - 5).toFixed(1));
         if (startText) startText.setAttribute('x', startX.toFixed(1));
 
-        const endLine = targetModal.querySelector('#wave-end-line');
-        const endBadge = targetModal.querySelector('#wave-end-badge');
-        const endText = targetModal.querySelector('#wave-end-text');
+        const endLine = targetModal.querySelector('#wave-eff-end-line') || targetModal.querySelector('#wave-end-line');
+        const endBadge = targetModal.querySelector('#wave-eff-end-badge') || targetModal.querySelector('#wave-end-badge');
+        const endText = targetModal.querySelector('#wave-eff-end-text') || targetModal.querySelector('#wave-end-text');
         if (endLine) { endLine.setAttribute('x1', endX.toFixed(1)); endLine.setAttribute('x2', endX.toFixed(1)); }
         if (endBadge) endBadge.setAttribute('x', (endX - 5).toFixed(1));
         if (endText) endText.setAttribute('x', endX.toFixed(1));
@@ -225,13 +231,13 @@ export const WaveView = {
         const cvStartX = PAD_X + Math.max(0, Math.min(1, bounds.rawStart)) * INNER_W;
         const cvEndX = PAD_X + Math.max(0, Math.min(1, bounds.rawEnd)) * INNER_W;
 
-        const cvStartLine = targetModal.querySelector('#wave-cv-start-line');
-        const cvStartNotch = targetModal.querySelector('#wave-cv-start-notch');
+        const cvStartLine = targetModal.querySelector('#wave-raw-start-line') || targetModal.querySelector('#wave-cv-start-line');
+        const cvStartNotch = targetModal.querySelector('#wave-raw-start-notch') || targetModal.querySelector('#wave-cv-start-notch');
         if (cvStartLine) { cvStartLine.style.display = 'block'; cvStartLine.setAttribute('x1', cvStartX.toFixed(1)); cvStartLine.setAttribute('x2', cvStartX.toFixed(1)); }
         if (cvStartNotch) { cvStartNotch.style.display = 'block'; cvStartNotch.setAttribute('points', `${cvStartX.toFixed(1)},${PAD_Y} ${cvStartX.toFixed(1)},${(PAD_Y + 6).toFixed(1)} ${(cvStartX + 5.5).toFixed(1)},${(PAD_Y + 3).toFixed(1)}`); }
 
-        const cvEndLine = targetModal.querySelector('#wave-cv-end-line');
-        const cvEndNotch = targetModal.querySelector('#wave-cv-end-notch');
+        const cvEndLine = targetModal.querySelector('#wave-raw-end-line') || targetModal.querySelector('#wave-cv-end-line');
+        const cvEndNotch = targetModal.querySelector('#wave-raw-end-notch') || targetModal.querySelector('#wave-cv-end-notch');
         if (cvEndLine) { cvEndLine.style.display = 'block'; cvEndLine.setAttribute('x1', cvEndX.toFixed(1)); cvEndLine.setAttribute('x2', cvEndX.toFixed(1)); }
         if (cvEndNotch) { cvEndNotch.style.display = 'block'; cvEndNotch.setAttribute('points', `${cvEndX.toFixed(1)},${PAD_Y} ${cvEndX.toFixed(1)},${(PAD_Y + 6).toFixed(1)} ${(cvEndX - 5.5).toFixed(1)},${(PAD_Y + 3).toFixed(1)}`); }
 
