@@ -242,25 +242,24 @@ export const TAPE = {
                 </div>
 
                 <!-- Row 1: PLAY Button, LOOP Button, RETRIG Button, and SPEED Slider -->
-                <div class="flex items-center justify-between gap-2 px-2.5 py-1.5 bg-slate-950/70 rounded-xl border border-slate-800 text-[8.5px]">
-                    <!-- Control Buttons -->
-                    <div class="flex items-center gap-1.5 shrink-0">
-                        <button id="tape-play-btn" class="h-6 px-2.5 rounded bg-cyan-600 hover:bg-cyan-500 text-white font-bold transition flex items-center gap-1 shadow-sm text-[8px] active:scale-95 cursor-pointer shrink-0">
-                            <i data-lucide="play" class="w-2.5 h-2.5"></i>
-                            <span id="tape-play-text">PLAY</span>
+                <div class="flex items-center justify-between gap-2 px-2 py-1.5 bg-slate-950/70 rounded-xl border border-slate-800 text-[8.5px]">
+                    <!-- Control Buttons (Icon Only for maximum space) -->
+                    <div class="flex items-center gap-1 shrink-0">
+                        <button id="tape-play-btn" class="h-6 w-7 rounded bg-cyan-600 hover:bg-cyan-500 text-white font-bold transition flex items-center justify-center shadow-sm active:scale-95 cursor-pointer shrink-0" title="PLAY / STOP">
+                            <i id="tape-play-icon" data-lucide="play" class="w-3 h-3"></i>
                         </button>
-                        <button id="tape-loop-btn" class="h-6 px-2 rounded border ${loopActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition text-[8px] cursor-pointer shrink-0" title="ループ再生の有効/無効">
-                            LOOP: <span id="tape-loop-text">${loopActive ? 'ON' : 'OFF'}</span>
+                        <button id="tape-loop-btn" class="h-6 w-7 rounded border ${loopActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0" title="LOOP (ループ再生 ON/OFF)">
+                            <i data-lucide="repeat" class="w-3 h-3"></i>
                         </button>
-                        <button id="tape-retrigger-btn" class="h-6 px-2 rounded border ${retriggerActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition text-[8px] cursor-pointer shrink-0" title="トリガー動作 (RETRIG: ON=毎回到頭再生 / OFF=完走までトリガー無視)">
-                            RETRIG: <span id="tape-retrigger-text">${retriggerActive ? 'ON' : 'OFF'}</span>
+                        <button id="tape-retrigger-btn" class="h-6 w-7 rounded border ${retriggerActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0" title="RETRIGGER (ON: 毎回到頭再生 / OFF: 完走までトリガー無視)">
+                            <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
                         </button>
                     </div>
 
                     <div class="w-[1px] h-6 bg-slate-800 shrink-0"></div>
 
                     <!-- SPEED Horizontal Slider (Exponential: /4, /2, x1, x2, x4) -->
-                    <div class="flex-1 min-w-[110px] flex flex-col justify-center gap-0.5 ${isSpeedPatched ? 'opacity-30 pointer-events-none' : ''}">
+                    <div class="flex-1 min-w-[120px] flex flex-col justify-center gap-0.5 ${isSpeedPatched ? 'opacity-30 pointer-events-none' : ''}">
                         <div class="flex items-center justify-between text-[8px] font-mono font-bold leading-tight">
                             <span class="text-cyan-400">SPEED</span>
                             <span id="tape-slider-speed-disp" class="text-cyan-300 font-mono text-[8.5px] cursor-ns-resize hover:bg-slate-800/80 px-1 rounded leading-none">${speedDisp}</span>
@@ -277,36 +276,30 @@ export const TAPE = {
                 </div>
 
                 <!-- Row 2: Enlarge START & END Sliders (Spacious & High Precision) -->
-                <div class="flex items-center justify-between gap-3 px-3 py-2 bg-slate-950/70 rounded-xl border border-slate-800 shadow-sm">
+                <div class="flex items-center justify-between gap-2 px-2.5 py-1.5 bg-slate-950/70 rounded-xl border border-slate-800 shadow-sm">
                     <!-- START (Large Horizontal Slider) -->
-                    <div class="flex-1 min-w-0 flex flex-col gap-1 ${isStartPatched ? 'opacity-30 pointer-events-none' : ''}">
-                        <div class="flex items-center justify-between text-[8.5px] font-mono font-bold leading-tight">
-                            <div class="flex items-center gap-1 text-emerald-400">
-                                <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(34,197,94,0.8)]"></span>
-                                <span class="text-[9px]">START</span>
-                            </div>
-                            <span id="tape-slider-start-disp" class="text-emerald-300 font-mono text-[9px] font-bold cursor-ns-resize hover:bg-slate-800/80 px-1.5 py-0.5 rounded leading-none">${startDisp}</span>
+                    <div class="flex-1 min-w-0 flex flex-col gap-0.5 ${isStartPatched ? 'opacity-30 pointer-events-none' : ''}">
+                        <div class="flex items-center justify-between gap-1 text-[8px] font-mono font-bold leading-tight whitespace-nowrap overflow-hidden">
+                            <span class="text-[8.5px] text-emerald-400 shrink-0">START</span>
+                            <span id="tape-slider-start-disp" class="text-emerald-300 font-mono text-[8px] font-bold cursor-ns-resize hover:bg-slate-800/80 px-1 py-0.5 rounded leading-none truncate">${startDisp}</span>
                         </div>
                         <input type="range" id="tape-slider-start" min="0.0" max="1.0" step="0.005" value="${m.start ?? 0.0}" class="w-full h-2.5 bg-slate-800 rounded-lg accent-emerald-400 cursor-pointer" ${isStartPatched ? 'disabled' : ''} title="開始位置 (0%〜100%)">
                     </div>
 
-                    <div class="w-[1px] h-8 bg-slate-800/90 shrink-0"></div>
+                    <div class="w-[1px] h-7 bg-slate-800/90 shrink-0"></div>
 
                     <!-- END (Large Horizontal Slider) -->
-                    <div class="flex-1 min-w-0 flex flex-col gap-1 ${isEndPatched ? 'opacity-30 pointer-events-none' : ''}">
-                        <div class="flex items-center justify-between text-[8.5px] font-mono font-bold leading-tight">
-                            <div class="flex items-center gap-1 text-emerald-400">
-                                <span class="inline-block w-2.5 h-2.5 rounded-full border border-emerald-500 bg-emerald-950 shadow-[0_0_4px_rgba(34,197,94,0.5)]"></span>
-                                <span class="text-[9px]">END</span>
-                            </div>
-                            <span id="tape-slider-end-disp" class="text-emerald-300 font-mono text-[9px] font-bold cursor-ns-resize hover:bg-slate-800/80 px-1.5 py-0.5 rounded leading-none">${endDisp}</span>
+                    <div class="flex-1 min-w-0 flex flex-col gap-0.5 ${isEndPatched ? 'opacity-30 pointer-events-none' : ''}">
+                        <div class="flex items-center justify-between gap-1 text-[8px] font-mono font-bold leading-tight whitespace-nowrap overflow-hidden">
+                            <span class="text-[8.5px] text-emerald-400 shrink-0">END</span>
+                            <span id="tape-slider-end-disp" class="text-emerald-300 font-mono text-[8px] font-bold cursor-ns-resize hover:bg-slate-800/80 px-1 py-0.5 rounded leading-none truncate">${endDisp}</span>
                         </div>
                         <input type="range" id="tape-slider-end" min="0.0" max="1.0" step="0.005" value="${m.end ?? 1.0}" class="w-full h-2.5 bg-slate-800 rounded-lg accent-emerald-400 cursor-pointer" ${isEndPatched ? 'disabled' : ''} title="終了位置 (0%〜100%)">
                     </div>
                 </div>
 
                 <div class="text-[7.5px] text-slate-500 px-1 text-center italic">
-                    * PLAY: 単体試聴（スピーカー未接続でも内部再生） | RETRIG: OFF時は完走までトリガー無視
+                    * PLAY: 単体試聴 | LOOP: ループ切替 | RETRIG: ON=頭出し再開 / OFF=完走までトリガー無視
                 </div>
             </div>
         `;
@@ -524,36 +517,35 @@ export const TAPE = {
 
                 if (st?.isPlaying) {
                     activeInst.stop?.();
-                    if (playText) playText.textContent = 'PLAY';
+                    playBtn.innerHTML = `<i data-lucide="play" class="w-3 h-3"></i>`;
+                    if (window.lucide) window.lucide.createIcons({ root: playBtn });
                     if (playheadLine) playheadLine.style.display = 'none';
                     if (progressFill) progressFill.style.opacity = '0';
                     if (progressDot) progressDot.style.left = `${(startP * 100).toFixed(1)}%`;
                 } else {
                     activeInst.testPlay?.();
-                    if (playText) playText.textContent = 'STOP';
+                    playBtn.innerHTML = `<i data-lucide="square" class="w-3 h-3"></i>`;
+                    if (window.lucide) window.lucide.createIcons({ root: playBtn });
                     if (playheadLine) playheadLine.style.display = 'block';
                 }
             });
         }
 
-        // Loop Toggle
+        // Loop Toggle (Icon Only)
         const loopBtn = root.querySelector('#tape-loop-btn');
-        const loopText = root.querySelector('#tape-loop-text');
         if (loopBtn) {
             loopBtn.addEventListener('click', () => {
                 m.loop = !m.loop;
                 const activeInst = TAPE.getActiveInst(ctx, m);
                 const synth = ctx?.synth || window.__GS_SYNTH__;
                 activeInst?.update?.(synth?.ctx, activeInst, m);
-                if (loopText) loopText.textContent = m.loop ? 'ON' : 'OFF';
-                loopBtn.className = `h-6 px-2 rounded border ${m.loop ? 'bg-cyan-950 text-cyan-300 border-cyan-500' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition text-[8px] cursor-pointer shrink-0`;
+                loopBtn.className = `h-6 w-7 rounded border ${m.loop ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0`;
                 cb();
             });
         }
 
-        // Retrigger Mode Toggle (RETRIG: ON = always restart / OFF = finish playback before retriggering)
+        // Retrigger Mode Toggle (Icon Only: ON = restart / OFF = finish playback before retriggering)
         const retriggerBtn = root.querySelector('#tape-retrigger-btn');
-        const retriggerText = root.querySelector('#tape-retrigger-text');
         if (retriggerBtn) {
             retriggerBtn.addEventListener('click', () => {
                 m.retrigger = !(m.retrigger !== false);
@@ -561,8 +553,7 @@ export const TAPE = {
                 const synth = ctx?.synth || window.__GS_SYNTH__;
                 activeInst?.update?.(synth?.ctx, activeInst, m);
                 const on = m.retrigger !== false;
-                if (retriggerText) retriggerText.textContent = on ? 'ON' : 'OFF';
-                retriggerBtn.className = `h-6 px-2 rounded border ${on ? 'bg-cyan-950 text-cyan-300 border-cyan-500' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition text-[8px] cursor-pointer shrink-0`;
+                retriggerBtn.className = `h-6 w-7 rounded border ${on ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0`;
                 cb();
             });
         }
@@ -682,10 +673,16 @@ export const TAPE = {
                 }
             }
 
-            // 4. Trigger / Play Button Label
-            const playText = targetModal.querySelector('#tape-play-text');
-            if (playText) {
-                playText.textContent = isTapePlaying ? 'STOP' : 'PLAY';
+            // 4. Trigger / Play Button Icon
+            const playBtn = targetModal.querySelector('#tape-play-btn');
+            if (playBtn) {
+                const icon = playBtn.querySelector('[data-lucide]');
+                const cur = icon?.getAttribute('data-lucide');
+                const target = isTapePlaying ? 'square' : 'play';
+                if (cur !== target) {
+                    playBtn.innerHTML = `<i data-lucide="${target}" class="w-3 h-3"></i>`;
+                    if (window.lucide) window.lucide.createIcons({ root: playBtn });
+                }
             }
 
             // 5. Update CV-patched start/end display badges
