@@ -1,5 +1,5 @@
 // src/audio/defs/wave.js
-import { WaveCodec } from '../wave-codec.js?v=253';
+import { WaveCodec } from '../wave-codec.js?v=254';
 
 export const WAVE = {
     create: (ctx, d, patch, eng) => {
@@ -17,6 +17,7 @@ export const WAVE = {
             end: d.end ?? 1.0,
             speed: d.speed ?? 1.0,
             pitchMode: Boolean(d.pitchMode),
+            semiMode: Boolean(d.semiMode),
             loop: d.loop ?? false,
             retrigger: d.retrigger ?? true,
             startPatched: Boolean(isStartPatched),
@@ -210,6 +211,7 @@ export const WAVE = {
             end: d.end ?? 1.0,
             speed: d.speed ?? 1.0,
             pitchMode: Boolean(d.pitchMode),
+            semiMode: Boolean(d.semiMode),
             loop: d.loop ?? false,
             retrigger: d.retrigger ?? true,
             startPatched: Boolean(isStartPatched),

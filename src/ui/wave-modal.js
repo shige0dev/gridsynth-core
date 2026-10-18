@@ -1,8 +1,8 @@
 // src/ui/wave-modal.js
-import { UIHelpers } from './helpers.js?v=253';
-import { WaveCodec } from '../audio/wave-codec.js?v=253';
-import { WaveView } from './wave-view.js?v=253';
-import { JsonIoDialog } from './json-io-dialog.js?v=253';
+import { UIHelpers } from './helpers.js?v=254';
+import { WaveCodec } from '../audio/wave-codec.js?v=254';
+import { WaveView } from './wave-view.js?v=254';
+import { JsonIoDialog } from './json-io-dialog.js?v=254';
 
 /**
  * WAVE Module Modal Renderer & Event Controller
@@ -132,7 +132,7 @@ export const WaveModal = {
                         // Apply WAVE module properties
                         const allowedKeys = [
                             'name', 'codec', 'sampleRate', 'maxDuration', 'duration',
-                            'start', 'end', 'speed', 'pitchMode', 'loop', 'retrigger',
+                            'start', 'end', 'speed', 'pitchMode', 'semiMode', 'loop', 'retrigger',
                             'chopMode', 'chops', 'snapMode', 'rangeLock',
                             'data', 'peaks'
                         ];
@@ -368,12 +368,15 @@ export const WaveModal = {
         const isAnyRangePatched = Boolean(isStartPatched || isEndPatched);
         const lockActive = Boolean(m.rangeLock) && !isAnyRangePatched;
         const pitchActive = Boolean(m.pitchMode);
+        const semiActive = Boolean(m.semiMode);
 
         const bounds = WaveView.resolveEffectiveBounds(m);
         const startDisp = WaveView.formatBoundDisp(m, bounds.rawStart, bounds.effStart, isStartPatched);
         const endDisp = WaveView.formatBoundDisp(m, bounds.rawEnd, bounds.effEnd, isEndPatched);
-        const speedCvVal = m.speedCv !== undefined ? m.speedCv : Math.log2(m.speed || 1.0);
-        const speedDisp = isSpeedPatched ? 'EXT' : (pitchActive ? WaveView.formatPitch(speedCvVal) : WaveView.formatSpeed(speedCvVal));
+        const rawSpeedCv = m.speedCv !== undefined ? m.speedCv : Math.log2(m.speed || 1.0);
+        const semiInt = Math.max(-24, Math.min(24, Math.round(rawSpeedCv * 12)));
+        const speedCvVal = semiActive ? (semiInt / 12) : rawSpeedCv;
+        const speedDisp = isSpeedPatched ? 'EXT' : (semiActive ? WaveView.formatSemi(semiInt) : (pitchActive ? WaveView.formatPitch(speedCvVal) : WaveView.formatSpeed(speedCvVal)));
         const durStr = `${(m.duration ?? 1.5).toFixed(2)}s`;
         const loopActive = Boolean(m.loop);
         const retriggerActive = m.retrigger !== false;
@@ -455,19 +458,24 @@ export const WaveModal = {
                     <div class="flex-1 min-w-[120px] flex flex-col justify-center gap-0.5">
                         <div class="flex items-center justify-between text-[8px] font-mono font-bold leading-tight">
                             <div class="flex items-center gap-1">
-                                <span class="text-slate-400 text-[7.5px] font-mono font-bold">SPEED MODE:</span>
-                                <button id="wave-pitch-mode-btn" class="px-1.5 py-0.5 rounded border ${pitchActive ? 'bg-purple-950 text-purple-300 border-purple-500 shadow-sm shadow-purple-500/20' : 'bg-slate-900 text-cyan-400 border-slate-700 hover:border-cyan-500/60'} text-[7.5px] font-mono font-bold transition cursor-pointer leading-none" title="クリックでモード切替: SPEED (再生速度＆ピッチ連動) ⇔ PITCH (再生時間固定・グレインピッチシフト)">
+                                <span class="text-slate-400 text-[7px] font-mono font-bold">MODE:</span>
+                                <button id="wave-pitch-mode-btn" class="px-1.5 py-0.5 rounded border ${pitchActive ? 'bg-purple-950 text-purple-300 border-purple-500 shadow-sm shadow-purple-500/20' : 'bg-slate-900 text-cyan-400 border-slate-700 hover:border-cyan-500/60'} text-[7.5px] font-mono font-bold transition cursor-pointer leading-none" title="クリックでモード切替: SPEED (再生速度＆ピッチ連動) ⇔ PITCH (WSOLA位相合わせグレイン・再生時間固定)">
                                     ${pitchActive ? 'PITCH (GRAIN)' : 'SPEED (VARI)'}
                                 </button>
+                                <button id="wave-semi-mode-btn" class="px-1.5 py-0.5 rounded border ${semiActive ? 'bg-amber-950 text-amber-300 border-amber-500 shadow-sm shadow-amber-500/20' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-amber-500/60'} text-[7.5px] font-mono font-bold transition cursor-pointer leading-none" title="SEMI クオンタイズ (ON: 半音=1/12oct単位でステップ調整 / OFF: 無段階調整)">
+                                    SEMI
+                                </button>
                             </div>
-                            <span id="wave-slider-speed-disp" class="${pitchActive ? 'text-purple-300' : 'text-cyan-300'} font-mono text-[8.5px] ${isSpeedPatched ? 'opacity-40 pointer-events-none' : 'cursor-ns-resize hover:bg-slate-800/80'} px-1 rounded leading-none">${speedDisp}</span>
+                            <span id="wave-slider-speed-disp" class="${semiActive ? 'text-amber-300' : (pitchActive ? 'text-purple-300' : 'text-cyan-300')} font-mono text-[8.5px] ${isSpeedPatched ? 'opacity-40 pointer-events-none' : 'cursor-ns-resize hover:bg-slate-800/80'} px-1 rounded leading-none">${speedDisp}</span>
                         </div>
                         <div class="${isSpeedPatched ? 'opacity-30 pointer-events-none' : ''} flex flex-col gap-0.5">
-                            <input type="range" id="wave-slider-speed" min="-2.0" max="2.0" step="0.05" value="${speedCvVal}" class="w-full h-1.5 bg-slate-800 rounded-lg ${pitchActive ? 'accent-purple-400' : 'accent-cyan-400'} cursor-pointer" ${isSpeedPatched ? 'disabled' : ''} title="${pitchActive ? 'ピッチシフト (-24st 〜 +24st / 再生時間固定)' : '再生速度 (/4, /2, x1, x2, x4)'}">
+                            <input type="range" id="wave-slider-speed" min="${semiActive ? -24 : -2.0}" max="${semiActive ? 24 : 2.0}" step="${semiActive ? 1 : 0.05}" value="${semiActive ? semiInt : speedCvVal}" class="w-full h-1.5 bg-slate-800 rounded-lg ${semiActive ? 'accent-amber-400' : (pitchActive ? 'accent-purple-400' : 'accent-cyan-400')} cursor-pointer" ${isSpeedPatched ? 'disabled' : ''} title="${semiActive ? '半音ステップ (-24semi 〜 +24semi / 1/12oct刻み)' : (pitchActive ? 'ピッチシフト (-24st 〜 +24st / 再生時間固定)' : '再生速度 (/4, /2, x1, x2, x4)')}">
                             <div class="flex justify-between px-0.5 text-[6.5px] font-mono text-slate-500 font-bold select-none pointer-events-none -mt-0.5">
-                                ${pitchActive
-                                    ? '<span>-24</span><span>-12</span><span class="text-purple-400">0st</span><span>+12</span><span>+24</span>'
-                                    : '<span>/4</span><span>/2</span><span class="text-cyan-400">x1</span><span>x2</span><span>x4</span>'}
+                                ${semiActive
+                                    ? '<span>-24</span><span>-12</span><span class="text-amber-400">0semi</span><span>+12</span><span>+24</span>'
+                                    : (pitchActive
+                                        ? '<span>-24</span><span>-12</span><span class="text-purple-400">0st</span><span>+12</span><span>+24</span>'
+                                        : '<span>/4</span><span>/2</span><span class="text-cyan-400">x1</span><span>x2</span><span>x4</span>')}
                             </div>
                         </div>
                     </div>
@@ -759,6 +767,18 @@ export const WaveModal = {
             ctx.reRenderModal?.();
         });
 
+        root.querySelector('#wave-semi-mode-btn')?.addEventListener('click', () => {
+            m.semiMode = !m.semiMode;
+            if (m.semiMode) {
+                const curCv = m.speedCv !== undefined ? m.speedCv : Math.log2(m.speed || 1.0);
+                const snappedSemi = Math.max(-24, Math.min(24, Math.round(curCv * 12)));
+                m.speedCv = snappedSemi / 12.0;
+                m.speed = Math.pow(2.0, m.speedCv);
+            }
+            syncRangeAndAudio();
+            ctx.reRenderModal?.();
+        });
+
         if (!isStartPatched) {
             UIHelpers.bindSlider('wave-slider-start', v => {
                 const b = WaveView.resolveEffectiveBounds(m, Math.max(0, Math.min(1, v)), m.end ?? 1.0);
@@ -772,11 +792,20 @@ export const WaveModal = {
             }, v => applyRangeCv('end', v), 1, 0.0, 1.0);
         }
         if (!isSpeedPatched) {
-            UIHelpers.bindSlider('wave-slider-speed', v => m.pitchMode ? WaveView.formatPitch(v) : WaveView.formatSpeed(v), v => {
-                m.speedCv = v;
-                m.speed = Math.pow(2.0, v);
-                syncRangeAndAudio();
-            }, 1, -2.0, 2.0);
+            if (m.semiMode) {
+                UIHelpers.bindSlider('wave-slider-speed', s => WaveView.formatSemi(s), s => {
+                    const snapped = Math.max(-24, Math.min(24, Math.round(s)));
+                    m.speedCv = snapped / 12.0;
+                    m.speed = Math.pow(2.0, m.speedCv);
+                    syncRangeAndAudio();
+                }, 1, -24, 24);
+            } else {
+                UIHelpers.bindSlider('wave-slider-speed', v => m.pitchMode ? WaveView.formatPitch(v) : WaveView.formatSpeed(v), v => {
+                    m.speedCv = v;
+                    m.speed = Math.pow(2.0, v);
+                    syncRangeAndAudio();
+                }, 1, -2.0, 2.0);
+            }
         }
     }
 };

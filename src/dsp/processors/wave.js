@@ -1,5 +1,5 @@
 // src/dsp/processors/wave.js
-import { WaveGrainShifter } from '../wave-grain-shifter.js?v=253';
+import { WaveGrainShifter } from '../wave-grain-shifter.js?v=254';
 
 export class WaveProcessor extends AudioWorkletProcessor {
     constructor() {
@@ -12,6 +12,7 @@ export class WaveProcessor extends AudioWorkletProcessor {
         this.end = 1.0;
         this.speed = 1.0;
         this.pitchMode = false;
+        this.semiMode = false;
         this.loop = false;
         this.retrigger = true;
         this.startPatched = false;
@@ -20,7 +21,7 @@ export class WaveProcessor extends AudioWorkletProcessor {
         this.chops = [];
 
         this.pointer = 0.0;
-        this.shifter = new WaveGrainShifter(0.036);
+        this.shifter = new WaveGrainShifter(0.068);
         this.isPlaying = false;
         this.lastGateHi = false;
         this.firstPass = true;
@@ -58,6 +59,7 @@ export class WaveProcessor extends AudioWorkletProcessor {
                 if (data.end !== undefined) this.end = Math.max(0.0, Math.min(1.0, data.end));
                 if (data.speed !== undefined) this.speed = Math.max(0.05, Math.min(8.0, data.speed));
                 if (data.pitchMode !== undefined) this.pitchMode = Boolean(data.pitchMode);
+                if (data.semiMode !== undefined) this.semiMode = Boolean(data.semiMode);
                 if (data.loop !== undefined) this.loop = Boolean(data.loop);
                 if (data.retrigger !== undefined) this.retrigger = Boolean(data.retrigger);
                 if (data.startPatched !== undefined) this.startPatched = Boolean(data.startPatched);
@@ -264,7 +266,8 @@ export class WaveProcessor extends AudioWorkletProcessor {
             let rate = this.speed;
             if (speedCvIn) {
                 const clampedCv = Math.max(-2.0, Math.min(2.0, speedCvIn[i]));
-                const cvMultiplier = Math.pow(2.0, clampedCv);
+                const effCv = this.semiMode ? (Math.round(clampedCv * 12.0) / 12.0) : clampedCv;
+                const cvMultiplier = Math.pow(2.0, effCv);
                 rate = this.speed * cvMultiplier;
             }
 

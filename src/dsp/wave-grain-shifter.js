@@ -3,12 +3,12 @@
 const TWO_PI = Math.PI * 2.0;
 
 /**
- * Lightweight Fixed-Crossfade Dual-Grain Pitch Shifter (No autocorrelation search).
+ * Lightweight WSOLA (Waveform Similarity Overlap-Add) Dual-Grain Pitch Shifter.
  * Keeps playback time/duration fixed while shifting pitch via two 180-degree out-of-phase
- * Hann-windowed read heads.
+ * Hann-windowed read heads with 2-stage coarse-to-fine phase alignment on grain reset.
  */
 export class WaveGrainShifter {
-    constructor(grainDurationSec = 0.036) {
+    constructor(grainDurationSec = 0.068) {
         this.grainDurationSec = grainDurationSec;
         this.phase = 0.0;
         this.headA = 0.0;
@@ -46,6 +46,84 @@ export class WaveGrainShifter {
     }
 
     /**
+     * 2-stage coarse-to-fine WSOLA phase alignment search.
+     * Finds the offset near `targetPos` whose waveform best matches the active head at `refPos`
+     * so that peaks/troughs align during the Hann crossfade without phase cancellation.
+     */
+    findAlignedPosition(buf, bufLen, targetPos, refPos, direction, minB, maxB, sr) {
+        const minI = Math.max(0, Math.floor(minB));
+        const maxI = Math.min(bufLen - 1, Math.ceil(maxB));
+        const span = maxI - minI;
+        if (span < 256) return targetPos;
+
+        const maxRadius = Math.min(Math.floor(sr * 0.015), Math.floor(span * 0.22));
+        const corrLen = Math.min(Math.floor(sr * 0.010), Math.floor(span * 0.18));
+        if (maxRadius < 16 || corrLen < 32) return targetPos;
+
+        const dirSign = direction >= 0 ? 1 : -1;
+        const refBase = Math.round(this.wrapInSlice(refPos, minI, maxI));
+        const targetBase = Math.round(this.wrapInSlice(targetPos, minI, maxI));
+
+        // Stage 1: Coarse search (step = 4 samples, template stride = 8)
+        let bestCoarseDelta = 0;
+        let bestCoarseErr = Infinity;
+
+        for (let delta = -maxRadius; delta <= maxRadius; delta += 4) {
+            let err = (delta * delta) * 1e-10;
+            const candStart = targetBase + delta;
+            for (let j = 0; j < corrLen; j += 8) {
+                const stepJ = j * dirSign;
+                let rIdx = refBase + stepJ;
+                if (rIdx > maxI) rIdx = minI + ((rIdx - minI) % span);
+                else if (rIdx < minI) rIdx = maxI - ((minI - rIdx) % span);
+
+                let cIdx = candStart + stepJ;
+                if (cIdx > maxI) cIdx = minI + ((cIdx - minI) % span);
+                else if (cIdx < minI) cIdx = maxI - ((minI - cIdx) % span);
+
+                const diff = buf[rIdx] - buf[cIdx];
+                err += diff * diff;
+                if (err >= bestCoarseErr) break;
+            }
+            if (err < bestCoarseErr) {
+                bestCoarseErr = err;
+                bestCoarseDelta = delta;
+            }
+        }
+
+        // Stage 2: Fine search around bestCoarseDelta (step = 1 sample, template stride = 4)
+        let bestDelta = bestCoarseDelta;
+        let bestFineErr = Infinity;
+        const fineMin = Math.max(-maxRadius, bestCoarseDelta - 4);
+        const fineMax = Math.min(maxRadius, bestCoarseDelta + 4);
+
+        for (let delta = fineMin; delta <= fineMax; delta += 1) {
+            let err = (delta * delta) * 1e-10;
+            const candStart = targetBase + delta;
+            for (let j = 0; j < corrLen; j += 4) {
+                const stepJ = j * dirSign;
+                let rIdx = refBase + stepJ;
+                if (rIdx > maxI) rIdx = minI + ((rIdx - minI) % span);
+                else if (rIdx < minI) rIdx = maxI - ((minI - rIdx) % span);
+
+                let cIdx = candStart + stepJ;
+                if (cIdx > maxI) cIdx = minI + ((cIdx - minI) % span);
+                else if (cIdx < minI) cIdx = maxI - ((minI - cIdx) % span);
+
+                const diff = buf[rIdx] - buf[cIdx];
+                err += diff * diff;
+                if (err >= bestFineErr) break;
+            }
+            if (err < bestFineErr) {
+                bestFineErr = err;
+                bestDelta = delta;
+            }
+        }
+
+        return targetPos + bestDelta;
+    }
+
+    /**
      * Computes one output sample in fixed-time pitch-shift mode.
      * @param {Float32Array} buf - Audio buffer
      * @param {number} bufLen - Buffer length in samples
@@ -69,20 +147,23 @@ export class WaveGrainShifter {
             return this.readLerp(buf, bufLen, basePointer);
         }
 
-        const grainSamples = Math.max(256, Math.round(this.grainDurationSec * sr));
+        const minB = Math.min(effStart, effEnd);
+        const maxB = Math.max(effStart, effEnd);
+
+        const grainSamples = Math.max(512, Math.round(this.grainDurationSec * sr));
         const phaseInc = 1.0 / grainSamples;
         const prevPhase = this.phase;
         let nextPhase = prevPhase + phaseInc;
 
-        // Grain A wraps at 1.0 -> 0.0 (where wA == 0.0)
+        // Grain A wraps at 1.0 -> 0.0 (where wA == 0.0 and Grain B is at peak wB == 1.0)
         if (nextPhase >= 1.0) {
             nextPhase -= 1.0;
-            this.headA = basePointer;
+            this.headA = this.findAlignedPosition(buf, bufLen, basePointer, this.headB, direction, minB, maxB, sr);
         }
 
-        // Grain B wraps when phase crosses 0.5 (where pB == 0.0 and wB == 0.0)
+        // Grain B wraps when phase crosses 0.5 (where wB == 0.0 and Grain A is at peak wA == 1.0)
         if (prevPhase < 0.5 && nextPhase >= 0.5) {
-            this.headB = basePointer;
+            this.headB = this.findAlignedPosition(buf, bufLen, basePointer, this.headA, direction, minB, maxB, sr);
         }
 
         this.phase = nextPhase;
@@ -90,9 +171,6 @@ export class WaveGrainShifter {
         // Hann window weights: wA + wB === 1.0
         const wA = 0.5 * (1.0 - Math.cos(TWO_PI * nextPhase));
         const wB = 1.0 - wA;
-
-        const minB = Math.min(effStart, effEnd);
-        const maxB = Math.max(effStart, effEnd);
 
         const posA = this.wrapInSlice(this.headA, minB, maxB);
         const posB = this.wrapInSlice(this.headB, minB, maxB);

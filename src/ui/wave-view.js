@@ -49,6 +49,12 @@ export const WaveView = {
         return Number.isInteger(st) ? `${sign}${st}st` : `${sign}${st.toFixed(1)}st`;
     },
 
+    formatSemi(semiInt) {
+        const s = Math.round(semiInt);
+        if (s === 0) return '0semi';
+        return s > 0 ? `+${s}semi` : `${s}semi`;
+    },
+
     /**
      * Convert raw Start/End CV values (0.0~1.0) into effective Start/End playback positions.
      */
