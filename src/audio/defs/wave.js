@@ -1,5 +1,5 @@
 // src/audio/defs/wave.js
-import { WaveCodec } from '../wave-codec.js?v=248';
+import { WaveCodec } from '../wave-codec.js?v=249';
 
 export const WAVE = {
     create: (ctx, d, patch, eng) => {
@@ -45,8 +45,25 @@ export const WAVE = {
                         d.peaks = WaveCodec.extractPeaks(res.buffer, 64);
                     }
                     d._peaks = d.peaks;
+
+                    // Propagate decoded buffer to any linked downstream WAVE modules
+                    if (eng?.modules) {
+                        Object.values(eng.modules).forEach(otherInst => {
+                            if (otherInst?.type === 'WAVE' && otherInst.data?._linkedRootId === d.id) {
+                                otherInst.data._buffer = res.buffer;
+                                otherInst.data.duration = res.duration;
+                                otherInst.data.sampleRate = res.sampleRate;
+                                otherInst.data.peaks = d.peaks ? [...d.peaks] : null;
+                                otherInst.data._peaks = otherInst.data.peaks || [];
+                                otherInst.setAudioBuffer?.(res.buffer, res.sampleRate);
+                                otherInst.update?.(ctx, otherInst, otherInst.data);
+                            }
+                        });
+                    }
                 }
             }).catch(() => {});
+        } else if (d._buffer && d._buffer.length > 0) {
+            sendBufferToWorklet(d._buffer, d.sampleRate);
         }
 
         const gateIn = ctx.createGain();

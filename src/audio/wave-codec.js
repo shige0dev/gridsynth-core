@@ -415,6 +415,89 @@ export const WaveCodec = {
             peaks[b] = Math.min(1.0, max);
         }
         return Array.from(peaks);
+    },
+
+    /**
+     * Resolves WAVE link_out -> link_in chains (both star and daisy-chain topologies)
+     * within a page and propagates the root WAVE's waveform table and chop settings
+     * to all downstream linked WAVE modules.
+     */
+    syncWaveLinks(pageData, synth = null, pageId = '0') {
+        if (!pageData || !pageData.modules) return [];
+        const mods = pageData.modules;
+        const conns = pageData.connections || [];
+
+        const parentMap = {};
+        conns.forEach(c => {
+            if (!c) return;
+            const fM = typeof c === 'object' ? c.from?.moduleId : c.split('>')[0]?.split(':')[0]?.trim();
+            const fP = typeof c === 'object' ? c.from?.port : c.split('>')[0]?.split(':')[1]?.trim();
+            const tM = typeof c === 'object' ? c.to?.moduleId : c.split('>')[1]?.split(':')[0]?.trim();
+            const tP = typeof c === 'object' ? c.to?.port : c.split('>')[1]?.split(':')[1]?.trim();
+            if (fM && tM && fP === 'link_out' && tP === 'link_in') {
+                if (mods[fM]?.type === 'WAVE' && mods[tM]?.type === 'WAVE') {
+                    parentMap[tM] = fM;
+                }
+            }
+        });
+
+        const findRootId = (startId) => {
+            let cur = startId;
+            const visited = new Set([cur]);
+            while (parentMap[cur]) {
+                const next = parentMap[cur];
+                if (visited.has(next)) break;
+                visited.add(next);
+                cur = next;
+            }
+            return cur !== startId ? cur : null;
+        };
+
+        const affectedIds = [];
+        Object.entries(mods).forEach(([mId, m]) => {
+            if (!m || m.type !== 'WAVE') return;
+            const rootId = findRootId(mId);
+            if (rootId && mods[rootId]) {
+                const rootMod = mods[rootId];
+                const prevChopMode = m.chopMode;
+                m._isLinked = true;
+                m._linkedRootId = rootId;
+                m.name = rootMod.name || 'Wave 1';
+                m.duration = rootMod.duration ?? 1.5;
+                m.sampleRate = rootMod.sampleRate ?? 48000;
+                const rootPeaks = rootMod.peaks || rootMod._peaks;
+                m.peaks = Array.isArray(rootPeaks) ? [...rootPeaks] : null;
+                m._peaks = m.peaks || [];
+                m._buffer = rootMod._buffer || null;
+                m.chopMode = rootMod.chopMode ?? 'off';
+                m.chops = Array.isArray(rootMod.chops) ? [...rootMod.chops] : [];
+                if (prevChopMode !== m.chopMode) {
+                    if (m.chopMode !== 'off' && prevChopMode === 'off') {
+                        m.snapMode = true;
+                    } else if (m.chopMode === 'off') {
+                        m.snapMode = false;
+                    }
+                }
+
+                if (synth?.modules) {
+                    const inst = synth.modules[`${pageId}/${mId}`] || synth.modules[mId];
+                    if (inst) {
+                        if (m._buffer) {
+                            inst.setAudioBuffer?.(m._buffer, m.sampleRate);
+                        }
+                        inst.update?.(synth.ctx, inst, m);
+                    }
+                }
+                affectedIds.push(mId);
+            } else {
+                const wasLinked = Boolean(m._isLinked);
+                m._isLinked = false;
+                m._linkedRootId = null;
+                if (wasLinked) affectedIds.push(mId);
+            }
+        });
+
+        return affectedIds;
     }
 };
 

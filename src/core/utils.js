@@ -307,6 +307,13 @@ export const SIGNAL_TYPES = {
         brightStroke: '#bae6fd', // sky-200
         tailwind: 'bg-blue-500'
     },
+    LINK: {
+        id: 'link',
+        label: 'LINK',
+        stroke: '#94a3b8',       // slate-400
+        brightStroke: '#f1f5f9', // slate-100
+        tailwind: 'bg-slate-300'
+    },
     DEFAULT: {
         id: 'default',
         label: 'SIGNAL',
@@ -320,6 +327,9 @@ export const getPortSignalType = (portName = '', modId = '') => {
     const p = String(portName).toLowerCase();
     const m = String(modId).toUpperCase();
 
+    if (p.includes('link')) {
+        return SIGNAL_TYPES.LINK;
+    }
     if (m.startsWith('GATE4')) {
         if (p.includes('in')) return SIGNAL_TYPES.GATE_SEQ;
         if (p.startsWith('gate_out')) return SIGNAL_TYPES.TRIGGER;
@@ -361,6 +371,7 @@ export const resolveConnectionSignalType = (conn) => {
     const fType = getPortSignalType(fP, fM);
     const tType = getPortSignalType(tP, tM);
 
+    if (fType.id === 'link' || tType.id === 'link') return SIGNAL_TYPES.LINK;
     if (fType.id === 'clock' || tType.id === 'clock') return SIGNAL_TYPES.CLOCK;
     if (fType.id === 'gate_seq' || tType.id === 'gate_seq') return SIGNAL_TYPES.GATE_SEQ;
     if (fType.id === 'trigger' || tType.id === 'trigger') return SIGNAL_TYPES.TRIGGER;

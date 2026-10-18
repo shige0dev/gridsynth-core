@@ -1,8 +1,8 @@
 // src/ui/wave-modal.js
-import { UIHelpers } from './helpers.js?v=248';
-import { WaveCodec } from '../audio/wave-codec.js?v=248';
-import { WaveView } from './wave-view.js?v=248';
-import { JsonIoDialog } from './json-io-dialog.js?v=248';
+import { UIHelpers } from './helpers.js?v=249';
+import { WaveCodec } from '../audio/wave-codec.js?v=249';
+import { WaveView } from './wave-view.js?v=249';
+import { JsonIoDialog } from './json-io-dialog.js?v=249';
 
 /**
  * WAVE Module Modal Renderer & Event Controller
@@ -171,6 +171,7 @@ export const WaveModal = {
 
                         const inst = activeInst || this.getActiveInst(ctx, m);
                         inst?.update?.(synth?.ctx, inst, m);
+                        this.propagateLinks(ctx);
                         redrawSvg?.();
                         ctx.reRenderModal?.();
                         cb?.();
@@ -187,7 +188,24 @@ export const WaveModal = {
         });
     },
 
+    propagateLinks(ctx) {
+        const ui = ctx?.ui || window.__GS_UI__;
+        const synth = ctx?.synth || window.__GS_SYNTH__;
+        const pId = String(ctx?.currentPageId ?? ui?.currentPageId ?? '0');
+        const pData = ui?.pagesData?.[pId] || ctx?.pagesData?.[pId] || (ui ? { modules: ui.modules, connections: ui.connections } : null);
+        if (!pData) return [];
+        const affected = WaveCodec.syncWaveLinks(pData, synth, pId);
+        if (affected.length > 0 && ui) {
+            ui.updateAllCells?.();
+            ui.reRenderDockModal?.();
+        }
+        return affected;
+    },
+
     renderModal(m, ctx) {
+        const isLinked = Boolean(ctx?.patched?.has('link_in') || m._isLinked);
+        m._isLinked = isLinked;
+
         const isStartPatched = Boolean(ctx?.patched?.has('start_cv'));
         const isEndPatched = Boolean(ctx?.patched?.has('end_cv'));
         const isSpeedPatched = Boolean(ctx?.patched?.has('speed_cv'));
@@ -204,27 +222,31 @@ export const WaveModal = {
         const retriggerActive = m.retrigger !== false;
 
         const chopBtnCls = (mode) =>
-            `px-1.5 py-0.5 rounded border ${(m.chopMode ?? 'off') === mode ? 'bg-amber-950 text-amber-300 border-amber-500 font-bold shadow-sm shadow-amber-500/20' : 'bg-slate-900 text-slate-500 border-slate-800'} transition cursor-pointer`;
+            `px-1.5 py-0.5 rounded border ${(m.chopMode ?? 'off') === mode ? 'bg-amber-950 text-amber-300 border-amber-500 font-bold shadow-sm shadow-amber-500/20' : 'bg-slate-900 text-slate-500 border-slate-800'} transition ${isLinked ? 'cursor-not-allowed' : 'cursor-pointer'}`;
+
+        const ioDisabledCls = isLinked ? 'opacity-30 pointer-events-none cursor-not-allowed' : '';
+        const ioDisabledAttr = isLinked ? 'disabled' : '';
 
         return `
             <div class="space-y-2 p-1 text-slate-200 w-full">
                 <!-- Header / File Loader & JSON I/O -->
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-1 select-none">
                     <div class="flex items-center gap-1.5 overflow-hidden">
-                        <span class="text-[9.5px] font-bold text-cyan-300 truncate max-w-[115px]">${m.name || 'Wave 1'}</span>
+                        ${isLinked ? '<span class="px-1 py-0.5 rounded bg-slate-800 border border-slate-600 text-slate-300 text-[7px] font-mono font-bold shrink-0">LINKED</span>' : ''}
+                        <span class="text-[9.5px] font-bold ${isLinked ? 'text-slate-300' : 'text-cyan-300'} truncate max-w-[115px]">${m.name || 'Wave 1'}</span>
                         <span class="text-[8px] font-mono text-slate-400 font-bold">(${durStr})</span>
                     </div>
-                    <div class="flex items-center gap-1 shrink-0">
+                    <div class="flex items-center gap-1 shrink-0 ${ioDisabledCls}">
                         <label class="px-2 py-1 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500/70 text-cyan-200 rounded text-[8px] font-bold cursor-pointer transition shadow-sm flex items-center gap-1 shrink-0" title="音声/動画ファイルを読み込む">
                             <i data-lucide="folder-open" class="w-2.5 h-2.5"></i>
                             <span>LOAD</span>
-                            <input type="file" id="wave-file-input" accept="audio/*, video/mp4, video/*" class="hidden">
+                            <input type="file" id="wave-file-input" accept="audio/*, video/mp4, video/*" class="hidden" ${ioDisabledAttr}>
                         </label>
-                        <button id="wave-json-export-btn" class="px-1.5 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-cyan-300 rounded text-[8px] font-bold cursor-pointer transition shadow-sm flex items-center gap-0.5 shrink-0" title="WAVEデータをJSONテキストとしてエクスポート">
+                        <button id="wave-json-export-btn" class="px-1.5 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-cyan-300 rounded text-[8px] font-bold cursor-pointer transition shadow-sm flex items-center gap-0.5 shrink-0" title="WAVEデータをJSONテキストとしてエクスポート" ${ioDisabledAttr}>
                             <i data-lucide="upload" class="w-2.5 h-2.5 pointer-events-none"></i>
                             <span>EXP</span>
                         </button>
-                        <button id="wave-json-import-btn" class="px-1.5 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-purple-300 rounded text-[8px] font-bold cursor-pointer transition shadow-sm flex items-center gap-0.5 shrink-0" title="JSONテキストからWAVEデータをインポート">
+                        <button id="wave-json-import-btn" class="px-1.5 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-purple-300 rounded text-[8px] font-bold cursor-pointer transition shadow-sm flex items-center gap-0.5 shrink-0" title="JSONテキストからWAVEデータをインポート" ${ioDisabledAttr}>
                             <i data-lucide="download" class="w-2.5 h-2.5 pointer-events-none"></i>
                             <span>IMP</span>
                         </button>
@@ -238,13 +260,13 @@ export const WaveModal = {
 
                 <!-- CHOP and SNAP Controls -->
                 <div class="flex items-center justify-between gap-1 px-2 py-1 bg-slate-950/70 rounded-xl border border-slate-800 text-[8px] select-none">
-                    <div class="flex items-center gap-1.5">
+                    <div class="flex items-center gap-1.5 ${isLinked ? 'opacity-30 pointer-events-none' : ''}">
                         <span class="text-amber-400 font-bold text-[7.5px] font-mono">CHOP:</span>
                         <div class="flex items-center gap-1">
-                            <button id="wave-chop-off" class="${chopBtnCls('off')}">OFF</button>
-                            <button id="wave-chop-4" class="${chopBtnCls('4')}">4</button>
-                            <button id="wave-chop-8" class="${chopBtnCls('8')}">8</button>
-                            <button id="wave-chop-16" class="${chopBtnCls('16')}">16</button>
+                            <button id="wave-chop-off" class="${chopBtnCls('off')}" ${ioDisabledAttr}>OFF</button>
+                            <button id="wave-chop-4" class="${chopBtnCls('4')}" ${ioDisabledAttr}>4</button>
+                            <button id="wave-chop-8" class="${chopBtnCls('8')}" ${ioDisabledAttr}>8</button>
+                            <button id="wave-chop-16" class="${chopBtnCls('16')}" ${ioDisabledAttr}>16</button>
                         </div>
                     </div>
                     <div class="flex items-center gap-1">
@@ -312,6 +334,8 @@ export const WaveModal = {
         const cb = typeof onChange === 'function' ? onChange : () => {};
         const svgWrap = root.querySelector('#wave-waveform-wrap');
 
+        const isLinked = Boolean(ctx?.patched?.has('link_in') || m._isLinked);
+        m._isLinked = isLinked;
         const isStartPatched = Boolean(ctx?.patched?.has('start_cv'));
         const isEndPatched = Boolean(ctx?.patched?.has('end_cv'));
         const isSpeedPatched = Boolean(ctx?.patched?.has('speed_cv'));
@@ -344,6 +368,7 @@ export const WaveModal = {
                     if (!m.peaks?.length) m.peaks = WaveCodec.extractPeaks(res.buffer, 64);
                     m._peaks = m.peaks;
                     this.getActiveInst(ctx, m)?.setAudioBuffer?.(res.buffer, res.sampleRate);
+                    this.propagateLinks(ctx);
                     redrawSvg();
                     cb();
                 }
@@ -366,10 +391,12 @@ export const WaveModal = {
 
         // File Input
         const fileInput = root.querySelector('#wave-file-input');
-        fileInput?.addEventListener('click', () => {
+        fileInput?.addEventListener('click', (e) => {
+            if (isLinked) { e.preventDefault(); return; }
             this.ensureSynthReady(ctx, m).catch(() => {});
         });
         fileInput?.addEventListener('change', async (e) => {
+            if (isLinked) return;
             const file = e.target.files?.[0];
             if (!file) return;
             try {
@@ -386,6 +413,7 @@ export const WaveModal = {
                 m._buffer = res.buffer;
                 (activeInst || this.getActiveInst(ctx, m))?.setAudioBuffer?.(res.buffer, res.sampleRate);
 
+                this.propagateLinks(ctx);
                 redrawSvg();
                 ctx.reRenderModal?.();
                 cb();
@@ -404,9 +432,11 @@ export const WaveModal = {
 
         // JSON Export / Import
         root.querySelector('#wave-json-export-btn')?.addEventListener('click', () => {
+            if (isLinked) return;
             this.openWaveExport(m, ctx, cb);
         });
         root.querySelector('#wave-json-import-btn')?.addEventListener('click', () => {
+            if (isLinked) return;
             this.openWaveImport(m, ctx, cb, redrawSvg);
         });
 
@@ -443,6 +473,7 @@ export const WaveModal = {
 
         // CHOP & SNAP
         const setChop = (mode) => {
+            if (isLinked) return;
             m.chopMode = mode;
             const n = mode === '4' ? 4 : mode === '8' ? 8 : mode === '16' ? 16 : 0;
             if (n > 0) {
@@ -459,6 +490,7 @@ export const WaveModal = {
             }
             m._lockDelta = (m.end ?? 1.0) - (m.start ?? 0.0);
             syncRangeAndAudio();
+            this.propagateLinks(ctx);
             ctx.reRenderModal?.();
         };
         ['off', '4', '8', '16'].forEach(mode => {

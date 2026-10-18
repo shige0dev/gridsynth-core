@@ -1,6 +1,7 @@
-import { safeClone, parseConn, isSubModule, normalizeSubPort, isPortMatching } from './utils.js?v=248';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=248';
+import { safeClone, parseConn, isSubModule, normalizeSubPort, isPortMatching } from './utils.js?v=249';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=249';
 import { findSubpatchTemplate, FACTORY_SUBPATCHES } from '../presets/subpatches.js';
+import { WaveCodec } from '../audio/wave-codec.js?v=249';
 
 /**
  * Resolves a subpatch template by id, subType, or name.
@@ -435,6 +436,7 @@ export function parsePatch(patchData, cols = 5, userSubpatches = null, errorSink
             modules: resolvedMods,
             connections
         };
+        WaveCodec.syncWaveLinks(parsedPages[pageId]);
     });
 
     if (!parsedPages["0"]) {
@@ -473,6 +475,7 @@ export function exportPatch(pagesData, bpm = 120, cols = 5) {
     const exportPages = {};
 
     Object.entries(pagesData || {}).forEach(([pId, pData]) => {
+        WaveCodec.syncWaveLinks(pData);
         const slots = {};
         const cleanMods = {};
 

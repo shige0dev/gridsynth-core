@@ -133,6 +133,8 @@ export const WaveView = {
 
         const peaks = m.peaks || m._peaks || [];
         const hasAudio = peaks.length > 0 && peaks.some(p => p > 0.005);
+        const isLinked = Boolean(m._isLinked);
+        const barColor = isLinked ? '#94a3b8' : '#06b6d4';
         let barsSvg = '';
         if (hasAudio) {
             const numBars = peaks.length;
@@ -142,7 +144,7 @@ export const WaveView = {
                 const val = peaks[i] || 0.0;
                 if (val > 0.005) {
                     const barH = Math.max(1.5, val * ((INNER_H - 10) * 0.46));
-                    barsSvg += `<line x1="${bx.toFixed(1)}" y1="${(midY - barH).toFixed(1)}" x2="${bx.toFixed(1)}" y2="${(midY + barH).toFixed(1)}" stroke="#06b6d4" stroke-width="1.8" stroke-linecap="round" opacity="0.85"/>`;
+                    barsSvg += `<line x1="${bx.toFixed(1)}" y1="${(midY - barH).toFixed(1)}" x2="${bx.toFixed(1)}" y2="${(midY + barH).toFixed(1)}" stroke="${barColor}" stroke-width="1.8" stroke-linecap="round" opacity="0.85"/>`;
                 }
             }
         } else {

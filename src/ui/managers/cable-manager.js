@@ -1,6 +1,7 @@
 // src/ui/managers/cable-manager.js
-import { parseConn, isSameConn, getPortSignalType, resolveConnectionSignalType, isSubModule, isSubIOModule, normalizeSubPort, getOppositeSubPort, getPortAliases, isPortMatching } from '../../core/utils.js?v=248';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=248';
+import { parseConn, isSameConn, getPortSignalType, resolveConnectionSignalType, isSubModule, isSubIOModule, normalizeSubPort, getOppositeSubPort, getPortAliases, isPortMatching } from '../../core/utils.js?v=249';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=249';
+import { WaveCodec } from '../../audio/wave-codec.js?v=249';
 
 export class CableManager {
     constructor(ui) {
@@ -348,11 +349,24 @@ export class CableManager {
                 const src = o1 ? first : cur;
                 const dst = o1 ? cur : first;
 
+                const isSrcLink = src.port === 'link_out' || src.port === 'link_in';
+                const isDstLink = dst.port === 'link_out' || dst.port === 'link_in';
+                if (isSrcLink !== isDstLink) {
+                    this.ui.showToast('LINK端子はWAVEのLINK端子同士のみ接続可能です');
+                    this.selectedTargetForConnection = null;
+                    this.updatePortHighlight();
+                    return;
+                }
+
                 const cand = { from: src, to: dst };
                 if (this.ui.connections.some(c => isSameConn(c, cand))) {
                     this.ui.showToast('既に接続されています');
                 } else {
                     this.ui.saveHistory();
+                    if (dst.port === 'link_in') {
+                        // A WAVE module can only have one upstream link_in source at a time
+                        this.ui.connections = this.ui.connections.filter(c => !(c.to.moduleId === dst.moduleId && c.to.port === 'link_in'));
+                    }
                     this.ui.connections.push(cand);
 
                     const mSrc = this.ui.modules[src.moduleId];
@@ -364,14 +378,16 @@ export class CableManager {
                     regDst?.onConnect?.(mDst, { port: dst.port, isSource: false, otherMod: mSrc, otherPort: src.port });
 
                     this.ui.synth.connect(`${this.ui.currentPageId}/${src.moduleId}`, src.port, `${this.ui.currentPageId}/${dst.moduleId}`, dst.port);
+                    const linkedWaveIds = WaveCodec.syncWaveLinks({ modules: this.ui.modules, connections: this.ui.connections }, this.ui.synth, this.ui.currentPageId);
                     this.ui.synth.updateModule(`${this.ui.currentPageId}/${src.moduleId}`, this.ui.modules[src.moduleId], this.ui.getPatchState(src.moduleId));
                     this.ui.synth.updateModule(`${this.ui.currentPageId}/${dst.moduleId}`, this.ui.modules[dst.moduleId], this.ui.getPatchState(dst.moduleId));
                     this.ui.persistCurrentPage();
                     this.cleanupOrphanSubConnections(this.ui.currentPageId);
                     this.ui.updateAllCells();
-                    const isDockAffected = this.ui.modalManager?.openDocks?.has(src.moduleId) || this.ui.modalManager?.openDocks?.has(dst.moduleId) || this.ui.activeDockModuleId === src.moduleId || this.ui.activeDockModuleId === dst.moduleId;
+                    const affectedSet = new Set([src.moduleId, dst.moduleId, ...linkedWaveIds]);
+                    const isDockAffected = Array.from(affectedSet).some(id => this.ui.modalManager?.openDocks?.has(id) || this.ui.activeDockModuleId === id);
                     if (isDockAffected) this.ui.reRenderDockModal();
-                    if (this.ui.activePopupModuleId === src.moduleId || this.ui.activePopupModuleId === dst.moduleId) this.ui.reRenderModal();
+                    if (this.ui.activePopupModuleId && affectedSet.has(this.ui.activePopupModuleId)) this.ui.reRenderModal();
                     this.ui.showToast('結線しました');
                 }
             }
@@ -399,6 +415,8 @@ export class CableManager {
             affectedIds.add(c.from.moduleId);
             affectedIds.add(c.to.moduleId);
         });
+        const linkedWaveIds = WaveCodec.syncWaveLinks({ modules: this.ui.modules, connections: this.ui.connections }, this.ui.synth, this.ui.currentPageId);
+        linkedWaveIds.forEach(id => affectedIds.add(id));
         affectedIds.forEach(id => {
             if (this.ui.modules[id]) {
                 this.ui.synth.updateModule(`${this.ui.currentPageId}/${id}`, this.ui.modules[id], this.ui.getPatchState(id));

@@ -1,8 +1,8 @@
 // src/modules/defs/wave.js
-import { UIHelpers } from '../../ui/helpers.js?v=248';
-import { WaveCodec } from '../../audio/wave-codec.js?v=248';
-import { WaveView } from '../../ui/wave-view.js?v=248';
-import { WaveModal } from '../../ui/wave-modal.js?v=248';
+import { UIHelpers } from '../../ui/helpers.js?v=249';
+import { WaveCodec } from '../../audio/wave-codec.js?v=249';
+import { WaveView } from '../../ui/wave-view.js?v=249';
+import { WaveModal } from '../../ui/wave-modal.js?v=249';
 
 export const WAVE = {
     color: 'cyan',
@@ -32,25 +32,37 @@ export const WAVE = {
         if (m.snapMode === undefined) m.snapMode = false;
         if (m.rangeLock === undefined) m.rangeLock = false;
     },
+    onExport: (cloned, m) => {
+        if (m?._isLinked) {
+            cloned.data = '';
+            cloned.peaks = null;
+        }
+    },
     ports: () => ({
         in: [
-            { port: 'gate_in', color: 'bg-orange-500' },
-            { port: 'start_cv', color: 'bg-yellow-400' },
-            { port: 'end_cv', color: 'bg-yellow-400' },
-            { port: 'speed_cv', color: 'bg-yellow-400' }
+            { port: 'gate_in', color: 'bg-orange-500', pin: 4 },
+            { port: 'start_cv', color: 'bg-yellow-400', pin: 5 },
+            { port: 'end_cv', color: 'bg-yellow-400', pin: 6 },
+            { port: 'speed_cv', color: 'bg-yellow-400', pin: 7 },
+            { port: 'link_in', color: 'bg-slate-300', pin: 3 }
         ],
         out: [
-            { port: 'wave_out', color: 'bg-blue-500' }
+            { port: 'wave_out', color: 'bg-blue-500', pin: 9 },
+            { port: 'link_out', color: 'bg-slate-300', pin: 10 }
         ]
     }),
-    renderGrid: (m) => {
+    renderGrid: (m, ctx) => {
         const bounds = WaveView.resolveEffectiveBounds(m);
         const rMin = Math.min(bounds.effStart, bounds.effEnd) * 100;
         const rWidth = Math.abs(bounds.effEnd - bounds.effStart) * 100;
-        return `<div class="flex items-center justify-center w-full h-full pointer-events-none">
-            <div class="w-14 h-7 rounded border border-slate-700/80 bg-slate-950 p-[1px] relative overflow-hidden flex items-center justify-center shadow-inner">
+        const isLinked = Boolean(ctx?.patched?.has('link_in') || m._isLinked);
+        return `<div class="flex flex-col items-center justify-center w-full h-full pointer-events-none pt-1">
+            <div class="h-2.5 flex items-center justify-center leading-none mb-0.5">
+                ${isLinked ? '<span class="text-[6.5px] font-mono font-bold tracking-wider text-slate-300 leading-none">LINKED</span>' : ''}
+            </div>
+            <div class="w-12 h-6 rounded border border-slate-700/80 bg-slate-950 p-[1px] relative overflow-hidden flex items-center justify-center shadow-inner">
                 <div class="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 border-t border-slate-800/80"></div>
-                <div data-wave-panel-range class="absolute top-0 bottom-0 bg-cyan-500/20 border-x border-cyan-500/40" style="left: ${rMin.toFixed(1)}%; width: ${rWidth.toFixed(1)}%;"></div>
+                <div data-wave-panel-range class="absolute top-0 bottom-0 bg-slate-300/20" style="left: ${rMin.toFixed(1)}%; width: ${rWidth.toFixed(1)}%;"></div>
                 <div data-wave-panel-playhead class="absolute top-0 bottom-0 w-[1.5px] bg-yellow-400 drop-shadow-[0_0_3px_rgba(250,204,21,1)] z-10" style="left: 0%; display: none;"></div>
             </div>
         </div>`;
