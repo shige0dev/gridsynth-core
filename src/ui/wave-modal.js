@@ -1,7 +1,8 @@
 // src/ui/wave-modal.js
-import { UIHelpers } from './helpers.js?v=246';
-import { WaveCodec } from '../audio/wave-codec.js?v=246';
-import { WaveView } from './wave-view.js?v=246';
+import { UIHelpers } from './helpers.js?v=247';
+import { WaveCodec } from '../audio/wave-codec.js?v=247';
+import { WaveView } from './wave-view.js?v=247';
+import { JsonIoDialog } from './json-io-dialog.js?v=247';
 
 /**
  * WAVE Module Modal Renderer & Event Controller
@@ -47,6 +48,145 @@ export const WaveModal = {
         return this.getActiveInst(ctx, m);
     },
 
+    extractWavePayload(parsed) {
+        if (!parsed || typeof parsed !== 'object') return null;
+        if (parsed.type === 'WAVE' || typeof parsed.data === 'string' || Array.isArray(parsed.peaks)) {
+            return parsed;
+        }
+        // Check if it's a keyed object like { "WAVE1": { type: "WAVE", ... } }
+        for (const val of Object.values(parsed)) {
+            if (val && typeof val === 'object' && (val.type === 'WAVE' || typeof val.data === 'string')) {
+                return val;
+            }
+        }
+        // Check if it's a full patch JSON with pages
+        if (parsed.pages && typeof parsed.pages === 'object') {
+            for (const p of Object.values(parsed.pages)) {
+                if (p?.modules && typeof p.modules === 'object') {
+                    for (const mod of Object.values(p.modules)) {
+                        if (mod && mod.type === 'WAVE') return mod;
+                    }
+                }
+            }
+        }
+        return null;
+    },
+
+    async openWaveExport(m, ctx, cb) {
+        const synth = ctx?.synth || window.__GS_SYNTH__;
+        if (!m.data && m._buffer?.length > 0) {
+            ctx.showToast?.('ENCODING AUDIO TO JSON...');
+            try {
+                m.data = await WaveCodec.encodeToOpusBase64(m._buffer, m.sampleRate || 48000, synth?.ctx);
+                cb?.();
+            } catch (_) {}
+        }
+        const exportObj = JsonIoDialog.exportModuleData(m);
+        const jsonStr = JSON.stringify(exportObj, null, 2);
+        const durStr = `${(m.duration ?? 1.5).toFixed(2)}s`;
+        const kbStr = `${(jsonStr.length / 1024).toFixed(1)} KB`;
+
+        JsonIoDialog.openExport({
+            title: `WAVE JSON EXPORT (${m.id || 'WAVE'})`,
+            icon: 'upload',
+            jsonStr,
+            infoBadges: [
+                `NAME: ${m.name || 'Wave 1'}`,
+                `DURATION: ${durStr}`,
+                `SIZE: ${kbStr}`
+            ],
+            copyToast: 'WAVE JSONをクリップボードにコピーしました',
+            showToast: (msg) => ctx.showToast?.(msg)
+        });
+    },
+
+    openWaveImport(m, ctx, cb, redrawSvg) {
+        JsonIoDialog.openImport({
+            title: `WAVE JSON IMPORT (${m.id || 'WAVE'})`,
+            icon: 'download',
+            placeholder: 'ここに WAVE モジュールの JSON テキストを貼り付けてください...',
+            showToast: (msg) => ctx.showToast?.(msg),
+            actions: [
+                {
+                    id: 'json-wave-import-btn',
+                    label: 'LOAD (このWAVEに適用)',
+                    icon: 'check',
+                    cls: 'bg-cyan-600 hover:bg-cyan-500 text-white shadow-md shadow-cyan-600/30',
+                    onClick: async (rawText, modal) => {
+                        const res = JsonIoDialog.parseJsonText(rawText);
+                        if (res.empty) {
+                            ctx.showToast?.('JSONテキストが空です');
+                            return;
+                        }
+                        if (res.syntaxError) {
+                            const info = res.info;
+                            alert(`【JSON構文エラー】\n${info.line}行目・${info.col}文字目付近に文法ミス（カンマや括弧の過不足など）があります。\n\n詳細: ${info.message}\n\n${info.snippet}`);
+                            return;
+                        }
+                        const waveData = this.extractWavePayload(res.data);
+                        if (!waveData) {
+                            alert('【インポートエラー】\n有効な WAVE モジュールデータが見つかりません。');
+                            return;
+                        }
+
+                        // Apply WAVE module properties
+                        const allowedKeys = [
+                            'name', 'codec', 'sampleRate', 'maxDuration', 'duration',
+                            'start', 'end', 'speed', 'loop', 'retrigger',
+                            'chopMode', 'chops', 'snapMode', 'rangeLock',
+                            'data', 'peaks'
+                        ];
+                        allowedKeys.forEach(k => {
+                            if (waveData[k] !== undefined) {
+                                m[k] = Array.isArray(waveData[k]) ? [...waveData[k]] : waveData[k];
+                            }
+                        });
+                        m.speedCv = Math.log2(Math.max(0.0625, m.speed || 1.0));
+                        m._peaks = Array.isArray(m.peaks) ? [...m.peaks] : [];
+                        m._lockDelta = (m.end ?? 1.0) - (m.start ?? 0.0);
+
+                        modal.classList.add('hidden');
+
+                        const activeInst = await this.ensureSynthReady(ctx, m);
+                        const synth = ctx?.synth || window.__GS_SYNTH__;
+
+                        if (m.data) {
+                            try {
+                                ctx.showToast?.('DECODING WAVE JSON...');
+                                const decoded = await WaveCodec.decodeFromBase64(m.data, synth?.ctx || null);
+                                if (decoded?.buffer) {
+                                    m._buffer = decoded.buffer;
+                                    m.duration = decoded.duration;
+                                    m.sampleRate = decoded.sampleRate;
+                                    if (!m.peaks?.length) {
+                                        m.peaks = WaveCodec.extractPeaks(decoded.buffer, 64);
+                                    }
+                                    m._peaks = m.peaks;
+                                    (activeInst || this.getActiveInst(ctx, m))?.setAudioBuffer?.(decoded.buffer, decoded.sampleRate);
+                                }
+                            } catch (err) {
+                                ctx.showToast?.(`DECODE ERROR: ${(err?.message || String(err)).slice(0, 28)}`);
+                            }
+                        }
+
+                        const inst = activeInst || this.getActiveInst(ctx, m);
+                        inst?.update?.(synth?.ctx, inst, m);
+                        redrawSvg?.();
+                        ctx.reRenderModal?.();
+                        cb?.();
+                        ctx.showToast?.(`WAVE JSON IMPORTED: ${m.name || 'Wave'}`);
+                    }
+                },
+                {
+                    id: 'json-close-btn',
+                    label: 'CANCEL',
+                    cls: 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700',
+                    onClick: (_, modal) => modal.classList.add('hidden')
+                }
+            ]
+        });
+    },
+
     renderModal(m, ctx) {
         const isStartPatched = Boolean(ctx?.patched?.has('start_cv'));
         const isEndPatched = Boolean(ctx?.patched?.has('end_cv'));
@@ -68,17 +208,27 @@ export const WaveModal = {
 
         return `
             <div class="space-y-2 p-1 text-slate-200 w-full">
-                <!-- Header / File Loader -->
+                <!-- Header / File Loader & JSON I/O -->
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-1 select-none">
                     <div class="flex items-center gap-1.5 overflow-hidden">
-                        <span class="text-[9.5px] font-bold text-cyan-300 truncate max-w-[140px]">${m.name || 'Wave 1'}</span>
+                        <span class="text-[9.5px] font-bold text-cyan-300 truncate max-w-[115px]">${m.name || 'Wave 1'}</span>
                         <span class="text-[8px] font-mono text-slate-400 font-bold">(${durStr})</span>
                     </div>
-                    <label class="px-2 py-1 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500/70 text-cyan-200 rounded text-[8px] font-bold cursor-pointer transition shadow-sm flex items-center gap-1 shrink-0">
-                        <i data-lucide="download" class="w-2.5 h-2.5"></i>
-                        <span>LOAD</span>
-                        <input type="file" id="wave-file-input" accept="audio/*, video/mp4, video/*" class="hidden">
-                    </label>
+                    <div class="flex items-center gap-1 shrink-0">
+                        <label class="px-2 py-1 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500/70 text-cyan-200 rounded text-[8px] font-bold cursor-pointer transition shadow-sm flex items-center gap-1 shrink-0" title="音声/動画ファイルを読み込む">
+                            <i data-lucide="folder-open" class="w-2.5 h-2.5"></i>
+                            <span>LOAD</span>
+                            <input type="file" id="wave-file-input" accept="audio/*, video/mp4, video/*" class="hidden">
+                        </label>
+                        <button id="wave-json-export-btn" class="px-1.5 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-cyan-300 rounded text-[8px] font-bold cursor-pointer transition shadow-sm flex items-center gap-0.5 shrink-0" title="WAVEデータをJSONテキストとしてエクスポート">
+                            <i data-lucide="upload" class="w-2.5 h-2.5 pointer-events-none"></i>
+                            <span>EXP</span>
+                        </button>
+                        <button id="wave-json-import-btn" class="px-1.5 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-purple-300 rounded text-[8px] font-bold cursor-pointer transition shadow-sm flex items-center gap-0.5 shrink-0" title="JSONテキストからWAVEデータをインポート">
+                            <i data-lucide="download" class="w-2.5 h-2.5 pointer-events-none"></i>
+                            <span>IMP</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Oscilloscope-sized Waveform Display -->
@@ -252,6 +402,14 @@ export const WaveModal = {
             }
         });
 
+        // JSON Export / Import
+        root.querySelector('#wave-json-export-btn')?.addEventListener('click', () => {
+            this.openWaveExport(m, ctx, cb);
+        });
+        root.querySelector('#wave-json-import-btn')?.addEventListener('click', () => {
+            this.openWaveImport(m, ctx, cb, redrawSvg);
+        });
+
         // Play / Stop
         const playBtn = root.querySelector('#wave-play-btn');
         playBtn?.addEventListener('click', async () => {
@@ -386,13 +544,13 @@ export const WaveModal = {
         if (!isStartPatched) {
             UIHelpers.bindSlider('wave-slider-start', v => {
                 const b = WaveView.resolveEffectiveBounds(m, Math.max(0, Math.min(1, v)), m.end ?? 1.0);
-                return WaveView.formatBoundDisp(m, b.rawStart, b.start, false);
+                return WaveView.formatBoundDisp(m, b.rawStart, b.effStart, false);
             }, v => applyRangeCv('start', v), 1, 0.0, 1.0);
         }
         if (!isEndPatched) {
             UIHelpers.bindSlider('wave-slider-end', v => {
                 const b = WaveView.resolveEffectiveBounds(m, m.start ?? 0.0, Math.max(0, Math.min(1, v)));
-                return WaveView.formatBoundDisp(m, b.rawEnd, b.end, false);
+                return WaveView.formatBoundDisp(m, b.rawEnd, b.effEnd, false);
             }, v => applyRangeCv('end', v), 1, 0.0, 1.0);
         }
         if (!isSpeedPatched) {

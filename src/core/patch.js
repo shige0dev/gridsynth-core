@@ -1,5 +1,5 @@
-import { safeClone, parseConn, isSubModule, normalizeSubPort, isPortMatching } from './utils.js?v=246';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=246';
+import { safeClone, parseConn, isSubModule, normalizeSubPort, isPortMatching } from './utils.js?v=247';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=247';
 import { findSubpatchTemplate, FACTORY_SUBPATCHES } from '../presets/subpatches.js';
 
 /**
@@ -231,16 +231,16 @@ export function validateConnectionDirection(c, fromMod, toMod, fromManifest = nu
     };
 
     if (!c || !c.from || !c.to) {
-        logErr('結線構文エラー: 接続の from または to が指定されていません。');
+        logErr('邨千ｷ壽ｧ区枚繧ｨ繝ｩ繝ｼ: 謗･邯壹・ from 縺ｾ縺溘・ to 縺梧欠螳壹＆繧後※縺・∪縺帙ｓ縲・);
         return false;
     }
 
     if (!fromMod) {
-        logErr(`結線エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - 送信元モジュール "${c.from.moduleId}" は modules に定義されていません。`);
+        logErr(`邨千ｷ壹お繝ｩ繝ｼ: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - 騾∽ｿ｡蜈・Δ繧ｸ繝･繝ｼ繝ｫ "${c.from.moduleId}" 縺ｯ modules 縺ｫ螳夂ｾｩ縺輔ｌ縺ｦ縺・∪縺帙ｓ縲Ａ);
         return false;
     }
     if (!toMod) {
-        logErr(`結線エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - 送信先モジュール "${c.to.moduleId}" は modules に定義されていません。`);
+        logErr(`邨千ｷ壹お繝ｩ繝ｼ: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - 騾∽ｿ｡蜈医Δ繧ｸ繝･繝ｼ繝ｫ "${c.to.moduleId}" 縺ｯ modules 縺ｫ螳夂ｾｩ縺輔ｌ縺ｦ縺・∪縺帙ｓ縲Ａ);
         return false;
     }
 
@@ -254,7 +254,7 @@ export function validateConnectionDirection(c, fromMod, toMod, fromManifest = nu
         fromPort = normalizeSubPort(fromPort, fromType, fromManifest);
         const m = fromPort.match(/^PIN([1-9]|1[0-2])_(in|out)$/i);
         if (m && m[2].toLowerCase() !== 'out') {
-            logErr(`結線構文エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - ${c.from.moduleId}:${fromPort} は入力端子です。送信元には出力端子(_out)を指定してください。`);
+            logErr(`邨千ｷ壽ｧ区枚繧ｨ繝ｩ繝ｼ: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - ${c.from.moduleId}:${fromPort} 縺ｯ蜈･蜉帷ｫｯ蟄舌〒縺吶る∽ｿ｡蜈・↓縺ｯ蜃ｺ蜉帷ｫｯ蟄・_out)繧呈欠螳壹＠縺ｦ縺上□縺輔＞縲Ａ);
             return false;
         }
     } else {
@@ -266,12 +266,12 @@ export function validateConnectionDirection(c, fromMod, toMod, fromManifest = nu
                 const outAliases = (pList?.out || []).flatMap(p => typeof p === 'object' && p.alias ? [p.alias] : []);
                 const isMatch = outPorts.some(p => isPortMatching(p, fromPort)) || outAliases.includes(fromPort);
                 if (outPorts.length > 0 && !isMatch) {
-                    logErr(`結線構文エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - ${c.from.moduleId}:${fromPort} は有効な出力端子ではありません。(利用可能な出力端子: [${outPorts.join(', ')}])`);
+                    logErr(`邨千ｷ壽ｧ区枚繧ｨ繝ｩ繝ｼ: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - ${c.from.moduleId}:${fromPort} 縺ｯ譛牙柑縺ｪ蜃ｺ蜉帷ｫｯ蟄舌〒縺ｯ縺ゅｊ縺ｾ縺帙ｓ縲・蛻ｩ逕ｨ蜿ｯ閭ｽ縺ｪ蜃ｺ蜉帷ｫｯ蟄・ [${outPorts.join(', ')}])`);
                     return false;
                 }
             } catch (e) {}
         } else if (fromPort.endsWith('_in')) {
-            logErr(`結線構文エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - 送信元は出力端子(_out)である必要があります。`);
+            logErr(`邨千ｷ壽ｧ区枚繧ｨ繝ｩ繝ｼ: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - 騾∽ｿ｡蜈・・蜃ｺ蜉帷ｫｯ蟄・_out)縺ｧ縺ゅｋ蠢・ｦ√′縺ゅｊ縺ｾ縺吶Ａ);
             return false;
         }
     }
@@ -283,7 +283,7 @@ export function validateConnectionDirection(c, fromMod, toMod, fromManifest = nu
         toPort = normalizeSubPort(toPort, toType, toManifest);
         const m = toPort.match(/^PIN([1-9]|1[0-2])_(in|out)$/i);
         if (m && m[2].toLowerCase() !== 'in') {
-            logErr(`結線構文エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - ${c.to.moduleId}:${toPort} は出力端子です。送信先には入力端子(_in)を指定してください。`);
+            logErr(`邨千ｷ壽ｧ区枚繧ｨ繝ｩ繝ｼ: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - ${c.to.moduleId}:${toPort} 縺ｯ蜃ｺ蜉帷ｫｯ蟄舌〒縺吶る∽ｿ｡蜈医↓縺ｯ蜈･蜉帷ｫｯ蟄・_in)繧呈欠螳壹＠縺ｦ縺上□縺輔＞縲Ａ);
             return false;
         }
     } else {
@@ -295,12 +295,12 @@ export function validateConnectionDirection(c, fromMod, toMod, fromManifest = nu
                 const inAliases = (pList?.in || []).flatMap(p => typeof p === 'object' && p.alias ? [p.alias] : []);
                 const isMatch = inPorts.some(p => isPortMatching(p, toPort)) || inAliases.includes(toPort);
                 if (inPorts.length > 0 && !isMatch) {
-                    logErr(`結線構文エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - ${c.to.moduleId}:${toPort} は有効な入力端子ではありません。(利用可能な入力端子: [${inPorts.join(', ')}])`);
+                    logErr(`邨千ｷ壽ｧ区枚繧ｨ繝ｩ繝ｼ: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - ${c.to.moduleId}:${toPort} 縺ｯ譛牙柑縺ｪ蜈･蜉帷ｫｯ蟄舌〒縺ｯ縺ゅｊ縺ｾ縺帙ｓ縲・蛻ｩ逕ｨ蜿ｯ閭ｽ縺ｪ蜈･蜉帷ｫｯ蟄・ [${inPorts.join(', ')}])`);
                     return false;
                 }
             } catch (e) {}
         } else if (toPort.endsWith('_out')) {
-            logErr(`結線構文エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - 送信先は入力端子(_in)である必要があります。`);
+            logErr(`邨千ｷ壽ｧ区枚繧ｨ繝ｩ繝ｼ: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - 騾∽ｿ｡蜈医・蜈･蜉帷ｫｯ蟄・_in)縺ｧ縺ゅｋ蠢・ｦ√′縺ゅｊ縺ｾ縺吶Ａ);
             return false;
         }
     }
@@ -349,7 +349,7 @@ export function parsePatch(patchData, cols = 5, userSubpatches = null, errorSink
             const parsed = parseConn(rawC);
             if (!parsed) {
                 const repr = typeof rawC === 'string' ? rawC : JSON.stringify(rawC);
-                const msg = `結線構文エラー: 接続形式が無効です (${repr})。"from" および "to" ("moduleId", "port") を指定してください。`;
+                const msg = `邨千ｷ壽ｧ区枚繧ｨ繝ｩ繝ｼ: 謗･邯壼ｽ｢蠑上′辟｡蜉ｹ縺ｧ縺・(${repr})縲・from" 縺翫ｈ縺ｳ "to" ("moduleId", "port") 繧呈欠螳壹＠縺ｦ縺上□縺輔＞縲Ａ;
                 console.error(`[Gridsynth Parse Error] ${msg}`);
                 errors.push(msg);
             }
@@ -376,7 +376,7 @@ export function parsePatch(patchData, cols = 5, userSubpatches = null, errorSink
             const raw = rawMods[id] || {};
             const type = raw.type || id.replace(/[0-9]/g, '').toUpperCase();
             if (!MODULE_REGISTRY[type] && !isSubModule(type)) {
-                const msg = `モジュール設定エラー: 未知のモジュールタイプ "${type}" (モジュールID: "${id}") です。`;
+                const msg = `繝｢繧ｸ繝･繝ｼ繝ｫ險ｭ螳壹お繝ｩ繝ｼ: 譛ｪ遏･縺ｮ繝｢繧ｸ繝･繝ｼ繝ｫ繧ｿ繧､繝・"${type}" (繝｢繧ｸ繝･繝ｼ繝ｫID: "${id}") 縺ｧ縺吶Ａ;
                 console.error(`[Gridsynth Parse Error] ${msg}`);
                 errors.push(msg);
             }
@@ -449,6 +449,24 @@ export function parsePatch(patchData, cols = 5, userSubpatches = null, errorSink
 }
 
 /**
+ * Exports a single module's data in the exact same structure as embedded in a patch JSON
+ */
+export function exportModuleData(m) {
+    if (!m) return {};
+    const { col, row, id: _id, ...props } = m;
+    const cleanProps = {};
+    Object.entries(props).forEach(([k, v]) => {
+        if (!k.startsWith('_')) cleanProps[k] = v;
+    });
+    const cloned = safeClone(cleanProps);
+
+    // Module lifecycle onExport hook
+    MODULE_REGISTRY[m.type]?.onExport?.(cloned, m);
+
+    return { type: m.type, ...cloned };
+}
+
+/**
  * Exports current pagesData structure into a clean, portable patch JSON object
  */
 export function exportPatch(pagesData, bpm = 120, cols = 5) {
@@ -461,18 +479,7 @@ export function exportPatch(pagesData, bpm = 120, cols = 5) {
         Object.entries(pData.modules || {}).forEach(([id, m]) => {
             const slotIdx = m.row * cols + m.col;
             slots[String(slotIdx)] = id;
-
-            const { col, row, id: _id, ...props } = m;
-            const cleanProps = {};
-            Object.entries(props).forEach(([k, v]) => {
-                if (!k.startsWith('_')) cleanProps[k] = v;
-            });
-            const cloned = safeClone(cleanProps);
-
-            // Module lifecycle onExport hook
-            MODULE_REGISTRY[m.type]?.onExport?.(cloned, m);
-
-            cleanMods[id] = { type: m.type, ...cloned };
+            cleanMods[id] = exportModuleData(m);
         });
 
         exportPages[pId] = {
