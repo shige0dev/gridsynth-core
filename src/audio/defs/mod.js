@@ -77,7 +77,11 @@ export const LFO = {
             polarity: d.polarity || 'bipolar',
             syncMode: d.syncMode || 'free',
             division: d.division || '1/4',
-            bpm: eng?.masterBPM || 120
+            bpm: eng?.masterBPM || 120,
+            rate: effRate,
+            depth: d.depth ?? 1.0,
+            duty: d.duty ?? 0.5,
+            phase: d.phase ?? 0.0
         });
         const rIn = ctx.createGain(), cvIn = ctx.createGain();
         rIn.connect(w, 0, 0);
@@ -100,7 +104,11 @@ export const LFO = {
             polarity: d.polarity || 'bipolar',
             syncMode: d.syncMode || 'free',
             division: d.division || '1/4',
-            bpm: eng?.masterBPM || 120
+            bpm: eng?.masterBPM || 120,
+            rate: effRate,
+            depth: d.depth,
+            duty: d.duty,
+            phase: d.phase
         });
     }
 };

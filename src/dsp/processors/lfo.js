@@ -19,6 +19,10 @@ export class LfoProcessor extends AudioWorkletProcessor {
         this.division = '1/4';
         this.bpm = 120;
         this.lastTrig = false;
+        this.configRate = null;
+        this.configDepth = null;
+        this.configDuty = null;
+        this.configPhase = null;
 
         this.port.onmessage = e => {
             if (e.data.type === 'SET_CONFIG') {
@@ -27,6 +31,18 @@ export class LfoProcessor extends AudioWorkletProcessor {
                 if (e.data.syncMode) this.syncMode = e.data.syncMode;
                 if (e.data.division) this.division = e.data.division;
                 if (e.data.bpm) this.bpm = e.data.bpm;
+                if (e.data.rate !== undefined && e.data.rate !== null) {
+                    this.configRate = Number(e.data.rate);
+                }
+                if (e.data.depth !== undefined && e.data.depth !== null) {
+                    this.configDepth = Number(e.data.depth);
+                }
+                if (e.data.duty !== undefined && e.data.duty !== null) {
+                    this.configDuty = Number(e.data.duty);
+                }
+                if (e.data.phase !== undefined && e.data.phase !== null) {
+                    this.configPhase = Number(e.data.phase);
+                }
             }
         };
     }
@@ -37,9 +53,15 @@ export class LfoProcessor extends AudioWorkletProcessor {
         const out = outs[0]?.[0];
         if (!out) return true;
 
-        const d = params.depth[0] ?? 1.0;
-        const duty = Math.max(0.01, Math.min(0.99, params.duty[0] ?? 0.5));
-        const phaseDeg = params.phase[0] ?? 0.0;
+        const paramDepth = params.depth ? params.depth[0] : 1.0;
+        const d = (this.configDepth !== null && this.configDepth !== undefined) ? this.configDepth : (paramDepth ?? 1.0);
+
+        const paramDuty = params.duty ? params.duty[0] : 0.5;
+        const rawDuty = (this.configDuty !== null && this.configDuty !== undefined) ? this.configDuty : (paramDuty ?? 0.5);
+        const duty = Math.max(0.01, Math.min(0.99, rawDuty));
+
+        const paramPhase = params.phase ? params.phase[0] : 0.0;
+        const phaseDeg = (this.configPhase !== null && this.configPhase !== undefined) ? this.configPhase : (paramPhase ?? 0.0);
         const phaseOffset = (phaseDeg / 360.0) % 1.0;
         const uni = this.pol === 'unipolar';
         const sr = getSR();
@@ -70,7 +92,8 @@ export class LfoProcessor extends AudioWorkletProcessor {
                 out[i] = uni ? (r + 1) * 0.5 * d : r * d;
             }
         } else {
-            const baseRate = params.rate[0] ?? 2.0;
+            const paramRate = (params.rate && params.rate.length > 0) ? params.rate[0] : 2.0;
+            const baseRate = (this.configRate !== null && this.configRate !== undefined) ? this.configRate : (paramRate ?? 2.0);
             for (let i = 0; i < out.length; i++) {
                 const trigVal = resetIn ? resetIn[i] : 0;
                 const isHi = trigVal > 0.3;

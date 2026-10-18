@@ -89,11 +89,13 @@ export const LFO = {
         duty: 0.5
     }),
     onNormalize: (m) => {
-        if (m.period === undefined) {
-            m.period = m.rate ? (1.0 / Math.max(0.001, m.rate)) : 0.5;
-        }
-        if (m.rate === undefined) {
-            m.rate = m.period ? (1.0 / Math.max(0.001, m.period)) : 2.0;
+        if (m.period === undefined && m.rate !== undefined) {
+            m.period = 1.0 / Math.max(0.001, m.rate);
+        } else if (m.period !== undefined) {
+            m.rate = 1.0 / Math.max(0.001, m.period);
+        } else {
+            m.period = 0.5;
+            m.rate = 2.0;
         }
     },
     ports: () => ({

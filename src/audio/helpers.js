@@ -2,9 +2,20 @@ export const AudioHelpers = {
     set: (p, v, ctx, t = 0.015) => {
         if (!p || !ctx) return;
         try {
-            p.setTargetAtTime(v, ctx.currentTime, t);
+            const now = ctx.currentTime;
+            if (typeof p.cancelScheduledValues === 'function') {
+                p.cancelScheduledValues(now);
+            }
+            p.setTargetAtTime(v, now, t);
         } catch (e) {
-            try { p.setValueAtTime(v, ctx.currentTime); } catch (_) {}
+            try {
+                if (typeof p.cancelScheduledValues === 'function') {
+                    p.cancelScheduledValues(ctx.currentTime);
+                }
+                p.setValueAtTime(v, ctx.currentTime);
+            } catch (_) {
+                try { p.value = v; } catch (__) {}
+            }
         }
     },
     cleanup: (nodes) => {

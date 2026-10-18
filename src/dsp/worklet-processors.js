@@ -1,7 +1,7 @@
 import './processors/clock.js';
 import './processors/seq.js';
 import './processors/adsr.js';
-import './processors/lfo.js?v=229';
+import './processors/lfo.js?v=232';
 import './processors/math.js';
 import './processors/sh.js';
 import './processors/fold.js';

@@ -130,7 +130,8 @@ export const preset01 = {
           "polarity": "unipolar",
           "syncMode": "free",
           "division": "1/4",
-          "rate": 0.08000000000000002,
+          "period": 12.5,
+          "rate": 0.08,
           "depth": 2,
           "phase": 0,
           "duty": 0.5
