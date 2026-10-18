@@ -16,8 +16,14 @@ export const TAPE = {
         speed: 1.0,
         loop: false,
         retrigger: true,
-        data: ''
+        data: '',
+        peaks: null
     }),
+    onNormalize: (m) => {
+        if (m.peaks && Array.isArray(m.peaks)) {
+            m._peaks = m.peaks;
+        }
+    },
     ports: () => ({
         in: [
             { port: 'gate_in', color: 'bg-orange-500' },
@@ -48,12 +54,24 @@ export const TAPE = {
         }
         return Array.from(peaks);
     },
+    formatMs: (ms) => {
+        if (ms <= 0) return '0ms';
+        if (ms < 1000) return `${Math.round(ms)}ms`;
+        if (ms < 10000) {
+            const s = ms / 1000;
+            return Number.isInteger(s) ? `${s}s` : (ms % 100 === 0 ? `${s.toFixed(1)}s` : `${s.toFixed(2)}s`);
+        }
+        return `${(ms / 1000).toFixed(1)}s`;
+    },
     renderWaveformSVG: (m, playhead = 0.0, isPlaying = false, effStartVal = null, effEndVal = null) => {
         const W = 320, H = 100;
         const padX = 6, padY = 6;
         const innerW = W - padX * 2;
         const innerH = H - padY * 2;
-        const midY = padY + innerH / 2;
+        const midY = padY + (innerH - 10) / 2;
+
+        const durSec = m.duration || 1.5;
+        const durMs = durSec * 1000;
 
         const startPct = Math.max(0, Math.min(1, effStartVal !== null ? effStartVal : (m.start ?? 0.0)));
         const endPct = Math.max(0, Math.min(1, effEndVal !== null ? effEndVal : (m.end ?? 1.0)));
@@ -62,16 +80,40 @@ export const TAPE = {
         let gridSvg = '';
         for (let gx = 1; gx <= 7; gx++) {
             const x = padX + (innerW / 8) * gx;
-            gridSvg += `<line x1="${x.toFixed(1)}" y1="${padY}" x2="${x.toFixed(1)}" y2="${padY + innerH}" stroke="#1e293b" stroke-width="0.8" stroke-dasharray="2,2"/>`;
+            const isCenter = (gx === 4);
+            const isQuarter = (gx % 2 === 0);
+            const strokeCol = isCenter ? '#334155' : (isQuarter ? '#1e293b' : '#0f172a');
+            gridSvg += `<line x1="${x.toFixed(1)}" y1="${padY}" x2="${(padY + innerH - 10).toFixed(1)}" stroke="${strokeCol}" stroke-width="0.8" stroke-dasharray="2,2"/>`;
         }
         for (let gy = 1; gy <= 3; gy++) {
-            const y = padY + (innerH / 4) * gy;
+            const y = padY + ((innerH - 10) / 4) * gy;
             gridSvg += `<line x1="${padX}" y1="${y.toFixed(1)}" x2="${padX + innerW}" y2="${y.toFixed(1)}" stroke="#1e293b" stroke-width="0.8" stroke-dasharray="2,2"/>`;
         }
 
+        // Representative Millisecond Time Labels & tick marks (0ms, 25%, 50%, 75%, 100%)
+        const intervals = [0, 0.25, 0.5, 0.75, 1.0];
+        let timeLabelsSvg = '';
+        intervals.forEach((pct, idx) => {
+            const x = padX + pct * innerW;
+            const ms = pct * durMs;
+            const label = TAPE.formatMs(ms);
+            let anchor = 'middle';
+            let drawX = x;
+            if (idx === 0) {
+                anchor = 'start';
+                drawX = padX + 2;
+            } else if (idx === intervals.length - 1) {
+                anchor = 'end';
+                drawX = padX + innerW - 2;
+            }
+            // Vertical tick mark at bottom axis
+            timeLabelsSvg += `<line x1="${x.toFixed(1)}" y1="${(padY + innerH - 9).toFixed(1)}" x2="${x.toFixed(1)}" y2="${(padY + innerH - 6).toFixed(1)}" stroke="#475569" stroke-width="1"/>`;
+            // Representative time text (bright readable slate monospace)
+            timeLabelsSvg += `<text x="${drawX.toFixed(1)}" y="${(padY + innerH - 1.5).toFixed(1)}" fill="${idx === 2 ? '#38bdf8' : '#94a3b8'}" font-size="7" font-family="monospace" font-weight="bold" text-anchor="${anchor}">${label}</text>`;
+        });
+
         // Waveform peaks (sharp cyan oscilloscope trace)
-        // If initial silence / no audio loaded, do NOT render dummy waveform
-        const peaks = m._peaks || [];
+        const peaks = m.peaks || m._peaks || [];
         const hasAudio = peaks.length > 0 && peaks.some(p => p > 0.005);
         let barsSvg = '';
         if (hasAudio) {
@@ -81,7 +123,7 @@ export const TAPE = {
                 const bx = padX + i * barW + barW * 0.5;
                 const val = peaks[i] || 0.0;
                 if (val > 0.005) {
-                    const barH = Math.max(1.5, val * (innerH * 0.46));
+                    const barH = Math.max(1.5, val * ((innerH - 10) * 0.46));
                     barsSvg += `<line x1="${bx.toFixed(1)}" y1="${(midY - barH).toFixed(1)}" x2="${bx.toFixed(1)}" y2="${(midY + barH).toFixed(1)}" stroke="#06b6d4" stroke-width="1.8" stroke-linecap="round" opacity="0.85"/>`;
                 }
             }
@@ -90,7 +132,6 @@ export const TAPE = {
         }
 
         // Neon Green (#22c55e) markers for Start & End
-        // Start line has uniform thickness (1.6px) matching End line
         const startX = padX + startPct * innerW;
         const endX = padX + endPct * innerW;
 
@@ -104,6 +145,9 @@ export const TAPE = {
                 
                 <!-- Oscilloscope Reticle Grid -->
                 ${gridSvg}
+
+                <!-- Representative Time Axis & Millisecond Labels -->
+                ${timeLabelsSvg}
 
                 <!-- Audio Waveform (Empty if silent) -->
                 ${barsSvg}
@@ -152,8 +196,9 @@ export const TAPE = {
         const isEndPatched = ctx?.patched?.has('end_cv') || ctx?.patched?.has('cv_end');
         const isSpeedPatched = ctx?.patched?.has('speed_cv') || ctx?.patched?.has('cv_speed');
 
-        const startDisp = isStartPatched ? 'EXT' : `${Math.round((m.start ?? 0) * 100)}%`;
-        const endDisp = isEndPatched ? 'EXT' : `${Math.round((m.end ?? 1) * 100)}%`;
+        const durMs = (m.duration ?? 1.5) * 1000;
+        const startDisp = isStartPatched ? 'EXT' : `${Math.round((m.start ?? 0) * 100)}% (${TAPE.formatMs((m.start ?? 0) * durMs)})`;
+        const endDisp = isEndPatched ? 'EXT' : `${Math.round((m.end ?? 1) * 100)}% (${TAPE.formatMs((m.end ?? 1) * durMs)})`;
         const speedCvVal = m.speedCv !== undefined ? m.speedCv : Math.log2(m.speed || 1.0);
         const speedDisp = isSpeedPatched ? 'EXT' : TAPE.formatSpeed(speedCvVal);
         const durStr = `${(m.duration ?? 1.5).toFixed(2)}s`;
@@ -291,10 +336,31 @@ export const TAPE = {
             try { window.lucide.createIcons({ root }); } catch (_) {}
         }
 
-        // Restore PCM buffer to AudioWorklet if already in memory
+        // Restore PCM buffer to AudioWorklet if already in memory, or decode from base64 if needed
         const initialInst = TAPE.getActiveInst(ctx, m);
         if (m._buffer && initialInst?.setAudioBuffer) {
             initialInst.setAudioBuffer(m._buffer, m.sampleRate || 48000);
+        } else if (m.data && (!m.peaks || m.peaks.length === 0 || !m._buffer)) {
+            const synth = ctx?.synth || window.__GS_SYNTH__;
+            TapeCodec.decodeFromBase64(m.data, synth?.ctx).then(res => {
+                if (res?.buffer) {
+                    m._buffer = res.buffer;
+                    m.duration = res.duration;
+                    m.sampleRate = res.sampleRate;
+                    if (!m.peaks || m.peaks.length === 0) {
+                        m.peaks = TAPE.extractPeaks(res.buffer, 64);
+                    }
+                    m._peaks = m.peaks;
+                    const inst = TAPE.getActiveInst(ctx, m);
+                    if (inst?.setAudioBuffer) {
+                        inst.setAudioBuffer(res.buffer, res.sampleRate);
+                    }
+                    redrawSvg();
+                    cb();
+                }
+            }).catch(err => {
+                console.warn('[TAPE] Decode data on bindEvents warning:', err);
+            });
         }
 
         const redrawSvg = () => {
@@ -307,6 +373,15 @@ export const TAPE = {
             redrawSvg();
             const startP = Math.max(0, Math.min(1, m.start ?? 0.0));
             const endP = Math.max(0, Math.min(1, m.end ?? 1.0));
+            const durMs = (m.duration ?? 1.5) * 1000;
+            const startDispEl = root.querySelector('#tape-slider-start-disp');
+            const endDispEl = root.querySelector('#tape-slider-end-disp');
+            if (startDispEl && !isStartPatched) {
+                startDispEl.textContent = `${Math.round(startP * 100)}% (${TAPE.formatMs(startP * durMs)})`;
+            }
+            if (endDispEl && !isEndPatched) {
+                endDispEl.textContent = `${Math.round(endP * 100)}% (${TAPE.formatMs(endP * durMs)})`;
+            }
             // Update progress bar range bounds
             const rangeEl = root.querySelector('#tape-progress-range');
             if (rangeEl) {
@@ -364,7 +439,9 @@ export const TAPE = {
                     m.name = file.name.replace(/\.[^/.]+$/, '').slice(0, 24);
                     m.duration = res.duration;
                     m.sampleRate = res.sampleRate;
-                    m._peaks = TAPE.extractPeaks(res.buffer, 64);
+                    const peaks = TAPE.extractPeaks(res.buffer, 64);
+                    m.peaks = peaks;
+                    m._peaks = peaks;
                     m._buffer = res.buffer; // Persist PCM in memory!
 
                     // Re-acquire active module instance and transfer PCM immediately
@@ -496,13 +573,15 @@ export const TAPE = {
         const isSpeedPatched = ctx?.patched?.has('speed_cv') || ctx?.patched?.has('cv_speed');
 
         if (!isStartPatched) {
-            UIHelpers.bindSlider('tape-slider-start', v => `${Math.round(v * 100)}%`, v => { m.start = v; onSliderChange(); }, 1, 0.0, 1.0);
-            UIHelpers.bindScrubber('tape-slider-start-disp', 'tape-slider-start', v => `${Math.round(v * 100)}%`, v => { m.start = v; onSliderChange(); }, 1, 0.0, 1.0);
+            const formatStart = v => `${Math.round(v * 100)}% (${TAPE.formatMs(v * ((m.duration ?? 1.5) * 1000))})`;
+            UIHelpers.bindSlider('tape-slider-start', formatStart, v => { m.start = v; onSliderChange(); }, 1, 0.0, 1.0);
+            UIHelpers.bindScrubber('tape-slider-start-disp', 'tape-slider-start', formatStart, v => { m.start = v; onSliderChange(); }, 1, 0.0, 1.0);
         }
 
         if (!isEndPatched) {
-            UIHelpers.bindSlider('tape-slider-end', v => `${Math.round(v * 100)}%`, v => { m.end = v; onSliderChange(); }, 1, 0.0, 1.0);
-            UIHelpers.bindScrubber('tape-slider-end-disp', 'tape-slider-end', v => `${Math.round(v * 100)}%`, v => { m.end = v; onSliderChange(); }, 1, 0.0, 1.0);
+            const formatEnd = v => `${Math.round(v * 100)}% (${TAPE.formatMs(v * ((m.duration ?? 1.5) * 1000))})`;
+            UIHelpers.bindSlider('tape-slider-end', formatEnd, v => { m.end = v; onSliderChange(); }, 1, 0.0, 1.0);
+            UIHelpers.bindScrubber('tape-slider-end-disp', 'tape-slider-end', formatEnd, v => { m.end = v; onSliderChange(); }, 1, 0.0, 1.0);
         }
 
         if (!isSpeedPatched) {
@@ -610,15 +689,16 @@ export const TAPE = {
             }
 
             // 5. Update CV-patched start/end display badges
+            const durMs = (m.duration ?? 1.5) * 1000;
             const sliderStart = targetModal.querySelector('#tape-slider-start');
             if (sliderStart && sliderStart.disabled) {
                 const disp = targetModal.querySelector('#tape-slider-start-disp');
-                if (disp) disp.textContent = `EXT (${Math.round(effStart * 100)}%)`;
+                if (disp) disp.textContent = `EXT (${Math.round(effStart * 100)}% / ${TAPE.formatMs(effStart * durMs)})`;
             }
             const sliderEnd = targetModal.querySelector('#tape-slider-end');
             if (sliderEnd && sliderEnd.disabled) {
                 const disp = targetModal.querySelector('#tape-slider-end-disp');
-                if (disp) disp.textContent = `EXT (${Math.round(effEnd * 100)}%)`;
+                if (disp) disp.textContent = `EXT (${Math.round(effEnd * 100)}% / ${TAPE.formatMs(effEnd * durMs)})`;
             }
         }
 

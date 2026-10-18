@@ -8,13 +8,18 @@ export const TAPE = {
             numberOfOutputs: 1
         });
 
+        const isStartPatched = patch?.has?.('start_cv') || patch?.has?.('cv_start') || Boolean(d.startPatched);
+        const isEndPatched = patch?.has?.('end_cv') || patch?.has?.('cv_end') || Boolean(d.endPatched);
+
         w.port.postMessage({
             type: 'SET_PARAMS',
             start: d.start ?? 0.0,
             end: d.end ?? 1.0,
             speed: d.speed ?? 1.0,
             loop: d.loop ?? false,
-            retrigger: d.retrigger ?? true
+            retrigger: d.retrigger ?? true,
+            startPatched: Boolean(isStartPatched),
+            endPatched: Boolean(isEndPatched)
         });
 
         // Initialize Audio Buffer from Base64
@@ -31,6 +36,26 @@ export const TAPE = {
             TapeCodec.decodeFromBase64(d.data, ctx).then(res => {
                 if (res?.buffer) {
                     sendBufferToWorklet(res.buffer, res.sampleRate);
+                    d._buffer = res.buffer;
+                    d.duration = res.duration;
+                    d.sampleRate = res.sampleRate;
+                    if (!d.peaks || d.peaks.length === 0) {
+                        const numBins = 64;
+                        const peaks = new Float32Array(numBins);
+                        const step = Math.floor(res.buffer.length / numBins);
+                        for (let b = 0; b < numBins; b++) {
+                            let max = 0;
+                            const st = b * step;
+                            const ed = Math.min(res.buffer.length, st + step);
+                            for (let i = st; i < ed; i++) {
+                                const abs = Math.abs(res.buffer[i]);
+                                if (abs > max) max = abs;
+                            }
+                            peaks[b] = Math.min(1.0, max);
+                        }
+                        d.peaks = Array.from(peaks);
+                    }
+                    d._peaks = d.peaks;
                 }
             }).catch(() => {});
         }
@@ -149,15 +174,24 @@ export const TAPE = {
             }
         };
     },
-    update: (ctx, inst, d) => {
+    update: (ctx, inst, d, patch) => {
         if (!inst?.nodes?.w) return;
+        if (patch !== undefined) {
+            inst._patchState = patch;
+        }
+        const p = inst._patchState || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id) : null);
+        const isStartPatched = p?.has?.('start_cv') || p?.has?.('cv_start') || Boolean(d.startPatched);
+        const isEndPatched = p?.has?.('end_cv') || p?.has?.('cv_end') || Boolean(d.endPatched);
+
         inst.nodes.w.port.postMessage({
             type: 'SET_PARAMS',
             start: d.start ?? 0.0,
             end: d.end ?? 1.0,
             speed: d.speed ?? 1.0,
             loop: d.loop ?? false,
-            retrigger: d.retrigger ?? true
+            retrigger: d.retrigger ?? true,
+            startPatched: Boolean(isStartPatched),
+            endPatched: Boolean(isEndPatched)
         });
     }
 };

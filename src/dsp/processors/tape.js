@@ -12,6 +12,8 @@ export class TapeProcessor extends AudioWorkletProcessor {
         this.speed = 1.0;
         this.loop = false;
         this.retrigger = true;
+        this.startPatched = false;
+        this.endPatched = false;
 
         this.pointer = 0.0;
         this.isPlaying = false;
@@ -37,7 +39,8 @@ export class TapeProcessor extends AudioWorkletProcessor {
                     this.bufferLength = this.buffer.length;
                     this.bufferSampleRate = data.sampleRate || 48000;
                     // Reset pointer to current effectiveStart
-                    this.pointer = Math.max(0, Math.min(this.bufferLength - 1, this.start * this.bufferLength));
+                    const baseStart = this.startPatched ? 0.0 : this.start;
+                    this.pointer = Math.max(0, Math.min(this.bufferLength - 1, baseStart * this.bufferLength));
                 }
             } else if (data.type === 'SET_PARAMS') {
                 if (data.start !== undefined) this.start = Math.max(0.0, Math.min(1.0, data.start));
@@ -45,6 +48,8 @@ export class TapeProcessor extends AudioWorkletProcessor {
                 if (data.speed !== undefined) this.speed = Math.max(0.05, Math.min(8.0, data.speed));
                 if (data.loop !== undefined) this.loop = Boolean(data.loop);
                 if (data.retrigger !== undefined) this.retrigger = Boolean(data.retrigger);
+                if (data.startPatched !== undefined) this.startPatched = Boolean(data.startPatched);
+                if (data.endPatched !== undefined) this.endPatched = Boolean(data.endPatched);
             } else if (data.type === 'PLAY') {
                 this.isManualPlay = true;
                 this.triggerPlay();
@@ -62,7 +67,8 @@ export class TapeProcessor extends AudioWorkletProcessor {
                 this.isPlaying = false;
                 this.firstPass = false;
                 this.isManualPlay = false;
-                this.pointer = Math.max(0, Math.min(this.bufferLength - 1, this.start * this.bufferLength));
+                const baseStart = this.startPatched ? 0.0 : this.start;
+                this.pointer = Math.max(0, Math.min(this.bufferLength - 1, baseStart * this.bufferLength));
                 this.lastGateHi = false;
                 this.reportState();
             }
@@ -74,7 +80,8 @@ export class TapeProcessor extends AudioWorkletProcessor {
             this.isPlaying = false;
             return;
         }
-        const effStart = Math.max(0.0, Math.min(1.0, this.start + cvStart)) * this.bufferLength;
+        const baseStart = this.startPatched ? 0.0 : this.start;
+        const effStart = Math.max(0.0, Math.min(1.0, baseStart + cvStart)) * this.bufferLength;
         this.pointer = Math.max(0, Math.min(this.bufferLength - 1, effStart));
         this.isPlaying = true;
         this.firstPass = true;
@@ -110,8 +117,10 @@ export class TapeProcessor extends AudioWorkletProcessor {
         // Current CV modulation inputs for Start / End
         const cvS0 = startCvIn ? startCvIn[0] : 0.0;
         const cvE0 = endCvIn ? endCvIn[0] : 0.0;
-        this.lastEffStart = Math.max(0.0, Math.min(1.0, this.start + cvS0));
-        this.lastEffEnd = Math.max(0.0, Math.min(1.0, this.end + cvE0));
+        const baseStart0 = this.startPatched ? 0.0 : this.start;
+        const baseEnd0 = this.endPatched ? 0.0 : this.end;
+        this.lastEffStart = Math.max(0.0, Math.min(1.0, baseStart0 + cvS0));
+        this.lastEffEnd = Math.max(0.0, Math.min(1.0, baseEnd0 + cvE0));
 
         if (!this.buffer || this.bufferLength === 0) {
             for (let i = 0; i < len; i++) out[i] = 0.0;
@@ -156,12 +165,14 @@ export class TapeProcessor extends AudioWorkletProcessor {
                 continue;
             }
 
-            // Current CV modulation inputs
+            // Current CV modulation inputs (internal value cancelled when patched)
             const cvS = startCvIn ? startCvIn[i] : 0.0;
             const cvE = endCvIn ? endCvIn[i] : 0.0;
+            const baseStart = this.startPatched ? 0.0 : this.start;
+            const baseEnd = this.endPatched ? 0.0 : this.end;
 
-            const effStartNorm = Math.max(0.0, Math.min(1.0, this.start + cvS));
-            const effEndNorm = Math.max(0.0, Math.min(1.0, this.end + cvE));
+            const effStartNorm = Math.max(0.0, Math.min(1.0, baseStart + cvS));
+            const effEndNorm = Math.max(0.0, Math.min(1.0, baseEnd + cvE));
 
             const effStart = effStartNorm * (bufLen - 1);
             const effEnd = effEndNorm * (bufLen - 1);
