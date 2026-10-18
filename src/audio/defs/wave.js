@@ -1,5 +1,5 @@
 // src/audio/defs/wave.js
-import { WaveCodec, TapeCodec } from '../wave-codec.js?v=239';
+import { WaveCodec, TapeCodec } from '../wave-codec.js?v=240';
 
 export const WAVE = {
     create: (ctx, d, patch, eng) => {
@@ -184,6 +184,9 @@ export const WAVE = {
                     endPatched: isEndPatchedState,
                     snapMode: isSnapModeState
                 };
+            },
+            update: (ctxArg, instArg, dArg, patchArg) => {
+                WAVE.update(ctxArg || ctx, instArg || { nodes: { w } }, dArg || d, patchArg);
             }
         };
     },
