@@ -1,8 +1,8 @@
 // src/ui/wave-modal.js
-import { UIHelpers } from './helpers.js?v=252';
-import { WaveCodec } from '../audio/wave-codec.js?v=252';
-import { WaveView } from './wave-view.js?v=252';
-import { JsonIoDialog } from './json-io-dialog.js?v=252';
+import { UIHelpers } from './helpers.js?v=253';
+import { WaveCodec } from '../audio/wave-codec.js?v=253';
+import { WaveView } from './wave-view.js?v=253';
+import { JsonIoDialog } from './json-io-dialog.js?v=253';
 
 /**
  * WAVE Module Modal Renderer & Event Controller
@@ -202,9 +202,165 @@ export const WaveModal = {
         return affected;
     },
 
+    formatRecName(date = new Date()) {
+        const pad2 = (n) => String(n).padStart(2, '0');
+        const yyyy = date.getFullYear();
+        const mm = pad2(date.getMonth() + 1);
+        const dd = pad2(date.getDate());
+        const hh = pad2(date.getHours());
+        const min = pad2(date.getMinutes());
+        return `REC ${yyyy}${mm}${dd}${hh}${min}`;
+    },
+
+    stopActiveRecording(cancelOnly = false) {
+        if (this._activeRec) {
+            const rec = this._activeRec;
+            this._activeRec = null;
+            rec.finish(cancelOnly);
+        }
+    },
+
+    async toggleMicRecording(m, ctx, cb, redrawSvg) {
+        if (this._activeRec) {
+            this.stopActiveRecording(false);
+            return;
+        }
+        if (!navigator.mediaDevices?.getUserMedia) {
+            ctx.showToast?.('MIC RECORDING NOT SUPPORTED');
+            return;
+        }
+
+        try {
+            const activeInst = await this.ensureSynthReady(ctx, m);
+            const synth = ctx?.synth || window.__GS_SYNTH__;
+            const audioCtx = synth?.ctx || new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') {
+                try { await audioCtx.resume(); } catch (_) {}
+            }
+
+            let stream;
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+                });
+            } catch (_) {
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            }
+
+            const sRate = audioCtx.sampleRate || 48000;
+            const maxSec = WaveCodec.MAX_DURATION || 16.0;
+            const maxSamples = Math.floor(maxSec * sRate);
+            const captured = new Float32Array(maxSamples);
+            let capturedOffset = 0;
+            const recName = this.formatRecName(new Date());
+
+            m._isRecording = true;
+            m.name = recName;
+            ctx.reRenderModal?.();
+            ctx.showToast?.('RECORDING... (CLICK STOP TO FINISH)');
+
+            const source = audioCtx.createMediaStreamSource(stream);
+            const recorderNode = audioCtx.createScriptProcessor(2048, 1, 1);
+            const zeroGain = audioCtx.createGain();
+            zeroGain.gain.value = 0.0;
+
+            let uiTick = 0;
+            recorderNode.onaudioprocess = (evt) => {
+                if (!this._activeRec) return;
+                const input = evt.inputBuffer.getChannelData(0);
+                const remaining = maxSamples - capturedOffset;
+                if (remaining <= 0) {
+                    this.stopActiveRecording(false);
+                    return;
+                }
+                const toCopy = Math.min(input.length, remaining);
+                captured.set(input.subarray(0, toCopy), capturedOffset);
+                capturedOffset += toCopy;
+
+                uiTick++;
+                if (uiTick % 4 === 0 && capturedOffset > 0) {
+                    const curSlice = captured.subarray(0, capturedOffset);
+                    m.duration = capturedOffset / sRate;
+                    m.peaks = WaveCodec.extractPeaks(curSlice, 64);
+                    m._peaks = m.peaks;
+                    redrawSvg?.();
+                }
+
+                if (capturedOffset >= maxSamples) {
+                    this.stopActiveRecording(false);
+                }
+            };
+
+            source.connect(recorderNode);
+            recorderNode.connect(zeroGain);
+            zeroGain.connect(audioCtx.destination);
+
+            let finished = false;
+            this._activeRec = {
+                finish: (cancelOnly = false) => {
+                    if (finished) return;
+                    finished = true;
+                    m._isRecording = false;
+
+                    try { source.disconnect(); } catch (_) {}
+                    try { recorderNode.disconnect(); } catch (_) {}
+                    try { zeroGain.disconnect(); } catch (_) {}
+                    try { stream.getTracks().forEach(t => t.stop()); } catch (_) {}
+
+                    if (cancelOnly || capturedOffset < Math.floor(sRate * 0.05)) {
+                        ctx.reRenderModal?.();
+                        ctx.showToast?.('RECORDING CANCELLED');
+                        return;
+                    }
+
+                    const finalBuf = new Float32Array(capturedOffset);
+                    finalBuf.set(captured.subarray(0, capturedOffset));
+
+                    // Peak normalize to 0.95
+                    let maxPeak = 0;
+                    for (let i = 0; i < finalBuf.length; i++) {
+                        const abs = Math.abs(finalBuf[i]);
+                        if (abs > maxPeak) maxPeak = abs;
+                    }
+                    if (maxPeak > 0.001) {
+                        const scale = 0.95 / maxPeak;
+                        for (let i = 0; i < finalBuf.length; i++) finalBuf[i] *= scale;
+                    }
+
+                    m.name = recName;
+                    m.duration = finalBuf.length / sRate;
+                    m.sampleRate = sRate;
+                    m.peaks = WaveCodec.extractPeaks(finalBuf, 64);
+                    m._peaks = m.peaks;
+                    m._buffer = finalBuf;
+
+                    const inst = activeInst || this.getActiveInst(ctx, m);
+                    inst?.setAudioBuffer?.(finalBuf, sRate);
+                    inst?.update?.(audioCtx, inst, m);
+
+                    this.propagateLinks(ctx);
+                    redrawSvg?.();
+                    ctx.reRenderModal?.();
+                    cb?.();
+                    ctx.showToast?.(`RECORDED: ${m.name} (${m.duration.toFixed(1)}s)`);
+
+                    WaveCodec.encodeToOpusBase64(finalBuf, sRate, audioCtx).then(b64 => {
+                        m.data = b64;
+                        cb?.();
+                    }).catch(() => {});
+                }
+            };
+        } catch (err) {
+            m._isRecording = false;
+            ctx.reRenderModal?.();
+            ctx.showToast?.(`MIC ERROR: ${(err?.message || String(err)).slice(0, 28)}`);
+        }
+    },
+
     renderModal(m, ctx) {
         const isLinked = Boolean(ctx?.patched?.has('link_in') || m._isLinked);
         m._isLinked = isLinked;
+        const isRecording = Boolean(m._isRecording);
 
         const isStartPatched = Boolean(ctx?.patched?.has('start_cv'));
         const isEndPatched = Boolean(ctx?.patched?.has('end_cv'));
@@ -230,15 +386,19 @@ export const WaveModal = {
 
         return `
             <div class="space-y-2 p-1 text-slate-200 w-full">
-                <!-- Header / File Loader & JSON I/O -->
+                <!-- Header / REC, File Loader & JSON I/O -->
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-1 select-none">
-                    <div class="flex items-center gap-1.5 overflow-hidden">
+                    <div class="flex items-center gap-1 overflow-hidden">
                         ${isLinked ? '<span class="px-1 py-0.5 rounded bg-slate-800 border border-slate-600 text-slate-300 text-[7px] font-mono font-bold shrink-0">LINKED</span>' : ''}
-                        <span class="text-[9.5px] font-bold ${isLinked ? 'text-slate-300' : 'text-cyan-300'} truncate max-w-[115px]">${m.name || 'Wave 1'}</span>
-                        <span class="text-[8px] font-mono text-slate-400 font-bold">(${durStr})</span>
+                        <span class="text-[9.5px] font-bold ${isLinked ? 'text-slate-300' : 'text-cyan-300'} truncate max-w-[105px]">${m.name || 'Wave 1'}</span>
+                        <span id="wave-header-dur" class="text-[8px] font-mono text-slate-400 font-bold shrink-0">(${durStr})</span>
                     </div>
                     <div class="flex items-center gap-1 shrink-0 ${ioDisabledCls}">
-                        <label class="px-2 py-1 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500/70 text-cyan-200 rounded text-[8px] font-bold cursor-pointer transition shadow-sm flex items-center gap-1 shrink-0" title="音声/動画ファイルを読み込む">
+                        <button id="wave-rec-btn" class="px-1.5 py-1 ${isRecording ? 'bg-red-600 hover:bg-red-500 border-red-400 text-white animate-pulse shadow-md shadow-red-600/40' : 'bg-red-950 hover:bg-red-900 border-red-500/70 text-red-200'} border rounded text-[8px] font-bold cursor-pointer transition shadow-sm flex items-center gap-0.5 shrink-0" title="${isRecording ? '録音を停止' : 'マイクからダイレクト録音 (最大16秒)'}" ${ioDisabledAttr}>
+                            <i data-lucide="${isRecording ? 'square' : 'mic'}" class="w-2.5 h-2.5 pointer-events-none"></i>
+                            <span>${isRecording ? 'STOP' : 'REC'}</span>
+                        </button>
+                        <label class="px-1.5 py-1 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500/70 text-cyan-200 rounded text-[8px] font-bold cursor-pointer transition shadow-sm flex items-center gap-0.5 shrink-0" title="音声/動画ファイルを読み込む">
                             <i data-lucide="folder-open" class="w-2.5 h-2.5"></i>
                             <span>LOAD</span>
                             <input type="file" id="wave-file-input" accept="audio/*, video/mp4, video/*" class="hidden" ${ioDisabledAttr}>
@@ -294,9 +454,12 @@ export const WaveModal = {
                     <div class="w-[1px] h-6 bg-slate-800 shrink-0"></div>
                     <div class="flex-1 min-w-[120px] flex flex-col justify-center gap-0.5">
                         <div class="flex items-center justify-between text-[8px] font-mono font-bold leading-tight">
-                            <button id="wave-pitch-mode-btn" class="px-1.5 py-0.5 rounded border ${pitchActive ? 'bg-purple-950 text-purple-300 border-purple-500 shadow-sm shadow-purple-500/20' : 'bg-slate-900 text-cyan-400 border-slate-700 hover:border-cyan-500/60'} text-[7.5px] font-mono font-bold transition cursor-pointer leading-none" title="クリックでモード切替: SPEED (再生速度＆ピッチ連動) ⇔ PITCH (再生時間固定・グレインピッチシフト)">
-                                ${pitchActive ? 'PITCH (FIX)' : 'SPEED'}
-                            </button>
+                            <div class="flex items-center gap-1">
+                                <span class="text-slate-400 text-[7.5px] font-mono font-bold">SPEED MODE:</span>
+                                <button id="wave-pitch-mode-btn" class="px-1.5 py-0.5 rounded border ${pitchActive ? 'bg-purple-950 text-purple-300 border-purple-500 shadow-sm shadow-purple-500/20' : 'bg-slate-900 text-cyan-400 border-slate-700 hover:border-cyan-500/60'} text-[7.5px] font-mono font-bold transition cursor-pointer leading-none" title="クリックでモード切替: SPEED (再生速度＆ピッチ連動) ⇔ PITCH (再生時間固定・グレインピッチシフト)">
+                                    ${pitchActive ? 'PITCH (GRAIN)' : 'SPEED (VARI)'}
+                                </button>
+                            </div>
                             <span id="wave-slider-speed-disp" class="${pitchActive ? 'text-purple-300' : 'text-cyan-300'} font-mono text-[8.5px] ${isSpeedPatched ? 'opacity-40 pointer-events-none' : 'cursor-ns-resize hover:bg-slate-800/80'} px-1 rounded leading-none">${speedDisp}</span>
                         </div>
                         <div class="${isSpeedPatched ? 'opacity-30 pointer-events-none' : ''} flex flex-col gap-0.5">
@@ -352,12 +515,16 @@ export const WaveModal = {
         if (window.lucide?.createIcons) { try { window.lucide.createIcons({ root }); } catch (_) {} }
 
         const redrawSvg = () => {
+            const liveRoot = ctx.getDialogElement?.() || document;
+            const liveWrap = liveRoot.querySelector('#wave-waveform-wrap') || svgWrap;
+            const durEl = liveRoot.querySelector('#wave-header-dur');
+            if (durEl) durEl.textContent = `(${(m.duration ?? 1.5).toFixed(2)}s)`;
             const st = this.getActiveInst(ctx, m)?.read?.();
             const rawS = isStartPatched ? (st?.rawStart ?? m.start ?? 0.0) : (m.start ?? 0.0);
             const rawE = isEndPatched ? (st?.rawEnd ?? m.end ?? 1.0) : (m.end ?? 1.0);
             const bounds = WaveView.resolveEffectiveBounds(m, rawS, rawE);
-            if (svgWrap) {
-                svgWrap.innerHTML = WaveView.renderWaveformSVG(m, st?.playhead ?? 0.0, Boolean(st?.isPlaying), bounds.effStart, bounds.effEnd, bounds.rawStart, bounds.rawEnd);
+            if (liveWrap) {
+                liveWrap.innerHTML = WaveView.renderWaveformSVG(m, st?.playhead ?? 0.0, Boolean(st?.isPlaying), bounds.effStart, bounds.effEnd, bounds.rawStart, bounds.rawEnd);
             }
         };
 
@@ -395,6 +562,12 @@ export const WaveModal = {
             activeInst?.update?.(synth?.ctx, activeInst, m);
             cb();
         };
+
+        // Direct Mic Recording
+        root.querySelector('#wave-rec-btn')?.addEventListener('click', () => {
+            if (isLinked) return;
+            this.toggleMicRecording(m, ctx, cb, redrawSvg);
+        });
 
         // File Input
         const fileInput = root.querySelector('#wave-file-input');
