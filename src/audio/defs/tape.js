@@ -13,7 +13,8 @@ export const TAPE = {
             start: d.start ?? 0.0,
             end: d.end ?? 1.0,
             speed: d.speed ?? 1.0,
-            loop: d.loop ?? false
+            loop: d.loop ?? false,
+            retrigger: d.retrigger ?? true
         });
 
         // Initialize Audio Buffer from Base64
@@ -65,6 +66,8 @@ export const TAPE = {
         let curPlayhead = 0.0;
         let isPlaying = false;
         let isTestPlaying = false;
+        let curEffStart = d.start ?? 0.0;
+        let curEffEnd = d.end ?? 1.0;
 
         const resetGains = () => {
             isTestPlaying = false;
@@ -78,6 +81,8 @@ export const TAPE = {
             if (e.data?.type === 'STATE') {
                 curPlayhead = e.data.pos ?? 0.0;
                 isPlaying = Boolean(e.data.isPlaying);
+                if (e.data.effStart !== undefined) curEffStart = e.data.effStart;
+                if (e.data.effEnd !== undefined) curEffEnd = e.data.effEnd;
                 if (!isPlaying && isTestPlaying) {
                     resetGains();
                 }
@@ -137,7 +142,9 @@ export const TAPE = {
                 return {
                     values: [buf[0] || 0.0],
                     playhead: curPlayhead,
-                    isPlaying
+                    isPlaying,
+                    effStart: curEffStart,
+                    effEnd: curEffEnd
                 };
             }
         };
@@ -149,7 +156,8 @@ export const TAPE = {
             start: d.start ?? 0.0,
             end: d.end ?? 1.0,
             speed: d.speed ?? 1.0,
-            loop: d.loop ?? false
+            loop: d.loop ?? false,
+            retrigger: d.retrigger ?? true
         });
     }
 };

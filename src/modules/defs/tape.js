@@ -15,6 +15,7 @@ export const TAPE = {
         end: 1.0,
         speed: 1.0,
         loop: false,
+        retrigger: true,
         data: ''
     }),
     ports: () => ({
@@ -47,15 +48,15 @@ export const TAPE = {
         }
         return Array.from(peaks);
     },
-    renderWaveformSVG: (m, playhead = 0.0, isPlaying = false) => {
+    renderWaveformSVG: (m, playhead = 0.0, isPlaying = false, effStartVal = null, effEndVal = null) => {
         const W = 320, H = 100;
         const padX = 6, padY = 6;
         const innerW = W - padX * 2;
         const innerH = H - padY * 2;
         const midY = padY + innerH / 2;
 
-        const startPct = Math.max(0, Math.min(1, m.start ?? 0.0));
-        const endPct = Math.max(0, Math.min(1, m.end ?? 1.0));
+        const startPct = Math.max(0, Math.min(1, effStartVal !== null ? effStartVal : (m.start ?? 0.0)));
+        const endPct = Math.max(0, Math.min(1, effEndVal !== null ? effEndVal : (m.end ?? 1.0)));
 
         // Oscilloscope reticle background grid
         let gridSvg = '';
@@ -89,7 +90,7 @@ export const TAPE = {
         }
 
         // Neon Green (#22c55e) markers for Start & End
-        // Start is slightly thicker (stroke-width: 3.0) than End (stroke-width: 1.6)
+        // Start line has uniform thickness (1.6px) matching End line
         const startX = padX + startPct * innerW;
         const endX = padX + endPct * innerW;
 
@@ -107,15 +108,15 @@ export const TAPE = {
                 <!-- Audio Waveform (Empty if silent) -->
                 ${barsSvg}
 
-                <!-- End Line: Neon Green (same color), normal stroke (1.6px) -->
-                <line x1="${endX.toFixed(1)}" y1="${padY}" x2="${endX.toFixed(1)}" y2="${padY + innerH}" stroke="#22c55e" stroke-width="1.6" class="drop-shadow-[0_0_4px_rgba(34,197,94,0.85)]"/>
-                <rect x="${(endX - 5).toFixed(1)}" y="${padY}" width="10" height="9" rx="1.5" fill="#14532d" stroke="#22c55e" stroke-width="1"/>
-                <text x="${endX.toFixed(1)}" y="${padY + 7}" fill="#4ade80" font-size="6.5" font-family="monospace" font-weight="bold" text-anchor="middle">E</text>
+                <!-- End Line: Neon Green (same color), stroke (1.6px) -->
+                <line id="tape-end-line" x1="${endX.toFixed(1)}" y1="${padY}" x2="${endX.toFixed(1)}" y2="${padY + innerH}" stroke="#22c55e" stroke-width="1.6" class="drop-shadow-[0_0_4px_rgba(34,197,94,0.85)]"/>
+                <rect id="tape-end-badge" x="${(endX - 5).toFixed(1)}" y="${padY}" width="10" height="9" rx="1.5" fill="#14532d" stroke="#22c55e" stroke-width="1"/>
+                <text id="tape-end-text" x="${endX.toFixed(1)}" y="${padY + 7}" fill="#4ade80" font-size="6.5" font-family="monospace" font-weight="bold" text-anchor="middle">E</text>
 
-                <!-- Start Line: Neon Green (same color), THICKER (3.0px) -->
-                <line x1="${startX.toFixed(1)}" y1="${padY}" x2="${startX.toFixed(1)}" y2="${padY + innerH}" stroke="#22c55e" stroke-width="3.0" class="drop-shadow-[0_0_6px_rgba(34,197,94,0.95)]"/>
-                <rect x="${(startX - 6).toFixed(1)}" y="${padY}" width="12" height="9" rx="1.5" fill="#14532d" stroke="#22c55e" stroke-width="1.2"/>
-                <text x="${startX.toFixed(1)}" y="${padY + 7}" fill="#4ade80" font-size="6.5" font-family="monospace" font-weight="bold" text-anchor="middle">S</text>
+                <!-- Start Line: Neon Green (same color), stroke (1.6px, same thickness as End) -->
+                <line id="tape-start-line" x1="${startX.toFixed(1)}" y1="${padY}" x2="${startX.toFixed(1)}" y2="${padY + innerH}" stroke="#22c55e" stroke-width="1.6" class="drop-shadow-[0_0_4px_rgba(34,197,94,0.85)]"/>
+                <rect id="tape-start-badge" x="${(startX - 5).toFixed(1)}" y="${padY}" width="10" height="9" rx="1.5" fill="#14532d" stroke="#22c55e" stroke-width="1"/>
+                <text id="tape-start-text" x="${startX.toFixed(1)}" y="${padY + 7}" fill="#4ade80" font-size="6.5" font-family="monospace" font-weight="bold" text-anchor="middle">S</text>
 
                 <!-- Dynamic Playhead Indicator Line (Shown ONLY while playing) -->
                 <line id="tape-playhead-line" x1="${playX.toFixed(1)}" y1="${padY}" x2="${playX.toFixed(1)}" y2="${padY + innerH}" stroke="#fde047" stroke-width="2.2" class="drop-shadow-[0_0_8px_rgba(253,224,71,1)]" style="display: ${isPlaying ? 'block' : 'none'};"/>
@@ -157,6 +158,7 @@ export const TAPE = {
         const speedDisp = isSpeedPatched ? 'EXT' : TAPE.formatSpeed(speedCvVal);
         const durStr = `${(m.duration ?? 1.5).toFixed(2)}s`;
         const loopActive = Boolean(m.loop);
+        const retriggerActive = m.retrigger !== false;
 
         const rangeLeft = (Math.min(m.start ?? 0, m.end ?? 1) * 100).toFixed(1);
         const rangeWidth = (Math.abs((m.end ?? 1) - (m.start ?? 0)) * 100).toFixed(1);
@@ -167,13 +169,12 @@ export const TAPE = {
                 <!-- Header / File Loader -->
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-1 select-none">
                     <div class="flex items-center gap-1.5 overflow-hidden">
-                        <i data-lucide="disc" class="w-3.5 h-3.5 text-cyan-400 shrink-0"></i>
-                        <span class="text-[9.5px] font-bold text-cyan-300 truncate max-w-[120px]">${m.name || 'Tape 1'}</span>
+                        <span class="text-[9.5px] font-bold text-cyan-300 truncate max-w-[140px]">${m.name || 'Tape 1'}</span>
                         <span class="text-[8px] font-mono text-slate-400 font-bold">(${durStr})</span>
                     </div>
-                    <label class="px-2 py-1 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500/70 text-cyan-200 rounded text-[8px] font-bold cursor-pointer transition shadow-sm flex items-center gap-1">
-                        <i data-lucide="upload" class="w-2.5 h-2.5"></i>
-                        <span>LOAD AUDIO/MP4</span>
+                    <label class="px-2 py-1 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500/70 text-cyan-200 rounded text-[8px] font-bold cursor-pointer transition shadow-sm flex items-center gap-1 shrink-0">
+                        <i data-lucide="download" class="w-2.5 h-2.5"></i>
+                        <span>LOAD</span>
                         <input type="file" id="tape-file-input" accept="audio/*, video/mp4, video/*" class="hidden">
                     </label>
                 </div>
@@ -183,35 +184,38 @@ export const TAPE = {
                     ${TAPE.renderWaveformSVG(m, 0.0, false)}
                 </div>
 
-                <!-- Dynamic Progress Bar (Clearly visible at all times, including silence) -->
+                <!-- Dynamic Progress Bar (Monochrome Gray) -->
                 <div class="w-full py-1">
                     <div class="w-full h-2.5 bg-slate-900 rounded-full border border-slate-700 relative shadow-inner overflow-visible">
-                        <!-- Start - End Range Band (Clearly visible emerald zone) -->
-                        <div id="tape-progress-range" class="absolute top-0 bottom-0 bg-emerald-500/30 border-l border-r border-emerald-400/90 rounded-sm" style="left: ${rangeLeft}%; width: ${rangeWidth}%;"></div>
-                        <!-- Live Playback Fill -->
-                        <div id="tape-progress-fill" class="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-cyan-500 via-emerald-400 to-amber-300 rounded-full transition-none opacity-0" style="width: 0%;"></div>
-                        <!-- Playhead Pin / Dot (Always visible, initially at START position) -->
-                        <div id="tape-progress-dot" class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-amber-300 border-2 border-slate-950 shadow-[0_0_8px_rgba(253,224,71,1)] transition-none z-10" style="left: ${(startPct * 100).toFixed(1)}%; display: block;"></div>
+                        <!-- Start - End Range Band (Neutral gray band) -->
+                        <div id="tape-progress-range" class="absolute top-0 bottom-0 bg-slate-600/40 border-l border-r border-slate-400/80 rounded-sm" style="left: ${rangeLeft}%; width: ${rangeWidth}%;"></div>
+                        <!-- Live Playback Fill (Neutral monochrome fill) -->
+                        <div id="tape-progress-fill" class="absolute top-0 bottom-0 left-0 bg-zinc-300 rounded-full transition-none opacity-0" style="width: 0%;"></div>
+                        <!-- Playhead Pin / Dot (Neutral silver dot) -->
+                        <div id="tape-progress-dot" class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-zinc-200 border-2 border-slate-950 shadow-[0_0_6px_rgba(255,255,255,0.7)] transition-none z-10" style="left: ${(startPct * 100).toFixed(1)}%; display: block;"></div>
                     </div>
                 </div>
 
-                <!-- Row 1: TEST PLAY Button, LOOP Button, and SPEED Slider -->
-                <div class="flex items-center justify-between gap-2.5 px-2.5 py-1.5 bg-slate-950/70 rounded-xl border border-slate-800 text-[8.5px]">
-                    <!-- Buttons: TEST PLAY & LOOP -->
+                <!-- Row 1: PLAY Button, LOOP Button, RETRIG Button, and SPEED Slider -->
+                <div class="flex items-center justify-between gap-2 px-2.5 py-1.5 bg-slate-950/70 rounded-xl border border-slate-800 text-[8.5px]">
+                    <!-- Control Buttons -->
                     <div class="flex items-center gap-1.5 shrink-0">
-                        <button id="tape-play-btn" class="h-6 px-2 rounded bg-cyan-600 hover:bg-cyan-500 text-white font-bold transition flex items-center gap-1 shadow-sm text-[8px] active:scale-95 cursor-pointer shrink-0">
+                        <button id="tape-play-btn" class="h-6 px-2.5 rounded bg-cyan-600 hover:bg-cyan-500 text-white font-bold transition flex items-center gap-1 shadow-sm text-[8px] active:scale-95 cursor-pointer shrink-0">
                             <i data-lucide="play" class="w-2.5 h-2.5"></i>
-                            <span id="tape-play-text">TEST PLAY</span>
+                            <span id="tape-play-text">PLAY</span>
                         </button>
-                        <button id="tape-loop-btn" class="h-6 px-2 rounded border ${loopActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition text-[8px] cursor-pointer shrink-0">
+                        <button id="tape-loop-btn" class="h-6 px-2 rounded border ${loopActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition text-[8px] cursor-pointer shrink-0" title="ループ再生の有効/無効">
                             LOOP: <span id="tape-loop-text">${loopActive ? 'ON' : 'OFF'}</span>
+                        </button>
+                        <button id="tape-retrigger-btn" class="h-6 px-2 rounded border ${retriggerActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition text-[8px] cursor-pointer shrink-0" title="トリガー動作 (RETRIG: ON=毎回到頭再生 / OFF=完走までトリガー無視)">
+                            RETRIG: <span id="tape-retrigger-text">${retriggerActive ? 'ON' : 'OFF'}</span>
                         </button>
                     </div>
 
                     <div class="w-[1px] h-6 bg-slate-800 shrink-0"></div>
 
                     <!-- SPEED Horizontal Slider (Exponential: /4, /2, x1, x2, x4) -->
-                    <div class="flex-1 min-w-[120px] flex flex-col justify-center gap-0.5 ${isSpeedPatched ? 'opacity-30 pointer-events-none' : ''}">
+                    <div class="flex-1 min-w-[110px] flex flex-col justify-center gap-0.5 ${isSpeedPatched ? 'opacity-30 pointer-events-none' : ''}">
                         <div class="flex items-center justify-between text-[8px] font-mono font-bold leading-tight">
                             <span class="text-cyan-400">SPEED</span>
                             <span id="tape-slider-speed-disp" class="text-cyan-300 font-mono text-[8.5px] cursor-ns-resize hover:bg-slate-800/80 px-1 rounded leading-none">${speedDisp}</span>
@@ -257,7 +261,7 @@ export const TAPE = {
                 </div>
 
                 <div class="text-[7.5px] text-slate-500 px-1 text-center italic">
-                    * TEST PLAY: 単体直接試聴（スピーカー未接続でも発音 / WAVE_OUT未送出） | START/END: 区間指定
+                    * PLAY: 単体試聴（スピーカー未接続でも内部再生） | RETRIG: OFF時は完走までトリガー無視
                 </div>
             </div>
         `;
@@ -282,6 +286,10 @@ export const TAPE = {
         const dialogEl = document.getElementById(`dock-dialog-${m.id}`);
         const root = dialogEl || document;
         const svgWrap = root.querySelector('#tape-waveform-wrap');
+
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            try { window.lucide.createIcons({ root }); } catch (_) {}
+        }
 
         // Restore PCM buffer to AudioWorklet if already in memory
         const initialInst = TAPE.getActiveInst(ctx, m);
@@ -312,6 +320,8 @@ export const TAPE = {
             if (dotEl && !st?.isPlaying) {
                 dotEl.style.left = `${(startP * 100).toFixed(1)}%`;
             }
+            const synth = ctx?.synth || window.__GS_SYNTH__;
+            activeInst?.update?.(synth?.ctx, activeInst, m);
             cb();
         };
 
@@ -437,7 +447,7 @@ export const TAPE = {
 
                 if (st?.isPlaying) {
                     activeInst.stop?.();
-                    if (playText) playText.textContent = 'TEST PLAY';
+                    if (playText) playText.textContent = 'PLAY';
                     if (playheadLine) playheadLine.style.display = 'none';
                     if (progressFill) progressFill.style.opacity = '0';
                     if (progressDot) progressDot.style.left = `${(startP * 100).toFixed(1)}%`;
@@ -460,6 +470,22 @@ export const TAPE = {
                 activeInst?.update?.(synth?.ctx, activeInst, m);
                 if (loopText) loopText.textContent = m.loop ? 'ON' : 'OFF';
                 loopBtn.className = `h-6 px-2 rounded border ${m.loop ? 'bg-cyan-950 text-cyan-300 border-cyan-500' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition text-[8px] cursor-pointer shrink-0`;
+                cb();
+            });
+        }
+
+        // Retrigger Mode Toggle (RETRIG: ON = always restart / OFF = finish playback before retriggering)
+        const retriggerBtn = root.querySelector('#tape-retrigger-btn');
+        const retriggerText = root.querySelector('#tape-retrigger-text');
+        if (retriggerBtn) {
+            retriggerBtn.addEventListener('click', () => {
+                m.retrigger = !(m.retrigger !== false);
+                const activeInst = TAPE.getActiveInst(ctx, m);
+                const synth = ctx?.synth || window.__GS_SYNTH__;
+                activeInst?.update?.(synth?.ctx, activeInst, m);
+                const on = m.retrigger !== false;
+                if (retriggerText) retriggerText.textContent = on ? 'ON' : 'OFF';
+                retriggerBtn.className = `h-6 px-2 rounded border ${on ? 'bg-cyan-950 text-cyan-300 border-cyan-500' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition text-[8px] cursor-pointer shrink-0`;
                 cb();
             });
         }
@@ -501,16 +527,42 @@ export const TAPE = {
     updateLive: (cell, data, isPlaying, targetModal, m) => {
         const playhead = data?.playhead ?? 0.0;
         const isTapePlaying = Boolean(data?.isPlaying);
-        const startP = Math.max(0, Math.min(1, m.start ?? 0.0));
+        const effStart = data?.effStart !== undefined ? data.effStart : (m.start ?? 0.0);
+        const effEnd = data?.effEnd !== undefined ? data.effEnd : (m.end ?? 1.0);
 
-        // Update modal playhead line and progress bar in real-time
+        // Update modal playhead line, Start/End CV markers, and progress bar in real-time
         if (targetModal) {
-            // 1. Playhead vertical line inside SVG
+            const W = 320, padX = 6, innerW = W - padX * 2;
+
+            // 1. Dynamic Start/End lines and badges according to external CV
+            const startX = padX + Math.max(0, Math.min(1, effStart)) * innerW;
+            const endX = padX + Math.max(0, Math.min(1, effEnd)) * innerW;
+
+            const startLine = targetModal.querySelector('#tape-start-line');
+            const startBadge = targetModal.querySelector('#tape-start-badge');
+            const startText = targetModal.querySelector('#tape-start-text');
+            if (startLine) {
+                startLine.setAttribute('x1', startX.toFixed(1));
+                startLine.setAttribute('x2', startX.toFixed(1));
+            }
+            if (startBadge) startBadge.setAttribute('x', (startX - 5).toFixed(1));
+            if (startText) startText.setAttribute('x', startX.toFixed(1));
+
+            const endLine = targetModal.querySelector('#tape-end-line');
+            const endBadge = targetModal.querySelector('#tape-end-badge');
+            const endText = targetModal.querySelector('#tape-end-text');
+            if (endLine) {
+                endLine.setAttribute('x1', endX.toFixed(1));
+                endLine.setAttribute('x2', endX.toFixed(1));
+            }
+            if (endBadge) endBadge.setAttribute('x', (endX - 5).toFixed(1));
+            if (endText) endText.setAttribute('x', endX.toFixed(1));
+
+            // 2. Playhead vertical line inside SVG
             const playheadLine = targetModal.querySelector('#tape-playhead-line');
             if (playheadLine) {
                 if (isTapePlaying) {
                     playheadLine.style.display = 'block';
-                    const W = 320, padX = 6, innerW = W - padX * 2;
                     const px = padX + Math.max(0, Math.min(1, playhead)) * innerW;
                     playheadLine.setAttribute('x1', px.toFixed(1));
                     playheadLine.setAttribute('x2', px.toFixed(1));
@@ -519,7 +571,15 @@ export const TAPE = {
                 }
             }
 
-            // 2. Horizontal Progress Bar (Fill & Playhead Dot - ALWAYS VISIBLE!)
+            // 3. Horizontal Progress Bar (Fill, Range, & Playhead Dot - ALWAYS VISIBLE!)
+            const progressRange = targetModal.querySelector('#tape-progress-range');
+            if (progressRange) {
+                const rLeft = Math.min(effStart, effEnd) * 100;
+                const rWidth = Math.abs(effEnd - effStart) * 100;
+                progressRange.style.left = `${rLeft.toFixed(1)}%`;
+                progressRange.style.width = `${rWidth.toFixed(1)}%`;
+            }
+
             const progressFill = targetModal.querySelector('#tape-progress-fill');
             const progressDot = targetModal.querySelector('#tape-progress-dot');
             if (progressDot) {
@@ -529,24 +589,36 @@ export const TAPE = {
                     progressDot.style.left = `${pct}%`;
                     if (progressFill) {
                         progressFill.style.opacity = '1';
-                        const fillLeft = Math.min(startP, playhead) * 100;
-                        const fillW = Math.abs(playhead - startP) * 100;
+                        const fillLeft = Math.min(effStart, playhead) * 100;
+                        const fillW = Math.abs(playhead - effStart) * 100;
                         progressFill.style.left = `${fillLeft.toFixed(1)}%`;
                         progressFill.style.width = `${fillW.toFixed(1)}%`;
                     }
                 } else {
-                    // Position at start when silent or stopped
-                    progressDot.style.left = `${(startP * 100).toFixed(1)}%`;
+                    // Position at effective start when silent or stopped
+                    progressDot.style.left = `${(effStart * 100).toFixed(1)}%`;
                     if (progressFill) {
                         progressFill.style.opacity = '0';
                     }
                 }
             }
 
-            // 3. Trigger / Test Play Button Label
+            // 4. Trigger / Play Button Label
             const playText = targetModal.querySelector('#tape-play-text');
             if (playText) {
-                playText.textContent = isTapePlaying ? 'STOP' : 'TEST PLAY';
+                playText.textContent = isTapePlaying ? 'STOP' : 'PLAY';
+            }
+
+            // 5. Update CV-patched start/end display badges
+            const sliderStart = targetModal.querySelector('#tape-slider-start');
+            if (sliderStart && sliderStart.disabled) {
+                const disp = targetModal.querySelector('#tape-slider-start-disp');
+                if (disp) disp.textContent = `EXT (${Math.round(effStart * 100)}%)`;
+            }
+            const sliderEnd = targetModal.querySelector('#tape-slider-end');
+            if (sliderEnd && sliderEnd.disabled) {
+                const disp = targetModal.querySelector('#tape-slider-end-disp');
+                if (disp) disp.textContent = `EXT (${Math.round(effEnd * 100)}%)`;
             }
         }
 

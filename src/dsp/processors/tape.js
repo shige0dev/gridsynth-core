@@ -11,6 +11,7 @@ export class TapeProcessor extends AudioWorkletProcessor {
         this.end = 1.0;
         this.speed = 1.0;
         this.loop = false;
+        this.retrigger = true;
 
         this.pointer = 0.0;
         this.isPlaying = false;
@@ -18,6 +19,10 @@ export class TapeProcessor extends AudioWorkletProcessor {
         this.firstPass = true;
         this.isManualPlay = false;
 
+        this.lastEffStart = 0.0;
+        this.lastEffEnd = 1.0;
+        this.lastReportedStart = -1.0;
+        this.lastReportedEnd = -1.0;
         this.lastReportedPos = 0.0;
         this.lastReportedPlaying = false;
         this.reportCounter = 0;
@@ -39,6 +44,7 @@ export class TapeProcessor extends AudioWorkletProcessor {
                 if (data.end !== undefined) this.end = Math.max(0.0, Math.min(1.0, data.end));
                 if (data.speed !== undefined) this.speed = Math.max(0.05, Math.min(8.0, data.speed));
                 if (data.loop !== undefined) this.loop = Boolean(data.loop);
+                if (data.retrigger !== undefined) this.retrigger = Boolean(data.retrigger);
             } else if (data.type === 'PLAY') {
                 this.isManualPlay = true;
                 this.triggerPlay();
@@ -78,10 +84,14 @@ export class TapeProcessor extends AudioWorkletProcessor {
         const normPos = this.bufferLength > 0 ? (this.pointer / this.bufferLength) : 0.0;
         this.lastReportedPlaying = this.isPlaying;
         this.lastReportedPos = normPos;
+        this.lastReportedStart = this.lastEffStart;
+        this.lastReportedEnd = this.lastEffEnd;
         this.port.postMessage({
             type: 'STATE',
             pos: normPos,
-            isPlaying: this.isPlaying
+            isPlaying: this.isPlaying,
+            effStart: this.lastEffStart,
+            effEnd: this.lastEffEnd
         });
     }
 
@@ -92,19 +102,31 @@ export class TapeProcessor extends AudioWorkletProcessor {
 
         if (!out) return true;
 
-        if (!this.buffer || this.bufferLength === 0) {
-            for (let i = 0; i < len; i++) out[i] = 0.0;
-            if (this.isPlaying) {
-                this.isPlaying = false;
-                this.reportState();
-            }
-            return true;
-        }
-
         const gateIn = inputs[0] ? inputs[0][0] : null;
         const startCvIn = inputs[1] ? inputs[1][0] : null;
         const endCvIn = inputs[2] ? inputs[2][0] : null;
         const speedCvIn = inputs[3] ? inputs[3][0] : null;
+
+        // Current CV modulation inputs for Start / End
+        const cvS0 = startCvIn ? startCvIn[0] : 0.0;
+        const cvE0 = endCvIn ? endCvIn[0] : 0.0;
+        this.lastEffStart = Math.max(0.0, Math.min(1.0, this.start + cvS0));
+        this.lastEffEnd = Math.max(0.0, Math.min(1.0, this.end + cvE0));
+
+        if (!this.buffer || this.bufferLength === 0) {
+            for (let i = 0; i < len; i++) out[i] = 0.0;
+            if (this.isPlaying) {
+                this.isPlaying = false;
+            }
+            this.reportCounter = (this.reportCounter || 0) + 1;
+            const effChanged = Math.abs((this.lastReportedStart ?? -1) - this.lastEffStart) > 0.002 ||
+                               Math.abs((this.lastReportedEnd ?? -1) - this.lastEffEnd) > 0.002;
+            if (this.reportCounter >= 6 || effChanged) {
+                this.reportCounter = 0;
+                this.reportState();
+            }
+            return true;
+        }
 
         const buf = this.buffer;
         const bufLen = this.bufferLength;
@@ -115,8 +137,10 @@ export class TapeProcessor extends AudioWorkletProcessor {
             const gateVal = gateIn ? gateIn[i] : 0.0;
             const isGateHi = gateVal > 0.3;
             if (isGateHi && !this.lastGateHi) {
-                const cvS = startCvIn ? startCvIn[i] : 0.0;
-                this.triggerPlay(cvS);
+                if (!this.isPlaying || this.retrigger) {
+                    const cvS = startCvIn ? startCvIn[i] : 0.0;
+                    this.triggerPlay(cvS);
+                }
             }
             this.lastGateHi = isGateHi;
 
@@ -182,9 +206,11 @@ export class TapeProcessor extends AudioWorkletProcessor {
             }
         }
 
-        // Periodic state reporting for UI playhead animation (~60Hz) or immediate on state change
+        // Periodic state reporting for UI playhead animation (~60Hz) or immediate on state change / CV change
         this.reportCounter = (this.reportCounter || 0) + 1;
-        if (this.reportCounter >= 6 || this.lastReportedPlaying !== this.isPlaying) {
+        const effChanged = Math.abs((this.lastReportedStart ?? -1) - this.lastEffStart) > 0.002 ||
+                           Math.abs((this.lastReportedEnd ?? -1) - this.lastEffEnd) > 0.002;
+        if (this.reportCounter >= 6 || this.lastReportedPlaying !== this.isPlaying || effChanged) {
             this.reportCounter = 0;
             this.reportState();
         }
