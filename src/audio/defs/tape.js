@@ -96,6 +96,12 @@ export const TAPE = {
         let curEffStart = d.start ?? 0.0;
         let curEffEnd = d.end ?? 1.0;
 
+        let curRawStart = d.start ?? 0.0;
+        let curRawEnd = d.end ?? 1.0;
+        let isStartPatchedState = Boolean(isStartPatched);
+        let isEndPatchedState = Boolean(isEndPatched);
+        let isSnapModeState = Boolean(d.snapMode);
+
         const resetGains = () => {
             isTestPlaying = false;
             try {
@@ -110,6 +116,11 @@ export const TAPE = {
                 isPlaying = Boolean(e.data.isPlaying);
                 if (e.data.effStart !== undefined) curEffStart = e.data.effStart;
                 if (e.data.effEnd !== undefined) curEffEnd = e.data.effEnd;
+                if (e.data.rawStart !== undefined) curRawStart = e.data.rawStart;
+                if (e.data.rawEnd !== undefined) curRawEnd = e.data.rawEnd;
+                if (e.data.startPatched !== undefined) isStartPatchedState = Boolean(e.data.startPatched);
+                if (e.data.endPatched !== undefined) isEndPatchedState = Boolean(e.data.endPatched);
+                if (e.data.snapMode !== undefined) isSnapModeState = Boolean(e.data.snapMode);
                 if (!isPlaying && isTestPlaying) {
                     resetGains();
                 }
@@ -171,7 +182,12 @@ export const TAPE = {
                     playhead: curPlayhead,
                     isPlaying,
                     effStart: curEffStart,
-                    effEnd: curEffEnd
+                    effEnd: curEffEnd,
+                    rawStart: curRawStart,
+                    rawEnd: curRawEnd,
+                    startPatched: isStartPatchedState,
+                    endPatched: isEndPatchedState,
+                    snapMode: isSnapModeState
                 };
             }
         };

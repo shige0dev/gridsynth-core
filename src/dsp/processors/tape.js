@@ -25,11 +25,17 @@ export class TapeProcessor extends AudioWorkletProcessor {
 
         this.lastEffStart = 0.0;
         this.lastEffEnd = 1.0;
+        this.lastRawStart = 0.0;
+        this.lastRawEnd = 1.0;
         this.lastReportedStart = -1.0;
         this.lastReportedEnd = -1.0;
+        this.lastReportedRawStart = -1.0;
+        this.lastReportedRawEnd = -1.0;
         this.lastReportedPos = 0.0;
         this.lastReportedPlaying = false;
         this.reportCounter = 0;
+        this.lastCvS = 0.0;
+        this.lastCvE = 0.0;
 
         this.port.onmessage = (e) => {
             const data = e.data;
@@ -40,8 +46,8 @@ export class TapeProcessor extends AudioWorkletProcessor {
                     this.buffer = new Float32Array(data.buffer);
                     this.bufferLength = this.buffer.length;
                     this.bufferSampleRate = data.sampleRate || 48000;
-                    const eff = this.getEffectiveStartEnd(0.0, 0.0);
-                    this.pointer = Math.max(0, Math.min(this.bufferLength - 1, eff.start * this.bufferLength));
+                    const eff = this.getEffectiveStartEnd(this.lastCvS, this.lastCvE);
+                    this.pointer = Math.max(0, Math.min(this.bufferLength - 1, eff.start * (this.bufferLength - 1)));
                 }
             } else if (data.type === 'SET_PARAMS') {
                 if (data.start !== undefined) this.start = Math.max(0.0, Math.min(1.0, data.start));
@@ -55,11 +61,11 @@ export class TapeProcessor extends AudioWorkletProcessor {
                 if (Array.isArray(data.chops)) this.chops = data.chops.map(x => Math.max(0.0, Math.min(1.0, x)));
             } else if (data.type === 'PLAY') {
                 this.isManualPlay = true;
-                this.triggerPlay();
+                this.triggerPlay(this.lastCvS, this.lastCvE);
                 this.reportState();
             } else if (data.type === 'TRIGGER') {
                 this.isManualPlay = false;
-                this.triggerPlay();
+                this.triggerPlay(this.lastCvS, this.lastCvE);
                 this.reportState();
             } else if (data.type === 'STOP') {
                 this.isPlaying = false;
@@ -70,8 +76,8 @@ export class TapeProcessor extends AudioWorkletProcessor {
                 this.isPlaying = false;
                 this.firstPass = false;
                 this.isManualPlay = false;
-                const eff = this.getEffectiveStartEnd(0.0, 0.0);
-                this.pointer = Math.max(0, Math.min(this.bufferLength - 1, eff.start * this.bufferLength));
+                const eff = this.getEffectiveStartEnd(this.lastCvS, this.lastCvE);
+                this.pointer = Math.max(0, Math.min(this.bufferLength - 1, eff.start * (this.bufferLength - 1)));
                 this.lastGateHi = false;
                 this.reportState();
             }
@@ -79,50 +85,72 @@ export class TapeProcessor extends AudioWorkletProcessor {
     }
 
     getEffectiveStartEnd(cvS = 0.0, cvE = 0.0) {
-        let baseStart = this.startPatched ? 0.0 : this.start;
-        let baseEnd = this.endPatched ? 0.0 : this.end;
-        let s = baseStart + cvS;
-        let e = baseEnd + cvE;
+        const baseStart = this.startPatched ? 0.0 : this.start;
+        const baseEnd = this.endPatched ? 0.0 : this.end;
+        const rawS = Math.max(0.0, Math.min(1.0, baseStart + cvS));
+        const rawE = Math.max(0.0, Math.min(1.0, baseEnd + cvE));
+
+        this.lastRawStart = rawS;
+        this.lastRawEnd = rawE;
+
+        let s = rawS;
+        let e = rawE;
 
         if (this.snapMode && Array.isArray(this.chops) && this.chops.length > 0) {
             const pts = [0.0, ...this.chops, 1.0].sort((a, b) => a - b);
             const N = pts.length - 1;
-            if (this.startPatched) {
-                // Scale-ledger uniform quantize: 0V~1V is divided into N equal segments
-                const frac = Math.max(0.0, Math.min(0.999999, cvS));
-                const idx = Math.min(N - 1, Math.max(0, Math.floor(frac * N)));
-                s = pts[idx];
-                if (!this.endPatched) {
-                    e = pts[idx + 1];
-                }
-            } else {
-                // Internal slider: snap to nearest slice start
-                let idx = 0;
-                for (let i = 0; i < N; i++) {
-                    if (s >= pts[i] && (i === N - 1 || s < pts[i + 1])) {
-                        idx = i;
-                        break;
+
+            const getIndex = (val, isPatched) => {
+                const clamped = Math.max(0.0, Math.min(1.0, val));
+                if (isPatched) {
+                    // Ledger uniform quantization across N segments for equal probability
+                    const frac = Math.min(0.999999, clamped);
+                    return Math.min(N - 1, Math.max(0, Math.floor(frac * N)));
+                } else {
+                    for (let i = 0; i < N; i++) {
+                        if (clamped >= pts[i] && (i === N - 1 || clamped < pts[i + 1])) {
+                            return i;
+                        }
                     }
+                    return 0;
                 }
-                s = pts[idx];
-                if (!this.endPatched) {
-                    e = pts[idx + 1];
-                }
+            };
+
+            const idxS = getIndex(rawS, this.startPatched);
+            const idxE = getIndex(rawE, this.endPatched);
+
+            const isDiff = Math.abs(rawS - rawE) > 0.001;
+
+            if (!isDiff) {
+                // When START and END CV / positions are equal, proceed in forward direction for this slice
+                s = pts[idxS];
+                e = pts[idxS + 1];
+            } else if (rawS < rawE) {
+                // Forward direction: from start of idxS to end of idxE
+                s = pts[idxS];
+                e = pts[idxE + 1];
+            } else {
+                // Reverse direction: start at end of idxS, travel down to start of idxE
+                s = pts[idxS + 1];
+                e = pts[idxE];
             }
         }
+
         return {
             start: Math.max(0.0, Math.min(1.0, s)),
-            end: Math.max(0.0, Math.min(1.0, e))
+            end: Math.max(0.0, Math.min(1.0, e)),
+            rawStart: rawS,
+            rawEnd: rawE
         };
     }
 
-    triggerPlay(cvStart = 0.0) {
+    triggerPlay(cvStart = 0.0, cvEnd = 0.0) {
         if (!this.buffer || this.bufferLength === 0) {
             this.isPlaying = false;
             return;
         }
-        const eff = this.getEffectiveStartEnd(cvStart, 0.0);
-        this.pointer = Math.max(0, Math.min(this.bufferLength - 1, eff.start * this.bufferLength));
+        const eff = this.getEffectiveStartEnd(cvStart, cvEnd);
+        this.pointer = Math.max(0, Math.min(this.bufferLength - 1, eff.start * (this.bufferLength - 1)));
         this.isPlaying = true;
         this.firstPass = true;
     }
@@ -133,12 +161,19 @@ export class TapeProcessor extends AudioWorkletProcessor {
         this.lastReportedPos = normPos;
         this.lastReportedStart = this.lastEffStart;
         this.lastReportedEnd = this.lastEffEnd;
+        this.lastReportedRawStart = this.lastRawStart;
+        this.lastReportedRawEnd = this.lastRawEnd;
         this.port.postMessage({
             type: 'STATE',
             pos: normPos,
             isPlaying: this.isPlaying,
             effStart: this.lastEffStart,
-            effEnd: this.lastEffEnd
+            effEnd: this.lastEffEnd,
+            rawStart: this.lastRawStart,
+            rawEnd: this.lastRawEnd,
+            startPatched: this.startPatched,
+            endPatched: this.endPatched,
+            snapMode: this.snapMode
         });
     }
 
@@ -157,6 +192,8 @@ export class TapeProcessor extends AudioWorkletProcessor {
         // Current CV modulation inputs for Start / End
         const cvS0 = startCvIn ? startCvIn[0] : 0.0;
         const cvE0 = endCvIn ? endCvIn[0] : 0.0;
+        this.lastCvS = cvS0;
+        this.lastCvE = cvE0;
         const effInit = this.getEffectiveStartEnd(cvS0, cvE0);
         this.lastEffStart = effInit.start;
         this.lastEffEnd = effInit.end;
@@ -168,7 +205,9 @@ export class TapeProcessor extends AudioWorkletProcessor {
             }
             this.reportCounter = (this.reportCounter || 0) + 1;
             const effChanged = Math.abs((this.lastReportedStart ?? -1) - this.lastEffStart) > 0.002 ||
-                               Math.abs((this.lastReportedEnd ?? -1) - this.lastEffEnd) > 0.002;
+                               Math.abs((this.lastReportedEnd ?? -1) - this.lastEffEnd) > 0.002 ||
+                               Math.abs((this.lastReportedRawStart ?? -1) - this.lastRawStart) > 0.002 ||
+                               Math.abs((this.lastReportedRawEnd ?? -1) - this.lastRawEnd) > 0.002;
             if (this.reportCounter >= 6 || effChanged) {
                 this.reportCounter = 0;
                 this.reportState();
@@ -187,7 +226,8 @@ export class TapeProcessor extends AudioWorkletProcessor {
             if (isGateHi && !this.lastGateHi) {
                 if (!this.isPlaying || this.retrigger) {
                     const cvS = startCvIn ? startCvIn[i] : 0.0;
-                    this.triggerPlay(cvS);
+                    const cvE = endCvIn ? endCvIn[i] : 0.0;
+                    this.triggerPlay(cvS, cvE);
                 }
             }
             this.lastGateHi = isGateHi;
@@ -248,7 +288,9 @@ export class TapeProcessor extends AudioWorkletProcessor {
         // Periodic state reporting for UI playhead animation (~60Hz) or immediate on state change / CV change
         this.reportCounter = (this.reportCounter || 0) + 1;
         const effChanged = Math.abs((this.lastReportedStart ?? -1) - this.lastEffStart) > 0.002 ||
-                           Math.abs((this.lastReportedEnd ?? -1) - this.lastEffEnd) > 0.002;
+                           Math.abs((this.lastReportedEnd ?? -1) - this.lastEffEnd) > 0.002 ||
+                           Math.abs((this.lastReportedRawStart ?? -1) - this.lastRawStart) > 0.002 ||
+                           Math.abs((this.lastReportedRawEnd ?? -1) - this.lastRawEnd) > 0.002;
         if (this.reportCounter >= 6 || this.lastReportedPlaying !== this.isPlaying || effChanged) {
             this.reportCounter = 0;
             this.reportState();
@@ -262,4 +304,3 @@ registerProcessor('tape-processor', TapeProcessor);
 try {
     registerProcessor('wave-processor', TapeProcessor);
 } catch (_) {}
-

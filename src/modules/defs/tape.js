@@ -69,7 +69,7 @@ export const TAPE = {
         }
         return `${(ms / 1000).toFixed(1)}s`;
     },
-    renderWaveformSVG: (m, playhead = 0.0, isPlaying = false, effStartVal = null, effEndVal = null) => {
+    renderWaveformSVG: (m, playhead = 0.0, isPlaying = false, effStartVal = null, effEndVal = null, rawStartVal = null, rawEndVal = null, isStartPatched = false, isEndPatched = false) => {
         const W = 320, H = 100;
         const padX = 6, padY = 6;
         const innerW = W - padX * 2;
@@ -81,6 +81,16 @@ export const TAPE = {
 
         const startPct = Math.max(0, Math.min(1, effStartVal !== null ? effStartVal : (m.start ?? 0.0)));
         const endPct = Math.max(0, Math.min(1, effEndVal !== null ? effEndVal : (m.end ?? 1.0)));
+        const rawStartPct = Math.max(0, Math.min(1, rawStartVal !== null ? rawStartVal : startPct));
+        const rawEndPct = Math.max(0, Math.min(1, rawEndVal !== null ? rawEndVal : endPct));
+
+        const hasChops = Array.isArray(m.chops) && m.chops.length > 0;
+        const isSlice = Boolean(m.snapMode) && hasChops;
+        const showCvStart = isSlice && (isStartPatched || Math.abs(rawStartPct - startPct) > 0.005);
+        const showCvEnd = isSlice && (isEndPatched || Math.abs(rawEndPct - endPct) > 0.005);
+
+        const cvStartX = padX + rawStartPct * innerW;
+        const cvEndX = padX + rawEndPct * innerW;
 
         // Oscilloscope reticle background grid
         let gridSvg = '';
@@ -163,6 +173,13 @@ export const TAPE = {
             });
         }
 
+        // Raw CV Lines (White with subtle glow and triangle notches)
+        const cvStartLineSvg = `<line id="tape-cv-start-line" x1="${cvStartX.toFixed(1)}" y1="${padY}" x2="${cvStartX.toFixed(1)}" y2="${padY + innerH}" stroke="#ffffff" stroke-width="1.4" class="drop-shadow-[0_0_4px_rgba(255,255,255,0.9)]" style="display: ${showCvStart ? 'block' : 'none'};"/>
+        <polygon id="tape-cv-start-notch" points="${(cvStartX - 3).toFixed(1)},${padY} ${(cvStartX + 3).toFixed(1)},${padY} ${cvStartX.toFixed(1)},${(padY + 4).toFixed(1)}" fill="#ffffff" style="display: ${showCvStart ? 'block' : 'none'};"/>`;
+
+        const cvEndLineSvg = `<line id="tape-cv-end-line" x1="${cvEndX.toFixed(1)}" y1="${padY}" x2="${cvEndX.toFixed(1)}" y2="${padY + innerH}" stroke="#ffffff" stroke-width="1.4" stroke-dasharray="3,2" class="drop-shadow-[0_0_4px_rgba(255,255,255,0.9)]" style="display: ${showCvEnd ? 'block' : 'none'};"/>
+        <polygon id="tape-cv-end-notch" points="${(cvEndX - 3).toFixed(1)},${(padY + innerH).toFixed(1)} ${(cvEndX + 3).toFixed(1)},${(padY + innerH).toFixed(1)} ${cvEndX.toFixed(1)},${(padY + innerH - 4).toFixed(1)}" fill="#ffffff" style="display: ${showCvEnd ? 'block' : 'none'};"/>`;
+
         // Neon Green (#22c55e) markers for Start & End
         const startX = padX + startPct * innerW;
         const endX = padX + endPct * innerW;
@@ -186,6 +203,10 @@ export const TAPE = {
 
                 <!-- Chop Slices Guide & Highlights -->
                 ${chopsSvg}
+
+                <!-- Raw CV Lines (White) -->
+                ${cvStartLineSvg}
+                ${cvEndLineSvg}
 
                 <!-- End Line: Neon Green (same color), stroke (1.6px) -->
                 <line id="tape-end-line" x1="${endX.toFixed(1)}" y1="${padY}" x2="${endX.toFixed(1)}" y2="${padY + innerH}" stroke="#22c55e" stroke-width="1.6" class="drop-shadow-[0_0_4px_rgba(34,197,94,0.85)]"/>
@@ -413,7 +434,19 @@ export const TAPE = {
         const redrawSvg = () => {
             const activeInst = TAPE.getActiveInst(ctx, m);
             const st = activeInst?.read?.();
-            if (svgWrap) svgWrap.innerHTML = TAPE.renderWaveformSVG(m, st?.playhead ?? 0.0, Boolean(st?.isPlaying));
+            if (svgWrap) {
+                svgWrap.innerHTML = TAPE.renderWaveformSVG(
+                    m,
+                    st?.playhead ?? 0.0,
+                    Boolean(st?.isPlaying),
+                    st?.effStart ?? null,
+                    st?.effEnd ?? null,
+                    st?.rawStart ?? null,
+                    st?.rawEnd ?? null,
+                    Boolean(st?.startPatched ?? isStartPatched),
+                    Boolean(st?.endPatched ?? isEndPatched)
+                );
+            }
         };
 
         const onSliderChange = () => {
@@ -633,18 +666,26 @@ export const TAPE = {
             if (mode === '4') {
                 m.chops = [0.25, 0.5, 0.75];
                 m.snapMode = true;
+                m.start = 0.0;
+                m.end = 0.25;
             } else if (mode === '8') {
                 m.chops = [0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875];
                 m.snapMode = true;
+                m.start = 0.0;
+                m.end = 0.125;
             } else if (mode === '16') {
                 const arr = [];
                 for (let i = 1; i < 16; i++) arr.push(parseFloat((i / 16.0).toFixed(4)));
                 m.chops = arr;
                 m.snapMode = true;
+                m.start = 0.0;
+                m.end = 0.0625;
             } else {
                 m.chopMode = 'off';
                 m.chops = [];
                 m.snapMode = false;
+                m.start = 0.0;
+                m.end = 1.0;
             }
             const activeInst = TAPE.getActiveInst(ctx, m);
             const synth = ctx?.synth || window.__GS_SYNTH__;
@@ -790,10 +831,17 @@ export const TAPE = {
         const isTapePlaying = Boolean(data?.isPlaying);
         const effStart = data?.effStart !== undefined ? data.effStart : (m.start ?? 0.0);
         const effEnd = data?.effEnd !== undefined ? data.effEnd : (m.end ?? 1.0);
+        const rawStart = data?.rawStart !== undefined ? data.rawStart : effStart;
+        const rawEnd = data?.rawEnd !== undefined ? data.rawEnd : effEnd;
+        const startPatched = Boolean(data?.startPatched ?? m.startPatched);
+        const endPatched = Boolean(data?.endPatched ?? m.endPatched);
+        const snapMode = Boolean(data?.snapMode ?? m.snapMode);
 
         // Update modal playhead line, Start/End CV markers, and progress bar in real-time
         if (targetModal) {
-            const W = 320, padX = 6, innerW = W - padX * 2;
+            const W = 320, H = 100, padX = 6, padY = 6;
+            const innerW = W - padX * 2;
+            const innerH = H - padY * 2;
 
             // 1. Dynamic Start/End lines and badges according to external CV
             const startX = padX + Math.max(0, Math.min(1, effStart)) * innerW;
@@ -818,6 +866,47 @@ export const TAPE = {
             }
             if (endBadge) endBadge.setAttribute('x', (endX - 5).toFixed(1));
             if (endText) endText.setAttribute('x', endX.toFixed(1));
+
+            // 2. Dynamic Raw CV Markers (White lines & triangle notches)
+            const hasChops = Array.isArray(m.chops) && m.chops.length > 0;
+            const isSlice = snapMode && hasChops;
+            const showCvStart = isSlice && (startPatched || Math.abs(rawStart - effStart) > 0.005);
+            const showCvEnd = isSlice && (endPatched || Math.abs(rawEnd - effEnd) > 0.005);
+
+            const cvStartX = padX + Math.max(0, Math.min(1, rawStart)) * innerW;
+            const cvEndX = padX + Math.max(0, Math.min(1, rawEnd)) * innerW;
+
+            const cvStartLine = targetModal.querySelector('#tape-cv-start-line');
+            const cvStartNotch = targetModal.querySelector('#tape-cv-start-notch');
+            if (cvStartLine) {
+                cvStartLine.style.display = showCvStart ? 'block' : 'none';
+                if (showCvStart) {
+                    cvStartLine.setAttribute('x1', cvStartX.toFixed(1));
+                    cvStartLine.setAttribute('x2', cvStartX.toFixed(1));
+                }
+            }
+            if (cvStartNotch) {
+                cvStartNotch.style.display = showCvStart ? 'block' : 'none';
+                if (showCvStart) {
+                    cvStartNotch.setAttribute('points', `${(cvStartX - 3).toFixed(1)},${padY} ${(cvStartX + 3).toFixed(1)},${padY} ${cvStartX.toFixed(1)},${(padY + 4).toFixed(1)}`);
+                }
+            }
+
+            const cvEndLine = targetModal.querySelector('#tape-cv-end-line');
+            const cvEndNotch = targetModal.querySelector('#tape-cv-end-notch');
+            if (cvEndLine) {
+                cvEndLine.style.display = showCvEnd ? 'block' : 'none';
+                if (showCvEnd) {
+                    cvEndLine.setAttribute('x1', cvEndX.toFixed(1));
+                    cvEndLine.setAttribute('x2', cvEndX.toFixed(1));
+                }
+            }
+            if (cvEndNotch) {
+                cvEndNotch.style.display = showCvEnd ? 'block' : 'none';
+                if (showCvEnd) {
+                    cvEndNotch.setAttribute('points', `${(cvEndX - 3).toFixed(1)},${(padY + innerH).toFixed(1)} ${(cvEndX + 3).toFixed(1)},${(padY + innerH).toFixed(1)} ${cvEndX.toFixed(1)},${(padY + innerH - 4).toFixed(1)}`);
+                }
+            }
 
             // 2. Playhead vertical line inside SVG
             const playheadLine = targetModal.querySelector('#tape-playhead-line');
