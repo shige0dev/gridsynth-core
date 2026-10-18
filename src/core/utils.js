@@ -202,7 +202,7 @@ export const PORT_ALIASES = {
     'r_cv': 'release_in',
     'release_cv': 'release_in',
 
-    // TAPE & CUE
+    // WAVE
     'cv_start': 'start_cv',
     'cv_end': 'end_cv',
     'cv_speed': 'speed_cv'

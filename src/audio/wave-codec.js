@@ -1,17 +1,17 @@
 /**
- * TAPE Module Audio Codec Utility
+ * WAVE Module Audio Codec Utility
  * Handles decoding audio/video (MP4, MP3, WAV, etc.) via Web Audio API,
  * 16-second clipping/mono downmix, and Opus WebM Base64 encoding/decoding.
  */
 
-export const TapeCodec = {
+export const WaveCodec = {
     MAX_DURATION: 16.0,
 
     /**
      * Helper to downmix AudioBuffer to mono Float32Array (max 16s) and peak-normalize.
      */
     processAudioBuffer(audioBuffer) {
-        const targetDuration = Math.min(audioBuffer.duration, TapeCodec.MAX_DURATION);
+        const targetDuration = Math.min(audioBuffer.duration, WaveCodec.MAX_DURATION);
         const targetSamples = Math.floor(targetDuration * audioBuffer.sampleRate);
         const monoData = new Float32Array(targetSamples);
 
@@ -92,14 +92,14 @@ export const TapeCodec = {
                 }
             });
 
-            return TapeCodec.processAudioBuffer(audioBuffer);
+            return WaveCodec.processAudioBuffer(audioBuffer);
         } catch (decodeErr) {
             console.warn('[TapeCodec] Direct decodeAudioData failed, attempting MediaElement extraction fallback:', decodeErr);
         }
 
         // 2. Secondary Fallback: Use HTMLVideoElement / HTMLAudioElement playback capture
         // (Guarantees decoding on mobile browsers where decodeAudioData does not support video/mp4 containers)
-        return await TapeCodec.extractAudioViaMediaElement(file, ctx);
+        return await WaveCodec.extractAudioViaMediaElement(file, ctx);
     },
 
     /**
@@ -148,7 +148,7 @@ export const TapeCodec = {
                         await audioCtx.resume();
                     }
 
-                    const duration = Math.min(video.duration || 16.0, TapeCodec.MAX_DURATION);
+                    const duration = Math.min(video.duration || 16.0, WaveCodec.MAX_DURATION);
                     const sRate = audioCtx.sampleRate;
                     const totalSamples = Math.floor(duration * sRate);
                     const captured = new Float32Array(totalSamples);
@@ -263,7 +263,7 @@ export const TapeCodec = {
                 }
             });
 
-            return TapeCodec.processAudioBuffer(audioBuffer);
+            return WaveCodec.processAudioBuffer(audioBuffer);
         } catch (err) {
             console.warn('[TapeCodec] Failed to decode base64 audio:', err);
             return null;
@@ -291,7 +291,7 @@ export const TapeCodec = {
         if (typeof MediaRecorder === 'undefined' ||
             !MediaRecorder.isTypeSupported?.(mimeType) ||
             typeof ctx.createMediaStreamDestination !== 'function') {
-            return TapeCodec.encodeToWavBase64(float32Array, sampleRate);
+            return WaveCodec.encodeToWavBase64(float32Array, sampleRate);
         }
 
         return new Promise((resolve, reject) => {
@@ -345,7 +345,7 @@ export const TapeCodec = {
                 }, durMs + 100);
             } catch (err) {
                 console.warn('[TapeCodec] Opus encoding failed, falling back to WAV:', err);
-                resolve(TapeCodec.encodeToWavBase64(float32Array, sampleRate));
+                resolve(WaveCodec.encodeToWavBase64(float32Array, sampleRate));
             }
         });
     },
@@ -411,3 +411,5 @@ export const TapeCodec = {
     }
 };
 
+export const TapeCodec = WaveCodec;
+export default WaveCodec;

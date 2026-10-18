@@ -29,7 +29,6 @@ export const MODAL_WIDTHS = {
     VCO: 'w-[235px]',
     WAVE: 'w-[360px]',
     TAPE: 'w-[360px]',
-    CUE: 'w-[260px]',
     NOISE: 'w-[185px]',
     VCF: 'w-[210px]',
     FOLD: 'w-[220px]',
@@ -85,8 +84,7 @@ export const DOCK_TITLES = {
     MARKOV: 'MARKOV GENERATOR',
     SCALE: 'SCALE QUANTIZER',
     WAVE: 'WAVE SAMPLER',
-    TAPE: 'WAVE SAMPLER',
-    CUE: 'CUE CONTROLLER'
+    TAPE: 'WAVE SAMPLER'
 };
 
 export const DOCK_ICONS = {
@@ -101,7 +99,6 @@ export const DOCK_ICONS = {
     VCO: 'activity',
     WAVE: 'audio-waveform',
     TAPE: 'audio-waveform',
-    CUE: 'play-circle',
     VCF: 'filter',
     VCA: 'volume-2',
     ADSR: 'trending-up',
@@ -624,7 +621,7 @@ export class ModalManager {
                         name: 'CV',
                         sub: 'CV (変調・演算・エンベロープ)',
                         color: 'purple',
-                        types: ['CUE', 'LFO', 'ADSR', 'RF', 'AR', 'CHORD', 'SCALE', 'MATH1', 'MATH2', 'SH', 'CVDELAY', 'SLIDER', 'THROUGH', 'MON', 'SUB_IO']
+                        types: ['LFO', 'ADSR', 'RF', 'AR', 'CHORD', 'SCALE', 'MATH1', 'MATH2', 'SH', 'CVDELAY', 'SLIDER', 'THROUGH', 'MON', 'SUB_IO']
                     }
                 ];
 

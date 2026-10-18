@@ -19,8 +19,7 @@ import { fmDefs } from './defs/fm.js?v=187';
 import { scaleDefs } from './defs/scale.js?v=217';
 import { rfDefs } from './defs/rf.js?v=217';
 import { arDefs } from './defs/ar.js?v=217';
-import { waveDefs, tapeDefs } from './defs/wave.js?v=234';
-import { cueDefs } from './defs/cue.js?v=218';
+import { waveDefs, tapeDefs } from './defs/wave.js?v=235';
 
 export const MODULE_REGISTRY = {
     ...vcoDefs,
@@ -40,8 +39,7 @@ export const MODULE_REGISTRY = {
     ...rfDefs,
     ...arDefs,
     ...waveDefs,
-    ...tapeDefs,
-    ...cueDefs
+    ...tapeDefs
 };
 
 export { ADSR_CURVES };

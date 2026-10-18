@@ -1,6 +1,6 @@
 // src/modules/defs/wave.js
 import { UIHelpers } from '../../ui/helpers.js?v=218';
-import { TapeCodec } from '../../audio/tape-codec.js';
+import { WaveCodec, TapeCodec } from '../../audio/wave-codec.js';
 
 export const WAVE = {
     color: 'cyan',
@@ -409,7 +409,7 @@ export const WAVE = {
             initialInst.setAudioBuffer(m._buffer, m.sampleRate || 48000);
         } else if (m.data && (!m.peaks || m.peaks.length === 0 || !m._buffer)) {
             const synth = ctx?.synth || window.__GS_SYNTH__;
-            TapeCodec.decodeFromBase64(m.data, synth?.ctx).then(res => {
+            WaveCodec.decodeFromBase64(m.data, synth?.ctx).then(res => {
                 if (res?.buffer) {
                     m._buffer = res.buffer;
                     m.duration = res.duration;
@@ -527,7 +527,7 @@ export const WAVE = {
 
                     // 2. Decode Audio / MP4
                     const audioCtx = synth?.ctx || null;
-                    const res = await TapeCodec.loadAudioFromFile(file, audioCtx);
+                    const res = await WaveCodec.loadAudioFromFile(file, audioCtx);
 
                     // Update module properties
                     m.name = file.name.replace(/\.[^/.]+$/, '').slice(0, 24);
@@ -550,7 +550,7 @@ export const WAVE = {
                     ctx.showToast?.(`LOADED: ${res.duration.toFixed(1)}s`);
 
                     // Encode to Opus Base64 in background for patch JSON persistence
-                    TapeCodec.encodeToOpusBase64(res.buffer, res.sampleRate, synth?.ctx).then(b64 => {
+                    WaveCodec.encodeToOpusBase64(res.buffer, res.sampleRate, synth?.ctx).then(b64 => {
                         m.data = b64;
                         cb();
                     }).catch(err => {
