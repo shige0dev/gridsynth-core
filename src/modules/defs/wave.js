@@ -1,8 +1,8 @@
 // src/modules/defs/wave.js
-import { UIHelpers } from '../../ui/helpers.js?v=255';
-import { WaveCodec } from '../../audio/wave-codec.js?v=255';
-import { WaveView } from '../../ui/wave-view.js?v=255';
-import { WaveModal } from '../../ui/wave-modal.js?v=255';
+import { UIHelpers } from '../../ui/helpers.js?v=256';
+import { WaveCodec } from '../../audio/wave-codec.js?v=256';
+import { WaveView } from '../../ui/wave-view.js?v=256';
+import { WaveModal } from '../../ui/wave-modal.js?v=256';
 
 export const WAVE = {
     color: 'cyan',
@@ -48,11 +48,11 @@ export const WAVE = {
             { port: 'start_cv', color: 'bg-yellow-400', pin: 5 },
             { port: 'end_cv', color: 'bg-yellow-400', pin: 6 },
             { port: 'speed_cv', color: 'bg-yellow-400', pin: 7 },
-            { port: 'link_in', color: 'bg-slate-300', pin: 3 }
+            { port: 'link_in', color: 'bg-slate-300', pin: 0 }
         ],
         out: [
             { port: 'wave_out', color: 'bg-blue-500', pin: 9 },
-            { port: 'link_out', color: 'bg-slate-300', pin: 10 }
+            { port: 'link_out', color: 'bg-slate-300', pin: 13 }
         ]
     }),
     renderGrid: (m, ctx) => {
@@ -61,7 +61,7 @@ export const WAVE = {
         const rWidth = Math.abs(bounds.effEnd - bounds.effStart) * 100;
         const isLinked = Boolean(ctx?.patched?.has('link_in') || m._isLinked);
         return `<div class="flex items-center justify-center w-full h-full pointer-events-none">
-            <div class="w-14 h-7 rounded border border-slate-700/80 bg-slate-950 p-[1px] relative flex items-center justify-center shadow-inner">
+            <div class="w-14 h-7 rounded border border-slate-400/90 bg-slate-950 p-[1px] relative flex items-center justify-center shadow-inner panel-bar-slot">
                 ${isLinked ? '<div class="absolute -top-2.5 inset-x-0 flex items-center justify-center pointer-events-none"><span class="text-[6px] font-mono font-bold tracking-wider text-slate-300 leading-none">LINKED</span></div>' : ''}
                 <div class="absolute inset-0 overflow-hidden rounded-[3px]">
                     <div class="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 border-t border-slate-800/80"></div>

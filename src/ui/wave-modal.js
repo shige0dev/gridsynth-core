@@ -1,8 +1,8 @@
 // src/ui/wave-modal.js
-import { UIHelpers } from './helpers.js?v=255';
-import { WaveCodec } from '../audio/wave-codec.js?v=255';
-import { WaveView } from './wave-view.js?v=255';
-import { JsonIoDialog } from './json-io-dialog.js?v=255';
+import { UIHelpers } from './helpers.js?v=256';
+import { WaveCodec } from '../audio/wave-codec.js?v=256';
+import { WaveView } from './wave-view.js?v=256';
+import { JsonIoDialog } from './json-io-dialog.js?v=256';
 
 /**
  * WAVE Module Modal Renderer & Event Controller
@@ -428,40 +428,26 @@ export const WaveModal = {
                     ${WaveView.renderWaveformSVG(m, curPlayhead, curIsPlaying, bounds.effStart, bounds.effEnd, bounds.rawStart, bounds.rawEnd)}
                 </div>
 
-                <!-- CHOP and SNAP Controls -->
-                <div class="flex items-center justify-between gap-1 px-2 py-1 bg-slate-950/70 rounded-xl border border-slate-800 text-[8px] select-none">
-                    <div class="flex items-center gap-1.5 ${isLinked ? 'opacity-30 pointer-events-none' : ''}">
-                        <span class="text-amber-400 font-bold text-[7.5px] font-mono">CHOP:</span>
-                        <div class="flex items-center gap-1">
-                            <button id="wave-chop-off" class="${chopBtnCls('off')}" ${ioDisabledAttr}>OFF</button>
-                            <button id="wave-chop-4" class="${chopBtnCls('4')}" ${ioDisabledAttr}>4</button>
-                            <button id="wave-chop-8" class="${chopBtnCls('8')}" ${ioDisabledAttr}>8</button>
-                            <button id="wave-chop-16" class="${chopBtnCls('16')}" ${ioDisabledAttr}>16</button>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <span class="text-slate-400 font-bold text-[7.5px] font-mono">SNAP:</span>
-                        <button id="wave-snap-btn" class="px-2 py-0.5 rounded border ${m.snapMode ? 'bg-emerald-950 text-emerald-300 border-emerald-500 font-bold shadow-sm shadow-emerald-500/20' : 'bg-slate-900 text-slate-500 border-slate-800'} transition cursor-pointer font-bold">
-                            ${m.snapMode ? 'ON' : 'OFF'}
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Row 1: PLAY, LOOP, RETRIG & SPEED/PITCH Slider -->
+                <!-- Unified Controls: PLAY/LOOP/RETRIG (Left) + SPEED Slider (Center) + CHOP & SNAP (Right) -->
                 <div class="flex items-center justify-between gap-2 px-2 py-1.5 bg-slate-950/70 rounded-xl border border-slate-800 text-[8.5px]">
+                    <!-- Left: Playback buttons (tall buttons matching two-tier height) -->
                     <div class="flex items-center gap-1 shrink-0">
-                        <button id="wave-play-btn" class="h-6 w-7 rounded ${curIsPlaying ? 'bg-red-600 hover:bg-red-500' : 'bg-cyan-600 hover:bg-cyan-500'} text-white font-bold transition flex items-center justify-center shadow-sm active:scale-95 cursor-pointer shrink-0" title="PLAY / STOP">
-                            <i id="wave-play-icon" data-lucide="${curIsPlaying ? 'square' : 'play'}" class="w-3 h-3"></i>
+                        <button id="wave-play-btn" class="h-[34px] w-7 rounded ${curIsPlaying ? 'bg-red-600 hover:bg-red-500' : 'bg-cyan-600 hover:bg-cyan-500'} text-white font-bold transition flex items-center justify-center shadow-sm active:scale-95 cursor-pointer shrink-0" title="PLAY / STOP">
+                            <i id="wave-play-icon" data-lucide="${curIsPlaying ? 'square' : 'play'}" class="w-3.5 h-3.5"></i>
                         </button>
-                        <button id="wave-loop-btn" class="h-6 w-7 rounded border ${loopActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0" title="LOOP (ループ再生 ON/OFF)">
-                            <i data-lucide="repeat" class="w-3 h-3"></i>
+                        <button id="wave-loop-btn" class="h-[34px] w-7 rounded border ${loopActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0" title="LOOP (ループ再生 ON/OFF)">
+                            <i data-lucide="repeat" class="w-3.5 h-3.5"></i>
                         </button>
-                        <button id="wave-retrigger-btn" class="h-6 w-7 rounded border ${retriggerActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0" title="RETRIGGER (ON: 毎回先頭から再生 / OFF: 完走するまでトリガー無視)">
-                            <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+                        <button id="wave-retrigger-btn" class="h-[34px] w-7 rounded border ${retriggerActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0" title="RETRIGGER (ON: 毎回先頭から再生 / OFF: 完走するまでトリガー無視)">
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
                         </button>
                     </div>
-                    <div class="w-[1px] h-6 bg-slate-800 shrink-0"></div>
-                    <div class="flex-1 min-w-[120px] flex flex-col justify-center gap-0.5">
+
+                    <div class="w-[1px] h-8 bg-slate-800 shrink-0"></div>
+
+                    <!-- Center: SPEED & Pitch Mode / Semi Quantize Slider (Two-tier) -->
+                    <div class="flex-1 min-w-[110px] flex flex-col justify-center gap-1">
+                        <!-- Top Text Area -->
                         <div class="flex items-center justify-between text-[8px] font-mono font-bold leading-tight">
                             <div class="flex items-center gap-1">
                                 <span class="text-slate-400 text-[7px] font-mono font-bold">MODE:</span>
@@ -474,6 +460,7 @@ export const WaveModal = {
                             </div>
                             <span id="wave-slider-speed-disp" class="${semiActive ? 'text-amber-300' : (pitchActive ? 'text-purple-300' : 'text-cyan-300')} font-mono text-[8.5px] ${isSpeedPatched ? 'opacity-40 pointer-events-none' : 'cursor-ns-resize hover:bg-slate-800/80'} px-1 rounded leading-none">${speedDisp}</span>
                         </div>
+                        <!-- Bottom Slider Area -->
                         <div class="${isSpeedPatched ? 'opacity-30 pointer-events-none' : ''} flex flex-col gap-0.5">
                             <input type="range" id="wave-slider-speed" min="${semiActive ? -24 : -2.0}" max="${semiActive ? 24 : 2.0}" step="${semiActive ? 1 : 0.05}" value="${semiActive ? semiInt : speedCvVal}" class="w-full h-1.5 bg-slate-800 rounded-lg ${semiActive ? 'accent-amber-400' : (pitchActive ? 'accent-purple-400' : 'accent-cyan-400')} cursor-pointer" ${isSpeedPatched ? 'disabled' : ''} title="${semiActive ? '半音ステップ (-24semi 〜 +24semi / 1/12oct刻み)' : (pitchActive ? 'ピッチシフト (-24st 〜 +24st / 再生時間固定)' : '再生速度 (/4, /2, x1, x2, x4)')}">
                             <div class="flex justify-between px-0.5 text-[6.5px] font-mono text-slate-500 font-bold select-none pointer-events-none -mt-0.5">
@@ -483,6 +470,30 @@ export const WaveModal = {
                                         ? '<span>-24</span><span>-12</span><span class="text-purple-400">0st</span><span>+12</span><span>+24</span>'
                                         : '<span>/4</span><span>/2</span><span class="text-cyan-400">x1</span><span>x2</span><span>x4</span>')}
                             </div>
+                        </div>
+                    </div>
+
+                    <div class="w-[1px] h-8 bg-slate-800 shrink-0"></div>
+
+                    <!-- Right: CHOP & SNAP Controls (Text on top, Buttons on bottom) -->
+                    <div class="flex flex-col justify-center gap-1 shrink-0 ${isLinked ? 'opacity-30 pointer-events-none' : ''}">
+                        <!-- Top Text Area -->
+                        <div class="flex items-center justify-between text-[7px] font-mono font-bold leading-tight px-0.5">
+                            <span class="text-amber-400">CHOP</span>
+                            <span class="text-slate-400">SNAP</span>
+                        </div>
+                        <!-- Bottom Button Area -->
+                        <div class="flex items-center gap-1">
+                            <div class="flex items-center gap-0.5">
+                                <button id="wave-chop-off" class="${chopBtnCls('off')}" ${ioDisabledAttr}>—</button>
+                                <button id="wave-chop-4" class="${chopBtnCls('4')}" ${ioDisabledAttr}>4</button>
+                                <button id="wave-chop-8" class="${chopBtnCls('8')}" ${ioDisabledAttr}>8</button>
+                                <button id="wave-chop-16" class="${chopBtnCls('16')}" ${ioDisabledAttr}>16</button>
+                            </div>
+                            <div class="w-px h-5 bg-slate-800 mx-0.5"></div>
+                            <button id="wave-snap-btn" class="px-1.5 py-0.5 rounded border ${m.snapMode ? 'bg-emerald-950 text-emerald-300 border-emerald-500 font-bold shadow-sm shadow-emerald-500/20' : 'bg-slate-900 text-slate-500 border-slate-800'} transition cursor-pointer font-bold text-[7.5px]">
+                                ${m.snapMode ? 'ON' : 'OFF'}
+                            </button>
                         </div>
                     </div>
                 </div>
