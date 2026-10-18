@@ -1,8 +1,8 @@
-import { AUDIO_REGISTRY } from './registry.js?v=229';
+import { AUDIO_REGISTRY } from './registry.js?v=231';
 import { AudioHelpers } from './helpers.js';
 import { parseConn, normalizeSubPort } from '../core/utils.js';
 
-export const WORKLET_MODULE_TYPES = ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'ADSR', 'LFO', 'MATH1', 'MATH2', 'SH', 'FOLD', 'CVDELAY', 'SCOPE', 'MARKOV', 'CHORD', 'FM', 'FM3OP', 'FMx3', 'FMCORE', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'TAPE', 'CUE'];
+export const WORKLET_MODULE_TYPES = ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'ADSR', 'LFO', 'MATH1', 'MATH2', 'SH', 'FOLD', 'CVDELAY', 'SCOPE', 'MARKOV', 'CHORD', 'FM', 'FM3OP', 'FMx3', 'FMCORE', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'TAPE', 'CUE'];
 
 export class SynthEngine {
     constructor() {
@@ -24,7 +24,7 @@ export class SynthEngine {
 
             if (this.ctx.audioWorklet) {
                 try {
-                    const workletUrl = new URL('../dsp/worklet-processors.js?v=229', import.meta.url).href;
+                    const workletUrl = new URL('../dsp/worklet-processors.js?v=231', import.meta.url).href;
                     await this.ctx.audioWorklet.addModule(workletUrl);
                     this.audioWorkletReady = true;
                 } catch (e) {

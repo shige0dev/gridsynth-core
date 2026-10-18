@@ -19,7 +19,9 @@ export const TAPE = {
             loop: d.loop ?? false,
             retrigger: d.retrigger ?? true,
             startPatched: Boolean(isStartPatched),
-            endPatched: Boolean(isEndPatched)
+            endPatched: Boolean(isEndPatched),
+            snapMode: Boolean(d.snapMode),
+            chops: Array.isArray(d.chops) ? d.chops : []
         });
 
         // Initialize Audio Buffer from Base64
@@ -191,10 +193,14 @@ export const TAPE = {
             loop: d.loop ?? false,
             retrigger: d.retrigger ?? true,
             startPatched: Boolean(isStartPatched),
-            endPatched: Boolean(isEndPatched)
+            endPatched: Boolean(isEndPatched),
+            snapMode: Boolean(d.snapMode),
+            chops: Array.isArray(d.chops) ? d.chops : []
         });
     }
 };
 
-export const tapeAudioDefs = { TAPE };
+export const WAVE = TAPE;
+export const waveAudioDefs = { WAVE, TAPE };
+export const tapeAudioDefs = waveAudioDefs;
 

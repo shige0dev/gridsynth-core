@@ -14,6 +14,8 @@ export class TapeProcessor extends AudioWorkletProcessor {
         this.retrigger = true;
         this.startPatched = false;
         this.endPatched = false;
+        this.snapMode = false;
+        this.chops = [];
 
         this.pointer = 0.0;
         this.isPlaying = false;
@@ -38,9 +40,8 @@ export class TapeProcessor extends AudioWorkletProcessor {
                     this.buffer = new Float32Array(data.buffer);
                     this.bufferLength = this.buffer.length;
                     this.bufferSampleRate = data.sampleRate || 48000;
-                    // Reset pointer to current effectiveStart
-                    const baseStart = this.startPatched ? 0.0 : this.start;
-                    this.pointer = Math.max(0, Math.min(this.bufferLength - 1, baseStart * this.bufferLength));
+                    const eff = this.getEffectiveStartEnd(0.0, 0.0);
+                    this.pointer = Math.max(0, Math.min(this.bufferLength - 1, eff.start * this.bufferLength));
                 }
             } else if (data.type === 'SET_PARAMS') {
                 if (data.start !== undefined) this.start = Math.max(0.0, Math.min(1.0, data.start));
@@ -50,6 +51,8 @@ export class TapeProcessor extends AudioWorkletProcessor {
                 if (data.retrigger !== undefined) this.retrigger = Boolean(data.retrigger);
                 if (data.startPatched !== undefined) this.startPatched = Boolean(data.startPatched);
                 if (data.endPatched !== undefined) this.endPatched = Boolean(data.endPatched);
+                if (data.snapMode !== undefined) this.snapMode = Boolean(data.snapMode);
+                if (Array.isArray(data.chops)) this.chops = data.chops.map(x => Math.max(0.0, Math.min(1.0, x)));
             } else if (data.type === 'PLAY') {
                 this.isManualPlay = true;
                 this.triggerPlay();
@@ -67,11 +70,49 @@ export class TapeProcessor extends AudioWorkletProcessor {
                 this.isPlaying = false;
                 this.firstPass = false;
                 this.isManualPlay = false;
-                const baseStart = this.startPatched ? 0.0 : this.start;
-                this.pointer = Math.max(0, Math.min(this.bufferLength - 1, baseStart * this.bufferLength));
+                const eff = this.getEffectiveStartEnd(0.0, 0.0);
+                this.pointer = Math.max(0, Math.min(this.bufferLength - 1, eff.start * this.bufferLength));
                 this.lastGateHi = false;
                 this.reportState();
             }
+        };
+    }
+
+    getEffectiveStartEnd(cvS = 0.0, cvE = 0.0) {
+        let baseStart = this.startPatched ? 0.0 : this.start;
+        let baseEnd = this.endPatched ? 0.0 : this.end;
+        let s = baseStart + cvS;
+        let e = baseEnd + cvE;
+
+        if (this.snapMode && Array.isArray(this.chops) && this.chops.length > 0) {
+            const pts = [0.0, ...this.chops, 1.0].sort((a, b) => a - b);
+            const N = pts.length - 1;
+            if (this.startPatched) {
+                // Scale-ledger uniform quantize: 0V~1V is divided into N equal segments
+                const frac = Math.max(0.0, Math.min(0.999999, cvS));
+                const idx = Math.min(N - 1, Math.max(0, Math.floor(frac * N)));
+                s = pts[idx];
+                if (!this.endPatched) {
+                    e = pts[idx + 1];
+                }
+            } else {
+                // Internal slider: snap to nearest slice start
+                let idx = 0;
+                for (let i = 0; i < N; i++) {
+                    if (s >= pts[i] && (i === N - 1 || s < pts[i + 1])) {
+                        idx = i;
+                        break;
+                    }
+                }
+                s = pts[idx];
+                if (!this.endPatched) {
+                    e = pts[idx + 1];
+                }
+            }
+        }
+        return {
+            start: Math.max(0.0, Math.min(1.0, s)),
+            end: Math.max(0.0, Math.min(1.0, e))
         };
     }
 
@@ -80,9 +121,8 @@ export class TapeProcessor extends AudioWorkletProcessor {
             this.isPlaying = false;
             return;
         }
-        const baseStart = this.startPatched ? 0.0 : this.start;
-        const effStart = Math.max(0.0, Math.min(1.0, baseStart + cvStart)) * this.bufferLength;
-        this.pointer = Math.max(0, Math.min(this.bufferLength - 1, effStart));
+        const eff = this.getEffectiveStartEnd(cvStart, 0.0);
+        this.pointer = Math.max(0, Math.min(this.bufferLength - 1, eff.start * this.bufferLength));
         this.isPlaying = true;
         this.firstPass = true;
     }
@@ -117,10 +157,9 @@ export class TapeProcessor extends AudioWorkletProcessor {
         // Current CV modulation inputs for Start / End
         const cvS0 = startCvIn ? startCvIn[0] : 0.0;
         const cvE0 = endCvIn ? endCvIn[0] : 0.0;
-        const baseStart0 = this.startPatched ? 0.0 : this.start;
-        const baseEnd0 = this.endPatched ? 0.0 : this.end;
-        this.lastEffStart = Math.max(0.0, Math.min(1.0, baseStart0 + cvS0));
-        this.lastEffEnd = Math.max(0.0, Math.min(1.0, baseEnd0 + cvE0));
+        const effInit = this.getEffectiveStartEnd(cvS0, cvE0);
+        this.lastEffStart = effInit.start;
+        this.lastEffEnd = effInit.end;
 
         if (!this.buffer || this.bufferLength === 0) {
             for (let i = 0; i < len; i++) out[i] = 0.0;
@@ -158,21 +197,13 @@ export class TapeProcessor extends AudioWorkletProcessor {
                 continue;
             }
 
-            // If not manual play, not first pass (subsequent loop passes), and gate is cut off -> stop immediately
-            if (!this.isManualPlay && !this.firstPass && !isGateHi) {
-                this.isPlaying = false;
-                out[i] = 0.0;
-                continue;
-            }
-
-            // Current CV modulation inputs (internal value cancelled when patched)
+            // Current CV modulation inputs (calculated through ledger / snap logic)
             const cvS = startCvIn ? startCvIn[i] : 0.0;
             const cvE = endCvIn ? endCvIn[i] : 0.0;
-            const baseStart = this.startPatched ? 0.0 : this.start;
-            const baseEnd = this.endPatched ? 0.0 : this.end;
+            const eff = this.getEffectiveStartEnd(cvS, cvE);
 
-            const effStartNorm = Math.max(0.0, Math.min(1.0, baseStart + cvS));
-            const effEndNorm = Math.max(0.0, Math.min(1.0, baseEnd + cvE));
+            const effStartNorm = eff.start;
+            const effEndNorm = eff.end;
 
             const effStart = effStartNorm * (bufLen - 1);
             const effEnd = effEndNorm * (bufLen - 1);
@@ -201,14 +232,11 @@ export class TapeProcessor extends AudioWorkletProcessor {
             this.pointer += step;
 
             // Boundary check and loop
-            // "初めての再生はワンショットでも最後まで再生する"
-            // "ループオンはゲートがENDにたどり着いたときオンのままならループを繰り返し ゲートが切れればすぐに再生停止"
             const reachedEnd = (direction > 0) ? (this.pointer >= effEnd) : (this.pointer <= effEnd);
             if (reachedEnd) {
-                const shouldLoop = this.loop && (this.isManualPlay || isGateHi);
-                if (shouldLoop) {
+                if (this.loop) {
                     this.pointer = effStart;
-                    this.firstPass = false; // Finished 1st pass
+                    this.firstPass = false;
                 } else {
                     this.pointer = effEnd;
                     this.isPlaying = false;
@@ -231,4 +259,7 @@ export class TapeProcessor extends AudioWorkletProcessor {
 }
 
 registerProcessor('tape-processor', TapeProcessor);
+try {
+    registerProcessor('wave-processor', TapeProcessor);
+} catch (_) {}
 

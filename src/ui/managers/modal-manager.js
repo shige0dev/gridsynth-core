@@ -27,6 +27,7 @@ export const MODAL_WIDTHS = {
 
     // Sound Generation & Processing
     VCO: 'w-[235px]',
+    WAVE: 'w-[360px]',
     TAPE: 'w-[360px]',
     CUE: 'w-[260px]',
     NOISE: 'w-[185px]',
@@ -83,7 +84,8 @@ export const DOCK_TITLES = {
     ARP: 'ARPEGGIATOR',
     MARKOV: 'MARKOV GENERATOR',
     SCALE: 'SCALE QUANTIZER',
-    TAPE: '16S TAPE SAMPLER',
+    WAVE: 'WAVE SAMPLER',
+    TAPE: 'WAVE SAMPLER',
     CUE: 'CUE CONTROLLER'
 };
 
@@ -97,7 +99,8 @@ export const DOCK_ICONS = {
     SCOPE: 'activity',
     MON: 'eye',
     VCO: 'activity',
-    TAPE: 'disc',
+    WAVE: 'audio-waveform',
+    TAPE: 'audio-waveform',
     CUE: 'play-circle',
     VCF: 'filter',
     VCA: 'volume-2',
@@ -242,7 +245,7 @@ export class ModalManager {
     openSettingsModal(mId) {
         const m = this.ui.modules[mId];
         if (!m || m.type === 'SUB_IO') return;
-        if (['KEY', 'SEQ8', 'SEQ16', 'PAT', 'SPEC', 'SCOPE', 'TAPE'].includes(m.type)) {
+        if (['KEY', 'SEQ8', 'SEQ16', 'PAT', 'SPEC', 'SCOPE', 'WAVE', 'TAPE'].includes(m.type)) {
             this.openDockModal(mId);
             return;
         }
@@ -609,7 +612,7 @@ export class ModalManager {
                         name: 'SOUND',
                         sub: 'サウンド (音源・音響・出力)',
                         color: 'cyan',
-                        types: ['VCO', 'TAPE', 'NOISE', 'FMx3', 'FMCORE', 'FOLD', 'VCF', 'VCA', 'MIX', 'DELAY', 'REVERB', 'SPK', 'SCOPE', 'SPEC']
+                        types: ['VCO', 'WAVE', 'NOISE', 'FMx3', 'FMCORE', 'FOLD', 'VCF', 'VCA', 'MIX', 'DELAY', 'REVERB', 'SPK', 'SCOPE', 'SPEC']
                     },
                     {
                         name: 'TRIGGER',

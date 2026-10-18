@@ -5,8 +5,8 @@ import { TapeCodec } from '../../audio/tape-codec.js';
 export const TAPE = {
     color: 'cyan',
     defaults: () => ({
-        type: 'TAPE',
-        name: 'Tape 1',
+        type: 'WAVE',
+        name: 'Wave 1',
         codec: 'opus',
         sampleRate: 48000,
         maxDuration: 16.0,
@@ -16,6 +16,9 @@ export const TAPE = {
         speed: 1.0,
         loop: false,
         retrigger: true,
+        chopMode: 'off',
+        chops: [],
+        snapMode: false,
         data: '',
         peaks: null
     }),
@@ -23,6 +26,9 @@ export const TAPE = {
         if (m.peaks && Array.isArray(m.peaks)) {
             m._peaks = m.peaks;
         }
+        if (m.chopMode === undefined) m.chopMode = 'off';
+        if (!Array.isArray(m.chops)) m.chops = [];
+        if (m.snapMode === undefined) m.snapMode = false;
     },
     ports: () => ({
         in: [
@@ -131,6 +137,32 @@ export const TAPE = {
             barsSvg = `<text x="${(W / 2).toFixed(1)}" y="${(midY + 3.5).toFixed(1)}" fill="#334155" font-size="8.5" font-family="monospace" font-weight="bold" text-anchor="middle" letter-spacing="1">NO AUDIO LOADED</text>`;
         }
 
+        // Chop guide lines, slice backgrounds, and labels
+        let chopsSvg = '';
+        if (m.chops && Array.isArray(m.chops) && m.chops.length > 0) {
+            const allPts = [0.0, ...m.chops, 1.0].sort((a, b) => a - b);
+            const numSlices = allPts.length - 1;
+
+            for (let i = 0; i < numSlices; i++) {
+                const s0 = allPts[i];
+                const s1 = allPts[i + 1];
+                const x0 = padX + s0 * innerW;
+                const x1 = padX + s1 * innerW;
+                const sliceW = x1 - x0;
+                const isSelected = Math.abs(startPct - s0) < 0.015 && Math.abs(endPct - s1) < 0.015;
+                if (isSelected) {
+                    chopsSvg += `<rect x="${x0.toFixed(1)}" y="${padY}" width="${sliceW.toFixed(1)}" height="${(innerH - 10).toFixed(1)}" fill="#f59e0b" fill-opacity="0.15"/>`;
+                }
+                const midX = x0 + sliceW * 0.5;
+                chopsSvg += `<text x="${midX.toFixed(1)}" y="${(padY + 8).toFixed(1)}" fill="${isSelected ? '#fbbf24' : '#64748b'}" font-size="6.5" font-family="monospace" font-weight="bold" text-anchor="middle" pointer-events="none">S${i + 1}</text>`;
+            }
+
+            m.chops.forEach((cp) => {
+                const cx = padX + cp * innerW;
+                chopsSvg += `<line x1="${cx.toFixed(1)}" y1="${padY}" x2="${cx.toFixed(1)}" y2="${(padY + innerH - 10).toFixed(1)}" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="3,2" opacity="0.85" pointer-events="none"/>`;
+            });
+        }
+
         // Neon Green (#22c55e) markers for Start & End
         const startX = padX + startPct * innerW;
         const endX = padX + endPct * innerW;
@@ -139,7 +171,7 @@ export const TAPE = {
         const playX = padX + Math.max(0, Math.min(1, playhead)) * innerW;
 
         return `
-            <svg id="tape-waveform-svg" viewBox="0 0 ${W} ${H}" class="w-full h-28 select-none bg-slate-950 rounded-xl border border-slate-800 shadow-inner overflow-hidden relative">
+            <svg id="tape-waveform-svg" viewBox="0 0 ${W} ${H}" class="w-full h-28 select-none bg-slate-950 rounded-xl border border-slate-800 shadow-inner overflow-hidden relative cursor-pointer">
                 <!-- Center zero axis -->
                 <line x1="${padX}" y1="${midY}" x2="${padX + innerW}" y2="${midY}" stroke="#334155" stroke-width="1"/>
                 
@@ -151,6 +183,9 @@ export const TAPE = {
 
                 <!-- Audio Waveform (Empty if silent) -->
                 ${barsSvg}
+
+                <!-- Chop Slices Guide & Highlights -->
+                ${chopsSvg}
 
                 <!-- End Line: Neon Green (same color), stroke (1.6px) -->
                 <line id="tape-end-line" x1="${endX.toFixed(1)}" y1="${padY}" x2="${endX.toFixed(1)}" y2="${padY + innerH}" stroke="#22c55e" stroke-width="1.6" class="drop-shadow-[0_0_4px_rgba(34,197,94,0.85)]"/>
@@ -214,7 +249,7 @@ export const TAPE = {
                 <!-- Header / File Loader -->
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-1 select-none">
                     <div class="flex items-center gap-1.5 overflow-hidden">
-                        <span class="text-[9.5px] font-bold text-cyan-300 truncate max-w-[140px]">${m.name || 'Tape 1'}</span>
+                        <span class="text-[9.5px] font-bold text-cyan-300 truncate max-w-[140px]">${m.name || 'Wave 1'}</span>
                         <span class="text-[8px] font-mono text-slate-400 font-bold">(${durStr})</span>
                     </div>
                     <label class="px-2 py-1 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500/70 text-cyan-200 rounded text-[8px] font-bold cursor-pointer transition shadow-sm flex items-center gap-1 shrink-0">
@@ -230,14 +265,33 @@ export const TAPE = {
                 </div>
 
                 <!-- Dynamic Progress Bar (Monochrome Gray) -->
-                <div class="w-full py-1">
-                    <div class="w-full h-2.5 bg-slate-900 rounded-full border border-slate-700 relative shadow-inner overflow-visible">
+                <div class="w-full py-0.5">
+                    <div class="w-full h-2 bg-slate-900 rounded-full border border-slate-700 relative shadow-inner overflow-visible">
                         <!-- Start - End Range Band (Neutral gray band) -->
                         <div id="tape-progress-range" class="absolute top-0 bottom-0 bg-slate-600/40 border-l border-r border-slate-400/80 rounded-sm" style="left: ${rangeLeft}%; width: ${rangeWidth}%;"></div>
                         <!-- Live Playback Fill (Neutral monochrome fill) -->
                         <div id="tape-progress-fill" class="absolute top-0 bottom-0 left-0 bg-zinc-300 rounded-full transition-none opacity-0" style="width: 0%;"></div>
                         <!-- Playhead Pin / Dot (Neutral silver dot) -->
-                        <div id="tape-progress-dot" class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-zinc-200 border-2 border-slate-950 shadow-[0_0_6px_rgba(255,255,255,0.7)] transition-none z-10" style="left: ${(startPct * 100).toFixed(1)}%; display: block;"></div>
+                        <div id="tape-progress-dot" class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-zinc-200 border-2 border-slate-950 shadow-[0_0_6px_rgba(255,255,255,0.7)] transition-none z-10" style="left: ${(startPct * 100).toFixed(1)}%; display: block;"></div>
+                    </div>
+                </div>
+
+                <!-- CHOP and SNAP Controls -->
+                <div class="flex items-center justify-between gap-1 px-2 py-1 bg-slate-950/70 rounded-xl border border-slate-800 text-[8px] select-none">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-amber-400 font-bold text-[7.5px] font-mono">CHOP:</span>
+                        <div class="flex items-center gap-1">
+                            <button id="tape-chop-off" class="px-1.5 py-0.5 rounded border ${(m.chopMode ?? 'off') === 'off' ? 'bg-amber-950 text-amber-300 border-amber-500 font-bold shadow-sm shadow-amber-500/20' : 'bg-slate-900 text-slate-500 border-slate-800'} transition cursor-pointer">OFF</button>
+                            <button id="tape-chop-4" class="px-1.5 py-0.5 rounded border ${m.chopMode === '4' ? 'bg-amber-950 text-amber-300 border-amber-500 font-bold shadow-sm shadow-amber-500/20' : 'bg-slate-900 text-slate-500 border-slate-800'} transition cursor-pointer">4</button>
+                            <button id="tape-chop-8" class="px-1.5 py-0.5 rounded border ${m.chopMode === '8' ? 'bg-amber-950 text-amber-300 border-amber-500 font-bold shadow-sm shadow-amber-500/20' : 'bg-slate-900 text-slate-500 border-slate-800'} transition cursor-pointer">8</button>
+                            <button id="tape-chop-16" class="px-1.5 py-0.5 rounded border ${m.chopMode === '16' ? 'bg-amber-950 text-amber-300 border-amber-500 font-bold shadow-sm shadow-amber-500/20' : 'bg-slate-900 text-slate-500 border-slate-800'} transition cursor-pointer">16</button>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="text-slate-400 font-bold text-[7.5px] font-mono">SNAP:</span>
+                        <button id="tape-snap-btn" class="px-2 py-0.5 rounded border ${m.snapMode ? 'bg-emerald-950 text-emerald-300 border-emerald-500 font-bold shadow-sm shadow-emerald-500/20' : 'bg-slate-900 text-slate-500 border-slate-800'} transition cursor-pointer font-bold">
+                            ${m.snapMode ? 'ON' : 'OFF'}
+                        </button>
                     </div>
                 </div>
 
@@ -370,11 +424,26 @@ export const TAPE = {
             const startDispEl = root.querySelector('#tape-slider-start-disp');
             const endDispEl = root.querySelector('#tape-slider-end-disp');
             if (startDispEl && !isStartPatched) {
-                startDispEl.textContent = `${Math.round(startP * 100)}% (${TAPE.formatMs(startP * durMs)})`;
+                let sliceBadge = '';
+                if (m.chops && m.chops.length > 0) {
+                    const allPts = [0.0, ...m.chops, 1.0].sort((a, b) => a - b);
+                    for (let i = 0; i < allPts.length - 1; i++) {
+                        if (Math.abs(startP - allPts[i]) < 0.015) {
+                            sliceBadge = `S${i + 1}: `;
+                            break;
+                        }
+                    }
+                }
+                startDispEl.textContent = `${sliceBadge}${Math.round(startP * 100)}% (${TAPE.formatMs(startP * durMs)})`;
             }
             if (endDispEl && !isEndPatched) {
                 endDispEl.textContent = `${Math.round(endP * 100)}% (${TAPE.formatMs(endP * durMs)})`;
             }
+            const inStart = root.querySelector('#tape-slider-start');
+            const inEnd = root.querySelector('#tape-slider-end');
+            if (inStart && Math.abs(parseFloat(inStart.value) - startP) > 0.002) inStart.value = startP;
+            if (inEnd && Math.abs(parseFloat(inEnd.value) - endP) > 0.002) inEnd.value = endP;
+
             // Update progress bar range bounds
             const rangeEl = root.querySelector('#tape-progress-range');
             if (rangeEl) {
@@ -558,21 +627,143 @@ export const TAPE = {
             });
         }
 
+        // Chop Buttons
+        const setChop = (mode) => {
+            m.chopMode = mode;
+            if (mode === '4') {
+                m.chops = [0.25, 0.5, 0.75];
+                m.snapMode = true;
+            } else if (mode === '8') {
+                m.chops = [0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875];
+                m.snapMode = true;
+            } else if (mode === '16') {
+                const arr = [];
+                for (let i = 1; i < 16; i++) arr.push(parseFloat((i / 16.0).toFixed(4)));
+                m.chops = arr;
+                m.snapMode = true;
+            } else {
+                m.chopMode = 'off';
+                m.chops = [];
+                m.snapMode = false;
+            }
+            const activeInst = TAPE.getActiveInst(ctx, m);
+            const synth = ctx?.synth || window.__GS_SYNTH__;
+            activeInst?.update?.(synth?.ctx, activeInst, m);
+            ctx.reRenderModal?.();
+            cb();
+        };
+
+        root.querySelector('#tape-chop-off')?.addEventListener('click', () => setChop('off'));
+        root.querySelector('#tape-chop-4')?.addEventListener('click', () => setChop('4'));
+        root.querySelector('#tape-chop-8')?.addEventListener('click', () => setChop('8'));
+        root.querySelector('#tape-chop-16')?.addEventListener('click', () => setChop('16'));
+
+        // SNAP Toggle Button
+        root.querySelector('#tape-snap-btn')?.addEventListener('click', () => {
+            m.snapMode = !m.snapMode;
+            const activeInst = TAPE.getActiveInst(ctx, m);
+            const synth = ctx?.synth || window.__GS_SYNTH__;
+            activeInst?.update?.(synth?.ctx, activeInst, m);
+            ctx.reRenderModal?.();
+            cb();
+        });
+
+        // Waveform SVG click to select slice
+        const svgEl = root.querySelector('#tape-waveform-svg');
+        if (svgEl) {
+            svgEl.addEventListener('click', (e) => {
+                if (e.target.closest('#tape-start-badge') || e.target.closest('#tape-end-badge')) return;
+                if (!m.chops || m.chops.length === 0) return;
+                const rect = svgEl.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const svgW = 320, padX = 6, innerW = svgW - padX * 2;
+                const normX = (clickX / rect.width) * svgW;
+                const pct = Math.max(0.0, Math.min(1.0, (normX - padX) / innerW));
+
+                const allPts = [0.0, ...m.chops, 1.0].sort((a, b) => a - b);
+                let foundIdx = 0;
+                for (let i = 0; i < allPts.length - 1; i++) {
+                    if (pct >= allPts[i] && (i === allPts.length - 2 || pct < allPts[i + 1])) {
+                        foundIdx = i;
+                        break;
+                    }
+                }
+                m.start = allPts[foundIdx];
+                m.end = allPts[foundIdx + 1];
+                onSliderChange();
+            });
+        }
+
         // Sliders
         const isStartPatched = ctx?.patched?.has('start_cv') || ctx?.patched?.has('cv_start');
         const isEndPatched = ctx?.patched?.has('end_cv') || ctx?.patched?.has('cv_end');
         const isSpeedPatched = ctx?.patched?.has('speed_cv') || ctx?.patched?.has('cv_speed');
 
         if (!isStartPatched) {
-            const formatStart = v => `${Math.round(v * 100)}% (${TAPE.formatMs(v * ((m.duration ?? 1.5) * 1000))})`;
-            UIHelpers.bindSlider('tape-slider-start', formatStart, v => { m.start = v; onSliderChange(); }, 1, 0.0, 1.0);
-            UIHelpers.bindScrubber('tape-slider-start-disp', 'tape-slider-start', formatStart, v => { m.start = v; onSliderChange(); }, 1, 0.0, 1.0);
+            const getStartVal = v => {
+                if (m.snapMode && m.chops && m.chops.length > 0) {
+                    const allPts = [0.0, ...m.chops, 1.0].sort((a, b) => a - b);
+                    let closest = allPts[0];
+                    let minDiff = 999;
+                    for (const pt of allPts.slice(0, -1)) {
+                        const diff = Math.abs(pt - v);
+                        if (diff < minDiff) { minDiff = diff; closest = pt; }
+                    }
+                    return closest;
+                }
+                return v;
+            };
+            const formatStart = v => {
+                const durMs = (m.duration ?? 1.5) * 1000;
+                let sliceBadge = '';
+                if (m.chops && m.chops.length > 0) {
+                    const allPts = [0.0, ...m.chops, 1.0].sort((a, b) => a - b);
+                    for (let i = 0; i < allPts.length - 1; i++) {
+                        if (Math.abs(v - allPts[i]) < 0.015) {
+                            sliceBadge = `S${i + 1}: `;
+                            break;
+                        }
+                    }
+                }
+                return `${sliceBadge}${Math.round(v * 100)}% (${TAPE.formatMs(v * durMs)})`;
+            };
+            const applyStart = v => {
+                const snapped = getStartVal(v);
+                m.start = snapped;
+                if (m.snapMode && m.chops && m.chops.length > 0 && !isEndPatched) {
+                    const allPts = [0.0, ...m.chops, 1.0].sort((a, b) => a - b);
+                    const idx = allPts.findIndex(p => Math.abs(p - snapped) < 0.01);
+                    if (idx >= 0 && idx + 1 < allPts.length) {
+                        m.end = allPts[idx + 1];
+                    }
+                }
+                onSliderChange();
+            };
+            UIHelpers.bindSlider('tape-slider-start', formatStart, applyStart, 1, 0.0, 1.0);
+            UIHelpers.bindScrubber('tape-slider-start-disp', 'tape-slider-start', formatStart, applyStart, 1, 0.0, 1.0);
         }
 
         if (!isEndPatched) {
+            const getEndVal = v => {
+                if (m.snapMode && m.chops && m.chops.length > 0) {
+                    const allPts = [0.0, ...m.chops, 1.0].sort((a, b) => a - b);
+                    let closest = allPts[allPts.length - 1];
+                    let minDiff = 999;
+                    for (const pt of allPts.slice(1)) {
+                        const diff = Math.abs(pt - v);
+                        if (diff < minDiff) { minDiff = diff; closest = pt; }
+                    }
+                    return closest;
+                }
+                return v;
+            };
             const formatEnd = v => `${Math.round(v * 100)}% (${TAPE.formatMs(v * ((m.duration ?? 1.5) * 1000))})`;
-            UIHelpers.bindSlider('tape-slider-end', formatEnd, v => { m.end = v; onSliderChange(); }, 1, 0.0, 1.0);
-            UIHelpers.bindScrubber('tape-slider-end-disp', 'tape-slider-end', formatEnd, v => { m.end = v; onSliderChange(); }, 1, 0.0, 1.0);
+            const applyEnd = v => {
+                m.end = getEndVal(v);
+                onSliderChange();
+            };
+            UIHelpers.bindSlider('tape-slider-end', formatEnd, applyEnd, 1, 0.0, 1.0);
+            UIHelpers.bindScrubber('tape-slider-end-disp', 'tape-slider-end', formatEnd, applyEnd, 1, 0.0, 1.0);
         }
 
         if (!isSpeedPatched) {
@@ -706,5 +897,8 @@ export const TAPE = {
     }
 };
 
-export const tapeDefs = { TAPE };
+export const WAVE = TAPE;
+export const waveDefs = { WAVE, TAPE };
+export const tapeDefs = waveDefs;
+export default waveDefs;
 
