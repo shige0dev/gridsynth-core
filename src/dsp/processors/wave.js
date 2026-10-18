@@ -1,6 +1,6 @@
-// src/dsp/processors/tape.js
+// src/dsp/processors/wave.js
 
-export class TapeProcessor extends AudioWorkletProcessor {
+export class WaveProcessor extends AudioWorkletProcessor {
     constructor() {
         super();
         this.buffer = null;
@@ -300,7 +300,8 @@ export class TapeProcessor extends AudioWorkletProcessor {
     }
 }
 
-registerProcessor('tape-processor', TapeProcessor);
+export const TapeProcessor = WaveProcessor;
+registerProcessor('wave-processor', WaveProcessor);
 try {
-    registerProcessor('wave-processor', TapeProcessor);
+    registerProcessor('tape-processor', WaveProcessor);
 } catch (_) {}

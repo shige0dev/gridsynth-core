@@ -17,5 +17,5 @@ import './processors/arp.js';
 import './processors/scale.js';
 import './processors/rf.js';
 import './processors/ar.js';
-import './processors/tape.js?v=233';
+import './processors/wave.js?v=234';
 import './processors/cue.js';

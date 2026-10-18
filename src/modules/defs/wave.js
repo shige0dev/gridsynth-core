@@ -1,8 +1,8 @@
-// src/modules/defs/tape.js
+// src/modules/defs/wave.js
 import { UIHelpers } from '../../ui/helpers.js?v=218';
 import { TapeCodec } from '../../audio/tape-codec.js';
 
-export const TAPE = {
+export const WAVE = {
     color: 'cyan',
     defaults: () => ({
         type: 'WAVE',
@@ -112,7 +112,7 @@ export const TAPE = {
         intervals.forEach((pct, idx) => {
             const x = padX + pct * innerW;
             const ms = pct * durMs;
-            const label = TAPE.formatMs(ms);
+            const label = WAVE.formatMs(ms);
             let anchor = 'middle';
             let drawX = x;
             if (idx === 0) {
@@ -253,10 +253,10 @@ export const TAPE = {
         const isSpeedPatched = ctx?.patched?.has('speed_cv') || ctx?.patched?.has('cv_speed');
 
         const durMs = (m.duration ?? 1.5) * 1000;
-        const startDisp = isStartPatched ? 'EXT' : `${Math.round((m.start ?? 0) * 100)}% (${TAPE.formatMs((m.start ?? 0) * durMs)})`;
-        const endDisp = isEndPatched ? 'EXT' : `${Math.round((m.end ?? 1) * 100)}% (${TAPE.formatMs((m.end ?? 1) * durMs)})`;
+        const startDisp = isStartPatched ? 'EXT' : `${Math.round((m.start ?? 0) * 100)}% (${WAVE.formatMs((m.start ?? 0) * durMs)})`;
+        const endDisp = isEndPatched ? 'EXT' : `${Math.round((m.end ?? 1) * 100)}% (${WAVE.formatMs((m.end ?? 1) * durMs)})`;
         const speedCvVal = m.speedCv !== undefined ? m.speedCv : Math.log2(m.speed || 1.0);
-        const speedDisp = isSpeedPatched ? 'EXT' : TAPE.formatSpeed(speedCvVal);
+        const speedDisp = isSpeedPatched ? 'EXT' : WAVE.formatSpeed(speedCvVal);
         const durStr = `${(m.duration ?? 1.5).toFixed(2)}s`;
         const loopActive = Boolean(m.loop);
         const retriggerActive = m.retrigger !== false;
@@ -282,7 +282,7 @@ export const TAPE = {
 
                 <!-- Oscilloscope-sized Waveform Display (Large format) -->
                 <div id="tape-waveform-wrap" class="w-full">
-                    ${TAPE.renderWaveformSVG(m, 0.0, false)}
+                    ${WAVE.renderWaveformSVG(m, 0.0, false)}
                 </div>
 
                 <!-- Dynamic Progress Bar (Monochrome Gray) -->
@@ -323,10 +323,10 @@ export const TAPE = {
                         <button id="tape-play-btn" class="h-6 w-7 rounded bg-cyan-600 hover:bg-cyan-500 text-white font-bold transition flex items-center justify-center shadow-sm active:scale-95 cursor-pointer shrink-0" title="PLAY / STOP">
                             <i id="tape-play-icon" data-lucide="play" class="w-3 h-3"></i>
                         </button>
-                        <button id="tape-loop-btn" class="h-6 w-7 rounded border ${loopActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0" title="LOOP (ループ再生 ON/OFF)">
+                        <button id="tape-loop-btn" class="h-6 w-7 rounded border ${loopActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0" title="LOOP (ループ�E甁EON/OFF)">
                             <i data-lucide="repeat" class="w-3 h-3"></i>
                         </button>
-                        <button id="tape-retrigger-btn" class="h-6 w-7 rounded border ${retriggerActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0" title="RETRIGGER (ON: 毎回到頭再生 / OFF: 完走までトリガー無視)">
+                        <button id="tape-retrigger-btn" class="h-6 w-7 rounded border ${retriggerActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0" title="RETRIGGER (ON: 毎回到頭再生 / OFF: 完走までトリガー無要E">
                             <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
                         </button>
                     </div>
@@ -339,7 +339,7 @@ export const TAPE = {
                             <span class="text-cyan-400">SPEED</span>
                             <span id="tape-slider-speed-disp" class="text-cyan-300 font-mono text-[8.5px] cursor-ns-resize hover:bg-slate-800/80 px-1 rounded leading-none">${speedDisp}</span>
                         </div>
-                        <input type="range" id="tape-slider-speed" min="-2.0" max="2.0" step="0.05" value="${speedCvVal}" class="w-full h-1.5 bg-slate-800 rounded-lg accent-cyan-400 cursor-pointer" ${isSpeedPatched ? 'disabled' : ''} title="再生速度 (指数: /4, /2, x1, x2, x4)">
+                        <input type="range" id="tape-slider-speed" min="-2.0" max="2.0" step="0.05" value="${speedCvVal}" class="w-full h-1.5 bg-slate-800 rounded-lg accent-cyan-400 cursor-pointer" ${isSpeedPatched ? 'disabled' : ''} title="再生速度 (持E��: /4, /2, x1, x2, x4)">
                         <div class="flex justify-between px-0.5 text-[6.5px] font-mono text-slate-500 font-bold select-none pointer-events-none -mt-0.5">
                             <span>/4</span>
                             <span>/2</span>
@@ -358,7 +358,7 @@ export const TAPE = {
                             <span class="text-[8.5px] text-emerald-400 shrink-0">START</span>
                             <span id="tape-slider-start-disp" class="text-emerald-300 font-mono text-[8px] font-bold cursor-ns-resize hover:bg-slate-800/80 px-1 py-0.5 rounded leading-none truncate">${startDisp}</span>
                         </div>
-                        <input type="range" id="tape-slider-start" min="0.0" max="1.0" step="0.005" value="${m.start ?? 0.0}" class="w-full h-2.5 bg-slate-800 rounded-lg accent-emerald-400 cursor-pointer" ${isStartPatched ? 'disabled' : ''} title="開始位置 (0%〜100%)">
+                        <input type="range" id="tape-slider-start" min="0.0" max="1.0" step="0.005" value="${m.start ?? 0.0}" class="w-full h-2.5 bg-slate-800 rounded-lg accent-emerald-400 cursor-pointer" ${isStartPatched ? 'disabled' : ''} title="開始位置 (0%、E00%)">
                     </div>
 
                     <div class="w-[1px] h-7 bg-slate-800/90 shrink-0"></div>
@@ -369,13 +369,12 @@ export const TAPE = {
                             <span class="text-[8.5px] text-emerald-400 shrink-0">END</span>
                             <span id="tape-slider-end-disp" class="text-emerald-300 font-mono text-[8px] font-bold cursor-ns-resize hover:bg-slate-800/80 px-1 py-0.5 rounded leading-none truncate">${endDisp}</span>
                         </div>
-                        <input type="range" id="tape-slider-end" min="0.0" max="1.0" step="0.005" value="${m.end ?? 1.0}" class="w-full h-2.5 bg-slate-800 rounded-lg accent-emerald-400 cursor-pointer" ${isEndPatched ? 'disabled' : ''} title="終了位置 (0%〜100%)">
+                        <input type="range" id="tape-slider-end" min="0.0" max="1.0" step="0.005" value="${m.end ?? 1.0}" class="w-full h-2.5 bg-slate-800 rounded-lg accent-emerald-400 cursor-pointer" ${isEndPatched ? 'disabled' : ''} title="終亁E��置 (0%、E00%)">
                     </div>
                 </div>
 
                 <div class="text-[7.5px] text-slate-500 px-1 text-center italic">
-                    * PLAY: 単体試聴 | LOOP: ループ切替 | RETRIG: ON=頭出し再開 / OFF=完走までトリガー無視
-                </div>
+                    * PLAY: 単体試聴 | LOOP: ループ�E替 | RETRIG: ON=頭出し�E閁E/ OFF=完走までトリガー無要E                </div>
             </div>
         `;
     },
@@ -405,7 +404,7 @@ export const TAPE = {
         }
 
         // Restore PCM buffer to AudioWorklet if already in memory, or decode from base64 if needed
-        const initialInst = TAPE.getActiveInst(ctx, m);
+        const initialInst = WAVE.getActiveInst(ctx, m);
         if (m._buffer && initialInst?.setAudioBuffer) {
             initialInst.setAudioBuffer(m._buffer, m.sampleRate || 48000);
         } else if (m.data && (!m.peaks || m.peaks.length === 0 || !m._buffer)) {
@@ -416,10 +415,10 @@ export const TAPE = {
                     m.duration = res.duration;
                     m.sampleRate = res.sampleRate;
                     if (!m.peaks || m.peaks.length === 0) {
-                        m.peaks = TAPE.extractPeaks(res.buffer, 64);
+                        m.peaks = WAVE.extractPeaks(res.buffer, 64);
                     }
                     m._peaks = m.peaks;
-                    const inst = TAPE.getActiveInst(ctx, m);
+                    const inst = WAVE.getActiveInst(ctx, m);
                     if (inst?.setAudioBuffer) {
                         inst.setAudioBuffer(res.buffer, res.sampleRate);
                     }
@@ -432,10 +431,10 @@ export const TAPE = {
         }
 
         const redrawSvg = () => {
-            const activeInst = TAPE.getActiveInst(ctx, m);
+            const activeInst = WAVE.getActiveInst(ctx, m);
             const st = activeInst?.read?.();
             if (svgWrap) {
-                svgWrap.innerHTML = TAPE.renderWaveformSVG(
+                svgWrap.innerHTML = WAVE.renderWaveformSVG(
                     m,
                     st?.playhead ?? 0.0,
                     Boolean(st?.isPlaying),
@@ -467,10 +466,10 @@ export const TAPE = {
                         }
                     }
                 }
-                startDispEl.textContent = `${sliceBadge}${Math.round(startP * 100)}% (${TAPE.formatMs(startP * durMs)})`;
+                startDispEl.textContent = `${sliceBadge}${Math.round(startP * 100)}% (${WAVE.formatMs(startP * durMs)})`;
             }
             if (endDispEl && !isEndPatched) {
-                endDispEl.textContent = `${Math.round(endP * 100)}% (${TAPE.formatMs(endP * durMs)})`;
+                endDispEl.textContent = `${Math.round(endP * 100)}% (${WAVE.formatMs(endP * durMs)})`;
             }
             const inStart = root.querySelector('#tape-slider-start');
             const inEnd = root.querySelector('#tape-slider-end');
@@ -485,7 +484,7 @@ export const TAPE = {
             }
             // Update playhead pin to current start if stopped
             const dotEl = root.querySelector('#tape-progress-dot');
-            const activeInst = TAPE.getActiveInst(ctx, m);
+            const activeInst = WAVE.getActiveInst(ctx, m);
             const st = activeInst?.read?.();
             if (dotEl && !st?.isPlaying) {
                 dotEl.style.left = `${(startP * 100).toFixed(1)}%`;
@@ -534,13 +533,13 @@ export const TAPE = {
                     m.name = file.name.replace(/\.[^/.]+$/, '').slice(0, 24);
                     m.duration = res.duration;
                     m.sampleRate = res.sampleRate;
-                    const peaks = TAPE.extractPeaks(res.buffer, 64);
+                    const peaks = WAVE.extractPeaks(res.buffer, 64);
                     m.peaks = peaks;
                     m._peaks = peaks;
                     m._buffer = res.buffer; // Persist PCM in memory!
 
                     // Re-acquire active module instance and transfer PCM immediately
-                    const activeInst = TAPE.getActiveInst(ctx, m);
+                    const activeInst = WAVE.getActiveInst(ctx, m);
                     if (activeInst && activeInst.setAudioBuffer) {
                         activeInst.setAudioBuffer(res.buffer, res.sampleRate);
                     }
@@ -592,7 +591,7 @@ export const TAPE = {
                     pwrBtn.className = "h-7 w-7 bg-red-950 text-red-400 rounded-lg border border-red-500 shadow-md shadow-red-500/40 flex items-center justify-center shrink-0";
                 }
 
-                const activeInst = TAPE.getActiveInst(ctx, m);
+                const activeInst = WAVE.getActiveInst(ctx, m);
                 if (!activeInst) {
                     console.error('[TAPE] No active synth instance found for', m.id);
                     ctx.showToast?.('ENGINE NOT READY');
@@ -638,7 +637,7 @@ export const TAPE = {
         if (loopBtn) {
             loopBtn.addEventListener('click', () => {
                 m.loop = !m.loop;
-                const activeInst = TAPE.getActiveInst(ctx, m);
+                const activeInst = WAVE.getActiveInst(ctx, m);
                 const synth = ctx?.synth || window.__GS_SYNTH__;
                 activeInst?.update?.(synth?.ctx, activeInst, m);
                 loopBtn.className = `h-6 w-7 rounded border ${m.loop ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0`;
@@ -651,7 +650,7 @@ export const TAPE = {
         if (retriggerBtn) {
             retriggerBtn.addEventListener('click', () => {
                 m.retrigger = !(m.retrigger !== false);
-                const activeInst = TAPE.getActiveInst(ctx, m);
+                const activeInst = WAVE.getActiveInst(ctx, m);
                 const synth = ctx?.synth || window.__GS_SYNTH__;
                 activeInst?.update?.(synth?.ctx, activeInst, m);
                 const on = m.retrigger !== false;
@@ -687,7 +686,7 @@ export const TAPE = {
                 m.start = 0.0;
                 m.end = 1.0;
             }
-            const activeInst = TAPE.getActiveInst(ctx, m);
+            const activeInst = WAVE.getActiveInst(ctx, m);
             const synth = ctx?.synth || window.__GS_SYNTH__;
             activeInst?.update?.(synth?.ctx, activeInst, m);
             ctx.reRenderModal?.();
@@ -702,7 +701,7 @@ export const TAPE = {
         // SNAP Toggle Button
         root.querySelector('#tape-snap-btn')?.addEventListener('click', () => {
             m.snapMode = !m.snapMode;
-            const activeInst = TAPE.getActiveInst(ctx, m);
+            const activeInst = WAVE.getActiveInst(ctx, m);
             const synth = ctx?.synth || window.__GS_SYNTH__;
             activeInst?.update?.(synth?.ctx, activeInst, m);
             ctx.reRenderModal?.();
@@ -766,7 +765,7 @@ export const TAPE = {
                         }
                     }
                 }
-                return `${sliceBadge}${Math.round(v * 100)}% (${TAPE.formatMs(v * durMs)})`;
+                return `${sliceBadge}${Math.round(v * 100)}% (${WAVE.formatMs(v * durMs)})`;
             };
             const applyStart = v => {
                 const snapped = getStartVal(v);
@@ -798,7 +797,7 @@ export const TAPE = {
                 }
                 return v;
             };
-            const formatEnd = v => `${Math.round(v * 100)}% (${TAPE.formatMs(v * ((m.duration ?? 1.5) * 1000))})`;
+            const formatEnd = v => `${Math.round(v * 100)}% (${WAVE.formatMs(v * ((m.duration ?? 1.5) * 1000))})`;
             const applyEnd = v => {
                 m.end = getEndVal(v);
                 onSliderChange();
@@ -808,18 +807,18 @@ export const TAPE = {
         }
 
         if (!isSpeedPatched) {
-            UIHelpers.bindSlider('tape-slider-speed', TAPE.formatSpeed, v => {
+            UIHelpers.bindSlider('tape-slider-speed', WAVE.formatSpeed, v => {
                 m.speedCv = v;
                 m.speed = Math.pow(2.0, v);
-                const activeInst = TAPE.getActiveInst(ctx, m);
+                const activeInst = WAVE.getActiveInst(ctx, m);
                 const synth = ctx?.synth || window.__GS_SYNTH__;
                 activeInst?.update?.(synth?.ctx, activeInst, m);
                 onSliderChange();
             }, 1, -2.0, 2.0);
-            UIHelpers.bindScrubber('tape-slider-speed-disp', 'tape-slider-speed', TAPE.formatSpeed, v => {
+            UIHelpers.bindScrubber('tape-slider-speed-disp', 'tape-slider-speed', WAVE.formatSpeed, v => {
                 m.speedCv = v;
                 m.speed = Math.pow(2.0, v);
-                const activeInst = TAPE.getActiveInst(ctx, m);
+                const activeInst = WAVE.getActiveInst(ctx, m);
                 const synth = ctx?.synth || window.__GS_SYNTH__;
                 activeInst?.update?.(synth?.ctx, activeInst, m);
                 onSliderChange();
@@ -970,12 +969,12 @@ export const TAPE = {
             const sliderStart = targetModal.querySelector('#tape-slider-start');
             if (sliderStart && sliderStart.disabled) {
                 const disp = targetModal.querySelector('#tape-slider-start-disp');
-                if (disp) disp.textContent = `EXT (${Math.round(effStart * 100)}% / ${TAPE.formatMs(effStart * durMs)})`;
+                if (disp) disp.textContent = `EXT (${Math.round(effStart * 100)}% / ${WAVE.formatMs(effStart * durMs)})`;
             }
             const sliderEnd = targetModal.querySelector('#tape-slider-end');
             if (sliderEnd && sliderEnd.disabled) {
                 const disp = targetModal.querySelector('#tape-slider-end-disp');
-                if (disp) disp.textContent = `EXT (${Math.round(effEnd * 100)}% / ${TAPE.formatMs(effEnd * durMs)})`;
+                if (disp) disp.textContent = `EXT (${Math.round(effEnd * 100)}% / ${WAVE.formatMs(effEnd * durMs)})`;
             }
         }
 

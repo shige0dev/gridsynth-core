@@ -1,12 +1,20 @@
-// src/audio/defs/tape.js
+// src/audio/defs/wave.js
 import { TapeCodec } from '../tape-codec.js';
 
-export const TAPE = {
+export const WAVE = {
     create: (ctx, d, patch, eng) => {
-        const w = new AudioWorkletNode(ctx, 'tape-processor', {
-            numberOfInputs: 4,
-            numberOfOutputs: 1
-        });
+        let w;
+        try {
+            w = new AudioWorkletNode(ctx, 'wave-processor', {
+                numberOfInputs: 4,
+                numberOfOutputs: 1
+            });
+        } catch (_) {
+            w = new AudioWorkletNode(ctx, 'tape-processor', {
+                numberOfInputs: 4,
+                numberOfOutputs: 1
+            });
+        }
 
         const isStartPatched = patch?.has?.('start_cv') || patch?.has?.('cv_start') || Boolean(d.startPatched);
         const isEndPatched = patch?.has?.('end_cv') || patch?.has?.('cv_end') || Boolean(d.endPatched);
@@ -216,7 +224,8 @@ export const TAPE = {
     }
 };
 
-export const WAVE = TAPE;
+export const TAPE = WAVE;
 export const waveAudioDefs = { WAVE, TAPE };
 export const tapeAudioDefs = waveAudioDefs;
+export default waveAudioDefs;
 
