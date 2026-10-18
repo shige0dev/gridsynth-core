@@ -323,10 +323,10 @@ export const WAVE = {
                         <button id="tape-play-btn" class="h-6 w-7 rounded bg-cyan-600 hover:bg-cyan-500 text-white font-bold transition flex items-center justify-center shadow-sm active:scale-95 cursor-pointer shrink-0" title="PLAY / STOP">
                             <i id="tape-play-icon" data-lucide="play" class="w-3 h-3"></i>
                         </button>
-                        <button id="tape-loop-btn" class="h-6 w-7 rounded border ${loopActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0" title="LOOP (ループ�E甁EON/OFF)">
+                        <button id="tape-loop-btn" class="h-6 w-7 rounded border ${loopActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0" title="LOOP (繝ｫ繝ｼ繝怜・逕・ON/OFF)">
                             <i data-lucide="repeat" class="w-3 h-3"></i>
                         </button>
-                        <button id="tape-retrigger-btn" class="h-6 w-7 rounded border ${retriggerActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0" title="RETRIGGER (ON: 毎回到頭再生 / OFF: 完走までトリガー無要E">
+                        <button id="tape-retrigger-btn" class="h-6 w-7 rounded border ${retriggerActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0" title="RETRIGGER (ON: 豈主屓蛻ｰ鬆ｭ蜀咲函 / OFF: 螳瑚ｵｰ縺ｾ縺ｧ繝医Μ繧ｬ繝ｼ辟｡隕・">
                             <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
                         </button>
                     </div>
@@ -339,7 +339,7 @@ export const WAVE = {
                             <span class="text-cyan-400">SPEED</span>
                             <span id="tape-slider-speed-disp" class="text-cyan-300 font-mono text-[8.5px] cursor-ns-resize hover:bg-slate-800/80 px-1 rounded leading-none">${speedDisp}</span>
                         </div>
-                        <input type="range" id="tape-slider-speed" min="-2.0" max="2.0" step="0.05" value="${speedCvVal}" class="w-full h-1.5 bg-slate-800 rounded-lg accent-cyan-400 cursor-pointer" ${isSpeedPatched ? 'disabled' : ''} title="再生速度 (持E��: /4, /2, x1, x2, x4)">
+                        <input type="range" id="tape-slider-speed" min="-2.0" max="2.0" step="0.05" value="${speedCvVal}" class="w-full h-1.5 bg-slate-800 rounded-lg accent-cyan-400 cursor-pointer" ${isSpeedPatched ? 'disabled' : ''} title="蜀咲函騾溷ｺｦ (謖・焚: /4, /2, x1, x2, x4)">
                         <div class="flex justify-between px-0.5 text-[6.5px] font-mono text-slate-500 font-bold select-none pointer-events-none -mt-0.5">
                             <span>/4</span>
                             <span>/2</span>
@@ -358,7 +358,7 @@ export const WAVE = {
                             <span class="text-[8.5px] text-emerald-400 shrink-0">START</span>
                             <span id="tape-slider-start-disp" class="text-emerald-300 font-mono text-[8px] font-bold cursor-ns-resize hover:bg-slate-800/80 px-1 py-0.5 rounded leading-none truncate">${startDisp}</span>
                         </div>
-                        <input type="range" id="tape-slider-start" min="0.0" max="1.0" step="0.005" value="${m.start ?? 0.0}" class="w-full h-2.5 bg-slate-800 rounded-lg accent-emerald-400 cursor-pointer" ${isStartPatched ? 'disabled' : ''} title="開始位置 (0%、E00%)">
+                        <input type="range" id="tape-slider-start" min="0.0" max="1.0" step="0.005" value="${m.start ?? 0.0}" class="w-full h-2.5 bg-slate-800 rounded-lg accent-emerald-400 cursor-pointer" ${isStartPatched ? 'disabled' : ''} title="髢句ｧ倶ｽ咲ｽｮ (0%縲・00%)">
                     </div>
 
                     <div class="w-[1px] h-7 bg-slate-800/90 shrink-0"></div>
@@ -369,12 +369,12 @@ export const WAVE = {
                             <span class="text-[8.5px] text-emerald-400 shrink-0">END</span>
                             <span id="tape-slider-end-disp" class="text-emerald-300 font-mono text-[8px] font-bold cursor-ns-resize hover:bg-slate-800/80 px-1 py-0.5 rounded leading-none truncate">${endDisp}</span>
                         </div>
-                        <input type="range" id="tape-slider-end" min="0.0" max="1.0" step="0.005" value="${m.end ?? 1.0}" class="w-full h-2.5 bg-slate-800 rounded-lg accent-emerald-400 cursor-pointer" ${isEndPatched ? 'disabled' : ''} title="終亁E��置 (0%、E00%)">
+                        <input type="range" id="tape-slider-end" min="0.0" max="1.0" step="0.005" value="${m.end ?? 1.0}" class="w-full h-2.5 bg-slate-800 rounded-lg accent-emerald-400 cursor-pointer" ${isEndPatched ? 'disabled' : ''} title="邨ゆｺ・ｽ咲ｽｮ (0%縲・00%)">
                     </div>
                 </div>
 
                 <div class="text-[7.5px] text-slate-500 px-1 text-center italic">
-                    * PLAY: 単体試聴 | LOOP: ループ�E替 | RETRIG: ON=頭出し�E閁E/ OFF=完走までトリガー無要E                </div>
+                    * PLAY: 蜊倅ｽ楢ｩｦ閨ｴ | LOOP: 繝ｫ繝ｼ繝怜・譖ｿ | RETRIG: ON=鬆ｭ蜃ｺ縺怜・髢・/ OFF=螳瑚ｵｰ縺ｾ縺ｧ繝医Μ繧ｬ繝ｼ辟｡隕・                </div>
             </div>
         `;
     },
@@ -985,7 +985,7 @@ export const WAVE = {
     }
 };
 
-export const WAVE = TAPE;
+export const TAPE = WAVE;
 export const waveDefs = { WAVE, TAPE };
 export const tapeDefs = waveDefs;
 export default waveDefs;

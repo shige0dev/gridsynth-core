@@ -1,12 +1,12 @@
-import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js';
-import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=231';
+import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=236';
+import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=236';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=236';
 import { UIHelpers } from './helpers.js?v=229';
-import { PresetManager } from './managers/preset-manager.js?v=217';
-import { ModalManager } from './managers/modal-manager.js?v=231';
-import { CableManager } from './managers/cable-manager.js';
-import { PageManager } from './managers/page-manager.js';
-import { InteractionManager } from './managers/interaction-manager.js';
+import { PresetManager } from './managers/preset-manager.js?v=236';
+import { ModalManager } from './managers/modal-manager.js?v=236';
+import { CableManager } from './managers/cable-manager.js?v=236';
+import { PageManager } from './managers/page-manager.js?v=236';
+import { InteractionManager } from './managers/interaction-manager.js?v=236';
 
 export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'SPEC', 'MON', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'TAPE'];
 
