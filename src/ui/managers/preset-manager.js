@@ -1,6 +1,6 @@
-import { safeClone, parseConn } from '../../core/utils.js?v=243';
-import { parsePatch, exportPatch, createDefaultPatchData } from '../../core/patch.js?v=243';
-import { getDefaultPresets } from '../../presets/default.js?v=243';
+import { safeClone, parseConn } from '../../core/utils.js?v=244';
+import { parsePatch, exportPatch, createDefaultPatchData } from '../../core/patch.js?v=244';
+import { getDefaultPresets } from '../../presets/default.js?v=244';
 import { AI_PATCH_SPEC_CONTENT } from '../../presets/ai-spec-content.js';
 
 export function analyzeJsonError(rawText, err) {

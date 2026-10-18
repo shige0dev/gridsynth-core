@@ -1,8 +1,8 @@
 // src/ui/managers/modal-manager.js
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=243';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=244';
 import { FACTORY_SUBPATCHES } from '../../presets/subpatches.js';
 import { UIHelpers } from '../helpers.js?v=187';
-import { generateModuleId } from '../../core/utils.js?v=243';
+import { generateModuleId } from '../../core/utils.js?v=244';
 
 export const MODAL_WIDTHS = {
     // Complex Synthesizers
@@ -28,7 +28,6 @@ export const MODAL_WIDTHS = {
     // Sound Generation & Processing
     VCO: 'w-[235px]',
     WAVE: 'w-[360px]',
-    TAPE: 'w-[360px]',
     NOISE: 'w-[185px]',
     VCF: 'w-[210px]',
     FOLD: 'w-[220px]',
@@ -83,8 +82,7 @@ export const DOCK_TITLES = {
     ARP: 'ARPEGGIATOR',
     MARKOV: 'MARKOV GENERATOR',
     SCALE: 'SCALE QUANTIZER',
-    WAVE: 'WAVE SAMPLER',
-    TAPE: 'WAVE SAMPLER'
+    WAVE: 'WAVE SAMPLER'
 };
 
 export const DOCK_ICONS = {
@@ -98,7 +96,6 @@ export const DOCK_ICONS = {
     MON: 'eye',
     VCO: 'activity',
     WAVE: 'audio-waveform',
-    TAPE: 'audio-waveform',
     VCF: 'filter',
     VCA: 'volume-2',
     ADSR: 'trending-up',
@@ -242,7 +239,7 @@ export class ModalManager {
     openSettingsModal(mId) {
         const m = this.ui.modules[mId];
         if (!m || m.type === 'SUB_IO') return;
-        if (['KEY', 'SEQ8', 'SEQ16', 'PAT', 'SPEC', 'SCOPE', 'WAVE', 'TAPE'].includes(m.type)) {
+        if (['KEY', 'SEQ8', 'SEQ16', 'PAT', 'SPEC', 'SCOPE', 'WAVE'].includes(m.type)) {
             this.openDockModal(mId);
             return;
         }

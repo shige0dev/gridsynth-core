@@ -70,7 +70,7 @@ export const WaveCodec = {
             try {
                 await ctx.resume();
             } catch (e) {
-                console.warn('[TapeCodec] AudioContext resume failed:', e);
+                console.warn('[WaveCodec] AudioContext resume failed:', e);
             }
         }
 
@@ -94,7 +94,7 @@ export const WaveCodec = {
 
             return WaveCodec.processAudioBuffer(audioBuffer);
         } catch (decodeErr) {
-            console.warn('[TapeCodec] Direct decodeAudioData failed, attempting MediaElement extraction fallback:', decodeErr);
+            console.warn('[WaveCodec] Direct decodeAudioData failed, attempting MediaElement extraction fallback:', decodeErr);
         }
 
         // 2. Secondary Fallback: Use HTMLVideoElement / HTMLAudioElement playback capture
@@ -265,7 +265,7 @@ export const WaveCodec = {
 
             return WaveCodec.processAudioBuffer(audioBuffer);
         } catch (err) {
-            console.warn('[TapeCodec] Failed to decode base64 audio:', err);
+            console.warn('[WaveCodec] Failed to decode base64 audio:', err);
             return null;
         }
     },
@@ -344,7 +344,7 @@ export const WaveCodec = {
                     }
                 }, durMs + 100);
             } catch (err) {
-                console.warn('[TapeCodec] Opus encoding failed, falling back to WAV:', err);
+                console.warn('[WaveCodec] Opus encoding failed, falling back to WAV:', err);
                 resolve(WaveCodec.encodeToWavBase64(float32Array, sampleRate));
             }
         });
@@ -395,22 +395,6 @@ export const WaveCodec = {
     },
 
     /**
-     * Generates a default 1-second clean test sample (sine beep / tape chirp) for newly created TAPE instances.
-     */
-    createDefaultSample(sampleRate = 48000) {
-        const len = Math.floor(sampleRate * 1.5);
-        const buf = new Float32Array(len);
-        for (let i = 0; i < len; i++) {
-            const t = i / sampleRate;
-            // Warm vintage tape sweep with harmonic decay
-            const freq = 220 + 110 * Math.exp(-t * 3);
-            const env = Math.exp(-t * 2);
-            buf[i] = Math.sin(2 * Math.PI * freq * t) * 0.7 * env;
-        }
-        return buf;
-    },
-
-    /**
      * Downsample Float32Array to an array of peak amplitudes (0.0 - 1.0) for waveform display.
      * @param {Float32Array} buffer
      * @param {number} [numBins=64]
@@ -434,5 +418,5 @@ export const WaveCodec = {
     }
 };
 
-export const TapeCodec = WaveCodec;
 export default WaveCodec;
+

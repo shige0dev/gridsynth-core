@@ -1,7 +1,7 @@
 // src/ui/wave-modal.js
-import { UIHelpers } from './helpers.js?v=243';
-import { WaveCodec } from '../audio/wave-codec.js?v=243';
-import { WaveView } from './wave-view.js?v=243';
+import { UIHelpers } from './helpers.js?v=244';
+import { WaveCodec } from '../audio/wave-codec.js?v=244';
+import { WaveView } from './wave-view.js?v=244';
 
 /**
  * WAVE Module Modal Renderer & Event Controller
@@ -48,9 +48,9 @@ export const WaveModal = {
     },
 
     renderModal(m, ctx) {
-        const isStartPatched = ctx?.patched?.has('start_cv') || ctx?.patched?.has('cv_start');
-        const isEndPatched = ctx?.patched?.has('end_cv') || ctx?.patched?.has('cv_end');
-        const isSpeedPatched = ctx?.patched?.has('speed_cv') || ctx?.patched?.has('cv_speed');
+        const isStartPatched = Boolean(ctx?.patched?.has('start_cv'));
+        const isEndPatched = Boolean(ctx?.patched?.has('end_cv'));
+        const isSpeedPatched = Boolean(ctx?.patched?.has('speed_cv'));
         const isAnyRangePatched = Boolean(isStartPatched || isEndPatched);
         const lockActive = Boolean(m.rangeLock) && !isAnyRangePatched;
 
@@ -77,12 +77,12 @@ export const WaveModal = {
                     <label class="px-2 py-1 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500/70 text-cyan-200 rounded text-[8px] font-bold cursor-pointer transition shadow-sm flex items-center gap-1 shrink-0">
                         <i data-lucide="download" class="w-2.5 h-2.5"></i>
                         <span>LOAD</span>
-                        <input type="file" id="tape-file-input" accept="audio/*, video/mp4, video/*" class="hidden">
+                        <input type="file" id="wave-file-input" accept="audio/*, video/mp4, video/*" class="hidden">
                     </label>
                 </div>
 
                 <!-- Oscilloscope-sized Waveform Display -->
-                <div id="tape-waveform-wrap" class="w-full">
+                <div id="wave-waveform-wrap" class="w-full">
                     ${WaveView.renderWaveformSVG(m, 0.0, false)}
                 </div>
 
@@ -91,15 +91,15 @@ export const WaveModal = {
                     <div class="flex items-center gap-1.5">
                         <span class="text-amber-400 font-bold text-[7.5px] font-mono">CHOP:</span>
                         <div class="flex items-center gap-1">
-                            <button id="tape-chop-off" class="${chopBtnCls('off')}">OFF</button>
-                            <button id="tape-chop-4" class="${chopBtnCls('4')}">4</button>
-                            <button id="tape-chop-8" class="${chopBtnCls('8')}">8</button>
-                            <button id="tape-chop-16" class="${chopBtnCls('16')}">16</button>
+                            <button id="wave-chop-off" class="${chopBtnCls('off')}">OFF</button>
+                            <button id="wave-chop-4" class="${chopBtnCls('4')}">4</button>
+                            <button id="wave-chop-8" class="${chopBtnCls('8')}">8</button>
+                            <button id="wave-chop-16" class="${chopBtnCls('16')}">16</button>
                         </div>
                     </div>
                     <div class="flex items-center gap-1">
                         <span class="text-slate-400 font-bold text-[7.5px] font-mono">SNAP:</span>
-                        <button id="tape-snap-btn" class="px-2 py-0.5 rounded border ${m.snapMode ? 'bg-emerald-950 text-emerald-300 border-emerald-500 font-bold shadow-sm shadow-emerald-500/20' : 'bg-slate-900 text-slate-500 border-slate-800'} transition cursor-pointer font-bold">
+                        <button id="wave-snap-btn" class="px-2 py-0.5 rounded border ${m.snapMode ? 'bg-emerald-950 text-emerald-300 border-emerald-500 font-bold shadow-sm shadow-emerald-500/20' : 'bg-slate-900 text-slate-500 border-slate-800'} transition cursor-pointer font-bold">
                             ${m.snapMode ? 'ON' : 'OFF'}
                         </button>
                     </div>
@@ -108,13 +108,13 @@ export const WaveModal = {
                 <!-- Row 1: PLAY, LOOP, RETRIG & SPEED Slider -->
                 <div class="flex items-center justify-between gap-2 px-2 py-1.5 bg-slate-950/70 rounded-xl border border-slate-800 text-[8.5px]">
                     <div class="flex items-center gap-1 shrink-0">
-                        <button id="tape-play-btn" class="h-6 w-7 rounded bg-cyan-600 hover:bg-cyan-500 text-white font-bold transition flex items-center justify-center shadow-sm active:scale-95 cursor-pointer shrink-0" title="PLAY / STOP">
-                            <i id="tape-play-icon" data-lucide="play" class="w-3 h-3"></i>
+                        <button id="wave-play-btn" class="h-6 w-7 rounded bg-cyan-600 hover:bg-cyan-500 text-white font-bold transition flex items-center justify-center shadow-sm active:scale-95 cursor-pointer shrink-0" title="PLAY / STOP">
+                            <i id="wave-play-icon" data-lucide="play" class="w-3 h-3"></i>
                         </button>
-                        <button id="tape-loop-btn" class="h-6 w-7 rounded border ${loopActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0" title="LOOP (ループ再生 ON/OFF)">
+                        <button id="wave-loop-btn" class="h-6 w-7 rounded border ${loopActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0" title="LOOP (ループ再生 ON/OFF)">
                             <i data-lucide="repeat" class="w-3 h-3"></i>
                         </button>
-                        <button id="tape-retrigger-btn" class="h-6 w-7 rounded border ${retriggerActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0" title="RETRIGGER (ON: 毎回先頭から再生 / OFF: 完走するまでトリガー無視)">
+                        <button id="wave-retrigger-btn" class="h-6 w-7 rounded border ${retriggerActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0" title="RETRIGGER (ON: 毎回先頭から再生 / OFF: 完走するまでトリガー無視)">
                             <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
                         </button>
                     </div>
@@ -122,9 +122,9 @@ export const WaveModal = {
                     <div class="flex-1 min-w-[120px] flex flex-col justify-center gap-0.5 ${isSpeedPatched ? 'opacity-30 pointer-events-none' : ''}">
                         <div class="flex items-center justify-between text-[8px] font-mono font-bold leading-tight">
                             <span class="text-cyan-400">SPEED</span>
-                            <span id="tape-slider-speed-disp" class="text-cyan-300 font-mono text-[8.5px] cursor-ns-resize hover:bg-slate-800/80 px-1 rounded leading-none">${speedDisp}</span>
+                            <span id="wave-slider-speed-disp" class="text-cyan-300 font-mono text-[8.5px] cursor-ns-resize hover:bg-slate-800/80 px-1 rounded leading-none">${speedDisp}</span>
                         </div>
-                        <input type="range" id="tape-slider-speed" min="-2.0" max="2.0" step="0.05" value="${speedCvVal}" class="w-full h-1.5 bg-slate-800 rounded-lg accent-cyan-400 cursor-pointer" ${isSpeedPatched ? 'disabled' : ''} title="再生速度 (/4, /2, x1, x2, x4)">
+                        <input type="range" id="wave-slider-speed" min="-2.0" max="2.0" step="0.05" value="${speedCvVal}" class="w-full h-1.5 bg-slate-800 rounded-lg accent-cyan-400 cursor-pointer" ${isSpeedPatched ? 'disabled' : ''} title="再生速度 (/4, /2, x1, x2, x4)">
                         <div class="flex justify-between px-0.5 text-[6.5px] font-mono text-slate-500 font-bold select-none pointer-events-none -mt-0.5">
                             <span>/4</span><span>/2</span><span class="text-cyan-400">x1</span><span>x2</span><span>x4</span>
                         </div>
@@ -136,21 +136,21 @@ export const WaveModal = {
                     <div class="flex-1 min-w-0 flex flex-col gap-0.5 ${isStartPatched ? 'opacity-30 pointer-events-none' : ''}">
                         <div class="flex items-center justify-between gap-1 text-[8px] font-mono font-bold leading-tight whitespace-nowrap overflow-hidden">
                             <span class="text-[8.5px] text-emerald-400 shrink-0">START</span>
-                            <span id="tape-slider-start-disp" class="text-emerald-300 font-mono text-[8px] font-bold cursor-ns-resize hover:bg-slate-800/80 px-1 py-0.5 rounded leading-none truncate">${startDisp}</span>
+                            <span id="wave-slider-start-disp" class="text-emerald-300 font-mono text-[8px] font-bold cursor-ns-resize hover:bg-slate-800/80 px-1 py-0.5 rounded leading-none truncate">${startDisp}</span>
                         </div>
-                        <input type="range" id="tape-slider-start" min="0.0" max="1.0" step="0.005" value="${m.start ?? 0.0}" class="w-full h-2.5 bg-slate-800 rounded-lg accent-emerald-400 cursor-pointer" ${isStartPatched ? 'disabled' : ''} title="開始CV位置 (0%〜100%)">
+                        <input type="range" id="wave-slider-start" min="0.0" max="1.0" step="0.005" value="${m.start ?? 0.0}" class="w-full h-2.5 bg-slate-800 rounded-lg accent-emerald-400 cursor-pointer" ${isStartPatched ? 'disabled' : ''} title="開始CV位置 (0%〜100%)">
                     </div>
 
-                    <button id="tape-range-lock-btn" class="h-6 w-6 rounded-lg border ${lockActive ? 'bg-emerald-950 text-emerald-300 border-emerald-500 shadow-sm shadow-emerald-500/30' : 'bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-300'} transition flex items-center justify-center shrink-0 ${isAnyRangePatched ? 'opacity-30 pointer-events-none cursor-not-allowed' : 'cursor-pointer active:scale-95'}" ${isAnyRangePatched ? 'disabled' : ''} title="TIME LOCK (START/END CV差分ロック)">
+                    <button id="wave-range-lock-btn" class="h-6 w-6 rounded-lg border ${lockActive ? 'bg-emerald-950 text-emerald-300 border-emerald-500 shadow-sm shadow-emerald-500/30' : 'bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-300'} transition flex items-center justify-center shrink-0 ${isAnyRangePatched ? 'opacity-30 pointer-events-none cursor-not-allowed' : 'cursor-pointer active:scale-95'}" ${isAnyRangePatched ? 'disabled' : ''} title="TIME LOCK (START/END CV差分ロック)">
                         <i data-lucide="${lockActive ? 'lock' : 'unlock'}" class="w-3 h-3 pointer-events-none"></i>
                     </button>
 
                     <div class="flex-1 min-w-0 flex flex-col gap-0.5 ${isEndPatched ? 'opacity-30 pointer-events-none' : ''}">
                         <div class="flex items-center justify-between gap-1 text-[8px] font-mono font-bold leading-tight whitespace-nowrap overflow-hidden">
                             <span class="text-[8.5px] text-emerald-400 shrink-0">END</span>
-                            <span id="tape-slider-end-disp" class="text-emerald-300 font-mono text-[8px] font-bold cursor-ns-resize hover:bg-slate-800/80 px-1 py-0.5 rounded leading-none truncate">${endDisp}</span>
+                            <span id="wave-slider-end-disp" class="text-emerald-300 font-mono text-[8px] font-bold cursor-ns-resize hover:bg-slate-800/80 px-1 py-0.5 rounded leading-none truncate">${endDisp}</span>
                         </div>
-                        <input type="range" id="tape-slider-end" min="0.0" max="1.0" step="0.005" value="${m.end ?? 1.0}" class="w-full h-2.5 bg-slate-800 rounded-lg accent-emerald-400 cursor-pointer" ${isEndPatched ? 'disabled' : ''} title="終了CV位置 (0%〜100%)">
+                        <input type="range" id="wave-slider-end" min="0.0" max="1.0" step="0.005" value="${m.end ?? 1.0}" class="w-full h-2.5 bg-slate-800 rounded-lg accent-emerald-400 cursor-pointer" ${isEndPatched ? 'disabled' : ''} title="終了CV位置 (0%〜100%)">
                     </div>
                 </div>
             </div>
@@ -160,11 +160,11 @@ export const WaveModal = {
     bindEvents(m, ctx, onChange) {
         const root = ctx.getDialogElement?.() || document;
         const cb = typeof onChange === 'function' ? onChange : () => {};
-        const svgWrap = root.querySelector('#tape-waveform-wrap');
+        const svgWrap = root.querySelector('#wave-waveform-wrap');
 
-        const isStartPatched = Boolean(ctx?.patched?.has('start_cv') || ctx?.patched?.has('cv_start'));
-        const isEndPatched = Boolean(ctx?.patched?.has('end_cv') || ctx?.patched?.has('cv_end'));
-        const isSpeedPatched = Boolean(ctx?.patched?.has('speed_cv') || ctx?.patched?.has('cv_speed'));
+        const isStartPatched = Boolean(ctx?.patched?.has('start_cv'));
+        const isEndPatched = Boolean(ctx?.patched?.has('end_cv'));
+        const isSpeedPatched = Boolean(ctx?.patched?.has('speed_cv'));
         const isAnyRangePatched = isStartPatched || isEndPatched;
 
         if (m._lockDelta === undefined) m._lockDelta = (m.end ?? 1.0) - (m.start ?? 0.0);
@@ -215,7 +215,7 @@ export const WaveModal = {
         };
 
         // File Input
-        const fileInput = root.querySelector('#tape-file-input');
+        const fileInput = root.querySelector('#wave-file-input');
         fileInput?.addEventListener('click', () => {
             this.ensureSynthReady(ctx, m).catch(() => {});
         });
@@ -253,7 +253,7 @@ export const WaveModal = {
         });
 
         // Play / Stop
-        const playBtn = root.querySelector('#tape-play-btn');
+        const playBtn = root.querySelector('#wave-play-btn');
         playBtn?.addEventListener('click', async () => {
             const activeInst = await this.ensureSynthReady(ctx, m);
             if (!activeInst) { ctx.showToast?.('ENGINE NOT READY'); return; }
@@ -272,12 +272,12 @@ export const WaveModal = {
 
         // Loop & Retrigger
         const toggleBtnCls = (on) => `h-6 w-7 rounded border ${on ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0`;
-        root.querySelector('#tape-loop-btn')?.addEventListener('click', (e) => {
+        root.querySelector('#wave-loop-btn')?.addEventListener('click', (e) => {
             m.loop = !m.loop;
             e.currentTarget.className = toggleBtnCls(m.loop);
             syncRangeAndAudio();
         });
-        root.querySelector('#tape-retrigger-btn')?.addEventListener('click', (e) => {
+        root.querySelector('#wave-retrigger-btn')?.addEventListener('click', (e) => {
             m.retrigger = !(m.retrigger !== false);
             e.currentTarget.className = toggleBtnCls(m.retrigger !== false);
             syncRangeAndAudio();
@@ -304,9 +304,9 @@ export const WaveModal = {
             ctx.reRenderModal?.();
         };
         ['off', '4', '8', '16'].forEach(mode => {
-            root.querySelector(`#tape-chop-${mode}`)?.addEventListener('click', () => setChop(mode));
+            root.querySelector(`#wave-chop-${mode}`)?.addEventListener('click', () => setChop(mode));
         });
-        root.querySelector('#tape-snap-btn')?.addEventListener('click', () => {
+        root.querySelector('#wave-snap-btn')?.addEventListener('click', () => {
             m.snapMode = !m.snapMode;
             syncRangeAndAudio();
             ctx.reRenderModal?.();
@@ -315,7 +315,7 @@ export const WaveModal = {
         // SVG Click to select slice or move locked CV window
         svgWrap?.addEventListener('click', (e) => {
             if (isAnyRangePatched) return;
-            const svgEl = svgWrap.querySelector('#tape-waveform-svg');
+            const svgEl = svgWrap.querySelector('#wave-waveform-svg');
             if (!svgEl) return;
             const rect = svgEl.getBoundingClientRect();
             const normX = ((e.clientX - rect.left) / rect.width) * WaveView.W;
@@ -344,7 +344,7 @@ export const WaveModal = {
         });
 
         // Center Time Lock Button
-        const lockBtn = root.querySelector('#tape-range-lock-btn');
+        const lockBtn = root.querySelector('#wave-range-lock-btn');
         if (lockBtn && !isAnyRangePatched) {
             lockBtn.addEventListener('click', () => {
                 m.rangeLock = !m.rangeLock;
@@ -384,19 +384,19 @@ export const WaveModal = {
         };
 
         if (!isStartPatched) {
-            UIHelpers.bindSlider('tape-slider-start', v => {
+            UIHelpers.bindSlider('wave-slider-start', v => {
                 const b = WaveView.resolveEffectiveBounds(m, Math.max(0, Math.min(1, v)), m.end ?? 1.0);
                 return WaveView.formatBoundDisp(m, b.rawStart, b.start, false);
             }, v => applyRangeCv('start', v), 1, 0.0, 1.0);
         }
         if (!isEndPatched) {
-            UIHelpers.bindSlider('tape-slider-end', v => {
+            UIHelpers.bindSlider('wave-slider-end', v => {
                 const b = WaveView.resolveEffectiveBounds(m, m.start ?? 0.0, Math.max(0, Math.min(1, v)));
                 return WaveView.formatBoundDisp(m, b.rawEnd, b.end, false);
             }, v => applyRangeCv('end', v), 1, 0.0, 1.0);
         }
         if (!isSpeedPatched) {
-            UIHelpers.bindSlider('tape-slider-speed', v => WaveView.formatSpeed(v), v => {
+            UIHelpers.bindSlider('wave-slider-speed', v => WaveView.formatSpeed(v), v => {
                 m.speedCv = v;
                 m.speed = Math.pow(2.0, v);
                 syncRangeAndAudio();
@@ -406,4 +406,5 @@ export const WaveModal = {
 };
 
 export default WaveModal;
+
 

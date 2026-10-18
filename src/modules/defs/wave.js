@@ -1,8 +1,8 @@
 // src/modules/defs/wave.js
-import { UIHelpers } from '../../ui/helpers.js?v=243';
-import { WaveCodec } from '../../audio/wave-codec.js?v=243';
-import { WaveView } from '../../ui/wave-view.js?v=243';
-import { WaveModal } from '../../ui/wave-modal.js?v=243';
+import { UIHelpers } from '../../ui/helpers.js?v=244';
+import { WaveCodec } from '../../audio/wave-codec.js?v=244';
+import { WaveView } from '../../ui/wave-view.js?v=244';
+import { WaveModal } from '../../ui/wave-modal.js?v=244';
 
 export const WAVE = {
     color: 'cyan',
@@ -48,9 +48,9 @@ export const WAVE = {
         const endPct = Math.max(5, Math.min(100, Math.round((m.end ?? 1) * 100)));
         const spdPct = Math.max(5, Math.min(100, Math.round(((m.speed ?? 1.0) / 4.0) * 100)));
         return `<div class="flex items-center justify-center w-full h-full pointer-events-none">${UIHelpers.renderPanelBars([
-            { pct: startPct, innerCls: 'tape-bar-start', attrs: 'data-tape-bar="start"', width: 'w-2' },
-            { pct: endPct, innerCls: 'tape-bar-end', attrs: 'data-tape-bar="end"', width: 'w-2' },
-            { pct: spdPct, innerCls: 'tape-bar-spd', attrs: 'data-tape-bar="spd"', width: 'w-2' }
+            { pct: startPct, innerCls: 'wave-bar-start', attrs: 'data-wave-bar="start"', width: 'w-2' },
+            { pct: endPct, innerCls: 'wave-bar-end', attrs: 'data-wave-bar="end"', width: 'w-2' },
+            { pct: spdPct, innerCls: 'wave-bar-spd', attrs: 'data-wave-bar="spd"', width: 'w-2' }
         ], { gapCls: 'gap-1.5', theme: 'audio' })}</div>`;
     },
     renderModal: (m, ctx) => WaveModal.renderModal(m, ctx),
@@ -68,7 +68,6 @@ export const WAVE = {
     getActiveInst: (ctx, m) => WaveModal.getActiveInst(ctx, m)
 };
 
-export const TAPE = WAVE;
-export const waveDefs = { WAVE, TAPE };
-export const tapeDefs = waveDefs;
+export const waveDefs = { WAVE };
 export default waveDefs;
+

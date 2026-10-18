@@ -296,8 +296,4 @@ export class WaveProcessor extends AudioWorkletProcessor {
     }
 }
 
-export const TapeProcessor = WaveProcessor;
 registerProcessor('wave-processor', WaveProcessor);
-try {
-    registerProcessor('tape-processor', WaveProcessor);
-} catch (_) {}

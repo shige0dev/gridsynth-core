@@ -1,23 +1,15 @@
 // src/audio/defs/wave.js
-import { WaveCodec, TapeCodec } from '../wave-codec.js?v=243';
+import { WaveCodec } from '../wave-codec.js?v=244';
 
 export const WAVE = {
     create: (ctx, d, patch, eng) => {
-        let w;
-        try {
-            w = new AudioWorkletNode(ctx, 'wave-processor', {
-                numberOfInputs: 4,
-                numberOfOutputs: 1
-            });
-        } catch (_) {
-            w = new AudioWorkletNode(ctx, 'tape-processor', {
-                numberOfInputs: 4,
-                numberOfOutputs: 1
-            });
-        }
+        const w = new AudioWorkletNode(ctx, 'wave-processor', {
+            numberOfInputs: 4,
+            numberOfOutputs: 1
+        });
 
-        const isStartPatched = patch?.has?.('start_cv') || patch?.has?.('cv_start') || Boolean(d.startPatched);
-        const isEndPatched = patch?.has?.('end_cv') || patch?.has?.('cv_end') || Boolean(d.endPatched);
+        const isStartPatched = patch?.has?.('start_cv') || Boolean(d.startPatched);
+        const isEndPatched = patch?.has?.('end_cv') || Boolean(d.endPatched);
 
         w.port.postMessage({
             type: 'SET_PARAMS',
@@ -43,7 +35,7 @@ export const WAVE = {
         };
 
         if (d.data && typeof d.data === 'string' && d.data.length > 0) {
-            TapeCodec.decodeFromBase64(d.data, ctx).then(res => {
+            WaveCodec.decodeFromBase64(d.data, ctx).then(res => {
                 if (res?.buffer) {
                     sendBufferToWorklet(res.buffer, res.sampleRate);
                     d._buffer = res.buffer;
@@ -126,17 +118,12 @@ export const WAVE = {
             nodes: { w, gateIn, cvStartIn, cvEndIn, cvSpeedIn, outWave, previewGain, an },
             inputs: {
                 gate_in: gateIn,
-                trig_in: gateIn,
                 start_cv: cvStartIn,
-                cv_start: cvStartIn,
                 end_cv: cvEndIn,
-                cv_end: cvEndIn,
-                speed_cv: cvSpeedIn,
-                cv_speed: cvSpeedIn
+                speed_cv: cvSpeedIn
             },
             outputs: {
-                wave_out: outWave,
-                out: outWave
+                wave_out: outWave
             },
             setAudioBuffer: (float32Buf, sRate) => {
                 sendBufferToWorklet(float32Buf, sRate);
@@ -196,8 +183,8 @@ export const WAVE = {
             inst._patchState = patch;
         }
         const p = inst._patchState || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id) : null);
-        const isStartPatched = p?.has?.('start_cv') || p?.has?.('cv_start') || Boolean(d.startPatched);
-        const isEndPatched = p?.has?.('end_cv') || p?.has?.('cv_end') || Boolean(d.endPatched);
+        const isStartPatched = p?.has?.('start_cv') || Boolean(d.startPatched);
+        const isEndPatched = p?.has?.('end_cv') || Boolean(d.endPatched);
 
         inst.nodes.w.port.postMessage({
             type: 'SET_PARAMS',
@@ -214,8 +201,7 @@ export const WAVE = {
     }
 };
 
-export const TAPE = WAVE;
-export const waveAudioDefs = { WAVE, TAPE };
-export const tapeAudioDefs = waveAudioDefs;
+export const waveAudioDefs = { WAVE };
 export default waveAudioDefs;
+
 
