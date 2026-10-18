@@ -196,7 +196,7 @@ export const LFO = {
             } : {
                 key: 'period',
                 label: 'TIME',
-                min: 0.01, max: 60.0, step: 0.001, default: 0.5,
+                min: 0.01, max: 120.0, step: 0.001, default: 0.5,
                 unit: 's',
                 power: 3.0,
                 getVal: (mod) => {
@@ -205,7 +205,7 @@ export const LFO = {
                     return 0.5;
                 },
                 setVal: (mod, v) => {
-                    const sec = Math.max(0.01, Math.min(60.0, v));
+                    const sec = Math.max(0.01, Math.min(120.0, v));
                     mod.period = sec;
                     mod.rate = 1.0 / sec;
                 },
