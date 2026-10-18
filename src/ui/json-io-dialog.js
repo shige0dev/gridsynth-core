@@ -1,5 +1,5 @@
 // src/ui/json-io-dialog.js
-import { exportModuleData } from '../core/patch.js?v=251';
+import { safeClone } from '../core/utils.js?v=252';
 
 export function analyzeJsonError(rawText, err) {
     let cleanText = (rawText || '').trim();
@@ -53,8 +53,21 @@ export const JsonIoDialog = {
     /**
      * Serializes a single module's data in the exact same structure as exportPatch.
      */
-    exportModuleData(m) {
-        return exportModuleData(m);
+    exportModuleData(m, onExport = null) {
+        if (!m) return {};
+        const { col, row, id: _id, ...props } = m;
+        const cleanProps = {};
+        Object.entries(props).forEach(([k, v]) => {
+            if (!k.startsWith('_')) cleanProps[k] = v;
+        });
+        const cloned = safeClone(cleanProps);
+        if (typeof onExport === 'function') {
+            onExport(cloned, m);
+        } else if (m.type === 'WAVE' && m._isLinked) {
+            cloned.data = '';
+            cloned.peaks = null;
+        }
+        return { type: m.type, ...cloned };
     },
 
     /**

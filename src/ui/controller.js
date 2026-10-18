@@ -1,14 +1,13 @@
-import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=251';
-import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=251';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=251';
+import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=252';
+import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=252';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=252';
 import { UIHelpers } from './helpers.js?v=229';
-import { PresetManager } from './managers/preset-manager.js?v=251';
-import { ModalManager } from './managers/modal-manager.js?v=251';
-import { CableManager } from './managers/cable-manager.js?v=251';
-import { PageManager } from './managers/page-manager.js?v=251';
-import { InteractionManager } from './managers/interaction-manager.js?v=251';
-import { WaveCodec } from '../audio/wave-codec.js?v=251';
-import { WaveCodec } from '../audio/wave-codec.js?v=248';
+import { PresetManager } from './managers/preset-manager.js?v=252';
+import { ModalManager } from './managers/modal-manager.js?v=252';
+import { CableManager } from './managers/cable-manager.js?v=252';
+import { PageManager } from './managers/page-manager.js?v=252';
+import { InteractionManager } from './managers/interaction-manager.js?v=252';
+import { WaveCodec } from '../audio/wave-codec.js?v=252';
 
 export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'SPEC', 'MON', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE'];
 
