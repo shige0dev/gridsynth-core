@@ -1,6 +1,6 @@
 // src/ui/managers/cable-manager.js
-import { parseConn, isSameConn, getPortSignalType, resolveConnectionSignalType, isSubModule, isSubIOModule, normalizeSubPort, getOppositeSubPort, getPortAliases, isPortMatching } from '../../core/utils.js?v=242';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=242';
+import { parseConn, isSameConn, getPortSignalType, resolveConnectionSignalType, isSubModule, isSubIOModule, normalizeSubPort, getOppositeSubPort, getPortAliases, isPortMatching } from '../../core/utils.js?v=243';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=243';
 
 export class CableManager {
     constructor(ui) {

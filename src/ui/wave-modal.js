@@ -1,7 +1,7 @@
 // src/ui/wave-modal.js
-import { UIHelpers } from './helpers.js?v=242';
-import { WaveCodec } from '../audio/wave-codec.js?v=242';
-import { WaveView } from './wave-view.js?v=242';
+import { UIHelpers } from './helpers.js?v=243';
+import { WaveCodec } from '../audio/wave-codec.js?v=243';
+import { WaveView } from './wave-view.js?v=243';
 
 /**
  * WAVE Module Modal Renderer & Event Controller
@@ -23,12 +23,22 @@ export const WaveModal = {
 
     async ensureSynthReady(ctx, m) {
         const synth = ctx?.synth || window.__GS_SYNTH__;
-        if (synth && !synth.ctx) await synth.init();
-        if (synth?.ctx && synth.ctx.state === 'suspended') {
-            try { await synth.ctx.resume(); } catch (_) {}
-        }
-        if (synth && !synth.hasModules()) {
-            synth.rebuildAll(ctx.pagesData, (pId, id) => ctx.getPatchState(id, pId));
+        const ui = ctx?.ui || window.__GS_UI__;
+        if (synth) {
+            await synth.init();
+            synth.resume?.();
+            if (synth.ctx && synth.ctx.state === 'suspended') {
+                try { await synth.ctx.resume(); } catch (_) {}
+            }
+            const pagesData = ctx?.pagesData || ui?.pagesData;
+            if ((!synth.hasModules() || !this.getActiveInst(ctx, m)) && pagesData) {
+                const resolvePatch = (pId, id) => {
+                    if (typeof ui?.getPatchState === 'function') return ui.getPatchState(id, pId);
+                    if (typeof ctx?.getPatchState === 'function') return ctx.getPatchState(id, pId);
+                    return new Set();
+                };
+                synth.rebuildAll(pagesData, resolvePatch);
+            }
         }
         const pwrBtn = document.getElementById('audio-power-btn');
         if (pwrBtn && !pwrBtn.classList.contains('border-red-500')) {
@@ -206,6 +216,9 @@ export const WaveModal = {
 
         // File Input
         const fileInput = root.querySelector('#tape-file-input');
+        fileInput?.addEventListener('click', () => {
+            this.ensureSynthReady(ctx, m).catch(() => {});
+        });
         fileInput?.addEventListener('change', async (e) => {
             const file = e.target.files?.[0];
             if (!file) return;

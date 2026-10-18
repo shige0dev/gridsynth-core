@@ -1,8 +1,8 @@
 // src/ui/managers/modal-manager.js
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=242';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=243';
 import { FACTORY_SUBPATCHES } from '../../presets/subpatches.js';
 import { UIHelpers } from '../helpers.js?v=187';
-import { generateModuleId } from '../../core/utils.js?v=242';
+import { generateModuleId } from '../../core/utils.js?v=243';
 
 export const MODAL_WIDTHS = {
     // Complex Synthesizers
@@ -497,6 +497,7 @@ export class ModalManager {
             synth: this.ui.synth,
             ui: this.ui,
             patched: this.ui.getPatchState(id),
+            getPatchState: (modId, pId) => this.ui.getPatchState(modId ?? id, pId),
             bpm: this.ui.synth.masterBPM,
             currentPageId: this.ui.currentPageId,
             getDialogElement: () => this.getDialogElement(id),
