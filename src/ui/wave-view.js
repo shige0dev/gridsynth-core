@@ -158,13 +158,16 @@ export const WaveView = {
             }
             m.chops.forEach((cp) => {
                 const cx = PAD_X + cp * INNER_W;
-                chopsSvg += `<line x1="${cx.toFixed(1)}" y1="${PAD_Y}" x2="${cx.toFixed(1)}" y2="${(PAD_Y + INNER_H - 10).toFixed(1)}" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="3,2" opacity="0.85" pointer-events="none"/>`;
+                chopsSvg += `<line x1="${cx.toFixed(1)}" y1="${PAD_Y}" x2="${cx.toFixed(1)}" y2="${(PAD_Y + INNER_H - 10).toFixed(1)}" stroke="#64748b" stroke-width="0.9" opacity="0.85" pointer-events="none"/>`;
             });
         }
 
         const startX = PAD_X + startPct * INNER_W;
         const endX = PAD_X + endPct * INNER_W;
         const playX = PAD_X + Math.max(0, Math.min(1, playhead)) * INNER_W;
+
+        const startNotchPts = `${cvStartX.toFixed(1)},${PAD_Y} ${cvStartX.toFixed(1)},${(PAD_Y + 6).toFixed(1)} ${(cvStartX + 5.5).toFixed(1)},${(PAD_Y + 3).toFixed(1)}`;
+        const endNotchPts = `${cvEndX.toFixed(1)},${PAD_Y} ${cvEndX.toFixed(1)},${(PAD_Y + 6).toFixed(1)} ${(cvEndX - 5.5).toFixed(1)},${(PAD_Y + 3).toFixed(1)}`;
 
         return `
             <svg id="tape-waveform-svg" viewBox="0 0 ${W} ${H}" class="w-full h-28 select-none bg-slate-950 rounded-xl border border-slate-800 shadow-inner overflow-hidden relative cursor-pointer">
@@ -175,29 +178,29 @@ export const WaveView = {
                 ${chopsSvg}
                 <line id="tape-end-line" x1="${endX.toFixed(1)}" y1="${PAD_Y}" x2="${endX.toFixed(1)}" y2="${PAD_Y + INNER_H}" stroke="#22c55e" stroke-width="2.0" class="drop-shadow-[0_0_4px_rgba(34,197,94,0.85)]"/>
                 <line id="tape-start-line" x1="${startX.toFixed(1)}" y1="${PAD_Y}" x2="${startX.toFixed(1)}" y2="${PAD_Y + INNER_H}" stroke="#22c55e" stroke-width="2.0" class="drop-shadow-[0_0_4px_rgba(34,197,94,0.85)]"/>
+                <rect id="tape-end-badge" x="${(endX - 5).toFixed(1)}" y="${PAD_Y + 7}" width="10" height="9" rx="1.5" fill="#14532d" stroke="#22c55e" stroke-width="1"/>
+                <text id="tape-end-text" x="${endX.toFixed(1)}" y="${PAD_Y + 14}" fill="#4ade80" font-size="6.5" font-family="monospace" font-weight="bold" text-anchor="middle">E</text>
+                <rect id="tape-start-badge" x="${(startX - 5).toFixed(1)}" y="${PAD_Y + 7}" width="10" height="9" rx="1.5" fill="#14532d" stroke="#22c55e" stroke-width="1"/>
+                <text id="tape-start-text" x="${startX.toFixed(1)}" y="${PAD_Y + 14}" fill="#4ade80" font-size="6.5" font-family="monospace" font-weight="bold" text-anchor="middle">S</text>
                 <line id="tape-cv-start-line" x1="${cvStartX.toFixed(1)}" y1="${PAD_Y}" x2="${cvStartX.toFixed(1)}" y2="${PAD_Y + INNER_H}" stroke="#ffffff" stroke-width="1.3" class="drop-shadow-[0_0_4px_rgba(255,255,255,0.9)]"/>
-                <polygon id="tape-cv-start-notch" points="${(cvStartX - 3).toFixed(1)},${PAD_Y} ${(cvStartX + 3).toFixed(1)},${PAD_Y} ${cvStartX.toFixed(1)},${(PAD_Y + 4).toFixed(1)}" fill="#ffffff"/>
-                <line id="tape-cv-end-line" x1="${cvEndX.toFixed(1)}" y1="${PAD_Y}" x2="${cvEndX.toFixed(1)}" y2="${PAD_Y + INNER_H}" stroke="#ffffff" stroke-width="1.3" stroke-dasharray="3,2" class="drop-shadow-[0_0_4px_rgba(255,255,255,0.9)]"/>
-                <polygon id="tape-cv-end-notch" points="${(cvEndX - 3).toFixed(1)},${(PAD_Y + INNER_H).toFixed(1)} ${(cvEndX + 3).toFixed(1)},${(PAD_Y + INNER_H).toFixed(1)} ${cvEndX.toFixed(1)},${(PAD_Y + INNER_H - 4).toFixed(1)}" fill="#ffffff"/>
-                <rect id="tape-end-badge" x="${(endX - 5).toFixed(1)}" y="${PAD_Y}" width="10" height="9" rx="1.5" fill="#14532d" stroke="#22c55e" stroke-width="1"/>
-                <text id="tape-end-text" x="${endX.toFixed(1)}" y="${PAD_Y + 7}" fill="#4ade80" font-size="6.5" font-family="monospace" font-weight="bold" text-anchor="middle">E</text>
-                <rect id="tape-start-badge" x="${(startX - 5).toFixed(1)}" y="${PAD_Y}" width="10" height="9" rx="1.5" fill="#14532d" stroke="#22c55e" stroke-width="1"/>
-                <text id="tape-start-text" x="${startX.toFixed(1)}" y="${PAD_Y + 7}" fill="#4ade80" font-size="6.5" font-family="monospace" font-weight="bold" text-anchor="middle">S</text>
+                <polygon id="tape-cv-start-notch" points="${startNotchPts}" fill="#ffffff"/>
+                <line id="tape-cv-end-line" x1="${cvEndX.toFixed(1)}" y1="${PAD_Y}" x2="${cvEndX.toFixed(1)}" y2="${PAD_Y + INNER_H}" stroke="#ffffff" stroke-width="1.3" class="drop-shadow-[0_0_4px_rgba(255,255,255,0.9)]"/>
+                <polygon id="tape-cv-end-notch" points="${endNotchPts}" fill="#ffffff"/>
                 <line id="tape-playhead-line" x1="${playX.toFixed(1)}" y1="${PAD_Y}" x2="${playX.toFixed(1)}" y2="${PAD_Y + INNER_H}" stroke="#fde047" stroke-width="2.2" class="drop-shadow-[0_0_8px_rgba(253,224,71,1)]" style="display: ${isPlaying ? 'block' : 'none'};"/>
             </svg>
         `;
     },
 
     /**
-     * Unified real-time DOM updater for SVG markers, progress bar, play button, and Start/End badges.
+     * Unified real-time DOM updater for SVG markers, play button, and Start/End badges.
      */
     syncModalDOM(targetModal, m, state = {}) {
         if (!targetModal || !m) return;
 
         const startPatched = Boolean(state.startPatched ?? m.startPatched);
         const endPatched = Boolean(state.endPatched ?? m.endPatched);
-        const rawStart = startPatched ? (state.rawStart ?? m.start ?? 0.0) : (state.rawStart ?? m.start ?? 0.0);
-        const rawEnd = endPatched ? (state.rawEnd ?? m.end ?? 1.0) : (state.rawEnd ?? m.end ?? 1.0);
+        const rawStart = state.rawStart ?? m.start ?? 0.0;
+        const rawEnd = state.rawEnd ?? m.end ?? 1.0;
         const bounds = this.resolveEffectiveBounds(m, rawStart, rawEnd);
         const effStart = (startPatched || endPatched) && state.effStart !== undefined ? state.effStart : bounds.start;
         const effEnd = (startPatched || endPatched) && state.effEnd !== undefined ? state.effEnd : bounds.end;
@@ -225,12 +228,12 @@ export const WaveView = {
         const cvStartLine = targetModal.querySelector('#tape-cv-start-line');
         const cvStartNotch = targetModal.querySelector('#tape-cv-start-notch');
         if (cvStartLine) { cvStartLine.style.display = 'block'; cvStartLine.setAttribute('x1', cvStartX.toFixed(1)); cvStartLine.setAttribute('x2', cvStartX.toFixed(1)); }
-        if (cvStartNotch) { cvStartNotch.style.display = 'block'; cvStartNotch.setAttribute('points', `${(cvStartX - 3).toFixed(1)},${PAD_Y} ${(cvStartX + 3).toFixed(1)},${PAD_Y} ${cvStartX.toFixed(1)},${(PAD_Y + 4).toFixed(1)}`); }
+        if (cvStartNotch) { cvStartNotch.style.display = 'block'; cvStartNotch.setAttribute('points', `${cvStartX.toFixed(1)},${PAD_Y} ${cvStartX.toFixed(1)},${(PAD_Y + 6).toFixed(1)} ${(cvStartX + 5.5).toFixed(1)},${(PAD_Y + 3).toFixed(1)}`); }
 
         const cvEndLine = targetModal.querySelector('#tape-cv-end-line');
         const cvEndNotch = targetModal.querySelector('#tape-cv-end-notch');
         if (cvEndLine) { cvEndLine.style.display = 'block'; cvEndLine.setAttribute('x1', cvEndX.toFixed(1)); cvEndLine.setAttribute('x2', cvEndX.toFixed(1)); }
-        if (cvEndNotch) { cvEndNotch.style.display = 'block'; cvEndNotch.setAttribute('points', `${(cvEndX - 3).toFixed(1)},${(PAD_Y + INNER_H).toFixed(1)} ${(cvEndX + 3).toFixed(1)},${(PAD_Y + INNER_H).toFixed(1)} ${cvEndX.toFixed(1)},${(PAD_Y + INNER_H - 4).toFixed(1)}`); }
+        if (cvEndNotch) { cvEndNotch.style.display = 'block'; cvEndNotch.setAttribute('points', `${cvEndX.toFixed(1)},${PAD_Y} ${cvEndX.toFixed(1)},${(PAD_Y + 6).toFixed(1)} ${(cvEndX - 5.5).toFixed(1)},${(PAD_Y + 3).toFixed(1)}`); }
 
         const rMin = Math.min(effStart, effEnd), rMax = Math.max(effStart, effEnd);
         const isSnap = Boolean(m.snapMode);
@@ -247,12 +250,6 @@ export const WaveView = {
             lblEl.setAttribute('fill', sel ? '#fbbf24' : '#64748b');
         });
 
-        const progressRange = targetModal.querySelector('#tape-progress-range');
-        if (progressRange) {
-            progressRange.style.left = `${(Math.min(effStart, effEnd) * 100).toFixed(1)}%`;
-            progressRange.style.width = `${(Math.abs(effEnd - effStart) * 100).toFixed(1)}%`;
-        }
-
         const isTapePlaying = Boolean(state.isPlaying);
         const playhead = state.playhead ?? 0.0;
         const playheadLine = targetModal.querySelector('#tape-playhead-line');
@@ -264,23 +261,6 @@ export const WaveView = {
                 playheadLine.setAttribute('x2', px.toFixed(1));
             } else {
                 playheadLine.style.display = 'none';
-            }
-        }
-
-        const progressFill = targetModal.querySelector('#tape-progress-fill');
-        const progressDot = targetModal.querySelector('#tape-progress-dot');
-        if (progressDot) {
-            progressDot.style.display = 'block';
-            if (isTapePlaying) {
-                progressDot.style.left = `${(Math.max(0, Math.min(1, playhead)) * 100).toFixed(1)}%`;
-                if (progressFill) {
-                    progressFill.style.opacity = '1';
-                    progressFill.style.left = `${(Math.min(effStart, playhead) * 100).toFixed(1)}%`;
-                    progressFill.style.width = `${(Math.abs(playhead - effStart) * 100).toFixed(1)}%`;
-                }
-            } else {
-                progressDot.style.left = `${(effStart * 100).toFixed(1)}%`;
-                if (progressFill) progressFill.style.opacity = '0';
             }
         }
 

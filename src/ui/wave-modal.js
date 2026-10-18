@@ -1,7 +1,7 @@
 // src/ui/wave-modal.js
-import { UIHelpers } from './helpers.js?v=240';
-import { WaveCodec } from '../audio/wave-codec.js?v=240';
-import { WaveView } from './wave-view.js?v=240';
+import { UIHelpers } from './helpers.js?v=241';
+import { WaveCodec } from '../audio/wave-codec.js?v=241';
+import { WaveView } from './wave-view.js?v=241';
 
 /**
  * WAVE Module Modal Renderer & Event Controller
@@ -53,8 +53,6 @@ export const WaveModal = {
         const loopActive = Boolean(m.loop);
         const retriggerActive = m.retrigger !== false;
 
-        const rangeLeft = (Math.min(bounds.start, bounds.end) * 100).toFixed(1);
-        const rangeWidth = (Math.abs(bounds.end - bounds.start) * 100).toFixed(1);
         const chopBtnCls = (mode) =>
             `px-1.5 py-0.5 rounded border ${(m.chopMode ?? 'off') === mode ? 'bg-amber-950 text-amber-300 border-amber-500 font-bold shadow-sm shadow-amber-500/20' : 'bg-slate-900 text-slate-500 border-slate-800'} transition cursor-pointer`;
 
@@ -76,15 +74,6 @@ export const WaveModal = {
                 <!-- Oscilloscope-sized Waveform Display -->
                 <div id="tape-waveform-wrap" class="w-full">
                     ${WaveView.renderWaveformSVG(m, 0.0, false)}
-                </div>
-
-                <!-- Dynamic Progress Bar -->
-                <div class="w-full py-0.5">
-                    <div class="w-full h-2 bg-slate-900 rounded-full border border-slate-700 relative shadow-inner overflow-visible">
-                        <div id="tape-progress-range" class="absolute top-0 bottom-0 bg-slate-600/40 border-l border-r border-slate-400/80 rounded-sm" style="left: ${rangeLeft}%; width: ${rangeWidth}%;"></div>
-                        <div id="tape-progress-fill" class="absolute top-0 bottom-0 left-0 bg-zinc-300 rounded-full transition-none opacity-0" style="width: 0%;"></div>
-                        <div id="tape-progress-dot" class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-zinc-200 border-2 border-slate-950 shadow-[0_0_6px_rgba(255,255,255,0.7)] transition-none z-10" style="left: ${(bounds.start * 100).toFixed(1)}%; display: block;"></div>
-                    </div>
                 </div>
 
                 <!-- CHOP and SNAP Controls -->
@@ -153,10 +142,6 @@ export const WaveModal = {
                         </div>
                         <input type="range" id="tape-slider-end" min="0.0" max="1.0" step="0.005" value="${m.end ?? 1.0}" class="w-full h-2.5 bg-slate-800 rounded-lg accent-emerald-400 cursor-pointer" ${isEndPatched ? 'disabled' : ''} title="終了CV位置 (0%〜100%)">
                     </div>
-                </div>
-
-                <div class="text-[7.5px] text-slate-500 px-1 text-center italic">
-                    * PLAY: 単体試聴 | LOOP: ループ切替 | RETRIG: ON=先頭再開 / OFF=完走するまでトリガー無視
                 </div>
             </div>
         `;
