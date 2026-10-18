@@ -1,6 +1,6 @@
 // src/ui/managers/page-manager.js
-import { safeClone, generateModuleId, parseConn } from '../../core/utils.js?v=247';
-import { parsePatch } from '../../core/patch.js?v=247';
+import { safeClone, generateModuleId, parseConn } from '../../core/utils.js?v=248';
+import { parsePatch } from '../../core/patch.js?v=248';
 import { FACTORY_SUBPATCHES, findSubpatchTemplate } from '../../presets/subpatches.js';
 
 export class PageManager {
@@ -164,7 +164,7 @@ export class PageManager {
                 const displayName = curName || `SUBPATCH ${curId}`;
                 titleEl.innerHTML = `<span class="cursor-pointer hover:text-emerald-300 transition underline decoration-dotted decoration-emerald-500/60 underline-offset-2">${displayName}</span>`;
                 titleEl.className = "text-[10px] font-bold text-emerald-400 uppercase tracking-wider cursor-pointer flex items-center";
-                titleEl.title = "繧ｯ繝ｪ繝・け縺励※繧ｵ繝悶ヱ繝・メ蜷阪ｒ螟画峩";
+                titleEl.title = "クリックしてサブパッチ名を変更";
             }
         }
         if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -204,7 +204,7 @@ export class PageManager {
                 undoBtn.classList.add('opacity-40', 'cursor-not-allowed');
             }
         }
-        this.ui.showToast('蜈・↓謌ｻ縺励∪縺励◆ (UNDO)');
+        this.ui.showToast('元に戻しました (UNDO)');
     }
 
     destroyPage(targetPageId) {
@@ -327,7 +327,7 @@ export class PageManager {
         }
         const depth = this.getNestingDepth(this.currentPageId);
         if (depth >= 3) {
-            this.ui.showToast("繧ｵ繝悶ヱ繝・メ縺ｮ譛螟ｧ髫主ｱ､・・髫主ｱ､・峨↓驕斐＠縺溘◆繧√％繧御ｻ･荳翫ロ繧ｹ繝医〒縺阪∪縺帙ｓ");
+            this.ui.showToast("サブパッチの最大階層（3階層）に達したためこれ以上ネストできません");
             return { success: false, error: "Max subpatch nesting depth (3) reached" };
         }
 
@@ -351,7 +351,7 @@ export class PageManager {
         this.ui.renderCell(slotIdx);
         if (typeof lucide !== 'undefined') lucide.createIcons();
         this.persistCurrentPage();
-        this.ui.showToast(`繧ｵ繝悶ヱ繝・メ縲・{res.name}縲阪ｒ驟咲ｽｮ縺励∪縺励◆`);
+        this.ui.showToast(`サブパッチ「${res.name}」を配置しました`);
         return { success: true, page: res.pageNum, pageId: res.pageId, moduleId: res.moduleId, subpatch: res.name };
     }
 }

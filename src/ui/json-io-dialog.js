@@ -1,5 +1,5 @@
 // src/ui/json-io-dialog.js
-import { exportModuleData } from '../core/patch.js?v=247';
+import { exportModuleData } from '../core/patch.js?v=248';
 
 export function analyzeJsonError(rawText, err) {
     let cleanText = (rawText || '').trim();

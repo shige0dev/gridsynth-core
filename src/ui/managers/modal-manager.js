@@ -1,8 +1,8 @@
 // src/ui/managers/modal-manager.js
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=247';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=248';
 import { FACTORY_SUBPATCHES } from '../../presets/subpatches.js';
 import { UIHelpers } from '../helpers.js?v=187';
-import { generateModuleId } from '../../core/utils.js?v=247';
+import { generateModuleId } from '../../core/utils.js?v=248';
 
 export const MODAL_WIDTHS = {
     // Complex Synthesizers
@@ -278,7 +278,7 @@ export class ModalManager {
                     <h3 class="dock-dialog-title text-[10px] font-bold text-cyan-300 uppercase tracking-wider">${titleText}</h3>
                 </div>
                 <div class="flex items-center gap-1">
-                    <button class="dock-lock-btn h-5 px-1.5 rounded text-[8.5px] font-bold flex items-center gap-1 border transition-colors bg-slate-800 text-slate-400 border-slate-700 cursor-pointer" title="繝ｭ繝・け/繝斐Φ逡吶ａ">
+                    <button class="dock-lock-btn h-5 px-1.5 rounded text-[8.5px] font-bold flex items-center gap-1 border transition-colors bg-slate-800 text-slate-400 border-slate-700 cursor-pointer" title="ロック/ピン留め">
                         <i data-lucide="pin" class="w-2.5 h-2.5 pointer-events-none"></i>
                         <span class="pointer-events-none">LOCK</span>
                     </button>
@@ -412,7 +412,7 @@ export class ModalManager {
                         Object.assign(m, JSON.parse(JSON.stringify(info.snapshot)));
                         this.ui.synth.updateModule(`${this.ui.currentPageId}/${mId}`, m, this.ui.getPatchState(mId));
                         this.ui.renderCell(m.row * this.ui.COLS + m.col);
-                        this.showToast('螟画峩繧剃ｸｭ豁｢縺励∪縺励◆');
+                        this.showToast('変更を中止しました');
                     }
                 }
                 info.element.remove();
@@ -431,7 +431,7 @@ export class ModalManager {
                 info.element.remove();
             });
             this.openDocks.clear();
-            if (isCancel) this.showToast('螟画峩繧剃ｸｭ豁｢縺励∪縺励◆');
+            if (isCancel) this.showToast('変更を中止しました');
         }
         if (this.openDocks.size === 0) {
             document.getElementById('dock-modal')?.classList.add('hidden');
@@ -477,7 +477,7 @@ export class ModalManager {
         const btn = info.element.querySelector('.dock-lock-btn');
         if (btn) {
             btn.className = `dock-lock-btn h-5 px-1.5 rounded text-[8.5px] font-bold flex items-center gap-1 border transition-colors ${info.isLocked ? 'bg-cyan-600 text-white border-cyan-400 shadow-sm shadow-cyan-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}`;
-            btn.title = info.isLocked ? '蝗ｺ螳壻ｸｭ・医け繝ｪ繝・け縺ｧ繝ｭ繝・け隗｣髯､・・ : '繝ｭ繝・け/繝斐Φ逡吶ａ';
+            btn.title = info.isLocked ? '固定中（クリックでロック解除）' : 'ロック/ピン留め';
         }
     }
 
@@ -516,7 +516,7 @@ export class ModalManager {
                 this.ui.pagesData[this.ui.currentPageId].name = name;
                 this.ui.updatePageNavUI();
                 this.ui.updateAllCells();
-                this.showToast(`繧ｵ繝悶ヱ繝・メ蜷阪ｒ縲・{name}縲阪↓螟画峩縺励∪縺励◆`);
+                this.showToast(`サブパッチ名を「${name}」に変更しました`);
             },
             pagesData: this.ui.pagesData
         };
@@ -605,19 +605,19 @@ export class ModalManager {
                 const CATEGORIES = [
                     {
                         name: 'SOUND',
-                        sub: '繧ｵ繧ｦ繝ｳ繝・(髻ｳ貅舌・髻ｳ髻ｿ繝ｻ蜃ｺ蜉・',
+                        sub: 'サウンド (音源・音響・出力)',
                         color: 'cyan',
                         types: ['VCO', 'WAVE', 'NOISE', 'FMx3', 'FMCORE', 'FOLD', 'VCF', 'VCA', 'MIX', 'DELAY', 'REVERB', 'SPK', 'SCOPE', 'SPEC']
                     },
                     {
                         name: 'TRIGGER',
-                        sub: '繝医Μ繧ｬ (繧ｯ繝ｭ繝・け繝ｻ繧ｷ繝ｼ繧ｱ繝ｳ繧ｵ繝ｼ)',
+                        sub: 'トリガ (クロック・シーケンサー)',
                         color: 'rose',
                         types: ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'MARKOV', 'GATE4', 'ARP', 'KEY']
                     },
                     {
                         name: 'CV',
-                        sub: 'CV (螟芽ｪｿ繝ｻ貍皮ｮ励・繧ｨ繝ｳ繝吶Ο繝ｼ繝・',
+                        sub: 'CV (変調・演算・エンベロープ)',
                         color: 'purple',
                         types: ['LFO', 'ADSR', 'RF', 'AR', 'CHORD', 'SCALE', 'MATH1', 'MATH2', 'SH', 'CVDELAY', 'SLIDER', 'THROUGH', 'MON', 'SUB_IO']
                     }
@@ -628,7 +628,7 @@ export class ModalManager {
                 if (uncategorized.length > 0) {
                     CATEGORIES.push({
                         name: 'OTHER',
-                        sub: '縺昴・莉・,
+                        sub: 'その他',
                         color: 'slate',
                         types: uncategorized
                     });
@@ -676,8 +676,8 @@ export class ModalManager {
                                 <div class="h-6 bg-slate-800/90 hover:bg-purple-950/60 border border-slate-700/80 hover:border-purple-500/80 rounded flex items-center justify-between px-1 transition cursor-pointer factory-sub-item" data-id="${sub.id}">
                                     <span class="text-[7.5px] font-bold text-purple-300 truncate pointer-events-none">${sub.name}</span>
                                     <div class="flex items-center gap-0.5 shrink-0 ml-0.5">
-                                        <button class="export-factory-sub-btn w-3.5 h-3.5 flex items-center justify-center bg-slate-900 hover:bg-slate-700 text-cyan-300 rounded border border-slate-700 text-[6.5px]" data-id="${sub.id}" title="JSON繧ｨ繧ｯ繧ｹ繝昴・繝・繧ｳ繝斐・)">搭</button>
-                                        <button class="sub-info-btn w-3.5 h-3.5 flex items-center justify-center text-slate-400 hover:text-purple-300 rounded text-[7px] hover:bg-slate-700/80" data-id="${sub.id}" title="隱ｬ譏・>邃ｹ・・/button>
+                                        <button class="export-factory-sub-btn w-3.5 h-3.5 flex items-center justify-center bg-slate-900 hover:bg-slate-700 text-cyan-300 rounded border border-slate-700 text-[6.5px]" data-id="${sub.id}" title="JSONエクスポート(コピー)">📋</button>
+                                        <button class="sub-info-btn w-3.5 h-3.5 flex items-center justify-center text-slate-400 hover:text-purple-300 rounded text-[7px] hover:bg-slate-700/80" data-id="${sub.id}" title="説明">ℹ️</button>
                                     </div>
                                 </div>
                             `).join('')}
@@ -691,11 +691,11 @@ export class ModalManager {
                         <div class="text-[8.5px] font-bold text-emerald-300 uppercase tracking-wider mb-1 px-0.5 flex items-center justify-between">
                             <span>USER STOCK (SUBPATCH)</span>
                             <div class="flex items-center gap-1">
-                                <button class="import-user-sub-btn h-5 px-2 bg-purple-950/80 hover:bg-purple-900 border border-purple-500/70 hover:border-purple-400 text-purple-300 rounded text-[8px] font-bold transition flex items-center gap-1 shadow-sm cursor-pointer" title="繧ｵ繝悶ヱ繝・メJSON繧偵う繝ｳ繝昴・繝医＠縺ｦ繧ｹ繝医ャ繧ｯ縺ｫ逋ｻ骭ｲ">
-                                    <span>踏 IMPORT</span>
+                                <button class="import-user-sub-btn h-5 px-2 bg-purple-950/80 hover:bg-purple-900 border border-purple-500/70 hover:border-purple-400 text-purple-300 rounded text-[8px] font-bold transition flex items-center gap-1 shadow-sm cursor-pointer" title="サブパッチJSONをインポートしてストックに登録">
+                                    <span>📥 IMPORT</span>
                                 </button>
                                 <button data-type="SUB" class="h-5 px-2 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/70 hover:border-emerald-400 text-emerald-300 rounded text-[8px] font-bold transition flex items-center gap-1 shadow-sm">
-                                    <span>筐・譁ｰ隕丈ｽ懈・</span>
+                                    <span>➕ 新規作成</span>
                                 </button>
                             </div>
                         </div>
@@ -705,9 +705,9 @@ export class ModalManager {
                                 <div class="h-6 bg-slate-800/90 hover:bg-emerald-950/60 border border-slate-700/80 hover:border-emerald-500/80 rounded flex items-center justify-between px-1 transition cursor-pointer user-sub-item select-user-sub" data-id="${sub.id}">
                                     <span class="text-[7.5px] font-bold text-emerald-300 truncate pointer-events-none">${sub.name}</span>
                                     <div class="flex items-center gap-0.5 shrink-0 ml-0.5">
-                                        <button class="export-user-sub-btn w-3.5 h-3.5 flex items-center justify-center bg-slate-900 hover:bg-slate-700 text-cyan-300 rounded border border-slate-700 text-[6.5px]" data-id="${sub.id}" title="JSON繧ｨ繧ｯ繧ｹ繝昴・繝・繧ｳ繝斐・)">搭</button>
-                                        <button class="edit-user-sub-btn w-3.5 h-3.5 flex items-center justify-center bg-slate-900 hover:bg-slate-700 text-emerald-300 rounded border border-slate-700 text-[6.5px]" data-id="${sub.id}" title="荳ｭ霄ｫ繧堤ｷｨ髮・>笨擾ｸ・/button>
-                                        <button class="delete-user-sub-btn w-3.5 h-3.5 flex items-center justify-center bg-red-950/70 hover:bg-red-900 text-red-300 rounded border border-red-700/60 text-[6.5px]" data-id="${sub.id}" title="蜑企勁">卵・・/button>
+                                        <button class="export-user-sub-btn w-3.5 h-3.5 flex items-center justify-center bg-slate-900 hover:bg-slate-700 text-cyan-300 rounded border border-slate-700 text-[6.5px]" data-id="${sub.id}" title="JSONエクスポート(コピー)">📋</button>
+                                        <button class="edit-user-sub-btn w-3.5 h-3.5 flex items-center justify-center bg-slate-900 hover:bg-slate-700 text-emerald-300 rounded border border-slate-700 text-[6.5px]" data-id="${sub.id}" title="中身を編集">✏️</button>
+                                        <button class="delete-user-sub-btn w-3.5 h-3.5 flex items-center justify-center bg-red-950/70 hover:bg-red-900 text-red-300 rounded border border-red-700/60 text-[6.5px]" data-id="${sub.id}" title="削除">🗑️</button>
                                     </div>
                                 </div>
                             `).join('')}
@@ -728,7 +728,7 @@ export class ModalManager {
                         this.ui.renderCell(slotIdx);
                         if (typeof lucide !== 'undefined') lucide.createIcons();
                         this.ui.updatePageNavUI();
-                        this.showToast(`SUBPATCH縲・{res.name}縲阪ｒ霑ｽ蜉縺励∪縺励◆`);
+                        this.showToast(`SUBPATCH「${res.name}」を追加しました`);
                         return;
                     }
 
@@ -746,7 +746,7 @@ export class ModalManager {
                     this.ui.renderCell(slotIdx);
                     if (typeof lucide !== 'undefined') lucide.createIcons();
                     this.ui.updatePageNavUI();
-                    this.showToast(`${type} 繧定ｿｽ蜉縺励∪縺励◆`);
+                    this.showToast(`${type} を追加しました`);
                 }));
 
                 // Factory subpatch click (Direct place)
@@ -776,7 +776,7 @@ export class ModalManager {
                         const subId = btn.dataset.id;
                         const sub = FACTORY_SUBPATCHES[subId] || (this.ui.userSubpatches && this.ui.userSubpatches[subId]);
                         if (sub) {
-                            this.showToast(`縲・{sub.name}縲・{sub.description || '隱ｬ譏弱↑縺・}`, 3000);
+                            this.showToast(`【${sub.name}】${sub.description || '説明なし'}`, 3000);
                         }
                     });
                 });
@@ -816,7 +816,7 @@ export class ModalManager {
                         if (res && res.success) {
                             document.getElementById('shared-modal')?.classList.add('hidden');
                             this.ui.switchPage(res.page);
-                            this.showToast(`繧ｵ繝悶ヱ繝・メ縲・{res.subpatch}縲阪・邱ｨ髮・判髱｢繧帝幕縺阪∪縺励◆・井ｸ企Κ縺ｮ STOCK 繝懊ち繝ｳ縺ｧ譖ｴ譁ｰ蜿ｯ閭ｽ・荏);
+                            this.showToast(`サブパッチ「${res.subpatch}」の編集画面を開きました（上部の STOCK ボタンで更新可能）`);
                         }
                     });
                 });
@@ -828,7 +828,7 @@ export class ModalManager {
                         const subId = btn.dataset.id;
                         const sub = this.ui.userSubpatches[subId];
                         if (!sub) return;
-                        if (confirm(`繧ｵ繝悶ヱ繝・メ縲・{sub.name}縲阪ｒ繝ｩ繧､繝悶Λ繝ｪ縺九ｉ蜑企勁縺励∪縺吶°・歃n・遺ｻ驟咲ｽｮ貂医∩縺ｮ繝｢繧ｸ繝･繝ｼ繝ｫ縺ｫ縺ｯ蠖ｱ髻ｿ縺励∪縺帙ｓ・荏)) {
+                        if (confirm(`サブパッチ「${sub.name}」をライブラリから削除しますか？\n（※配置済みのモジュールには影響しません）`)) {
                             this.ui.deleteUserSubpatch(subId);
                             renderContent();
                         }
@@ -886,7 +886,7 @@ export class ModalManager {
             const copyBtnText = document.getElementById('alert-copy-btn-text');
             const iconEl = document.getElementById('alert-icon');
 
-            const isError = options.isError ?? (title.toUpperCase().includes('ERROR') || title.includes('繧ｨ繝ｩ繝ｼ'));
+            const isError = options.isError ?? (title.toUpperCase().includes('ERROR') || title.includes('エラー'));
             const showCopy = options.showCopy ?? true;
             const copyBtnLabel = options.copyBtnLabel || (isError ? 'COPY ERROR' : 'COPY REPORT');
 
@@ -975,14 +975,14 @@ export class ModalManager {
                                 document.body.removeChild(ta);
                             } catch (err) {}
                         }
-                        if (copyBtnText) copyBtnText.textContent = 'COPIED! 笨・;
+                        if (copyBtnText) copyBtnText.textContent = 'COPIED! ✅';
                         copyBtn.classList.add('bg-emerald-800', 'text-emerald-200', 'border-emerald-500');
                         if (copyTimer) clearTimeout(copyTimer);
                         copyTimer = setTimeout(() => {
                             if (copyBtnText) copyBtnText.textContent = copyBtnLabel;
                             copyBtn.classList.remove('bg-emerald-800', 'text-emerald-200', 'border-emerald-500');
                         }, 1800);
-                        this.ui?.showToast?.('繧ｯ繝ｪ繝・・繝懊・繝峨↓繧ｳ繝斐・縺励∪縺励◆');
+                        this.ui?.showToast?.('クリップボードにコピーしました');
                     };
                 } else {
                     copyBtn.classList.add('hidden');

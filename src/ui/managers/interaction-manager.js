@@ -1,6 +1,6 @@
 // src/ui/managers/interaction-manager.js
-import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=247';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=247';
+import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=248';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=248';
 
 export class InteractionManager {
     constructor(ui) {
@@ -137,7 +137,7 @@ export class InteractionManager {
                         if (hasLocked) {
                             this.selectedModuleIds = [];
                             this.updateSelectionClasses();
-                            return this.ui.showToast('SUB_IO 繝｢繧ｸ繝･繝ｼ繝ｫ縺ｯ蜑企勁縺ｧ縺阪∪縺帙ｓ・井ｿ晁ｭｷ荳ｭ・・);
+                            return this.ui.showToast('SUB_IO モジュールは削除できません（保護中）');
                         }
                         this.ui.saveHistory();
                         const targets = [...this.selectedModuleIds];
@@ -149,7 +149,7 @@ export class InteractionManager {
                         }
                         this.ui.updateAllCells();
                         this.ui.renderCables();
-                        this.ui.showToast(`繝｢繧ｸ繝･繝ｼ繝ｫ繧堤ｴ譽・＠縺ｾ縺励◆ (${this.ui._destroyCount}蛟・`);
+                        this.ui.showToast(`モジュールを破棄しました (${this.ui._destroyCount}個)`);
                         return;
                     }
                     this.selectedModuleIds = [];
@@ -237,7 +237,7 @@ export class InteractionManager {
                         if (isDockAffected) this.ui.reRenderDockModal();
                         if (this.ui.activePopupModuleId && affectedIds.has(this.ui.activePopupModuleId)) this.ui.reRenderModal();
                         this.ui.updatePortHighlight();
-                        this.ui.showToast('遶ｯ蟄舌・邨千ｷ壹ｒ蛻・妙縺励∪縺励◆');
+                        this.ui.showToast('端子の結線を切断しました');
                     }
                 }, 500);
                 return;
@@ -389,9 +389,9 @@ export class InteractionManager {
 
                         if (subCopied) {
                             this.ui.synth.linkSubBridges();
-                            this.ui.showToast(`繧ｵ繝悶ヱ繝・メ縲・{lastCopiedSubName}縲阪ｒ譁ｰ隕剰､・｣ｽ縺励∪縺励◆`);
+                            this.ui.showToast(`サブパッチ「${lastCopiedSubName}」を新規複製しました`);
                         } else {
-                            this.ui.showToast(`${this.dragGroupOffsets.length}蛟九さ繝斐・縺励∪縺励◆`);
+                            this.ui.showToast(`${this.dragGroupOffsets.length}個コピーしました`);
                         }
                     } else {
                         this.dragGroupOffsets.forEach(off => {
@@ -399,7 +399,7 @@ export class InteractionManager {
                             m.row = tR + off.dRow;
                             m.col = tC + off.dCol;
                         });
-                        this.ui.showToast(`${this.dragGroupOffsets.length}蛟狗ｧｻ蜍輔＠縺ｾ縺励◆`);
+                        this.ui.showToast(`${this.dragGroupOffsets.length}個移動しました`);
                     }
                     this.ui.syncGridMap();
                     this.selectedModuleIds = [];

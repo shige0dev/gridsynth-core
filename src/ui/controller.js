@@ -1,12 +1,12 @@
-import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=247';
-import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=247';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=247';
+import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=248';
+import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=248';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=248';
 import { UIHelpers } from './helpers.js?v=229';
-import { PresetManager } from './managers/preset-manager.js?v=247';
-import { ModalManager } from './managers/modal-manager.js?v=247';
-import { CableManager } from './managers/cable-manager.js?v=247';
-import { PageManager } from './managers/page-manager.js?v=247';
-import { InteractionManager } from './managers/interaction-manager.js?v=247';
+import { PresetManager } from './managers/preset-manager.js?v=248';
+import { ModalManager } from './managers/modal-manager.js?v=248';
+import { CableManager } from './managers/cable-manager.js?v=248';
+import { PageManager } from './managers/page-manager.js?v=248';
+import { InteractionManager } from './managers/interaction-manager.js?v=248';
 
 export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'SPEC', 'MON', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE'];
 
@@ -365,7 +365,7 @@ export class UIController {
                         const hasUnconnected = weights.some((w, idx) => Number(w) > 0 && !patched.has(`transition_out${idx + 1}`) && !patched.has(`trig_out${idx + 1}`));
                         if (hasUnconnected) {
                             titleClass = 'text-rose-500 font-extrabold drop-shadow-[0_0_2px_rgba(244,63,94,0.9)] animate-pulse';
-                            extraTitleAttrs = 'title="譛ｪ邨千ｷ壹・蜃ｺ蜉帷ｫｯ蟄舌↓繧ｦ繧ｨ繧､繝医′險ｭ螳壹＆繧後※縺・∪縺・';
+                            extraTitleAttrs = 'title="未結線の出力端子にウエイトが設定されています"';
                         }
                     }
                     titleHTML = `
@@ -624,7 +624,7 @@ export class UIController {
                     } else if (root.webkitRequestFullscreen) {
                         try { root.webkitRequestFullscreen(); this.showToast('FULLSCREEN'); } catch (_) {}
                     } else {
-                        this.showToast('iOS: 蜈ｱ譛峨Γ繝九Η繝ｼ縺ｮ縲後・繝ｼ繝逕ｻ髱｢縺ｫ霑ｽ蜉縲阪〒蜈ｨ逕ｻ髱｢蛹悶〒縺阪∪縺・, 3000);
+                        this.showToast('iOS: 共有メニューの「ホーム画面に追加」で全画面化できます', 3000);
                     }
                 } else {
                     if (document.exitFullscreen) {
@@ -755,7 +755,7 @@ export class UIController {
                 this.pagesData[this.currentPageId].name = res.trim();
                 this.updatePageNavUI();
                 this.updateAllCells();
-                this.showToast(`繧ｵ繝悶ヱ繝・メ蜷阪ｒ縲・{res.trim()}縲阪↓螟画峩縺励∪縺励◆`);
+                this.showToast(`サブパッチ名を「${res.trim()}」に変更しました`);
             }
         };
         document.getElementById('page-nav-title')?.addEventListener('click', handleRenameSubpatch);
@@ -787,7 +787,7 @@ export class UIController {
                 this.savePresetsDB();
                 this.loadActivePreset();
                 this.renderPresetList();
-                this.showToast(`"${name}" 繧剃ｿ晏ｭ倥＠縺ｾ縺励◆`);
+                this.showToast(`"${name}" を保存しました`);
             }
         });
         document.getElementById('preset-export-top-btn')?.addEventListener('click', () => this.openJsonExportModal());
