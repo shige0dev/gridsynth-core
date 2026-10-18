@@ -19,6 +19,7 @@ export const WAVE = {
         chopMode: 'off',
         chops: [],
         snapMode: false,
+        rangeLock: false,
         data: '',
         peaks: null
     }),
@@ -29,6 +30,7 @@ export const WAVE = {
         if (m.chopMode === undefined) m.chopMode = 'off';
         if (!Array.isArray(m.chops)) m.chops = [];
         if (m.snapMode === undefined) m.snapMode = false;
+        if (m.rangeLock === undefined) m.rangeLock = false;
     },
     ports: () => ({
         in: [
@@ -69,7 +71,58 @@ export const WAVE = {
         }
         return `${(ms / 1000).toFixed(1)}s`;
     },
-    renderWaveformSVG: (m, playhead = 0.0, isPlaying = false, effStartVal = null, effEndVal = null, rawStartVal = null, rawEndVal = null, isStartPatched = false, isEndPatched = false) => {
+    /**
+     * Convert raw Start/End CV values (0.0~1.0) into effective Start/End playback positions.
+     */
+    resolveEffectiveBounds: (m, rawStartVal = null, rawEndVal = null) => {
+        const rawS = Math.max(0.0, Math.min(1.0, rawStartVal !== null ? rawStartVal : (m.start ?? 0.0)));
+        const rawE = Math.max(0.0, Math.min(1.0, rawEndVal !== null ? rawEndVal : (m.end ?? 1.0)));
+
+        let s = rawS;
+        let e = rawE;
+
+        if (m.snapMode && Array.isArray(m.chops) && m.chops.length > 0) {
+            const pts = [0.0, ...m.chops, 1.0].sort((a, b) => a - b);
+            const N = pts.length - 1;
+
+            const getIndex = (val) => {
+                const clamped = Math.max(0.0, Math.min(0.999999, val + 1e-7));
+                return Math.min(N - 1, Math.max(0, Math.floor(clamped * N)));
+            };
+
+            const isDiff = Math.abs(rawS - rawE) > 0.001;
+
+            if (!isDiff) {
+                const idxS = getIndex(rawS);
+                s = pts[idxS];
+                e = pts[idxS + 1];
+            } else if (rawS < rawE) {
+                const idxS = getIndex(rawS);
+                const idxE = getIndex(Math.max(rawS, rawE - 0.0001));
+                s = pts[idxS];
+                e = pts[idxE + 1];
+            } else {
+                const idxS = getIndex(Math.max(rawE, rawS - 0.0001));
+                const idxE = getIndex(rawE);
+                s = pts[idxS + 1];
+                e = pts[idxE];
+            }
+        }
+
+        return {
+            start: Math.max(0.0, Math.min(1.0, s)),
+            end: Math.max(0.0, Math.min(1.0, e)),
+            rawStart: rawS,
+            rawEnd: rawE
+        };
+    },
+    formatBoundDisp: (m, rawVal, effVal, isPatched = false) => {
+        const durMs = (m.duration ?? 1.5) * 1000;
+        const cvPct = Math.round(Math.max(0, Math.min(1, rawVal)) * 100);
+        const effMsStr = WAVE.formatMs(Math.max(0, Math.min(1, effVal)) * durMs);
+        return isPatched ? `EXT ${cvPct}% (${effMsStr})` : `${cvPct}% (${effMsStr})`;
+    },
+    renderWaveformSVG: (m, playhead = 0.0, isPlaying = false, effStartVal = null, effEndVal = null, rawStartVal = null, rawEndVal = null) => {
         const W = 320, H = 100;
         const padX = 6, padY = 6;
         const innerW = W - padX * 2;
@@ -79,15 +132,11 @@ export const WAVE = {
         const durSec = m.duration || 1.5;
         const durMs = durSec * 1000;
 
-        const startPct = Math.max(0, Math.min(1, effStartVal !== null ? effStartVal : (m.start ?? 0.0)));
-        const endPct = Math.max(0, Math.min(1, effEndVal !== null ? effEndVal : (m.end ?? 1.0)));
-        const rawStartPct = Math.max(0, Math.min(1, rawStartVal !== null ? rawStartVal : startPct));
-        const rawEndPct = Math.max(0, Math.min(1, rawEndVal !== null ? rawEndVal : endPct));
-
-        const hasChops = Array.isArray(m.chops) && m.chops.length > 0;
-        const isSlice = Boolean(m.snapMode) && hasChops;
-        const showCvStart = isSlice && (isStartPatched || Math.abs(rawStartPct - startPct) > 0.005);
-        const showCvEnd = isSlice && (isEndPatched || Math.abs(rawEndPct - endPct) > 0.005);
+        const bounds = WAVE.resolveEffectiveBounds(m, rawStartVal, rawEndVal);
+        const startPct = Math.max(0, Math.min(1, effStartVal !== null ? effStartVal : bounds.start));
+        const endPct = Math.max(0, Math.min(1, effEndVal !== null ? effEndVal : bounds.end));
+        const rawStartPct = bounds.rawStart;
+        const rawEndPct = bounds.rawEnd;
 
         const cvStartX = padX + rawStartPct * innerW;
         const cvEndX = padX + rawEndPct * innerW;
@@ -152,6 +201,8 @@ export const WAVE = {
         if (m.chops && Array.isArray(m.chops) && m.chops.length > 0) {
             const allPts = [0.0, ...m.chops, 1.0].sort((a, b) => a - b);
             const numSlices = allPts.length - 1;
+            const rMin = Math.min(startPct, endPct);
+            const rMax = Math.max(startPct, endPct);
 
             for (let i = 0; i < numSlices; i++) {
                 const s0 = allPts[i];
@@ -159,12 +210,10 @@ export const WAVE = {
                 const x0 = padX + s0 * innerW;
                 const x1 = padX + s1 * innerW;
                 const sliceW = x1 - x0;
-                const isSelected = Math.abs(startPct - s0) < 0.015 && Math.abs(endPct - s1) < 0.015;
-                if (isSelected) {
-                    chopsSvg += `<rect x="${x0.toFixed(1)}" y="${padY}" width="${sliceW.toFixed(1)}" height="${(innerH - 10).toFixed(1)}" fill="#f59e0b" fill-opacity="0.15"/>`;
-                }
+                const isSelected = Boolean(m.snapMode) && (s0 >= rMin - 0.01) && (s1 <= rMax + 0.01) && (rMax - rMin > 0.005);
+                chopsSvg += `<rect data-slice-rect="${i}" data-s0="${s0}" data-s1="${s1}" x="${x0.toFixed(1)}" y="${padY}" width="${sliceW.toFixed(1)}" height="${(innerH - 10).toFixed(1)}" fill="#f59e0b" fill-opacity="0.15" style="display: ${isSelected ? 'block' : 'none'};"/>`;
                 const midX = x0 + sliceW * 0.5;
-                chopsSvg += `<text x="${midX.toFixed(1)}" y="${(padY + 8).toFixed(1)}" fill="${isSelected ? '#fbbf24' : '#64748b'}" font-size="6.5" font-family="monospace" font-weight="bold" text-anchor="middle" pointer-events="none">S${i + 1}</text>`;
+                chopsSvg += `<text data-slice-label="${i}" data-s0="${s0}" data-s1="${s1}" x="${midX.toFixed(1)}" y="${(padY + 8).toFixed(1)}" fill="${isSelected ? '#fbbf24' : '#64748b'}" font-size="6.5" font-family="monospace" font-weight="bold" text-anchor="middle" pointer-events="none">S${i + 1}</text>`;
             }
 
             m.chops.forEach((cp) => {
@@ -173,14 +222,14 @@ export const WAVE = {
             });
         }
 
-        // Raw CV Lines (White with subtle glow and triangle notches)
-        const cvStartLineSvg = `<line id="tape-cv-start-line" x1="${cvStartX.toFixed(1)}" y1="${padY}" x2="${cvStartX.toFixed(1)}" y2="${padY + innerH}" stroke="#ffffff" stroke-width="1.4" class="drop-shadow-[0_0_4px_rgba(255,255,255,0.9)]" style="display: ${showCvStart ? 'block' : 'none'};"/>
-        <polygon id="tape-cv-start-notch" points="${(cvStartX - 3).toFixed(1)},${padY} ${(cvStartX + 3).toFixed(1)},${padY} ${cvStartX.toFixed(1)},${(padY + 4).toFixed(1)}" fill="#ffffff" style="display: ${showCvStart ? 'block' : 'none'};"/>`;
+        // Raw CV Lines (White with subtle glow and triangle notches — ALWAYS VISIBLE)
+        const cvStartLineSvg = `<line id="tape-cv-start-line" x1="${cvStartX.toFixed(1)}" y1="${padY}" x2="${cvStartX.toFixed(1)}" y2="${padY + innerH}" stroke="#ffffff" stroke-width="1.3" class="drop-shadow-[0_0_4px_rgba(255,255,255,0.9)]"/>
+        <polygon id="tape-cv-start-notch" points="${(cvStartX - 3).toFixed(1)},${padY} ${(cvStartX + 3).toFixed(1)},${padY} ${cvStartX.toFixed(1)},${(padY + 4).toFixed(1)}" fill="#ffffff"/>`;
 
-        const cvEndLineSvg = `<line id="tape-cv-end-line" x1="${cvEndX.toFixed(1)}" y1="${padY}" x2="${cvEndX.toFixed(1)}" y2="${padY + innerH}" stroke="#ffffff" stroke-width="1.4" stroke-dasharray="3,2" class="drop-shadow-[0_0_4px_rgba(255,255,255,0.9)]" style="display: ${showCvEnd ? 'block' : 'none'};"/>
-        <polygon id="tape-cv-end-notch" points="${(cvEndX - 3).toFixed(1)},${(padY + innerH).toFixed(1)} ${(cvEndX + 3).toFixed(1)},${(padY + innerH).toFixed(1)} ${cvEndX.toFixed(1)},${(padY + innerH - 4).toFixed(1)}" fill="#ffffff" style="display: ${showCvEnd ? 'block' : 'none'};"/>`;
+        const cvEndLineSvg = `<line id="tape-cv-end-line" x1="${cvEndX.toFixed(1)}" y1="${padY}" x2="${cvEndX.toFixed(1)}" y2="${padY + innerH}" stroke="#ffffff" stroke-width="1.3" stroke-dasharray="3,2" class="drop-shadow-[0_0_4px_rgba(255,255,255,0.9)]"/>
+        <polygon id="tape-cv-end-notch" points="${(cvEndX - 3).toFixed(1)},${(padY + innerH).toFixed(1)} ${(cvEndX + 3).toFixed(1)},${(padY + innerH).toFixed(1)} ${cvEndX.toFixed(1)},${(padY + innerH - 4).toFixed(1)}" fill="#ffffff"/>`;
 
-        // Neon Green (#22c55e) markers for Start & End
+        // Neon Green (#22c55e) markers for Effective Start & End
         const startX = padX + startPct * innerW;
         const endX = padX + endPct * innerW;
 
@@ -204,17 +253,18 @@ export const WAVE = {
                 <!-- Chop Slices Guide & Highlights -->
                 ${chopsSvg}
 
-                <!-- Raw CV Lines (White) -->
+                <!-- Effective Start & End Lines (Neon Green #22c55e) -->
+                <line id="tape-end-line" x1="${endX.toFixed(1)}" y1="${padY}" x2="${endX.toFixed(1)}" y2="${padY + innerH}" stroke="#22c55e" stroke-width="2.0" class="drop-shadow-[0_0_4px_rgba(34,197,94,0.85)]"/>
+                <line id="tape-start-line" x1="${startX.toFixed(1)}" y1="${padY}" x2="${startX.toFixed(1)}" y2="${padY + innerH}" stroke="#22c55e" stroke-width="2.0" class="drop-shadow-[0_0_4px_rgba(34,197,94,0.85)]"/>
+
+                <!-- Raw CV Lines (White — always displayed over/alongside effective bounds) -->
                 ${cvStartLineSvg}
                 ${cvEndLineSvg}
 
-                <!-- End Line: Neon Green (same color), stroke (1.6px) -->
-                <line id="tape-end-line" x1="${endX.toFixed(1)}" y1="${padY}" x2="${endX.toFixed(1)}" y2="${padY + innerH}" stroke="#22c55e" stroke-width="1.6" class="drop-shadow-[0_0_4px_rgba(34,197,94,0.85)]"/>
+                <!-- Effective Start & End Top Badges -->
                 <rect id="tape-end-badge" x="${(endX - 5).toFixed(1)}" y="${padY}" width="10" height="9" rx="1.5" fill="#14532d" stroke="#22c55e" stroke-width="1"/>
                 <text id="tape-end-text" x="${endX.toFixed(1)}" y="${padY + 7}" fill="#4ade80" font-size="6.5" font-family="monospace" font-weight="bold" text-anchor="middle">E</text>
 
-                <!-- Start Line: Neon Green (same color), stroke (1.6px, same thickness as End) -->
-                <line id="tape-start-line" x1="${startX.toFixed(1)}" y1="${padY}" x2="${startX.toFixed(1)}" y2="${padY + innerH}" stroke="#22c55e" stroke-width="1.6" class="drop-shadow-[0_0_4px_rgba(34,197,94,0.85)]"/>
                 <rect id="tape-start-badge" x="${(startX - 5).toFixed(1)}" y="${padY}" width="10" height="9" rx="1.5" fill="#14532d" stroke="#22c55e" stroke-width="1"/>
                 <text id="tape-start-text" x="${startX.toFixed(1)}" y="${padY + 7}" fill="#4ade80" font-size="6.5" font-family="monospace" font-weight="bold" text-anchor="middle">S</text>
 
@@ -251,19 +301,21 @@ export const WAVE = {
         const isStartPatched = ctx?.patched?.has('start_cv') || ctx?.patched?.has('cv_start');
         const isEndPatched = ctx?.patched?.has('end_cv') || ctx?.patched?.has('cv_end');
         const isSpeedPatched = ctx?.patched?.has('speed_cv') || ctx?.patched?.has('cv_speed');
+        const isAnyRangePatched = Boolean(isStartPatched || isEndPatched);
+        const lockActive = Boolean(m.rangeLock) && !isAnyRangePatched;
 
-        const durMs = (m.duration ?? 1.5) * 1000;
-        const startDisp = isStartPatched ? 'EXT' : `${Math.round((m.start ?? 0) * 100)}% (${WAVE.formatMs((m.start ?? 0) * durMs)})`;
-        const endDisp = isEndPatched ? 'EXT' : `${Math.round((m.end ?? 1) * 100)}% (${WAVE.formatMs((m.end ?? 1) * durMs)})`;
+        const bounds = WAVE.resolveEffectiveBounds(m);
+        const startDisp = WAVE.formatBoundDisp(m, bounds.rawStart, bounds.start, isStartPatched);
+        const endDisp = WAVE.formatBoundDisp(m, bounds.rawEnd, bounds.end, isEndPatched);
         const speedCvVal = m.speedCv !== undefined ? m.speedCv : Math.log2(m.speed || 1.0);
         const speedDisp = isSpeedPatched ? 'EXT' : WAVE.formatSpeed(speedCvVal);
         const durStr = `${(m.duration ?? 1.5).toFixed(2)}s`;
         const loopActive = Boolean(m.loop);
         const retriggerActive = m.retrigger !== false;
 
-        const rangeLeft = (Math.min(m.start ?? 0, m.end ?? 1) * 100).toFixed(1);
-        const rangeWidth = (Math.abs((m.end ?? 1) - (m.start ?? 0)) * 100).toFixed(1);
-        const startPct = Math.max(0, Math.min(1, m.start ?? 0.0));
+        const rangeLeft = (Math.min(bounds.start, bounds.end) * 100).toFixed(1);
+        const rangeWidth = (Math.abs(bounds.end - bounds.start) * 100).toFixed(1);
+        const startPct = bounds.start;
 
         return `
             <div class="space-y-2 p-1 text-slate-200 w-full">
@@ -361,7 +413,10 @@ export const WAVE = {
                         <input type="range" id="tape-slider-start" min="0.0" max="1.0" step="0.005" value="${m.start ?? 0.0}" class="w-full h-2.5 bg-slate-800 rounded-lg accent-emerald-400 cursor-pointer" ${isStartPatched ? 'disabled' : ''} title="髢句ｧ倶ｽ咲ｽｮ (0%縲・00%)">
                     </div>
 
-                    <div class="w-[1px] h-7 bg-slate-800/90 shrink-0"></div>
+                    <!-- Center Time Lock Button (Locks START/END CV Difference) -->
+                    <button id="tape-range-lock-btn" class="h-6 w-6 rounded-lg border ${lockActive ? 'bg-emerald-950 text-emerald-300 border-emerald-500 shadow-sm shadow-emerald-500/30' : 'bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-300'} transition flex items-center justify-center shrink-0 ${isAnyRangePatched ? 'opacity-30 pointer-events-none cursor-not-allowed' : 'cursor-pointer active:scale-95'}" ${isAnyRangePatched ? 'disabled' : ''} title="TIME LOCK (START/END CV difference lock)">
+                        <i data-lucide="${lockActive ? 'lock' : 'unlock'}" class="w-3 h-3 pointer-events-none"></i>
+                    </button>
 
                     <!-- END (Large Horizontal Slider) -->
                     <div class="flex-1 min-w-0 flex flex-col gap-0.5 ${isEndPatched ? 'opacity-30 pointer-events-none' : ''}">
@@ -399,6 +454,15 @@ export const WAVE = {
         const root = dialogEl || document;
         const svgWrap = root.querySelector('#tape-waveform-wrap');
 
+        const isStartPatched = ctx?.patched?.has('start_cv') || ctx?.patched?.has('cv_start');
+        const isEndPatched = ctx?.patched?.has('end_cv') || ctx?.patched?.has('cv_end');
+        const isSpeedPatched = ctx?.patched?.has('speed_cv') || ctx?.patched?.has('cv_speed');
+        const isAnyRangePatched = Boolean(isStartPatched || isEndPatched);
+
+        if (m._lockDelta === undefined) {
+            m._lockDelta = (m.end ?? 1.0) - (m.start ?? 0.0);
+        }
+
         if (window.lucide && typeof window.lucide.createIcons === 'function') {
             try { window.lucide.createIcons({ root }); } catch (_) {}
         }
@@ -433,61 +497,54 @@ export const WAVE = {
         const redrawSvg = () => {
             const activeInst = WAVE.getActiveInst(ctx, m);
             const st = activeInst?.read?.();
+            const rawS = isStartPatched ? (st?.rawStart ?? m.start ?? 0.0) : (m.start ?? 0.0);
+            const rawE = isEndPatched ? (st?.rawEnd ?? m.end ?? 1.0) : (m.end ?? 1.0);
+            const bounds = WAVE.resolveEffectiveBounds(m, rawS, rawE);
             if (svgWrap) {
                 svgWrap.innerHTML = WAVE.renderWaveformSVG(
                     m,
                     st?.playhead ?? 0.0,
                     Boolean(st?.isPlaying),
-                    st?.effStart ?? null,
-                    st?.effEnd ?? null,
-                    st?.rawStart ?? null,
-                    st?.rawEnd ?? null,
-                    Boolean(st?.startPatched ?? isStartPatched),
-                    Boolean(st?.endPatched ?? isEndPatched)
+                    bounds.start,
+                    bounds.end,
+                    bounds.rawStart,
+                    bounds.rawEnd
                 );
             }
         };
 
         const onSliderChange = () => {
+            const activeInst = WAVE.getActiveInst(ctx, m);
+            const st = activeInst?.read?.();
+            const rawS = isStartPatched ? (st?.rawStart ?? m.start ?? 0.0) : (m.start ?? 0.0);
+            const rawE = isEndPatched ? (st?.rawEnd ?? m.end ?? 1.0) : (m.end ?? 1.0);
+            const bounds = WAVE.resolveEffectiveBounds(m, rawS, rawE);
+
             redrawSvg();
-            const startP = Math.max(0, Math.min(1, m.start ?? 0.0));
-            const endP = Math.max(0, Math.min(1, m.end ?? 1.0));
-            const durMs = (m.duration ?? 1.5) * 1000;
+
             const startDispEl = root.querySelector('#tape-slider-start-disp');
             const endDispEl = root.querySelector('#tape-slider-end-disp');
             if (startDispEl && !isStartPatched) {
-                let sliceBadge = '';
-                if (m.chops && m.chops.length > 0) {
-                    const allPts = [0.0, ...m.chops, 1.0].sort((a, b) => a - b);
-                    for (let i = 0; i < allPts.length - 1; i++) {
-                        if (Math.abs(startP - allPts[i]) < 0.015) {
-                            sliceBadge = `S${i + 1}: `;
-                            break;
-                        }
-                    }
-                }
-                startDispEl.textContent = `${sliceBadge}${Math.round(startP * 100)}% (${WAVE.formatMs(startP * durMs)})`;
+                startDispEl.textContent = WAVE.formatBoundDisp(m, bounds.rawStart, bounds.start, false);
             }
             if (endDispEl && !isEndPatched) {
-                endDispEl.textContent = `${Math.round(endP * 100)}% (${WAVE.formatMs(endP * durMs)})`;
+                endDispEl.textContent = WAVE.formatBoundDisp(m, bounds.rawEnd, bounds.end, false);
             }
             const inStart = root.querySelector('#tape-slider-start');
             const inEnd = root.querySelector('#tape-slider-end');
-            if (inStart && Math.abs(parseFloat(inStart.value) - startP) > 0.002) inStart.value = startP;
-            if (inEnd && Math.abs(parseFloat(inEnd.value) - endP) > 0.002) inEnd.value = endP;
+            if (inStart && !isStartPatched) inStart.value = bounds.rawStart;
+            if (inEnd && !isEndPatched) inEnd.value = bounds.rawEnd;
 
-            // Update progress bar range bounds
+            // Update progress bar range bounds to effective playback range
             const rangeEl = root.querySelector('#tape-progress-range');
             if (rangeEl) {
-                rangeEl.style.left = `${(Math.min(startP, endP) * 100).toFixed(1)}%`;
-                rangeEl.style.width = `${(Math.abs(endP - startP) * 100).toFixed(1)}%`;
+                rangeEl.style.left = `${(Math.min(bounds.start, bounds.end) * 100).toFixed(1)}%`;
+                rangeEl.style.width = `${(Math.abs(bounds.end - bounds.start) * 100).toFixed(1)}%`;
             }
-            // Update playhead pin to current start if stopped
+            // Update playhead pin to current effective start if stopped
             const dotEl = root.querySelector('#tape-progress-dot');
-            const activeInst = WAVE.getActiveInst(ctx, m);
-            const st = activeInst?.read?.();
             if (dotEl && !st?.isPlaying) {
-                dotEl.style.left = `${(startP * 100).toFixed(1)}%`;
+                dotEl.style.left = `${(bounds.start * 100).toFixed(1)}%`;
             }
             const synth = ctx?.synth || window.__GS_SYNTH__;
             activeInst?.update?.(synth?.ctx, activeInst, m);
@@ -686,6 +743,7 @@ export const WAVE = {
                 m.start = 0.0;
                 m.end = 1.0;
             }
+            m._lockDelta = (m.end ?? 1.0) - (m.start ?? 0.0);
             const activeInst = WAVE.getActiveInst(ctx, m);
             const synth = ctx?.synth || window.__GS_SYNTH__;
             activeInst?.update?.(synth?.ctx, activeInst, m);
@@ -708,114 +766,115 @@ export const WAVE = {
             cb();
         });
 
-        // Waveform SVG click to select slice
-        const svgEl = root.querySelector('#tape-waveform-svg');
-        if (svgEl) {
-            svgEl.addEventListener('click', (e) => {
-                if (e.target.closest('#tape-start-badge') || e.target.closest('#tape-end-badge')) return;
-                if (!m.chops || m.chops.length === 0) return;
+        // Waveform SVG click to select slice or move locked CV window
+        if (svgWrap) {
+            svgWrap.addEventListener('click', (e) => {
+                if (isAnyRangePatched) return;
+                const svgEl = svgWrap.querySelector('#tape-waveform-svg');
+                if (!svgEl) return;
                 const rect = svgEl.getBoundingClientRect();
                 const clickX = e.clientX - rect.left;
                 const svgW = 320, padX = 6, innerW = svgW - padX * 2;
                 const normX = (clickX / rect.width) * svgW;
                 const pct = Math.max(0.0, Math.min(1.0, (normX - padX) / innerW));
 
-                const allPts = [0.0, ...m.chops, 1.0].sort((a, b) => a - b);
-                let foundIdx = 0;
-                for (let i = 0; i < allPts.length - 1; i++) {
-                    if (pct >= allPts[i] && (i === allPts.length - 2 || pct < allPts[i + 1])) {
-                        foundIdx = i;
-                        break;
+                if (m.rangeLock) {
+                    const delta = (m._lockDelta !== undefined) ? m._lockDelta : ((m.end ?? 1.0) - (m.start ?? 0.0));
+                    const minStart = Math.max(0.0, -delta);
+                    const maxStart = Math.min(1.0, 1.0 - delta);
+                    let targetStart = pct;
+                    if (m.snapMode && m.chops && m.chops.length > 0) {
+                        const allPts = [0.0, ...m.chops, 1.0].sort((a, b) => a - b);
+                        const N = allPts.length - 1;
+                        const idx = Math.min(N - 1, Math.max(0, Math.floor(Math.min(0.999999, pct) * N)));
+                        targetStart = allPts[idx];
                     }
-                }
-                m.start = allPts[foundIdx];
-                m.end = allPts[foundIdx + 1];
-                onSliderChange();
-            });
-        }
-
-        // Sliders
-        const isStartPatched = ctx?.patched?.has('start_cv') || ctx?.patched?.has('cv_start');
-        const isEndPatched = ctx?.patched?.has('end_cv') || ctx?.patched?.has('cv_end');
-        const isSpeedPatched = ctx?.patched?.has('speed_cv') || ctx?.patched?.has('cv_speed');
-
-        if (!isStartPatched) {
-            const getStartVal = v => {
-                if (m.snapMode && m.chops && m.chops.length > 0) {
+                    const clampedStart = Math.max(minStart, Math.min(maxStart, targetStart));
+                    m.start = parseFloat(clampedStart.toFixed(4));
+                    m.end = parseFloat(Math.max(0.0, Math.min(1.0, clampedStart + delta)).toFixed(4));
+                    onSliderChange();
+                } else if (m.chops && m.chops.length > 0) {
                     const allPts = [0.0, ...m.chops, 1.0].sort((a, b) => a - b);
-                    let closest = allPts[0];
-                    let minDiff = 999;
-                    for (const pt of allPts.slice(0, -1)) {
-                        const diff = Math.abs(pt - v);
-                        if (diff < minDiff) { minDiff = diff; closest = pt; }
-                    }
-                    return closest;
-                }
-                return v;
-            };
-            const formatStart = v => {
-                const durMs = (m.duration ?? 1.5) * 1000;
-                let sliceBadge = '';
-                if (m.chops && m.chops.length > 0) {
-                    const allPts = [0.0, ...m.chops, 1.0].sort((a, b) => a - b);
+                    let foundIdx = 0;
                     for (let i = 0; i < allPts.length - 1; i++) {
-                        if (Math.abs(v - allPts[i]) < 0.015) {
-                            sliceBadge = `S${i + 1}: `;
+                        if (pct >= allPts[i] && (i === allPts.length - 2 || pct < allPts[i + 1])) {
+                            foundIdx = i;
                             break;
                         }
                     }
+                    m.start = allPts[foundIdx];
+                    m.end = allPts[foundIdx + 1];
+                    m._lockDelta = m.end - m.start;
+                    onSliderChange();
                 }
-                return `${sliceBadge}${Math.round(v * 100)}% (${WAVE.formatMs(v * durMs)})`;
+            });
+        }
+
+        // Center Time Lock Button (Locks START / END CV Difference)
+        const lockBtn = root.querySelector('#tape-range-lock-btn');
+        if (lockBtn && !isAnyRangePatched) {
+            lockBtn.addEventListener('click', () => {
+                m.rangeLock = !m.rangeLock;
+                m._lockDelta = (m.end ?? 1.0) - (m.start ?? 0.0);
+                const on = Boolean(m.rangeLock);
+                lockBtn.className = `h-6 w-6 rounded-lg border ${on ? 'bg-emerald-950 text-emerald-300 border-emerald-500 shadow-sm shadow-emerald-500/30' : 'bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-300'} transition flex items-center justify-center shrink-0 cursor-pointer active:scale-95`;
+                lockBtn.innerHTML = `<i data-lucide="${on ? 'lock' : 'unlock'}" class="w-3 h-3 pointer-events-none"></i>`;
+                if (window.lucide) window.lucide.createIcons({ root: lockBtn });
+                cb();
+            });
+        }
+
+        // Sliders (Control CV Values 0.0 ~ 1.0 directly; Effective Start/End are auto-computed)
+        if (!isStartPatched) {
+            const formatStart = v => {
+                const rawV = Math.max(0.0, Math.min(1.0, v));
+                const bounds = WAVE.resolveEffectiveBounds(m, rawV, m.end ?? 1.0);
+                return WAVE.formatBoundDisp(m, bounds.rawStart, bounds.start, false);
             };
             const applyStart = v => {
-                const snapped = getStartVal(v);
-                m.start = snapped;
-                if (m.snapMode && m.chops && m.chops.length > 0 && !isEndPatched) {
-                    const allPts = [0.0, ...m.chops, 1.0].sort((a, b) => a - b);
-                    const idx = allPts.findIndex(p => Math.abs(p - snapped) < 0.01);
-                    if (idx >= 0 && idx + 1 < allPts.length) {
-                        m.end = allPts[idx + 1];
-                    }
+                const rawV = Math.max(0.0, Math.min(1.0, v));
+                if (m.rangeLock && !isEndPatched) {
+                    const delta = (m._lockDelta !== undefined) ? m._lockDelta : ((m.end ?? 1.0) - (m.start ?? 0.0));
+                    const minStart = Math.max(0.0, -delta);
+                    const maxStart = Math.min(1.0, 1.0 - delta);
+                    const clampedStart = Math.max(minStart, Math.min(maxStart, rawV));
+                    m.start = parseFloat(clampedStart.toFixed(4));
+                    m.end = parseFloat(Math.max(0.0, Math.min(1.0, clampedStart + delta)).toFixed(4));
+                } else {
+                    m.start = parseFloat(rawV.toFixed(4));
+                    m._lockDelta = (m.end ?? 1.0) - m.start;
                 }
                 onSliderChange();
             };
             UIHelpers.bindSlider('tape-slider-start', formatStart, applyStart, 1, 0.0, 1.0);
-            UIHelpers.bindScrubber('tape-slider-start-disp', 'tape-slider-start', formatStart, applyStart, 1, 0.0, 1.0);
         }
 
         if (!isEndPatched) {
-            const getEndVal = v => {
-                if (m.snapMode && m.chops && m.chops.length > 0) {
-                    const allPts = [0.0, ...m.chops, 1.0].sort((a, b) => a - b);
-                    let closest = allPts[allPts.length - 1];
-                    let minDiff = 999;
-                    for (const pt of allPts.slice(1)) {
-                        const diff = Math.abs(pt - v);
-                        if (diff < minDiff) { minDiff = diff; closest = pt; }
-                    }
-                    return closest;
-                }
-                return v;
+            const formatEnd = v => {
+                const rawV = Math.max(0.0, Math.min(1.0, v));
+                const bounds = WAVE.resolveEffectiveBounds(m, m.start ?? 0.0, rawV);
+                return WAVE.formatBoundDisp(m, bounds.rawEnd, bounds.end, false);
             };
-            const formatEnd = v => `${Math.round(v * 100)}% (${WAVE.formatMs(v * ((m.duration ?? 1.5) * 1000))})`;
             const applyEnd = v => {
-                m.end = getEndVal(v);
+                const rawV = Math.max(0.0, Math.min(1.0, v));
+                if (m.rangeLock && !isStartPatched) {
+                    const delta = (m._lockDelta !== undefined) ? m._lockDelta : ((m.end ?? 1.0) - (m.start ?? 0.0));
+                    const minEnd = Math.max(0.0, delta);
+                    const maxEnd = Math.min(1.0, 1.0 + delta);
+                    const clampedEnd = Math.max(minEnd, Math.min(maxEnd, rawV));
+                    m.end = parseFloat(clampedEnd.toFixed(4));
+                    m.start = parseFloat(Math.max(0.0, Math.min(1.0, clampedEnd - delta)).toFixed(4));
+                } else {
+                    m.end = parseFloat(rawV.toFixed(4));
+                    m._lockDelta = m.end - (m.start ?? 0.0);
+                }
                 onSliderChange();
             };
             UIHelpers.bindSlider('tape-slider-end', formatEnd, applyEnd, 1, 0.0, 1.0);
-            UIHelpers.bindScrubber('tape-slider-end-disp', 'tape-slider-end', formatEnd, applyEnd, 1, 0.0, 1.0);
         }
 
         if (!isSpeedPatched) {
             UIHelpers.bindSlider('tape-slider-speed', WAVE.formatSpeed, v => {
-                m.speedCv = v;
-                m.speed = Math.pow(2.0, v);
-                const activeInst = WAVE.getActiveInst(ctx, m);
-                const synth = ctx?.synth || window.__GS_SYNTH__;
-                activeInst?.update?.(synth?.ctx, activeInst, m);
-                onSliderChange();
-            }, 1, -2.0, 2.0);
-            UIHelpers.bindScrubber('tape-slider-speed-disp', 'tape-slider-speed', WAVE.formatSpeed, v => {
                 m.speedCv = v;
                 m.speed = Math.pow(2.0, v);
                 const activeInst = WAVE.getActiveInst(ctx, m);
@@ -828,13 +887,14 @@ export const WAVE = {
     updateLive: (cell, data, isPlaying, targetModal, m) => {
         const playhead = data?.playhead ?? 0.0;
         const isTapePlaying = Boolean(data?.isPlaying);
-        const effStart = data?.effStart !== undefined ? data.effStart : (m.start ?? 0.0);
-        const effEnd = data?.effEnd !== undefined ? data.effEnd : (m.end ?? 1.0);
-        const rawStart = data?.rawStart !== undefined ? data.rawStart : effStart;
-        const rawEnd = data?.rawEnd !== undefined ? data.rawEnd : effEnd;
         const startPatched = Boolean(data?.startPatched ?? m.startPatched);
         const endPatched = Boolean(data?.endPatched ?? m.endPatched);
-        const snapMode = Boolean(data?.snapMode ?? m.snapMode);
+
+        const rawStart = startPatched ? (data?.rawStart ?? m.start ?? 0.0) : (m.start ?? 0.0);
+        const rawEnd = endPatched ? (data?.rawEnd ?? m.end ?? 1.0) : (m.end ?? 1.0);
+        const bounds = WAVE.resolveEffectiveBounds(m, rawStart, rawEnd);
+        const effStart = (startPatched || endPatched) && data?.effStart !== undefined ? data.effStart : bounds.start;
+        const effEnd = (startPatched || endPatched) && data?.effEnd !== undefined ? data.effEnd : bounds.end;
 
         // Update modal playhead line, Start/End CV markers, and progress bar in real-time
         if (targetModal) {
@@ -842,7 +902,7 @@ export const WAVE = {
             const innerW = W - padX * 2;
             const innerH = H - padY * 2;
 
-            // 1. Dynamic Start/End lines and badges according to external CV
+            // 1. Dynamic Effective Start/End lines and badges (Green)
             const startX = padX + Math.max(0, Math.min(1, effStart)) * innerW;
             const endX = padX + Math.max(0, Math.min(1, effEnd)) * innerW;
 
@@ -866,48 +926,52 @@ export const WAVE = {
             if (endBadge) endBadge.setAttribute('x', (endX - 5).toFixed(1));
             if (endText) endText.setAttribute('x', endX.toFixed(1));
 
-            // 2. Dynamic Raw CV Markers (White lines & triangle notches)
-            const hasChops = Array.isArray(m.chops) && m.chops.length > 0;
-            const isSlice = snapMode && hasChops;
-            const showCvStart = isSlice && (startPatched || Math.abs(rawStart - effStart) > 0.005);
-            const showCvEnd = isSlice && (endPatched || Math.abs(rawEnd - effEnd) > 0.005);
-
+            // 2. Dynamic Raw CV Markers (White lines & triangle notches — ALWAYS VISIBLE)
             const cvStartX = padX + Math.max(0, Math.min(1, rawStart)) * innerW;
             const cvEndX = padX + Math.max(0, Math.min(1, rawEnd)) * innerW;
 
             const cvStartLine = targetModal.querySelector('#tape-cv-start-line');
             const cvStartNotch = targetModal.querySelector('#tape-cv-start-notch');
             if (cvStartLine) {
-                cvStartLine.style.display = showCvStart ? 'block' : 'none';
-                if (showCvStart) {
-                    cvStartLine.setAttribute('x1', cvStartX.toFixed(1));
-                    cvStartLine.setAttribute('x2', cvStartX.toFixed(1));
-                }
+                cvStartLine.style.display = 'block';
+                cvStartLine.setAttribute('x1', cvStartX.toFixed(1));
+                cvStartLine.setAttribute('x2', cvStartX.toFixed(1));
             }
             if (cvStartNotch) {
-                cvStartNotch.style.display = showCvStart ? 'block' : 'none';
-                if (showCvStart) {
-                    cvStartNotch.setAttribute('points', `${(cvStartX - 3).toFixed(1)},${padY} ${(cvStartX + 3).toFixed(1)},${padY} ${cvStartX.toFixed(1)},${(padY + 4).toFixed(1)}`);
-                }
+                cvStartNotch.style.display = 'block';
+                cvStartNotch.setAttribute('points', `${(cvStartX - 3).toFixed(1)},${padY} ${(cvStartX + 3).toFixed(1)},${padY} ${cvStartX.toFixed(1)},${(padY + 4).toFixed(1)}`);
             }
 
             const cvEndLine = targetModal.querySelector('#tape-cv-end-line');
             const cvEndNotch = targetModal.querySelector('#tape-cv-end-notch');
             if (cvEndLine) {
-                cvEndLine.style.display = showCvEnd ? 'block' : 'none';
-                if (showCvEnd) {
-                    cvEndLine.setAttribute('x1', cvEndX.toFixed(1));
-                    cvEndLine.setAttribute('x2', cvEndX.toFixed(1));
-                }
+                cvEndLine.style.display = 'block';
+                cvEndLine.setAttribute('x1', cvEndX.toFixed(1));
+                cvEndLine.setAttribute('x2', cvEndX.toFixed(1));
             }
             if (cvEndNotch) {
-                cvEndNotch.style.display = showCvEnd ? 'block' : 'none';
-                if (showCvEnd) {
-                    cvEndNotch.setAttribute('points', `${(cvEndX - 3).toFixed(1)},${(padY + innerH).toFixed(1)} ${(cvEndX + 3).toFixed(1)},${(padY + innerH).toFixed(1)} ${cvEndX.toFixed(1)},${(padY + innerH - 4).toFixed(1)}`);
-                }
+                cvEndNotch.style.display = 'block';
+                cvEndNotch.setAttribute('points', `${(cvEndX - 3).toFixed(1)},${(padY + innerH).toFixed(1)} ${(cvEndX + 3).toFixed(1)},${(padY + innerH).toFixed(1)} ${cvEndX.toFixed(1)},${(padY + innerH - 4).toFixed(1)}`);
             }
 
-            // 2. Playhead vertical line inside SVG
+            // 3. Dynamic Slice Highlights inside SVG
+            const rMin = Math.min(effStart, effEnd);
+            const rMax = Math.max(effStart, effEnd);
+            const isSnap = Boolean(m.snapMode);
+            targetModal.querySelectorAll('[data-slice-rect]').forEach(rectEl => {
+                const s0 = parseFloat(rectEl.getAttribute('data-s0') || '0');
+                const s1 = parseFloat(rectEl.getAttribute('data-s1') || '0');
+                const sel = isSnap && (s0 >= rMin - 0.01) && (s1 <= rMax + 0.01) && (rMax - rMin > 0.005);
+                rectEl.style.display = sel ? 'block' : 'none';
+            });
+            targetModal.querySelectorAll('[data-slice-label]').forEach(lblEl => {
+                const s0 = parseFloat(lblEl.getAttribute('data-s0') || '0');
+                const s1 = parseFloat(lblEl.getAttribute('data-s1') || '0');
+                const sel = isSnap && (s0 >= rMin - 0.01) && (s1 <= rMax + 0.01) && (rMax - rMin > 0.005);
+                lblEl.setAttribute('fill', sel ? '#fbbf24' : '#64748b');
+            });
+
+            // 4. Playhead vertical line inside SVG
             const playheadLine = targetModal.querySelector('#tape-playhead-line');
             if (playheadLine) {
                 if (isTapePlaying) {
@@ -920,7 +984,7 @@ export const WAVE = {
                 }
             }
 
-            // 3. Horizontal Progress Bar (Fill, Range, & Playhead Dot - ALWAYS VISIBLE!)
+            // 5. Horizontal Progress Bar (Fill, Range, & Playhead Dot - ALWAYS VISIBLE!)
             const progressRange = targetModal.querySelector('#tape-progress-range');
             if (progressRange) {
                 const rLeft = Math.min(effStart, effEnd) * 100;
@@ -952,7 +1016,7 @@ export const WAVE = {
                 }
             }
 
-            // 4. Trigger / Play Button Icon
+            // 6. Trigger / Play Button Icon
             const playBtn = targetModal.querySelector('#tape-play-btn');
             if (playBtn) {
                 const icon = playBtn.querySelector('[data-lucide]');
@@ -964,17 +1028,16 @@ export const WAVE = {
                 }
             }
 
-            // 5. Update CV-patched start/end display badges
-            const durMs = (m.duration ?? 1.5) * 1000;
+            // 7. Update CV-patched start/end display badges
             const sliderStart = targetModal.querySelector('#tape-slider-start');
             if (sliderStart && sliderStart.disabled) {
                 const disp = targetModal.querySelector('#tape-slider-start-disp');
-                if (disp) disp.textContent = `EXT (${Math.round(effStart * 100)}% / ${WAVE.formatMs(effStart * durMs)})`;
+                if (disp) disp.textContent = WAVE.formatBoundDisp(m, rawStart, effStart, true);
             }
             const sliderEnd = targetModal.querySelector('#tape-slider-end');
             if (sliderEnd && sliderEnd.disabled) {
                 const disp = targetModal.querySelector('#tape-slider-end-disp');
-                if (disp) disp.textContent = `EXT (${Math.round(effEnd * 100)}% / ${WAVE.formatMs(effEnd * durMs)})`;
+                if (disp) disp.textContent = WAVE.formatBoundDisp(m, rawEnd, effEnd, true);
             }
         }
 

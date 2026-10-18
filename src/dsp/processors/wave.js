@@ -59,6 +59,10 @@ export class WaveProcessor extends AudioWorkletProcessor {
                 if (data.endPatched !== undefined) this.endPatched = Boolean(data.endPatched);
                 if (data.snapMode !== undefined) this.snapMode = Boolean(data.snapMode);
                 if (Array.isArray(data.chops)) this.chops = data.chops.map(x => Math.max(0.0, Math.min(1.0, x)));
+                const eff = this.getEffectiveStartEnd(this.lastCvS, this.lastCvE);
+                this.lastEffStart = eff.start;
+                this.lastEffEnd = eff.end;
+                this.reportState();
             } else if (data.type === 'PLAY') {
                 this.isManualPlay = true;
                 this.triggerPlay(this.lastCvS, this.lastCvE);
@@ -100,37 +104,29 @@ export class WaveProcessor extends AudioWorkletProcessor {
             const pts = [0.0, ...this.chops, 1.0].sort((a, b) => a - b);
             const N = pts.length - 1;
 
-            const getIndex = (val, isPatched) => {
-                const clamped = Math.max(0.0, Math.min(1.0, val));
-                if (isPatched) {
-                    // Ledger uniform quantization across N segments for equal probability
-                    const frac = Math.min(0.999999, clamped);
-                    return Math.min(N - 1, Math.max(0, Math.floor(frac * N)));
-                } else {
-                    for (let i = 0; i < N; i++) {
-                        if (clamped >= pts[i] && (i === N - 1 || clamped < pts[i + 1])) {
-                            return i;
-                        }
-                    }
-                    return 0;
-                }
+            const getIndex = (val) => {
+                // Ledger uniform quantization across N segments for equal probability
+                const clamped = Math.max(0.0, Math.min(0.999999, val + 1e-7));
+                return Math.min(N - 1, Math.max(0, Math.floor(clamped * N)));
             };
-
-            const idxS = getIndex(rawS, this.startPatched);
-            const idxE = getIndex(rawE, this.endPatched);
 
             const isDiff = Math.abs(rawS - rawE) > 0.001;
 
             if (!isDiff) {
-                // When START and END CV / positions are equal, proceed in forward direction for this slice
+                // When START CV and END CV are equal, proceed in forward direction for this slice
+                const idxS = getIndex(rawS);
                 s = pts[idxS];
                 e = pts[idxS + 1];
             } else if (rawS < rawE) {
                 // Forward direction: from start of idxS to end of idxE
+                const idxS = getIndex(rawS);
+                const idxE = getIndex(Math.max(rawS, rawE - 0.0001));
                 s = pts[idxS];
                 e = pts[idxE + 1];
             } else {
                 // Reverse direction: start at end of idxS, travel down to start of idxE
+                const idxS = getIndex(Math.max(rawE, rawS - 0.0001));
+                const idxE = getIndex(rawE);
                 s = pts[idxS + 1];
                 e = pts[idxE];
             }
