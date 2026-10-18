@@ -1,364 +1,325 @@
 // src/ui/wave-view.js
 /**
- * WAVE Module Waveform Visualization & Modal DOM Synchronizer
- * Extracted from src/modules/defs/wave.js for modularity and zero-rebuild real-time updates.
+ * WAVE Module Waveform Visualization, Bound Resolution & Live DOM Synchronizer
  */
 
-const SVG_W = 280;
-const SVG_H = 92;
-const MID_Y = SVG_H / 2;
+const W = 320;
+const H = 100;
+const PAD_X = 6;
+const PAD_Y = 6;
+const INNER_W = W - PAD_X * 2;
+const INNER_H = H - PAD_Y * 2;
 
 export const WaveView = {
-    SVG_W,
-    SVG_H,
+    W,
+    H,
+    PAD_X,
+    PAD_Y,
+    INNER_W,
+    INNER_H,
 
     formatMs(ms) {
-        const sec = Math.max(0, ms) / 1000;
-        return sec >= 10 ? `${sec.toFixed(1)}s` : `${sec.toFixed(2)}s`;
+        if (ms <= 0) return '0ms';
+        if (ms < 1000) return `${Math.round(ms)}ms`;
+        if (ms < 10000) {
+            const s = ms / 1000;
+            return Number.isInteger(s) ? `${s}s` : (ms % 100 === 0 ? `${s.toFixed(1)}s` : `${s.toFixed(2)}s`);
+        }
+        return `${(ms / 1000).toFixed(1)}s`;
     },
 
     formatSpeed(v) {
-        const val = Number(v || 0);
-        return `${val >= 0 ? '+' : ''}${val.toFixed(2)}x`;
+        if (Math.abs(v) < 0.02) return 'x1';
+        if (Math.abs(v - (-2.0)) < 0.02) return '/4';
+        if (Math.abs(v - (-1.0)) < 0.02) return '/2';
+        if (Math.abs(v - 1.0) < 0.02) return 'x2';
+        if (Math.abs(v - 2.0) < 0.02) return 'x4';
+        const mult = Math.pow(2.0, v);
+        if (v < 0) {
+            const denom = Math.pow(2.0, -v);
+            return `/${denom < 10 ? denom.toFixed(1) : denom.toFixed(0)}`;
+        }
+        return `x${mult.toFixed(1)}`;
     },
 
     /**
-     * Resolve effective playback start/end (0..1) and slice indices from raw CV values (0..1).
+     * Convert raw Start/End CV values (0.0~1.0) into effective Start/End playback positions.
      */
     resolveEffectiveBounds(m, rawStartVal = null, rawEndVal = null) {
-        const rawStart = Math.max(0, Math.min(1, Number(rawStartVal ?? m.start ?? 0.0)));
-        const rawEnd = Math.max(0, Math.min(1, Number(rawEndVal ?? m.end ?? 1.0)));
-        const chops = Array.isArray(m.chops) ? m.chops : [];
-        const isSnap = Boolean(m.snapMode && chops.length > 0);
+        const rawS = Math.max(0.0, Math.min(1.0, rawStartVal !== null ? rawStartVal : (m.start ?? 0.0)));
+        const rawE = Math.max(0.0, Math.min(1.0, rawEndVal !== null ? rawEndVal : (m.end ?? 1.0)));
 
-        if (!isSnap) {
-            return {
-                rawStart,
-                rawEnd,
-                effStart: rawStart,
-                effEnd: rawEnd,
-                startIdx: -1,
-                endIdx: -1,
-                sliceCount: 1,
-                isSnap: false
+        let s = rawS;
+        let e = rawE;
+
+        if (m.snapMode && Array.isArray(m.chops) && m.chops.length > 0) {
+            const pts = [0.0, ...m.chops, 1.0].sort((a, b) => a - b);
+            const N = pts.length - 1;
+            const getIndex = (val) => {
+                const clamped = Math.max(0.0, Math.min(0.999999, val + 1e-7));
+                return Math.min(N - 1, Math.max(0, Math.floor(clamped * N)));
             };
-        }
 
-        const bounds = [0.0];
-        for (let i = 0; i < chops.length; i++) {
-            const c = Number(chops[i]);
-            if (c > 0.001 && c < 0.999) bounds.push(c);
-        }
-        bounds.push(1.0);
-        bounds.sort((a, b) => a - b);
-
-        const sliceCount = Math.max(1, bounds.length - 1);
-        const startIdx = Math.min(sliceCount - 1, Math.max(0, Math.floor(rawStart * sliceCount)));
-        const endIdx = Math.min(sliceCount - 1, Math.max(0, Math.floor(rawEnd * sliceCount)));
-
-        let effStart = rawStart;
-        let effEnd = rawEnd;
-        if (startIdx === endIdx) {
-            effStart = bounds[startIdx];
-            effEnd = bounds[startIdx + 1];
-        } else if (startIdx < endIdx) {
-            effStart = bounds[startIdx];
-            effEnd = bounds[endIdx + 1];
-        } else {
-            // Reverse playback across slices when Start > End
-            effStart = bounds[startIdx + 1];
-            effEnd = bounds[endIdx];
-        }
-
-        return {
-            rawStart,
-            rawEnd,
-            effStart,
-            effEnd,
-            startIdx,
-            endIdx,
-            sliceCount,
-            isSnap: true
-        };
-    },
-
-    /**
-     * Format the Start / End slider badge text showing CV value, slice index (in SNAP mode), and time in seconds.
-     */
-    formatBoundDisp(m, rawVal, effVal, isPatched = false) {
-        const durSec = m.duration || 1.5;
-        const chops = Array.isArray(m.chops) ? m.chops : [];
-        const prefix = isPatched ? '[EXT] ' : '';
-        if (m.snapMode && chops.length > 0) {
-            const sliceCount = chops.length + 1;
-            const idx = Math.min(sliceCount, Math.max(1, Math.floor(Math.max(0, Math.min(0.9999, rawVal)) * sliceCount) + 1));
-            return `${prefix}CV ${Number(rawVal).toFixed(2)} -> #${idx} (${this.formatMs(effVal * durSec * 1000)})`;
-        }
-        return `${prefix}CV ${Number(rawVal).toFixed(2)} (${this.formatMs(effVal * durSec * 1000)})`;
-    },
-
-    /**
-     * Render the full SVG waveform markup for the WAVE modal.
-     */
-    renderWaveformSVG(m, playhead = 0.0, isPlaying = false, effStartVal = null, effEndVal = null, rawStartVal = null, rawEndVal = null) {
-        const peaks = m.peaks || m._peaks || [];
-        const numBins = peaks.length || 64;
-        const barW = SVG_W / numBins;
-
-        const resolved = this.resolveEffectiveBounds(m, rawStartVal, rawEndVal);
-        const startRatio = Math.max(0, Math.min(1, Number(effStartVal ?? resolved.effStart)));
-        const endRatio = Math.max(0, Math.min(1, Number(effEndVal ?? resolved.effEnd)));
-        const rawStartRatio = resolved.rawStart;
-        const rawEndRatio = resolved.rawEnd;
-
-        const minR = Math.min(startRatio, endRatio);
-        const maxR = Math.max(startRatio, endRatio);
-        const startX = (startRatio * SVG_W).toFixed(1);
-        const endX = (endRatio * SVG_W).toFixed(1);
-        const rawStartX = (rawStartRatio * SVG_W).toFixed(1);
-        const rawEndX = (rawEndRatio * SVG_W).toFixed(1);
-        const playX = (Math.max(0, Math.min(1, playhead)) * SVG_W).toFixed(1);
-
-        const startLabelX = startRatio > 0.90 ? (Number(startX) - 13).toFixed(1) : (Number(startX) + 3).toFixed(1);
-        const endLabelX = endRatio < 0.10 ? (Number(endX) + 3).toFixed(1) : (Number(endX) - 13).toFixed(1);
-
-        let barsHtml = '';
-        for (let i = 0; i < numBins; i++) {
-            const ratio = i / numBins;
-            const inRange = ratio >= minR - 0.005 && ratio <= maxR + 0.005;
-            const amp = peaks[i] !== undefined ? peaks[i] : 0.05;
-            const barH = Math.max(2, amp * (SVG_H - 14));
-            const x = (i * barW + 0.6).toFixed(1);
-            const y = (MID_Y - barH / 2).toFixed(1);
-            const w = Math.max(1.2, barW - 1.2).toFixed(1);
-            const color = inRange ? '#4ade80' : '#334155';
-            const opacity = inRange ? '0.88' : '0.4';
-            barsHtml += `<rect x="${x}" y="${y}" width="${w}" height="${barH.toFixed(1)}" rx="1" fill="${color}" opacity="${opacity}" />`;
-        }
-
-        const chops = Array.isArray(m.chops) ? m.chops : [];
-        const sliceBounds = [0.0, ...chops.filter(c => c > 0.001 && c < 0.999), 1.0].sort((a, b) => a - b);
-
-        let sliceOverlaysHtml = '';
-        if (sliceBounds.length > 2) {
-            for (let idx = 0; idx < sliceBounds.length - 1; idx++) {
-                const s0 = sliceBounds[idx];
-                const s1 = sliceBounds[idx + 1];
-                const sx = (s0 * SVG_W).toFixed(1);
-                const sw = Math.max(1, (s1 - s0) * SVG_W).toFixed(1);
-                const midRatio = (s0 + s1) * 0.5;
-                const isSelected = midRatio >= minR - 0.002 && midRatio <= maxR + 0.002;
-                const fill = isSelected
-                    ? (m.snapMode ? 'rgba(56,189,248,0.16)' : 'rgba(74,222,128,0.10)')
-                    : 'rgba(15,23,42,0.35)';
-                const labelColor = isSelected ? (m.snapMode ? '#38bdf8' : '#4ade80') : '#64748b';
-                sliceOverlaysHtml += `
-                    <rect data-slice-rect="${idx}" x="${sx}" y="0" width="${sw}" height="${SVG_H}" fill="${fill}" style="cursor:pointer;" />
-                    <text data-slice-label="${idx}" x="${(Number(sx) + 3).toFixed(1)}" y="10" fill="${labelColor}" font-size="8" font-family="monospace" font-weight="bold" pointer-events="none">#${idx + 1}</text>
-                `;
+            const isDiff = Math.abs(rawS - rawE) > 0.001;
+            if (!isDiff) {
+                const idxS = getIndex(rawS);
+                s = pts[idxS];
+                e = pts[idxS + 1];
+            } else if (rawS < rawE) {
+                const idxS = getIndex(rawS);
+                const idxE = getIndex(Math.max(rawS, rawE - 0.0001));
+                s = pts[idxS];
+                e = pts[idxE + 1];
+            } else {
+                const idxS = getIndex(Math.max(rawE, rawS - 0.0001));
+                const idxE = getIndex(rawE);
+                s = pts[idxS + 1];
+                e = pts[idxE];
             }
         }
 
-        let chopsHtml = '';
-        for (let i = 0; i < chops.length; i++) {
-            const cx = (Math.max(0, Math.min(1, chops[i])) * SVG_W).toFixed(1);
-            chopsHtml += `<line x1="${cx}" y1="0" x2="${cx}" y2="${SVG_H}" stroke="#38bdf8" stroke-width="1.2" stroke-dasharray="2,2" opacity="0.85" pointer-events="none" />`;
+        return {
+            start: Math.max(0.0, Math.min(1.0, s)),
+            end: Math.max(0.0, Math.min(1.0, e)),
+            rawStart: rawS,
+            rawEnd: rawE
+        };
+    },
+
+    formatBoundDisp(m, rawVal, effVal, isPatched = false) {
+        const durMs = (m.duration ?? 1.5) * 1000;
+        const cvPct = Math.round(Math.max(0, Math.min(1, rawVal)) * 100);
+        const effMsStr = this.formatMs(Math.max(0, Math.min(1, effVal)) * durMs);
+        return isPatched ? `EXT ${cvPct}% (${effMsStr})` : `${cvPct}% (${effMsStr})`;
+    },
+
+    renderWaveformSVG(m, playhead = 0.0, isPlaying = false, effStartVal = null, effEndVal = null, rawStartVal = null, rawEndVal = null) {
+        const midY = PAD_Y + (INNER_H - 10) / 2;
+        const durMs = (m.duration || 1.5) * 1000;
+
+        const bounds = this.resolveEffectiveBounds(m, rawStartVal, rawEndVal);
+        const startPct = Math.max(0, Math.min(1, effStartVal !== null ? effStartVal : bounds.start));
+        const endPct = Math.max(0, Math.min(1, effEndVal !== null ? effEndVal : bounds.end));
+        const cvStartX = PAD_X + bounds.rawStart * INNER_W;
+        const cvEndX = PAD_X + bounds.rawEnd * INNER_W;
+
+        let gridSvg = '';
+        for (let gx = 1; gx <= 7; gx++) {
+            const x = PAD_X + (INNER_W / 8) * gx;
+            const strokeCol = gx === 4 ? '#334155' : (gx % 2 === 0 ? '#1e293b' : '#0f172a');
+            gridSvg += `<line x1="${x.toFixed(1)}" y1="${PAD_Y}" x2="${x.toFixed(1)}" y2="${(PAD_Y + INNER_H - 10).toFixed(1)}" stroke="${strokeCol}" stroke-width="0.8" stroke-dasharray="2,2"/>`;
+        }
+        for (let gy = 1; gy <= 3; gy++) {
+            const y = PAD_Y + ((INNER_H - 10) / 4) * gy;
+            gridSvg += `<line x1="${PAD_X}" y1="${y.toFixed(1)}" x2="${PAD_X + INNER_W}" y2="${y.toFixed(1)}" stroke="#1e293b" stroke-width="0.8" stroke-dasharray="2,2"/>`;
         }
 
-        const r = 3.5;
-        const startNotchPts = `${(Number(rawStartX) - r).toFixed(1)},0 ${(Number(rawStartX) + r).toFixed(1)},0 ${rawStartX},${(r * 1.6).toFixed(1)}`;
-        const endNotchPts = `${(Number(rawEndX) - r).toFixed(1)},${SVG_H} ${(Number(rawEndX) + r).toFixed(1)},${SVG_H} ${rawEndX},${(SVG_H - r * 1.6).toFixed(1)}`;
+        const intervals = [0, 0.25, 0.5, 0.75, 1.0];
+        let timeLabelsSvg = '';
+        intervals.forEach((pct, idx) => {
+            const x = PAD_X + pct * INNER_W;
+            const label = this.formatMs(pct * durMs);
+            const anchor = idx === 0 ? 'start' : (idx === intervals.length - 1 ? 'end' : 'middle');
+            const drawX = idx === 0 ? PAD_X + 2 : (idx === intervals.length - 1 ? PAD_X + INNER_W - 2 : x);
+            timeLabelsSvg += `<line x1="${x.toFixed(1)}" y1="${(PAD_Y + INNER_H - 9).toFixed(1)}" x2="${x.toFixed(1)}" y2="${(PAD_Y + INNER_H - 6).toFixed(1)}" stroke="#475569" stroke-width="1"/>`;
+            timeLabelsSvg += `<text x="${drawX.toFixed(1)}" y="${(PAD_Y + INNER_H - 1.5).toFixed(1)}" fill="${idx === 2 ? '#38bdf8' : '#94a3b8'}" font-size="7" font-family="monospace" font-weight="bold" text-anchor="${anchor}">${label}</text>`;
+        });
+
+        const peaks = m.peaks || m._peaks || [];
+        const hasAudio = peaks.length > 0 && peaks.some(p => p > 0.005);
+        let barsSvg = '';
+        if (hasAudio) {
+            const numBars = peaks.length;
+            const barW = INNER_W / numBars;
+            for (let i = 0; i < numBars; i++) {
+                const bx = PAD_X + i * barW + barW * 0.5;
+                const val = peaks[i] || 0.0;
+                if (val > 0.005) {
+                    const barH = Math.max(1.5, val * ((INNER_H - 10) * 0.46));
+                    barsSvg += `<line x1="${bx.toFixed(1)}" y1="${(midY - barH).toFixed(1)}" x2="${bx.toFixed(1)}" y2="${(midY + barH).toFixed(1)}" stroke="#06b6d4" stroke-width="1.8" stroke-linecap="round" opacity="0.85"/>`;
+                }
+            }
+        } else {
+            barsSvg = `<text x="${(W / 2).toFixed(1)}" y="${(midY + 3.5).toFixed(1)}" fill="#334155" font-size="8.5" font-family="monospace" font-weight="bold" text-anchor="middle" letter-spacing="1">NO AUDIO LOADED</text>`;
+        }
+
+        let chopsSvg = '';
+        if (Array.isArray(m.chops) && m.chops.length > 0) {
+            const allPts = [0.0, ...m.chops, 1.0].sort((a, b) => a - b);
+            const rMin = Math.min(startPct, endPct);
+            const rMax = Math.max(startPct, endPct);
+            for (let i = 0; i < allPts.length - 1; i++) {
+                const s0 = allPts[i], s1 = allPts[i + 1];
+                const x0 = PAD_X + s0 * INNER_W, x1 = PAD_X + s1 * INNER_W;
+                const sliceW = x1 - x0;
+                const isSelected = Boolean(m.snapMode) && (s0 >= rMin - 0.01) && (s1 <= rMax + 0.01) && (rMax - rMin > 0.005);
+                chopsSvg += `<rect data-slice-rect="${i}" data-s0="${s0}" data-s1="${s1}" x="${x0.toFixed(1)}" y="${PAD_Y}" width="${sliceW.toFixed(1)}" height="${(INNER_H - 10).toFixed(1)}" fill="#f59e0b" fill-opacity="0.15" style="display: ${isSelected ? 'block' : 'none'};"/>`;
+                chopsSvg += `<text data-slice-label="${i}" data-s0="${s0}" data-s1="${s1}" x="${(x0 + sliceW * 0.5).toFixed(1)}" y="${(PAD_Y + 8).toFixed(1)}" fill="${isSelected ? '#fbbf24' : '#64748b'}" font-size="6.5" font-family="monospace" font-weight="bold" text-anchor="middle" pointer-events="none">S${i + 1}</text>`;
+            }
+            m.chops.forEach((cp) => {
+                const cx = PAD_X + cp * INNER_W;
+                chopsSvg += `<line x1="${cx.toFixed(1)}" y1="${PAD_Y}" x2="${cx.toFixed(1)}" y2="${(PAD_Y + INNER_H - 10).toFixed(1)}" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="3,2" opacity="0.85" pointer-events="none"/>`;
+            });
+        }
+
+        const startX = PAD_X + startPct * INNER_W;
+        const endX = PAD_X + endPct * INNER_W;
+        const playX = PAD_X + Math.max(0, Math.min(1, playhead)) * INNER_W;
 
         return `
-            <svg id="tape-waveform-svg" viewBox="0 0 ${SVG_W} ${SVG_H}" width="100%" height="100%" preserveAspectRatio="none" style="display:block; background:#090d14; border-radius:6px; border:1px solid #1e293b; overflow:hidden; user-select:none; touch-action:none;">
-                <line x1="0" y1="${MID_Y}" x2="${SVG_W}" y2="${MID_Y}" stroke="#1e293b" stroke-width="1" pointer-events="none" />
-                ${sliceOverlaysHtml}
-                ${chopsHtml}
-                <g pointer-events="none">${barsHtml}</g>
-                <!-- Effective Start Marker (Green) -->
-                <line id="tape-start-line" x1="${startX}" y1="0" x2="${startX}" y2="${SVG_H}" stroke="#4ade80" stroke-width="2" pointer-events="none" />
-                <rect id="tape-start-badge" x="${startLabelX}" y="3" width="11" height="12" rx="2" fill="#064e3b" stroke="#4ade80" stroke-width="0.8" pointer-events="none" />
-                <text id="tape-start-text" x="${(Number(startLabelX) + 5.5).toFixed(1)}" y="11.5" fill="#4ade80" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle" pointer-events="none">S</text>
-                <!-- Effective End Marker (Green) -->
-                <line id="tape-end-line" x1="${endX}" y1="0" x2="${endX}" y2="${SVG_H}" stroke="#4ade80" stroke-width="2" stroke-dasharray="4,2" pointer-events="none" />
-                <rect id="tape-end-badge" x="${endLabelX}" y="${SVG_H - 15}" width="11" height="12" rx="2" fill="#064e3b" stroke="#4ade80" stroke-width="0.8" pointer-events="none" />
-                <text id="tape-end-text" x="${(Number(endLabelX) + 5.5).toFixed(1)}" y="${SVG_H - 6.5}" fill="#4ade80" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle" pointer-events="none">E</text>
-                <!-- Raw CV Start Marker (White) -->
-                <line id="tape-cv-start-line" x1="${rawStartX}" y1="0" x2="${rawStartX}" y2="${SVG_H}" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="2,2" opacity="0.9" style="display:block;" pointer-events="none" />
-                <polygon id="tape-cv-start-notch" points="${startNotchPts}" fill="#ffffff" style="display:block;" pointer-events="none" />
-                <!-- Raw CV End Marker (White) -->
-                <line id="tape-cv-end-line" x1="${rawEndX}" y1="0" x2="${rawEndX}" y2="${SVG_H}" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="2,2" opacity="0.9" style="display:block;" pointer-events="none" />
-                <polygon id="tape-cv-end-notch" points="${endNotchPts}" fill="#ffffff" style="display:block;" pointer-events="none" />
-                <!-- Playhead Line -->
-                <line id="tape-playhead-line" x1="${playX}" y1="0" x2="${playX}" y2="${SVG_H}" stroke="#facc15" stroke-width="2" style="display:${isPlaying ? 'block' : 'none'};" pointer-events="none" />
+            <svg id="tape-waveform-svg" viewBox="0 0 ${W} ${H}" class="w-full h-28 select-none bg-slate-950 rounded-xl border border-slate-800 shadow-inner overflow-hidden relative cursor-pointer">
+                <line x1="${PAD_X}" y1="${midY}" x2="${PAD_X + INNER_W}" y2="${midY}" stroke="#334155" stroke-width="1"/>
+                ${gridSvg}
+                ${timeLabelsSvg}
+                ${barsSvg}
+                ${chopsSvg}
+                <line id="tape-end-line" x1="${endX.toFixed(1)}" y1="${PAD_Y}" x2="${endX.toFixed(1)}" y2="${PAD_Y + INNER_H}" stroke="#22c55e" stroke-width="2.0" class="drop-shadow-[0_0_4px_rgba(34,197,94,0.85)]"/>
+                <line id="tape-start-line" x1="${startX.toFixed(1)}" y1="${PAD_Y}" x2="${startX.toFixed(1)}" y2="${PAD_Y + INNER_H}" stroke="#22c55e" stroke-width="2.0" class="drop-shadow-[0_0_4px_rgba(34,197,94,0.85)]"/>
+                <line id="tape-cv-start-line" x1="${cvStartX.toFixed(1)}" y1="${PAD_Y}" x2="${cvStartX.toFixed(1)}" y2="${PAD_Y + INNER_H}" stroke="#ffffff" stroke-width="1.3" class="drop-shadow-[0_0_4px_rgba(255,255,255,0.9)]"/>
+                <polygon id="tape-cv-start-notch" points="${(cvStartX - 3).toFixed(1)},${PAD_Y} ${(cvStartX + 3).toFixed(1)},${PAD_Y} ${cvStartX.toFixed(1)},${(PAD_Y + 4).toFixed(1)}" fill="#ffffff"/>
+                <line id="tape-cv-end-line" x1="${cvEndX.toFixed(1)}" y1="${PAD_Y}" x2="${cvEndX.toFixed(1)}" y2="${PAD_Y + INNER_H}" stroke="#ffffff" stroke-width="1.3" stroke-dasharray="3,2" class="drop-shadow-[0_0_4px_rgba(255,255,255,0.9)]"/>
+                <polygon id="tape-cv-end-notch" points="${(cvEndX - 3).toFixed(1)},${(PAD_Y + INNER_H).toFixed(1)} ${(cvEndX + 3).toFixed(1)},${(PAD_Y + INNER_H).toFixed(1)} ${cvEndX.toFixed(1)},${(PAD_Y + INNER_H - 4).toFixed(1)}" fill="#ffffff"/>
+                <rect id="tape-end-badge" x="${(endX - 5).toFixed(1)}" y="${PAD_Y}" width="10" height="9" rx="1.5" fill="#14532d" stroke="#22c55e" stroke-width="1"/>
+                <text id="tape-end-text" x="${endX.toFixed(1)}" y="${PAD_Y + 7}" fill="#4ade80" font-size="6.5" font-family="monospace" font-weight="bold" text-anchor="middle">E</text>
+                <rect id="tape-start-badge" x="${(startX - 5).toFixed(1)}" y="${PAD_Y}" width="10" height="9" rx="1.5" fill="#14532d" stroke="#22c55e" stroke-width="1"/>
+                <text id="tape-start-text" x="${startX.toFixed(1)}" y="${PAD_Y + 7}" fill="#4ade80" font-size="6.5" font-family="monospace" font-weight="bold" text-anchor="middle">S</text>
+                <line id="tape-playhead-line" x1="${playX.toFixed(1)}" y1="${PAD_Y}" x2="${playX.toFixed(1)}" y2="${PAD_Y + INNER_H}" stroke="#fde047" stroke-width="2.2" class="drop-shadow-[0_0_8px_rgba(253,224,71,1)]" style="display: ${isPlaying ? 'block' : 'none'};"/>
             </svg>
         `;
     },
 
     /**
-     * Unified real-time DOM updater for the WAVE modal.
-     * Updates SVG lines/notches/slice overlays, progress bar, play button, and Start/End slider displays without rebuilding SVG innerHTML.
+     * Unified real-time DOM updater for SVG markers, progress bar, play button, and Start/End badges.
      */
     syncModalDOM(targetModal, m, state = {}) {
         if (!targetModal || !m) return;
 
-        const rawStart = state.rawStart !== undefined ? state.rawStart : (m.start ?? 0.0);
-        const rawEnd = state.rawEnd !== undefined ? state.rawEnd : (m.end ?? 1.0);
-        const resolved = this.resolveEffectiveBounds(m, rawStart, rawEnd);
+        const startPatched = Boolean(state.startPatched ?? m.startPatched);
+        const endPatched = Boolean(state.endPatched ?? m.endPatched);
+        const rawStart = startPatched ? (state.rawStart ?? m.start ?? 0.0) : (state.rawStart ?? m.start ?? 0.0);
+        const rawEnd = endPatched ? (state.rawEnd ?? m.end ?? 1.0) : (state.rawEnd ?? m.end ?? 1.0);
+        const bounds = this.resolveEffectiveBounds(m, rawStart, rawEnd);
+        const effStart = (startPatched || endPatched) && state.effStart !== undefined ? state.effStart : bounds.start;
+        const effEnd = (startPatched || endPatched) && state.effEnd !== undefined ? state.effEnd : bounds.end;
 
-        const effS = Math.max(0, Math.min(1, Number(state.effStart !== undefined ? state.effStart : resolved.effStart)));
-        const effE = Math.max(0, Math.min(1, Number(state.effEnd !== undefined ? state.effEnd : resolved.effEnd)));
-        const rStart = resolved.rawStart;
-        const rEnd = resolved.rawEnd;
-
-        const startPatched = Boolean(state.startPatched);
-        const endPatched = Boolean(state.endPatched);
-
-        // 1. Update Effective Start/End Green Markers
-        const sx = (effS * SVG_W).toFixed(1);
-        const ex = (effE * SVG_W).toFixed(1);
-        const sLabelX = effS > 0.90 ? (Number(sx) - 13).toFixed(1) : (Number(sx) + 3).toFixed(1);
-        const eLabelX = effE < 0.10 ? (Number(ex) + 3).toFixed(1) : (Number(ex) - 13).toFixed(1);
+        const startX = PAD_X + Math.max(0, Math.min(1, effStart)) * INNER_W;
+        const endX = PAD_X + Math.max(0, Math.min(1, effEnd)) * INNER_W;
 
         const startLine = targetModal.querySelector('#tape-start-line');
         const startBadge = targetModal.querySelector('#tape-start-badge');
         const startText = targetModal.querySelector('#tape-start-text');
-        if (startLine) {
-            startLine.setAttribute('x1', sx);
-            startLine.setAttribute('x2', sx);
-        }
-        if (startBadge) startBadge.setAttribute('x', sLabelX);
-        if (startText) startText.setAttribute('x', (Number(sLabelX) + 5.5).toFixed(1));
+        if (startLine) { startLine.setAttribute('x1', startX.toFixed(1)); startLine.setAttribute('x2', startX.toFixed(1)); }
+        if (startBadge) startBadge.setAttribute('x', (startX - 5).toFixed(1));
+        if (startText) startText.setAttribute('x', startX.toFixed(1));
 
         const endLine = targetModal.querySelector('#tape-end-line');
         const endBadge = targetModal.querySelector('#tape-end-badge');
         const endText = targetModal.querySelector('#tape-end-text');
-        if (endLine) {
-            endLine.setAttribute('x1', ex);
-            endLine.setAttribute('x2', ex);
-        }
-        if (endBadge) endBadge.setAttribute('x', eLabelX);
-        if (endText) endText.setAttribute('x', (Number(eLabelX) + 5.5).toFixed(1));
+        if (endLine) { endLine.setAttribute('x1', endX.toFixed(1)); endLine.setAttribute('x2', endX.toFixed(1)); }
+        if (endBadge) endBadge.setAttribute('x', (endX - 5).toFixed(1));
+        if (endText) endText.setAttribute('x', endX.toFixed(1));
 
-        // 2. Update Raw CV White Lines & Notches
-        const r = 3.5;
-        const rsx = (rStart * SVG_W).toFixed(1);
-        const rex = (rEnd * SVG_W).toFixed(1);
+        const cvStartX = PAD_X + Math.max(0, Math.min(1, bounds.rawStart)) * INNER_W;
+        const cvEndX = PAD_X + Math.max(0, Math.min(1, bounds.rawEnd)) * INNER_W;
 
         const cvStartLine = targetModal.querySelector('#tape-cv-start-line');
         const cvStartNotch = targetModal.querySelector('#tape-cv-start-notch');
-        if (cvStartLine) {
-            cvStartLine.setAttribute('x1', rsx);
-            cvStartLine.setAttribute('x2', rsx);
-            cvStartLine.style.display = 'block';
-        }
-        if (cvStartNotch) {
-            cvStartNotch.setAttribute('points', `${(Number(rsx) - r).toFixed(1)},0 ${(Number(rsx) + r).toFixed(1)},0 ${rsx},${(r * 1.6).toFixed(1)}`);
-            cvStartNotch.style.display = 'block';
-        }
+        if (cvStartLine) { cvStartLine.style.display = 'block'; cvStartLine.setAttribute('x1', cvStartX.toFixed(1)); cvStartLine.setAttribute('x2', cvStartX.toFixed(1)); }
+        if (cvStartNotch) { cvStartNotch.style.display = 'block'; cvStartNotch.setAttribute('points', `${(cvStartX - 3).toFixed(1)},${PAD_Y} ${(cvStartX + 3).toFixed(1)},${PAD_Y} ${cvStartX.toFixed(1)},${(PAD_Y + 4).toFixed(1)}`); }
 
         const cvEndLine = targetModal.querySelector('#tape-cv-end-line');
         const cvEndNotch = targetModal.querySelector('#tape-cv-end-notch');
-        if (cvEndLine) {
-            cvEndLine.setAttribute('x1', rex);
-            cvEndLine.setAttribute('x2', rex);
-            cvEndLine.style.display = 'block';
-        }
-        if (cvEndNotch) {
-            cvEndNotch.setAttribute('points', `${(Number(rex) - r).toFixed(1)},${SVG_H} ${(Number(rex) + r).toFixed(1)},${SVG_H} ${rex},${(SVG_H - r * 1.6).toFixed(1)}`);
-            cvEndNotch.style.display = 'block';
+        if (cvEndLine) { cvEndLine.style.display = 'block'; cvEndLine.setAttribute('x1', cvEndX.toFixed(1)); cvEndLine.setAttribute('x2', cvEndX.toFixed(1)); }
+        if (cvEndNotch) { cvEndNotch.style.display = 'block'; cvEndNotch.setAttribute('points', `${(cvEndX - 3).toFixed(1)},${(PAD_Y + INNER_H).toFixed(1)} ${(cvEndX + 3).toFixed(1)},${(PAD_Y + INNER_H).toFixed(1)} ${cvEndX.toFixed(1)},${(PAD_Y + INNER_H - 4).toFixed(1)}`); }
+
+        const rMin = Math.min(effStart, effEnd), rMax = Math.max(effStart, effEnd);
+        const isSnap = Boolean(m.snapMode);
+        targetModal.querySelectorAll('[data-slice-rect]').forEach(rectEl => {
+            const s0 = parseFloat(rectEl.getAttribute('data-s0') || '0');
+            const s1 = parseFloat(rectEl.getAttribute('data-s1') || '0');
+            const sel = isSnap && (s0 >= rMin - 0.01) && (s1 <= rMax + 0.01) && (rMax - rMin > 0.005);
+            rectEl.style.display = sel ? 'block' : 'none';
+        });
+        targetModal.querySelectorAll('[data-slice-label]').forEach(lblEl => {
+            const s0 = parseFloat(lblEl.getAttribute('data-s0') || '0');
+            const s1 = parseFloat(lblEl.getAttribute('data-s1') || '0');
+            const sel = isSnap && (s0 >= rMin - 0.01) && (s1 <= rMax + 0.01) && (rMax - rMin > 0.005);
+            lblEl.setAttribute('fill', sel ? '#fbbf24' : '#64748b');
+        });
+
+        const progressRange = targetModal.querySelector('#tape-progress-range');
+        if (progressRange) {
+            progressRange.style.left = `${(Math.min(effStart, effEnd) * 100).toFixed(1)}%`;
+            progressRange.style.width = `${(Math.abs(effEnd - effStart) * 100).toFixed(1)}%`;
         }
 
-        // 3. Update Slice Overlays
-        const chops = Array.isArray(m.chops) ? m.chops : [];
-        if (chops.length > 0) {
-            const sliceBounds = [0.0, ...chops.filter(c => c > 0.001 && c < 0.999), 1.0].sort((a, b) => a - b);
-            const minR = Math.min(effS, effE);
-            const maxR = Math.max(effS, effE);
-            for (let idx = 0; idx < sliceBounds.length - 1; idx++) {
-                const midRatio = (sliceBounds[idx] + sliceBounds[idx + 1]) * 0.5;
-                const isSel = midRatio >= minR - 0.002 && midRatio <= maxR + 0.002;
-                const rectEl = targetModal.querySelector(`[data-slice-rect="${idx}"]`);
-                const lblEl = targetModal.querySelector(`[data-slice-label="${idx}"]`);
-                if (rectEl) {
-                    rectEl.setAttribute('fill', isSel ? (m.snapMode ? 'rgba(56,189,248,0.16)' : 'rgba(74,222,128,0.10)') : 'rgba(15,23,42,0.35)');
+        const isTapePlaying = Boolean(state.isPlaying);
+        const playhead = state.playhead ?? 0.0;
+        const playheadLine = targetModal.querySelector('#tape-playhead-line');
+        if (playheadLine) {
+            if (isTapePlaying) {
+                playheadLine.style.display = 'block';
+                const px = PAD_X + Math.max(0, Math.min(1, playhead)) * INNER_W;
+                playheadLine.setAttribute('x1', px.toFixed(1));
+                playheadLine.setAttribute('x2', px.toFixed(1));
+            } else {
+                playheadLine.style.display = 'none';
+            }
+        }
+
+        const progressFill = targetModal.querySelector('#tape-progress-fill');
+        const progressDot = targetModal.querySelector('#tape-progress-dot');
+        if (progressDot) {
+            progressDot.style.display = 'block';
+            if (isTapePlaying) {
+                progressDot.style.left = `${(Math.max(0, Math.min(1, playhead)) * 100).toFixed(1)}%`;
+                if (progressFill) {
+                    progressFill.style.opacity = '1';
+                    progressFill.style.left = `${(Math.min(effStart, playhead) * 100).toFixed(1)}%`;
+                    progressFill.style.width = `${(Math.abs(playhead - effStart) * 100).toFixed(1)}%`;
                 }
-                if (lblEl) {
-                    lblEl.setAttribute('fill', isSel ? (m.snapMode ? '#38bdf8' : '#4ade80') : '#64748b');
-                }
+            } else {
+                progressDot.style.left = `${(effStart * 100).toFixed(1)}%`;
+                if (progressFill) progressFill.style.opacity = '0';
             }
         }
 
-        // 4. Update Playhead, Progress Bar & Play Button
-        const minPct = Math.min(effS, effE) * 100;
-        const maxPct = Math.max(effS, effE) * 100;
-        const progRange = targetModal.querySelector('#tape-progress-range');
-        if (progRange) {
-            progRange.style.left = `${minPct.toFixed(1)}%`;
-            progRange.style.width = `${Math.max(0.5, maxPct - minPct).toFixed(1)}%`;
-        }
-
-        if (state.playhead !== undefined || state.isPlaying !== undefined) {
-            const playhead = Math.max(0, Math.min(1, Number(state.playhead ?? 0.0)));
-            const isPlaying = Boolean(state.isPlaying);
-            const playLine = targetModal.querySelector('#tape-playhead-line');
-            if (playLine) {
-                const px = (playhead * SVG_W).toFixed(1);
-                playLine.setAttribute('x1', px);
-                playLine.setAttribute('x2', px);
-                playLine.style.display = isPlaying ? 'block' : 'none';
-            }
-
-            const progFill = targetModal.querySelector('#tape-progress-fill');
-            const progDot = targetModal.querySelector('#tape-progress-dot');
-            const pct = playhead * 100;
-            if (progFill) {
-                const fillLeft = Math.min(minPct, pct);
-                const fillWidth = isPlaying ? Math.max(0, pct - minPct) : 0;
-                progFill.style.left = `${fillLeft.toFixed(1)}%`;
-                progFill.style.width = `${fillWidth.toFixed(1)}%`;
-            }
-            if (progDot) {
-                progDot.style.left = `calc(${pct.toFixed(1)}% - 5px)`;
-                progDot.style.display = isPlaying ? 'block' : 'none';
-            }
-
-            const playBtn = targetModal.querySelector('#tape-play-btn');
-            if (playBtn && playBtn.dataset.playing !== (isPlaying ? '1' : '0')) {
-                playBtn.dataset.playing = isPlaying ? '1' : '0';
-                playBtn.innerHTML = isPlaying ? '&#9632;' : '&#9654;';
-                playBtn.style.background = isPlaying ? 'rgba(239,68,68,0.2)' : 'rgba(74,222,128,0.18)';
-                playBtn.style.borderColor = isPlaying ? '#ef4444' : '#4ade80';
-                playBtn.style.color = isPlaying ? '#ef4444' : '#4ade80';
+        const playBtn = targetModal.querySelector('#tape-play-btn');
+        if (playBtn && state.isPlaying !== undefined) {
+            const cur = playBtn.querySelector('[data-lucide]')?.getAttribute('data-lucide');
+            const target = isTapePlaying ? 'square' : 'play';
+            if (cur !== target) {
+                playBtn.innerHTML = `<i data-lucide="${target}" class="w-3 h-3"></i>`;
+                if (window.lucide) window.lucide.createIcons({ root: playBtn });
             }
         }
 
-        // 5. Update Start/End Sliders & Badges
-        const sliderStart = targetModal.querySelector('#tape-slider-start');
-        const sliderStartDisp = targetModal.querySelector('#tape-slider-start-disp');
-        if (sliderStart) {
-            sliderStart.disabled = startPatched;
-            sliderStart.style.opacity = startPatched ? '0.45' : '1';
-            if (startPatched || document.activeElement !== sliderStart) {
-                sliderStart.value = rStart.toFixed(3);
-            }
-        }
-        if (sliderStartDisp) {
-            sliderStartDisp.textContent = this.formatBoundDisp(m, rStart, effS, startPatched);
-        }
+        const startDisp = targetModal.querySelector('#tape-slider-start-disp');
+        const endDisp = targetModal.querySelector('#tape-slider-end-disp');
+        const inStart = targetModal.querySelector('#tape-slider-start');
+        const inEnd = targetModal.querySelector('#tape-slider-end');
+        if (startDisp) startDisp.textContent = this.formatBoundDisp(m, bounds.rawStart, effStart, startPatched);
+        if (endDisp) endDisp.textContent = this.formatBoundDisp(m, bounds.rawEnd, effEnd, endPatched);
+        if (inStart && !startPatched) inStart.value = bounds.rawStart;
+        if (inEnd && !endPatched) inEnd.value = bounds.rawEnd;
+    },
 
-        const sliderEnd = targetModal.querySelector('#tape-slider-end');
-        const sliderEndDisp = targetModal.querySelector('#tape-slider-end-disp');
-        if (sliderEnd) {
-            sliderEnd.disabled = endPatched;
-            sliderEnd.style.opacity = endPatched ? '0.45' : '1';
-            if (endPatched || document.activeElement !== sliderEnd) {
-                sliderEnd.value = rEnd.toFixed(3);
-            }
+    updateLive(cell, data, isPlaying, targetModal, m) {
+        if (targetModal) {
+            this.syncModalDOM(targetModal, m, {
+                playhead: data?.playhead ?? 0.0,
+                isPlaying: Boolean(data?.isPlaying),
+                startPatched: Boolean(data?.startPatched ?? m.startPatched),
+                endPatched: Boolean(data?.endPatched ?? m.endPatched),
+                rawStart: data?.rawStart,
+                rawEnd: data?.rawEnd,
+                effStart: data?.effStart,
+                effEnd: data?.effEnd
+            });
         }
-        if (sliderEndDisp) {
-            sliderEndDisp.textContent = this.formatBoundDisp(m, rEnd, effE, endPatched);
-        }
+        cell?.querySelectorAll('[data-tape-bar]').forEach(bar => {
+            bar.classList.toggle('bar-active-audio', Boolean(data?.isPlaying));
+        });
     }
 };
 
