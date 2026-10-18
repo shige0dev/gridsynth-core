@@ -1,5 +1,5 @@
 // src/audio/defs/wave.js
-import { WaveCodec } from '../wave-codec.js?v=254';
+import { WaveCodec } from '../wave-codec.js?v=255';
 
 export const WAVE = {
     create: (ctx, d, patch, eng) => {
@@ -26,13 +26,19 @@ export const WAVE = {
             chops: Array.isArray(d.chops) ? d.chops : []
         });
 
-        // Initialize Audio Buffer from Base64
-        const sendBufferToWorklet = (float32Buf, sRate) => {
+        // Initialize Audio Buffer from Base64 (skip redundant sends of identical buffer to preserve playhead)
+        let lastSentBuffer = null;
+        let lastSentRate = 0;
+        const sendBufferToWorklet = (float32Buf, sRate, force = false) => {
             if (!float32Buf || float32Buf.length === 0) return;
+            const effRate = sRate || ctx.sampleRate;
+            if (!force && lastSentBuffer === float32Buf && lastSentRate === effRate) return;
+            lastSentBuffer = float32Buf;
+            lastSentRate = effRate;
             w.port.postMessage({
                 type: 'SET_BUFFER',
                 buffer: float32Buf,
-                sampleRate: sRate || ctx.sampleRate
+                sampleRate: effRate
             });
         };
 

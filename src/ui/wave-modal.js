@@ -1,8 +1,8 @@
 // src/ui/wave-modal.js
-import { UIHelpers } from './helpers.js?v=254';
-import { WaveCodec } from '../audio/wave-codec.js?v=254';
-import { WaveView } from './wave-view.js?v=254';
-import { JsonIoDialog } from './json-io-dialog.js?v=254';
+import { UIHelpers } from './helpers.js?v=255';
+import { WaveCodec } from '../audio/wave-codec.js?v=255';
+import { WaveView } from './wave-view.js?v=255';
+import { JsonIoDialog } from './json-io-dialog.js?v=255';
 
 /**
  * WAVE Module Modal Renderer & Event Controller
@@ -370,7 +370,13 @@ export const WaveModal = {
         const pitchActive = Boolean(m.pitchMode);
         const semiActive = Boolean(m.semiMode);
 
-        const bounds = WaveView.resolveEffectiveBounds(m);
+        const curState = this.getActiveInst(ctx, m)?.read?.();
+        const curPlayhead = curState?.playhead ?? 0.0;
+        const curIsPlaying = Boolean(curState?.isPlaying);
+        const rawS = isStartPatched ? (curState?.rawStart ?? m.start ?? 0.0) : (m.start ?? 0.0);
+        const rawE = isEndPatched ? (curState?.rawEnd ?? m.end ?? 1.0) : (m.end ?? 1.0);
+
+        const bounds = WaveView.resolveEffectiveBounds(m, rawS, rawE);
         const startDisp = WaveView.formatBoundDisp(m, bounds.rawStart, bounds.effStart, isStartPatched);
         const endDisp = WaveView.formatBoundDisp(m, bounds.rawEnd, bounds.effEnd, isEndPatched);
         const rawSpeedCv = m.speedCv !== undefined ? m.speedCv : Math.log2(m.speed || 1.0);
@@ -419,7 +425,7 @@ export const WaveModal = {
 
                 <!-- Oscilloscope-sized Waveform Display -->
                 <div id="wave-waveform-wrap" class="w-full">
-                    ${WaveView.renderWaveformSVG(m, 0.0, false)}
+                    ${WaveView.renderWaveformSVG(m, curPlayhead, curIsPlaying, bounds.effStart, bounds.effEnd, bounds.rawStart, bounds.rawEnd)}
                 </div>
 
                 <!-- CHOP and SNAP Controls -->
@@ -444,8 +450,8 @@ export const WaveModal = {
                 <!-- Row 1: PLAY, LOOP, RETRIG & SPEED/PITCH Slider -->
                 <div class="flex items-center justify-between gap-2 px-2 py-1.5 bg-slate-950/70 rounded-xl border border-slate-800 text-[8.5px]">
                     <div class="flex items-center gap-1 shrink-0">
-                        <button id="wave-play-btn" class="h-6 w-7 rounded bg-cyan-600 hover:bg-cyan-500 text-white font-bold transition flex items-center justify-center shadow-sm active:scale-95 cursor-pointer shrink-0" title="PLAY / STOP">
-                            <i id="wave-play-icon" data-lucide="play" class="w-3 h-3"></i>
+                        <button id="wave-play-btn" class="h-6 w-7 rounded ${curIsPlaying ? 'bg-red-600 hover:bg-red-500' : 'bg-cyan-600 hover:bg-cyan-500'} text-white font-bold transition flex items-center justify-center shadow-sm active:scale-95 cursor-pointer shrink-0" title="PLAY / STOP">
+                            <i id="wave-play-icon" data-lucide="${curIsPlaying ? 'square' : 'play'}" class="w-3 h-3"></i>
                         </button>
                         <button id="wave-loop-btn" class="h-6 w-7 rounded border ${loopActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0" title="LOOP (ループ再生 ON/OFF)">
                             <i data-lucide="repeat" class="w-3 h-3"></i>
