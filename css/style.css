@@ -286,6 +286,22 @@ body {
     transition: opacity 0.15s ease;
 }
 
+/* Lock module/cell operations during Row Handle Mode */
+.row-handle-mode-active .grid-cell,
+.row-handle-mode-active .port,
+.row-handle-mode-active .module-body {
+    pointer-events: none !important;
+    cursor: default !important;
+}
+
+.row-handle-mode-active #cable-canvas {
+    pointer-events: none !important;
+}
+
+.row-handle-mode-active .grid-cell {
+    transition: border-color 0.2s ease, opacity 0.2s ease;
+}
+
 .row-insert-line {
     position: absolute;
     left: 0;

@@ -1,6 +1,6 @@
 // src/ui/managers/interaction-manager.js
-import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=263';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=263';
+import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=264';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=264';
 
 export class InteractionManager {
     constructor(ui) {
@@ -113,6 +113,7 @@ export class InteractionManager {
         });
 
         this.ui.gridBoard.addEventListener('click', async (e) => {
+            if (this.isRowHandleMode) return;
             const port = e.target.closest('.port');
             if (port) {
                 if (this.portLongPressed) {
@@ -201,6 +202,7 @@ export class InteractionManager {
         });
 
         this.ui.gridBoard.addEventListener('pointerdown', (e) => {
+            if (this.isRowHandleMode) return;
             this._sX = e.clientX;
             this._sY = e.clientY;
             const port = e.target.closest('.port');
@@ -438,8 +440,20 @@ export class InteractionManager {
                 btn.classList.add('bg-slate-900', 'border-slate-700', 'text-slate-400');
             }
         }
+        if (this.isRowHandleMode) {
+            // Deselect any selected modules or connection targets
+            if (this.selectedModuleIds.length > 0) {
+                this.selectedModuleIds = [];
+                this.updateSelectionClasses();
+            }
+            if (this.ui.selectedTargetForConnection) {
+                this.ui.selectedTargetForConnection = null;
+                this.ui.updatePortHighlight();
+            }
+        }
+        this.ui.gridBoard?.classList.toggle('row-handle-mode-active', this.isRowHandleMode);
         this.updateRowHandleRail();
-        this.ui.showToast(this.isRowHandleMode ? 'ROW MODE: 行ハンドル表示中（ドラッグで上下差し込み）' : 'ROW MODE: 解除（セル固定）');
+        this.ui.showToast(this.isRowHandleMode ? 'ROW MODE: 行ハンドル表示中（モジュール操作ロック）' : 'ROW MODE: 解除（モジュール操作アンロック）');
     }
 
     initRowHandleUI() {

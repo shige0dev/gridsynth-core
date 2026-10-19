@@ -1,8 +1,8 @@
 // src/ui/managers/modal-manager.js
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=263';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=264';
 import { FACTORY_SUBPATCHES } from '../../presets/subpatches.js';
 import { UIHelpers } from '../helpers.js?v=187';
-import { generateModuleId } from '../../core/utils.js?v=263';
+import { generateModuleId } from '../../core/utils.js?v=264';
 
 export const MODAL_WIDTHS = {
     // Complex Synthesizers
