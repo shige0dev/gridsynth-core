@@ -1,6 +1,6 @@
 // src/ui/managers/interaction-manager.js
-import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=260';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=260';
+import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=261';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=261';
 
 export class InteractionManager {
     constructor(ui) {
@@ -25,6 +25,12 @@ export class InteractionManager {
         this._dragCandidate = null;
         this.portLongPressed = false;
         this.moduleLongPressed = false;
+
+        // Row Handle Mode & Row Movement states
+        this.isRowHandleMode = false;
+        this.draggingRow = null;
+        this.rowInsertTargetIndex = null;
+        this.rowInsertIndicatorEl = null;
 
         // Ready for future modes: 'edit', 'performance', 'visualizer'
         this.mode = 'edit';
@@ -415,6 +421,227 @@ export class InteractionManager {
             this.portLongPressed = false;
             this.moduleLongPressed = false;
         });
+
+        // Initialize Row Handle UI elements
+        this.initRowHandleUI();
+    }
+
+    toggleRowHandleMode() {
+        this.isRowHandleMode = !this.isRowHandleMode;
+        const btn = document.getElementById('row-handle-mode-btn');
+        if (btn) {
+            if (this.isRowHandleMode) {
+                btn.classList.add('bg-cyan-950/90', 'border-cyan-500/80', 'text-cyan-300', 'shadow-cyan-500/20');
+                btn.classList.remove('bg-slate-900', 'border-slate-700', 'text-slate-400');
+            } else {
+                btn.classList.remove('bg-cyan-950/90', 'border-cyan-500/80', 'text-cyan-300', 'shadow-cyan-500/20');
+                btn.classList.add('bg-slate-900', 'border-slate-700', 'text-slate-400');
+            }
+        }
+        this.updateRowHandleRail();
+        this.ui.showToast(this.isRowHandleMode ? 'ROW MODE: 行ハンドル表示中（ドラッグで上下差し込み）' : 'ROW MODE: 解除（セル固定）');
+    }
+
+    initRowHandleUI() {
+        const gridBoard = this.ui.gridBoard;
+        if (!gridBoard) return;
+
+        let rail = document.getElementById('row-handle-rail');
+        if (!rail) {
+            rail = document.createElement('div');
+            rail.id = 'row-handle-rail';
+            rail.className = 'row-handle-rail absolute top-0 bottom-0 z-30 flex flex-col justify-between pointer-events-none transition-all duration-200';
+            rail.style.display = 'none';
+            rail.style.width = '24px';
+            rail.style.left = '-26px';
+            gridBoard.parentElement.appendChild(rail);
+        }
+
+        let indicator = document.getElementById('row-insert-indicator');
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.id = 'row-insert-indicator';
+            indicator.className = 'row-insert-line hidden';
+            gridBoard.appendChild(indicator);
+        }
+        this.rowInsertIndicatorEl = indicator;
+
+        // Build 8 row handle buttons
+        rail.innerHTML = '';
+        for (let r = 0; r < this.ui.ROWS; r++) {
+            const handle = document.createElement('div');
+            handle.className = 'row-handle-btn pointer-events-auto flex items-center justify-center bg-slate-900/90 border border-slate-700/80 rounded text-slate-400 hover:text-cyan-300 hover:border-cyan-500/60 font-mono text-[9px] font-bold cursor-grab active:cursor-grabbing select-none shadow-sm';
+            handle.dataset.row = String(r);
+            handle.title = `行 ${r + 1} をドラッグして上下に差し込み移動`;
+            handle.innerHTML = `<span class="opacity-40 text-[7px] mr-0.5 pointer-events-none">⠿</span><span class="pointer-events-none">${String(r + 1).padStart(2, '0')}</span>`;
+
+            this.bindRowHandleEvents(handle, r);
+            rail.appendChild(handle);
+        }
+
+        // Align rail heights on resize
+        window.addEventListener('resize', () => {
+            if (this.isRowHandleMode) this.updateRowHandleRail();
+        });
+    }
+
+    updateRowHandleRail() {
+        const rail = document.getElementById('row-handle-rail');
+        const gridBoard = this.ui.gridBoard;
+        if (!rail || !gridBoard) return;
+
+        if (!this.isRowHandleMode) {
+            rail.style.display = 'none';
+            if (this.rowInsertIndicatorEl) this.rowInsertIndicatorEl.classList.add('hidden');
+            gridBoard.parentElement.style.paddingLeft = '';
+            setTimeout(() => this.ui.renderCables(), 50);
+            return;
+        }
+
+        rail.style.display = 'flex';
+        gridBoard.parentElement.style.paddingLeft = '30px';
+
+        const handles = rail.querySelectorAll('.row-handle-btn');
+        for (let r = 0; r < this.ui.ROWS; r++) {
+            const firstCellInRow = document.getElementById(`cell-${r * this.ui.COLS}`);
+            const handle = handles[r];
+            if (firstCellInRow && handle) {
+                const cellRect = firstCellInRow.getBoundingClientRect();
+                const parentRect = gridBoard.parentElement.getBoundingClientRect();
+                const topOffset = cellRect.top - parentRect.top;
+                handle.style.position = 'absolute';
+                handle.style.top = `${topOffset}px`;
+                handle.style.height = `${cellRect.height}px`;
+                handle.style.left = '4px';
+                handle.style.width = '24px';
+            }
+        }
+        setTimeout(() => this.ui.renderCables(), 50);
+    }
+
+    bindRowHandleEvents(handle, r) {
+        let isRowDragging = false;
+        let startY = 0;
+        let originalRow = r;
+        let currentTargetRow = r;
+
+        const onPointerMove = (e) => {
+            if (!isRowDragging) {
+                if (Math.abs(e.clientY - startY) > 5) {
+                    isRowDragging = true;
+                    this.draggingRow = originalRow;
+                    handle.classList.add('dragging');
+
+                    // Highlight all cells in source row
+                    for (let c = 0; c < this.ui.COLS; c++) {
+                        const cell = document.getElementById(`cell-${originalRow * this.ui.COLS + c}`);
+                        if (cell) cell.classList.add('row-cell-dragging');
+                    }
+                }
+            }
+
+            if (isRowDragging) {
+                const gridBoard = this.ui.gridBoard;
+                const boardRect = gridBoard.getBoundingClientRect();
+                const rowHeight = boardRect.height / this.ui.ROWS;
+                const relY = e.clientY - boardRect.top;
+
+                // Determine target insertion index (0 to ROWS)
+                let insertIdx = Math.round(relY / rowHeight);
+                insertIdx = Math.max(0, Math.min(this.ui.ROWS, insertIdx));
+                currentTargetRow = insertIdx;
+
+                if (this.rowInsertIndicatorEl) {
+                    this.rowInsertIndicatorEl.classList.remove('hidden');
+                    const targetTop = (insertIdx / this.ui.ROWS) * boardRect.height;
+                    this.rowInsertIndicatorEl.style.top = `${targetTop}px`;
+                }
+            }
+        };
+
+        const onPointerUp = (e) => {
+            try { handle.releasePointerCapture(e.pointerId); } catch (_) {}
+            window.removeEventListener('pointermove', onPointerMove);
+            window.removeEventListener('pointerup', onPointerUp);
+            window.removeEventListener('pointercancel', onPointerUp);
+
+            if (this.rowInsertIndicatorEl) {
+                this.rowInsertIndicatorEl.classList.add('hidden');
+            }
+
+            for (let c = 0; c < this.ui.COLS; c++) {
+                const cell = document.getElementById(`cell-${originalRow * this.ui.COLS + c}`);
+                if (cell) cell.classList.remove('row-cell-dragging');
+            }
+            handle.classList.remove('dragging');
+
+            if (isRowDragging) {
+                isRowDragging = false;
+                this.draggingRow = null;
+                // Execute row reorder / insertion if target is different
+                this.moveRowTo(originalRow, currentTargetRow);
+            }
+        };
+
+        handle.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            originalRow = parseInt(handle.dataset.row);
+            startY = e.clientY;
+            try { handle.setPointerCapture(e.pointerId); } catch (_) {}
+            window.addEventListener('pointermove', onPointerMove, { passive: false });
+            window.addEventListener('pointerup', onPointerUp);
+            window.addEventListener('pointercancel', onPointerUp);
+        });
+    }
+
+    moveRowTo(sourceRow, targetInsertRow) {
+        if (sourceRow < 0 || sourceRow >= this.ui.ROWS) return;
+        if (targetInsertRow < 0 || targetInsertRow > this.ui.ROWS) return;
+
+        // If targetInsertRow is either sourceRow or sourceRow + 1, order remains identical
+        if (targetInsertRow === sourceRow || targetInsertRow === sourceRow + 1) {
+            return;
+        }
+
+        this.ui.saveHistory();
+
+        // Calculate destination row index (0-indexed)
+        const destRow = targetInsertRow > sourceRow ? targetInsertRow - 1 : targetInsertRow;
+
+        // Build mapping from old row index to new row index
+        const rowMap = new Array(this.ui.ROWS);
+        for (let r = 0; r < this.ui.ROWS; r++) rowMap[r] = r;
+
+        // Splice source row and insert at destRow
+        const [removedRow] = rowMap.splice(sourceRow, 1);
+        rowMap.splice(destRow, 0, removedRow);
+
+        // Invert to get for each old row: where does it go?
+        const newRowForOld = new Array(this.ui.ROWS);
+        for (let newR = 0; newR < this.ui.ROWS; newR++) {
+            const oldR = rowMap[newR];
+            newRowForOld[oldR] = newR;
+        }
+
+        // Update row of all modules
+        let movedCount = 0;
+        Object.values(this.ui.modules).forEach(m => {
+            if (m.row !== undefined && newRowForOld[m.row] !== undefined) {
+                const updatedRow = newRowForOld[m.row];
+                if (updatedRow !== m.row) {
+                    m.row = updatedRow;
+                    movedCount++;
+                }
+            }
+        });
+
+        this.ui.syncGridMap();
+        this.ui.updateAllCells();
+        this.ui.renderCables();
+        this.updateRowHandleRail();
+
+        this.ui.showToast(`行 ${sourceRow + 1} を 行 ${destRow + 1} に差し込み移動しました`);
     }
 }
 

@@ -1,13 +1,13 @@
-import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=260';
-import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=260';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=260';
+import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=261';
+import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=261';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=261';
 import { UIHelpers } from './helpers.js?v=229';
-import { PresetManager } from './managers/preset-manager.js?v=260';
-import { ModalManager } from './managers/modal-manager.js?v=260';
-import { CableManager } from './managers/cable-manager.js?v=260';
-import { PageManager } from './managers/page-manager.js?v=260';
-import { InteractionManager } from './managers/interaction-manager.js?v=260';
-import { WaveCodec } from '../audio/wave-codec.js?v=260';
+import { PresetManager } from './managers/preset-manager.js?v=261';
+import { ModalManager } from './managers/modal-manager.js?v=261';
+import { CableManager } from './managers/cable-manager.js?v=261';
+import { PageManager } from './managers/page-manager.js?v=261';
+import { InteractionManager } from './managers/interaction-manager.js?v=261';
+import { WaveCodec } from '../audio/wave-codec.js?v=261';
 
 export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'SPEC', 'MON', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE'];
 
@@ -70,6 +70,8 @@ export class UIController {
     set isDragging(v) { this.interactionManager.isDragging = v; }
     get dropTargetIndex() { return this.interactionManager.dropTargetIndex; }
     set dropTargetIndex(v) { this.interactionManager.dropTargetIndex = v; }
+    get isRowHandleMode() { return this.interactionManager.isRowHandleMode; }
+    set isRowHandleMode(v) { this.interactionManager.isRowHandleMode = v; }
     get dragMode() { return this.interactionManager.dragMode; }
     set dragMode(v) { this.interactionManager.dragMode = v; }
     get dragGroupOffsets() { return this.interactionManager.dragGroupOffsets; }
@@ -658,6 +660,10 @@ export class UIController {
             const nextOp = steps[nextIdx];
             this.setCableOpacity(nextOp);
             this.showToast(nextOp < 0.5 ? 'CABLE: DIM (20%)' : 'CABLE: BRIGHT (100%)');
+        });
+
+        document.getElementById('row-handle-mode-btn')?.addEventListener('click', () => {
+            this.interactionManager.toggleRowHandleMode();
         });
 
         document.getElementById('audio-power-btn')?.addEventListener('click', async () => {
