@@ -1,8 +1,8 @@
 // src/ui/wave-modal.js
-import { UIHelpers } from './helpers.js?v=264';
-import { WaveCodec } from '../audio/wave-codec.js?v=264';
-import { WaveView } from './wave-view.js?v=264';
-import { JsonIoDialog } from './json-io-dialog.js?v=264';
+import { UIHelpers } from './helpers.js?v=265';
+import { WaveCodec } from '../audio/wave-codec.js?v=265';
+import { WaveView } from './wave-view.js?v=265';
+import { JsonIoDialog } from './json-io-dialog.js?v=265';
 
 /**
  * WAVE Module Modal Renderer & Event Controller

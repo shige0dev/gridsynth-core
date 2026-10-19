@@ -1,6 +1,6 @@
 // src/ui/managers/interaction-manager.js
-import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=264';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=264';
+import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=265';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=265';
 
 export class InteractionManager {
     constructor(ui) {
@@ -535,10 +535,77 @@ export class InteractionManager {
         let startY = 0;
         let originalRow = r;
         let currentTargetRow = r;
+        const gridBoard = this.ui.gridBoard;
+        const handles = document.querySelectorAll('.row-handle-btn');
+
+        const updateDynamicRowShifts = (targetInsertIdx, currentDeltaY) => {
+            const firstCell = document.getElementById('cell-0');
+            const rowHeightWithGap = firstCell ? (firstCell.getBoundingClientRect().height + 6) : 56;
+
+            // Animate dragging row elements following pointer
+            for (let c = 0; c < this.ui.COLS; c++) {
+                const cell = document.getElementById(`cell-${originalRow * this.ui.COLS + c}`);
+                if (cell) {
+                    cell.style.transform = `translateY(${currentDeltaY}px) scale(1.02)`;
+                }
+            }
+            handle.style.transform = `translateY(${currentDeltaY}px) scale(1.15)`;
+
+            // Calculate shift for every other row: does it need to slide up or down?
+            for (let rowIdx = 0; rowIdx < this.ui.ROWS; rowIdx++) {
+                if (rowIdx === originalRow) continue;
+
+                let shiftY = 0;
+                if (targetInsertIdx > originalRow) {
+                    // Moving downward: rows between (originalRow + 1) and (targetInsertIdx - 1) shift UP by 1 row
+                    if (rowIdx > originalRow && rowIdx < targetInsertIdx) {
+                        shiftY = -rowHeightWithGap;
+                    }
+                } else if (targetInsertIdx < originalRow) {
+                    // Moving upward: rows between targetInsertIdx and (originalRow - 1) shift DOWN by 1 row
+                    if (rowIdx >= targetInsertIdx && rowIdx < originalRow) {
+                        shiftY = rowHeightWithGap;
+                    }
+                }
+
+                // Apply transform to all 5 cells of rowIdx
+                for (let c = 0; c < this.ui.COLS; c++) {
+                    const otherCell = document.getElementById(`cell-${rowIdx * this.ui.COLS + c}`);
+                    if (otherCell) {
+                        otherCell.classList.add('row-cell-shifting');
+                        otherCell.style.transform = shiftY !== 0 ? `translateY(${shiftY}px)` : '';
+                    }
+                }
+
+                // Also shift corresponding row handle
+                const otherHandle = handles[rowIdx];
+                if (otherHandle && otherHandle !== handle) {
+                    otherHandle.classList.add('row-handle-shifting');
+                    otherHandle.style.transform = shiftY !== 0 ? `translateY(${shiftY}px)` : '';
+                }
+            }
+        };
+
+        const resetAllRowTransforms = () => {
+            for (let idx = 0; idx < 40; idx++) {
+                const cell = document.getElementById(`cell-${idx}`);
+                if (cell) {
+                    cell.classList.remove('row-cell-dragging', 'row-cell-shifting');
+                    cell.style.transform = '';
+                    cell.style.zIndex = '';
+                }
+            }
+            handles.forEach(h => {
+                h.classList.remove('dragging', 'row-handle-shifting');
+                h.style.transform = '';
+            });
+        };
 
         const onPointerMove = (e) => {
+            const deltaY = e.clientY - startY;
+
             if (!isRowDragging) {
-                if (Math.abs(e.clientY - startY) > 5) {
+                if (Math.abs(deltaY) > 5) {
                     isRowDragging = true;
                     this.draggingRow = originalRow;
                     handle.classList.add('dragging');
@@ -546,14 +613,14 @@ export class InteractionManager {
                     // Highlight all cells in source row
                     for (let c = 0; c < this.ui.COLS; c++) {
                         const cell = document.getElementById(`cell-${originalRow * this.ui.COLS + c}`);
-                        if (cell) cell.classList.add('row-cell-dragging');
+                        if (cell) {
+                            cell.classList.add('row-cell-dragging');
+                        }
                     }
                 }
             }
 
             if (isRowDragging) {
-                const gridBoard = this.ui.gridBoard;
-                const parentRect = gridBoard.parentElement.getBoundingClientRect();
                 const boardRect = gridBoard.getBoundingClientRect();
                 const rowHeight = boardRect.height / this.ui.ROWS;
                 const relY = e.clientY - boardRect.top;
@@ -563,13 +630,8 @@ export class InteractionManager {
                 insertIdx = Math.max(0, Math.min(this.ui.ROWS, insertIdx));
                 currentTargetRow = insertIdx;
 
-                if (this.rowInsertIndicatorEl) {
-                    this.rowInsertIndicatorEl.classList.remove('hidden');
-                    const targetTop = (boardRect.top - parentRect.top) + (insertIdx / this.ui.ROWS) * boardRect.height;
-                    this.rowInsertIndicatorEl.style.top = `${targetTop}px`;
-                    this.rowInsertIndicatorEl.style.left = `${boardRect.left - parentRect.left}px`;
-                    this.rowInsertIndicatorEl.style.width = `${boardRect.width}px`;
-                }
+                // Dynamically open gap by shifting other rows
+                updateDynamicRowShifts(insertIdx, deltaY);
             }
         };
 
@@ -579,15 +641,7 @@ export class InteractionManager {
             window.removeEventListener('pointerup', onPointerUp);
             window.removeEventListener('pointercancel', onPointerUp);
 
-            if (this.rowInsertIndicatorEl) {
-                this.rowInsertIndicatorEl.classList.add('hidden');
-            }
-
-            for (let c = 0; c < this.ui.COLS; c++) {
-                const cell = document.getElementById(`cell-${originalRow * this.ui.COLS + c}`);
-                if (cell) cell.classList.remove('row-cell-dragging');
-            }
-            handle.classList.remove('dragging');
+            resetAllRowTransforms();
 
             if (isRowDragging) {
                 isRowDragging = false;
