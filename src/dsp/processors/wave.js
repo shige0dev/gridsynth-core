@@ -1,5 +1,5 @@
 // src/dsp/processors/wave.js
-import { WaveGrainShifter } from '../wave-grain-shifter.js?v=266';
+import { WaveGrainShifter } from '../wave-grain-shifter.js?v=267';
 
 export class WaveProcessor extends AudioWorkletProcessor {
     constructor() {

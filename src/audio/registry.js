@@ -8,7 +8,7 @@ import { filterAudioDefs } from './defs/filter.js';
 import { ampAudioDefs } from './defs/amp.js?v=187';
 import { effectsAudioDefs } from './defs/effects.js?v=187';
 import { adsrAudioDefs } from './defs/adsr.js';
-import { modAudioDefs } from './defs/mod.js?v=266';
+import { modAudioDefs } from './defs/mod.js?v=267';
 import { ioAudioDefs } from './defs/io.js?v=185';
 import { seqAudioDefs } from './defs/seq.js';
 import { chordAudioDefs } from './defs/chord.js';
@@ -19,7 +19,7 @@ import { fmAudioDefs } from './defs/fm.js';
 import { scaleAudioDefs } from './defs/scale.js?v=217';
 import { rfAudioDefs } from './defs/rf.js?v=217';
 import { arAudioDefs } from './defs/ar.js?v=217';
-import { waveAudioDefs } from './defs/wave.js?v=266';
+import { waveAudioDefs } from './defs/wave.js?v=267';
 
 export const AUDIO_REGISTRY = {
     ...vcoAudioDefs,

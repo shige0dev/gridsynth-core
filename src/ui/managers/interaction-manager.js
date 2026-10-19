@@ -1,6 +1,6 @@
 // src/ui/managers/interaction-manager.js
-import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=266';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=266';
+import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=267';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=267';
 
 export class InteractionManager {
     constructor(ui) {
@@ -30,8 +30,8 @@ export class InteractionManager {
         this.isRowHandleMode = false;
         this.draggingRow = null;
         this.rowInsertTargetIndex = null;
-        this.rowInsertIndicatorEl = null;
-        this.rowHandles = [];
+        this.rowHandleOverlayEl = null;
+        this.rowTracks = [];
         this.rowTargetSlotIndicatorEl = null;
 
         // Ready for future modes: 'edit', 'performance', 'visualizer'
@@ -462,19 +462,50 @@ export class InteractionManager {
         const gridBoard = this.ui.gridBoard;
         if (!gridBoard) return;
 
-        if (!this.rowHandles || this.rowHandles.length === 0) {
-            this.rowHandles = [];
-            for (let r = 0; r < this.ui.ROWS; r++) {
-                const handle = document.createElement('div');
-                handle.id = `row-handle-${r}`;
-                handle.className = 'row-handle-btn';
-                handle.dataset.row = String(r);
-                handle.title = `行 ${r + 1} をドラッグして上下に差し込み移動`;
-                handle.innerHTML = `<svg viewBox="0 0 16 16" class="w-3 h-3 pointer-events-none opacity-80" fill="currentColor"><circle cx="5.5" cy="4" r="1.3"/><circle cx="10.5" cy="4" r="1.3"/><circle cx="5.5" cy="8" r="1.3"/><circle cx="10.5" cy="8" r="1.3"/><circle cx="5.5" cy="12" r="1.3"/><circle cx="10.5" cy="12" r="1.3"/></svg>`;
-                this.bindRowHandleEvents(handle, r);
-                this.rowHandles[r] = handle;
-            }
+        let overlay = document.getElementById('row-handle-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'row-handle-overlay';
+            overlay.className = 'absolute inset-0 pointer-events-none z-40';
+            overlay.style.display = 'none';
+            gridBoard.appendChild(overlay);
         }
+        this.rowHandleOverlayEl = overlay;
+
+        // Build 8 row overlay tracks, each with a left and right protruding handle
+        overlay.innerHTML = '';
+        this.rowTracks = [];
+        for (let r = 0; r < this.ui.ROWS; r++) {
+            const track = document.createElement('div');
+            track.id = `row-overlay-track-${r}`;
+            track.className = 'row-overlay-track';
+            track.dataset.row = String(r);
+
+            const leftHandle = document.createElement('div');
+            leftHandle.id = `row-handle-left-${r}`;
+            leftHandle.className = 'row-handle-btn row-handle-left';
+            leftHandle.dataset.row = String(r);
+            leftHandle.title = `行 ${r + 1} をドラッグして上下に差し込み移動`;
+            leftHandle.innerHTML = `<svg viewBox="0 0 16 16" class="w-3 h-3 pointer-events-none opacity-80" fill="currentColor"><circle cx="5.5" cy="4" r="1.3"/><circle cx="10.5" cy="4" r="1.3"/><circle cx="5.5" cy="8" r="1.3"/><circle cx="10.5" cy="8" r="1.3"/><circle cx="5.5" cy="12" r="1.3"/><circle cx="10.5" cy="12" r="1.3"/></svg>`;
+
+            const rightHandle = document.createElement('div');
+            rightHandle.id = `row-handle-right-${r}`;
+            rightHandle.className = 'row-handle-btn row-handle-right';
+            rightHandle.dataset.row = String(r);
+            rightHandle.title = `行 ${r + 1} をドラッグして上下に差し込み移動`;
+            rightHandle.innerHTML = `<svg viewBox="0 0 16 16" class="w-3 h-3 pointer-events-none opacity-80" fill="currentColor"><circle cx="5.5" cy="4" r="1.3"/><circle cx="10.5" cy="4" r="1.3"/><circle cx="5.5" cy="8" r="1.3"/><circle cx="10.5" cy="8" r="1.3"/><circle cx="5.5" cy="12" r="1.3"/><circle cx="10.5" cy="12" r="1.3"/></svg>`;
+
+            this.bindRowHandleEvents(leftHandle, rightHandle, r);
+            track.appendChild(leftHandle);
+            track.appendChild(rightHandle);
+            overlay.appendChild(track);
+            this.rowTracks[r] = track;
+        }
+
+        // Keep overlay tracks aligned on resize
+        window.addEventListener('resize', () => {
+            if (this.isRowHandleMode) this.updateRowHandleRail();
+        });
 
         // Candidate destination row highlight indicator (5 cell slots with .drop-highlight-valid)
         let slotIndicator = document.getElementById('row-target-slot-indicator');
@@ -498,31 +529,31 @@ export class InteractionManager {
         this.updateRowHandleRail();
     }
 
-    attachRowHandle(r) {
-        if (!this.rowHandles || !this.rowHandles[r]) {
-            this.initRowHandleUI();
-        }
-        const handle = this.rowHandles?.[r];
-        const firstCell = document.getElementById(`cell-${r * this.ui.COLS}`);
-        if (firstCell && handle) {
-            if (handle.parentElement !== firstCell) {
-                firstCell.appendChild(handle);
-            }
-            handle.style.display = this.isRowHandleMode ? 'flex' : 'none';
-        }
-    }
-
     updateRowHandleRail() {
-        if (!this.rowHandles || this.rowHandles.length === 0) {
+        const overlay = this.rowHandleOverlayEl || document.getElementById('row-handle-overlay');
+        if (!overlay) {
             this.initRowHandleUI();
             return;
         }
+
+        overlay.style.display = this.isRowHandleMode ? 'block' : 'none';
+        if (!this.isRowHandleMode) {
+            if (this.rowTargetSlotIndicatorEl) this.rowTargetSlotIndicatorEl.style.display = 'none';
+            return;
+        }
+
+        // Align each row track to the physical position of row r
         for (let r = 0; r < this.ui.ROWS; r++) {
-            this.attachRowHandle(r);
+            const track = this.rowTracks?.[r] || document.getElementById(`row-overlay-track-${r}`);
+            const firstCell = document.getElementById(`cell-${r * this.ui.COLS}`);
+            if (track && firstCell) {
+                track.style.top = `${firstCell.offsetTop}px`;
+                track.style.height = `${firstCell.offsetHeight}px`;
+            }
         }
     }
 
-    bindRowHandleEvents(handle, r) {
+    bindRowHandleEvents(leftHandle, rightHandle, r) {
         let isRowDragging = false;
         let startY = 0;
         let originalRow = r;
@@ -541,6 +572,10 @@ export class InteractionManager {
                     cell.style.transform = `translateY(${currentDeltaY}px) scale(1.02)`;
                 }
             }
+            const dragTrack = this.rowTracks?.[originalRow] || document.getElementById(`row-overlay-track-${originalRow}`);
+            if (dragTrack) {
+                dragTrack.style.transform = `translateY(${currentDeltaY}px) scale(1.02)`;
+            }
 
             // Calculate shift for every other row: does it need to slide up or down?
             for (let rowIdx = 0; rowIdx < this.ui.ROWS; rowIdx++) {
@@ -548,24 +583,29 @@ export class InteractionManager {
 
                 let shiftY = 0;
                 if (targetInsertIdx > originalRow) {
-                    // Moving downward: rows between (originalRow + 1) and (targetInsertIdx - 1) shift UP by 1 row
                     if (rowIdx > originalRow && rowIdx < targetInsertIdx) {
                         shiftY = -rowHeightWithGap;
                     }
                 } else if (targetInsertIdx < originalRow) {
-                    // Moving upward: rows between targetInsertIdx and (originalRow - 1) shift DOWN by 1 row
                     if (rowIdx >= targetInsertIdx && rowIdx < originalRow) {
                         shiftY = rowHeightWithGap;
                     }
                 }
 
-                // Apply transform to all 5 cells of rowIdx (the handles inside cell 0 follow automatically)
+                // Apply transform to all 5 cells of rowIdx
                 for (let c = 0; c < this.ui.COLS; c++) {
                     const otherCell = document.getElementById(`cell-${rowIdx * this.ui.COLS + c}`);
                     if (otherCell) {
                         otherCell.classList.add('row-cell-shifting');
                         otherCell.style.transform = shiftY !== 0 ? `translateY(${shiftY}px)` : '';
                     }
+                }
+
+                // Apply transform to row track overlay
+                const otherTrack = this.rowTracks?.[rowIdx] || document.getElementById(`row-overlay-track-${rowIdx}`);
+                if (otherTrack) {
+                    otherTrack.classList.add('row-cell-shifting');
+                    otherTrack.style.transform = shiftY !== 0 ? `translateY(${shiftY}px)` : '';
                 }
             }
 
@@ -606,11 +646,15 @@ export class InteractionManager {
                 }
             }
             for (let rowIdx = 0; rowIdx < this.ui.ROWS; rowIdx++) {
-                const h = this.rowHandles?.[rowIdx] || document.getElementById(`row-handle-${rowIdx}`);
-                if (h) {
-                    h.classList.remove('dragging');
-                    h.style.transform = '';
+                const track = this.rowTracks?.[rowIdx] || document.getElementById(`row-overlay-track-${rowIdx}`);
+                if (track) {
+                    track.classList.remove('row-cell-shifting');
+                    track.style.transform = '';
                 }
+                const lH = document.getElementById(`row-handle-left-${rowIdx}`);
+                const rH = document.getElementById(`row-handle-right-${rowIdx}`);
+                if (lH) lH.classList.remove('dragging');
+                if (rH) rH.classList.remove('dragging');
             }
         };
 
@@ -621,7 +665,8 @@ export class InteractionManager {
                 if (Math.abs(deltaY) > 5) {
                     isRowDragging = true;
                     this.draggingRow = originalRow;
-                    handle.classList.add('dragging');
+                    leftHandle.classList.add('dragging');
+                    rightHandle.classList.add('dragging');
 
                     // Highlight all cells in source row
                     for (let c = 0; c < this.ui.COLS; c++) {
@@ -648,32 +693,37 @@ export class InteractionManager {
             }
         };
 
-        const onPointerUp = (e) => {
-            try { handle.releasePointerCapture(e.pointerId); } catch (_) {}
-            window.removeEventListener('pointermove', onPointerMove);
-            window.removeEventListener('pointerup', onPointerUp);
-            window.removeEventListener('pointercancel', onPointerUp);
+        const bindHandle = (h) => {
+            const onPointerUp = (e) => {
+                try { h.releasePointerCapture(e.pointerId); } catch (_) {}
+                window.removeEventListener('pointermove', onPointerMove);
+                window.removeEventListener('pointerup', onPointerUp);
+                window.removeEventListener('pointercancel', onPointerUp);
 
-            resetAllRowTransforms();
+                resetAllRowTransforms();
 
-            if (isRowDragging) {
-                isRowDragging = false;
-                this.draggingRow = null;
-                // Execute row reorder / insertion if target is different
-                this.moveRowTo(originalRow, currentTargetRow);
-            }
+                if (isRowDragging) {
+                    isRowDragging = false;
+                    this.draggingRow = null;
+                    // Execute row reorder / insertion if target is different
+                    this.moveRowTo(originalRow, currentTargetRow);
+                }
+            };
+
+            h.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                originalRow = parseInt(h.dataset.row);
+                startY = e.clientY;
+                try { h.setPointerCapture(e.pointerId); } catch (_) {}
+                window.addEventListener('pointermove', onPointerMove, { passive: false });
+                window.addEventListener('pointerup', onPointerUp);
+                window.addEventListener('pointercancel', onPointerUp);
+            });
         };
 
-        handle.addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            originalRow = parseInt(handle.dataset.row);
-            startY = e.clientY;
-            try { handle.setPointerCapture(e.pointerId); } catch (_) {}
-            window.addEventListener('pointermove', onPointerMove, { passive: false });
-            window.addEventListener('pointerup', onPointerUp);
-            window.addEventListener('pointercancel', onPointerUp);
-        });
+        bindHandle(leftHandle);
+        bindHandle(rightHandle);
     }
 
     moveRowTo(sourceRow, targetInsertRow) {

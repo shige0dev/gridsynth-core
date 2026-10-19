@@ -230,17 +230,17 @@ body {
     cursor: text;
 }
 
-/* Row Handle Mode & Reordering / Insertion */
-.row-handle-rail {
-    user-select: none;
-    touch-action: none;
+/* Row Handle Mode Overlay & Reordering */
+.row-overlay-track {
     position: absolute;
-    top: 0;
-    bottom: 0;
     left: 0;
-    width: 28px;
-    z-index: 45;
+    right: 0;
     pointer-events: none;
+    z-index: 45;
+}
+
+.row-overlay-track.row-cell-shifting {
+    transition: transform 0.22s cubic-bezier(0.2, 0, 0, 1) !important;
 }
 
 .row-handle-btn {
@@ -248,8 +248,8 @@ body {
     touch-action: none;
     -webkit-user-select: none;
     position: absolute;
-    top: 2px;
-    left: 2px;
+    top: 50%;
+    transform: translateY(-50%);
     width: 18px;
     height: 18px;
     background-color: rgba(15, 23, 42, 0.94);
@@ -261,10 +261,17 @@ body {
     justify-content: center;
     cursor: grab;
     pointer-events: auto !important;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(4px);
-    z-index: 45;
     transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.row-handle-left {
+    left: -11px;
+}
+
+.row-handle-right {
+    right: -11px;
 }
 
 .row-handle-btn:hover {
@@ -280,7 +287,6 @@ body {
     color: #ffffff !important;
     box-shadow: 0 0 12px rgba(34, 211, 238, 0.9);
     cursor: grabbing !important;
-    z-index: 50 !important;
 }
 
 .row-cell-dragging {
