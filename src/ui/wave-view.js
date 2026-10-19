@@ -190,6 +190,16 @@ export const WaveView = {
         const startNotchPts = `${cvStartX.toFixed(1)},${PAD_Y} ${cvStartX.toFixed(1)},${(PAD_Y + 6).toFixed(1)} ${(cvStartX + 5.5).toFixed(1)},${(PAD_Y + 3).toFixed(1)}`;
         const endNotchPts = `${cvEndX.toFixed(1)},${PAD_Y} ${cvEndX.toFixed(1)},${(PAD_Y + 6).toFixed(1)} ${(cvEndX - 5.5).toFixed(1)},${(PAD_Y + 3).toFixed(1)}`;
 
+        let bpmVal = m.bpm;
+        if (!bpmVal && hasAudio && m.duration > 0) {
+            for (const beats of [4, 8, 16, 2, 32]) {
+                const b = (60.0 * beats) / m.duration;
+                if (b >= 60 && b <= 180) { bpmVal = Math.round(b); break; }
+            }
+        }
+        const bpmLabel = (hasAudio && bpmVal) ? `${Math.round(bpmVal)} BPM` : '-- BPM';
+        const bpmSvg = `<text id="wave-bpm-text" x="${(PAD_X + INNER_W - 7).toFixed(1)}" y="${(PAD_Y + 6).toFixed(1)}" fill="#94a3b8" font-size="7" font-family="monospace" font-weight="bold" text-anchor="end" pointer-events="none">${bpmLabel}</text>`;
+
         return `
             <svg id="wave-waveform-svg" viewBox="0 0 ${W} ${H}" class="w-full h-28 select-none bg-slate-950 rounded-xl border border-slate-800 shadow-inner overflow-hidden relative cursor-pointer">
                 <line x1="${PAD_X}" y1="${midY}" x2="${PAD_X + INNER_W}" y2="${midY}" stroke="#334155" stroke-width="1"/>
@@ -197,6 +207,7 @@ export const WaveView = {
                 ${timeLabelsSvg}
                 ${barsSvg}
                 ${chopsSvg}
+                ${bpmSvg}
                 <line id="wave-eff-end-line" x1="${endX.toFixed(1)}" y1="${PAD_Y}" x2="${endX.toFixed(1)}" y2="${PAD_Y + INNER_H}" stroke="#22c55e" stroke-width="2.0" class="drop-shadow-[0_0_4px_rgba(34,197,94,0.85)]"/>
                 <line id="wave-eff-start-line" x1="${startX.toFixed(1)}" y1="${PAD_Y}" x2="${startX.toFixed(1)}" y2="${PAD_Y + INNER_H}" stroke="#22c55e" stroke-width="2.0" class="drop-shadow-[0_0_4px_rgba(34,197,94,0.85)]"/>
                 <rect id="wave-eff-end-badge" x="${(endX - 5).toFixed(1)}" y="${PAD_Y + 7}" width="10" height="9" rx="1.5" fill="#14532d" stroke="#22c55e" stroke-width="1"/>
@@ -303,6 +314,12 @@ export const WaveView = {
         if (endDisp) endDisp.textContent = this.formatBoundDisp(m, bounds.rawEnd, effEnd, endPatched);
         if (inStart && !startPatched) inStart.value = bounds.rawStart;
         if (inEnd && !endPatched) inEnd.value = bounds.rawEnd;
+
+        const bpmEl = targetModal.querySelector('#wave-bpm-text');
+        if (bpmEl && m.bpm) {
+            const targetBpm = `${Math.round(m.bpm)} BPM`;
+            if (bpmEl.textContent !== targetBpm) bpmEl.textContent = targetBpm;
+        }
     },
 
     updateLive(cell, data, isPlaying, targetModal, m) {

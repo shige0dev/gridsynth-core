@@ -1,8 +1,8 @@
 // src/ui/wave-modal.js
-import { UIHelpers } from './helpers.js?v=257';
-import { WaveCodec } from '../audio/wave-codec.js?v=257';
-import { WaveView } from './wave-view.js?v=257';
-import { JsonIoDialog } from './json-io-dialog.js?v=257';
+import { UIHelpers } from './helpers.js?v=258';
+import { WaveCodec } from '../audio/wave-codec.js?v=258';
+import { WaveView } from './wave-view.js?v=258';
+import { JsonIoDialog } from './json-io-dialog.js?v=258';
 
 /**
  * WAVE Module Modal Renderer & Event Controller
@@ -131,7 +131,7 @@ export const WaveModal = {
 
                         // Apply WAVE module properties
                         const allowedKeys = [
-                            'name', 'codec', 'sampleRate', 'maxDuration', 'duration',
+                            'name', 'codec', 'sampleRate', 'maxDuration', 'duration', 'bpm',
                             'start', 'end', 'speed', 'pitchMode', 'semiMode', 'loop', 'retrigger',
                             'chopMode', 'chops', 'snapMode', 'rangeLock',
                             'data', 'peaks'
@@ -158,6 +158,7 @@ export const WaveModal = {
                                     m._buffer = decoded.buffer;
                                     m.duration = decoded.duration;
                                     m.sampleRate = decoded.sampleRate;
+                                    m.bpm = decoded.bpm || WaveCodec.detectBPM(decoded.buffer, decoded.sampleRate);
                                     if (!m.peaks?.length) {
                                         m.peaks = WaveCodec.extractPeaks(decoded.buffer, 64);
                                     }
@@ -330,6 +331,7 @@ export const WaveModal = {
                     m.name = recName;
                     m.duration = finalBuf.length / sRate;
                     m.sampleRate = sRate;
+                    m.bpm = WaveCodec.detectBPM(finalBuf, sRate);
                     m.peaks = WaveCodec.extractPeaks(finalBuf, 64);
                     m._peaks = m.peaks;
                     m._buffer = finalBuf;
@@ -361,6 +363,9 @@ export const WaveModal = {
         const isLinked = Boolean(ctx?.patched?.has('link_in') || m._isLinked);
         m._isLinked = isLinked;
         const isRecording = Boolean(m._isRecording);
+        if (!m.bpm && m._buffer?.length > 0) {
+            m.bpm = WaveCodec.detectBPM(m._buffer, m.sampleRate || 48000);
+        }
 
         const isStartPatched = Boolean(ctx?.patched?.has('start_cv'));
         const isEndPatched = Boolean(ctx?.patched?.has('end_cv'));
@@ -564,6 +569,7 @@ export const WaveModal = {
         // Ensure PCM buffer is loaded into AudioWorklet
         const initialInst = this.getActiveInst(ctx, m);
         if (m._buffer && initialInst?.setAudioBuffer) {
+            if (!m.bpm) m.bpm = WaveCodec.detectBPM(m._buffer, m.sampleRate || 48000);
             initialInst.setAudioBuffer(m._buffer, m.sampleRate || 48000);
         } else if (m.data && (!m.peaks?.length || !m._buffer)) {
             const synth = ctx?.synth || window.__GS_SYNTH__;
@@ -572,6 +578,7 @@ export const WaveModal = {
                     m._buffer = res.buffer;
                     m.duration = res.duration;
                     m.sampleRate = res.sampleRate;
+                    m.bpm = res.bpm || WaveCodec.detectBPM(res.buffer, res.sampleRate);
                     if (!m.peaks?.length) m.peaks = WaveCodec.extractPeaks(res.buffer, 64);
                     m._peaks = m.peaks;
                     this.getActiveInst(ctx, m)?.setAudioBuffer?.(res.buffer, res.sampleRate);
@@ -621,6 +628,7 @@ export const WaveModal = {
                 m.name = file.name.replace(/\.[^/.]+$/, '').slice(0, 24);
                 m.duration = res.duration;
                 m.sampleRate = res.sampleRate;
+                m.bpm = res.bpm || WaveCodec.detectBPM(res.buffer, res.sampleRate);
                 m.peaks = WaveCodec.extractPeaks(res.buffer, 64);
                 m._peaks = m.peaks;
                 m._buffer = res.buffer;

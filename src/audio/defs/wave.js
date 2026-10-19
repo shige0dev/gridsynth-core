@@ -1,5 +1,5 @@
 // src/audio/defs/wave.js
-import { WaveCodec } from '../wave-codec.js?v=257';
+import { WaveCodec } from '../wave-codec.js?v=258';
 
 export const WAVE = {
     create: (ctx, d, patch, eng) => {
@@ -49,6 +49,7 @@ export const WAVE = {
                     d._buffer = res.buffer;
                     d.duration = res.duration;
                     d.sampleRate = res.sampleRate;
+                    d.bpm = res.bpm || WaveCodec.detectBPM(res.buffer, res.sampleRate);
                     if (!d.peaks || d.peaks.length === 0) {
                         d.peaks = WaveCodec.extractPeaks(res.buffer, 64);
                     }
@@ -61,6 +62,7 @@ export const WAVE = {
                                 otherInst.data._buffer = res.buffer;
                                 otherInst.data.duration = res.duration;
                                 otherInst.data.sampleRate = res.sampleRate;
+                                otherInst.data.bpm = d.bpm;
                                 otherInst.data.peaks = d.peaks ? [...d.peaks] : null;
                                 otherInst.data._peaks = otherInst.data.peaks || [];
                                 otherInst.setAudioBuffer?.(res.buffer, res.sampleRate);
@@ -71,6 +73,7 @@ export const WAVE = {
                 }
             }).catch(() => {});
         } else if (d._buffer && d._buffer.length > 0) {
+            if (!d.bpm) d.bpm = WaveCodec.detectBPM(d._buffer, d.sampleRate || 48000);
             sendBufferToWorklet(d._buffer, d.sampleRate);
         }
 

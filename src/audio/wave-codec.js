@@ -41,10 +41,14 @@ export const WaveCodec = {
             }
         }
 
+        const sampleRate = audioBuffer.sampleRate;
+        const bpm = WaveCodec.detectBPM(monoData, sampleRate);
+
         return {
             buffer: monoData,
-            sampleRate: audioBuffer.sampleRate,
-            duration: targetDuration
+            sampleRate,
+            duration: targetDuration,
+            bpm
         };
     },
 
@@ -196,7 +200,8 @@ export const WaveCodec = {
                             resolve({
                                 buffer: finalSamples,
                                 sampleRate: sRate,
-                                duration: capturedOffset / sRate
+                                duration: capturedOffset / sRate,
+                                bpm: WaveCodec.detectBPM(finalSamples, sRate)
                             });
                         }
                     }, 100);
@@ -206,10 +211,12 @@ export const WaveCodec = {
                         if (!isCleanedUp) {
                             cleanup();
                             if (capturedOffset > 0) {
+                                const sub = captured.subarray(0, capturedOffset);
                                 resolve({
-                                    buffer: captured.subarray(0, capturedOffset),
+                                    buffer: sub,
                                     sampleRate: sRate,
-                                    duration: capturedOffset / sRate
+                                    duration: capturedOffset / sRate,
+                                    bpm: WaveCodec.detectBPM(sub, sRate)
                                 });
                             } else {
                                 reject(new Error('MediaElement extraction timed out (no audio track?)'));
@@ -418,6 +425,136 @@ export const WaveCodec = {
     },
 
     /**
+     * Offline BPM estimation from a mono Float32Array buffer using log-compressed
+     * onset flux envelope and comb-weighted autocorrelation in the 60..180 BPM range.
+     * @param {Float32Array} buffer
+     * @param {number} [sampleRate=48000]
+     * @returns {number|null}
+     */
+    detectBPM(buffer, sampleRate = 48000) {
+        if (!buffer || buffer.length < sampleRate * 0.25) return null;
+
+        const hop = Math.max(1, Math.round(sampleRate / 200)); // ~200 Hz envelope
+        const envRate = sampleRate / hop;
+        const numFrames = Math.floor(buffer.length / hop);
+        if (numFrames < 20) return null;
+
+        // 1. RMS energy per frame & check for silence
+        const logEnergy = new Float32Array(numFrames);
+        let maxE = 0;
+        for (let k = 0; k < numFrames; k++) {
+            const offset = k * hop;
+            let sumSq = 0;
+            for (let i = 0; i < hop; i++) {
+                const s = buffer[offset + i];
+                sumSq += s * s;
+            }
+            const rms = Math.sqrt(sumSq / hop);
+            if (rms > maxE) maxE = rms;
+            logEnergy[k] = Math.log1p(25.0 * rms);
+        }
+        if (maxE < 0.008) return null;
+
+        // 2. First-order half-wave rectified onset flux + 3-tap smoothing
+        const rawFlux = new Float32Array(numFrames);
+        for (let k = 1; k < numFrames; k++) {
+            const diff = logEnergy[k] - logEnergy[k - 1];
+            rawFlux[k] = diff > 0 ? diff : 0;
+        }
+        const smoothFlux = new Float32Array(numFrames);
+        for (let k = 1; k < numFrames - 1; k++) {
+            smoothFlux[k] = 0.25 * rawFlux[k - 1] + 0.5 * rawFlux[k] + 0.25 * rawFlux[k + 1];
+        }
+
+        // 3. Adaptive local threshold (moving average over +/-20 frames = ~200ms)
+        const onset = new Float32Array(numFrames);
+        const winRadius = 20;
+        let onsetSum = 0;
+        for (let k = 0; k < numFrames; k++) {
+            const sIdx = Math.max(0, k - winRadius);
+            const eIdx = Math.min(numFrames - 1, k + winRadius);
+            let localSum = 0;
+            for (let j = sIdx; j <= eIdx; j++) localSum += smoothFlux[j];
+            const localMean = localSum / (eIdx - sIdx + 1);
+            const val = smoothFlux[k] - localMean;
+            onset[k] = val > 0 ? val : 0;
+            onsetSum += onset[k];
+        }
+
+        const duration = buffer.length / sampleRate;
+        if (onsetSum < 1e-4) {
+            for (const beats of [4, 8, 16, 2, 32]) {
+                const b = (60.0 * beats) / duration;
+                if (b >= 60 && b <= 180) return Math.round(b);
+            }
+            return 120;
+        }
+
+        // 4. Normalized Autocorrelation over candidate lags (60 to 180 BPM)
+        const minLag = Math.max(4, Math.floor((60.0 * envRate) / 180.0));
+        const maxLag = Math.min(numFrames - 4, Math.ceil((60.0 * envRate) / 60.0));
+        if (maxLag <= minLag) {
+            for (const beats of [4, 8, 16, 2, 32]) {
+                const b = (60.0 * beats) / duration;
+                if (b >= 60 && b <= 180) return Math.round(b);
+            }
+            return 120;
+        }
+
+        const maxCorrLag = Math.min(numFrames - 2, maxLag * 2 + 2);
+        const acf = new Float32Array(maxCorrLag + 1);
+        for (let lag = 1; lag <= maxCorrLag; lag++) {
+            let sum = 0;
+            const limit = numFrames - lag;
+            for (let k = 0; k < limit; k++) {
+                sum += onset[k] * onset[k + lag];
+            }
+            acf[lag] = sum / limit;
+        }
+
+        // 5. Harmonic comb scoring + perceptual tempo prior centered at 120 BPM
+        const combScore = new Float32Array(maxLag + 2);
+        let bestLag = minLag;
+        let bestWeighted = -1;
+
+        for (let lag = minLag; lag <= maxLag; lag++) {
+            let c = acf[lag];
+            if (lag * 2 <= maxCorrLag) c += 0.5 * acf[lag * 2];
+            const halfLag = Math.round(lag * 0.5);
+            if (halfLag >= 1) c += 0.3 * acf[halfLag];
+            combScore[lag] = c;
+
+            const bpm = (60.0 * envRate) / lag;
+            const logDiff = Math.log2(bpm / 120.0);
+            const prior = Math.exp(-0.5 * (logDiff / 0.75) * (logDiff / 0.75));
+            const wScore = c * prior;
+            if (wScore > bestWeighted) {
+                bestWeighted = wScore;
+                bestLag = lag;
+            }
+        }
+
+        // 6. Parabolic interpolation around bestLag
+        let fineLag = bestLag;
+        if (bestLag > minLag && bestLag < maxLag) {
+            const y0 = combScore[bestLag - 1];
+            const y1 = combScore[bestLag];
+            const y2 = combScore[bestLag + 1];
+            const denom = 2 * (y0 - 2 * y1 + y2);
+            if (Math.abs(denom) > 1e-9) {
+                const delta = (y0 - y2) / denom;
+                if (delta >= -0.5 && delta <= 0.5) fineLag = bestLag + delta;
+            }
+        }
+
+        let estBpm = (60.0 * envRate) / fineLag;
+        while (estBpm < 60.0) estBpm *= 2.0;
+        while (estBpm > 180.0) estBpm *= 0.5;
+
+        return Math.round(estBpm);
+    },
+
+    /**
      * Resolves WAVE link_out -> link_in chains (both star and daisy-chain topologies)
      * within a page and propagates the root WAVE's waveform table and chop settings
      * to all downstream linked WAVE modules.
@@ -465,6 +602,7 @@ export const WaveCodec = {
                 m.name = rootMod.name || 'Wave 1';
                 m.duration = rootMod.duration ?? 1.5;
                 m.sampleRate = rootMod.sampleRate ?? 48000;
+                m.bpm = rootMod.bpm ?? null;
                 const rootPeaks = rootMod.peaks || rootMod._peaks;
                 m.peaks = Array.isArray(rootPeaks) ? [...rootPeaks] : null;
                 m._peaks = m.peaks || [];
