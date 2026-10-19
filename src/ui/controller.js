@@ -1,13 +1,13 @@
-import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=265';
-import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=265';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=265';
+import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=266';
+import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=266';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=266';
 import { UIHelpers } from './helpers.js?v=229';
-import { PresetManager } from './managers/preset-manager.js?v=265';
-import { ModalManager } from './managers/modal-manager.js?v=265';
-import { CableManager } from './managers/cable-manager.js?v=265';
-import { PageManager } from './managers/page-manager.js?v=265';
-import { InteractionManager } from './managers/interaction-manager.js?v=265';
-import { WaveCodec } from '../audio/wave-codec.js?v=265';
+import { PresetManager } from './managers/preset-manager.js?v=266';
+import { ModalManager } from './managers/modal-manager.js?v=266';
+import { CableManager } from './managers/cable-manager.js?v=266';
+import { PageManager } from './managers/page-manager.js?v=266';
+import { InteractionManager } from './managers/interaction-manager.js?v=266';
+import { WaveCodec } from '../audio/wave-codec.js?v=266';
 
 export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'SPEC', 'MON', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE'];
 
@@ -386,6 +386,9 @@ export class UIController {
                 cell.dataset.renderedState = 'empty';
                 cell.innerHTML = `<div class="absolute inset-0 flex items-center justify-center font-bold text-sm text-black opacity-20 pointer-events-none">${String(idx).padStart(2, '0')}</div>`;
             }
+        }
+        if (idx % this.COLS === 0 && this.isRowHandleMode) {
+            this.interactionManager?.attachRowHandle?.(Math.floor(idx / this.COLS));
         }
     }
 

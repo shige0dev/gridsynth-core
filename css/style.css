@@ -248,6 +248,7 @@ body {
     touch-action: none;
     -webkit-user-select: none;
     position: absolute;
+    top: 2px;
     left: 2px;
     width: 18px;
     height: 18px;
@@ -259,10 +260,11 @@ body {
     align-items: center;
     justify-content: center;
     cursor: grab;
-    pointer-events: auto;
+    pointer-events: auto !important;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(4px);
-    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+    z-index: 45;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .row-handle-btn:hover {
@@ -277,24 +279,29 @@ body {
     border-color: #22d3ee !important;
     color: #ffffff !important;
     box-shadow: 0 0 12px rgba(34, 211, 238, 0.9);
-    cursor: grabbing;
+    cursor: grabbing !important;
+    z-index: 50 !important;
 }
 
 .row-cell-dragging {
-    opacity: 0.85 !important;
+    opacity: 0.9 !important;
     filter: brightness(1.15) !important;
     box-shadow: 0 4px 16px rgba(6, 182, 212, 0.45) !important;
     border-color: rgba(6, 182, 212, 0.9) !important;
     z-index: 40 !important;
-    transition: transform 0.05s ease-out;
+    pointer-events: none !important;
 }
 
 .row-cell-shifting {
     transition: transform 0.22s cubic-bezier(0.2, 0, 0, 1) !important;
 }
 
-.row-handle-shifting {
-    transition: transform 0.22s cubic-bezier(0.2, 0, 0, 1) !important;
+/* White highlight for row insertion target slot */
+.row-target-slot-highlight {
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.7) !important;
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: white !important;
+    z-index: 35 !important;
 }
 
 /* Lock module/cell operations during Row Handle Mode */
@@ -303,6 +310,15 @@ body {
 .row-handle-mode-active .module-body {
     pointer-events: none !important;
     cursor: default !important;
+}
+
+.row-handle-mode-active .row-handle-btn {
+    pointer-events: auto !important;
+    cursor: grab !important;
+}
+
+.row-handle-mode-active .row-handle-btn.dragging {
+    cursor: grabbing !important;
 }
 
 .row-handle-mode-active #cable-canvas {
