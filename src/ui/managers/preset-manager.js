@@ -1,8 +1,8 @@
-import { safeClone, parseConn } from '../../core/utils.js?v=262';
-import { parsePatch, exportPatch, createDefaultPatchData } from '../../core/patch.js?v=262';
-import { getDefaultPresets } from '../../presets/default.js?v=262';
+import { safeClone, parseConn } from '../../core/utils.js?v=263';
+import { parsePatch, exportPatch, createDefaultPatchData } from '../../core/patch.js?v=263';
+import { getDefaultPresets } from '../../presets/default.js?v=263';
 import { AI_PATCH_SPEC_CONTENT } from '../../presets/ai-spec-content.js';
-import { JsonIoDialog, analyzeJsonError } from '../json-io-dialog.js?v=262';
+import { JsonIoDialog, analyzeJsonError } from '../json-io-dialog.js?v=263';
 
 export { analyzeJsonError };
 

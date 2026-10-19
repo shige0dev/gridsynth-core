@@ -1,6 +1,6 @@
 // src/ui/managers/interaction-manager.js
-import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=262';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=262';
+import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=263';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=263';
 
 export class InteractionManager {
     constructor(ui) {
@@ -472,7 +472,7 @@ export class InteractionManager {
             handle.className = 'row-handle-btn';
             handle.dataset.row = String(r);
             handle.title = `行 ${r + 1} をドラッグして上下に差し込み移動`;
-            handle.innerHTML = `<span style="font-size:7px; opacity:0.6; margin-right:1px; pointer-events:none;">⠿</span><span style="pointer-events:none;">${String(r + 1).padStart(2, '0')}</span>`;
+            handle.innerHTML = `<svg viewBox="0 0 16 16" class="w-3 h-3 pointer-events-none opacity-80" fill="currentColor"><circle cx="5.5" cy="4" r="1.3"/><circle cx="10.5" cy="4" r="1.3"/><circle cx="5.5" cy="8" r="1.3"/><circle cx="10.5" cy="8" r="1.3"/><circle cx="5.5" cy="12" r="1.3"/><circle cx="10.5" cy="12" r="1.3"/></svg>`;
 
             this.bindRowHandleEvents(handle, r);
             rail.appendChild(handle);
@@ -510,8 +510,8 @@ export class InteractionManager {
                 const leftOffset = cellRect.left - parentRect.left;
                 handle.style.top = `${topOffset + 2}px`;
                 handle.style.left = `${leftOffset + 2}px`;
-                handle.style.height = `${Math.min(cellRect.height - 4, 26)}px`;
-                handle.style.width = '26px';
+                handle.style.height = '18px';
+                handle.style.width = '18px';
             }
         }
     }
