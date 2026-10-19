@@ -234,27 +234,52 @@ body {
 .row-handle-rail {
     user-select: none;
     touch-action: none;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 28px;
+    z-index: 45;
+    pointer-events: none;
 }
 
 .row-handle-btn {
     user-select: none;
     touch-action: none;
     -webkit-user-select: none;
-    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    position: absolute;
+    left: 4px;
+    width: 24px;
+    background-color: rgba(15, 23, 42, 0.92);
+    border: 1px solid rgba(51, 65, 85, 0.9);
+    border-radius: 4px;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: monospace;
+    font-size: 8.5px;
+    font-weight: bold;
+    cursor: grab;
+    pointer-events: auto;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
 }
 
 .row-handle-btn:hover {
-    background-color: rgba(30, 41, 59, 0.9);
-    border-color: rgba(6, 182, 212, 0.6);
+    background-color: rgba(30, 41, 59, 0.95);
+    border-color: rgba(6, 182, 212, 0.8);
     color: #67e8f9;
 }
 
 .row-handle-btn:active,
 .row-handle-btn.dragging {
-    background-color: rgba(14, 116, 144, 0.8) !important;
+    background-color: rgba(14, 116, 144, 0.95) !important;
     border-color: #22d3ee !important;
     color: #ffffff !important;
-    box-shadow: 0 0 10px rgba(34, 211, 238, 0.7);
+    box-shadow: 0 0 12px rgba(34, 211, 238, 0.9);
+    cursor: grabbing;
 }
 
 .row-cell-dragging {

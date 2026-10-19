@@ -1,6 +1,6 @@
 // src/ui/managers/interaction-manager.js
-import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=261';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=261';
+import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=262';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=262';
 
 export class InteractionManager {
     constructor(ui) {
@@ -450,10 +450,9 @@ export class InteractionManager {
         if (!rail) {
             rail = document.createElement('div');
             rail.id = 'row-handle-rail';
-            rail.className = 'row-handle-rail absolute top-0 bottom-0 z-30 flex flex-col justify-between pointer-events-none transition-all duration-200';
+            rail.className = 'row-handle-rail';
             rail.style.display = 'none';
-            rail.style.width = '24px';
-            rail.style.left = '-26px';
+            // Append rail directly inside grid-board or canvas-container
             gridBoard.parentElement.appendChild(rail);
         }
 
@@ -462,7 +461,7 @@ export class InteractionManager {
             indicator = document.createElement('div');
             indicator.id = 'row-insert-indicator';
             indicator.className = 'row-insert-line hidden';
-            gridBoard.appendChild(indicator);
+            gridBoard.parentElement.appendChild(indicator);
         }
         this.rowInsertIndicatorEl = indicator;
 
@@ -470,10 +469,10 @@ export class InteractionManager {
         rail.innerHTML = '';
         for (let r = 0; r < this.ui.ROWS; r++) {
             const handle = document.createElement('div');
-            handle.className = 'row-handle-btn pointer-events-auto flex items-center justify-center bg-slate-900/90 border border-slate-700/80 rounded text-slate-400 hover:text-cyan-300 hover:border-cyan-500/60 font-mono text-[9px] font-bold cursor-grab active:cursor-grabbing select-none shadow-sm';
+            handle.className = 'row-handle-btn';
             handle.dataset.row = String(r);
             handle.title = `行 ${r + 1} をドラッグして上下に差し込み移動`;
-            handle.innerHTML = `<span class="opacity-40 text-[7px] mr-0.5 pointer-events-none">⠿</span><span class="pointer-events-none">${String(r + 1).padStart(2, '0')}</span>`;
+            handle.innerHTML = `<span style="font-size:7px; opacity:0.6; margin-right:1px; pointer-events:none;">⠿</span><span style="pointer-events:none;">${String(r + 1).padStart(2, '0')}</span>`;
 
             this.bindRowHandleEvents(handle, r);
             rail.appendChild(handle);
@@ -493,30 +492,28 @@ export class InteractionManager {
         if (!this.isRowHandleMode) {
             rail.style.display = 'none';
             if (this.rowInsertIndicatorEl) this.rowInsertIndicatorEl.classList.add('hidden');
-            gridBoard.parentElement.style.paddingLeft = '';
-            setTimeout(() => this.ui.renderCables(), 50);
             return;
         }
 
-        rail.style.display = 'flex';
-        gridBoard.parentElement.style.paddingLeft = '30px';
+        rail.style.display = 'block';
 
         const handles = rail.querySelectorAll('.row-handle-btn');
+        const parentRect = gridBoard.parentElement.getBoundingClientRect();
+        const boardRect = gridBoard.getBoundingClientRect();
+
         for (let r = 0; r < this.ui.ROWS; r++) {
             const firstCellInRow = document.getElementById(`cell-${r * this.ui.COLS}`);
             const handle = handles[r];
             if (firstCellInRow && handle) {
                 const cellRect = firstCellInRow.getBoundingClientRect();
-                const parentRect = gridBoard.parentElement.getBoundingClientRect();
                 const topOffset = cellRect.top - parentRect.top;
-                handle.style.position = 'absolute';
-                handle.style.top = `${topOffset}px`;
-                handle.style.height = `${cellRect.height}px`;
-                handle.style.left = '4px';
-                handle.style.width = '24px';
+                const leftOffset = cellRect.left - parentRect.left;
+                handle.style.top = `${topOffset + 2}px`;
+                handle.style.left = `${leftOffset + 2}px`;
+                handle.style.height = `${Math.min(cellRect.height - 4, 26)}px`;
+                handle.style.width = '26px';
             }
         }
-        setTimeout(() => this.ui.renderCables(), 50);
     }
 
     bindRowHandleEvents(handle, r) {
@@ -542,6 +539,7 @@ export class InteractionManager {
 
             if (isRowDragging) {
                 const gridBoard = this.ui.gridBoard;
+                const parentRect = gridBoard.parentElement.getBoundingClientRect();
                 const boardRect = gridBoard.getBoundingClientRect();
                 const rowHeight = boardRect.height / this.ui.ROWS;
                 const relY = e.clientY - boardRect.top;
@@ -553,8 +551,10 @@ export class InteractionManager {
 
                 if (this.rowInsertIndicatorEl) {
                     this.rowInsertIndicatorEl.classList.remove('hidden');
-                    const targetTop = (insertIdx / this.ui.ROWS) * boardRect.height;
+                    const targetTop = (boardRect.top - parentRect.top) + (insertIdx / this.ui.ROWS) * boardRect.height;
                     this.rowInsertIndicatorEl.style.top = `${targetTop}px`;
+                    this.rowInsertIndicatorEl.style.left = `${boardRect.left - parentRect.left}px`;
+                    this.rowInsertIndicatorEl.style.width = `${boardRect.width}px`;
                 }
             }
         };
