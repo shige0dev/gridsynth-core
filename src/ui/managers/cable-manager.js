@@ -1,7 +1,7 @@
 // src/ui/managers/cable-manager.js
-import { parseConn, isSameConn, getPortSignalType, resolveConnectionSignalType, isSubModule, isSubIOModule, normalizeSubPort, getOppositeSubPort, getPortAliases, isPortMatching } from '../../core/utils.js?v=258';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=258';
-import { WaveCodec } from '../../audio/wave-codec.js?v=258';
+import { parseConn, isSameConn, getPortSignalType, resolveConnectionSignalType, isSubModule, isSubIOModule, normalizeSubPort, getOppositeSubPort, getPortAliases, isPortMatching } from '../../core/utils.js?v=259';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=259';
+import { WaveCodec } from '../../audio/wave-codec.js?v=259';
 
 export class CableManager {
     constructor(ui) {
