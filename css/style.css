@@ -311,61 +311,43 @@ body {
     transition: transform 0.22s cubic-bezier(0.2, 0, 0, 1) !important;
 }
 
-/* White highlight for row insertion target slot */
-.row-target-slot-highlight {
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.7) !important;
-    background: rgba(255, 255, 255, 0.15) !important;
-    border-color: white !important;
-    z-index: 35 !important;
-}
-
-/* Lock module/cell operations during Layout / Row Handle Mode */
-.layout-mode-active .port,
-.row-handle-mode-active .port {
+/* Lock module/cell operations during Layout Mode */
+.layout-mode-active .port {
     pointer-events: none !important;
     cursor: default !important;
 }
 
-.layout-mode-active .module-body,
-.row-handle-mode-active .module-body {
+.layout-mode-active .module-body {
     pointer-events: auto !important;
     cursor: grab !important;
     user-select: none !important;
     -webkit-user-select: none !important;
 }
 
-.layout-mode-active .module-body:active,
-.row-handle-mode-active .module-body:active {
+.layout-mode-active .module-body:active {
     cursor: grabbing !important;
 }
 
 .layout-mode-active .module-body input,
 .layout-mode-active .module-body select,
-.layout-mode-active .module-body button,
-.row-handle-mode-active .module-body input,
-.row-handle-mode-active .module-body select,
-.row-handle-mode-active .module-body button {
+.layout-mode-active .module-body button {
     pointer-events: none !important;
 }
 
-.layout-mode-active .row-handle-btn,
-.row-handle-mode-active .row-handle-btn {
+.layout-mode-active .row-handle-btn {
     pointer-events: auto !important;
     cursor: grab !important;
 }
 
-.layout-mode-active .row-handle-btn.dragging,
-.row-handle-mode-active .row-handle-btn.dragging {
+.layout-mode-active .row-handle-btn.dragging {
     cursor: grabbing !important;
 }
 
-.layout-mode-active #cable-canvas,
-.row-handle-mode-active #cable-canvas {
+.layout-mode-active #cable-canvas {
     pointer-events: none !important;
 }
 
-.layout-mode-active .grid-cell,
-.row-handle-mode-active .grid-cell {
+.layout-mode-active .grid-cell {
     pointer-events: auto !important;
     transition: border-color 0.2s ease, opacity 0.2s ease;
 }

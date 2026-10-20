@@ -1,13 +1,13 @@
-import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=277';
-import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=277';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=277';
+import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=278';
+import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=278';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=278';
 import { UIHelpers } from './helpers.js?v=229';
-import { PresetManager } from './managers/preset-manager.js?v=277';
-import { ModalManager } from './managers/modal-manager.js?v=277';
-import { CableManager } from './managers/cable-manager.js?v=277';
-import { PageManager } from './managers/page-manager.js?v=277';
-import { InteractionManager } from './managers/interaction-manager.js?v=277';
-import { WaveCodec } from '../audio/wave-codec.js?v=277';
+import { PresetManager } from './managers/preset-manager.js?v=278';
+import { ModalManager } from './managers/modal-manager.js?v=278';
+import { CableManager } from './managers/cable-manager.js?v=278';
+import { PageManager } from './managers/page-manager.js?v=278';
+import { InteractionManager } from './managers/interaction-manager.js?v=278';
+import { WaveCodec } from '../audio/wave-codec.js?v=278';
 
 export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'SPEC', 'MON', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE'];
 
@@ -72,8 +72,6 @@ export class UIController {
     set dropTargetIndex(v) { this.interactionManager.dropTargetIndex = v; }
     get isLayoutMode() { return this.interactionManager.isLayoutMode; }
     set isLayoutMode(v) { this.interactionManager.isLayoutMode = v; }
-    get isRowHandleMode() { return this.interactionManager.isLayoutMode; }
-    set isRowHandleMode(v) { this.interactionManager.isLayoutMode = v; }
     get dragMode() { return this.interactionManager.dragMode; }
     set dragMode(v) { this.interactionManager.dragMode = v; }
     get dragGroupOffsets() { return this.interactionManager.dragGroupOffsets; }
@@ -396,7 +394,7 @@ export class UIController {
         for (let i = 0; i < 40; i++) this.renderCell(i);
         if (typeof lucide !== 'undefined') lucide.createIcons();
         this.updatePortHighlight();
-        if (this.isRowHandleMode) {
+        if (this.isLayoutMode) {
             this.interactionManager?.updateRowHandleRail?.();
         }
     }

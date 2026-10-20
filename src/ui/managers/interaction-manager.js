@@ -1,6 +1,6 @@
 // src/ui/managers/interaction-manager.js
-import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=277';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=277';
+import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=278';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=278';
 
 export class InteractionManager {
     constructor(ui) {
@@ -39,14 +39,6 @@ export class InteractionManager {
 
         // Ready for future modes: 'edit', 'performance', 'visualizer'
         this.mode = 'edit';
-    }
-
-    get isRowHandleMode() {
-        return this.isLayoutMode;
-    }
-
-    set isRowHandleMode(v) {
-        this.isLayoutMode = v;
     }
 
     updateSelectionClasses() {
@@ -484,7 +476,7 @@ export class InteractionManager {
 
     toggleLayoutMode() {
         this.isLayoutMode = !this.isLayoutMode;
-        const btn = document.getElementById('layout-mode-btn') || document.getElementById('row-handle-mode-btn');
+        const btn = document.getElementById('layout-mode-btn');
         if (btn) {
             if (this.isLayoutMode) {
                 btn.classList.add('bg-cyan-950/90', 'border-cyan-500/80', 'text-cyan-300', 'shadow-cyan-500/20');
@@ -513,14 +505,10 @@ export class InteractionManager {
         }
         this.ui.renderCables();
         this.ui.gridBoard?.classList.toggle('layout-mode-active', this.isLayoutMode);
-        this.ui.gridBoard?.classList.toggle('row-handle-mode-active', this.isLayoutMode);
         this.updateRowHandleRail();
         this.ui.showToast(this.isLayoutMode ? 'LAYOUT MODE: ON（モジュール移動・行入れ替え）' : 'LAYOUT MODE: OFF（通常モード）');
     }
 
-    toggleRowHandleMode() {
-        return this.toggleLayoutMode();
-    }
 
     scheduleCableRender(animateDurationMs = 0) {
         if (this._cableRafId) return;
