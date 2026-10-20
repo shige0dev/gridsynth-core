@@ -1,6 +1,6 @@
 // src/ui/managers/interaction-manager.js
-import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=267';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=267';
+import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=268';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=268';
 
 export class InteractionManager {
     constructor(ui) {
@@ -33,6 +33,7 @@ export class InteractionManager {
         this.rowHandleOverlayEl = null;
         this.rowTracks = [];
         this.rowTargetSlotIndicatorEl = null;
+        this._cableRafId = null;
 
         // Ready for future modes: 'edit', 'performance', 'visualizer'
         this.mode = 'edit';
@@ -127,7 +128,16 @@ export class InteractionManager {
                     this.ui.updatePortHighlight();
                     return;
                 }
-                return this.ui.handlePortTap(port.dataset.moduleId, port.dataset.port);
+                let mId = port.dataset.moduleId;
+                let pName = port.dataset.port;
+                if (port.dataset.portId) {
+                    const colonIdx = port.dataset.portId.indexOf(':');
+                    if (colonIdx > 0) {
+                        mId = port.dataset.portId.slice(0, colonIdx);
+                        pName = port.dataset.portId.slice(colonIdx + 1);
+                    }
+                }
+                return this.ui.handlePortTap(mId, pName);
             }
             if (this.ui.selectedTargetForConnection) {
                 this.ui.selectedTargetForConnection = null;
@@ -458,6 +468,27 @@ export class InteractionManager {
         this.ui.showToast(this.isRowHandleMode ? 'ROW MODE: 行ハンドル表示中（モジュール操作ロック）' : 'ROW MODE: 解除（モジュール操作アンロック）');
     }
 
+    scheduleCableRender(animateDurationMs = 0) {
+        if (this._cableRafId) return;
+        const startTime = performance.now();
+        const renderLoop = (now) => {
+            this.ui.renderCables();
+            if (animateDurationMs > 0 && (now - startTime) < animateDurationMs) {
+                this._cableRafId = requestAnimationFrame(renderLoop);
+            } else {
+                this._cableRafId = null;
+            }
+        };
+        this._cableRafId = requestAnimationFrame(renderLoop);
+    }
+
+    cancelCableRender() {
+        if (this._cableRafId) {
+            cancelAnimationFrame(this._cableRafId);
+            this._cableRafId = null;
+        }
+    }
+
     initRowHandleUI() {
         const gridBoard = this.ui.gridBoard;
         if (!gridBoard) return;
@@ -630,9 +661,14 @@ export class InteractionManager {
                     slotIndicator.style.display = 'none';
                 }
             }
+
+            // Real-time cable follow during row drag and row shift animation
+            this.scheduleCableRender(240);
         };
 
         const resetAllRowTransforms = () => {
+            this.cancelCableRender();
+            this.ui.renderCables();
             const slotIndicator = this.rowTargetSlotIndicatorEl || document.getElementById('row-target-slot-indicator');
             if (slotIndicator) {
                 slotIndicator.style.display = 'none';

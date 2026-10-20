@@ -1,7 +1,7 @@
 // src/ui/managers/cable-manager.js
-import { parseConn, isSameConn, getPortSignalType, resolveConnectionSignalType, isSubModule, isSubIOModule, normalizeSubPort, getOppositeSubPort, getPortAliases, isPortMatching } from '../../core/utils.js?v=267';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=267';
-import { WaveCodec } from '../../audio/wave-codec.js?v=267';
+import { parseConn, isSameConn, getPortSignalType, resolveConnectionSignalType, isSubModule, isSubIOModule, normalizeSubPort, getOppositeSubPort, getPortAliases, isPortMatching } from '../../core/utils.js?v=268';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=268';
+import { WaveCodec } from '../../audio/wave-codec.js?v=268';
 
 export class CableManager {
     constructor(ui) {
@@ -13,21 +13,29 @@ export class CableManager {
         return this.ui.cableCanvas;
     }
 
+    getModuleIdByCell(cellIndex) {
+        if (cellIndex === null || cellIndex === undefined) return null;
+        return this.ui.gridMap[cellIndex] || null;
+    }
+
     findPortElement(moduleId, port) {
         if (!moduleId || !port) return null;
-        let el = document.querySelector(`[data-module-id="${moduleId}"][data-port="${port}"]`);
+        let el = document.querySelector(`[data-port-id="${moduleId}:${port}"]`) ||
+                 document.querySelector(`[data-module-id="${moduleId}"][data-port="${port}"]`);
         if (el) return el;
 
         if (isSubModule(moduleId)) {
             const norm = normalizeSubPort(port, moduleId);
-            el = document.querySelector(`[data-module-id="${moduleId}"][data-port="${norm}"]`);
+            el = document.querySelector(`[data-port-id="${moduleId}:${norm}"]`) ||
+                 document.querySelector(`[data-module-id="${moduleId}"][data-port="${norm}"]`);
             if (el) return el;
         }
 
         const aliases = getPortAliases(port);
         for (const alt of aliases) {
             if (alt === port) continue;
-            el = document.querySelector(`[data-module-id="${moduleId}"][data-port="${alt}"]`);
+            el = document.querySelector(`[data-port-id="${moduleId}:${alt}"]`) ||
+                 document.querySelector(`[data-module-id="${moduleId}"][data-port="${alt}"]`);
             if (el) return el;
         }
         return null;
@@ -260,8 +268,10 @@ export class CableManager {
         });
 
         connsToRender.forEach(conn => {
-            const fEl = this.findPortElement(conn.from.moduleId, conn.from.port);
-            const tEl = this.findPortElement(conn.to.moduleId, conn.to.port);
+            const fromId = conn.from?.moduleId || this.getModuleIdByCell(conn.from?.cell);
+            const toId = conn.to?.moduleId || this.getModuleIdByCell(conn.to?.cell);
+            const fEl = this.findPortElement(fromId, conn.from?.port);
+            const tEl = this.findPortElement(toId, conn.to?.port);
             if (!fEl || !tEl) return;
             const r1 = fEl.getBoundingClientRect(), r2 = tEl.getBoundingClientRect();
             const x1 = r1.left + r1.width / 2 - cr.left, y1 = r1.top + r1.height / 2 - cr.top;
