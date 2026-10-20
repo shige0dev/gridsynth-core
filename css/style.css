@@ -282,7 +282,7 @@ body {
 
 .row-handle-btn:hover .row-handle-bar {
     background-color: #ffffff;
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.95), 0 0 4px #38bdf8;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.95), 0 0 4px #d946ef;
     height: 30px;
 }
 
@@ -294,15 +294,16 @@ body {
 .row-handle-btn:active .row-handle-bar,
 .row-handle-btn.dragging .row-handle-bar {
     background-color: #ffffff !important;
-    box-shadow: 0 0 12px #22d3ee, 0 0 6px #ffffff !important;
+    box-shadow: 0 0 14px rgba(217, 70, 239, 0.9), 0 0 6px #ffffff !important;
     height: 32px;
 }
 
 .row-cell-dragging {
     opacity: 0.9 !important;
     filter: brightness(1.15) !important;
-    box-shadow: 0 4px 16px rgba(6, 182, 212, 0.45) !important;
-    border-color: rgba(6, 182, 212, 0.9) !important;
+    box-shadow: 0 0 15px rgba(217, 70, 239, 0.5) !important;
+    border-color: #d946ef !important;
+    border-width: 2px !important;
     z-index: 40 !important;
     pointer-events: none !important;
 }

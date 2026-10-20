@@ -1,6 +1,6 @@
 // src/ui/managers/interaction-manager.js
-import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=282';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=282';
+import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=283';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=283';
 
 export class InteractionManager {
     constructor(ui) {
@@ -474,8 +474,9 @@ export class InteractionManager {
         this.initRowHandleUI();
     }
 
-    toggleLayoutMode() {
-        this.isLayoutMode = !this.isLayoutMode;
+    setLayoutMode(active) {
+        if (this.isLayoutMode === Boolean(active)) return;
+        this.isLayoutMode = Boolean(active);
         const btn = document.getElementById('layout-mode-btn');
         if (btn) {
             if (this.isLayoutMode) {
@@ -507,6 +508,10 @@ export class InteractionManager {
         this.ui.gridBoard?.classList.toggle('layout-mode-active', this.isLayoutMode);
         this.updateRowHandleRail();
         this.ui.showToast(this.isLayoutMode ? 'LAYOUT MODE: ON（モジュール移動・行入れ替え）' : 'LAYOUT MODE: OFF（通常モード）');
+    }
+
+    toggleLayoutMode() {
+        this.setLayoutMode(!this.isLayoutMode);
     }
 
 

@@ -1,8 +1,8 @@
-import { safeClone, parseConn } from '../../core/utils.js?v=282';
-import { parsePatch, exportPatch, createDefaultPatchData } from '../../core/patch.js?v=282';
-import { getDefaultPresets } from '../../presets/default.js?v=282';
+import { safeClone, parseConn } from '../../core/utils.js?v=283';
+import { parsePatch, exportPatch, createDefaultPatchData } from '../../core/patch.js?v=283';
+import { getDefaultPresets } from '../../presets/default.js?v=283';
 import { AI_PATCH_SPEC_CONTENT } from '../../presets/ai-spec-content.js';
-import { JsonIoDialog, analyzeJsonError } from '../json-io-dialog.js?v=282';
+import { JsonIoDialog, analyzeJsonError } from '../json-io-dialog.js?v=283';
 
 export { analyzeJsonError };
 
@@ -347,6 +347,7 @@ export class PresetManager {
 
         // パッチ切り替え時は開いているすべてのドックダイアログ（LOCK中含む）とポップアップを閉じる
         this.ui.closeDockModal();
+        this.ui.interactionManager?.setLayoutMode(false);
         document.getElementById('shared-modal')?.classList.add('hidden');
 
         const parseErrors = [];
