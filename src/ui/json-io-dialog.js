@@ -1,5 +1,5 @@
 // src/ui/json-io-dialog.js
-import { safeClone } from '../core/utils.js?v=269';
+import { safeClone } from '../core/utils.js?v=270';
 
 export function analyzeJsonError(rawText, err) {
     let cleanText = (rawText || '').trim();

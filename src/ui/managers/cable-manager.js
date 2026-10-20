@@ -1,7 +1,7 @@
 // src/ui/managers/cable-manager.js
-import { parseConn, isSameConn, getPortSignalType, resolveConnectionSignalType, isSubModule, isSubIOModule, normalizeSubPort, getOppositeSubPort, getPortAliases, isPortMatching } from '../../core/utils.js?v=269';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=269';
-import { WaveCodec } from '../../audio/wave-codec.js?v=269';
+import { parseConn, isSameConn, getPortSignalType, resolveConnectionSignalType, isSubModule, isSubIOModule, normalizeSubPort, getOppositeSubPort, getPortAliases, isPortMatching } from '../../core/utils.js?v=270';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=270';
+import { WaveCodec } from '../../audio/wave-codec.js?v=270';
 
 export class CableManager {
     constructor(ui) {
@@ -245,11 +245,6 @@ export class CableManager {
 
     renderCables() {
         if (!this.cableCanvas) return;
-        if (this.ui.isLayoutMode) {
-            this.cableCanvas.innerHTML = '';
-            this.cableCanvas.style.display = 'none';
-            return;
-        }
         this.cableCanvas.style.display = '';
         this.cableCanvas.innerHTML = '';
         const cr = this.cableCanvas.getBoundingClientRect();

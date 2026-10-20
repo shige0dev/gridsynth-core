@@ -352,7 +352,6 @@ body {
 
 .layout-mode-active #cable-canvas,
 .row-handle-mode-active #cable-canvas {
-    display: none !important;
     pointer-events: none !important;
 }
 

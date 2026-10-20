@@ -1,6 +1,6 @@
 // src/ui/managers/interaction-manager.js
-import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=269';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=269';
+import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=270';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=270';
 
 export class InteractionManager {
     constructor(ui) {
@@ -23,6 +23,7 @@ export class InteractionManager {
         this._lpTimer = null;
         this._copyTimer = null;
         this._dragCandidate = null;
+        this._didDrag = false;
         this.portLongPressed = false;
         this.moduleLongPressed = false;
 
@@ -125,40 +126,21 @@ export class InteractionManager {
 
         this.ui.gridBoard.addEventListener('click', async (e) => {
             if (this.isLayoutMode) {
-                // In Layout Mode: port tapping and normal module taps are locked.
-                // Modules can be selected and tapped to delete.
+                if (this._didDrag) {
+                    this._didDrag = false;
+                    return;
+                }
                 const body = e.target.closest('.module-body');
                 if (body) {
                     const mId = body.dataset.moduleId;
-                    if (this.moduleLongPressed) {
-                        this.moduleLongPressed = false;
-                        return;
+                    // Tap on module toggles selection in Layout Mode
+                    if (this.selectedModuleIds.includes(mId)) {
+                        this.selectedModuleIds = this.selectedModuleIds.filter(id => id !== mId);
+                    } else {
+                        this.selectedModuleIds = [...this.selectedModuleIds, mId];
                     }
-                    if (this.selectedModuleIds.length > 0) {
-                        if (this.selectedModuleIds.includes(mId)) {
-                            const hasLocked = this.selectedModuleIds.some(id => this.ui.modules[id]?.type === 'SUB_IO');
-                            if (hasLocked) {
-                                this.selectedModuleIds = [];
-                                this.updateSelectionClasses();
-                                return this.ui.showToast('SUB_IO モジュールは削除できません（保護中）');
-                            }
-                            this.ui.saveHistory();
-                            const targets = [...this.selectedModuleIds];
-                            this.selectedModuleIds = [];
-                            this.updateSelectionClasses();
-                            this.ui._destroyCount = 0;
-                            for (const id of targets) {
-                                await this.ui.destroyModule(this.ui.currentPageId, id);
-                            }
-                            this.ui.updateAllCells();
-                            this.ui.renderCables();
-                            this.ui.showToast(`モジュールを破棄しました (${this.ui._destroyCount}個)`);
-                            return;
-                        }
-                        this.selectedModuleIds = [];
-                        this.updateSelectionClasses();
-                        return;
-                    }
+                    this.updateSelectionClasses();
+                    return;
                 }
                 const empty = e.target.closest('.empty-cell');
                 if (empty) {
@@ -166,6 +148,7 @@ export class InteractionManager {
                         this.selectedModuleIds = [];
                         this.updateSelectionClasses();
                     }
+                    return;
                 }
                 return;
             }
@@ -238,20 +221,12 @@ export class InteractionManager {
             this._sY = e.clientY;
 
             if (this.isLayoutMode) {
-                // In Layout Mode: modules can be selected (long press) and dragged (move/copy)
+                // In Layout Mode: touching a module prepares it for drag or tap
                 const body = e.target.closest('.module-body');
                 if (!body) return;
                 const mId = body.dataset.moduleId;
                 this._dragCandidate = mId;
-                this._lpTimer = setTimeout(() => {
-                    this._lpTimer = null;
-                    this.moduleLongPressed = true;
-                    this.selectedModuleIds = this.selectedModuleIds.includes(mId) ? this.selectedModuleIds.filter(x => x !== mId) : [...this.selectedModuleIds, mId];
-                    if (this.ui.selectedTargetForConnection) {
-                        this.ui.selectedTargetForConnection = null;
-                    }
-                    this.updateSelectionClasses();
-                }, 400);
+                this._didDrag = false;
                 return;
             }
 
@@ -311,10 +286,11 @@ export class InteractionManager {
             }
             if (this.isLayoutMode) {
                 if (!this.isDragging && this._dragCandidate && (Math.abs(e.clientX - this._sX) > 8 || Math.abs(e.clientY - this._sY) > 8)) {
-                if (this._lpTimer) {
-                    clearTimeout(this._lpTimer);
-                    this._lpTimer = null;
-                }
+                    this._didDrag = true;
+                    if (this._lpTimer) {
+                        clearTimeout(this._lpTimer);
+                        this._lpTimer = null;
+                    }
                 if (!this.selectedModuleIds.includes(this._dragCandidate)) this.selectedModuleIds = [this._dragCandidate];
                 if (this.ui.selectedTargetForConnection) {
                     this.ui.selectedTargetForConnection = null;
@@ -491,23 +467,14 @@ export class InteractionManager {
                 this.ui.selectedTargetForConnection = null;
                 this.ui.updatePortHighlight();
             }
-            // Hide cables in layout mode
-            if (this.ui.cableCanvas) {
-                this.ui.cableCanvas.innerHTML = '';
-                this.ui.cableCanvas.style.display = 'none';
-            }
         } else {
             // Exiting Layout Mode:
             if (this.selectedModuleIds.length > 0) {
                 this.selectedModuleIds = [];
                 this.updateSelectionClasses();
             }
-            // Restore and re-render cables
-            if (this.ui.cableCanvas) {
-                this.ui.cableCanvas.style.display = '';
-            }
-            this.ui.renderCables();
         }
+        this.ui.renderCables();
         this.ui.gridBoard?.classList.toggle('layout-mode-active', this.isLayoutMode);
         this.ui.gridBoard?.classList.toggle('row-handle-mode-active', this.isLayoutMode);
         this.updateRowHandleRail();
