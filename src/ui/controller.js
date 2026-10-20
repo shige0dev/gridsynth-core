@@ -1,13 +1,13 @@
-import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=284';
-import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=284';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=284';
+import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=285';
+import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=285';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=285';
 import { UIHelpers } from './helpers.js?v=229';
-import { PresetManager } from './managers/preset-manager.js?v=284';
-import { ModalManager } from './managers/modal-manager.js?v=284';
-import { CableManager } from './managers/cable-manager.js?v=284';
-import { PageManager } from './managers/page-manager.js?v=284';
-import { InteractionManager } from './managers/interaction-manager.js?v=284';
-import { WaveCodec } from '../audio/wave-codec.js?v=284';
+import { PresetManager } from './managers/preset-manager.js?v=285';
+import { ModalManager } from './managers/modal-manager.js?v=285';
+import { CableManager } from './managers/cable-manager.js?v=285';
+import { PageManager } from './managers/page-manager.js?v=285';
+import { InteractionManager } from './managers/interaction-manager.js?v=285';
+import { WaveCodec } from '../audio/wave-codec.js?v=285';
 
 export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'SPEC', 'MON', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE'];
 
@@ -107,6 +107,16 @@ export class UIController {
     initDOM() {
         this.gridBoard = document.getElementById('grid-board');
         this.cableCanvas = document.getElementById('cable-canvas');
+        const baseGrid = document.getElementById('base-grid');
+        if (baseGrid && !baseGrid.hasChildNodes()) {
+            const fragment = document.createDocumentFragment();
+            for (let i = 0; i < 40; i++) {
+                const bgCell = document.createElement('div');
+                bgCell.className = 'aspect-square border border-solid border-slate-700/50 rounded-xs';
+                fragment.appendChild(bgCell);
+            }
+            baseGrid.appendChild(fragment);
+        }
         this.gridBoard.innerHTML = '';
         for (let i = 0; i < 40; i++) {
             const c = document.createElement('div');
@@ -293,7 +303,7 @@ export class UIController {
         const cell = this.cells[idx] || document.getElementById(`cell-${idx}`);
         if (!cell) return;
         const mId = this.gridMap[idx], m = mId ? this.modules[mId] : null;
-        cell.className = `grid-cell relative aspect-square border transition-all select-none overflow-hidden touch-none ${m ? `border-slate-600 bg-white/10 backdrop-blur-sm shadow-md shadow-black/50 ${this.selectedModuleIds.includes(mId)?'selected-module':''}` : 'border-solid border-slate-700/50 cursor-pointer empty-cell'}`;
+        cell.className = `grid-cell relative aspect-square transition-all select-none overflow-hidden touch-none ${m ? `border border-slate-600 bg-white/10 backdrop-blur-sm shadow-md shadow-black/50 ${this.selectedModuleIds.includes(mId)?'selected-module':''}` : 'cursor-pointer empty-cell'}`;
         if (m) {
             cell.dataset.renderedState = 'module';
             const reg = MODULE_REGISTRY[m.type];
