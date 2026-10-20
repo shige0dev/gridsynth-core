@@ -20,8 +20,7 @@ export const SHAPER_FUNCTIONS = {
 export class FoldProcessor extends AudioWorkletProcessor {
     static get parameterDescriptors() {
         return [
-            { name: 'fold', defaultValue: 1.5, minValue: 0.0, maxValue: 10.0 },
-            { name: 'bias', defaultValue: 0.0, minValue: -1.0, maxValue: 1.0 },
+            { name: 'gain', defaultValue: 1.5, minValue: 0.0, maxValue: 10.0 },
             { name: 'mix', defaultValue: 1.0, minValue: 0.0, maxValue: 1.0 }
         ];
     }
@@ -46,20 +45,18 @@ export class FoldProcessor extends AudioWorkletProcessor {
             return true;
         }
 
-        const bias = params.bias[0] || 0;
         const mix = params.mix[0] !== undefined ? params.mix[0] : 1.0;
-        const isFoldArray = params.fold.length > 1;
-        const singleFold = params.fold[0] || 0;
+        const isGainArray = params.gain.length > 1;
+        const singleGain = params.gain[0] || 0;
         const shaper = SHAPER_FUNCTIONS[this.shapeMode] || SHAPER_FUNCTIONS.fold;
 
         for (let i = 0; i < out.length; i++) {
             const inVal = inp[i];
-            const foldVal = Math.max(0, isFoldArray ? params.fold[i] : singleFold);
-            const drv = 1.0 + foldVal * 3.5;
-            const u = (inVal + bias) * drv;
+            const gainVal = Math.max(0, isGainArray ? params.gain[i] : singleGain);
+            const u = inVal * gainVal;
             const folded = shaper(u);
             const res = (1.0 - mix) * inVal + mix * folded;
-            out[i] = Math.max(-1.0, Math.min(1.0, res * 0.92));
+            out[i] = Math.max(-1.0, Math.min(1.0, res * 0.95));
         }
         return true;
     }

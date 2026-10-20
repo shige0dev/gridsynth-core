@@ -18,14 +18,15 @@ export const FOLD = {
     create: (ctx, d, patch) => {
         const inp = ctx.createGain();
         const out = ctx.createGain();
-        const fCv = ctx.createGain();
+        const gCv = ctx.createGain();
+        const hasGainCv = patch.has('gain_cv') || patch.has('fold_cv');
+        const initialGain = hasGainCv ? 0.0 : (d.gain !== undefined ? d.gain : (d.fold ?? 1.5));
 
         const w = new AudioWorkletNode(ctx, 'fold-processor', {
             numberOfInputs: 1,
             numberOfOutputs: 1,
             parameterData: {
-                fold: patch.has('fold_cv') ? 0.0 : (d.fold ?? 1.5),
-                bias: d.bias ?? 0.0,
+                gain: initialGain,
                 mix: d.mix ?? 1.0
             }
         });
@@ -34,21 +35,22 @@ export const FOLD = {
             w.port.postMessage({ type: 'SET_SHAPE', mode: d.shape });
         }
 
-        fCv.gain.value = 3.0;
-        fCv.connect(w.parameters.get('fold'));
+        gCv.gain.value = 5.0;
+        gCv.connect(w.parameters.get('gain'));
 
         inp.connect(w);
         w.connect(out);
 
         return {
-            nodes: { inp, out, fCv, w },
-            inputs: { wave_in: inp, fold_cv: fCv },
+            nodes: { inp, out, gCv, w },
+            inputs: { wave_in: inp, gain_cv: gCv, fold_cv: gCv },
             outputs: { wave_out: out }
         };
     },
     update: (ctx, inst, d, patch) => {
-        AudioHelpers.set(inst.nodes.w.parameters.get('fold'), patch.has('fold_cv') ? 0.0 : (d.fold ?? 1.5), ctx);
-        AudioHelpers.set(inst.nodes.w.parameters.get('bias'), d.bias ?? 0.0, ctx);
+        const hasGainCv = patch.has('gain_cv') || patch.has('fold_cv');
+        const gainVal = hasGainCv ? 0.0 : (d.gain !== undefined ? d.gain : (d.fold ?? 1.5));
+        AudioHelpers.set(inst.nodes.w.parameters.get('gain'), gainVal, ctx);
         AudioHelpers.set(inst.nodes.w.parameters.get('mix'), d.mix ?? 1.0, ctx);
         if (d.shape) {
             inst.nodes.w.port.postMessage({ type: 'SET_SHAPE', mode: d.shape });

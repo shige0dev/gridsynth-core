@@ -193,14 +193,13 @@ export const preset03 = {
         },
         "VCO1": {
           "type": "VCO",
-          "wave": "sine",
+          "wave": "triangle",
           "freq1": 110,
           "channels": 1
         },
         "FOLD1": {
           "type": "FOLD",
-          "fold": 2.0,
-          "bias": 0.0,
+          "gain": 2.2,
           "mix": 1.0
         },
         "DELAY2": {
@@ -230,7 +229,7 @@ export const preset03 = {
         { "from": { "moduleId": "SEQ16_1", "port": "cv_out" }, "to": { "moduleId": "VCO1", "port": "cv_in" } },
         { "from": { "moduleId": "VCO1", "port": "wave_out" }, "to": { "moduleId": "FOLD1", "port": "wave_in" } },
         { "from": { "moduleId": "FOLD1", "port": "wave_out" }, "to": { "moduleId": "VCF1", "port": "wave_in" } },
-        { "from": { "moduleId": "RF1", "port": "cv_out" }, "to": { "moduleId": "FOLD1", "port": "fold_cv" } },
+        { "from": { "moduleId": "RF1", "port": "cv_out" }, "to": { "moduleId": "FOLD1", "port": "gain_cv" } },
         { "from": { "moduleId": "NOISE1", "port": "wave_out" }, "to": { "moduleId": "VCF2", "port": "wave_in" } },
         { "from": { "moduleId": "LFO1", "port": "cv_out" }, "to": { "moduleId": "VCA2", "port": "cv_in" } },
         { "from": { "moduleId": "LFO1", "port": "cv_out" }, "to": { "moduleId": "VCF2", "port": "cv_in" } },
