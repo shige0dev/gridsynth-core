@@ -1,7 +1,7 @@
 // src/ui/managers/cable-manager.js
-import { parseConn, isSameConn, getPortSignalType, resolveConnectionSignalType, isSubModule, isSubIOModule, normalizeSubPort, getOppositeSubPort, getPortAliases, isPortMatching } from '../../core/utils.js?v=273';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=273';
-import { WaveCodec } from '../../audio/wave-codec.js?v=273';
+import { parseConn, isSameConn, getPortSignalType, resolveConnectionSignalType, isSubModule, isSubIOModule, normalizeSubPort, getOppositeSubPort, getPortAliases, isPortMatching } from '../../core/utils.js?v=274';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=274';
+import { WaveCodec } from '../../audio/wave-codec.js?v=274';
 
 export class CableManager {
     constructor(ui) {
@@ -282,12 +282,21 @@ export class CableManager {
             const dy = y2 - y1;
             const dist = Math.sqrt(dx * dx + dy * dy);
             const curveY = Math.max(dist * 0.35, 18);
-            let targetX = x2;
+            const baseY = Math.max(y1, y2) + curveY;
+
+            let cp1x, cp2x;
             if (Math.abs(dx) < 12) {
-                targetX = x2 + Math.min(32, Math.max(18, dist * 0.18));
+                const bulge = Math.min(32, Math.max(18, dist * 0.18));
+                cp1x = x1 + bulge;
+                cp2x = x2 + bulge;
+            } else {
+                cp1x = x1 + dx * 0.38;
+                cp2x = x2 - dx * 0.38;
             }
-            const targetY = Math.max(y2 + curveY, y1 + curveY * 0.25);
-            path.setAttribute('d', `M ${x1} ${y1} Q ${targetX} ${targetY} ${x2} ${y2}`);
+            const cp1y = baseY;
+            const cp2y = baseY;
+
+            path.setAttribute('d', `M ${x1} ${y1} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${x2} ${y2}`);
 
             const sig = resolveConnectionSignalType(conn);
             const strokeColor = sig.stroke;
