@@ -1,7 +1,7 @@
 // src/ui/managers/cable-manager.js
-import { parseConn, isSameConn, getPortSignalType, resolveConnectionSignalType, isSubModule, isSubIOModule, normalizeSubPort, getOppositeSubPort, getPortAliases, isPortMatching } from '../../core/utils.js?v=287';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=287';
-import { WaveCodec } from '../../audio/wave-codec.js?v=287';
+import { parseConn, isSameConn, getPortSignalType, resolveConnectionSignalType, isSubModule, isSubIOModule, normalizeSubPort, getOppositeSubPort, getPortAliases, isPortMatching } from '../../core/utils.js?v=288';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=288';
+import { WaveCodec } from '../../audio/wave-codec.js?v=288';
 
 export class CableManager {
     constructor(ui) {
@@ -26,11 +26,12 @@ export class CableManager {
             if (gamma === null || gamma === undefined) return;
 
             // Handle device rotation (portrait vs landscape)
+            // Invert rawX so gravity pulls cables toward the tilted direction (gamma > 0 = tilted right -> +X pull)
             const angle = window.screen?.orientation?.angle ?? window.orientation ?? 0;
-            let rawX = gamma;
-            if (angle === 90) rawX = (e.beta ?? 0);
-            else if (angle === -90 || angle === 270) rawX = -(e.beta ?? 0);
-            else if (angle === 180) rawX = -gamma;
+            let rawX = -gamma;
+            if (angle === 90) rawX = -(e.beta ?? 0);
+            else if (angle === -90 || angle === 270) rawX = (e.beta ?? 0);
+            else if (angle === 180) rawX = gamma;
 
             // Deadband: ignore tiny tremors (< 1.2 degrees) to save CPU/battery
             const delta = Math.abs(rawX - this.lastRawX);
