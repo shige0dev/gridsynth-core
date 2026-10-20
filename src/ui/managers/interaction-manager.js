@@ -1,6 +1,6 @@
 // src/ui/managers/interaction-manager.js
-import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=271';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=271';
+import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=272';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=272';
 
 export class InteractionManager {
     constructor(ui) {
@@ -24,6 +24,7 @@ export class InteractionManager {
         this._copyTimer = null;
         this._dragCandidate = null;
         this._didDrag = false;
+        this._selectionBeforeTap = null;
         this.portLongPressed = false;
         this.moduleLongPressed = false;
 
@@ -133,7 +134,42 @@ export class InteractionManager {
                 const body = e.target.closest('.module-body');
                 if (body) {
                     const mId = body.dataset.moduleId;
-                    // Tap on module toggles selection in Layout Mode
+                    const now = Date.now();
+                    const isDoubleTap = (now - this._lastTap < 350 && this._lastTapId === mId);
+
+                    if (isDoubleTap) {
+                        this._lastTap = 0;
+                        this._lastTapId = null;
+                        const targets = (this._selectionBeforeTap && this._selectionBeforeTap.includes(mId))
+                            ? this._selectionBeforeTap
+                            : (this.selectedModuleIds.length > 0 ? [...this.selectedModuleIds] : [mId]);
+                        this._selectionBeforeTap = null;
+
+                        const hasLocked = targets.some(id => this.ui.modules[id]?.type === 'SUB_IO');
+                        if (hasLocked) {
+                            this.selectedModuleIds = [];
+                            this.updateSelectionClasses();
+                            return this.ui.showToast('SUB_IO モジュールは削除できません（保護中）');
+                        }
+
+                        this.ui.saveHistory();
+                        this.selectedModuleIds = [];
+                        this.updateSelectionClasses();
+                        this.ui._destroyCount = 0;
+                        for (const id of targets) {
+                            await this.ui.destroyModule(this.ui.currentPageId, id);
+                        }
+                        this.ui.updateAllCells();
+                        this.ui.renderCables();
+                        this.ui.showToast(`モジュールを破棄しました (${this.ui._destroyCount}個)`);
+                        return;
+                    }
+
+                    // 1st Tap: Record tap state and toggle selection
+                    this._lastTap = now;
+                    this._lastTapId = mId;
+                    this._selectionBeforeTap = [...this.selectedModuleIds];
+
                     if (this.selectedModuleIds.includes(mId)) {
                         this.selectedModuleIds = this.selectedModuleIds.filter(id => id !== mId);
                     } else {
@@ -144,6 +180,7 @@ export class InteractionManager {
                 }
                 const empty = e.target.closest('.empty-cell');
                 if (empty) {
+                    this._selectionBeforeTap = null;
                     if (this.selectedModuleIds.length > 0) {
                         this.selectedModuleIds = [];
                         this.updateSelectionClasses();
