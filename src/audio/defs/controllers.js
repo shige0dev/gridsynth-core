@@ -12,3 +12,4 @@ export const KEY = {
 export const controllerAudioDefs = {
     KEY
 };
+

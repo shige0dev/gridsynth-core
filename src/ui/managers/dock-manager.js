@@ -1,6 +1,6 @@
 // src/ui/managers/dock-manager.js
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=292';
-import { UIHelpers } from '../helpers.js?v=292';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=293';
+import { UIHelpers } from '../helpers.js?v=293';
 
 export const DOCK_TITLES = {
     KEY: 'KEYBOARD',
@@ -9,6 +9,8 @@ export const DOCK_TITLES = {
     SEQ8: '8-STEP SEQUENCER',
     SPEC: 'SPECTRUM ANALYZER',
     SCOPE: 'OSCILLOSCOPE',
+    LISS: 'LISSAJOUS (X-Y)',
+    XY: 'LISSAJOUS (X-Y)',
     SCALE: 'SCALE QUANTIZER',
     CHORD: 'CHORD GENERATOR',
     ARP: 'ARPEGGIATOR',
@@ -48,6 +50,8 @@ export const DOCK_ICONS = {
     SEQ8: 'sliders',
     SPEC: 'activity',
     SCOPE: 'activity',
+    LISS: 'activity',
+    XY: 'activity',
     CHORD: 'layers',
     ARP: 'trending-up',
     MARKOV: 'shuffle',

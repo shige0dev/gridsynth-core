@@ -1,8 +1,8 @@
 // src/ui/managers/modal-manager.js
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=292';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=293';
 import { FACTORY_SUBPATCHES } from '../../presets/subpatches.js';
 import { UIHelpers } from '../helpers.js?v=187';
-import { generateModuleId } from '../../core/utils.js?v=292';
+import { generateModuleId } from '../../core/utils.js?v=293';
 
 export const MODAL_WIDTHS = {
     // Complex Synthesizers
@@ -48,13 +48,14 @@ export const MODAL_WIDTHS = {
 
     // IO & Monitoring
     SCOPE: 'w-[235px]',
+    LISS: 'w-[235px]',
     SPEC: 'w-[235px]',
     MON: 'w-[195px]',
     SPK: 'w-[185px]',
     SUB: 'w-[240px]'
 };
 
-export { DOCK_TITLES, DOCK_ICONS } from './dock-manager.js?v=292';
+export { DOCK_TITLES, DOCK_ICONS } from './dock-manager.js?v=293';
 
 export class ModalManager {
     constructor(ui) {
@@ -160,7 +161,7 @@ export class ModalManager {
     openSettingsModal(mId) {
         const m = this.ui.modules[mId];
         if (!m || m.type === 'SUB_IO') return;
-        if (['KEY', 'SEQ8', 'SEQ16', 'PAT', 'SPEC', 'SCOPE', 'WAVE'].includes(m.type)) {
+        if (['KEY', 'SEQ8', 'SEQ16', 'PAT', 'SPEC', 'SCOPE', 'LISS', 'WAVE'].includes(m.type)) {
             this.openDockModal(mId);
             return;
         }
@@ -275,7 +276,7 @@ export class ModalManager {
                         name: 'SOUND',
                         sub: 'サウンド (音源・音響・出力)',
                         color: 'cyan',
-                        types: ['VCO', 'WAVE', 'NOISE', 'FMx3', 'FMCORE', 'FOLD', 'VCF', 'VCA', 'MIX', 'DELAY', 'REVERB', 'SPK', 'SCOPE', 'SPEC']
+                        types: ['VCO', 'WAVE', 'NOISE', 'FMx3', 'FMCORE', 'FOLD', 'VCF', 'VCA', 'MIX', 'DELAY', 'REVERB', 'SPK', 'SCOPE', 'LISS', 'SPEC']
                     },
                     {
                         name: 'TRIGGER',

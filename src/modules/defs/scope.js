@@ -1,5 +1,8 @@
-import { UIHelpers } from '../../ui/helpers.js?v=292';
+import { UIHelpers } from '../../ui/helpers.js?v=293';
 
+// -------------------------------------------------------------
+// 1. Single-Channel Oscilloscope Canvas
+// -------------------------------------------------------------
 const drawScopeCanvas = (ctx2d, w, h, data, m, isModal = false) => {
     ctx2d.clearRect(0, 0, w, h);
 
@@ -7,7 +10,6 @@ const drawScopeCanvas = (ctx2d, w, h, data, m, isModal = false) => {
     if (isModal) {
         ctx2d.strokeStyle = '#1e293b';
         ctx2d.lineWidth = 0.5;
-        // 8 horizontal divisions
         for (let i = 1; i < 8; i++) {
             const y = (h / 8) * i;
             ctx2d.beginPath();
@@ -15,7 +17,6 @@ const drawScopeCanvas = (ctx2d, w, h, data, m, isModal = false) => {
             ctx2d.lineTo(w, y);
             ctx2d.stroke();
         }
-        // 10 vertical divisions
         for (let i = 1; i < 10; i++) {
             const x = (w / 10) * i;
             ctx2d.beginPath();
@@ -34,90 +35,47 @@ const drawScopeCanvas = (ctx2d, w, h, data, m, isModal = false) => {
     ctx2d.stroke();
 
     const vR = m.vRange || 5.0;
-    const b1 = data.buf1, b2 = data.buf2, trg = data.trigBuf;
+    const b1 = data?.buf1, trg = data?.trigBuf;
     if (!b1) return;
     const len = b1.length;
 
-    if (m.displayMode === 'xy') {
-        // Lissajous XY Mode (X = in1, Y = in2)
-        ctx2d.lineWidth = isModal ? 1.8 : 1.4;
-        ctx2d.strokeStyle = '#10b981';
-        ctx2d.beginPath();
-        let lastX = w / 2, lastY = h / 2;
-        for (let i = 0; i < len; i++) {
-            const x = Math.max(1, Math.min(w - 1, (w / 2) + ((b1[i] / vR) * (w * 0.44))));
-            const y = Math.max(1, Math.min(h - 1, (h / 2) - (((b2 ? b2[i] : 0) / vR) * (h * 0.44))));
-            if (i === 0) ctx2d.moveTo(x, y);
-            else ctx2d.lineTo(x, y);
-            if (i === len - 1) {
-                lastX = x;
-                lastY = y;
-            }
+    // Trigger offset search (auto trigger on rising zero-crossing)
+    let startIdx = 0;
+    if ((m.trigMode || 'auto') === 'auto' && trg) {
+        for (let i = 0; i < Math.min(trg.length - 2, 128); i++) {
+            if (trg[i] < 0 && trg[i + 1] >= 0) { startIdx = i; break; }
         }
-        ctx2d.stroke();
-
-        // High-luminance phosphor beam spot
-        ctx2d.save();
-        ctx2d.shadowColor = '#00ffaa';
-        ctx2d.shadowBlur = isModal ? 8 : 6;
-        ctx2d.fillStyle = '#ffffff';
-        ctx2d.beginPath();
-        ctx2d.arc(lastX, lastY, isModal ? 2.2 : 1.4, 0, Math.PI * 2);
-        ctx2d.fill();
-        ctx2d.restore();
-    } else {
-        // Dual Trace Time Domain Mode
-        let startIdx = 0;
-        if ((m.trigMode || 'auto') === 'auto' && trg) {
-            for (let i = 0; i < Math.min(trg.length - 2, 128); i++) {
-                if (trg[i] < 0 && trg[i + 1] >= 0) { startIdx = i; break; }
-            }
-        }
-        const drawPts = len - startIdx;
-        const sW = w / Math.max(1, drawPts - 1);
-        const sp = m.ySpread ?? 0.2;
-
-        // Upper terminal (in2 / b2 - Purple) - shifts UP
-        if (b2) {
-            ctx2d.lineWidth = isModal ? 1.6 : 1.2;
-            ctx2d.strokeStyle = '#c084fc';
-            ctx2d.beginPath();
-            for (let i = 0; i < drawPts; i++) {
-                const idx = startIdx + i;
-                const y = Math.max(1, Math.min(h - 1, (h / 2) - (((b2[idx] / vR) + sp) * (h * 0.44))));
-                i === 0 ? ctx2d.moveTo(i * sW, y) : ctx2d.lineTo(i * sW, y);
-            }
-            ctx2d.stroke();
-        }
-
-        // Lower terminal (in1 / b1 - Cyan) - shifts DOWN
-        ctx2d.lineWidth = isModal ? 1.8 : 1.4;
-        ctx2d.strokeStyle = '#22d3ee';
-        ctx2d.beginPath();
-        for (let i = 0; i < drawPts; i++) {
-            const idx = startIdx + i;
-            const y = Math.max(1, Math.min(h - 1, (h / 2) - (((b1[idx] / vR) - sp) * (h * 0.44))));
-            i === 0 ? ctx2d.moveTo(i * sW, y) : ctx2d.lineTo(i * sW, y);
-        }
-        ctx2d.stroke();
     }
+    const drawPts = len - startIdx;
+    const sW = w / Math.max(1, drawPts - 1);
+
+    // Single-trace waveform (Cyan)
+    ctx2d.lineWidth = isModal ? 1.8 : 1.4;
+    ctx2d.strokeStyle = '#22d3ee';
+    ctx2d.beginPath();
+    for (let i = 0; i < drawPts; i++) {
+        const idx = startIdx + i;
+        const y = Math.max(1, Math.min(h - 1, (h / 2) - ((b1[idx] / vR) * (h * 0.44))));
+        i === 0 ? ctx2d.moveTo(i * sW, y) : ctx2d.lineTo(i * sW, y);
+    }
+    ctx2d.stroke();
 };
 
 export const SCOPE = {
     color: 'cyan',
-    defaults: () => ({ type: 'SCOPE', timeSpan: 0.05, vRange: 5.0, trigMode: 'auto', displayMode: 'time', ySpread: 0.2 }),
+    defaults: () => ({ type: 'SCOPE', timeSpan: 0.05, vRange: 5.0, trigMode: 'auto' }),
     ports: () => ({
         in: [
-            { port: 'wave_in1', pin: 4, color: 'bg-yellow-400' },
-            { port: 'trig_in', pin: 5, color: 'bg-orange-500' },
-            { port: 'wave_in2', pin: 3, color: 'bg-yellow-400' }
+            { port: 'wave_in', pin: 4, alias: 'wave_in1', color: 'bg-yellow-400' },
+            { port: 'trig_in', pin: 5, color: 'bg-orange-500' }
         ],
         out: []
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
     T_STEPS: [0.001, 0.005, 0.01, 0.02, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
+    V_STEPS: [0.5, 1.0, 2.0, 5.0, 10.0],
     formatTime: (v) => v < 1 ? `${Math.round(v * 1000)}ms` : `${v.toFixed(1)}s`,
-    renderGrid: (m) => `
+    renderGrid: () => `
         <div class="absolute inset-0.5 bg-slate-950 rounded-sm border border-slate-800/90 overflow-hidden z-0 pointer-events-none">
             <canvas class="scope-canvas w-full h-full block" width="100" height="100"></canvas>
         </div>`,
@@ -138,15 +96,12 @@ export const SCOPE = {
         const curT = m.timeSpan || 0.05;
         const curV = m.vRange || 5.0;
         const curTrig = m.trigMode || 'auto';
-        const curDisp = m.displayMode || 'time';
-        const curYSp = m.ySpread ?? 0.2;
 
         return `
             <div class="space-y-1.5">
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800 select-none">
-                    <div class="flex items-center gap-1">
-                        <button id="scope-mode-time" class="h-4 px-1.5 rounded text-[8px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${curDisp === 'time' ? 'bg-cyan-600 text-white border-cyan-400 shadow-sm shadow-cyan-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">TIME</button>
-                        <button id="scope-mode-xy" class="h-4 px-1.5 rounded text-[8px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${curDisp === 'xy' ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">X-Y</button>
+                    <div class="flex items-center gap-1 font-mono text-[9px] text-cyan-400 font-bold">
+                        <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 inline-block"></span>1-CH SCOPE
                     </div>
                     <div class="flex items-center gap-2">
                         <div class="flex items-center gap-1">
@@ -167,39 +122,16 @@ export const SCOPE = {
                     <canvas id="scope-modal-canvas" class="w-full h-full block rounded bg-slate-950" width="360" height="106"></canvas>
                 </div>
                 <div class="flex items-center justify-between text-[8px] text-slate-400 select-none pt-0.5">
-                    <div class="flex items-center gap-2">
-                        <span class="inline-flex items-center gap-1 font-mono text-[8px] text-cyan-400 font-bold">
-                            <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 inline-block"></span>CH1
-                        </span>
-                        <span class="inline-flex items-center gap-1 font-mono text-[8px] text-purple-400 font-bold">
-                            <span class="w-1.5 h-1.5 rounded-full bg-purple-400 inline-block"></span>CH2
-                        </span>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        <button id="scope-trig-toggle" class="h-4 px-1.5 rounded text-[8px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${curTrig === 'auto' ? 'bg-amber-950 text-amber-300 border-amber-600/70 shadow-sm shadow-amber-500/30' : 'bg-slate-800 text-slate-400 border-slate-700'}">
-                            TRIG: ${curTrig.toUpperCase()}
-                        </button>
-                        <button id="scope-sp-toggle" class="h-4 px-1.5 rounded text-[8px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${curYSp > 0 ? 'bg-slate-800 text-cyan-300 border-cyan-700/60' : 'bg-slate-800 text-slate-400 border-slate-700'}">
-                            SEP: ${curYSp > 0 ? 'ON' : 'OFF'}
-                        </button>
-                    </div>
+                    <span class="text-[8px] text-slate-400 font-mono">INPUT: PIN4 (WAVE)</span>
+                    <button id="scope-trig-toggle" class="h-4 px-2 rounded text-[8px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${curTrig === 'auto' ? 'bg-amber-950 text-amber-300 border-amber-600/70 shadow-sm shadow-amber-500/30' : 'bg-slate-800 text-slate-400 border-slate-700'}">
+                        TRIG: ${curTrig.toUpperCase()} (PIN5)
+                    </button>
                 </div>
             </div>`;
     },
     bindEvents: (m, ctx, cb) => {
         const tSteps = SCOPE.T_STEPS;
-        const vSteps = [0.5, 1.0, 2.0, 5.0, 10.0];
-
-        document.getElementById('scope-mode-time')?.addEventListener('click', () => {
-            m.displayMode = 'time';
-            ctx.reRenderModal();
-            cb();
-        });
-        document.getElementById('scope-mode-xy')?.addEventListener('click', () => {
-            m.displayMode = 'xy';
-            ctx.reRenderModal();
-            cb();
-        });
+        const vSteps = SCOPE.V_STEPS;
 
         document.getElementById('scope-t-down')?.addEventListener('click', () => {
             const cur = m.timeSpan || 0.05;
@@ -244,15 +176,148 @@ export const SCOPE = {
             ctx.reRenderModal();
             cb();
         });
+    }
+};
 
-        document.getElementById('scope-sp-toggle')?.addEventListener('click', () => {
-            m.ySpread = (m.ySpread ?? 0.2) > 0 ? 0.0 : 0.2;
-            ctx.reRenderModal();
-            cb();
+// -------------------------------------------------------------
+// 2. Lissajous XY Scope Canvas & Module
+// -------------------------------------------------------------
+const drawLissajousCanvas = (ctx2d, w, h, data, m, isModal = false) => {
+    ctx2d.clearRect(0, 0, w, h);
+
+    if (isModal) {
+        ctx2d.strokeStyle = '#1e293b';
+        ctx2d.lineWidth = 0.5;
+        for (let i = 1; i < 8; i++) {
+            const y = (h / 8) * i;
+            ctx2d.beginPath(); ctx2d.moveTo(0, y); ctx2d.lineTo(w, y); ctx2d.stroke();
+        }
+        for (let i = 1; i < 10; i++) {
+            const x = (w / 10) * i;
+            ctx2d.beginPath(); ctx2d.moveTo(x, 0); ctx2d.lineTo(x, h); ctx2d.stroke();
+        }
+    }
+
+    // Center crosshair axes
+    ctx2d.strokeStyle = isModal ? '#334155' : '#1e293b';
+    ctx2d.lineWidth = isModal ? 1.0 : 0.8;
+    ctx2d.beginPath();
+    ctx2d.moveTo(0, h / 2); ctx2d.lineTo(w, h / 2);
+    ctx2d.moveTo(w / 2, 0); ctx2d.lineTo(w / 2, h);
+    ctx2d.stroke();
+
+    const vR = m.vRange || 5.0;
+    const b1 = data?.buf1, b2 = data?.buf2;
+    if (!b1) return;
+    const len = b1.length;
+
+    ctx2d.lineWidth = isModal ? 1.8 : 1.4;
+    ctx2d.strokeStyle = '#10b981';
+    ctx2d.beginPath();
+    let lastX = w / 2, lastY = h / 2;
+    for (let i = 0; i < len; i++) {
+        const x = Math.max(1, Math.min(w - 1, (w / 2) + ((b1[i] / vR) * (w * 0.44))));
+        const y = Math.max(1, Math.min(h - 1, (h / 2) - (((b2 ? b2[i] : 0) / vR) * (h * 0.44))));
+        if (i === 0) ctx2d.moveTo(x, y);
+        else ctx2d.lineTo(x, y);
+        if (i === len - 1) {
+            lastX = x;
+            lastY = y;
+        }
+    }
+    ctx2d.stroke();
+
+    // High-luminance phosphor beam spot
+    ctx2d.save();
+    ctx2d.shadowColor = '#00ffaa';
+    ctx2d.shadowBlur = isModal ? 8 : 6;
+    ctx2d.fillStyle = '#ffffff';
+    ctx2d.beginPath();
+    ctx2d.arc(lastX, lastY, isModal ? 2.2 : 1.4, 0, Math.PI * 2);
+    ctx2d.fill();
+    ctx2d.restore();
+};
+
+export const LISS = {
+    color: 'emerald',
+    defaults: () => ({ type: 'LISS', vRange: 5.0 }),
+    ports: () => ({
+        in: [
+            { port: 'x_in', pin: 4, alias: 'wave_in1', color: 'bg-yellow-400' },
+            { port: 'y_in', pin: 5, alias: 'wave_in2', color: 'bg-yellow-400' }
+        ],
+        out: []
+    }),
+    renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
+    V_STEPS: [0.5, 1.0, 2.0, 5.0, 10.0],
+    renderGrid: () => `
+        <div class="absolute inset-0.5 bg-slate-950 rounded-sm border border-slate-800/90 overflow-hidden z-0 pointer-events-none">
+            <canvas class="liss-canvas w-full h-full block" width="100" height="100"></canvas>
+            <div class="absolute top-1 left-1.5 text-[7.5px] font-mono font-bold text-emerald-400/80 pointer-events-none select-none">LISS</div>
+        </div>`,
+    updateLive: (cell, data, isP, modal, m) => {
+        if (!data || !m) return;
+        const cvs = cell.querySelector('.liss-canvas');
+        if (cvs) {
+            const ctx = cvs.getContext('2d');
+            drawLissajousCanvas(ctx, cvs.width, cvs.height, data, m, false);
+        }
+        const modalCvs = modal?.querySelector('#liss-modal-canvas');
+        if (modalCvs) {
+            const mCtx = modalCvs.getContext('2d');
+            drawLissajousCanvas(mCtx, modalCvs.width, modalCvs.height, data, m, true);
+        }
+    },
+    renderModal: (m) => {
+        const curV = m.vRange || 5.0;
+        return `
+            <div class="space-y-1.5">
+                <div class="flex items-center justify-between pb-1 border-b border-slate-800 select-none">
+                    <div class="flex items-center gap-1 font-mono text-[9px] text-emerald-400 font-bold">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span>LISSAJOUS (X-Y)
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="text-[8px] text-slate-400 font-bold uppercase tracking-tight">V/DIV:</span>
+                        <button id="liss-v-down" class="h-4 w-4 rounded bg-slate-800 border border-slate-700 text-slate-200 text-[10px] font-bold flex items-center justify-center leading-none active:bg-slate-700">−</button>
+                        <span id="liss-v-disp" class="font-mono text-[9px] font-bold text-emerald-300 w-8 text-center">${curV.toFixed(1)}V</span>
+                        <button id="liss-v-up" class="h-4 w-4 rounded bg-slate-800 border border-slate-700 text-slate-200 text-[10px] font-bold flex items-center justify-center leading-none active:bg-slate-700">＋</button>
+                    </div>
+                </div>
+                <div class="h-[108px] bg-slate-950 p-1 rounded-lg border border-slate-800 select-none shadow-sm overflow-hidden">
+                    <canvas id="liss-modal-canvas" class="w-full h-full block rounded bg-slate-950" width="360" height="106"></canvas>
+                </div>
+                <div class="flex items-center justify-between text-[8px] text-slate-400 select-none pt-0.5">
+                    <span class="font-mono text-emerald-400">X-IN: PIN4</span>
+                    <span class="font-mono text-emerald-400">Y-IN: PIN5</span>
+                </div>
+            </div>`;
+    },
+    bindEvents: (m, ctx, cb) => {
+        const vSteps = LISS.V_STEPS;
+        document.getElementById('liss-v-down')?.addEventListener('click', () => {
+            const cur = m.vRange || 5.0;
+            let idx = vSteps.findIndex(v => v >= cur - 0.001);
+            if (idx > 0) {
+                m.vRange = vSteps[idx - 1];
+                ctx.reRenderModal();
+                cb();
+            }
+        });
+        document.getElementById('liss-v-up')?.addEventListener('click', () => {
+            const cur = m.vRange || 5.0;
+            let idx = vSteps.findIndex(v => v >= cur - 0.001);
+            if (idx >= 0 && idx < vSteps.length - 1) {
+                m.vRange = vSteps[idx + 1];
+                ctx.reRenderModal();
+                cb();
+            }
         });
     }
 };
 
+// -------------------------------------------------------------
+// 3. Monitor Module (MON)
+// -------------------------------------------------------------
 export const MON = {
     color: 'slate',
     defaults: () => ({ type: 'MON' }),
@@ -276,6 +341,9 @@ export const MON = {
     renderModal: () => `<div class="text-[9px] text-slate-400 p-2 text-center">4チャンネル CV/オーディオ信号リアルタイムモニター</div>`
 };
 
+// -------------------------------------------------------------
+// 4. Spectrum Analyzer Module (SPEC)
+// -------------------------------------------------------------
 const extractBands = (freqs, numBands = 96, sampleRate = 48000) => {
     const fftSize = freqs.length * 2;
     const bands = new Float32Array(numBands);
@@ -301,20 +369,6 @@ const extractBands = (freqs, numBands = 96, sampleRate = 48000) => {
     }
 
     return { bands, peakVal, peakFreq };
-};
-
-const findGlobalPeak = (freqs, sampleRate = 48000, fMin = 40, fMax = 14000) => {
-    const fftSize = freqs.length * 2;
-    const kMin = Math.max(1, Math.floor(fMin * fftSize / sampleRate));
-    const kMax = Math.min(freqs.length - 1, Math.ceil(fMax * fftSize / sampleRate));
-    let max = 0, maxK = 0;
-    for (let k = kMin; k <= kMax; k++) {
-        if (freqs[k] > max) {
-            max = freqs[k];
-            maxK = k;
-        }
-    }
-    return { peakVal: max, peakFreq: (maxK * sampleRate) / fftSize };
 };
 
 const drawSpectrumCanvas = (ctx, w, h, bands, mode, isModal) => {
@@ -460,7 +514,7 @@ export const SPEC = {
         out: []
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
-    renderGrid: (m) => `
+    renderGrid: () => `
         <div class="absolute inset-0.5 bg-slate-950 rounded-sm border border-slate-800/90 overflow-hidden z-0 pointer-events-none">
             <canvas class="spec-canvas w-full h-full block" width="120" height="120"></canvas>
         </div>`,
@@ -533,6 +587,8 @@ export const SPEC = {
 
 export const scopeDefs = {
     SCOPE,
+    LISS,
+    XY: LISS,
     MON,
     SPEC
 };

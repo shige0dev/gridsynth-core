@@ -1,14 +1,13 @@
 export const SCOPE = {
     create: (ctx, d, patch, eng) => {
         const w = new AudioWorkletNode(ctx, 'scope-processor', { numberOfInputs: 3, numberOfOutputs: 0 });
-        w.port.postMessage({ type: 'SET_CONFIG', timeSpan: d.timeSpan ?? 0.1 });
+        w.port.postMessage({ type: 'SET_CONFIG', timeSpan: d.timeSpan ?? 0.05 });
 
-        const g1 = ctx.createGain(), g2 = ctx.createGain(), gTrig = ctx.createGain();
-        g1.connect(w, 0, 0);
-        g2.connect(w, 0, 1);
+        const gWave = ctx.createGain(), gTrig = ctx.createGain();
+        gWave.connect(w, 0, 0);
         gTrig.connect(w, 0, 2);
 
-        let latest = { buf1: new Float32Array(512), buf2: new Float32Array(512), trigBuf: new Float32Array(512), sampleRate: ctx.sampleRate };
+        let latest = { buf1: new Float32Array(512), trigBuf: new Float32Array(512), sampleRate: ctx.sampleRate };
         w.port.onmessage = e => {
             if (e.data.type === 'SCOPE_DATA') {
                 latest = e.data;
@@ -16,33 +15,64 @@ export const SCOPE = {
         };
 
         return {
-            nodes: { w, g1, g2, gTrig },
+            nodes: { w, gWave, gTrig },
             inputs: {
-                wave_in1: g1,
-                wave_in2: g2,
+                wave_in: gWave,
+                wave_in1: gWave,
+                in: gWave,
                 trig_in: gTrig,
-                in1: g1,
-                in2: g2,
-                trig: gTrig,
-                wave_in: g1
+                trig: gTrig
             },
             outputs: {},
             _hasTrig: patch?.has('trig_in') || patch?.has('trig'),
-            _hasIn2: patch?.has('wave_in2') || patch?.has('in2'),
             read: () => ({
                 buf1: latest.buf1,
-                buf2: latest.buf2,
                 trigBuf: latest.trigBuf,
                 hasTrig: patch?.has('trig_in') || patch?.has('trig'),
-                hasIn2: patch?.has('wave_in2') || patch?.has('in2'),
                 sampleRate: latest.sampleRate || ctx.sampleRate
             })
         };
     },
     update: (ctx, inst, d, patch) => {
         inst._hasTrig = patch?.has('trig_in') || patch?.has('trig');
-        inst._hasIn2 = patch?.has('wave_in2') || patch?.has('in2');
-        inst.nodes.w.port.postMessage({ type: 'SET_CONFIG', timeSpan: d.timeSpan ?? 0.1 });
+        inst.nodes.w.port.postMessage({ type: 'SET_CONFIG', timeSpan: d.timeSpan ?? 0.05 });
+    }
+};
+
+export const LISS = {
+    create: (ctx, d, patch, eng) => {
+        const w = new AudioWorkletNode(ctx, 'scope-processor', { numberOfInputs: 3, numberOfOutputs: 0 });
+        w.port.postMessage({ type: 'SET_CONFIG', timeSpan: d.timeSpan ?? 0.04 });
+
+        const gX = ctx.createGain(), gY = ctx.createGain();
+        gX.connect(w, 0, 0);
+        gY.connect(w, 0, 1);
+
+        let latest = { buf1: new Float32Array(512), buf2: new Float32Array(512), sampleRate: ctx.sampleRate };
+        w.port.onmessage = e => {
+            if (e.data.type === 'SCOPE_DATA') {
+                latest = e.data;
+            }
+        };
+
+        return {
+            nodes: { w, gX, gY },
+            inputs: {
+                x_in: gX,
+                y_in: gY,
+                wave_in1: gX,
+                wave_in2: gY
+            },
+            outputs: {},
+            read: () => ({
+                buf1: latest.buf1,
+                buf2: latest.buf2,
+                sampleRate: latest.sampleRate || ctx.sampleRate
+            })
+        };
+    },
+    update: (ctx, inst, d) => {
+        inst.nodes.w.port.postMessage({ type: 'SET_CONFIG', timeSpan: d.timeSpan ?? 0.04 });
     }
 };
 
@@ -99,6 +129,8 @@ export const SPEC = {
 
 export const scopeAudioDefs = {
     SCOPE,
+    LISS,
+    XY: LISS,
     MON,
     SPEC
 };

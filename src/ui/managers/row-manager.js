@@ -341,3 +341,4 @@ export class RowManager {
         this.ui.showToast(`行 ${sourceRow + 1} を 行 ${destRow + 1} に差し込み移動しました`);
     }
 }
+
