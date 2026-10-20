@@ -1,6 +1,6 @@
 // src/ui/managers/interaction-manager.js
-import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=268';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=268';
+import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=269';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=269';
 
 export class InteractionManager {
     constructor(ui) {
@@ -26,8 +26,8 @@ export class InteractionManager {
         this.portLongPressed = false;
         this.moduleLongPressed = false;
 
-        // Row Handle Mode & Row Movement states
-        this.isRowHandleMode = false;
+        // Layout Mode (formerly Row Handle Mode) & Row Movement states
+        this.isLayoutMode = false;
         this.draggingRow = null;
         this.rowInsertTargetIndex = null;
         this.rowHandleOverlayEl = null;
@@ -37,6 +37,14 @@ export class InteractionManager {
 
         // Ready for future modes: 'edit', 'performance', 'visualizer'
         this.mode = 'edit';
+    }
+
+    get isRowHandleMode() {
+        return this.isLayoutMode;
+    }
+
+    set isRowHandleMode(v) {
+        this.isLayoutMode = v;
     }
 
     updateSelectionClasses() {
@@ -116,7 +124,53 @@ export class InteractionManager {
         });
 
         this.ui.gridBoard.addEventListener('click', async (e) => {
-            if (this.isRowHandleMode) return;
+            if (this.isLayoutMode) {
+                // In Layout Mode: port tapping and normal module taps are locked.
+                // Modules can be selected and tapped to delete.
+                const body = e.target.closest('.module-body');
+                if (body) {
+                    const mId = body.dataset.moduleId;
+                    if (this.moduleLongPressed) {
+                        this.moduleLongPressed = false;
+                        return;
+                    }
+                    if (this.selectedModuleIds.length > 0) {
+                        if (this.selectedModuleIds.includes(mId)) {
+                            const hasLocked = this.selectedModuleIds.some(id => this.ui.modules[id]?.type === 'SUB_IO');
+                            if (hasLocked) {
+                                this.selectedModuleIds = [];
+                                this.updateSelectionClasses();
+                                return this.ui.showToast('SUB_IO モジュールは削除できません（保護中）');
+                            }
+                            this.ui.saveHistory();
+                            const targets = [...this.selectedModuleIds];
+                            this.selectedModuleIds = [];
+                            this.updateSelectionClasses();
+                            this.ui._destroyCount = 0;
+                            for (const id of targets) {
+                                await this.ui.destroyModule(this.ui.currentPageId, id);
+                            }
+                            this.ui.updateAllCells();
+                            this.ui.renderCables();
+                            this.ui.showToast(`モジュールを破棄しました (${this.ui._destroyCount}個)`);
+                            return;
+                        }
+                        this.selectedModuleIds = [];
+                        this.updateSelectionClasses();
+                        return;
+                    }
+                }
+                const empty = e.target.closest('.empty-cell');
+                if (empty) {
+                    if (this.selectedModuleIds.length > 0) {
+                        this.selectedModuleIds = [];
+                        this.updateSelectionClasses();
+                    }
+                }
+                return;
+            }
+
+            // Normal Mode (!this.isLayoutMode):
             const port = e.target.closest('.port');
             if (port) {
                 if (this.portLongPressed) {
@@ -146,35 +200,6 @@ export class InteractionManager {
             const body = e.target.closest('.module-body');
             if (body) {
                 const mId = body.dataset.moduleId;
-                if (this.moduleLongPressed) {
-                    this.moduleLongPressed = false;
-                    return;
-                }
-                if (this.selectedModuleIds.length > 0) {
-                    if (this.selectedModuleIds.includes(mId)) {
-                        const hasLocked = this.selectedModuleIds.some(id => this.ui.modules[id]?.type === 'SUB_IO');
-                        if (hasLocked) {
-                            this.selectedModuleIds = [];
-                            this.updateSelectionClasses();
-                            return this.ui.showToast('SUB_IO モジュールは削除できません（保護中）');
-                        }
-                        this.ui.saveHistory();
-                        const targets = [...this.selectedModuleIds];
-                        this.selectedModuleIds = [];
-                        this.updateSelectionClasses();
-                        this.ui._destroyCount = 0;
-                        for (const id of targets) {
-                            await this.ui.destroyModule(this.ui.currentPageId, id);
-                        }
-                        this.ui.updateAllCells();
-                        this.ui.renderCables();
-                        this.ui.showToast(`モジュールを破棄しました (${this.ui._destroyCount}個)`);
-                        return;
-                    }
-                    this.selectedModuleIds = [];
-                    this.updateSelectionClasses();
-                    return;
-                }
                 if (this.ui.modules[mId]?.type === 'SUB_IO') {
                     return;
                 }
@@ -201,11 +226,6 @@ export class InteractionManager {
             }
             const empty = e.target.closest('.empty-cell');
             if (empty) {
-                if (this.selectedModuleIds.length > 0) {
-                    this.selectedModuleIds = [];
-                    this.updateSelectionClasses();
-                    return;
-                }
                 const idx = parseInt(empty.dataset.index), now = Date.now();
                 if (now - this._lastEmptyTap < 350 && this._lastEmptyIdx === idx) this.ui.openAddModal(idx);
                 this._lastEmptyTap = now;
@@ -214,9 +234,29 @@ export class InteractionManager {
         });
 
         this.ui.gridBoard.addEventListener('pointerdown', (e) => {
-            if (this.isRowHandleMode) return;
             this._sX = e.clientX;
             this._sY = e.clientY;
+
+            if (this.isLayoutMode) {
+                // In Layout Mode: modules can be selected (long press) and dragged (move/copy)
+                const body = e.target.closest('.module-body');
+                if (!body) return;
+                const mId = body.dataset.moduleId;
+                this._dragCandidate = mId;
+                this._lpTimer = setTimeout(() => {
+                    this._lpTimer = null;
+                    this.moduleLongPressed = true;
+                    this.selectedModuleIds = this.selectedModuleIds.includes(mId) ? this.selectedModuleIds.filter(x => x !== mId) : [...this.selectedModuleIds, mId];
+                    if (this.ui.selectedTargetForConnection) {
+                        this.ui.selectedTargetForConnection = null;
+                    }
+                    this.updateSelectionClasses();
+                }, 400);
+                return;
+            }
+
+            // Normal Mode: only port long-press for cable disconnection.
+            // Module long-press & drag are disabled in Normal Mode (freed for future features).
             const port = e.target.closest('.port');
             if (port) {
                 const mId = port.dataset.moduleId, p = port.dataset.port;
@@ -262,19 +302,6 @@ export class InteractionManager {
                 }, 500);
                 return;
             }
-            const body = e.target.closest('.module-body');
-            if (!body) return;
-            const mId = body.dataset.moduleId;
-            this._dragCandidate = mId;
-            this._lpTimer = setTimeout(() => {
-                this._lpTimer = null;
-                this.moduleLongPressed = true;
-                this.selectedModuleIds = this.selectedModuleIds.includes(mId) ? this.selectedModuleIds.filter(x => x !== mId) : [...this.selectedModuleIds, mId];
-                if (this.ui.selectedTargetForConnection) {
-                    this.ui.selectedTargetForConnection = null;
-                }
-                this.updateSelectionClasses();
-            }, 400);
         });
 
         window.addEventListener('pointermove', (e) => {
@@ -282,7 +309,8 @@ export class InteractionManager {
                 clearTimeout(this._pTimer);
                 this._pTimer = null;
             }
-            if (!this.isDragging && this._dragCandidate && (Math.abs(e.clientX - this._sX) > 8 || Math.abs(e.clientY - this._sY) > 8)) {
+            if (this.isLayoutMode) {
+                if (!this.isDragging && this._dragCandidate && (Math.abs(e.clientX - this._sX) > 8 || Math.abs(e.clientY - this._sY) > 8)) {
                 if (this._lpTimer) {
                     clearTimeout(this._lpTimer);
                     this._lpTimer = null;
@@ -329,7 +357,8 @@ export class InteractionManager {
                     this.updateDropHighlight();
                 }
             }
-        });
+        }
+    });
 
         const stopDrag = () => {
             if (this._pTimer) {
@@ -440,11 +469,11 @@ export class InteractionManager {
         this.initRowHandleUI();
     }
 
-    toggleRowHandleMode() {
-        this.isRowHandleMode = !this.isRowHandleMode;
-        const btn = document.getElementById('row-handle-mode-btn');
+    toggleLayoutMode() {
+        this.isLayoutMode = !this.isLayoutMode;
+        const btn = document.getElementById('layout-mode-btn') || document.getElementById('row-handle-mode-btn');
         if (btn) {
-            if (this.isRowHandleMode) {
+            if (this.isLayoutMode) {
                 btn.classList.add('bg-cyan-950/90', 'border-cyan-500/80', 'text-cyan-300', 'shadow-cyan-500/20');
                 btn.classList.remove('bg-slate-900', 'border-slate-700', 'text-slate-400');
             } else {
@@ -452,7 +481,7 @@ export class InteractionManager {
                 btn.classList.add('bg-slate-900', 'border-slate-700', 'text-slate-400');
             }
         }
-        if (this.isRowHandleMode) {
+        if (this.isLayoutMode) {
             // Deselect any selected modules or connection targets
             if (this.selectedModuleIds.length > 0) {
                 this.selectedModuleIds = [];
@@ -462,10 +491,31 @@ export class InteractionManager {
                 this.ui.selectedTargetForConnection = null;
                 this.ui.updatePortHighlight();
             }
+            // Hide cables in layout mode
+            if (this.ui.cableCanvas) {
+                this.ui.cableCanvas.innerHTML = '';
+                this.ui.cableCanvas.style.display = 'none';
+            }
+        } else {
+            // Exiting Layout Mode:
+            if (this.selectedModuleIds.length > 0) {
+                this.selectedModuleIds = [];
+                this.updateSelectionClasses();
+            }
+            // Restore and re-render cables
+            if (this.ui.cableCanvas) {
+                this.ui.cableCanvas.style.display = '';
+            }
+            this.ui.renderCables();
         }
-        this.ui.gridBoard?.classList.toggle('row-handle-mode-active', this.isRowHandleMode);
+        this.ui.gridBoard?.classList.toggle('layout-mode-active', this.isLayoutMode);
+        this.ui.gridBoard?.classList.toggle('row-handle-mode-active', this.isLayoutMode);
         this.updateRowHandleRail();
-        this.ui.showToast(this.isRowHandleMode ? 'ROW MODE: 行ハンドル表示中（モジュール操作ロック）' : 'ROW MODE: 解除（モジュール操作アンロック）');
+        this.ui.showToast(this.isLayoutMode ? 'LAYOUT MODE: ON（モジュール移動・行入れ替え）' : 'LAYOUT MODE: OFF（通常モード）');
+    }
+
+    toggleRowHandleMode() {
+        return this.toggleLayoutMode();
     }
 
     scheduleCableRender(animateDurationMs = 0) {
@@ -535,7 +585,7 @@ export class InteractionManager {
 
         // Keep overlay tracks aligned on resize
         window.addEventListener('resize', () => {
-            if (this.isRowHandleMode) this.updateRowHandleRail();
+            if (this.isLayoutMode) this.updateRowHandleRail();
         });
 
         // Candidate destination row highlight indicator (5 cell slots with .drop-highlight-valid)
@@ -567,8 +617,8 @@ export class InteractionManager {
             return;
         }
 
-        overlay.style.display = this.isRowHandleMode ? 'block' : 'none';
-        if (!this.isRowHandleMode) {
+        overlay.style.display = this.isLayoutMode ? 'block' : 'none';
+        if (!this.isLayoutMode) {
             if (this.rowTargetSlotIndicatorEl) this.rowTargetSlotIndicatorEl.style.display = 'none';
             return;
         }

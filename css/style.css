@@ -310,28 +310,55 @@ body {
     z-index: 35 !important;
 }
 
-/* Lock module/cell operations during Row Handle Mode */
-.row-handle-mode-active .grid-cell,
-.row-handle-mode-active .port,
-.row-handle-mode-active .module-body {
+/* Lock module/cell operations during Layout / Row Handle Mode */
+.layout-mode-active .port,
+.row-handle-mode-active .port {
     pointer-events: none !important;
     cursor: default !important;
 }
 
+.layout-mode-active .module-body,
+.row-handle-mode-active .module-body {
+    pointer-events: auto !important;
+    cursor: grab !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+}
+
+.layout-mode-active .module-body:active,
+.row-handle-mode-active .module-body:active {
+    cursor: grabbing !important;
+}
+
+.layout-mode-active .module-body input,
+.layout-mode-active .module-body select,
+.layout-mode-active .module-body button,
+.row-handle-mode-active .module-body input,
+.row-handle-mode-active .module-body select,
+.row-handle-mode-active .module-body button {
+    pointer-events: none !important;
+}
+
+.layout-mode-active .row-handle-btn,
 .row-handle-mode-active .row-handle-btn {
     pointer-events: auto !important;
     cursor: grab !important;
 }
 
+.layout-mode-active .row-handle-btn.dragging,
 .row-handle-mode-active .row-handle-btn.dragging {
     cursor: grabbing !important;
 }
 
+.layout-mode-active #cable-canvas,
 .row-handle-mode-active #cable-canvas {
+    display: none !important;
     pointer-events: none !important;
 }
 
+.layout-mode-active .grid-cell,
 .row-handle-mode-active .grid-cell {
+    pointer-events: auto !important;
     transition: border-color 0.2s ease, opacity 0.2s ease;
 }
 
