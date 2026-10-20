@@ -1,7 +1,7 @@
-import { safeClone, parseConn, isSubModule, normalizeSubPort, isPortMatching } from './utils.js?v=288';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=288';
+import { safeClone, parseConn, isSubModule, normalizeSubPort, isPortMatching } from './utils.js?v=289';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=289';
 import { findSubpatchTemplate, FACTORY_SUBPATCHES } from '../presets/subpatches.js';
-import { WaveCodec } from '../audio/wave-codec.js?v=288';
+import { WaveCodec } from '../audio/wave-codec.js?v=289';
 
 /**
  * Resolves a subpatch template by id, subType, or name.

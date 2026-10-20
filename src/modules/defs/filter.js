@@ -1,4 +1,4 @@
-import { UIHelpers } from '../../ui/helpers.js?v=288';
+import { UIHelpers } from '../../ui/helpers.js?v=289';
 
 export const VCF = {
     color: 'emerald',
@@ -34,28 +34,27 @@ export const FOLD = {
     defaults: () => ({ type: 'FOLD', gain: 1.5, mix: 1.0, shape: 'fold' }),
     ports: () => ({
         in: [
-            { port: 'gain_cv', pin: 4, alias: 'fold_cv', color: 'bg-yellow-400' },
-            { port: 'wave_in', pin: 9, color: 'bg-emerald-500' }
+            { port: 'wave_in', pin: 4, color: 'bg-emerald-500' },
+            { port: 'gain_cv', pin: 5, alias: 'fold_cv', color: 'bg-yellow-400' }
         ],
         out: [
             { port: 'wave_out', pin: 11, color: 'bg-cyan-500' }
         ]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
-    renderGrid: (m, ctx) => {
-        const isGainPatched = ctx?.patched?.has('gain_cv') || ctx?.patched?.has('fold_cv');
+    renderGrid: (m) => {
         const gainVal = (m.gain !== undefined ? m.gain : (m.fold ?? 1.5)).toFixed(1);
         const mixVal = Math.round((m.mix ?? 1.0) * 100);
         return `<div class="flex flex-col items-center justify-center leading-none gap-0.5 pointer-events-none text-amber-400 select-none">
             <span class="text-[9px] font-bold uppercase tracking-wider">W-FOLD</span>
-            <span class="text-[12px] font-mono font-bold">${isGainPatched ? 'EXT' : gainVal + 'x'}</span>
+            <span class="text-[12px] font-mono font-bold">${gainVal}x</span>
             <span class="text-[8px] font-mono text-slate-400">MIX:${mixVal}%</span>
         </div>`;
     },
     schema: {
         color: 'amber',
         sliders: () => [
-            { key: 'gain', label: 'GAIN', min: 0.0, max: 8.0, step: 0.05, default: 1.5, unit: 'x', color: 'amber', cvPort: 'gain_cv', patchedVal: 0, patchedText: 'EXT', format: v => v.toFixed(2) + 'x' },
+            { key: 'gain', label: 'GAIN', min: 0.0, max: 8.0, step: 0.05, default: 1.5, unit: 'x', color: 'amber', format: v => v.toFixed(2) + 'x' },
             { key: 'mix', label: 'MIX', min: 0.0, max: 1.0, step: 0.01, default: 1.0, unit: '%', color: 'cyan', format: v => `${Math.round(v * 100)}%` }
         ]
     }

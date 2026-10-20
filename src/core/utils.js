@@ -196,6 +196,9 @@ export const PORT_ALIASES = {
     // Switched CV
     'out': 'cv_out',
 
+    // FOLD: legacy fold_cv -> canonical gain_cv
+    'fold_cv': 'gain_cv',
+
     // AR: attack_in / release_in
     'a_cv': 'attack_in',
     'attack_cv': 'attack_in',

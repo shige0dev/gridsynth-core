@@ -20,7 +20,8 @@ export const FOLD = {
         const out = ctx.createGain();
         const gCv = ctx.createGain();
         const hasGainCv = patch.has('gain_cv') || patch.has('fold_cv');
-        const initialGain = hasGainCv ? 0.0 : (d.gain !== undefined ? d.gain : (d.fold ?? 1.5));
+        const gainVal = d.gain !== undefined ? d.gain : (d.fold ?? 1.5);
+        const initialGain = hasGainCv ? 0.0 : gainVal;
 
         const w = new AudioWorkletNode(ctx, 'fold-processor', {
             numberOfInputs: 1,
@@ -35,7 +36,7 @@ export const FOLD = {
             w.port.postMessage({ type: 'SET_SHAPE', mode: d.shape });
         }
 
-        gCv.gain.value = 5.0;
+        gCv.gain.value = gainVal;
         gCv.connect(w.parameters.get('gain'));
 
         inp.connect(w);
@@ -49,8 +50,12 @@ export const FOLD = {
     },
     update: (ctx, inst, d, patch) => {
         const hasGainCv = patch.has('gain_cv') || patch.has('fold_cv');
-        const gainVal = hasGainCv ? 0.0 : (d.gain !== undefined ? d.gain : (d.fold ?? 1.5));
-        AudioHelpers.set(inst.nodes.w.parameters.get('gain'), gainVal, ctx);
+        const gainVal = d.gain !== undefined ? d.gain : (d.fold ?? 1.5);
+        const baseGain = hasGainCv ? 0.0 : gainVal;
+        AudioHelpers.set(inst.nodes.w.parameters.get('gain'), baseGain, ctx);
+        if (inst.nodes.gCv) {
+            AudioHelpers.set(inst.nodes.gCv.gain, gainVal, ctx);
+        }
         AudioHelpers.set(inst.nodes.w.parameters.get('mix'), d.mix ?? 1.0, ctx);
         if (d.shape) {
             inst.nodes.w.port.postMessage({ type: 'SET_SHAPE', mode: d.shape });
