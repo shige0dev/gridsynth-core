@@ -1,5 +1,5 @@
-import { MODULE_REGISTRY } from '../modules/registry.js?v=272';
-import { parseConn, isSameConn, safeClone } from './utils.js?v=272';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=273';
+import { parseConn, isSameConn, safeClone } from './utils.js?v=273';
 import { FACTORY_SUBPATCHES } from '../presets/subpatches.js';
 
 export function initExternalAPI(ui, synth) {
