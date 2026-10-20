@@ -1,7 +1,7 @@
 // src/ui/managers/cable-manager.js
-import { parseConn, isSameConn, getPortSignalType, resolveConnectionSignalType, isSubModule, isSubIOModule, normalizeSubPort, getOppositeSubPort, getPortAliases, isPortMatching } from '../../core/utils.js?v=280';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=280';
-import { WaveCodec } from '../../audio/wave-codec.js?v=280';
+import { parseConn, isSameConn, getPortSignalType, resolveConnectionSignalType, isSubModule, isSubIOModule, normalizeSubPort, getOppositeSubPort, getPortAliases, isPortMatching } from '../../core/utils.js?v=281';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=281';
+import { WaveCodec } from '../../audio/wave-codec.js?v=281';
 
 export class CableManager {
     constructor(ui) {
@@ -345,8 +345,8 @@ export class CableManager {
             const dx = x2 - x1;
             const dy = y2 - y1;
             const dist = Math.sqrt(dx * dx + dy * dy);
-            // Upper-bound capped sag: gentle curve for close ports, capped at max 28px for long cables
-            const curveY = Math.min(28, Math.max(16, 14 + dist * 0.05));
+            // Upper-bound capped sag: 2.5x droop (min 40px, max 70px)
+            const curveY = Math.min(70, Math.max(40, (14 + dist * 0.05) * 2.5));
             const baseY = Math.max(y1, y2) + curveY;
 
             const tiltX = this.tiltOffsetX || 0;
