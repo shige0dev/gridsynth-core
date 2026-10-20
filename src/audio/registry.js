@@ -8,18 +8,21 @@ import { filterAudioDefs } from './defs/filter.js';
 import { ampAudioDefs } from './defs/amp.js?v=187';
 import { effectsAudioDefs } from './defs/effects.js?v=187';
 import { adsrAudioDefs } from './defs/adsr.js';
-import { modAudioDefs } from './defs/mod.js?v=291';
-import { ioAudioDefs } from './defs/io.js?v=185';
+import { modAudioDefs } from './defs/mod.js?v=292';
+import { ioAudioDefs } from './defs/io.js?v=292';
+import { scopeAudioDefs } from './defs/scope.js?v=292';
+import { subAudioDefs } from './defs/sub.js?v=292';
+import { controllerAudioDefs } from './defs/controllers.js?v=292';
 import { seqAudioDefs } from './defs/seq.js';
 import { chordAudioDefs } from './defs/chord.js';
 import { arpAudioDefs } from './defs/arp.js';
-import { patAudioDefs } from './defs/pat.js?v=291';
+import { patAudioDefs } from './defs/pat.js?v=292';
 import { markovAudioDefs } from './defs/markov.js';
 import { fmAudioDefs } from './defs/fm.js';
 import { scaleAudioDefs } from './defs/scale.js?v=217';
 import { rfAudioDefs } from './defs/rf.js?v=217';
 import { arAudioDefs } from './defs/ar.js?v=217';
-import { waveAudioDefs } from './defs/wave.js?v=291';
+import { waveAudioDefs } from './defs/wave.js?v=292';
 
 export const AUDIO_REGISTRY = {
     ...vcoAudioDefs,
@@ -29,6 +32,9 @@ export const AUDIO_REGISTRY = {
     ...adsrAudioDefs,
     ...modAudioDefs,
     ...ioAudioDefs,
+    ...scopeAudioDefs,
+    ...subAudioDefs,
+    ...controllerAudioDefs,
     ...seqAudioDefs,
     ...chordAudioDefs,
     ...arpAudioDefs,
@@ -42,4 +48,3 @@ export const AUDIO_REGISTRY = {
 };
 
 export default AUDIO_REGISTRY;
-

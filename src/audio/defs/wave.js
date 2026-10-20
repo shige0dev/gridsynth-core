@@ -1,5 +1,5 @@
 // src/audio/defs/wave.js
-import { WaveCodec } from '../wave-codec.js?v=291';
+import { WaveCodec } from '../wave-codec.js?v=292';
 
 export const WAVE = {
     create: (ctx, d, patch, eng) => {
