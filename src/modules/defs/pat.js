@@ -46,19 +46,19 @@ export const PAT = {
     renderGrid: (m) => {
         return `
             <div class="flex items-center justify-center w-full h-full pointer-events-none select-none">
-                <span class="pat-state-disp text-[17px] font-mono font-bold text-slate-500 tracking-wider">—</span>
+                <span class="pat-state-disp text-[17px] font-mono font-bold text-slate-500 tracking-wider">&mdash;</span>
             </div>`;
     },
     updateLive: (cell, data, isP, modal, m) => {
         const stateEl = cell?.querySelector('.pat-state-disp');
         if (stateEl) {
             if (!isP || !data) {
-                stateEl.textContent = '—';
+                stateEl.textContent = '\u2014';
                 stateEl.className = 'pat-state-disp text-[17px] font-mono font-bold text-slate-600 tracking-wider';
             } else {
-                const label = data.activeLabel || (data.activeIdx >= 0 ? `STEP ${data.activeIdx + 1}` : '—');
+                const label = data.activeLabel || (data.activeIdx >= 0 ? `STEP ${data.activeIdx + 1}` : '\u2014');
                 const isGateOn = !!data.gate;
-                const isRest = data.isRest || label === '~' || label === '—';
+                const isRest = data.isRest || label === '~' || label === '\u2014';
                 stateEl.textContent = label;
                 if (isRest) {
                     stateEl.className = 'pat-state-disp text-[17px] font-mono font-bold text-cyan-400/30 tracking-wider';

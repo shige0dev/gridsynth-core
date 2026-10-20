@@ -1,8 +1,8 @@
 // src/modules/defs/wave.js
-import { UIHelpers } from '../../ui/helpers.js?v=275';
-import { WaveCodec } from '../../audio/wave-codec.js?v=275';
-import { WaveView } from '../../ui/wave-view.js?v=275';
-import { WaveModal } from '../../ui/wave-modal.js?v=275';
+import { UIHelpers } from '../../ui/helpers.js?v=276';
+import { WaveCodec } from '../../audio/wave-codec.js?v=276';
+import { WaveView } from '../../ui/wave-view.js?v=276';
+import { WaveModal } from '../../ui/wave-modal.js?v=276';
 
 export const WAVE = {
     color: 'cyan',

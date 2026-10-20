@@ -19,7 +19,7 @@ export class PatProcessor extends AudioWorkletProcessor {
         this.gate = 0;
         this.gap = 0;
         this.activeIdx = -1;
-        this.activeLabel = '—';
+        this.activeLabel = '\u2014';
         this.activeIsRest = true;
         this.postCounter = 0;
 
@@ -39,7 +39,7 @@ export class PatProcessor extends AudioWorkletProcessor {
                         this.cycleCount = 0;
                         this.gap = 0;
                         this.activeIdx = -1;
-                        this.activeLabel = '—';
+                        this.activeLabel = '\u2014';
                         this.activeIsRest = true;
                     }
                     this.running = e.data.running;
@@ -49,7 +49,7 @@ export class PatProcessor extends AudioWorkletProcessor {
                 this.cycleCount = 0;
                 this.gap = 0;
                 this.activeIdx = -1;
-                this.activeLabel = '—';
+                this.activeLabel = '\u2014';
                 this.activeIsRest = true;
             }
         };
