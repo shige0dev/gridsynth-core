@@ -1,4 +1,4 @@
-import { UIHelpers } from '../../ui/helpers.js?v=289';
+import { UIHelpers } from '../../ui/helpers.js?v=290';
 
 export const VCF = {
     color: 'emerald',
@@ -38,7 +38,7 @@ export const FOLD = {
             { port: 'gain_cv', pin: 5, alias: 'fold_cv', color: 'bg-yellow-400' }
         ],
         out: [
-            { port: 'wave_out', pin: 11, color: 'bg-cyan-500' }
+            { port: 'wave_out', pin: 9, color: 'bg-cyan-500' }
         ]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
