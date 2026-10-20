@@ -356,3 +356,8 @@ body {
 
 
 
+
+.empty-cell {
+    border-color: transparent !important;
+    background: transparent !important;
+}
