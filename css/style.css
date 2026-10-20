@@ -30,21 +30,21 @@ body {
 .drop-highlight-valid {
     box-shadow: 0 0 15px rgba(255, 255, 255, 0.7) !important;
     background: rgba(255, 255, 255, 0.2) !important;
-    border-color: white !important;
+    border: 1px solid white !important;
     z-index: 40;
 }
 
 .drop-highlight-copy-valid {
     box-shadow: 0 0 15px rgba(234, 179, 8, 0.7) !important;
     background: rgba(234, 179, 8, 0.2) !important;
-    border-color: #eab308 !important;
+    border: 1px solid #eab308 !important;
     z-index: 40;
 }
 
 .drop-highlight-invalid {
     box-shadow: 0 0 15px rgba(239, 68, 68, 0.7) !important;
     background: rgba(239, 68, 68, 0.2) !important;
-    border-color: #ef4444 !important;
+    border: 1px solid #ef4444 !important;
     z-index: 40;
 }
 

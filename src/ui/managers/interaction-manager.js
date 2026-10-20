@@ -1,6 +1,6 @@
 // src/ui/managers/interaction-manager.js
-import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=276';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=276';
+import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=277';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=277';
 
 export class InteractionManager {
     constructor(ui) {
@@ -601,11 +601,11 @@ export class InteractionManager {
             slotIndicator.style.display = 'none';
             slotIndicator.innerHTML = `
                 <div class="grid grid-cols-5 gap-1.5 w-full h-full">
-                    <div class="drop-highlight-valid rounded border border-white aspect-square"></div>
-                    <div class="drop-highlight-valid rounded border border-white aspect-square"></div>
-                    <div class="drop-highlight-valid rounded border border-white aspect-square"></div>
-                    <div class="drop-highlight-valid rounded border border-white aspect-square"></div>
-                    <div class="drop-highlight-valid rounded border border-white aspect-square"></div>
+                    <div class="drop-highlight-valid aspect-square"></div>
+                    <div class="drop-highlight-valid aspect-square"></div>
+                    <div class="drop-highlight-valid aspect-square"></div>
+                    <div class="drop-highlight-valid aspect-square"></div>
+                    <div class="drop-highlight-valid aspect-square"></div>
                 </div>`;
             gridBoard.appendChild(slotIndicator);
         }
