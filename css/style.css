@@ -250,43 +250,52 @@ body {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    width: 18px;
-    height: 18px;
-    background-color: rgba(15, 23, 42, 0.94);
-    border: 1px solid rgba(51, 65, 85, 0.9);
-    border-radius: 4px;
-    color: #94a3b8;
+    width: 12px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: grab;
     pointer-events: auto !important;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(4px);
-    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    background: transparent;
+    border: none;
+    padding: 0;
+    transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
 .row-handle-left {
-    left: -11px;
+    left: -13px;
 }
 
 .row-handle-right {
-    right: -11px;
+    right: -13px;
 }
 
-.row-handle-btn:hover {
-    background-color: rgba(30, 41, 59, 0.98);
-    border-color: rgba(6, 182, 212, 0.9);
-    color: #67e8f9;
+.row-handle-bar {
+    width: 3px;
+    height: 26px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 2px;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.6), 0 1px 3px rgba(0, 0, 0, 0.9);
+    transition: background-color 0.15s ease, box-shadow 0.15s ease, height 0.15s ease;
+}
+
+.row-handle-btn:hover .row-handle-bar {
+    background-color: #ffffff;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.95), 0 0 4px #38bdf8;
+    height: 30px;
 }
 
 .row-handle-btn:active,
 .row-handle-btn.dragging {
-    background-color: rgba(14, 116, 144, 0.95) !important;
-    border-color: #22d3ee !important;
-    color: #ffffff !important;
-    box-shadow: 0 0 12px rgba(34, 211, 238, 0.9);
     cursor: grabbing !important;
+}
+
+.row-handle-btn:active .row-handle-bar,
+.row-handle-btn.dragging .row-handle-bar {
+    background-color: #ffffff !important;
+    box-shadow: 0 0 12px #22d3ee, 0 0 6px #ffffff !important;
+    height: 32px;
 }
 
 .row-cell-dragging {

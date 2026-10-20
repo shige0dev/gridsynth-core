@@ -1,6 +1,6 @@
 // src/ui/managers/interaction-manager.js
-import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=270';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=270';
+import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=271';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=271';
 
 export class InteractionManager {
     constructor(ui) {
@@ -534,14 +534,14 @@ export class InteractionManager {
             leftHandle.className = 'row-handle-btn row-handle-left';
             leftHandle.dataset.row = String(r);
             leftHandle.title = `行 ${r + 1} をドラッグして上下に差し込み移動`;
-            leftHandle.innerHTML = `<svg viewBox="0 0 16 16" class="w-3 h-3 pointer-events-none opacity-80" fill="currentColor"><circle cx="5.5" cy="4" r="1.3"/><circle cx="10.5" cy="4" r="1.3"/><circle cx="5.5" cy="8" r="1.3"/><circle cx="10.5" cy="8" r="1.3"/><circle cx="5.5" cy="12" r="1.3"/><circle cx="10.5" cy="12" r="1.3"/></svg>`;
+            leftHandle.innerHTML = `<span class="row-handle-bar pointer-events-none"></span>`;
 
             const rightHandle = document.createElement('div');
             rightHandle.id = `row-handle-right-${r}`;
             rightHandle.className = 'row-handle-btn row-handle-right';
             rightHandle.dataset.row = String(r);
             rightHandle.title = `行 ${r + 1} をドラッグして上下に差し込み移動`;
-            rightHandle.innerHTML = `<svg viewBox="0 0 16 16" class="w-3 h-3 pointer-events-none opacity-80" fill="currentColor"><circle cx="5.5" cy="4" r="1.3"/><circle cx="10.5" cy="4" r="1.3"/><circle cx="5.5" cy="8" r="1.3"/><circle cx="10.5" cy="8" r="1.3"/><circle cx="5.5" cy="12" r="1.3"/><circle cx="10.5" cy="12" r="1.3"/></svg>`;
+            rightHandle.innerHTML = `<span class="row-handle-bar pointer-events-none"></span>`;
 
             this.bindRowHandleEvents(leftHandle, rightHandle, r);
             track.appendChild(leftHandle);
@@ -737,8 +737,16 @@ export class InteractionManager {
                 const relY = e.clientY - boardRect.top;
 
                 // Determine target insertion index (0 to ROWS)
-                let insertIdx = Math.round(relY / rowHeight);
-                insertIdx = Math.max(0, Math.min(this.ui.ROWS, insertIdx));
+                // Adjacent grid entry trigger: responds as soon as pointer enters adjacent grid area
+                const pointerRow = Math.max(0, Math.min(this.ui.ROWS - 1, Math.floor(relY / rowHeight)));
+                let insertIdx;
+                if (pointerRow < originalRow) {
+                    insertIdx = pointerRow;
+                } else if (pointerRow > originalRow) {
+                    insertIdx = pointerRow + 1;
+                } else {
+                    insertIdx = originalRow;
+                }
                 currentTargetRow = insertIdx;
 
                 // Dynamically open gap by shifting other rows
