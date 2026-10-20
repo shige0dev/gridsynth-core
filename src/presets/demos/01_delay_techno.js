@@ -326,8 +326,8 @@ export const preset01 = {
         "LFO1:cv_out > VCF1:cv_in",
         "SEQ8_2:gate_out > SEQ8_3:gate_in",
         "SEQ8_3:cv_out > VCO1:cv_in",
-        "DELAY1:wave_out > SCOPE1:in1",
-        "LFO1:cv_out > SCOPE1:in2",
+        "DELAY1:wave_out > SCOPE1:wave_in",
+        "LFO1:cv_out > SCOPE1:trig_in",
         "SEQ8_1:gate_out > SEQ8_4:gate_in",
         "SEQ8_4:gate_out > SEQ8_2:gate_in"
       ]

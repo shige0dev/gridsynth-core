@@ -188,7 +188,8 @@ export const PORT_ALIASES = {
     'cv_out': 'CV_OUT',
 
     // IO: legacy in1 / in2 / trig -> canonical wave_in1 / wave_in2 / trig_in
-    'in1': 'wave_in1',
+    'in1': 'wave_in',
+    'wave_in1': 'wave_in',
     'in2': 'wave_in2',
     'trig': 'trig_in',
     'reset': 'trig_in',

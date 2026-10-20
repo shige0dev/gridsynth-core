@@ -20,6 +20,7 @@ export const SCOPE = {
                 wave_in: gWave,
                 wave_in1: gWave,
                 in: gWave,
+                in1: gWave,
                 trig_in: gTrig,
                 trig: gTrig
             },
