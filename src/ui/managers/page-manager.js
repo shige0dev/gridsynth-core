@@ -1,6 +1,6 @@
 // src/ui/managers/page-manager.js
-import { safeClone, generateModuleId, parseConn } from '../../core/utils.js?v=285';
-import { parsePatch } from '../../core/patch.js?v=285';
+import { safeClone, generateModuleId, parseConn } from '../../core/utils.js?v=286';
+import { parsePatch } from '../../core/patch.js?v=286';
 import { FACTORY_SUBPATCHES, findSubpatchTemplate } from '../../presets/subpatches.js';
 
 export class PageManager {

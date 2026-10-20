@@ -1,13 +1,13 @@
-import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=285';
-import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=285';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=285';
+import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=286';
+import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=286';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=286';
 import { UIHelpers } from './helpers.js?v=229';
-import { PresetManager } from './managers/preset-manager.js?v=285';
-import { ModalManager } from './managers/modal-manager.js?v=285';
-import { CableManager } from './managers/cable-manager.js?v=285';
-import { PageManager } from './managers/page-manager.js?v=285';
-import { InteractionManager } from './managers/interaction-manager.js?v=285';
-import { WaveCodec } from '../audio/wave-codec.js?v=285';
+import { PresetManager } from './managers/preset-manager.js?v=286';
+import { ModalManager } from './managers/modal-manager.js?v=286';
+import { CableManager } from './managers/cable-manager.js?v=286';
+import { PageManager } from './managers/page-manager.js?v=286';
+import { InteractionManager } from './managers/interaction-manager.js?v=286';
+import { WaveCodec } from '../audio/wave-codec.js?v=286';
 
 export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'SPEC', 'MON', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE'];
 
@@ -404,9 +404,7 @@ export class UIController {
         for (let i = 0; i < 40; i++) this.renderCell(i);
         if (typeof lucide !== 'undefined') lucide.createIcons();
         this.updatePortHighlight();
-        if (this.isLayoutMode) {
-            this.interactionManager?.updateRowHandleRail?.();
-        }
+        this.interactionManager?.updateRowHandleRail?.();
     }
 
     renderCables() {
@@ -675,9 +673,7 @@ export class UIController {
             this.showToast(nextOp < 0.5 ? 'CABLE: DIM (20%)' : 'CABLE: BRIGHT (100%)');
         });
 
-        (document.getElementById('layout-mode-btn') || document.getElementById('row-handle-mode-btn'))?.addEventListener('click', () => {
-            this.interactionManager.toggleLayoutMode();
-        });
+
 
         document.getElementById('audio-power-btn')?.addEventListener('click', async () => {
             await this.synth.init();

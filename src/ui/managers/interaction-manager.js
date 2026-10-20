@@ -1,6 +1,6 @@
 // src/ui/managers/interaction-manager.js
-import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=285';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=285';
+import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=286';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=286';
 
 export class InteractionManager {
     constructor(ui) {
@@ -23,13 +23,10 @@ export class InteractionManager {
         this._lpTimer = null;
         this._copyTimer = null;
         this._dragCandidate = null;
-        this._didDrag = false;
-        this._selectionBeforeTap = null;
         this.portLongPressed = false;
         this.moduleLongPressed = false;
 
-        // Layout Mode (formerly Row Handle Mode) & Row Movement states
-        this.isLayoutMode = false;
+        // Row Movement & Handle states
         this.draggingRow = null;
         this.rowInsertTargetIndex = null;
         this.rowHandleOverlayEl = null;
@@ -118,71 +115,6 @@ export class InteractionManager {
         });
 
         this.ui.gridBoard.addEventListener('click', async (e) => {
-            if (this.isLayoutMode) {
-                if (this._didDrag) {
-                    this._didDrag = false;
-                    return;
-                }
-                const body = e.target.closest('.module-body');
-                if (body) {
-                    const mId = body.dataset.moduleId;
-                    const now = Date.now();
-                    const isDoubleTap = (now - this._lastTap < 350 && this._lastTapId === mId);
-
-                    if (isDoubleTap) {
-                        this._lastTap = 0;
-                        this._lastTapId = null;
-                        const targets = (this._selectionBeforeTap && this._selectionBeforeTap.includes(mId))
-                            ? this._selectionBeforeTap
-                            : (this.selectedModuleIds.length > 0 ? [...this.selectedModuleIds] : [mId]);
-                        this._selectionBeforeTap = null;
-
-                        const hasLocked = targets.some(id => this.ui.modules[id]?.type === 'SUB_IO');
-                        if (hasLocked) {
-                            this.selectedModuleIds = [];
-                            this.updateSelectionClasses();
-                            return this.ui.showToast('SUB_IO モジュールは削除できません（保護中）');
-                        }
-
-                        this.ui.saveHistory();
-                        this.selectedModuleIds = [];
-                        this.updateSelectionClasses();
-                        this.ui._destroyCount = 0;
-                        for (const id of targets) {
-                            await this.ui.destroyModule(this.ui.currentPageId, id);
-                        }
-                        this.ui.updateAllCells();
-                        this.ui.renderCables();
-                        this.ui.showToast(`モジュールを破棄しました (${this.ui._destroyCount}個)`);
-                        return;
-                    }
-
-                    // 1st Tap: Record tap state and toggle selection
-                    this._lastTap = now;
-                    this._lastTapId = mId;
-                    this._selectionBeforeTap = [...this.selectedModuleIds];
-
-                    if (this.selectedModuleIds.includes(mId)) {
-                        this.selectedModuleIds = this.selectedModuleIds.filter(id => id !== mId);
-                    } else {
-                        this.selectedModuleIds = [...this.selectedModuleIds, mId];
-                    }
-                    this.updateSelectionClasses();
-                    return;
-                }
-                const empty = e.target.closest('.empty-cell');
-                if (empty) {
-                    this._selectionBeforeTap = null;
-                    if (this.selectedModuleIds.length > 0) {
-                        this.selectedModuleIds = [];
-                        this.updateSelectionClasses();
-                    }
-                    return;
-                }
-                return;
-            }
-
-            // Normal Mode (!this.isLayoutMode):
             const port = e.target.closest('.port');
             if (port) {
                 if (this.portLongPressed) {
@@ -212,6 +144,35 @@ export class InteractionManager {
             const body = e.target.closest('.module-body');
             if (body) {
                 const mId = body.dataset.moduleId;
+                if (this.moduleLongPressed) {
+                    this.moduleLongPressed = false;
+                    return;
+                }
+                if (this.selectedModuleIds.length > 0) {
+                    if (this.selectedModuleIds.includes(mId)) {
+                        const hasLocked = this.selectedModuleIds.some(id => this.ui.modules[id]?.type === 'SUB_IO');
+                        if (hasLocked) {
+                            this.selectedModuleIds = [];
+                            this.updateSelectionClasses();
+                            return this.ui.showToast('SUB_IO モジュールは削除できません（保護中）');
+                        }
+                        this.ui.saveHistory();
+                        const targets = [...this.selectedModuleIds];
+                        this.selectedModuleIds = [];
+                        this.updateSelectionClasses();
+                        this.ui._destroyCount = 0;
+                        for (const id of targets) {
+                            await this.ui.destroyModule(this.ui.currentPageId, id);
+                        }
+                        this.ui.updateAllCells();
+                        this.ui.renderCables();
+                        this.ui.showToast(`モジュールを破棄しました (${this.ui._destroyCount}個)`);
+                        return;
+                    }
+                    this.selectedModuleIds = [];
+                    this.updateSelectionClasses();
+                    return;
+                }
                 if (this.ui.modules[mId]?.type === 'SUB_IO') {
                     return;
                 }
@@ -238,6 +199,10 @@ export class InteractionManager {
             }
             const empty = e.target.closest('.empty-cell');
             if (empty) {
+                if (this.selectedModuleIds.length > 0) {
+                    this.selectedModuleIds = [];
+                    this.updateSelectionClasses();
+                }
                 const idx = parseInt(empty.dataset.index), now = Date.now();
                 if (now - this._lastEmptyTap < 350 && this._lastEmptyIdx === idx) this.ui.openAddModal(idx);
                 this._lastEmptyTap = now;
@@ -249,18 +214,6 @@ export class InteractionManager {
             this._sX = e.clientX;
             this._sY = e.clientY;
 
-            if (this.isLayoutMode) {
-                // In Layout Mode: touching a module prepares it for drag or tap
-                const body = e.target.closest('.module-body');
-                if (!body) return;
-                const mId = body.dataset.moduleId;
-                this._dragCandidate = mId;
-                this._didDrag = false;
-                return;
-            }
-
-            // Normal Mode: only port long-press for cable disconnection.
-            // Module long-press & drag are disabled in Normal Mode (freed for future features).
             const port = e.target.closest('.port');
             if (port) {
                 const mId = port.dataset.moduleId, p = port.dataset.port;
@@ -306,6 +259,20 @@ export class InteractionManager {
                 }, 500);
                 return;
             }
+
+            const body = e.target.closest('.module-body');
+            if (!body) return;
+            const mId = body.dataset.moduleId;
+            this._dragCandidate = mId;
+            this._lpTimer = setTimeout(() => {
+                this._lpTimer = null;
+                this.moduleLongPressed = true;
+                this.selectedModuleIds = this.selectedModuleIds.includes(mId) ? this.selectedModuleIds.filter(x => x !== mId) : [...this.selectedModuleIds, mId];
+                if (this.ui.selectedTargetForConnection) {
+                    this.ui.selectedTargetForConnection = null;
+                }
+                this.updateSelectionClasses();
+            }, 400);
         });
 
         window.addEventListener('pointermove', (e) => {
@@ -313,13 +280,11 @@ export class InteractionManager {
                 clearTimeout(this._pTimer);
                 this._pTimer = null;
             }
-            if (this.isLayoutMode) {
-                if (!this.isDragging && this._dragCandidate && (Math.abs(e.clientX - this._sX) > 8 || Math.abs(e.clientY - this._sY) > 8)) {
-                    this._didDrag = true;
-                    if (this._lpTimer) {
-                        clearTimeout(this._lpTimer);
-                        this._lpTimer = null;
-                    }
+            if (!this.isDragging && this._dragCandidate && (Math.abs(e.clientX - this._sX) > 8 || Math.abs(e.clientY - this._sY) > 8)) {
+                if (this._lpTimer) {
+                    clearTimeout(this._lpTimer);
+                    this._lpTimer = null;
+                }
                 if (!this.selectedModuleIds.includes(this._dragCandidate)) this.selectedModuleIds = [this._dragCandidate];
                 if (this.ui.selectedTargetForConnection) {
                     this.ui.selectedTargetForConnection = null;
@@ -362,8 +327,7 @@ export class InteractionManager {
                     this.updateDropHighlight();
                 }
             }
-        }
-    });
+        });
 
         const stopDrag = () => {
             if (this._pTimer) {
@@ -474,47 +438,6 @@ export class InteractionManager {
         this.initRowHandleUI();
     }
 
-    setLayoutMode(active) {
-        if (this.isLayoutMode === Boolean(active)) return;
-        this.isLayoutMode = Boolean(active);
-        const btn = document.getElementById('layout-mode-btn');
-        if (btn) {
-            if (this.isLayoutMode) {
-                btn.classList.add('bg-cyan-950/90', 'border-cyan-500/80', 'text-cyan-300', 'shadow-cyan-500/20');
-                btn.classList.remove('bg-slate-900', 'border-slate-700', 'text-slate-400');
-            } else {
-                btn.classList.remove('bg-cyan-950/90', 'border-cyan-500/80', 'text-cyan-300', 'shadow-cyan-500/20');
-                btn.classList.add('bg-slate-900', 'border-slate-700', 'text-slate-400');
-            }
-        }
-        if (this.isLayoutMode) {
-            // Deselect any selected modules or connection targets
-            if (this.selectedModuleIds.length > 0) {
-                this.selectedModuleIds = [];
-                this.updateSelectionClasses();
-            }
-            if (this.ui.selectedTargetForConnection) {
-                this.ui.selectedTargetForConnection = null;
-                this.ui.updatePortHighlight();
-            }
-        } else {
-            // Exiting Layout Mode:
-            if (this.selectedModuleIds.length > 0) {
-                this.selectedModuleIds = [];
-                this.updateSelectionClasses();
-            }
-        }
-        this.ui.renderCables();
-        this.ui.gridBoard?.classList.toggle('layout-mode-active', this.isLayoutMode);
-        this.updateRowHandleRail();
-        this.ui.showToast(this.isLayoutMode ? 'LAYOUT MODE: ON（モジュール移動・行入れ替え）' : 'LAYOUT MODE: OFF（通常モード）');
-    }
-
-    toggleLayoutMode() {
-        this.setLayoutMode(!this.isLayoutMode);
-    }
-
-
     scheduleCableRender(animateDurationMs = 0) {
         if (this._cableRafId) return;
         const startTime = performance.now();
@@ -545,12 +468,12 @@ export class InteractionManager {
             overlay = document.createElement('div');
             overlay.id = 'row-handle-overlay';
             overlay.className = 'absolute inset-0 pointer-events-none z-40';
-            overlay.style.display = 'none';
+            overlay.style.display = 'block';
             gridBoard.appendChild(overlay);
         }
         this.rowHandleOverlayEl = overlay;
 
-        // Build 8 row overlay tracks, each with a left and right protruding handle
+        // Build 8 row overlay tracks with permanently displayed right handles
         overlay.innerHTML = '';
         this.rowTracks = [];
         for (let r = 0; r < this.ui.ROWS; r++) {
@@ -559,22 +482,14 @@ export class InteractionManager {
             track.className = 'row-overlay-track';
             track.dataset.row = String(r);
 
-            const leftHandle = document.createElement('div');
-            leftHandle.id = `row-handle-left-${r}`;
-            leftHandle.className = 'row-handle-btn row-handle-left';
-            leftHandle.dataset.row = String(r);
-            leftHandle.title = `行 ${r + 1} をドラッグして上下に差し込み移動`;
-            leftHandle.innerHTML = `<span class="row-handle-bar pointer-events-none"></span>`;
-
             const rightHandle = document.createElement('div');
             rightHandle.id = `row-handle-right-${r}`;
             rightHandle.className = 'row-handle-btn row-handle-right';
             rightHandle.dataset.row = String(r);
-            rightHandle.title = `行 ${r + 1} をドラッグして上下に差し込み移動`;
+            rightHandle.title = `行 ${r + 1}（長押しで行を差し込み移動）`;
             rightHandle.innerHTML = `<span class="row-handle-bar pointer-events-none"></span>`;
 
-            this.bindRowHandleEvents(leftHandle, rightHandle, r);
-            track.appendChild(leftHandle);
+            this.bindRowHandleEvents(rightHandle, r);
             track.appendChild(rightHandle);
             overlay.appendChild(track);
             this.rowTracks[r] = track;
@@ -582,7 +497,7 @@ export class InteractionManager {
 
         // Keep overlay tracks aligned on resize
         window.addEventListener('resize', () => {
-            if (this.isLayoutMode) this.updateRowHandleRail();
+            this.updateRowHandleRail();
         });
 
         // Candidate destination row highlight indicator (5 cell slots with .drop-highlight-valid)
@@ -614,11 +529,7 @@ export class InteractionManager {
             return;
         }
 
-        overlay.style.display = this.isLayoutMode ? 'block' : 'none';
-        if (!this.isLayoutMode) {
-            if (this.rowTargetSlotIndicatorEl) this.rowTargetSlotIndicatorEl.style.display = 'none';
-            return;
-        }
+        overlay.style.display = 'block';
 
         // Align each row track to the physical position of row r
         for (let r = 0; r < this.ui.ROWS; r++) {
@@ -631,8 +542,10 @@ export class InteractionManager {
         }
     }
 
-    bindRowHandleEvents(leftHandle, rightHandle, r) {
+    bindRowHandleEvents(rightHandle, r) {
         let isRowDragging = false;
+        let isArming = false;
+        let rowLpTimer = null;
         let startY = 0;
         let originalRow = r;
         let currentTargetRow = r;
@@ -678,8 +591,6 @@ export class InteractionManager {
                         otherCell.style.transform = shiftY !== 0 ? `translateY(${shiftY}px)` : '';
                     }
                 }
-
-                // Apply transform to row track overlay
                 const otherTrack = this.rowTracks?.[rowIdx] || document.getElementById(`row-overlay-track-${rowIdx}`);
                 if (otherTrack) {
                     otherTrack.classList.add('row-cell-shifting');
@@ -687,7 +598,7 @@ export class InteractionManager {
                 }
             }
 
-            // Highlight the candidate destination row slot in clean white (matching normal move)
+            // Highlight destination row slot
             const destRow = targetInsertIdx > originalRow ? targetInsertIdx - 1 : targetInsertIdx;
             const slotIndicator = this.rowTargetSlotIndicatorEl || document.getElementById('row-target-slot-indicator');
             if (slotIndicator) {
@@ -709,7 +620,6 @@ export class InteractionManager {
                 }
             }
 
-            // Real-time cable follow during row drag and row shift animation
             this.scheduleCableRender(240);
         };
 
@@ -734,21 +644,19 @@ export class InteractionManager {
                     track.classList.remove('row-cell-shifting');
                     track.style.transform = '';
                 }
-                const lH = document.getElementById(`row-handle-left-${rowIdx}`);
                 const rH = document.getElementById(`row-handle-right-${rowIdx}`);
-                if (lH) lH.classList.remove('dragging');
-                if (rH) rH.classList.remove('dragging');
+                if (rH) rH.classList.remove('dragging', 'row-arming');
             }
         };
 
         const onPointerMove = (e) => {
+            if (!isArming) return;
             const deltaY = e.clientY - startY;
 
             if (!isRowDragging) {
-                if (Math.abs(deltaY) > 5) {
+                if (Math.abs(deltaY) > 4) {
                     isRowDragging = true;
                     this.draggingRow = originalRow;
-                    leftHandle.classList.add('dragging');
                     rightHandle.classList.add('dragging');
 
                     // Highlight all cells in source row
@@ -766,8 +674,6 @@ export class InteractionManager {
                 const rowHeight = boardRect.height / this.ui.ROWS;
                 const relY = e.clientY - boardRect.top;
 
-                // Determine target insertion index (0 to ROWS)
-                // Adjacent grid entry trigger: responds as soon as pointer enters adjacent grid area
                 const pointerRow = Math.max(0, Math.min(this.ui.ROWS - 1, Math.floor(relY / rowHeight)));
                 let insertIdx;
                 if (pointerRow < originalRow) {
@@ -779,74 +685,78 @@ export class InteractionManager {
                 }
                 currentTargetRow = insertIdx;
 
-                // Dynamically open gap by shifting other rows
                 updateDynamicRowShifts(insertIdx, deltaY);
             }
         };
 
-        const bindHandle = (h) => {
-            const onPointerUp = (e) => {
-                try { h.releasePointerCapture(e.pointerId); } catch (_) {}
-                window.removeEventListener('pointermove', onPointerMove);
-                window.removeEventListener('pointerup', onPointerUp);
-                window.removeEventListener('pointercancel', onPointerUp);
+        const onPointerUp = (e) => {
+            if (rowLpTimer) {
+                clearTimeout(rowLpTimer);
+                rowLpTimer = null;
+            }
+            try { rightHandle.releasePointerCapture(e.pointerId); } catch (_) {}
+            window.removeEventListener('pointermove', onPointerMove);
+            window.removeEventListener('pointerup', onPointerUp);
+            window.removeEventListener('pointercancel', onPointerUp);
 
-                resetAllRowTransforms();
+            resetAllRowTransforms();
 
-                if (isRowDragging) {
-                    isRowDragging = false;
-                    this.draggingRow = null;
-                    // Execute row reorder / insertion if target is different
-                    this.moveRowTo(originalRow, currentTargetRow);
-                }
-            };
-
-            h.addEventListener('pointerdown', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                originalRow = parseInt(h.dataset.row);
-                startY = e.clientY;
-                try { h.setPointerCapture(e.pointerId); } catch (_) {}
-                window.addEventListener('pointermove', onPointerMove, { passive: false });
-                window.addEventListener('pointerup', onPointerUp);
-                window.addEventListener('pointercancel', onPointerUp);
-            });
+            if (isRowDragging) {
+                isRowDragging = false;
+                this.draggingRow = null;
+                this.moveRowTo(originalRow, currentTargetRow);
+            }
+            isArming = false;
         };
 
-        bindHandle(leftHandle);
-        bindHandle(rightHandle);
+        rightHandle.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            originalRow = parseInt(rightHandle.dataset.row);
+            startY = e.clientY;
+            isArming = false;
+            isRowDragging = false;
+
+            try { rightHandle.setPointerCapture(e.pointerId); } catch (_) {}
+            window.addEventListener('pointermove', onPointerMove, { passive: false });
+            window.addEventListener('pointerup', onPointerUp);
+            window.addEventListener('pointercancel', onPointerUp);
+
+            // Arm row movement on long-press (300ms)
+            rowLpTimer = setTimeout(() => {
+                rowLpTimer = null;
+                isArming = true;
+                rightHandle.classList.add('row-arming');
+                if (navigator.vibrate) {
+                    try { navigator.vibrate(25); } catch (_) {}
+                }
+            }, 300);
+        });
     }
 
     moveRowTo(sourceRow, targetInsertRow) {
         if (sourceRow < 0 || sourceRow >= this.ui.ROWS) return;
         if (targetInsertRow < 0 || targetInsertRow > this.ui.ROWS) return;
 
-        // If targetInsertRow is either sourceRow or sourceRow + 1, order remains identical
         if (targetInsertRow === sourceRow || targetInsertRow === sourceRow + 1) {
             return;
         }
 
         this.ui.saveHistory();
 
-        // Calculate destination row index (0-indexed)
         const destRow = targetInsertRow > sourceRow ? targetInsertRow - 1 : targetInsertRow;
-
-        // Build mapping from old row index to new row index
         const rowMap = new Array(this.ui.ROWS);
         for (let r = 0; r < this.ui.ROWS; r++) rowMap[r] = r;
 
-        // Splice source row and insert at destRow
         const [removedRow] = rowMap.splice(sourceRow, 1);
         rowMap.splice(destRow, 0, removedRow);
 
-        // Invert to get for each old row: where does it go?
         const newRowForOld = new Array(this.ui.ROWS);
         for (let newR = 0; newR < this.ui.ROWS; newR++) {
             const oldR = rowMap[newR];
             newRowForOld[oldR] = newR;
         }
 
-        // Update row of all modules
         let movedCount = 0;
         Object.values(this.ui.modules).forEach(m => {
             if (m.row !== undefined && newRowForOld[m.row] !== undefined) {
@@ -866,4 +776,3 @@ export class InteractionManager {
         this.ui.showToast(`行 ${sourceRow + 1} を 行 ${destRow + 1} に差し込み移動しました`);
     }
 }
-

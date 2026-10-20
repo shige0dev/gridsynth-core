@@ -250,7 +250,7 @@ body {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    width: 12px;
+    width: 14px;
     height: 36px;
     display: flex;
     align-items: center;
@@ -265,25 +265,31 @@ body {
 
 .row-handle-left {
     left: -13px;
+    display: none; /* Right-only handle */
 }
 
 .row-handle-right {
-    right: -13px;
+    right: -11px;
 }
 
 .row-handle-bar {
-    width: 3px;
-    height: 26px;
-    background-color: rgba(255, 255, 255, 0.9);
+    width: 3.5px;
+    height: 24px;
+    background-color: #475569; /* Dark gray slate-600 */
     border-radius: 2px;
-    box-shadow: 0 0 5px rgba(255, 255, 255, 0.6), 0 1px 3px rgba(0, 0, 0, 0.9);
-    transition: background-color 0.15s ease, box-shadow 0.15s ease, height 0.15s ease;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, height 0.2s ease, transform 0.2s ease;
 }
 
 .row-handle-btn:hover .row-handle-bar {
-    background-color: #ffffff;
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.95), 0 0 4px #d946ef;
-    height: 30px;
+    background-color: #64748b; /* slate-500 */
+    box-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
+}
+
+.row-handle-btn.row-arming .row-handle-bar {
+    background-color: #d946ef !important; /* purple pulsing on long-press */
+    box-shadow: 0 0 10px rgba(217, 70, 239, 0.8), 0 0 4px #ffffff !important;
+    height: 28px;
 }
 
 .row-handle-btn:active,
@@ -291,7 +297,6 @@ body {
     cursor: grabbing !important;
 }
 
-.row-handle-btn:active .row-handle-bar,
 .row-handle-btn.dragging .row-handle-bar {
     background-color: #ffffff !important;
     box-shadow: 0 0 14px rgba(217, 70, 239, 0.9), 0 0 6px #ffffff !important;
@@ -312,46 +317,7 @@ body {
     transition: transform 0.22s cubic-bezier(0.2, 0, 0, 1) !important;
 }
 
-/* Lock module/cell operations during Layout Mode */
-.layout-mode-active .port {
-    pointer-events: none !important;
-    cursor: default !important;
-}
 
-.layout-mode-active .module-body {
-    pointer-events: auto !important;
-    cursor: grab !important;
-    user-select: none !important;
-    -webkit-user-select: none !important;
-}
-
-.layout-mode-active .module-body:active {
-    cursor: grabbing !important;
-}
-
-.layout-mode-active .module-body input,
-.layout-mode-active .module-body select,
-.layout-mode-active .module-body button {
-    pointer-events: none !important;
-}
-
-.layout-mode-active .row-handle-btn {
-    pointer-events: auto !important;
-    cursor: grab !important;
-}
-
-.layout-mode-active .row-handle-btn.dragging {
-    cursor: grabbing !important;
-}
-
-.layout-mode-active #cable-canvas {
-    pointer-events: none !important;
-}
-
-.layout-mode-active .grid-cell {
-    pointer-events: auto !important;
-    transition: border-color 0.2s ease;
-}
 
 
 
