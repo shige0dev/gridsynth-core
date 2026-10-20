@@ -1,4 +1,4 @@
-import { UIHelpers } from '../../ui/helpers.js?v=295';
+import { UIHelpers } from '../../ui/helpers.js?v=296';
 
 // -------------------------------------------------------------
 // 1. Single-Channel Oscilloscope Canvas
@@ -39,11 +39,18 @@ const drawScopeCanvas = (ctx2d, w, h, data, m, isModal = false) => {
     if (!b1) return;
     const len = b1.length;
 
-    // Trigger offset search (auto trigger on rising zero-crossing)
+    // Trigger offset search (auto trigger on rising zero-crossing or pulse edge)
     let startIdx = 0;
     if ((m.trigMode || 'auto') === 'auto' && trg) {
-        for (let i = 0; i < Math.min(trg.length - 2, 128); i++) {
-            if (trg[i] < 0 && trg[i + 1] >= 0) { startIdx = i; break; }
+        let minVal = 0, maxVal = 0;
+        const searchLimit = Math.min(trg.length - 2, 256);
+        for (let i = 0; i < searchLimit; i++) {
+            if (trg[i] < minVal) minVal = trg[i];
+            if (trg[i] > maxVal) maxVal = trg[i];
+        }
+        const thresh = (minVal >= -0.05 && maxVal > 0.2) ? (minVal + maxVal) * 0.5 : 0;
+        for (let i = 0; i < searchLimit; i++) {
+            if (trg[i] < thresh && trg[i + 1] >= thresh) { startIdx = i; break; }
         }
     }
     const drawPts = len - startIdx;

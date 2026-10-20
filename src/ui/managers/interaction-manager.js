@@ -1,7 +1,7 @@
 // src/ui/managers/interaction-manager.js
-import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=295';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=295';
-import { RowManager } from './row-manager.js?v=295';
+import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=296';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=296';
+import { RowManager } from './row-manager.js?v=296';
 
 export class InteractionManager {
     constructor(ui) {
