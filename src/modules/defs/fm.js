@@ -9,9 +9,9 @@ const FM_OPERATORS = [
 export const FMx3 = {
     color: 'cyan',
     ALGORITHMS: [
-        { id: 1, label: '1: 3➁E➁E', name: 'CASCADE', desc: 'Op3 ➁EOp2 ➁EOp1 ➁EOUT (直列FM/金属音/褁E��倍音)' },
-        { id: 2, label: '2: (3+2)➁E', name: 'DUAL MOD', desc: '(Op3 + Op2) ➁EOp1 ➁EOUT (並列変調/王道パ�EカチE��ョン)' },
-        { id: 3, label: '3: 3+(2➁E)', name: 'FM+LAYER', desc: 'Op3 + (Op2 ➁EOp1) ➁EOUT (FM�E�ノイズ/スネア/アタチE��直足ぁE' }
+        { id: 1, label: '1: 3➔2➔1', name: 'CASCADE', desc: 'Op3 ➔ Op2 ➔ Op1 ➔ OUT (直列FM/金属音/複雑倍音)' },
+        { id: 2, label: '2: (3+2)➔1', name: 'DUAL MOD', desc: '(Op3 + Op2) ➔ Op1 ➔ OUT (並列変調/王道パーカッション)' },
+        { id: 3, label: '3: 3+(2➔1)', name: 'FM+LAYER', desc: 'Op3 + (Op2 ➔ Op1) ➔ OUT (FM＋ノイズ/スネア/アタック直足し)' }
     ],
     defaults: () => ({
         type: 'FMx3',
@@ -100,7 +100,7 @@ export const FMx3 = {
             return `
                 <div class="flex flex-col items-center justify-between h-full min-w-[17px] flex-1 shrink-0">
                     <span class="text-[6.5px] font-bold text-slate-400 uppercase tracking-tight leading-none shrink-0">${label}</span>
-                    <span id="${id}-disp" class="text-[7.5px] font-mono font-bold text-${accentColor}-300 cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 rounded leading-none py-0.5 shrink-0" title="上下ドラチE��で微調整">${formattedDisp}</span>
+                    <span id="${id}-disp" class="text-[7.5px] font-mono font-bold text-${accentColor}-300 cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 rounded leading-none py-0.5 shrink-0" title="上下ドラッグで微調整">${formattedDisp}</span>
                     <div class="h-12 min-h-[48px] flex items-center justify-center my-0.5 shrink-0">
                         <input type="range" id="${id}" min="${sMin}" max="${sMax}" step="${sStep}" value="${sVal}" class="native-vslider-sm accent-${accentColor}-400 shrink-0">
                     </div>
@@ -111,7 +111,7 @@ export const FMx3 = {
         const renderMiniPlaceholder = (label = 'FB') => `
             <div class="flex flex-col items-center justify-between h-full min-w-[17px] flex-1 opacity-20 pointer-events-none shrink-0">
                 <span class="text-[6.5px] font-bold text-slate-600 uppercase tracking-tight leading-none shrink-0">${label}</span>
-                <span class="text-[7.5px] font-mono text-slate-600 leading-none py-0.5 shrink-0"> E/span>
+                <span class="text-[7.5px] font-mono text-slate-600 leading-none py-0.5 shrink-0">—</span>
                 <div class="w-[14px] h-12 min-h-[48px] flex items-center justify-center my-0.5 shrink-0">
                     <div class="w-[1px] h-full bg-slate-800/60"></div>
                 </div>
@@ -165,7 +165,7 @@ export const FMx3 = {
                             <span class="text-[6.5px] font-mono text-slate-400 leading-tight">${op.sub}</span>
                         </div>
                         ${op.hasWave ? `
-                        <button id="fm-op3-wave-btn" class="w-full py-0.5 rounded text-[6.5px] font-bold border transition-colors ${isNz ? 'bg-amber-500 text-slate-950 border-amber-300 font-extrabold shadow-sm' : 'bg-slate-900 text-slate-300 border-slate-700'}" title="波形刁E�� (Sine / White Noise)">
+                        <button id="fm-op3-wave-btn" class="w-full py-0.5 rounded text-[6.5px] font-bold border transition-colors ${isNz ? 'bg-amber-500 text-slate-950 border-amber-300 font-extrabold shadow-sm' : 'bg-slate-900 text-slate-300 border-slate-700'}" title="波形切替 (Sine / White Noise)">
                             ${isNz ? 'NOISE' : 'SINE'}
                         </button>` : ''}
                     </div>
@@ -218,7 +218,7 @@ export const FMx3 = {
                             <span class="text-[7px] font-bold text-yellow-400 uppercase tracking-tight text-center leading-tight">ROOT</span>
                             <span class="text-[6px] font-mono text-slate-400 leading-tight">NOTE</span>
                         </div>
-                        <span id="fm-root-slider-disp" class="text-[8.5px] font-mono font-bold text-yellow-300 cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 rounded leading-none py-0.5" title="上下ドラチE��で微調整">${isPitchPatched ? 'EXT' : rootName}</span>
+                        <span id="fm-root-slider-disp" class="text-[8.5px] font-mono font-bold text-yellow-300 cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 rounded leading-none py-0.5" title="上下ドラッグで微調整">${isPitchPatched ? 'EXT' : rootName}</span>
                         <div class="flex items-center justify-center flex-1 my-1">
                             <input type="range" id="fm-root-slider" min="24" max="72" step="1" value="${rootM}" class="native-vslider accent-yellow-400" ${isPitchPatched ? 'disabled' : ''} style="height: 140px;">
                         </div>

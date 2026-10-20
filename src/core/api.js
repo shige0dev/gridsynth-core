@@ -243,7 +243,7 @@ export function initExternalAPI(ui, synth) {
             if (ok) {
                 ui.updateAllCells();
                 ui.renderCables();
-                ui.showToast(`モジュールを破棁E��ました (${ui._destroyCount}倁E`);
+                ui.showToast(`モジュールを破棄しました (${ui._destroyCount}個)`);
             }
             return { success: ok, page, moduleId: mId, totalDestroyed: ui._destroyCount };
         }

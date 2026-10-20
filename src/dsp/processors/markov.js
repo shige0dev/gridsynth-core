@@ -52,34 +52,37 @@ export class MarkovProcessor extends AudioWorkletProcessor {
             const trigV = inTrig ? inTrig[i] : 0.0;
             const isClkHi = clkV >= 0.5;
 
-            // 1. 他ノードから�E遷移トリガー受信�E�バトン受け口�E�E            if (trigV >= 0.5) {
+            // 1. 他ノードからの遷移トリガー受信（バトン受け口）
+            if (trigV >= 0.5) {
                 if (this.state === 0) {
                     this.state = 1;
                     this.clockCount = 1;
-                    this.clkActive = true; // 現在の立ち上がり拍でバトンを受け取った�Eで同拍での即時�E移を防止
-                    this.shotActive = true; // ノ�Eド発行時のワンショチE��トリガーをこの拍で発火
+                    this.clkActive = true; // 現在の立ち上がり拍でバトンを受け取ったので同拍での即時遷移を防止
+                    this.shotActive = true; // ノード発行時のワンショットトリガーをこの拍で発火
                     this.port.postMessage({ type: 'STATE_CHANGED', state: 1 });
                 }
             }
 
-            // 2. クロチE��入力�E立ち下がり検知�E�ロチE��解除・トリガー消�E�E�E            if (clkV < 0.3) {
+            // 2. クロック入力の立ち下がり検知（ロック解除・トリガー消灯）
+            if (clkV < 0.3) {
                 this.clkActive = false;
                 this.trigOutCh = -1;
-                this.shotActive = false; // 1拍�EクロチE��終亁E��ワンショチE��トリガー消�E
+                this.shotActive = false; // 1拍のクロック終了でワンショットトリガー消灯
             }
 
-            // 3. クロチE��立ち上がり検知と状態�E移
+            // 3. クロック立ち上がり検知と状態遷移
             const isRising = (isClkHi && !this.clkActive);
             if (isRising) {
                 this.clkActive = true;
 
                 if (this.state === 1) {
                     if (this.clockCount === 0) {
-                        // 初期起動ノード�E第1拍目
+                        // 初期起動ノードの第1拍目
                         this.clockCount = 1;
-                        this.shotActive = true; // 初回発行時のワンショチE��トリガー発火
+                        this.shotActive = true; // 初回発行時のワンショットトリガー発火
                     } else {
-                        // 最低保持クロチE��数�E�EoldClocks�E�に達してぁE��場合、確玁E�E移を判宁E                        if (this.clockCount >= this.holdClocks) {
+                        // 最低保持クロック数（holdClocks）に達している場合、確率遷移を判定
+                        if (this.clockCount >= this.holdClocks) {
                             let totalW = Math.max(0, this.stayWeight);
                             for (let k = 0; k < 4; k++) {
                                 totalW += Math.max(0, this.weights[k] || 0);
@@ -98,7 +101,8 @@ export class MarkovProcessor extends AudioWorkletProcessor {
                                         }
                                     }
                                     if (chosen !== -1) {
-                                        // 即座に次ノ�Eドへ遷移�E�E                                        this.state = 0;
+                                        // 即座に次ノードへ遷移！
+                                        this.state = 0;
                                         this.clockCount = 0;
                                         this.trigOutCh = chosen;
                                         this.shotActive = false;
@@ -108,31 +112,35 @@ export class MarkovProcessor extends AudioWorkletProcessor {
                             }
                         }
 
-                        // 遷移せず留まる場合、滞在クロチE��数を加箁E                        if (this.state === 1) {
+                        // 遷移せず留まる場合、滞在クロック数を加算
+                        if (this.state === 1) {
                             this.clockCount++;
                         }
                     }
                 }
             }
 
-            // 4. トリガ出力！Erig_out1..4�E�E クロチE��Highの間、E�E移先�Eートへパルス出劁E            for (let k = 0; k < 4; k++) {
+            // 4. トリガ出力（trig_out1..4）: クロックHighの間、遷移先ポートへパルス出力
+            for (let k = 0; k < 4; k++) {
                 const outCh = outArr[k];
                 if (outCh) {
                     outCh[i] = (this.trigOutCh === k && isClkHi) ? 1.0 : 0.0;
                 }
             }
 
-            // 5. CV出力！Ev_out�E�E アクチE��ブ時は音程CV、次クロチE��立ち上がりまで保持
+            // 5. CV出力（cv_out）: アクティブ時は音程CV、次クロック立ち上がりまで保持
             if (cvOut) {
                 cvOut[i] = this.state === 1 ? this.stateVal : 0.0;
             }
 
-            // 6. 持続ゲート�E力！Eate_out�E�E 次に遷移するまでずっとON�E�E.0V�E�E            if (gtOut) {
+            // 6. 持続ゲート出力（gate_out）: 次に遷移するまでずっとON（1.0V）
+            if (gtOut) {
                 gtOut[i] = this.state === 1 ? 1.0 : 0.0;
             }
 
-            // 7. ワンショチE��トリガ出力！Etep_gate�E�E
-            // ノ�EドがアクチE��ブ（発行）された最初�E拍に、�E力トリガー�E�クロチE��High�E�と同じ時間だぁE.0Vを�E劁E            if (stepGtOut) {
+            // 7. ワンショットトリガ出力（step_gate）:
+            // ノードがアクティブ（発行）された最初の拍に、入力トリガー（クロックHigh）と同じ時間だけ1.0Vを出力
+            if (stepGtOut) {
                 stepGtOut[i] = (this.state === 1 && this.shotActive && isClkHi) ? 1.0 : 0.0;
             }
         }

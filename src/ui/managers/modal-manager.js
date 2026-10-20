@@ -278,7 +278,7 @@ export class ModalManager {
                     <h3 class="dock-dialog-title text-[10px] font-bold text-cyan-300 uppercase tracking-wider">${titleText}</h3>
                 </div>
                 <div class="flex items-center gap-1">
-                    <button class="dock-lock-btn h-5 px-1.5 rounded text-[8.5px] font-bold flex items-center gap-1 border transition-colors bg-slate-800 text-slate-400 border-slate-700 cursor-pointer" title="ロチE��/ピン留め">
+                    <button class="dock-lock-btn h-5 px-1.5 rounded text-[8.5px] font-bold flex items-center gap-1 border transition-colors bg-slate-800 text-slate-400 border-slate-700 cursor-pointer" title="ロック/ピン留め">
                         <i data-lucide="pin" class="w-2.5 h-2.5 pointer-events-none"></i>
                         <span class="pointer-events-none">LOCK</span>
                     </button>
@@ -477,7 +477,7 @@ export class ModalManager {
         const btn = info.element.querySelector('.dock-lock-btn');
         if (btn) {
             btn.className = `dock-lock-btn h-5 px-1.5 rounded text-[8.5px] font-bold flex items-center gap-1 border transition-colors ${info.isLocked ? 'bg-cyan-600 text-white border-cyan-400 shadow-sm shadow-cyan-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}`;
-            btn.title = info.isLocked ? '固定中�E�クリチE��でロチE��解除�E�E : 'ロチE��/ピン留め';
+            btn.title = info.isLocked ? '固定中（クリックでロック解除）' : 'ロック/ピン留め';
         }
     }
 
@@ -516,7 +516,7 @@ export class ModalManager {
                 this.ui.pagesData[this.ui.currentPageId].name = name;
                 this.ui.updatePageNavUI();
                 this.ui.updateAllCells();
-                this.showToast(`サブパチE��名を、E{name}」に変更しました`);
+                this.showToast(`サブパッチ名を「${name}」に変更しました`);
             },
             pagesData: this.ui.pagesData
         };
@@ -605,19 +605,19 @@ export class ModalManager {
                 const CATEGORIES = [
                     {
                         name: 'SOUND',
-                        sub: 'サウンチE(音源�E音響・出劁E',
+                        sub: 'サウンド (音源・音響・出力)',
                         color: 'cyan',
                         types: ['VCO', 'WAVE', 'NOISE', 'FMx3', 'FMCORE', 'FOLD', 'VCF', 'VCA', 'MIX', 'DELAY', 'REVERB', 'SPK', 'SCOPE', 'SPEC']
                     },
                     {
                         name: 'TRIGGER',
-                        sub: 'トリガ (クロチE��・シーケンサー)',
+                        sub: 'トリガ (クロック・シーケンサー)',
                         color: 'rose',
                         types: ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'MARKOV', 'GATE4', 'ARP', 'KEY']
                     },
                     {
                         name: 'CV',
-                        sub: 'CV (変調・演算�EエンベローチE',
+                        sub: 'CV (変調・演算・エンベロープ)',
                         color: 'purple',
                         types: ['LFO', 'ADSR', 'RF', 'AR', 'CHORD', 'SCALE', 'MATH1', 'MATH2', 'SH', 'CVDELAY', 'SLIDER', 'THROUGH', 'MON', 'SUB_IO']
                     }
@@ -628,7 +628,7 @@ export class ModalManager {
                 if (uncategorized.length > 0) {
                     CATEGORIES.push({
                         name: 'OTHER',
-                        sub: 'そ�E仁E,
+                        sub: 'その他',
                         color: 'slate',
                         types: uncategorized
                     });
@@ -676,8 +676,8 @@ export class ModalManager {
                                 <div class="h-6 bg-slate-800/90 hover:bg-purple-950/60 border border-slate-700/80 hover:border-purple-500/80 rounded flex items-center justify-between px-1 transition cursor-pointer factory-sub-item" data-id="${sub.id}">
                                     <span class="text-[7.5px] font-bold text-purple-300 truncate pointer-events-none">${sub.name}</span>
                                     <div class="flex items-center gap-0.5 shrink-0 ml-0.5">
-                                        <button class="export-factory-sub-btn w-3.5 h-3.5 flex items-center justify-center bg-slate-900 hover:bg-slate-700 text-cyan-300 rounded border border-slate-700 text-[6.5px]" data-id="${sub.id}" title="JSONエクスポ�EチEコピ�E)">📋</button>
-                                        <button class="sub-info-btn w-3.5 h-3.5 flex items-center justify-center text-slate-400 hover:text-purple-300 rounded text-[7px] hover:bg-slate-700/80" data-id="${sub.id}" title="説昁E>ℹ�E�E/button>
+                                        <button class="export-factory-sub-btn w-3.5 h-3.5 flex items-center justify-center bg-slate-900 hover:bg-slate-700 text-cyan-300 rounded border border-slate-700 text-[6.5px]" data-id="${sub.id}" title="JSONエクスポート(コピー)">📋</button>
+                                        <button class="sub-info-btn w-3.5 h-3.5 flex items-center justify-center text-slate-400 hover:text-purple-300 rounded text-[7px] hover:bg-slate-700/80" data-id="${sub.id}" title="説明">ℹ️</button>
                                     </div>
                                 </div>
                             `).join('')}
@@ -691,11 +691,11 @@ export class ModalManager {
                         <div class="text-[8.5px] font-bold text-emerald-300 uppercase tracking-wider mb-1 px-0.5 flex items-center justify-between">
                             <span>USER STOCK (SUBPATCH)</span>
                             <div class="flex items-center gap-1">
-                                <button class="import-user-sub-btn h-5 px-2 bg-purple-950/80 hover:bg-purple-900 border border-purple-500/70 hover:border-purple-400 text-purple-300 rounded text-[8px] font-bold transition flex items-center gap-1 shadow-sm cursor-pointer" title="サブパチE��JSONをインポ�Eトしてストックに登録">
+                                <button class="import-user-sub-btn h-5 px-2 bg-purple-950/80 hover:bg-purple-900 border border-purple-500/70 hover:border-purple-400 text-purple-300 rounded text-[8px] font-bold transition flex items-center gap-1 shadow-sm cursor-pointer" title="サブパッチJSONをインポートしてストックに登録">
                                     <span>📥 IMPORT</span>
                                 </button>
                                 <button data-type="SUB" class="h-5 px-2 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/70 hover:border-emerald-400 text-emerald-300 rounded text-[8px] font-bold transition flex items-center gap-1 shadow-sm">
-                                    <span>➁E新規作�E</span>
+                                    <span>➕ 新規作成</span>
                                 </button>
                             </div>
                         </div>
@@ -705,9 +705,9 @@ export class ModalManager {
                                 <div class="h-6 bg-slate-800/90 hover:bg-emerald-950/60 border border-slate-700/80 hover:border-emerald-500/80 rounded flex items-center justify-between px-1 transition cursor-pointer user-sub-item select-user-sub" data-id="${sub.id}">
                                     <span class="text-[7.5px] font-bold text-emerald-300 truncate pointer-events-none">${sub.name}</span>
                                     <div class="flex items-center gap-0.5 shrink-0 ml-0.5">
-                                        <button class="export-user-sub-btn w-3.5 h-3.5 flex items-center justify-center bg-slate-900 hover:bg-slate-700 text-cyan-300 rounded border border-slate-700 text-[6.5px]" data-id="${sub.id}" title="JSONエクスポ�EチEコピ�E)">📋</button>
-                                        <button class="edit-user-sub-btn w-3.5 h-3.5 flex items-center justify-center bg-slate-900 hover:bg-slate-700 text-emerald-300 rounded border border-slate-700 text-[6.5px]" data-id="${sub.id}" title="中身を編雁E>✏︁E/button>
-                                        <button class="delete-user-sub-btn w-3.5 h-3.5 flex items-center justify-center bg-red-950/70 hover:bg-red-900 text-red-300 rounded border border-red-700/60 text-[6.5px]" data-id="${sub.id}" title="削除">🗑�E�E/button>
+                                        <button class="export-user-sub-btn w-3.5 h-3.5 flex items-center justify-center bg-slate-900 hover:bg-slate-700 text-cyan-300 rounded border border-slate-700 text-[6.5px]" data-id="${sub.id}" title="JSONエクスポート(コピー)">📋</button>
+                                        <button class="edit-user-sub-btn w-3.5 h-3.5 flex items-center justify-center bg-slate-900 hover:bg-slate-700 text-emerald-300 rounded border border-slate-700 text-[6.5px]" data-id="${sub.id}" title="中身を編集">✏️</button>
+                                        <button class="delete-user-sub-btn w-3.5 h-3.5 flex items-center justify-center bg-red-950/70 hover:bg-red-900 text-red-300 rounded border border-red-700/60 text-[6.5px]" data-id="${sub.id}" title="削除">🗑️</button>
                                     </div>
                                 </div>
                             `).join('')}
@@ -728,7 +728,7 @@ export class ModalManager {
                         this.ui.renderCell(slotIdx);
                         if (typeof lucide !== 'undefined') lucide.createIcons();
                         this.ui.updatePageNavUI();
-                        this.showToast(`SUBPATCH、E{res.name}」を追加しました`);
+                        this.showToast(`SUBPATCH「${res.name}」を追加しました`);
                         return;
                     }
 
@@ -776,7 +776,7 @@ export class ModalManager {
                         const subId = btn.dataset.id;
                         const sub = FACTORY_SUBPATCHES[subId] || (this.ui.userSubpatches && this.ui.userSubpatches[subId]);
                         if (sub) {
-                            this.showToast(`、E{sub.name}、E{sub.description || '説明なぁE}`, 3000);
+                            this.showToast(`【${sub.name}】${sub.description || '説明なし'}`, 3000);
                         }
                     });
                 });
@@ -816,7 +816,7 @@ export class ModalManager {
                         if (res && res.success) {
                             document.getElementById('shared-modal')?.classList.add('hidden');
                             this.ui.switchPage(res.page);
-                            this.showToast(`サブパチE��、E{res.subpatch}」�E編雁E��面を開きました�E�上部の STOCK ボタンで更新可能�E�`);
+                            this.showToast(`サブパッチ「${res.subpatch}」の編集画面を開きました（上部の STOCK ボタンで更新可能）`);
                         }
                     });
                 });
@@ -828,7 +828,7 @@ export class ModalManager {
                         const subId = btn.dataset.id;
                         const sub = this.ui.userSubpatches[subId];
                         if (!sub) return;
-                        if (confirm(`サブパチE��、E{sub.name}」をライブラリから削除しますか�E�\n�E�※配置済みのモジュールには影響しません�E�`)) {
+                        if (confirm(`サブパッチ「${sub.name}」をライブラリから削除しますか？\n（※配置済みのモジュールには影響しません）`)) {
                             this.ui.deleteUserSubpatch(subId);
                             renderContent();
                         }
@@ -975,14 +975,14 @@ export class ModalManager {
                                 document.body.removeChild(ta);
                             } catch (err) {}
                         }
-                        if (copyBtnText) copyBtnText.textContent = 'COPIED! ✁E;
+                        if (copyBtnText) copyBtnText.textContent = 'COPIED! ✅';
                         copyBtn.classList.add('bg-emerald-800', 'text-emerald-200', 'border-emerald-500');
                         if (copyTimer) clearTimeout(copyTimer);
                         copyTimer = setTimeout(() => {
                             if (copyBtnText) copyBtnText.textContent = copyBtnLabel;
                             copyBtn.classList.remove('bg-emerald-800', 'text-emerald-200', 'border-emerald-500');
                         }, 1800);
-                        this.ui?.showToast?.('クリチE�Eボ�Eドにコピ�Eしました');
+                        this.ui?.showToast?.('クリップボードにコピーしました');
                     };
                 } else {
                     copyBtn.classList.add('hidden');

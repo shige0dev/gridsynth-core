@@ -6,7 +6,7 @@ export class ScaleProcessor extends AudioWorkletProcessor {
         this.validSemis = [0, 3, 5, 7, 10]; // relative semitones
 
         this.heldCv = 0.0;
-        this.heldSemi = 0; // 0、E1 (absolute semitone C〜B)
+        this.heldSemi = 0; // 0〜11 (absolute semitone C〜B)
         this.sampleCount = 0;
 
         this.port.onmessage = (e) => {
@@ -32,17 +32,17 @@ export class ScaleProcessor extends AudioWorkletProcessor {
         const N = this.validSemis.length;
         if (N === 0) return { cv: inV, semi: 0 };
 
-        // 0、EV�E�およ�E吁E��クターブ）�E入力値をN等�Eしてスケール音へ坁E��より�EぁE
+        // 0〜1V（および各オクターブ）の入力値をN等分してスケール音へ均等より分け
         const oct = Math.floor(inV);
         let frac = inV - oct;
         if (frac < 0) frac = 0;
         if (frac >= 0.999999) frac = 0.999999;
 
-        // N等�Eして完�E坁E��確玁E��インチE��クス決宁E
+        // N等分して完全均等確率でインデックス決定
         const idx = Math.min(N - 1, Math.max(0, Math.floor(frac * N)));
         const relSemi = this.validSemis[idx];
 
-        // ルート音オフセチE��を加味�E�E1〜C2: 0V、EV�E�E
+        // ルート音オフセットを加味（C1〜C2: 0V〜1V）
         const totalSemi = relSemi + this.rootMidi;
         const addOct = Math.floor(totalSemi / 12);
         const absSemi = ((totalSemi % 12) + 12) % 12;
@@ -70,7 +70,7 @@ export class ScaleProcessor extends AudioWorkletProcessor {
             this.sampleCount++;
         }
 
-        // 定期皁E��UIへ状態送信�E�紁E30Hz: 44100 / 1470 ≁E30fps�E�E
+        // 定期的にUIへ状態送信（約 30Hz: 44100 / 1470 ≈ 30fps）
         if (this.sampleCount >= 1470) {
             this.sampleCount = 0;
             this.port.postMessage({

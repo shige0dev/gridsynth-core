@@ -44,17 +44,17 @@
                 <button id="page-nav-back-btn" class="h-5 px-1.5 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500/70 text-cyan-200 rounded text-[9px] font-bold items-center gap-1 transition" style="display: none;">
                     <i data-lucide="arrow-left" class="w-3 h-3"></i>MAIN
                 </button>
-                <button id="fullscreen-btn" class="h-5 px-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200 rounded flex items-center justify-center gap-1 transition shadow-sm text-[8px] font-bold cursor-pointer" title="全画面表示刁E��">
+                <button id="fullscreen-btn" class="h-5 px-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200 rounded flex items-center justify-center gap-1 transition shadow-sm text-[8px] font-bold cursor-pointer" title="全画面表示切替">
                     <i id="fullscreen-icon" data-lucide="maximize" class="w-2.5 h-2.5 pointer-events-none"></i>
                 </button>
-                <button id="cable-opacity-btn" class="h-5 px-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200 rounded flex items-center justify-center transition shadow-sm cursor-pointer" title="ケーブル表示刁E���E�透�E度�E�E>
+                <button id="cable-opacity-btn" class="h-5 px-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200 rounded flex items-center justify-center transition shadow-sm cursor-pointer" title="ケーブル表示切替（透明度）">
                     <svg id="cable-opacity-indicator" viewBox="0 0 16 16" class="w-2.5 h-2.5 pointer-events-none transition-opacity duration-200" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
                         <path d="M2 13 C 2 6, 14 10, 14 3"></path>
                         <circle cx="2" cy="13" r="1.2" fill="currentColor"></circle>
                         <circle cx="14" cy="3" r="1.2" fill="currentColor"></circle>
                     </svg>
                 </button>
-                <button id="layout-mode-btn" class="h-5 px-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200 rounded flex items-center justify-center gap-0.5 transition shadow-sm text-[8px] font-bold cursor-pointer" title="レイアウトモード�E替�E�モジュール移動�E行�Eれ替え！E>
+                <button id="layout-mode-btn" class="h-5 px-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200 rounded flex items-center justify-center gap-0.5 transition shadow-sm text-[8px] font-bold cursor-pointer" title="レイアウトモード切替（モジュール移動・行入れ替え）">
                     <i data-lucide="layout-grid" class="w-2.5 h-2.5 pointer-events-none"></i>
                     <span class="text-[7.5px] font-bold uppercase tracking-tight pointer-events-none">LAYOUT</span>
                 </button>
@@ -87,9 +87,9 @@
                         <button id="preset-new-top-btn" class="h-6 px-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-md border border-slate-700 text-[8.5px] font-bold flex items-center gap-1 shrink-0"><i data-lucide="plus" class="w-2.5 h-2.5 text-emerald-400"></i>NEW</button>
                         <button id="preset-save-top-btn" class="h-6 px-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-md border border-slate-700 text-[8.5px] font-bold flex items-center gap-1 shrink-0"><i data-lucide="save" class="w-2.5 h-2.5 text-cyan-400"></i>SAVE</button>
                         <button id="preset-saveas-top-btn" class="h-6 px-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-md border border-slate-700 text-[8.5px] font-bold flex items-center gap-1 shrink-0"><i data-lucide="file-plus" class="w-2.5 h-2.5 text-cyan-400"></i>SAVE AS</button>
-                        <button id="preset-export-top-btn" class="h-6 px-1.5 bg-slate-800 hover:bg-cyan-950/80 text-cyan-300 rounded-md border border-slate-700 hover:border-cyan-500/80 text-[8.5px] font-bold flex items-center gap-1 shrink-0" title="パッチ設定をJSONチE��ストで出劁E><i data-lucide="upload" class="w-2.5 h-2.5 text-cyan-400"></i>EXP</button>
-                        <button id="preset-import-top-btn" class="h-6 px-1.5 bg-slate-800 hover:bg-purple-950/80 text-purple-300 rounded-md border border-slate-700 hover:border-purple-500/80 text-[8.5px] font-bold flex items-center gap-1 shrink-0" title="JSONチE��ストを読み込み"><i data-lucide="download" class="w-2.5 h-2.5 text-purple-400"></i>IMP</button>
-                        <button id="preset-ai-spec-top-btn" class="h-6 px-1.5 bg-slate-800 hover:bg-amber-950/80 text-amber-300 rounded-md border border-slate-700 hover:border-amber-500/80 text-[8.5px] font-bold flex items-center gap-1 shrink-0" title="AI用パッチ生成�Eロンプト仕様書を表示/コピ�E"><i data-lucide="bot" class="w-2.5 h-2.5 text-amber-400"></i>MD</button>
+                        <button id="preset-export-top-btn" class="h-6 px-1.5 bg-slate-800 hover:bg-cyan-950/80 text-cyan-300 rounded-md border border-slate-700 hover:border-cyan-500/80 text-[8.5px] font-bold flex items-center gap-1 shrink-0" title="パッチ設定をJSONテキストで出力"><i data-lucide="upload" class="w-2.5 h-2.5 text-cyan-400"></i>EXP</button>
+                        <button id="preset-import-top-btn" class="h-6 px-1.5 bg-slate-800 hover:bg-purple-950/80 text-purple-300 rounded-md border border-slate-700 hover:border-purple-500/80 text-[8.5px] font-bold flex items-center gap-1 shrink-0" title="JSONテキストを読み込み"><i data-lucide="download" class="w-2.5 h-2.5 text-purple-400"></i>IMP</button>
+                        <button id="preset-ai-spec-top-btn" class="h-6 px-1.5 bg-slate-800 hover:bg-amber-950/80 text-amber-300 rounded-md border border-slate-700 hover:border-amber-500/80 text-[8.5px] font-bold flex items-center gap-1 shrink-0" title="AI用パッチ生成プロンプト仕様書を表示/コピー"><i data-lucide="bot" class="w-2.5 h-2.5 text-amber-400"></i>MD</button>
                         <button id="preset-about-btn" class="h-6 w-6 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-md border border-slate-700 text-[10px] font-bold font-serif italic flex items-center justify-center shrink-0 cursor-pointer shadow-sm" title="ABOUT">i</button>
                     </div>
                 </div>
@@ -136,7 +136,7 @@
                 <div id="alert-message" class="text-[10px] text-slate-300 leading-relaxed font-sans selectable-text select-text break-words"></div>
                 <div id="alert-details" class="max-h-48 overflow-y-auto bg-slate-950/90 border border-slate-800 rounded-lg p-2 font-mono text-[9px] text-amber-200/90 space-y-1 selectable-text select-text whitespace-pre-wrap break-words"></div>
                 <div class="pt-1 flex items-center justify-between gap-2">
-                    <button id="alert-copy-btn" class="h-6 px-2.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/50 font-bold text-[9px] rounded-lg transition flex items-center gap-1 cursor-pointer shadow-sm active:scale-95" title="エラーチE��ストをクリチE�Eボ�Eドにコピ�E">
+                    <button id="alert-copy-btn" class="h-6 px-2.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/50 font-bold text-[9px] rounded-lg transition flex items-center gap-1 cursor-pointer shadow-sm active:scale-95" title="エラーテキストをクリップボードにコピー">
                         <i data-lucide="copy" class="w-3 h-3 pointer-events-none"></i>
                         <span id="alert-copy-btn-text">COPY ERROR</span>
                     </button>

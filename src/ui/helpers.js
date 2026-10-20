@@ -134,9 +134,9 @@ export const UIHelpers = {
         <div class="flex items-center gap-1.5">
             <span class="text-[8px] text-slate-400 font-semibold uppercase">${label}</span>
             <div class="flex items-center gap-1 bg-slate-950 px-1 py-0.5 rounded border border-slate-800">
-                <button id="${prefix}-dec-btn" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold">âˆE/button>
+                <button id="${prefix}-dec-btn" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold">âˆ’</button>
                 <span class="w-4 text-center text-[10px] font-mono font-bold text-cyan-300">${ch}</span>
-                <button id="${prefix}-inc-btn" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold">EE/button>
+                <button id="${prefix}-inc-btn" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold">ï¼‹</button>
             </div>
         </div>`,
     bindChannelControl: (prefix, m, ctx, maxCh = 4, cb) => {
@@ -244,9 +244,9 @@ export const UIHelpers = {
                     <div class="flex items-center gap-1.5">
                         <span class="text-[8px] text-slate-400 font-semibold uppercase">${h.channel.label || 'CH'}</span>
                         <div class="flex items-center gap-1 bg-slate-950 px-1 py-0.5 rounded border border-slate-800">
-                            <button id="schema-header-ch-dec" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold leading-none">âˆE/button>
+                            <button id="schema-header-ch-dec" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold leading-none">âˆ’</button>
                             <span class="w-4 text-center text-[10px] font-mono font-bold text-cyan-300">${ch}</span>
-                            <button id="schema-header-ch-inc" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold leading-none">EE/button>
+                            <button id="schema-header-ch-inc" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold leading-none">ï¼‹</button>
                         </div>
                     </div>`;
             }

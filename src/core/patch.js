@@ -232,16 +232,16 @@ export function validateConnectionDirection(c, fromMod, toMod, fromManifest = nu
     };
 
     if (!c || !c.from || !c.to) {
-        logErr('結線構文エラー: 接続�E from また�E to が指定されてぁE��せん、E);
+        logErr('結線構文エラー: 接続の from または to が指定されていません。');
         return false;
     }
 
     if (!fromMod) {
-        logErr(`結線エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - 送信允E��ジュール "${c.from.moduleId}" は modules に定義されてぁE��せん。`);
+        logErr(`結線エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - 送信元モジュール "${c.from.moduleId}" は modules に定義されていません。`);
         return false;
     }
     if (!toMod) {
-        logErr(`結線エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - 送信先モジュール "${c.to.moduleId}" は modules に定義されてぁE��せん。`);
+        logErr(`結線エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - 送信先モジュール "${c.to.moduleId}" は modules に定義されていません。`);
         return false;
     }
 
@@ -255,7 +255,7 @@ export function validateConnectionDirection(c, fromMod, toMod, fromManifest = nu
         fromPort = normalizeSubPort(fromPort, fromType, fromManifest);
         const m = fromPort.match(/^PIN([1-9]|1[0-2])_(in|out)$/i);
         if (m && m[2].toLowerCase() !== 'out') {
-            logErr(`結線構文エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - ${c.from.moduleId}:${fromPort} は入力端子です。送信允E��は出力端孁E_out)を指定してください。`);
+            logErr(`結線構文エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - ${c.from.moduleId}:${fromPort} は入力端子です。送信元には出力端子(_out)を指定してください。`);
             return false;
         }
     } else {
@@ -267,12 +267,12 @@ export function validateConnectionDirection(c, fromMod, toMod, fromManifest = nu
                 const outAliases = (pList?.out || []).flatMap(p => typeof p === 'object' && p.alias ? [p.alias] : []);
                 const isMatch = outPorts.some(p => isPortMatching(p, fromPort)) || outAliases.includes(fromPort);
                 if (outPorts.length > 0 && !isMatch) {
-                    logErr(`結線構文エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - ${c.from.moduleId}:${fromPort} は有効な出力端子ではありません、E利用可能な出力端孁E [${outPorts.join(', ')}])`);
+                    logErr(`結線構文エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - ${c.from.moduleId}:${fromPort} は有効な出力端子ではありません。(利用可能な出力端子: [${outPorts.join(', ')}])`);
                     return false;
                 }
             } catch (e) {}
         } else if (fromPort.endsWith('_in')) {
-            logErr(`結線構文エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - 送信允E�E出力端孁E_out)である忁E��があります。`);
+            logErr(`結線構文エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - 送信元は出力端子(_out)である必要があります。`);
             return false;
         }
     }
@@ -284,7 +284,7 @@ export function validateConnectionDirection(c, fromMod, toMod, fromManifest = nu
         toPort = normalizeSubPort(toPort, toType, toManifest);
         const m = toPort.match(/^PIN([1-9]|1[0-2])_(in|out)$/i);
         if (m && m[2].toLowerCase() !== 'in') {
-            logErr(`結線構文エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - ${c.to.moduleId}:${toPort} は出力端子です。送信先には入力端孁E_in)を指定してください。`);
+            logErr(`結線構文エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - ${c.to.moduleId}:${toPort} は出力端子です。送信先には入力端子(_in)を指定してください。`);
             return false;
         }
     } else {
@@ -296,12 +296,12 @@ export function validateConnectionDirection(c, fromMod, toMod, fromManifest = nu
                 const inAliases = (pList?.in || []).flatMap(p => typeof p === 'object' && p.alias ? [p.alias] : []);
                 const isMatch = inPorts.some(p => isPortMatching(p, toPort)) || inAliases.includes(toPort);
                 if (inPorts.length > 0 && !isMatch) {
-                    logErr(`結線構文エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - ${c.to.moduleId}:${toPort} は有効な入力端子ではありません、E利用可能な入力端孁E [${inPorts.join(', ')}])`);
+                    logErr(`結線構文エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - ${c.to.moduleId}:${toPort} は有効な入力端子ではありません。(利用可能な入力端子: [${inPorts.join(', ')}])`);
                     return false;
                 }
             } catch (e) {}
         } else if (toPort.endsWith('_out')) {
-            logErr(`結線構文エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - 送信先�E入力端孁E_in)である忁E��があります。`);
+            logErr(`結線構文エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - 送信先は入力端子(_in)である必要があります。`);
             return false;
         }
     }
@@ -350,7 +350,7 @@ export function parsePatch(patchData, cols = 5, userSubpatches = null, errorSink
             const parsed = parseConn(rawC);
             if (!parsed) {
                 const repr = typeof rawC === 'string' ? rawC : JSON.stringify(rawC);
-                const msg = `結線構文エラー: 接続形式が無効でぁE(${repr})、Efrom" および "to" ("moduleId", "port") を指定してください。`;
+                const msg = `結線構文エラー: 接続形式が無効です (${repr})。"from" および "to" ("moduleId", "port") を指定してください。`;
                 console.error(`[Gridsynth Parse Error] ${msg}`);
                 errors.push(msg);
             }
@@ -377,7 +377,7 @@ export function parsePatch(patchData, cols = 5, userSubpatches = null, errorSink
             const raw = rawMods[id] || {};
             const type = raw.type || id.replace(/[0-9]/g, '').toUpperCase();
             if (!MODULE_REGISTRY[type] && !isSubModule(type)) {
-                const msg = `モジュール設定エラー: 未知のモジュールタイチE"${type}" (モジュールID: "${id}") です。`;
+                const msg = `モジュール設定エラー: 未知のモジュールタイプ "${type}" (モジュールID: "${id}") です。`;
                 console.error(`[Gridsynth Parse Error] ${msg}`);
                 errors.push(msg);
             }

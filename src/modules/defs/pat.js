@@ -46,19 +46,19 @@ export const PAT = {
     renderGrid: (m) => {
         return `
             <div class="flex items-center justify-center w-full h-full pointer-events-none select-none">
-                <span class="pat-state-disp text-[17px] font-mono font-bold text-slate-500 tracking-wider"> E/span>
+                <span class="pat-state-disp text-[17px] font-mono font-bold text-slate-500 tracking-wider">—</span>
             </div>`;
     },
     updateLive: (cell, data, isP, modal, m) => {
         const stateEl = cell?.querySelector('.pat-state-disp');
         if (stateEl) {
             if (!isP || !data) {
-                stateEl.textContent = ' E;
+                stateEl.textContent = '—';
                 stateEl.className = 'pat-state-disp text-[17px] font-mono font-bold text-slate-600 tracking-wider';
             } else {
-                const label = data.activeLabel || (data.activeIdx >= 0 ? `STEP ${data.activeIdx + 1}` : ' E);
+                const label = data.activeLabel || (data.activeIdx >= 0 ? `STEP ${data.activeIdx + 1}` : '—');
                 const isGateOn = !!data.gate;
-                const isRest = data.isRest || label === '~' || label === ' E;
+                const isRest = data.isRest || label === '~' || label === '—';
                 stateEl.textContent = label;
                 if (isRest) {
                     stateEl.className = 'pat-state-disp text-[17px] font-mono font-bold text-cyan-400/30 tracking-wider';
@@ -132,7 +132,7 @@ export const PAT = {
 
                     <!-- Right: Small Action Buttons [ ↺ ] and [ ↵ ] -->
                     <div class="flex items-center gap-1 shrink-0">
-                        <button id="pat-revert-btn-${uid}" disabled class="w-6 h-5 shrink-0 rounded text-[9.5px] font-bold border transition flex items-center justify-center opacity-40 pointer-events-none bg-slate-900 text-slate-600 border-slate-800 shadow-sm cursor-pointer" title="允E�E斁E���Eに戻ぁE(REVERT)">
+                        <button id="pat-revert-btn-${uid}" disabled class="w-6 h-5 shrink-0 rounded text-[9.5px] font-bold border transition flex items-center justify-center opacity-40 pointer-events-none bg-slate-900 text-slate-600 border-slate-800 shadow-sm cursor-pointer" title="元の文字列に戻す (REVERT)">
                             ↺
                         </button>
                         <button id="pat-apply-btn-${uid}" class="w-6 h-5 shrink-0 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded text-[10px] font-bold border border-slate-700 transition flex items-center justify-center cursor-pointer shadow-sm" title="流し込み (SEND / Enter)">
@@ -182,14 +182,14 @@ export const PAT = {
                 <div class="bg-slate-950/80 p-1.5 rounded border border-slate-800/80 text-[7.5px] font-mono text-slate-300 space-y-1 animate-fadeIn select-none">
                     <div class="grid grid-cols-4 gap-1 text-center">
                         <div><b class="text-cyan-300">~</b> 休符</div>
-                        <div><b class="text-cyan-300">[a b]</b> 刁E��</div>
+                        <div><b class="text-cyan-300">[a b]</b> 分割</div>
                         <div><b class="text-cyan-300">&lt;a b&gt;</b> 周期交代</div>
-                        <div><b class="text-cyan-300">a!3</b> 褁E��</div>
+                        <div><b class="text-cyan-300">a!3</b> 複製</div>
                     </div>
                     <div class="grid grid-cols-4 gap-1 pt-0.5 border-t border-slate-800/50 text-center">
-                        <div><b class="text-cyan-300">a*4</b> 連扁E/div>
-                        <div><b class="text-cyan-300">a(3,8)</b> ユークリチE��</div>
-                        <div><b class="text-cyan-300">a?0.7</b> 確玁E/div>
+                        <div><b class="text-cyan-300">a*4</b> 連打</div>
+                        <div><b class="text-cyan-300">a(3,8)</b> ユークリッド</div>
+                        <div><b class="text-cyan-300">a?0.7</b> 確率</div>
                         <div><b class="text-cyan-300">a^1</b> オクターブ変更</div>
                     </div>
                 </div>

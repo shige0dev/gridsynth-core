@@ -1,9 +1,9 @@
 import { UIHelpers } from '../../ui/helpers.js';
 
 export const ADSR_CURVES = {
-    exp: { label: '⟁EEXP', attackCurve: 0.0, decayCurve: -0.75, releaseCurve: -0.75 },
-    lin: { label: '�E� LIN', attackCurve: 0.0, decayCurve: 0.0, releaseCurve: 0.0 },
-    log: { label: '⟁ELOG', attackCurve: 0.0, decayCurve: 0.75, releaseCurve: 0.75 }
+    exp: { label: '⟍ EXP', attackCurve: 0.0, decayCurve: -0.75, releaseCurve: -0.75 },
+    lin: { label: '＼ LIN', attackCurve: 0.0, decayCurve: 0.0, releaseCurve: 0.0 },
+    log: { label: '⟋ LOG', attackCurve: 0.0, decayCurve: 0.75, releaseCurve: 0.75 }
 };
 
 export const ADSR = {
@@ -222,7 +222,7 @@ export const ADSR = {
                 </div>
             </div>
 
-            <!-- CURVE: A用 D用 R用 横並び (上かめELOG, LIN, EXP) -->
+            <!-- CURVE: A用 D用 R用 横並び (上から LOG, LIN, EXP) -->
             <div class="my-1">
                 <label class="block text-[8px] text-slate-400 mb-0.5 uppercase tracking-wider font-semibold">CURVE</label>
                 <div class="grid grid-cols-3 gap-1">

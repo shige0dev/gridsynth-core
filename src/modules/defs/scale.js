@@ -36,11 +36,11 @@ export const SCALE = {
 
         return `
             <div class="flex flex-col items-center justify-center w-full h-full pointer-events-none leading-none gap-1">
-                <!-- ルート音 �E�Eスケール吁E-->
+                <!-- ルート音 ＋ スケール名 -->
                 <div class="flex items-center justify-center w-[50px] px-0.5 pointer-events-none text-center">
                     <span class="text-[8px] font-mono font-bold text-amber-400 truncate tracking-tight">${rootName} ${scaleName}</span>
                 </div>
-                <!-- 12本バ�E�E�C〜B固定。ルート音変更で通過音の黁E��位置がシフト -->
+                <!-- 12本バー：C〜B固定。ルート音変更で通過音の黄色位置がシフト -->
                 <div class="flex items-center justify-between w-[50px] h-6 gap-[1.5px] p-0 pointer-events-none">
                     ${Array.from({ length: 12 }, (_, semi) => {
                         const rel = (semi - root + 12) % 12;
@@ -56,13 +56,13 @@ export const SCALE = {
     updateLive: (cell, data, isP, modal) => {
         const semi = data?.activeSemi ?? -1;
 
-        // 該当�E力�Eバ�Eだけ枠が�Eる！E、E1の絶対半音 C〜B�E�E
+        // 該当出力のバーだけ枠が光る（0〜11の絶対半音 C〜B）
         cell.querySelectorAll('[data-scale-bar]').forEach((b) => {
             const barSemi = parseInt(b.getAttribute('data-scale-bar'), 10);
             b.classList.toggle('scale-active', barSemi === semi);
         });
 
-        // モーダルが開ぁE��ぁE��ばモーダル冁E�Eバ�E枠もハイライチE
+        // モーダルが開いていればモーダル内のバー枠もハイライト
         if (modal) {
             modal.querySelectorAll('[data-modal-bar]').forEach((b) => {
                 const barSemi = parseInt(b.getAttribute('data-modal-bar'), 10);
@@ -110,7 +110,7 @@ export const SCALE = {
                         <span class="text-amber-400 font-mono">${relMask.filter(x => x === 1).length} ACTIVE</span>
                     </div>
 
-                    <!-- 12 Bars: C〜B 完�E固定。ルート変更で黁E��バ�Eと光る位置がシフト -->
+                    <!-- 12 Bars: C〜B 完全固定。ルート変更で黄色バーと光る位置がシフト -->
                     <div class="flex items-end justify-between gap-1 h-16 pt-1 pb-0.5">
                         ${NOTE_NAMES.map((n, semi) => {
                             const rel = (semi - root + 12) % 12;
@@ -163,7 +163,7 @@ export const SCALE = {
             });
         }
 
-        // Interactive Note Bar Toggles (C〜Bの吁E��ーをタチE�E)
+        // Interactive Note Bar Toggles (C〜Bの各バーをタップ)
         document.querySelectorAll('[data-note-toggle]').forEach(el => {
             el.addEventListener('click', () => {
                 const semi = parseInt(el.dataset.noteToggle, 10);

@@ -134,8 +134,8 @@ export const LFO = {
             rateDisp = `${Math.round(period * 1000)}ms`;
         }
         const subDisp = isSync
-            ? `ρE${Math.round(m.phase || 0)}°`
-            : (period < 1.0 ? `${(1.0 / period).toFixed(period <= 0.1 ? 0 : 1)}Hz` : `ρE${Math.round(m.phase || 0)}°`);
+            ? `φ:${Math.round(m.phase || 0)}°`
+            : (period < 1.0 ? `${(1.0 / period).toFixed(period <= 0.1 ? 0 : 1)}Hz` : `φ:${Math.round(m.phase || 0)}°`);
         return `<div class="flex flex-col items-center justify-center leading-none gap-0.5 pointer-events-none text-indigo-300">
             <span class="text-[8px] font-bold uppercase text-indigo-400">${(m.waveType || 'sin').substring(0,3)} (${sp})</span>
             <span class="text-[13px] font-mono font-bold text-white tracking-tight">${rateDisp}</span>
@@ -379,7 +379,7 @@ export const SH = {
     }),
     schema: {
         color: 'fuchsia',
-        groups: [{ key: 'polarity', label: 'Internal Source', cols: 2, options: [{ val: 'unipolar', label: 'UNI (0、EV)' }, { val: 'bipolar', label: 'BI (±1V)' }] }],
+        groups: [{ key: 'polarity', label: 'Internal Source', cols: 2, options: [{ val: 'unipolar', label: 'UNI (0〜1V)' }, { val: 'bipolar', label: 'BI (±1V)' }] }],
         sliders: [
             { key: 'glide', label: 'GLIDE', min: 0.0, max: 0.5, step: 0.01, default: 0.0, unit: 's', color: 'fuchsia', format: v => v<=0.001?'OFF':Math.round(v*1000)+'ms' },
             { key: 'scale', label: 'SCALE', min: -3.0, max: 3.0, step: 0.05, default: 1.0, unit: 'x', color: 'fuchsia', format: v => (v>=0?'+':'')+v.toFixed(2) }

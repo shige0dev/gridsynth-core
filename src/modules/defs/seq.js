@@ -81,7 +81,7 @@ export const SEQ8 = {
                     const isGateAct = typeof st === 'object' ? (st.gate !== false) : true;
                     return `
                     <div data-step-col="${i}" class="flex flex-col items-center gap-1 flex-1 min-w-[34px] p-1 rounded-lg border transition-all shrink-0 ${isAct ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-950/80 border-slate-800/40 opacity-40 grayscale'}">
-                        <span id="seq-slider-${i}-disp" class="text-[8.5px] ${isAct ? 'text-cyan-300' : 'text-slate-500'} font-mono font-bold cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-1 py-0.5 rounded transition-colors shrink-0" title="上下ドラチE��で微調整">${m.quantize!==false?UIHelpers.cvToNoteName(val):val.toFixed(2)}</span>
+                        <span id="seq-slider-${i}-disp" class="text-[8.5px] ${isAct ? 'text-cyan-300' : 'text-slate-500'} font-mono font-bold cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-1 py-0.5 rounded transition-colors shrink-0" title="上下ドラッグで微調整">${m.quantize!==false?UIHelpers.cvToNoteName(val):val.toFixed(2)}</span>
                         <div class="h-12 min-h-[48px] flex items-center justify-center my-0.5 shrink-0">
                             <input type="range" data-seq-slider="${i}" id="seq-slider-${i}" min="0" max="2.0" step="${m.quantize!==false?0.083333:0.01}" value="${val}" class="native-vslider ${isAct ? 'accent-blue-500' : 'accent-slate-600'} shrink-0">
                         </div>
@@ -214,7 +214,7 @@ export const SEQ16 = {
                     const isGateAct = typeof st === 'object' ? (st.gate !== false) : true;
                     return `
                     <div data-step-col="${idx}" class="flex flex-col items-center gap-0.5 flex-1 min-w-[34px] p-1 rounded-lg border transition-all shrink-0 ${isAct ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-950/80 border-slate-800/40 opacity-40 grayscale'}">
-                        <span id="seq16-slider-${idx}-disp" class="text-[8px] ${isAct ? 'text-cyan-300' : 'text-slate-500'} font-mono font-bold cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 py-0.5 rounded transition-colors shrink-0" title="上下ドラチE��で微調整">${m.quantize!==false?UIHelpers.cvToNoteName(val):val.toFixed(2)}</span>
+                        <span id="seq16-slider-${idx}-disp" class="text-[8px] ${isAct ? 'text-cyan-300' : 'text-slate-500'} font-mono font-bold cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 py-0.5 rounded transition-colors shrink-0" title="上下ドラッグで微調整">${m.quantize!==false?UIHelpers.cvToNoteName(val):val.toFixed(2)}</span>
                         <div class="h-12 min-h-[48px] flex items-center justify-center my-0.5 shrink-0">
                             <input type="range" data-seq-slider="${idx}" id="seq16-slider-${idx}" min="0" max="2.0" step="${m.quantize!==false?0.083333:0.01}" value="${val}" class="native-vslider ${isAct ? 'accent-blue-500' : 'accent-slate-600'} shrink-0">
                         </div>

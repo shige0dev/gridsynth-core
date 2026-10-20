@@ -95,7 +95,7 @@ export const WaveModal = {
                 `DURATION: ${durStr}`,
                 `SIZE: ${kbStr}`
             ],
-            copyToast: 'WAVE JSONをクリチE�Eボ�Eドにコピ�Eしました',
+            copyToast: 'WAVE JSONをクリップボードにコピーしました',
             showToast: (msg) => ctx.showToast?.(msg)
         });
     },
@@ -104,28 +104,28 @@ export const WaveModal = {
         JsonIoDialog.openImport({
             title: `WAVE JSON IMPORT (${m.id || 'WAVE'})`,
             icon: 'download',
-            placeholder: 'ここに WAVE モジュールの JSON チE��ストを貼り付けてください...',
+            placeholder: 'ここに WAVE モジュールの JSON テキストを貼り付けてください...',
             showToast: (msg) => ctx.showToast?.(msg),
             actions: [
                 {
                     id: 'json-wave-import-btn',
-                    label: 'LOAD (こ�EWAVEに適用)',
+                    label: 'LOAD (このWAVEに適用)',
                     icon: 'check',
                     cls: 'bg-cyan-600 hover:bg-cyan-500 text-white shadow-md shadow-cyan-600/30',
                     onClick: async (rawText, modal) => {
                         const res = JsonIoDialog.parseJsonText(rawText);
                         if (res.empty) {
-                            ctx.showToast?.('JSONチE��ストが空でぁE);
+                            ctx.showToast?.('JSONテキストが空です');
                             return;
                         }
                         if (res.syntaxError) {
                             const info = res.info;
-                            alert(`【JSON構文エラー】\n${info.line}行目・${info.col}斁E��目付近に斁E��ミス�E�カンマや括弧の過不足など�E�があります、En\n詳細: ${info.message}\n\n${info.snippet}`);
+                            alert(`【JSON構文エラー】\n${info.line}行目・${info.col}文字目付近に文法ミス（カンマや括弧の過不足など）があります。\n\n詳細: ${info.message}\n\n${info.snippet}`);
                             return;
                         }
                         const waveData = this.extractWavePayload(res.data);
                         if (!waveData) {
-                            alert('【インポ�Eトエラー】\n有効な WAVE モジュールチE�Eタが見つかりません、E);
+                            alert('【インポートエラー】\n有効な WAVE モジュールデータが見つかりません。');
                             return;
                         }
 
@@ -408,7 +408,7 @@ export const WaveModal = {
                         <span id="wave-header-dur" class="text-[8px] font-mono text-slate-400 font-bold shrink-0">(${durStr})</span>
                     </div>
                     <div class="flex items-center gap-1 shrink-0 ${ioDisabledCls}">
-                        <button id="wave-rec-btn" class="px-1.5 py-1 ${isRecording ? 'bg-red-600 hover:bg-red-500 border-red-400 text-white animate-pulse shadow-md shadow-red-600/40' : 'bg-red-950 hover:bg-red-900 border-red-500/70 text-red-200'} border rounded text-[8px] font-bold cursor-pointer transition shadow-sm flex items-center gap-0.5 shrink-0" title="${isRecording ? '録音を停止' : 'マイクからダイレクト録音 (最大16私E'}" ${ioDisabledAttr}>
+                        <button id="wave-rec-btn" class="px-1.5 py-1 ${isRecording ? 'bg-red-600 hover:bg-red-500 border-red-400 text-white animate-pulse shadow-md shadow-red-600/40' : 'bg-red-950 hover:bg-red-900 border-red-500/70 text-red-200'} border rounded text-[8px] font-bold cursor-pointer transition shadow-sm flex items-center gap-0.5 shrink-0" title="${isRecording ? '録音を停止' : 'マイクからダイレクト録音 (最大16秒)'}" ${ioDisabledAttr}>
                             <i data-lucide="${isRecording ? 'square' : 'mic'}" class="w-2.5 h-2.5 pointer-events-none"></i>
                             <span>${isRecording ? 'STOP' : 'REC'}</span>
                         </button>
@@ -417,11 +417,11 @@ export const WaveModal = {
                             <span>LOAD</span>
                             <input type="file" id="wave-file-input" accept="audio/*, video/mp4, video/*" class="hidden" ${ioDisabledAttr}>
                         </label>
-                        <button id="wave-json-export-btn" class="px-1.5 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-cyan-300 rounded text-[8px] font-bold cursor-pointer transition shadow-sm flex items-center gap-0.5 shrink-0" title="WAVEチE�EタをJSONチE��ストとしてエクスポ�EチE ${ioDisabledAttr}>
+                        <button id="wave-json-export-btn" class="px-1.5 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-cyan-300 rounded text-[8px] font-bold cursor-pointer transition shadow-sm flex items-center gap-0.5 shrink-0" title="WAVEデータをJSONテキストとしてエクスポート" ${ioDisabledAttr}>
                             <i data-lucide="upload" class="w-2.5 h-2.5 pointer-events-none"></i>
                             <span>EXP</span>
                         </button>
-                        <button id="wave-json-import-btn" class="px-1.5 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-purple-300 rounded text-[8px] font-bold cursor-pointer transition shadow-sm flex items-center gap-0.5 shrink-0" title="JSONチE��ストからWAVEチE�Eタをインポ�EチE ${ioDisabledAttr}>
+                        <button id="wave-json-import-btn" class="px-1.5 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-purple-300 rounded text-[8px] font-bold cursor-pointer transition shadow-sm flex items-center gap-0.5 shrink-0" title="JSONテキストからWAVEデータをインポート" ${ioDisabledAttr}>
                             <i data-lucide="download" class="w-2.5 h-2.5 pointer-events-none"></i>
                             <span>IMP</span>
                         </button>
@@ -445,13 +445,13 @@ export const WaveModal = {
                         </div>
                         <div class="flex flex-col items-center gap-1">
                             <span class="text-[7px] font-mono font-bold leading-tight text-slate-400">LOOP</span>
-                            <button id="wave-loop-btn" class="h-5 w-6 rounded border ${loopActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0" title="LOOP (ループ�E甁EON/OFF)">
+                            <button id="wave-loop-btn" class="h-5 w-6 rounded border ${loopActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0" title="LOOP (ループ再生 ON/OFF)">
                                 <i data-lucide="repeat" class="w-3 h-3"></i>
                             </button>
                         </div>
                         <div class="flex flex-col items-center gap-1">
                             <span class="text-[7px] font-mono font-bold leading-tight text-slate-400">RETR</span>
-                            <button id="wave-retrigger-btn" class="h-5 w-6 rounded border ${retriggerActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0" title="RETRIGGER (ON: 毎回先頭から再生 / OFF: 完走するまでトリガー無要E">
+                            <button id="wave-retrigger-btn" class="h-5 w-6 rounded border ${retriggerActive ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-sm shadow-cyan-500/30' : 'bg-slate-900 text-slate-500 border-slate-800'} font-bold transition flex items-center justify-center cursor-pointer shrink-0" title="RETRIGGER (ON: 毎回先頭から再生 / OFF: 完走するまでトリガー無視)">
                                 <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
                             </button>
                         </div>
@@ -464,10 +464,10 @@ export const WaveModal = {
                         <!-- Top Text Area -->
                         <div class="flex items-center justify-between text-[8px] font-mono font-bold leading-tight">
                             <div class="flex items-center gap-1">
-                                <button id="wave-pitch-mode-btn" class="px-1.5 py-0.5 rounded border ${pitchActive ? 'bg-purple-950 text-purple-300 border-purple-500 shadow-sm shadow-purple-500/20' : 'bg-slate-900 text-cyan-400 border-slate-700 hover:border-cyan-500/60'} text-[7.5px] font-mono font-bold transition cursor-pointer leading-none" title="クリチE��でモード�E替: normal (再生速度�E�E��チE��連勁E ⇁EPITCH (WSOLA位相合わせグレイン・再生時間固宁E">
+                                <button id="wave-pitch-mode-btn" class="px-1.5 py-0.5 rounded border ${pitchActive ? 'bg-purple-950 text-purple-300 border-purple-500 shadow-sm shadow-purple-500/20' : 'bg-slate-900 text-cyan-400 border-slate-700 hover:border-cyan-500/60'} text-[7.5px] font-mono font-bold transition cursor-pointer leading-none" title="クリックでモード切替: normal (再生速度＆ピッチ連動) ⇔ PITCH (WSOLA位相合わせグレイン・再生時間固定)">
                                     ${pitchActive ? 'PITCH' : 'normal'}
                                 </button>
-                                <button id="wave-semi-mode-btn" class="px-1.5 py-0.5 rounded border ${semiActive ? 'bg-amber-950 text-amber-300 border-amber-500 shadow-sm shadow-amber-500/20' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-amber-500/60'} text-[7.5px] font-mono font-bold transition cursor-pointer leading-none" title="クオンタイズ (ON: 半音=1/12oct単位でスチE��プ調整 / OFF: 無段階調整)">
+                                <button id="wave-semi-mode-btn" class="px-1.5 py-0.5 rounded border ${semiActive ? 'bg-amber-950 text-amber-300 border-amber-500 shadow-sm shadow-amber-500/20' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-amber-500/60'} text-[7.5px] font-mono font-bold transition cursor-pointer leading-none" title="クオンタイズ (ON: 半音=1/12oct単位でステップ調整 / OFF: 無段階調整)">
                                     QTZ
                                 </button>
                             </div>
@@ -475,7 +475,7 @@ export const WaveModal = {
                         </div>
                         <!-- Bottom Slider Area -->
                         <div class="${isSpeedPatched ? 'opacity-30 pointer-events-none' : ''} flex flex-col gap-0.5">
-                            <input type="range" id="wave-slider-speed" min="${semiActive ? -24 : -2.0}" max="${semiActive ? 24 : 2.0}" step="${semiActive ? 1 : 0.05}" value="${semiActive ? semiInt : speedCvVal}" class="w-full h-1.5 bg-slate-800 rounded-lg ${semiActive ? 'accent-amber-400' : (pitchActive ? 'accent-purple-400' : 'accent-cyan-400')} cursor-pointer" ${isSpeedPatched ? 'disabled' : ''} title="${semiActive ? '半音スチE��チE(-24semi 、E+24semi / 1/12oct刻み)' : (pitchActive ? 'ピッチシフト (-24st 、E+24st / 再生時間固宁E' : '再生速度 (/4, /2, x1, x2, x4)')}">
+                            <input type="range" id="wave-slider-speed" min="${semiActive ? -24 : -2.0}" max="${semiActive ? 24 : 2.0}" step="${semiActive ? 1 : 0.05}" value="${semiActive ? semiInt : speedCvVal}" class="w-full h-1.5 bg-slate-800 rounded-lg ${semiActive ? 'accent-amber-400' : (pitchActive ? 'accent-purple-400' : 'accent-cyan-400')} cursor-pointer" ${isSpeedPatched ? 'disabled' : ''} title="${semiActive ? '半音ステップ (-24semi 〜 +24semi / 1/12oct刻み)' : (pitchActive ? 'ピッチシフト (-24st 〜 +24st / 再生時間固定)' : '再生速度 (/4, /2, x1, x2, x4)')}">
                             <div class="flex justify-between px-0.5 text-[6.5px] font-mono text-slate-500 font-bold select-none pointer-events-none -mt-0.5">
                                 ${semiActive
                                     ? '<span>-24</span><span>-12</span><span class="text-amber-400">0semi</span><span>+12</span><span>+24</span>'
@@ -498,7 +498,7 @@ export const WaveModal = {
                         <!-- Bottom Button Area -->
                         <div class="flex items-center gap-1">
                             <div class="flex items-center gap-0.5">
-                                <button id="wave-chop-off" class="${chopBtnCls('off')}" ${ioDisabledAttr}> E/button>
+                                <button id="wave-chop-off" class="${chopBtnCls('off')}" ${ioDisabledAttr}>—</button>
                                 <button id="wave-chop-4" class="${chopBtnCls('4')}" ${ioDisabledAttr}>4</button>
                                 <button id="wave-chop-8" class="${chopBtnCls('8')}" ${ioDisabledAttr}>8</button>
                                 <button id="wave-chop-16" class="${chopBtnCls('16')}" ${ioDisabledAttr}>16</button>
@@ -518,10 +518,10 @@ export const WaveModal = {
                             <span class="text-[8.5px] text-emerald-400 shrink-0">START</span>
                             <span id="wave-slider-start-disp" class="text-emerald-300 font-mono text-[8px] font-bold cursor-ns-resize hover:bg-slate-800/80 px-1 py-0.5 rounded leading-none truncate">${startDisp}</span>
                         </div>
-                        <input type="range" id="wave-slider-start" min="0.0" max="1.0" step="0.005" value="${m.start ?? 0.0}" class="w-full h-2.5 bg-slate-800 rounded-lg accent-emerald-400 cursor-pointer" ${isStartPatched ? 'disabled' : ''} title="開始CV位置 (0%、E00%)">
+                        <input type="range" id="wave-slider-start" min="0.0" max="1.0" step="0.005" value="${m.start ?? 0.0}" class="w-full h-2.5 bg-slate-800 rounded-lg accent-emerald-400 cursor-pointer" ${isStartPatched ? 'disabled' : ''} title="開始CV位置 (0%〜100%)">
                     </div>
 
-                    <button id="wave-range-lock-btn" class="h-6 w-6 rounded-lg border ${lockActive ? 'bg-emerald-950 text-emerald-300 border-emerald-500 shadow-sm shadow-emerald-500/30' : 'bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-300'} transition flex items-center justify-center shrink-0 ${isAnyRangePatched ? 'opacity-30 pointer-events-none cursor-not-allowed' : 'cursor-pointer active:scale-95'}" ${isAnyRangePatched ? 'disabled' : ''} title="TIME LOCK (START/END CV差刁E��チE��)">
+                    <button id="wave-range-lock-btn" class="h-6 w-6 rounded-lg border ${lockActive ? 'bg-emerald-950 text-emerald-300 border-emerald-500 shadow-sm shadow-emerald-500/30' : 'bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-300'} transition flex items-center justify-center shrink-0 ${isAnyRangePatched ? 'opacity-30 pointer-events-none cursor-not-allowed' : 'cursor-pointer active:scale-95'}" ${isAnyRangePatched ? 'disabled' : ''} title="TIME LOCK (START/END CV差分ロック)">
                         <i data-lucide="${lockActive ? 'lock' : 'unlock'}" class="w-3 h-3 pointer-events-none"></i>
                     </button>
 
@@ -530,7 +530,7 @@ export const WaveModal = {
                             <span class="text-[8.5px] text-emerald-400 shrink-0">END</span>
                             <span id="wave-slider-end-disp" class="text-emerald-300 font-mono text-[8px] font-bold cursor-ns-resize hover:bg-slate-800/80 px-1 py-0.5 rounded leading-none truncate">${endDisp}</span>
                         </div>
-                        <input type="range" id="wave-slider-end" min="0.0" max="1.0" step="0.005" value="${m.end ?? 1.0}" class="w-full h-2.5 bg-slate-800 rounded-lg accent-emerald-400 cursor-pointer" ${isEndPatched ? 'disabled' : ''} title="終亁EV位置 (0%、E00%)">
+                        <input type="range" id="wave-slider-end" min="0.0" max="1.0" step="0.005" value="${m.end ?? 1.0}" class="w-full h-2.5 bg-slate-800 rounded-lg accent-emerald-400 cursor-pointer" ${isEndPatched ? 'disabled' : ''} title="終了CV位置 (0%〜100%)">
                     </div>
                 </div>
             </div>

@@ -346,13 +346,14 @@ export class CableManager {
             const dx = x2 - x1;
             const dy = y2 - y1;
             const dist = Math.sqrt(dx * dx + dy * dy);
-            const curveY = Math.max(dist * 0.35, 18);
+            // Upper-bound capped sag: gentle curve for close ports, capped at max 28px for long cables
+            const curveY = Math.min(28, Math.max(16, 14 + dist * 0.05));
             const baseY = Math.max(y1, y2) + curveY;
 
             const tiltX = this.tiltOffsetX || 0;
             let cp1x, cp2x;
             if (Math.abs(dx) < 12) {
-                const bulge = Math.min(32, Math.max(18, dist * 0.18));
+                const bulge = Math.min(28, Math.max(16, dist * 0.12));
                 cp1x = x1 + bulge + tiltX;
                 cp2x = x2 + bulge + tiltX;
             } else {
@@ -403,7 +404,7 @@ export class CableManager {
             this.selectedTargetForConnection = cur;
             this.updatePortHighlight();
             const toastLabel = info.hasAlias ? info.label : pName;
-            this.ui.showToast(`[${mId}:${toastLabel}] 接続�EをタチE�Eしてください`);
+            this.ui.showToast(`[${mId}:${toastLabel}] 接続先をタップしてください`);
         } else {
             const first = this.selectedTargetForConnection;
             if (first.moduleId === cur.moduleId && first.port === cur.port) {
@@ -446,7 +447,7 @@ export class CableManager {
                 const isSrcLink = src.port === 'link_out' || src.port === 'link_in';
                 const isDstLink = dst.port === 'link_out' || dst.port === 'link_in';
                 if (isSrcLink !== isDstLink) {
-                    this.ui.showToast('LINK端子�EWAVEのLINK端子同士のみ接続可能でぁE);
+                    this.ui.showToast('LINK端子はWAVEのLINK端子同士のみ接続可能です');
                     this.selectedTargetForConnection = null;
                     this.updatePortHighlight();
                     return;
@@ -454,7 +455,7 @@ export class CableManager {
 
                 const cand = { from: src, to: dst };
                 if (this.ui.connections.some(c => isSameConn(c, cand))) {
-                    this.ui.showToast('既に接続されてぁE��ぁE);
+                    this.ui.showToast('既に接続されています');
                 } else {
                     this.ui.saveHistory();
                     if (dst.port === 'link_in') {

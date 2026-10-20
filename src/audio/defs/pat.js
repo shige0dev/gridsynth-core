@@ -29,13 +29,13 @@ export const PAT = {
             gt.connect(eng.silentSink);
         }
 
-        let latestPhase = 0, latestIdx = -1, latestCycle = 0, latestLabel = ' E, latestIsRest = true, latestGate = false;
+        let latestPhase = 0, latestIdx = -1, latestCycle = 0, latestLabel = '—', latestIsRest = true, latestGate = false;
         w.port.onmessage = e => {
             if (e.data.type === 'PLAYHEAD') {
                 latestPhase = e.data.phase;
                 latestIdx = e.data.activeIdx;
                 latestCycle = e.data.cycleCount || 0;
-                latestLabel = e.data.activeLabel || ' E;
+                latestLabel = e.data.activeLabel || '—';
                 latestIsRest = !!e.data.isRest;
                 latestGate = !!e.data.gate;
             }
@@ -49,7 +49,7 @@ export const PAT = {
                 latestPhase = 0;
                 latestIdx = -1;
                 latestCycle = 0;
-                latestLabel = ' E;
+                latestLabel = '—';
                 latestIsRest = true;
                 latestGate = false;
             },

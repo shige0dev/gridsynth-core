@@ -370,7 +370,7 @@ export class UIController {
                         const hasUnconnected = weights.some((w, idx) => Number(w) > 0 && !patched.has(`transition_out${idx + 1}`) && !patched.has(`trig_out${idx + 1}`));
                         if (hasUnconnected) {
                             titleClass = 'text-rose-500 font-extrabold drop-shadow-[0_0_2px_rgba(244,63,94,0.9)] animate-pulse';
-                            extraTitleAttrs = 'title="未結線�E出力端子にウエイトが設定されてぁE��ぁE';
+                            extraTitleAttrs = 'title="未結線の出力端子にウエイトが設定されています"';
                         }
                     }
                     titleHTML = `
@@ -633,7 +633,7 @@ export class UIController {
                     } else if (root.webkitRequestFullscreen) {
                         try { root.webkitRequestFullscreen(); this.showToast('FULLSCREEN'); } catch (_) {}
                     } else {
-                        this.showToast('iOS: 共有メニューの「�Eーム画面に追加」で全画面化できまぁE, 3000);
+                        this.showToast('iOS: 共有メニューの「ホーム画面に追加」で全画面化できます', 3000);
                     }
                 } else {
                     if (document.exitFullscreen) {
@@ -768,7 +768,7 @@ export class UIController {
                 this.pagesData[this.currentPageId].name = res.trim();
                 this.updatePageNavUI();
                 this.updateAllCells();
-                this.showToast(`サブパチE��名を、E{res.trim()}」に変更しました`);
+                this.showToast(`サブパッチ名を「${res.trim()}」に変更しました`);
             }
         };
         document.getElementById('page-nav-title')?.addEventListener('click', handleRenameSubpatch);

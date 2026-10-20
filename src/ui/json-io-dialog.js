@@ -103,7 +103,7 @@ export const JsonIoDialog = {
      * @param {string} opts.jsonStr - Text to display and copy
      * @param {string[]} [opts.infoBadges=[]] - Info strings on the left side of footer
      * @param {string} [opts.btnColorCls='bg-cyan-600 hover:bg-cyan-500 shadow-cyan-600/30'] - Copy button color classes
-     * @param {string} [opts.copyToast='JSONをクリチE�Eボ�Eドにコピ�Eしました'] - Toast message on copy
+     * @param {string} [opts.copyToast='JSONをクリップボードにコピーしました'] - Toast message on copy
      * @param {Function} [opts.showToast] - Toast callback
      * @param {string} [opts.leftActionHtml=''] - Optional custom HTML on the left side of footer
      * @param {Function} [opts.onBindFooter] - Optional callback after footer HTML is injected
@@ -114,7 +114,7 @@ export const JsonIoDialog = {
         jsonStr = '',
         infoBadges = [],
         btnColorCls = 'bg-cyan-600 hover:bg-cyan-500 shadow-cyan-600/30',
-        copyToast = 'JSONをクリチE�Eボ�Eドにコピ�Eしました',
+        copyToast = 'JSONをクリップボードにコピーしました',
         showToast = null,
         leftActionHtml = '',
         onBindFooter = null
@@ -158,7 +158,7 @@ export const JsonIoDialog = {
             document.getElementById('json-copy-btn')?.addEventListener('click', () => {
                 navigator.clipboard.writeText(jsonStr).then(() => {
                     const btnText = document.getElementById('json-copy-btn-text');
-                    if (btnText) btnText.textContent = 'COPIED! ✁E;
+                    if (btnText) btnText.textContent = 'COPIED! ✅';
                     toast(copyToast);
                     setTimeout(() => {
                         const bt = document.getElementById('json-copy-btn-text');
@@ -168,7 +168,7 @@ export const JsonIoDialog = {
                     textarea.focus();
                     textarea.select();
                     document.execCommand('copy');
-                    toast('選択部刁E��コピ�Eしました');
+                    toast('選択部分をコピーしました');
                 });
             });
 
@@ -194,14 +194,14 @@ export const JsonIoDialog = {
      * @param {Object} opts
      * @param {string} opts.title - Modal header title
      * @param {string} [opts.icon='download'] - Lucide icon name
-     * @param {string} [opts.placeholder='ここに JSON チE��ストを貼り付けてください...'] - Textarea placeholder
+     * @param {string} [opts.placeholder='ここに JSON テキストを貼り付けてください...'] - Textarea placeholder
      * @param {Array<{id: string, label: string, icon?: string, cls?: string, onClick: (rawText: string, modal: HTMLElement, textarea: HTMLTextAreaElement) => void}>} opts.actions - Right-side action buttons
      * @param {Function} [opts.showToast] - Toast callback
      */
     openImport({
         title = 'JSON IMPORT',
         icon = 'download',
-        placeholder = 'ここに JSON チE��ストを貼り付けてください...',
+        placeholder = 'ここに JSON テキストを貼り付けてください...',
         actions = [],
         showToast = null
     } = {}) {
@@ -249,7 +249,7 @@ export const JsonIoDialog = {
                     const text = await navigator.clipboard.readText();
                     if (text) {
                         textarea.value = text;
-                        toast('クリチE�Eボ�Eドから貼り付けました');
+                        toast('クリップボードから貼り付けました');
                     }
                 } catch (e) {
                     toast('貼り付けは手動 (Ctrl+V) で行ってください');

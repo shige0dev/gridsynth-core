@@ -16,7 +16,7 @@ export const SCALE = {
         cvIn.connect(w, 0, 0);
         w.connect(cvOut, 0, 0);
 
-        // Keepalive (無接続時でもWorkletが停止しなぁE��ぁE��)
+        // Keepalive (無接続時でもWorkletが停止しないように)
         if (eng?.silentSink) cvOut.connect(eng.silentSink);
 
         let liveData = { activeSemi: -1, cv: 0 };
