@@ -20,48 +20,7 @@ export const VCO = {
     }
 };
 
-export const FOLD = {
-    create: (ctx, d, patch) => {
-        const ch = Math.min(4, Math.max(1, d.channels || 1));
-        const oscMix = ctx.createGain();
-        oscMix.gain.value = 0.75 / Math.sqrt(ch);
 
-        const out = ctx.createGain();
-        out.gain.value = 0.75;
-
-        const fCv = ctx.createGain();
-        const w = new AudioWorkletNode(ctx, 'fold-processor', {
-            numberOfInputs: 1,
-            numberOfOutputs: 1,
-            parameterData: {
-                fold: patch.has('fold_cv') ? 0.0 : (d.fold ?? 1.5),
-                bias: d.bias || 0.0
-            }
-        });
-
-        fCv.gain.value = 3.0;
-        fCv.connect(w.parameters.get('fold'));
-
-        oscMix.connect(w);
-        w.connect(out);
-
-        const { oscs, cvGains, inputs } = MultiOscGroup.create(ctx, d, patch, oscMix);
-        inputs.fold_cv = fCv;
-
-        return {
-            nodes: { oscs, oscMix, w, out, cvGains, fCv },
-            inputs,
-            outputs: { wave_out: out }
-        };
-    },
-    update: (ctx, inst, d, patch) => {
-        const ch = Math.min(4, Math.max(1, d.channels || 1));
-        AudioHelpers.set(inst.nodes.oscMix.gain, 0.75 / Math.sqrt(ch), ctx);
-        AudioHelpers.set(inst.nodes.w.parameters.get('fold'), patch.has('fold_cv') ? 0.0 : (d.fold ?? 1.5), ctx);
-        AudioHelpers.set(inst.nodes.w.parameters.get('bias'), d.bias || 0.0, ctx);
-        MultiOscGroup.update(ctx, inst.nodes.oscs, d, patch);
-    }
-};
 
 export const NOISE = {
     create: (ctx, d) => {
@@ -93,6 +52,5 @@ export const NOISE = {
 
 export const vcoAudioDefs = {
     VCO,
-    FOLD,
     NOISE
 };

@@ -7,6 +7,7 @@ export const preset03 = {
         "0": "CLK1",
         "1": "KEY1",
         "5": "SEQ16_1",
+        "6": "VCO1",
         "7": "FOLD1",
         "10": "GATE4_1",
         "12": "AR1",
@@ -190,16 +191,17 @@ export const preset03 = {
           "type": "SLIDER",
           "vol": 0.7
         },
+        "VCO1": {
+          "type": "VCO",
+          "wave": "sine",
+          "freq1": 110,
+          "channels": 1
+        },
         "FOLD1": {
           "type": "FOLD",
-          "channels": 1,
-          "wave": "triangle",
-          "fold": 0,
-          "bias": 0,
-          "freq1": 220,
-          "freq2": 220,
-          "freq3": 220,
-          "freq4": 220
+          "fold": 2.0,
+          "bias": 0.0,
+          "mix": 1.0
         },
         "DELAY2": {
           "type": "DELAY",
@@ -224,10 +226,11 @@ export const preset03 = {
         { "from": { "moduleId": "SEQ16_1", "port": "gate_out" }, "to": { "moduleId": "AR1", "port": "gate_in" } },
         { "from": { "moduleId": "VCA1", "port": "wave_out" }, "to": { "moduleId": "REVERB1", "port": "wave_in" } },
         { "from": { "moduleId": "REVERB1", "port": "wave_out" }, "to": { "moduleId": "DELAY1", "port": "wave_in" } },
-        { "from": { "moduleId": "KEY1", "port": "cv_out" }, "to": { "moduleId": "FOLD1", "port": "cv_in" } },
+        { "from": { "moduleId": "KEY1", "port": "cv_out" }, "to": { "moduleId": "VCO1", "port": "cv_in" } },
+        { "from": { "moduleId": "SEQ16_1", "port": "cv_out" }, "to": { "moduleId": "VCO1", "port": "cv_in" } },
+        { "from": { "moduleId": "VCO1", "port": "wave_out" }, "to": { "moduleId": "FOLD1", "port": "wave_in" } },
         { "from": { "moduleId": "FOLD1", "port": "wave_out" }, "to": { "moduleId": "VCF1", "port": "wave_in" } },
         { "from": { "moduleId": "RF1", "port": "cv_out" }, "to": { "moduleId": "FOLD1", "port": "fold_cv" } },
-        { "from": { "moduleId": "SEQ16_1", "port": "cv_out" }, "to": { "moduleId": "FOLD1", "port": "cv_in" } },
         { "from": { "moduleId": "NOISE1", "port": "wave_out" }, "to": { "moduleId": "VCF2", "port": "wave_in" } },
         { "from": { "moduleId": "LFO1", "port": "cv_out" }, "to": { "moduleId": "VCA2", "port": "cv_in" } },
         { "from": { "moduleId": "LFO1", "port": "cv_out" }, "to": { "moduleId": "VCF2", "port": "cv_in" } },
