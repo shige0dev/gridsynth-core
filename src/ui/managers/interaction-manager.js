@@ -1,6 +1,6 @@
 // src/ui/managers/interaction-manager.js
-import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=286';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=286';
+import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=287';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=287';
 
 export class InteractionManager {
     constructor(ui) {

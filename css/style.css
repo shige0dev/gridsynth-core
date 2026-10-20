@@ -28,24 +28,24 @@ body {
 }
 
 .drop-highlight-valid {
-    border: 1px solid white !important;
+    border: 2px solid #ffffff !important;
     background: transparent !important;
-    box-shadow: none !important;
-    z-index: 40;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.6) !important;
+    z-index: 40 !important;
 }
 
 .drop-highlight-copy-valid {
-    border: 1px solid #eab308 !important;
+    border: 2px solid #eab308 !important;
     background: transparent !important;
-    box-shadow: none !important;
-    z-index: 40;
+    box-shadow: 0 0 10px rgba(234, 179, 8, 0.6) !important;
+    z-index: 40 !important;
 }
 
 .drop-highlight-invalid {
-    border: 1px solid #ef4444 !important;
+    border: 2px solid #ef4444 !important;
     background: transparent !important;
-    box-shadow: none !important;
-    z-index: 40;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.6) !important;
+    z-index: 40 !important;
 }
 
 .selected-module {

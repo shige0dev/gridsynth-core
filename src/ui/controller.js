@@ -1,13 +1,13 @@
-import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=286';
-import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=286';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=286';
+import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=287';
+import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=287';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=287';
 import { UIHelpers } from './helpers.js?v=229';
-import { PresetManager } from './managers/preset-manager.js?v=286';
-import { ModalManager } from './managers/modal-manager.js?v=286';
-import { CableManager } from './managers/cable-manager.js?v=286';
-import { PageManager } from './managers/page-manager.js?v=286';
-import { InteractionManager } from './managers/interaction-manager.js?v=286';
-import { WaveCodec } from '../audio/wave-codec.js?v=286';
+import { PresetManager } from './managers/preset-manager.js?v=287';
+import { ModalManager } from './managers/modal-manager.js?v=287';
+import { CableManager } from './managers/cable-manager.js?v=287';
+import { PageManager } from './managers/page-manager.js?v=287';
+import { InteractionManager } from './managers/interaction-manager.js?v=287';
+import { WaveCodec } from '../audio/wave-codec.js?v=287';
 
 export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'SPEC', 'MON', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE'];
 
@@ -303,7 +303,7 @@ export class UIController {
         const cell = this.cells[idx] || document.getElementById(`cell-${idx}`);
         if (!cell) return;
         const mId = this.gridMap[idx], m = mId ? this.modules[mId] : null;
-        cell.className = `grid-cell relative aspect-square transition-all select-none overflow-hidden touch-none ${m ? `border border-slate-600 bg-white/10 backdrop-blur-sm shadow-md shadow-black/50 ${this.selectedModuleIds.includes(mId)?'selected-module':''}` : 'cursor-pointer empty-cell'}`;
+        cell.className = `grid-cell relative aspect-square border transition-all select-none overflow-hidden touch-none ${m ? `border-slate-600 bg-white/10 backdrop-blur-sm shadow-md shadow-black/50 ${this.selectedModuleIds.includes(mId)?'selected-module':''}` : 'border-transparent cursor-pointer empty-cell'}`;
         if (m) {
             cell.dataset.renderedState = 'module';
             const reg = MODULE_REGISTRY[m.type];
