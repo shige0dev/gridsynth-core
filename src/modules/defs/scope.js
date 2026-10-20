@@ -1,4 +1,4 @@
-import { UIHelpers } from '../../ui/helpers.js?v=293';
+import { UIHelpers } from '../../ui/helpers.js?v=294';
 
 // -------------------------------------------------------------
 // 1. Single-Channel Oscilloscope Canvas
