@@ -1,13 +1,13 @@
-import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=274';
-import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=274';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=274';
+import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=275';
+import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=275';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=275';
 import { UIHelpers } from './helpers.js?v=229';
-import { PresetManager } from './managers/preset-manager.js?v=274';
-import { ModalManager } from './managers/modal-manager.js?v=274';
-import { CableManager } from './managers/cable-manager.js?v=274';
-import { PageManager } from './managers/page-manager.js?v=274';
-import { InteractionManager } from './managers/interaction-manager.js?v=274';
-import { WaveCodec } from '../audio/wave-codec.js?v=274';
+import { PresetManager } from './managers/preset-manager.js?v=275';
+import { ModalManager } from './managers/modal-manager.js?v=275';
+import { CableManager } from './managers/cable-manager.js?v=275';
+import { PageManager } from './managers/page-manager.js?v=275';
+import { InteractionManager } from './managers/interaction-manager.js?v=275';
+import { WaveCodec } from '../audio/wave-codec.js?v=275';
 
 export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'SPEC', 'MON', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE'];
 
@@ -370,7 +370,7 @@ export class UIController {
                         const hasUnconnected = weights.some((w, idx) => Number(w) > 0 && !patched.has(`transition_out${idx + 1}`) && !patched.has(`trig_out${idx + 1}`));
                         if (hasUnconnected) {
                             titleClass = 'text-rose-500 font-extrabold drop-shadow-[0_0_2px_rgba(244,63,94,0.9)] animate-pulse';
-                            extraTitleAttrs = 'title="未結線の出力端子にウエイトが設定されています"';
+                            extraTitleAttrs = 'title="未結線�E出力端子にウエイトが設定されてぁE��ぁE';
                         }
                     }
                     titleHTML = `
@@ -633,7 +633,7 @@ export class UIController {
                     } else if (root.webkitRequestFullscreen) {
                         try { root.webkitRequestFullscreen(); this.showToast('FULLSCREEN'); } catch (_) {}
                     } else {
-                        this.showToast('iOS: 共有メニューの「ホーム画面に追加」で全画面化できます', 3000);
+                        this.showToast('iOS: 共有メニューの「�Eーム画面に追加」で全画面化できまぁE, 3000);
                     }
                 } else {
                     if (document.exitFullscreen) {
@@ -768,7 +768,7 @@ export class UIController {
                 this.pagesData[this.currentPageId].name = res.trim();
                 this.updatePageNavUI();
                 this.updateAllCells();
-                this.showToast(`サブパッチ名を「${res.trim()}」に変更しました`);
+                this.showToast(`サブパチE��名を、E{res.trim()}」に変更しました`);
             }
         };
         document.getElementById('page-nav-title')?.addEventListener('click', handleRenameSubpatch);

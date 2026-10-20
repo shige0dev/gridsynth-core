@@ -97,9 +97,9 @@ export const MARKOV = {
                 <div class="flex items-center justify-between px-2 py-1 bg-slate-950/60 rounded-lg border border-slate-800/80">
                     <span class="text-[8px] font-bold text-slate-400 uppercase tracking-wider">HOLD CLOCKS</span>
                     <div class="flex items-center gap-1 bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800 shadow-inner">
-                        <button id="markov-hold-dec" class="w-4 h-4 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-slate-300 flex items-center justify-center leading-none select-none cursor-pointer">−</button>
+                        <button id="markov-hold-dec" class="w-4 h-4 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-slate-300 flex items-center justify-center leading-none select-none cursor-pointer">∁E/button>
                         <span id="markov-hold-val" class="w-4 text-center text-[9.5px] font-mono font-bold text-amber-400 select-none">${holdC}</span>
-                        <button id="markov-hold-inc" class="w-4 h-4 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-slate-300 flex items-center justify-center leading-none select-none cursor-pointer">＋</button>
+                        <button id="markov-hold-inc" class="w-4 h-4 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-slate-300 flex items-center justify-center leading-none select-none cursor-pointer">�E�E/button>
                         <span class="text-[7.5px] font-mono text-slate-500 uppercase ml-0.5">CLK</span>
                     </div>
                 </div>
@@ -122,7 +122,7 @@ export const MARKOV = {
                         <!-- Stay Slider -->
                         <div class="flex flex-col items-center gap-1 flex-1 min-w-0 shrink-0">
                             <span class="text-[8px] font-bold text-slate-300 uppercase tracking-tight truncate w-full text-center shrink-0">STAY</span>
-                            <span id="markov-p-stay" class="text-[9px] text-amber-300 font-mono font-bold cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 py-0.5 rounded transition-colors leading-tight shrink-0" title="上下ドラッグで微調整">${pctStay}%</span>
+                            <span id="markov-p-stay" class="text-[9px] text-amber-300 font-mono font-bold cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 py-0.5 rounded transition-colors leading-tight shrink-0" title="上下ドラチE��で微調整">${pctStay}%</span>
                             <div class="h-12 min-h-[48px] flex items-center justify-center my-0.5 shrink-0">
                                 <input type="range" id="markov-w-stay" min="0" max="100" step="1" value="${wStay}" class="native-vslider accent-amber-500 shrink-0">
                             </div>
@@ -133,7 +133,7 @@ export const MARKOV = {
                         ${[0, 1, 2, 3].map(idx => `
                             <div class="flex flex-col items-center gap-1 flex-1 min-w-0 shrink-0">
                                 <span class="text-[8px] font-bold text-slate-300 uppercase tracking-tight truncate w-full text-center shrink-0">OUT ${idx + 1}</span>
-                                <span id="markov-p-${idx}" class="text-[9px] text-amber-300 font-bold font-mono cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 py-0.5 rounded transition-colors leading-tight shrink-0" title="上下ドラッグで微調整">${pcts[idx]}%</span>
+                                <span id="markov-p-${idx}" class="text-[9px] text-amber-300 font-bold font-mono cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 py-0.5 rounded transition-colors leading-tight shrink-0" title="上下ドラチE��で微調整">${pcts[idx]}%</span>
                                 <div class="h-12 min-h-[48px] flex items-center justify-center my-0.5 shrink-0">
                                     <input type="range" id="markov-w-${idx}" min="0" max="100" step="1" value="${weights[idx] ?? 0}" class="native-vslider accent-amber-500 markov-w-slider shrink-0" data-idx="${idx}">
                                 </div>

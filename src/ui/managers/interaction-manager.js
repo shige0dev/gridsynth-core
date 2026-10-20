@@ -1,6 +1,6 @@
 // src/ui/managers/interaction-manager.js
-import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=274';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=274';
+import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=275';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=275';
 
 export class InteractionManager {
     constructor(ui) {
@@ -149,7 +149,7 @@ export class InteractionManager {
                         if (hasLocked) {
                             this.selectedModuleIds = [];
                             this.updateSelectionClasses();
-                            return this.ui.showToast('SUB_IO モジュールは削除できません（保護中）');
+                            return this.ui.showToast('SUB_IO モジュールは削除できません�E�保護中�E�E);
                         }
 
                         this.ui.saveHistory();
@@ -161,7 +161,7 @@ export class InteractionManager {
                         }
                         this.ui.updateAllCells();
                         this.ui.renderCables();
-                        this.ui.showToast(`モジュールを破棄しました (${this.ui._destroyCount}個)`);
+                        this.ui.showToast(`モジュールを破棁E��ました (${this.ui._destroyCount}倁E`);
                         return;
                     }
 
@@ -309,7 +309,7 @@ export class InteractionManager {
                         if (isDockAffected) this.ui.reRenderDockModal();
                         if (this.ui.activePopupModuleId && affectedIds.has(this.ui.activePopupModuleId)) this.ui.reRenderModal();
                         this.ui.updatePortHighlight();
-                        this.ui.showToast('端子の結線を切断しました');
+                        this.ui.showToast('端子�E結線を刁E��しました');
                     }
                 }, 500);
                 return;
@@ -451,9 +451,9 @@ export class InteractionManager {
 
                         if (subCopied) {
                             this.ui.synth.linkSubBridges();
-                            this.ui.showToast(`サブパッチ「${lastCopiedSubName}」を新規複製しました`);
+                            this.ui.showToast(`サブパチE��、E{lastCopiedSubName}」を新規褁E��しました`);
                         } else {
-                            this.ui.showToast(`${this.dragGroupOffsets.length}個コピーしました`);
+                            this.ui.showToast(`${this.dragGroupOffsets.length}個コピ�Eしました`);
                         }
                     } else {
                         this.dragGroupOffsets.forEach(off => {
@@ -515,7 +515,7 @@ export class InteractionManager {
         this.ui.gridBoard?.classList.toggle('layout-mode-active', this.isLayoutMode);
         this.ui.gridBoard?.classList.toggle('row-handle-mode-active', this.isLayoutMode);
         this.updateRowHandleRail();
-        this.ui.showToast(this.isLayoutMode ? 'LAYOUT MODE: ON（モジュール移動・行入れ替え）' : 'LAYOUT MODE: OFF（通常モード）');
+        this.ui.showToast(this.isLayoutMode ? 'LAYOUT MODE: ON�E�モジュール移動�E行�Eれ替え！E : 'LAYOUT MODE: OFF�E�通常モード！E);
     }
 
     toggleRowHandleMode() {
@@ -570,14 +570,14 @@ export class InteractionManager {
             leftHandle.id = `row-handle-left-${r}`;
             leftHandle.className = 'row-handle-btn row-handle-left';
             leftHandle.dataset.row = String(r);
-            leftHandle.title = `行 ${r + 1} をドラッグして上下に差し込み移動`;
+            leftHandle.title = `衁E${r + 1} をドラチE��して上下に差し込み移動`;
             leftHandle.innerHTML = `<span class="row-handle-bar pointer-events-none"></span>`;
 
             const rightHandle = document.createElement('div');
             rightHandle.id = `row-handle-right-${r}`;
             rightHandle.className = 'row-handle-btn row-handle-right';
             rightHandle.dataset.row = String(r);
-            rightHandle.title = `行 ${r + 1} をドラッグして上下に差し込み移動`;
+            rightHandle.title = `衁E${r + 1} をドラチE��して上下に差し込み移動`;
             rightHandle.innerHTML = `<span class="row-handle-bar pointer-events-none"></span>`;
 
             this.bindRowHandleEvents(leftHandle, rightHandle, r);
@@ -870,7 +870,7 @@ export class InteractionManager {
         this.ui.renderCables();
         this.updateRowHandleRail();
 
-        this.ui.showToast(`行 ${sourceRow + 1} を 行 ${destRow + 1} に差し込み移動しました`);
+        this.ui.showToast(`衁E${sourceRow + 1} めE衁E${destRow + 1} に差し込み移動しました`);
     }
 }
 

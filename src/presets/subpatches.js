@@ -58,7 +58,7 @@ export const FACTORY_SUBPATCHES = {
         isSystem: true,
         description: '303-style resonant screaming acid bass (Sawtooth + Resonant VCF + Snappy Decay)',
         manifest: {
-            description: '303スタイルのアシッドベースボイス（VCO + Resonant VCF + Snappy ADSR + VCA）',
+            description: '303スタイルのアシチE��ベ�Eスボイス�E�ECO + Resonant VCF + Snappy ADSR + VCA�E�E,
             ports: {
                 pitch_in: { pin: 'PIN4', signal: 'cv' },
                 trig_in: { pin: 'PIN3', signal: 'gate' },
@@ -107,7 +107,7 @@ export const FACTORY_SUBPATCHES = {
         isSystem: true,
         description: 'Dual detuned oscillators with lowpass filter',
         manifest: {
-            description: 'デュアル・オシレーター＆ローパスフィルターによるリードボイス',
+            description: 'チE��アル・オシレーター�E�E��ーパスフィルターによるリード�Eイス',
             ports: {
                 pitch_in: { pin: 'PIN4', signal: 'cv' },
                 gate_in: { pin: 'PIN3', signal: 'gate' },
@@ -157,7 +157,7 @@ export const FACTORY_SUBPATCHES = {
         isSystem: true,
         description: 'Stereo-like Delay & Reverb processing block',
         manifest: {
-            description: '空間系エフェクト（ディレイ＆ステレオリバーブ）ブロック',
+            description: '空間系エフェクト（ディレイ�E�E��チE��オリバ�Eブ）ブロチE��',
             ports: {
                 wave_in: { pin: 'PIN4', signal: 'audio' },
                 wave_out: { pin: 'PIN9', signal: 'audio' }
@@ -196,7 +196,7 @@ export const FACTORY_SUBPATCHES = {
         isSystem: true,
         description: 'Punchy 808/909-style analogue kick with pitch sweep and exponential decay',
         manifest: {
-            description: 'アナログスタイル・パンチーバスドラム（ピッチスウィープ＋減衰）',
+            description: 'アナログスタイル・パンチ�Eバスドラム�E�ピチE��スウィープ＋減衰�E�E,
             ports: {
                 trig_in: { pin: 'PIN4', signal: 'gate' },
                 wave_out: { pin: 'PIN9', signal: 'audio' }
@@ -245,7 +245,7 @@ export const FACTORY_SUBPATCHES = {
         isSystem: true,
         description: 'Dual-layer analogue snare (Triangle body tone + Highpass filtered noise wire)',
         manifest: {
-            description: 'アナログスタイル・スネアドラム（三角波ボディトーン＋ノイズワイヤー）',
+            description: 'アナログスタイル・スネアドラム�E�三角波ボディト�Eン�E�ノイズワイヤー�E�E,
             ports: {
                 trig_in: { pin: 'PIN4', signal: 'gate' },
                 wave_out: { pin: 'PIN9', signal: 'audio' }
@@ -303,7 +303,7 @@ export const FACTORY_SUBPATCHES = {
         isSystem: true,
         description: 'Hard & Rich Techno Kick (Crisp Attack Click + 50Hz Deep Resonant Sub Rumble)',
         manifest: {
-            description: 'ハード＆リッチ・テクノキック（アタッククリック＋50Hzサブランブル）',
+            description: 'ハ�Eド！E��チE��・チE��ノキチE���E�アタチE��クリチE���E�E0Hzサブランブル�E�E,
             ports: {
                 trig_in: { pin: 'PIN4', signal: 'gate' },
                 wave_out: { pin: 'PIN9', signal: 'audio' }
@@ -368,7 +368,7 @@ export const FACTORY_SUBPATCHES = {
         isSystem: true,
         description: 'Crisp & Sizzling Techno Hi-Hat (Highpass Filtered Metallic Noise + Ultra-snappy Decay)',
         manifest: {
-            description: 'ハイパスフィルタード・メタリックノイズによるクリスプなハイハット',
+            description: 'ハイパスフィルタード�EメタリチE��ノイズによるクリスプなハイハッチE,
             ports: {
                 trig_in: { pin: 'PIN4', signal: 'gate' },
                 wave_out: { pin: 'PIN9', signal: 'audio' }
@@ -413,7 +413,7 @@ export const FACTORY_SUBPATCHES = {
         isSystem: true,
         description: 'Authentic 909 Multi-Burst Hand Clap (Dual CVDELAY + Triple Burst ADSR + Bandpass Resonant Noise)',
         manifest: {
-            description: '909スタイル・マルチバースト・ハンドクラップ（3連バーストエンベロープ）',
+            description: '909スタイル・マルチバースト�EハンドクラチE�E�E�E連バ�Eストエンベロープ！E,
             ports: {
                 trig_in: { pin: 'PIN4', signal: 'gate' },
                 wave_out: { pin: 'PIN9', signal: 'audio' }
@@ -472,7 +472,7 @@ export const FACTORY_SUBPATCHES = {
         isSystem: true,
         description: 'Polyrhythmic Acid/Tribal Tom (Tuned Triangle Pitch-bend + Deep Resonant Body)',
         manifest: {
-            description: 'テクノタム（ピッチベンド三角波＋深みのあるレゾナンスボディ）',
+            description: 'チE��ノタム�E�ピチE��ベンド三角波�E�深みのあるレゾナンスボディ�E�E,
             ports: {
                 trig_in: { pin: 'PIN4', signal: 'gate' },
                 wave_out: { pin: 'PIN9', signal: 'audio' }
@@ -524,7 +524,7 @@ export const FACTORY_SUBPATCHES = {
         isSystem: true,
         description: 'Hypnotic Modular Metallic Percussion / Rim Shot (Dual Resonant Ring + Snappy Click)',
         manifest: {
-            description: 'メタリックパーカッション / リムショット（金属的な倍音リングモジュレーション）',
+            description: 'メタリチE��パ�EカチE��ョン / リムショチE���E���属的な倍音リングモジュレーション�E�E,
             ports: {
                 trig_in: { pin: 'PIN4', signal: 'gate' },
                 wave_out: { pin: 'PIN9', signal: 'audio' }

@@ -146,7 +146,7 @@ export const SCOPE = {
         const curV = m.vRange || 5.0;
         return `
             <div class="space-y-1.5">
-                <!-- Top Menu Bar (上段 各種設定メニュー) -->
+                <!-- Top Menu Bar (上段 吁E��設定メニュー) -->
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-1 select-none">
                     <div class="flex items-center gap-1 shrink-0">
                         <button id="scope-mode-time" class="h-4 px-1.5 rounded text-[8px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${!isLiss ? 'bg-cyan-600 text-white border-cyan-500 shadow-sm shadow-cyan-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">DUAL</button>
@@ -154,10 +154,10 @@ export const SCOPE = {
                         <button id="scope-trig-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${m.trigMode === 'free' ? 'bg-amber-600 text-white border-amber-500' : 'bg-cyan-600 text-white border-cyan-500'}">TRIG: ${(m.trigMode || 'auto').toUpperCase()}</button>
                     </div>
 
-                    <!-- X-Axis Time Span Slider in Menu Bar (X軸の時間幅はメニュー領域にスライダで配置) -->
+                    <!-- X-Axis Time Span Slider in Menu Bar (X軸の時間幁E�Eメニュー領域にスライダで配置) -->
                     <div class="flex items-center gap-1 shrink-0">
                         <span class="text-[7.5px] font-mono text-cyan-300 font-bold uppercase tracking-tight">TIME:</span>
-                        <input type="range" id="scope-time-slider" min="0" max="${T.length - 1}" step="1" value="${tIdx}" class="w-16 h-1 bg-slate-800 rounded accent-cyan-400 cursor-pointer" title="X軸時間幅">
+                        <input type="range" id="scope-time-slider" min="0" max="${T.length - 1}" step="1" value="${tIdx}" class="w-16 h-1 bg-slate-800 rounded accent-cyan-400 cursor-pointer" title="X軸時間幁E>
                         <span id="scope-time-val" class="text-[7.5px] font-mono text-cyan-300 font-bold min-w-[24px] text-right">${fmtT(T[tIdx])}</span>
                     </div>
 
@@ -168,7 +168,7 @@ export const SCOPE = {
                     </div>
                 </div>
 
-                <!-- Core Display Area flanked by Left and Right Sliders (Y軸倍率/2波形分離は表示域の左右にスライダ配置・オシロスコープとは分離) -->
+                <!-- Core Display Area flanked by Left and Right Sliders (Y軸倍率/2波形刁E��は表示域�E左右にスライダ配置・オシロスコープとは刁E��) -->
                 <div class="flex items-center gap-1.5 h-[108px]">
                     <!-- Left: Y-Axis Scale / Magnification (Y軸倍率) -->
                     <div class="flex flex-col items-center justify-between shrink-0 w-8 h-[108px] bg-slate-950 py-1 px-0.5 rounded-lg border border-slate-800 select-none shadow-sm">
@@ -186,10 +186,10 @@ export const SCOPE = {
                         <canvas id="scope-modal-canvas" class="w-full flex-1 min-h-0 block rounded bg-slate-950" width="300" height="78"></canvas>
                     </div>
 
-                    <!-- Right: 2-Waveform Separation (2波形の分離) -->
+                    <!-- Right: 2-Waveform Separation (2波形の刁E��) -->
                     <div class="flex flex-col items-center justify-between shrink-0 w-8 h-[108px] bg-slate-950 py-1 px-0.5 rounded-lg border border-slate-800 select-none shadow-sm ${isLiss ? 'opacity-30 pointer-events-none' : ''}">
                         <span class="text-[6.5px] font-mono text-purple-400 font-bold tracking-tight">Y-SEP</span>
-                        <input type="range" id="scope-spread-slider" min="0.0" max="0.8" step="0.02" value="${curSpread}" class="scope-vslider accent-purple-500 cursor-pointer" title="2波形分離">
+                        <input type="range" id="scope-spread-slider" min="0.0" max="0.8" step="0.02" value="${curSpread}" class="scope-vslider accent-purple-500 cursor-pointer" title="2波形刁E��">
                         <span id="scope-spread-val" class="text-[7px] font-mono text-purple-300 font-bold min-w-[22px] text-center">${curSpread.toFixed(2)}</span>
                     </div>
                 </div>
@@ -258,7 +258,7 @@ export const MON = {
             if (el) el.textContent = (data.values[c-1]>=0?'+':'') + Number(data.values[c-1]||0).toFixed(2);
         }
     },
-    renderModal: () => `<div class="text-[9px] text-slate-400 p-2 text-center">4チャンネル CV/オーディオ信号リアルタイムモニター</div>`
+    renderModal: () => `<div class="text-[9px] text-slate-400 p-2 text-center">4チャンネル CV/オーチE��オ信号リアルタイムモニター</div>`
 };
 
 export const SPK = {
@@ -332,9 +332,9 @@ export const KEY = {
             <div class="space-y-2">
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800">
                     <div class="flex items-center gap-1.5"><span class="text-[8px] text-slate-400 uppercase font-semibold">OCTAVE</span>
-                    <button id="key-oct-down" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold">−</button>
+                    <button id="key-oct-down" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold">∁E/button>
                     <span id="key-oct-disp" class="w-5 text-center text-[10px] font-mono font-bold text-cyan-300">${m.octave||4}</span>
-                    <button id="key-oct-up" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold">＋</button></div>
+                    <button id="key-oct-up" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold">�E�E/button></div>
                     <span class="text-[9px] font-mono font-bold text-sky-300" id="key-active-note">${m.lastNote||'C4'}</span>
                 </div>
                 <div class="relative h-28 bg-slate-950 border-2 border-slate-400 flex select-none touch-none overflow-hidden" id="kb-box">
@@ -484,7 +484,7 @@ export const SUB = {
                 </div>
                 <div class="pt-1">
                     <button id="sub-open-page-btn" class="w-full py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg border border-cyan-400 text-xs font-bold shadow-md shadow-cyan-500/30 flex items-center justify-center gap-1.5 transition">
-                        <span>OPEN SUBPATCH (PAGE ${curP})</span> →
+                        <span>OPEN SUBPATCH (PAGE ${curP})</span> ↁE
                     </button>
                 </div>
             </div>`;
@@ -555,27 +555,27 @@ export const SUB_IO = {
                     <span class="text-[8px] text-slate-400 font-semibold uppercase">SUBPATCH NAME</span>
                     <button id="sub-io-rename-btn" class="h-4 px-1.5 rounded text-[8px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-500/60 hover:bg-emerald-900 transition leading-none inline-flex items-center gap-1">
                         <span class="font-mono font-bold">${pageName}</span>
-                        <span class="text-[8px]">✏️</span>
+                        <span class="text-[8px]">✏︁E/span>
                     </button>
                 </div>
                 <div class="text-center py-1">
                     <span class="text-[10px] font-bold text-emerald-300 uppercase">SUBPATCH I/O ROOT</span>
-                    <p class="text-[8.5px] text-slate-400 mt-1">メイングリッドの SUB モジュールと12本の対称端子で通信します。</p>
+                    <p class="text-[8.5px] text-slate-400 mt-1">メイングリチE��の SUB モジュールと12本の対称端子で通信します、E/p>
                     <div class="mt-1.5 p-1 bg-slate-950/80 rounded border border-slate-800 text-[7.5px] text-left text-slate-300 space-y-0.5">
-                        <div><span class="font-mono text-cyan-300 font-bold">PIN1〜6 [OUT]</span>: 親からの送り (CV / Gate / Clock)</div>
-                        <div><span class="font-mono text-emerald-300 font-bold">PIN7〜12 [IN]</span>: 親への戻り (Audio L/R / Mod還元)</div>
-                        <div class="text-[7px] text-slate-400 pt-0.5">左: PIN1〜3 (上➔下) / 下: PIN4〜9 (左➔右) / 右: PIN10〜12 (下➔上)</div>
+                        <div><span class="font-mono text-cyan-300 font-bold">PIN1、E [OUT]</span>: 親からの送り (CV / Gate / Clock)</div>
+                        <div><span class="font-mono text-emerald-300 font-bold">PIN7、E2 [IN]</span>: 親への戻めE(Audio L/R / Mod邁E�E)</div>
+                        <div class="text-[7px] text-slate-400 pt-0.5">左: PIN1、E (上➔丁E / 丁E PIN4、E (左➔右) / 右: PIN10、E2 (下➔丁E</div>
                     </div>
-                    <p class="text-[8px] text-amber-400/80 mt-1">※ このモジュールは削除できません（保護中）</p>
+                    <p class="text-[8px] text-amber-400/80 mt-1">※ こ�Eモジュールは削除できません�E�保護中�E�E/p>
                 </div>
                 <div class="flex gap-1.5 pt-1">
                     <button id="sub-io-save-btn" class="flex-1 py-1.5 bg-emerald-950 hover:bg-emerald-900 text-emerald-300 rounded-lg border border-emerald-500/70 text-[10px] font-bold shadow-sm flex items-center justify-center gap-1 transition">
-                        <span>💾 ライブラリに保存 (CUSTOM)</span>
+                        <span>💾 ライブラリに保孁E(CUSTOM)</span>
                     </button>
                 </div>
                 <div class="pt-0.5">
                     <button id="sub-io-back-btn" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg border border-emerald-400 text-xs font-bold shadow-md shadow-emerald-500/30 flex items-center justify-center gap-1.5 transition">
-                        ← <span>RETURN TO MAIN (PAGE 0)</span>
+                        ↁE<span>RETURN TO MAIN (PAGE 0)</span>
                     </button>
                 </div>
             </div>`;
@@ -609,22 +609,22 @@ const extractBands = (freqs, numBands = 96, sampleRate = 48000) => {
     const bands = new Float32Array(numBands);
     let peakVal = 0, peakFreq = 0;
 
-    // 1オクターブ12セミトーン（半音単位）、全96バンド（8オクターブ: 55Hz〜14080Hz / 約14kHz）
-    // 55Hz (A1) を起点(b=0)とし、各半音の中心周波数は 55 * 2^(b / 12)
+    // 1オクターチE2セミトーン�E�半音単位）、�E96バンド！EオクターチE 55Hz、E4080Hz / 紁E4kHz�E�E
+    // 55Hz (A1) を起点(b=0)とし、各半音の中忁E��波数は 55 * 2^(b / 12)
     const bandsPerOct = 12;
     const f0 = 55;
 
     for (let b = 0; b < numBands; b++) {
         const fCenter = f0 * Math.pow(2, b / bandsPerOct);
 
-        // 各半音の中心周波数のスペクトル値を前後のビンから純粋に線形補間でサンプリング（区間max探索の重複を完全排除）
+        // 吁E��音の中忁E��波数のスペクトル値を前後�Eビンから純粋に線形補間でサンプリング�E�区間max探索の重褁E��完�E排除�E�E
         const kCenterFloat = fCenter * fftSize / sampleRate;
         const k0 = Math.max(0, Math.min(freqs.length - 1, Math.floor(kCenterFloat)));
         const k1 = Math.min(freqs.length - 1, k0 + 1);
         const t = kCenterFloat - k0;
         const val = (1 - t) * freqs[k0] + t * freqs[k1];
 
-        // 自然な正規化（0.0〜1.0）とガンマカーブ（台形化を防ぎ、正規分布カーブを描画）
+        // 自然な正規化�E�E.0、E.0�E�とガンマカーブ（台形化を防ぎ、正規�E币E��ーブを描画�E�E
         const v = Math.max(0, Math.min(1.0, val / 255.0));
         bands[b] = Math.pow(v, 1.4);
 
@@ -700,12 +700,12 @@ const drawSpectrumCanvas = (ctx, w, h, bands, mode, isModal) => {
 
             ctx.save();
             if (item.isA4) {
-                // 440Hz基準ライン (鮮やかなティール系アクセント破線)
+                // 440Hz基準ライン (鮮めE��なチE��ール系アクセント破緁E
                 ctx.strokeStyle = 'rgba(45, 212, 191, 0.85)';
                 ctx.lineWidth = 1.2;
                 ctx.setLineDash([3, 2]);
             } else {
-                // オクターブライン (明るく視認性の高いスレート系破線)
+                // オクターブライン (明るく視認性の高いスレート系破緁E
                 ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
                 ctx.lineWidth = 0.8;
                 ctx.setLineDash([2, 2]);
@@ -716,7 +716,7 @@ const drawSpectrumCanvas = (ctx, w, h, bands, mode, isModal) => {
             ctx.lineTo(x, h);
             ctx.stroke();
 
-            // モーダル拡大時: 周波数ラベルを明るくくっきり表示
+            // モーダル拡大晁E 周波数ラベルを�Eるくくっきり表示
             if (isModal) {
                 ctx.font = 'bold 8.5px ui-monospace, monospace';
                 ctx.fillStyle = item.isA4 ? '#2dd4bf' : '#cbd5e1';
@@ -754,7 +754,7 @@ const drawSpectrumCanvas = (ctx, w, h, bands, mode, isModal) => {
             ctx.fill();
         }
     } else {
-        // Curve mode (折れ線・スペクトル曲線)
+        // Curve mode (折れ線�Eスペクトル曲緁E
         const pts = [];
         for (let i = 0; i < n; i++) {
             const x = (i / (n - 1)) * w;
@@ -816,7 +816,7 @@ export const SPEC = {
         const sampleRate = data.sampleRate || 48000;
         const mode = m.mode || 'bar';
 
-        // 1. Draw cell canvas (96 bands, 1オクターブ12セミトーン, 55Hz〜14080Hz)
+        // 1. Draw cell canvas (96 bands, 1オクターチE2セミトーン, 55Hz、E4080Hz)
         const cvs = cell.querySelector('.spec-canvas');
         if (cvs) {
             const cellRes = extractBands(freqs, 96, sampleRate);
@@ -824,7 +824,7 @@ export const SPEC = {
             drawSpectrumCanvas(ctx, cvs.width, cvs.height, cellRes.bands, mode, false);
         }
 
-        // 2. Draw modal canvas if modal is open (96 bands, 1オクターブ12セミトーン, 55Hz〜14080Hz)
+        // 2. Draw modal canvas if modal is open (96 bands, 1オクターチE2セミトーン, 55Hz、E4080Hz)
         const modalCvs = modal?.querySelector('#spec-modal-canvas');
         if (modalCvs) {
             const modalRes = extractBands(freqs, 96, sampleRate);
@@ -852,7 +852,7 @@ export const SPEC = {
                     </div>
                 </div>
 
-                <!-- Expanded Modal Spectrum Display (オシロスコープ同様、文字表示なしのフルキャンバス) -->
+                <!-- Expanded Modal Spectrum Display (オシロスコープ同様、文字表示なし�Eフルキャンバス) -->
                 <div class="h-[108px] bg-slate-950 p-1 rounded-lg border border-slate-800 select-none shadow-sm overflow-hidden">
                     <canvas id="spec-modal-canvas" class="w-full h-full block rounded bg-slate-950" width="360" height="106"></canvas>
                 </div>

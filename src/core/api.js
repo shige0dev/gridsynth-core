@@ -1,5 +1,5 @@
-import { MODULE_REGISTRY } from '../modules/registry.js?v=274';
-import { parseConn, isSameConn, safeClone } from './utils.js?v=274';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=275';
+import { parseConn, isSameConn, safeClone } from './utils.js?v=275';
 import { FACTORY_SUBPATCHES } from '../presets/subpatches.js';
 
 export function initExternalAPI(ui, synth) {
@@ -243,7 +243,7 @@ export function initExternalAPI(ui, synth) {
             if (ok) {
                 ui.updateAllCells();
                 ui.renderCables();
-                ui.showToast(`モジュールを破棄しました (${ui._destroyCount}個)`);
+                ui.showToast(`モジュールを破棁E��ました (${ui._destroyCount}倁E`);
             }
             return { success: ok, page, moduleId: mId, totalDestroyed: ui._destroyCount };
         }

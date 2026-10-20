@@ -115,7 +115,7 @@ export const AR = {
                 </div>
 
                 <div class="text-[7.5px] text-slate-500 px-1 italic text-center">
-                    * Gate入力がHighの間ホールド、Lowで指数減衰します
+                    * Gate入力がHighの間�Eールド、Lowで持E��減衰しまぁE
                 </div>
             </div>
         `;

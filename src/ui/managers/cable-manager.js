@@ -1,12 +1,77 @@
 // src/ui/managers/cable-manager.js
-import { parseConn, isSameConn, getPortSignalType, resolveConnectionSignalType, isSubModule, isSubIOModule, normalizeSubPort, getOppositeSubPort, getPortAliases, isPortMatching } from '../../core/utils.js?v=274';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=274';
-import { WaveCodec } from '../../audio/wave-codec.js?v=274';
+import { parseConn, isSameConn, getPortSignalType, resolveConnectionSignalType, isSubModule, isSubIOModule, normalizeSubPort, getOppositeSubPort, getPortAliases, isPortMatching } from '../../core/utils.js?v=275';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=275';
+import { WaveCodec } from '../../audio/wave-codec.js?v=275';
 
 export class CableManager {
     constructor(ui) {
         this.ui = ui;
         this.selectedTargetForConnection = null;
+        this.tiltOffsetX = 0;
+        this.targetTiltOffsetX = 0;
+        this.lastRawX = 0;
+        this.isAnimatingTilt = false;
+        this.initOrientationListener();
+    }
+
+    initOrientationListener() {
+        if (typeof window === 'undefined') return;
+
+        const onOrientation = (e) => {
+            // Battery saving: skip if tab is in background or no cables are rendered
+            if (document.hidden) return;
+            if (!this.ui.connections || this.ui.connections.length === 0) return;
+
+            const gamma = e.gamma; // Left/Right tilt in portrait: [-90, 90]
+            if (gamma === null || gamma === undefined) return;
+
+            // Handle device rotation (portrait vs landscape)
+            const angle = window.screen?.orientation?.angle ?? window.orientation ?? 0;
+            let rawX = gamma;
+            if (angle === 90) rawX = (e.beta ?? 0);
+            else if (angle === -90 || angle === 270) rawX = -(e.beta ?? 0);
+            else if (angle === 180) rawX = -gamma;
+
+            // Deadband: ignore tiny tremors (< 1.2 degrees) to save CPU/battery
+            const delta = Math.abs(rawX - this.lastRawX);
+            if (delta < 1.2) return;
+
+            this.lastRawX = rawX;
+
+            // Gentle tilt clamped to [-16, 16] px
+            this.targetTiltOffsetX = Math.max(-16, Math.min(16, rawX * 0.35));
+
+            // Start smooth easing transition if not currently animating
+            if (!this.isAnimatingTilt) {
+                this.isAnimatingTilt = true;
+                requestAnimationFrame(this.stepTiltAnimation.bind(this));
+            }
+        };
+
+        window.addEventListener('deviceorientation', onOrientation, { passive: true });
+    }
+
+    stepTiltAnimation() {
+        if (!this.isAnimatingTilt) return;
+        if (document.hidden || !this.cableCanvas || !this.ui.connections || this.ui.connections.length === 0) {
+            this.isAnimatingTilt = false;
+            return;
+        }
+
+        const diff = this.targetTiltOffsetX - this.tiltOffsetX;
+
+        // Converged within threshold: enter sleep mode (CPU drops to 0%)
+        if (Math.abs(diff) < 0.15) {
+            this.tiltOffsetX = this.targetTiltOffsetX;
+            this.renderCables();
+            this.isAnimatingTilt = false;
+            return;
+        }
+
+        // Smooth easing: converges in ~12-15 frames
+        this.tiltOffsetX += diff * 0.2;
+        this.renderCables();
+        requestAnimationFrame(this.stepTiltAnimation.bind(this));
     }
 
     get cableCanvas() {
@@ -284,14 +349,15 @@ export class CableManager {
             const curveY = Math.max(dist * 0.35, 18);
             const baseY = Math.max(y1, y2) + curveY;
 
+            const tiltX = this.tiltOffsetX || 0;
             let cp1x, cp2x;
             if (Math.abs(dx) < 12) {
                 const bulge = Math.min(32, Math.max(18, dist * 0.18));
-                cp1x = x1 + bulge;
-                cp2x = x2 + bulge;
+                cp1x = x1 + bulge + tiltX;
+                cp2x = x2 + bulge + tiltX;
             } else {
-                cp1x = x1 + dx * 0.38;
-                cp2x = x2 - dx * 0.38;
+                cp1x = x1 + dx * 0.38 + tiltX;
+                cp2x = x2 - dx * 0.38 + tiltX;
             }
             const cp1y = baseY;
             const cp2y = baseY;
@@ -337,7 +403,7 @@ export class CableManager {
             this.selectedTargetForConnection = cur;
             this.updatePortHighlight();
             const toastLabel = info.hasAlias ? info.label : pName;
-            this.ui.showToast(`[${mId}:${toastLabel}] 接続先をタップしてください`);
+            this.ui.showToast(`[${mId}:${toastLabel}] 接続�EをタチE�Eしてください`);
         } else {
             const first = this.selectedTargetForConnection;
             if (first.moduleId === cur.moduleId && first.port === cur.port) {
@@ -380,7 +446,7 @@ export class CableManager {
                 const isSrcLink = src.port === 'link_out' || src.port === 'link_in';
                 const isDstLink = dst.port === 'link_out' || dst.port === 'link_in';
                 if (isSrcLink !== isDstLink) {
-                    this.ui.showToast('LINK端子はWAVEのLINK端子同士のみ接続可能です');
+                    this.ui.showToast('LINK端子�EWAVEのLINK端子同士のみ接続可能でぁE);
                     this.selectedTargetForConnection = null;
                     this.updatePortHighlight();
                     return;
@@ -388,7 +454,7 @@ export class CableManager {
 
                 const cand = { from: src, to: dst };
                 if (this.ui.connections.some(c => isSameConn(c, cand))) {
-                    this.ui.showToast('既に接続されています');
+                    this.ui.showToast('既に接続されてぁE��ぁE);
                 } else {
                     this.ui.saveHistory();
                     if (dst.port === 'link_in') {

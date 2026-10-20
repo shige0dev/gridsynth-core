@@ -131,8 +131,7 @@ export class ArpProcessor extends AudioWorkletProcessor {
             }
 
             if (gateBuf) {
-                // 出力ゲートは入力ゲートそのものを出力
-                gateBuf[i] = (N > 0) ? clkVal : 0.0;
+                // 出力ゲート�E入力ゲートそのも�Eを�E劁E                gateBuf[i] = (N > 0) ? clkVal : 0.0;
             }
         }
 

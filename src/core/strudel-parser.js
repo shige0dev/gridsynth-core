@@ -287,16 +287,16 @@ export function parseStrudelPatternCycles(patternStr, cycleBeats = 4, maxCycles 
  */
 export const STRUDEL_PRESETS = [
     // --- House Basslines ---
-    { name: 'Classic 90s Offbeat', pattern: '[~ c2] [~ c2] [~ c2] [~ <c2 eb2>]', desc: '90s王道の裏打ちハウス・ベースライン' },
-    { name: '16-Step Octaves', pattern: '[c2 c2 c2 c2] [c2 c2 c2 c3] [c2 c2 c2 c2] [c2 c2 c2 c4]', desc: '4拍×4ステップのオクターブ跳躍ベース' },
-    { name: 'Deep House Sync', pattern: 'c2 [~ c2] ~ [c2 <eb2 g2>] [~ c2] ~ [c2 <bb1 d2>]', desc: 'シンコペーションと周回展開のディープハウス' },
-    { name: 'Chicago Jackin', pattern: '[c2 c2] ~ [c2 eb2] [~ c2] [c2 <g2 bb2>] ~ [eb2 c2] <~ c2>', desc: '16分の跳ねとドライブ感のあるシカゴスタイル' },
-    { name: 'Garage / 2-Step', pattern: 'c2 ~ [~ c2] ~ ~ [c2 <f2 eb2>] ~ [c2*2]', desc: '独特の間（スペース）を活かしたガラージ・サブベース' },
+    { name: 'Classic 90s Offbeat', pattern: '[~ c2] [~ c2] [~ c2] [~ <c2 eb2>]', desc: '90s王道の裏打ちハウス・ベ�Eスライン' },
+    { name: '16-Step Octaves', pattern: '[c2 c2 c2 c2] [c2 c2 c2 c3] [c2 c2 c2 c2] [c2 c2 c2 c4]', desc: '4拍ÁEスチE��プ�Eオクターブ跳躍�Eース' },
+    { name: 'Deep House Sync', pattern: 'c2 [~ c2] ~ [c2 <eb2 g2>] [~ c2] ~ [c2 <bb1 d2>]', desc: 'シンコペ�Eションと周回展開のチE��ープハウス' },
+    { name: 'Chicago Jackin', pattern: '[c2 c2] ~ [c2 eb2] [~ c2] [c2 <g2 bb2>] ~ [eb2 c2] <~ c2>', desc: '16刁E�E跳ねとドライブ感のあるシカゴスタイル' },
+    { name: 'Garage / 2-Step', pattern: 'c2 ~ [~ c2] ~ ~ [c2 <f2 eb2>] ~ [c2*2]', desc: '独特の間（スペ�Eス�E�を活かしたガラージ・サブ�Eース' },
 
     // --- Percussion & Drums ---
-    { name: '909 Hats & Ride', pattern: '[~ c4] [c4*2 c4] [~ c4] [c4 <c4*2 c4*3>]', desc: '裏打ちオープンハットとゴースト連打' },
-    { name: 'House Shaker', pattern: '[c4 c4*2] [c4 ~] [c4*2 c4] [<c4 d4> c4]', desc: 'グルーヴをドライブさせるシェイカー・パーカッション' },
-    { name: 'Syncopated Clap', pattern: '~ [c3 ~] ~ [c3 <~ c3*2>]', desc: '2・4拍バックビートと変則ゴーストショット' }
+    { name: '909 Hats & Ride', pattern: '[~ c4] [c4*2 c4] [~ c4] [c4 <c4*2 c4*3>]', desc: '裏打ちオープンハットとゴースト連扁E },
+    { name: 'House Shaker', pattern: '[c4 c4*2] [c4 ~] [c4*2 c4] [<c4 d4> c4]', desc: 'グルーヴをドライブさせるシェイカー・パ�EカチE��ョン' },
+    { name: 'Syncopated Clap', pattern: '~ [c3 ~] ~ [c3 <~ c3*2>]', desc: '2・4拍バチE��ビ�Eトと変則ゴーストショチE��' }
 ];
 
 function escapePatHtml(str) {
