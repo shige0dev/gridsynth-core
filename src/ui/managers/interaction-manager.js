@@ -1,7 +1,7 @@
 // src/ui/managers/interaction-manager.js
 import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=297';
 import { MODULE_REGISTRY } from '../../modules/registry.js?v=297';
-import { RowManager } from './row-manager.js?v=298';
+import { RowManager } from './row-manager.js?v=299';
 
 export class InteractionManager {
     constructor(ui) {
@@ -264,44 +264,53 @@ export class InteractionManager {
             this._lpTimer = setTimeout(() => {
                 this._lpTimer = null;
                 this.moduleLongPressed = true;
-                this.selectedModuleIds = this.selectedModuleIds.includes(mId) ? this.selectedModuleIds.filter(x => x !== mId) : [...this.selectedModuleIds, mId];
+                if (!this.selectedModuleIds.includes(mId)) {
+                    this.selectedModuleIds = [...this.selectedModuleIds, mId];
+                }
                 if (this.ui.selectedTargetForConnection) {
                     this.ui.selectedTargetForConnection = null;
                 }
                 this.updateSelectionClasses();
-            }, 400);
+                if (navigator.vibrate) {
+                    try { navigator.vibrate(25); } catch (_) {}
+                }
+            }, 350);
         });
 
         window.addEventListener('pointermove', (e) => {
-            if (this._pTimer && (Math.abs(e.clientX - this._sX) > 8 || Math.abs(e.clientY - this._sY) > 8)) {
+            const dx = e.clientX - this._sX;
+            const dy = e.clientY - this._sY;
+            const distSq = dx * dx + dy * dy;
+
+            if (this._pTimer && distSq > 64) {
                 clearTimeout(this._pTimer);
                 this._pTimer = null;
             }
-            if (!this.isDragging && this._dragCandidate && (Math.abs(e.clientX - this._sX) > 8 || Math.abs(e.clientY - this._sY) > 8)) {
-                if (this._lpTimer) {
-                    clearTimeout(this._lpTimer);
-                    this._lpTimer = null;
-                }
-                if (!this.selectedModuleIds.includes(this._dragCandidate)) this.selectedModuleIds = [this._dragCandidate];
-                if (this.ui.selectedTargetForConnection) {
-                    this.ui.selectedTargetForConnection = null;
-                }
-                this.updateSelectionClasses();
-                this.isDragging = true;
-                this.dragMode = 'move';
-
-                const baseM = this.ui.modules[this._dragCandidate];
-                this.dragGroupOffsets = this.selectedModuleIds.map(id => {
-                    const mod = this.ui.modules[id];
-                    return { id, dRow: mod && baseM ? mod.row - baseM.row : 0, dCol: mod && baseM ? mod.col - baseM.col : 0 };
-                });
-
-                this._copyTimer = setTimeout(() => {
-                    if (this.isDragging) {
-                        this.dragMode = 'copy';
-                        this.updateDropHighlight();
+            if (this._lpTimer && distSq > 64) {
+                clearTimeout(this._lpTimer);
+                this._lpTimer = null;
+            }
+            if (!this.isDragging && this._dragCandidate && distSq > 64) {
+                if (this.selectedModuleIds.includes(this._dragCandidate)) {
+                    if (this.ui.selectedTargetForConnection) {
+                        this.ui.selectedTargetForConnection = null;
                     }
-                }, 1200);
+                    this.isDragging = true;
+                    this.dragMode = 'move';
+
+                    const baseM = this.ui.modules[this._dragCandidate];
+                    this.dragGroupOffsets = this.selectedModuleIds.map(id => {
+                        const mod = this.ui.modules[id];
+                        return { id, dRow: mod && baseM ? mod.row - baseM.row : 0, dCol: mod && baseM ? mod.col - baseM.col : 0 };
+                    });
+
+                    this._copyTimer = setTimeout(() => {
+                        if (this.isDragging) {
+                            this.dragMode = 'copy';
+                            this.updateDropHighlight();
+                        }
+                    }, 1200);
+                }
             }
             if (this.isDragging) {
                 const targetCell = document.elementFromPoint(e.clientX, e.clientY)?.closest('.grid-cell');
