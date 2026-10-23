@@ -4,7 +4,7 @@ import { MODULE_REGISTRY } from '../modules/registry.js?v=297';
 import { UIHelpers } from './helpers.js?v=229';
 import { PresetManager } from './managers/preset-manager.js?v=297';
 import { ModalManager } from './managers/modal-manager.js?v=297';
-import { CableManager } from './managers/cable-manager.js?v=297';
+import { CableManager } from './managers/cable-manager.js?v=306';
 import { PageManager } from './managers/page-manager.js?v=297';
 import { InteractionManager } from './managers/interaction-manager.js?v=297';
 import { WaveCodec } from '../audio/wave-codec.js?v=297';
@@ -303,7 +303,8 @@ export class UIController {
         const cell = this.cells[idx] || document.getElementById(`cell-${idx}`);
         if (!cell) return;
         const mId = this.gridMap[idx], m = mId ? this.modules[mId] : null;
-        cell.className = `grid-cell relative aspect-square border transition-all select-none overflow-hidden touch-none ${m ? `border-slate-600 bg-white/10 backdrop-blur-sm shadow-md shadow-black/50 ${this.selectedModuleIds.includes(mId)?'selected-module':''}` : 'border-transparent cursor-pointer empty-cell'}`;
+        const hasSelectedPort = !this.selectedModuleIds.length && this.selectedTargetForConnection && this.selectedTargetForConnection.moduleId === mId;
+        cell.className = `grid-cell relative aspect-square border transition-all select-none touch-none ${hasSelectedPort ? 'has-selected-port' : ''} ${m ? `border-slate-600 bg-white/10 backdrop-blur-sm shadow-md shadow-black/50 ${this.selectedModuleIds.includes(mId)?'selected-module':''}` : 'border-transparent cursor-pointer empty-cell'}`;
         if (m) {
             cell.dataset.renderedState = 'module';
             const reg = MODULE_REGISTRY[m.type];
@@ -350,7 +351,8 @@ export class UIController {
                 }
                 const dimCls = p.dimmed ? 'opacity-35 grayscale' : '';
                 const extraCls = p.extraClass || '';
-                const portEl = `<div class="w-2 h-2 rounded-full ${p.color} border border-slate-950/90 shadow-sm shadow-black/60 port cursor-pointer hover:scale-150 transition relative z-10 flex items-center justify-center before:absolute before:inset-[-6px] ${dimCls} ${extraCls} ${isSel ? 'port-selected' : ''} ${isOpp ? 'port-connected-highlight' : ''}" style="${oppStyle}" data-module-id="${mId}" data-port="${p.port}" data-port-id="${mId}:${p.port}" title="${portTitle}"></div>`;
+                const shadowCls = isSel ? 'port-selected' : 'shadow-sm shadow-black/60';
+                const portEl = `<div class="w-2 h-2 rounded-full ${p.color} border border-slate-950/90 ${shadowCls} port cursor-pointer hover:scale-150 transition relative z-10 flex items-center justify-center before:absolute before:inset-[-6px] ${dimCls} ${extraCls} ${isOpp ? 'port-connected-highlight' : ''}" style="${oppStyle}" data-module-id="${mId}" data-port="${p.port}" data-port-id="${mId}:${p.port}" title="${portTitle}"></div>`;
                 if (p.badgeColor) {
                     return `<div class="relative inline-flex items-center justify-center"><span class="absolute -top-[1.5px] -left-[1.5px] w-[3.5px] h-[3.5px] rounded-full ${p.badgeColor} pointer-events-none z-0 ring-[0.5px] ring-black/70"></span>${portEl}</div>`;
                 }
@@ -389,7 +391,7 @@ export class UIController {
             }
             cell.innerHTML = `
                 ${titleHTML}
-                <div class="absolute inset-0 flex flex-col items-center justify-center module-body cursor-pointer p-1 z-0" data-module-id="${mId}">${reg.renderGrid(m, ctx)}</div>
+                <div class="absolute inset-0 flex flex-col items-center justify-center module-body cursor-pointer p-1 z-0 overflow-hidden" data-module-id="${mId}">${reg.renderGrid(m, ctx)}</div>
                 ${portsHTML}`;
         } else {
             if (cell.dataset.renderedState !== 'empty') {

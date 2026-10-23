@@ -44,8 +44,12 @@ export class CableManager {
     updatePortHighlight() {
         document.querySelectorAll('.port').forEach(el => {
             el.classList.remove('port-selected', 'port-connected-highlight');
+            el.classList.add('shadow-sm');
             el.style.removeProperty('--conn-glow');
             el.style.removeProperty('--conn-bright');
+        });
+        document.querySelectorAll('.grid-cell').forEach(cell => {
+            cell.classList.remove('has-selected-port');
         });
         if (this.ui.selectedModuleIds.length > 0) {
             this.selectedTargetForConnection = null;
@@ -55,7 +59,12 @@ export class CableManager {
         if (this.selectedTargetForConnection) {
             const { moduleId, port } = this.selectedTargetForConnection;
             const el = this.findPortElement(moduleId, port);
-            if (el) el.classList.add('port-selected');
+            if (el) {
+                el.classList.remove('shadow-sm');
+                el.classList.add('port-selected');
+                const cell = el.closest('.grid-cell');
+                if (cell) cell.classList.add('has-selected-port');
+            }
 
             // Highlight all connected opposite ports
             this.ui.connections.forEach(c => {

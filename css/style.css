@@ -93,18 +93,40 @@ body {
     background: transparent;
 }
 
+.grid-cell {
+    overflow: visible !important;
+}
+
+.grid-cell .module-body {
+    overflow: hidden;
+    border-radius: inherit;
+}
+
+.grid-cell.has-selected-port {
+    z-index: 35 !important;
+    border-color: rgba(255, 255, 255, 0.6) !important;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.25), 0 0 2px rgba(255, 255, 255, 0.4) !important;
+}
+
 .selected-module .port,
 .has-selected-module .port {
     pointer-events: none !important;
     transform: none !important;
 }
 
+.port.port-selected,
 .port-selected {
     border: none !important;
     border-color: transparent !important;
-    transform: scale(1.4) !important;
-    box-shadow: 0 0 6px 2.5px rgba(255, 255, 255, 0.95), 0 0 14px 5px rgba(255, 255, 255, 0.75) !important;
-    z-index: 30;
+    transform: scale(1.45) !important;
+    --tw-shadow: none !important;
+    --tw-ring-shadow: none !important;
+    --tw-ring-offset-shadow: none !important;
+    box-shadow: 
+        0 0 4px 1.5px #ffffff,
+        0 0 10px 4px rgba(255, 255, 255, 0.95),
+        0 0 22px 8px rgba(255, 255, 255, 0.65) !important;
+    z-index: 40 !important;
 }
 
 .port-connected-highlight {
