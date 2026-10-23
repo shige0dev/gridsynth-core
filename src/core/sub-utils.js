@@ -143,3 +143,4 @@ export const isSubPortInput = (port, modIdOrType = null, manifest = null) => {
     const m = norm.match(/^PIN([1-9]|1[0-2])_(in|out)$/i);
     return m ? m[2].toLowerCase() === 'in' : false;
 };
+

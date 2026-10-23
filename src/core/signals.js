@@ -138,3 +138,4 @@ export const parseClockRate = (val) => {
     const n = parseFloat(s);
     return (n && n > 0) ? n : 1.0;
 };
+
