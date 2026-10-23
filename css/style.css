@@ -239,10 +239,6 @@ body {
     z-index: 45;
 }
 
-.row-overlay-track.row-cell-shifting {
-    transition: transform 0.22s cubic-bezier(0.2, 0, 0, 1) !important;
-}
-
 .row-handle-btn {
     user-select: none;
     touch-action: none;
@@ -250,8 +246,8 @@ body {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    width: 14px;
-    height: 36px;
+    width: 22px;
+    height: 22px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -269,27 +265,28 @@ body {
 }
 
 .row-handle-right {
-    right: -11px;
+    right: -13px;
 }
 
 .row-handle-bar {
-    width: 3.5px;
-    height: 24px;
-    background-color: #475569; /* Dark gray slate-600 */
-    border-radius: 2px;
+    width: 6.5px;
+    height: 6.5px;
+    background-color: #475569; /* slate-600 */
+    border-radius: 1.5px;
     box-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
-    transition: background-color 0.2s ease, box-shadow 0.2s ease, height 0.2s ease, transform 0.2s ease;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .row-handle-btn:hover .row-handle-bar {
-    background-color: #64748b; /* slate-500 */
-    box-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
+    background-color: #94a3b8; /* slate-400 */
+    box-shadow: 0 0 4px rgba(255, 255, 255, 0.4);
+    transform: scale(1.15);
 }
 
 .row-handle-btn.row-arming .row-handle-bar {
     background-color: #d946ef !important; /* purple pulsing on long-press */
-    box-shadow: 0 0 10px rgba(217, 70, 239, 0.8), 0 0 4px #ffffff !important;
-    height: 28px;
+    box-shadow: 0 0 10px rgba(217, 70, 239, 0.9), 0 0 4px #ffffff !important;
+    transform: scale(1.35);
 }
 
 .row-handle-btn:active,
@@ -299,8 +296,8 @@ body {
 
 .row-handle-btn.dragging .row-handle-bar {
     background-color: #ffffff !important;
-    box-shadow: 0 0 14px rgba(217, 70, 239, 0.9), 0 0 6px #ffffff !important;
-    height: 32px;
+    box-shadow: 0 0 12px rgba(217, 70, 239, 0.9), 0 0 5px #ffffff !important;
+    transform: scale(1.4);
 }
 
 .row-cell-dragging {
@@ -312,16 +309,6 @@ body {
     z-index: 40 !important;
     pointer-events: none !important;
 }
-
-.row-cell-shifting {
-    transition: transform 0.22s cubic-bezier(0.2, 0, 0, 1) !important;
-}
-
-
-
-
-
-
 
 .empty-cell {
     border-color: transparent !important;
