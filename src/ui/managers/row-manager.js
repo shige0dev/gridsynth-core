@@ -184,31 +184,27 @@ export class RowManager {
 
     bindRowHandleEvents(rightHandle, r) {
         let isRowDragging = false;
-        let isArming = false;
-        let rowLpTimer = null;
         let startY = 0;
         let originalRow = r;
         let currentTargetRow = null;
 
         const cleanupDragVisuals = () => {
             this.hideInsertBeam();
-            rightHandle.classList.remove('dragging', 'row-arming');
+            rightHandle.classList.remove('dragging');
         };
 
         const onPointerMove = (e) => {
             const deltaY = e.clientY - startY;
 
             if (!isRowDragging) {
-                // Snappy response: start drag immediately if armed or if moved > 4px
-                if (isArming || Math.abs(deltaY) > 4) {
-                    if (rowLpTimer) {
-                        clearTimeout(rowLpTimer);
-                        rowLpTimer = null;
-                    }
-                    isArming = true;
+                // Immediate response without long-press: start drag on 3px movement
+                if (Math.abs(deltaY) > 3) {
                     isRowDragging = true;
                     this.draggingRow = originalRow;
                     rightHandle.classList.add('dragging');
+                    if (navigator.vibrate) {
+                        try { navigator.vibrate(15); } catch (_) {}
+                    }
                 }
             }
 
@@ -227,10 +223,6 @@ export class RowManager {
         };
 
         const onPointerUp = (e) => {
-            if (rowLpTimer) {
-                clearTimeout(rowLpTimer);
-                rowLpTimer = null;
-            }
             try { rightHandle.releasePointerCapture(e.pointerId); } catch (_) {}
             window.removeEventListener('pointermove', onPointerMove);
             window.removeEventListener('pointerup', onPointerUp);
@@ -241,7 +233,6 @@ export class RowManager {
 
             isRowDragging = false;
             this.draggingRow = null;
-            isArming = false;
 
             cleanupDragVisuals();
 
@@ -256,23 +247,12 @@ export class RowManager {
             originalRow = parseInt(rightHandle.dataset.row);
             currentTargetRow = null;
             startY = e.clientY;
-            isArming = false;
             isRowDragging = false;
 
             try { rightHandle.setPointerCapture(e.pointerId); } catch (_) {}
             window.addEventListener('pointermove', onPointerMove, { passive: false });
             window.addEventListener('pointerup', onPointerUp);
             window.addEventListener('pointercancel', onPointerUp);
-
-            // Snappy arming (80ms) for fast handle response
-            rowLpTimer = setTimeout(() => {
-                rowLpTimer = null;
-                isArming = true;
-                rightHandle.classList.add('row-arming');
-                if (navigator.vibrate) {
-                    try { navigator.vibrate(20); } catch (_) {}
-                }
-            }, 80);
         });
     }
 
