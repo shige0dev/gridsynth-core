@@ -249,8 +249,8 @@ body {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -263,17 +263,17 @@ body {
 }
 
 .row-handle-left {
-    left: -13px;
+    left: -17px;
     display: none; /* Right-only handle */
 }
 
 .row-handle-right {
-    right: -13px;
+    right: -17px;
 }
 
 .row-handle-bar {
-    width: 6.5px;
-    height: 6.5px;
+    width: 6px;
+    height: 6px;
     background-color: #475569; /* slate-600 */
     border-radius: 1.5px;
     box-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
@@ -287,9 +287,9 @@ body {
 }
 
 .row-handle-btn.row-arming .row-handle-bar {
-    background-color: #d946ef !important; /* purple pulsing on long-press */
-    box-shadow: 0 0 10px rgba(217, 70, 239, 0.9), 0 0 4px #ffffff !important;
-    transform: scale(1.35);
+    background-color: #ffffff !important;
+    box-shadow: 0 0 8px #ffffff, 0 0 3px #ffffff !important;
+    transform: scale(1.3);
 }
 
 .row-handle-btn:active,
@@ -299,26 +299,16 @@ body {
 
 .row-handle-btn.dragging .row-handle-bar {
     background-color: #ffffff !important;
-    box-shadow: 0 0 12px rgba(217, 70, 239, 0.9), 0 0 5px #ffffff !important;
+    box-shadow: 0 0 10px #ffffff, 0 0 4px #ffffff !important;
     transform: scale(1.4);
 }
 
-.row-cell-dragging {
-    opacity: 0.9 !important;
-    filter: brightness(1.15) !important;
-    box-shadow: 0 0 15px rgba(217, 70, 239, 0.5) !important;
-    border-color: #d946ef !important;
-    border-width: 2px !important;
-    z-index: 40 !important;
-    pointer-events: none !important;
-}
-
-/* Inter-row Insertion Glowing Beam */
+/* Inter-row Insertion Guide Line (Simple Thin White) */
 .row-insert-beam {
     position: absolute;
-    left: -4px;
-    right: -4px;
-    height: 12px;
+    left: 0;
+    right: 0;
+    height: 4px;
     transform: translateY(-50%);
     pointer-events: none;
     z-index: 55;
@@ -331,59 +321,12 @@ body {
     display: flex;
 }
 
-.row-insert-marker {
-    width: 0;
-    height: 0;
-    border-top: 5px solid transparent;
-    border-bottom: 5px solid transparent;
-    flex-shrink: 0;
-}
-
-.row-insert-marker-left {
-    border-left: 7px solid #38bdf8;
-    filter: drop-shadow(0 0 5px #0ea5e9);
-}
-
-.row-insert-marker-right {
-    border-right: 7px solid #38bdf8;
-    filter: drop-shadow(0 0 5px #0ea5e9);
-}
-
 .row-insert-line {
-    flex: 1;
-    height: 3.5px;
+    width: 100%;
+    height: 1.5px;
     border-radius: 9999px;
-    background: linear-gradient(90deg, 
-        rgba(56, 189, 248, 0.3) 0%, 
-        #38bdf8 12%, 
-        #ffffff 50%, 
-        #38bdf8 88%, 
-        rgba(56, 189, 248, 0.3) 100%
-    );
-    box-shadow: 
-        0 0 4px 1px #ffffff,
-        0 0 10px 2px #38bdf8,
-        0 0 22px 5px rgba(14, 165, 233, 0.8),
-        0 0 35px 8px rgba(56, 189, 248, 0.45);
-    animation: row-insert-pulse 0.9s ease-in-out infinite alternate;
-}
-
-@keyframes row-insert-pulse {
-    0% {
-        box-shadow: 
-            0 0 3px 1px #ffffff,
-            0 0 8px 2px #38bdf8,
-            0 0 18px 4px rgba(14, 165, 233, 0.75);
-        opacity: 0.92;
-    }
-    100% {
-        box-shadow: 
-            0 0 6px 1px #ffffff,
-            0 0 14px 4px #38bdf8,
-            0 0 28px 7px rgba(56, 189, 248, 0.95),
-            0 0 42px 10px rgba(14, 165, 233, 0.55);
-        opacity: 1.0;
-    }
+    background-color: #ffffff;
+    box-shadow: 0 0 4px 1px rgba(255, 255, 255, 0.95), 0 0 8px 2px rgba(255, 255, 255, 0.5);
 }
 
 .empty-cell {

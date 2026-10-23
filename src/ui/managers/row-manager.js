@@ -49,7 +49,7 @@ export class RowManager {
             rightHandle.id = `row-handle-right-${r}`;
             rightHandle.className = 'row-handle-btn row-handle-right';
             rightHandle.dataset.row = String(r);
-            rightHandle.title = `行 ${r + 1}（長押しで行を差し込み移動）`;
+            rightHandle.title = `行 ${r + 1}（ドラッグで行を差し込み移動）`;
             rightHandle.innerHTML = `<span class="row-handle-bar pointer-events-none"></span>`;
 
             this.bindRowHandleEvents(rightHandle, r);
@@ -58,17 +58,13 @@ export class RowManager {
             this.rowTracks[r] = track;
         }
 
-        // Inter-row glowing insertion beam
+        // Inter-row insertion guide line (simple thin white line)
         let beam = document.getElementById('row-insert-beam');
         if (!beam) {
             beam = document.createElement('div');
             beam.id = 'row-insert-beam';
             beam.className = 'row-insert-beam';
-            beam.innerHTML = `
-                <div class="row-insert-marker row-insert-marker-left"></div>
-                <div class="row-insert-line"></div>
-                <div class="row-insert-marker row-insert-marker-right"></div>
-            `;
+            beam.innerHTML = `<div class="row-insert-line"></div>`;
             overlay.appendChild(beam);
         }
         this.rowInsertBeamEl = beam;
@@ -193,47 +189,26 @@ export class RowManager {
         let startY = 0;
         let originalRow = r;
         let currentTargetRow = null;
-        const gridBoard = this.ui.gridBoard;
 
         const cleanupDragVisuals = () => {
             this.hideInsertBeam();
-            for (let c = 0; c < this.ui.COLS; c++) {
-                const cell = document.getElementById(`cell-${originalRow * this.ui.COLS + c}`);
-                if (cell) {
-                    cell.classList.remove('row-cell-dragging', 'selected-module');
-                }
-            }
-            gridBoard?.classList.remove('has-selected-module');
             rightHandle.classList.remove('dragging', 'row-arming');
         };
 
         const onPointerMove = (e) => {
             const deltaY = e.clientY - startY;
 
-            if (!isArming) {
-                if (Math.abs(deltaY) > 8) {
+            if (!isRowDragging) {
+                // Snappy response: start drag immediately if armed or if moved > 4px
+                if (isArming || Math.abs(deltaY) > 4) {
                     if (rowLpTimer) {
                         clearTimeout(rowLpTimer);
                         rowLpTimer = null;
                     }
-                }
-                return;
-            }
-
-            if (!isRowDragging) {
-                if (Math.abs(deltaY) > 4) {
+                    isArming = true;
                     isRowDragging = true;
                     this.draggingRow = originalRow;
                     rightHandle.classList.add('dragging');
-                    gridBoard?.classList.add('has-selected-module');
-
-                    // Highlight all cells in source row matching selected-module styling
-                    for (let c = 0; c < this.ui.COLS; c++) {
-                        const cell = document.getElementById(`cell-${originalRow * this.ui.COLS + c}`);
-                        if (cell) {
-                            cell.classList.add('row-cell-dragging');
-                        }
-                    }
                 }
             }
 
@@ -289,15 +264,15 @@ export class RowManager {
             window.addEventListener('pointerup', onPointerUp);
             window.addEventListener('pointercancel', onPointerUp);
 
-            // Arm row movement on long-press (300ms)
+            // Snappy arming (80ms) for fast handle response
             rowLpTimer = setTimeout(() => {
                 rowLpTimer = null;
                 isArming = true;
                 rightHandle.classList.add('row-arming');
                 if (navigator.vibrate) {
-                    try { navigator.vibrate(25); } catch (_) {}
+                    try { navigator.vibrate(20); } catch (_) {}
                 }
-            }, 300);
+            }, 80);
         });
     }
 
