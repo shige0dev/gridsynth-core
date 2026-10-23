@@ -231,6 +231,9 @@ body {
 }
 
 /* Row Handle Mode Overlay & Reordering */
+#row-handle-overlay {
+    transition: opacity 0.15s ease;
+}
 .row-overlay-track {
     position: absolute;
     left: 0;

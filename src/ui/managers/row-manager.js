@@ -9,6 +9,7 @@ export class RowManager {
         this.rowTargetSlotIndicatorEl = null;
         this.draggingRow = null;
         this.highlightedDestRow = null;
+        this._ro = null;
     }
 
     scheduleCableRender(animateDurationMs = 0) {
@@ -57,10 +58,17 @@ export class RowManager {
             this.rowTracks[r] = track;
         }
 
-        // Keep overlay tracks aligned on resize
+        // Keep overlay tracks aligned on resize and layout changes
         window.addEventListener('resize', () => {
             this.updateRowHandleRail();
         });
+
+        if (window.ResizeObserver && gridBoard && !this._ro) {
+            this._ro = new ResizeObserver(() => {
+                this.updateRowHandleRail();
+            });
+            this._ro.observe(gridBoard);
+        }
 
         this.updateRowHandleRail();
     }
@@ -72,7 +80,17 @@ export class RowManager {
             return;
         }
 
+        const cell0 = document.getElementById('cell-0');
+        const cellLast = document.getElementById(`cell-${(this.ui.ROWS - 1) * this.ui.COLS}`);
+        // If grid cells are not yet laid out (height 0 or offsetTop uncomputed)
+        if (!cell0 || cell0.offsetHeight === 0 || (this.ui.ROWS > 1 && cellLast && cellLast.offsetTop === 0)) {
+            overlay.style.opacity = '0';
+            requestAnimationFrame(() => this.updateRowHandleRail());
+            return;
+        }
+
         overlay.style.display = 'block';
+        overlay.style.opacity = '1';
 
         // Align each row track to the physical position of row r
         for (let r = 0; r < this.ui.ROWS; r++) {

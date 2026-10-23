@@ -1,6 +1,6 @@
-import { SynthEngine } from './audio/engine.js?v=299';
-import { UIController } from './ui/controller.js?v=299';
-import { initExternalAPI } from './core/api.js?v=299';
+import { SynthEngine } from './audio/engine.js?v=300';
+import { UIController } from './ui/controller.js?v=300';
+import { initExternalAPI } from './core/api.js?v=300';
 
 document.addEventListener('DOMContentLoaded', () => {
     const synth = new SynthEngine();
@@ -9,7 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
     window.__GS_APP__ = ui;
     window.__GS_SYNTH__ = synth;
 
-    const ro = new ResizeObserver(() => setTimeout(() => ui.renderCables(), 50));
+    const ro = new ResizeObserver(() => setTimeout(() => {
+        ui.renderCables();
+        ui.interactionManager?.updateRowHandleRail?.();
+    }, 50));
     const frame = document.getElementById('phone-frame');
     if (frame) ro.observe(frame);
 });
