@@ -1,7 +1,7 @@
 // src/ui/managers/interaction-manager.js
 import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=297';
 import { MODULE_REGISTRY } from '../../modules/registry.js?v=297';
-import { RowManager } from './row-manager.js?v=300';
+import { RowManager } from './row-manager.js?v=301';
 
 export class InteractionManager {
     constructor(ui) {
@@ -491,5 +491,8 @@ export class InteractionManager {
     }
     get rowTargetSlotIndicatorEl() {
         return this.rowManager.rowTargetSlotIndicatorEl;
+    }
+    get rowInsertBeamEl() {
+        return this.rowManager?.rowInsertBeamEl;
     }
 }

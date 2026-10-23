@@ -313,6 +313,79 @@ body {
     pointer-events: none !important;
 }
 
+/* Inter-row Insertion Glowing Beam */
+.row-insert-beam {
+    position: absolute;
+    left: -4px;
+    right: -4px;
+    height: 12px;
+    transform: translateY(-50%);
+    pointer-events: none;
+    z-index: 55;
+    display: none;
+    align-items: center;
+    transition: top 0.04s ease-out;
+}
+
+.row-insert-beam.active {
+    display: flex;
+}
+
+.row-insert-marker {
+    width: 0;
+    height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    flex-shrink: 0;
+}
+
+.row-insert-marker-left {
+    border-left: 7px solid #38bdf8;
+    filter: drop-shadow(0 0 5px #0ea5e9);
+}
+
+.row-insert-marker-right {
+    border-right: 7px solid #38bdf8;
+    filter: drop-shadow(0 0 5px #0ea5e9);
+}
+
+.row-insert-line {
+    flex: 1;
+    height: 3.5px;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, 
+        rgba(56, 189, 248, 0.3) 0%, 
+        #38bdf8 12%, 
+        #ffffff 50%, 
+        #38bdf8 88%, 
+        rgba(56, 189, 248, 0.3) 100%
+    );
+    box-shadow: 
+        0 0 4px 1px #ffffff,
+        0 0 10px 2px #38bdf8,
+        0 0 22px 5px rgba(14, 165, 233, 0.8),
+        0 0 35px 8px rgba(56, 189, 248, 0.45);
+    animation: row-insert-pulse 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes row-insert-pulse {
+    0% {
+        box-shadow: 
+            0 0 3px 1px #ffffff,
+            0 0 8px 2px #38bdf8,
+            0 0 18px 4px rgba(14, 165, 233, 0.75);
+        opacity: 0.92;
+    }
+    100% {
+        box-shadow: 
+            0 0 6px 1px #ffffff,
+            0 0 14px 4px #38bdf8,
+            0 0 28px 7px rgba(56, 189, 248, 0.95),
+            0 0 42px 10px rgba(14, 165, 233, 0.55);
+        opacity: 1.0;
+    }
+}
+
 .empty-cell {
     border-color: transparent !important;
     background: transparent !important;

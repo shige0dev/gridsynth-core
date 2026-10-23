@@ -7,8 +7,8 @@ export class RowManager {
         this.rowHandleOverlayEl = null;
         this.rowTracks = [];
         this.rowTargetSlotIndicatorEl = null;
+        this.rowInsertBeamEl = null;
         this.draggingRow = null;
-        this.highlightedDestRow = null;
         this._ro = null;
     }
 
@@ -58,6 +58,21 @@ export class RowManager {
             this.rowTracks[r] = track;
         }
 
+        // Inter-row glowing insertion beam
+        let beam = document.getElementById('row-insert-beam');
+        if (!beam) {
+            beam = document.createElement('div');
+            beam.id = 'row-insert-beam';
+            beam.className = 'row-insert-beam';
+            beam.innerHTML = `
+                <div class="row-insert-marker row-insert-marker-left"></div>
+                <div class="row-insert-line"></div>
+                <div class="row-insert-marker row-insert-marker-right"></div>
+            `;
+            overlay.appendChild(beam);
+        }
+        this.rowInsertBeamEl = beam;
+
         // Keep overlay tracks aligned on resize and layout changes
         window.addEventListener('resize', () => {
             this.updateRowHandleRail();
@@ -103,26 +118,72 @@ export class RowManager {
         }
     }
 
-    clearDropHighlights() {
-        if (this.highlightedDestRow !== null) {
-            for (let c = 0; c < this.ui.COLS; c++) {
-                const cell = document.getElementById(`cell-${this.highlightedDestRow * this.ui.COLS + c}`);
-                if (cell) cell.classList.remove('drop-highlight-valid');
+    getTargetRow(clientY) {
+        const ROWS = this.ui.ROWS;
+        const COLS = this.ui.COLS;
+        const cell0 = document.getElementById('cell-0');
+        const cellLast = document.getElementById(`cell-${(ROWS - 1) * COLS}`);
+        if (!cell0 || !cellLast) return null;
+
+        const r0 = cell0.getBoundingClientRect();
+        const rLast = cellLast.getBoundingClientRect();
+        if (clientY < r0.top) return 0;
+        if (clientY > rLast.bottom) return ROWS - 1;
+
+        for (let r = 0; r < ROWS; r++) {
+            const cell = document.getElementById(`cell-${r * COLS}`);
+            if (cell) {
+                const rect = cell.getBoundingClientRect();
+                const topBound = (r === 0) ? rect.top : (rect.top - 3);
+                const bottomBound = (r === ROWS - 1) ? rect.bottom : (rect.bottom + 3);
+                if (clientY >= topBound && clientY <= bottomBound) {
+                    return r;
+                }
             }
-            this.highlightedDestRow = null;
         }
+        return null;
     }
 
-    setDropHighlight(targetRow) {
-        if (this.highlightedDestRow === targetRow) return;
-        this.clearDropHighlights();
-        if (targetRow !== null && targetRow >= 0 && targetRow < this.ui.ROWS) {
-            for (let c = 0; c < this.ui.COLS; c++) {
-                const cell = document.getElementById(`cell-${targetRow * this.ui.COLS + c}`);
-                if (cell) cell.classList.add('drop-highlight-valid');
+    showInsertBeam(b) {
+        if (!this.rowInsertBeamEl) return;
+        const gridBoard = this.ui.gridBoard;
+        if (!gridBoard) return;
+        const boardRect = gridBoard.getBoundingClientRect();
+
+        let beamClientY = 0;
+        const ROWS = this.ui.ROWS;
+        const COLS = this.ui.COLS;
+
+        if (b <= 0) {
+            const cell0 = document.getElementById('cell-0');
+            if (cell0) {
+                const r0 = cell0.getBoundingClientRect();
+                beamClientY = r0.top - 3;
             }
-            this.highlightedDestRow = targetRow;
+        } else if (b >= ROWS) {
+            const cellLast = document.getElementById(`cell-${(ROWS - 1) * COLS}`);
+            if (cellLast) {
+                const rLast = cellLast.getBoundingClientRect();
+                beamClientY = rLast.bottom + 3;
+            }
+        } else {
+            const cellAbove = document.getElementById(`cell-${(b - 1) * COLS}`);
+            const cellBelow = document.getElementById(`cell-${b * COLS}`);
+            if (cellAbove && cellBelow) {
+                const rAbove = cellAbove.getBoundingClientRect();
+                const rBelow = cellBelow.getBoundingClientRect();
+                beamClientY = (rAbove.bottom + rBelow.top) / 2;
+            }
         }
+
+        const beamTop = beamClientY - boardRect.top;
+        this.rowInsertBeamEl.style.top = `${beamTop}px`;
+        this.rowInsertBeamEl.classList.add('active');
+    }
+
+    hideInsertBeam() {
+        if (!this.rowInsertBeamEl) return;
+        this.rowInsertBeamEl.classList.remove('active');
     }
 
     bindRowHandleEvents(rightHandle, r) {
@@ -135,7 +196,7 @@ export class RowManager {
         const gridBoard = this.ui.gridBoard;
 
         const cleanupDragVisuals = () => {
-            this.clearDropHighlights();
+            this.hideInsertBeam();
             for (let c = 0; c < this.ui.COLS; c++) {
                 const cell = document.getElementById(`cell-${originalRow * this.ui.COLS + c}`);
                 if (cell) {
@@ -147,8 +208,17 @@ export class RowManager {
         };
 
         const onPointerMove = (e) => {
-            if (!isArming) return;
             const deltaY = e.clientY - startY;
+
+            if (!isArming) {
+                if (Math.abs(deltaY) > 8) {
+                    if (rowLpTimer) {
+                        clearTimeout(rowLpTimer);
+                        rowLpTimer = null;
+                    }
+                }
+                return;
+            }
 
             if (!isRowDragging) {
                 if (Math.abs(deltaY) > 4) {
@@ -168,17 +238,15 @@ export class RowManager {
             }
 
             if (isRowDragging) {
-                const boardRect = gridBoard.getBoundingClientRect();
-                const rowHeight = boardRect.height / this.ui.ROWS;
-                const relY = e.clientY - boardRect.top;
+                const targetRow = this.getTargetRow(e.clientY);
 
-                const pointerRow = Math.max(0, Math.min(this.ui.ROWS - 1, Math.floor(relY / rowHeight)));
-                if (pointerRow !== originalRow) {
-                    currentTargetRow = pointerRow;
-                    this.setDropHighlight(pointerRow);
+                if (targetRow !== null && targetRow !== originalRow) {
+                    currentTargetRow = targetRow;
+                    const boundary = (targetRow < originalRow) ? targetRow : (targetRow + 1);
+                    this.showInsertBeam(boundary);
                 } else {
                     currentTargetRow = null;
-                    this.clearDropHighlights();
+                    this.hideInsertBeam();
                 }
             }
         };
