@@ -114,30 +114,33 @@ export class RowManager {
         }
     }
 
-    getTargetRow(clientY) {
+    // Candidate boundary detection: candidate row gap ± 1/2 grid (上下1/2グリッド)
+    getNearestBoundary(clientY) {
         const ROWS = this.ui.ROWS;
         const COLS = this.ui.COLS;
+
         const cell0 = document.getElementById('cell-0');
-        const cellLast = document.getElementById(`cell-${(ROWS - 1) * COLS}`);
-        if (!cell0 || !cellLast) return null;
-
+        if (!cell0) return null;
         const r0 = cell0.getBoundingClientRect();
-        const rLast = cellLast.getBoundingClientRect();
-        if (clientY < r0.top) return 0;
-        if (clientY > rLast.bottom) return ROWS - 1;
+        const mid0 = r0.top + (r0.height / 2);
 
-        for (let r = 0; r < ROWS; r++) {
-            const cell = document.getElementById(`cell-${r * COLS}`);
+        // Above midpoint of row 0: boundary 0 (upper 1/2 of row 0 and above)
+        if (clientY < mid0) return 0;
+
+        // Between midpoints of row b-1 and row b (captures lower 1/2 of row b-1 and upper 1/2 of row b)
+        for (let b = 1; b < ROWS; b++) {
+            const cell = document.getElementById(`cell-${b * COLS}`);
             if (cell) {
                 const rect = cell.getBoundingClientRect();
-                const topBound = (r === 0) ? rect.top : (rect.top - 3);
-                const bottomBound = (r === ROWS - 1) ? rect.bottom : (rect.bottom + 3);
-                if (clientY >= topBound && clientY <= bottomBound) {
-                    return r;
+                const mid = rect.top + (rect.height / 2);
+                if (clientY < mid) {
+                    return b;
                 }
             }
         }
-        return null;
+
+        // Below midpoint of last row: boundary ROWS (lower 1/2 of last row and below)
+        return ROWS;
     }
 
     showInsertBeam(b) {
@@ -186,7 +189,7 @@ export class RowManager {
         let isRowDragging = false;
         let startY = 0;
         let originalRow = r;
-        let currentTargetRow = null;
+        let currentTargetBoundary = null;
 
         const cleanupDragVisuals = () => {
             this.hideInsertBeam();
@@ -209,14 +212,15 @@ export class RowManager {
             }
 
             if (isRowDragging) {
-                const targetRow = this.getTargetRow(e.clientY);
+                const boundary = this.getNearestBoundary(e.clientY);
 
-                if (targetRow !== null && targetRow !== originalRow) {
-                    currentTargetRow = targetRow;
-                    const boundary = (targetRow < originalRow) ? targetRow : (targetRow + 1);
+                // Boundaries originalRow (above originalRow) and originalRow + 1 (below originalRow)
+                // represent no change in position. Outside of those, light up the boundary line!
+                if (boundary !== null && boundary !== originalRow && boundary !== originalRow + 1) {
+                    currentTargetBoundary = boundary;
                     this.showInsertBeam(boundary);
                 } else {
-                    currentTargetRow = null;
+                    currentTargetBoundary = null;
                     this.hideInsertBeam();
                 }
             }
@@ -228,7 +232,7 @@ export class RowManager {
             window.removeEventListener('pointerup', onPointerUp);
             window.removeEventListener('pointercancel', onPointerUp);
 
-            const destRow = currentTargetRow;
+            const boundary = currentTargetBoundary;
             const didDrag = isRowDragging;
 
             isRowDragging = false;
@@ -236,7 +240,8 @@ export class RowManager {
 
             cleanupDragVisuals();
 
-            if (didDrag && destRow !== null && destRow !== originalRow) {
+            if (didDrag && boundary !== null && boundary !== originalRow && boundary !== originalRow + 1) {
+                const destRow = (boundary < originalRow) ? boundary : (boundary - 1);
                 this.moveRowTo(originalRow, destRow);
             }
         };
@@ -245,7 +250,7 @@ export class RowManager {
             e.preventDefault();
             e.stopPropagation();
             originalRow = parseInt(rightHandle.dataset.row);
-            currentTargetRow = null;
+            currentTargetBoundary = null;
             startY = e.clientY;
             isRowDragging = false;
 
