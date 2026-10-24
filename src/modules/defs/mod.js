@@ -337,8 +337,8 @@ export const MATH1 = {
     MODES: ['-', 'ABS', 'FLOOR', 'CEIL', 'ROUND', 'INT'],
     defaults: () => ({ type: 'MATH1', mode: '-', valA: 0.0 }),
     ports: () => ({
-        in: [{ port: 'CV_inA', color: 'bg-yellow-400' }],
-        out: [{ port: 'CV_OUT', color: 'bg-yellow-400' }]
+        in: [{ port: 'CV_inA', pin: 4, alias: 'a', color: 'bg-yellow-400' }],
+        out: [{ port: 'CV_OUT', pin: 9, alias: 'out', color: 'bg-yellow-400' }]
     }),
     renderGrid: renderMathGridUI,
     updateLive: updateMathLiveUI,
@@ -353,10 +353,10 @@ export const MATH2 = {
     defaults: () => ({ type: 'MATH2', mode: 'ADD', valA: 0.0, valB: 1.0 }),
     ports: () => ({
         in: [
-            { port: 'CV_inA', color: 'bg-yellow-400' },
-            { port: 'CV_inB', color: 'bg-yellow-400' }
+            { port: 'CV_inA', pin: 4, alias: 'a', color: 'bg-yellow-400' },
+            { port: 'CV_inB', pin: 5, alias: 'b', color: 'bg-yellow-400' }
         ],
-        out: [{ port: 'CV_OUT', color: 'bg-yellow-400' }]
+        out: [{ port: 'CV_OUT', pin: 9, alias: 'out', color: 'bg-yellow-400' }]
     }),
     renderGrid: renderMathGridUI,
     updateLive: updateMathLiveUI,
