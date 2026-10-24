@@ -225,7 +225,7 @@ export const CLK = {
     color: 'rose',
     RATES: ['/16', '/8', '/7', '/6', '/5', '/4', '/3', '/2', 'x1', 'x2', 'x3', 'x4', 'x5', 'x6', 'x7', 'x8', 'x16'],
     defaults: () => ({ type: 'CLK', div: 'x2', pulseWidthMs: 15, limitPct: 90 }),
-    ports: () => ({ in: [], out: [{ port: 'gate_out', color: 'bg-red-500' }] }),
+    ports: () => ({ in: [{ port: 'power_in', color: 'bg-red-500' }], out: [{ port: 'gate_out', color: 'bg-red-500' }] }),
     renderGrid: (m, ctx) => {
         const bpm = ctx?.bpm || 120, mult = parseClockRate(m.div || 'x2');
         const intMs = Math.round((60.0 / bpm / mult) * 1000);

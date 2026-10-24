@@ -22,6 +22,8 @@ export class PatProcessor extends AudioWorkletProcessor {
         this.activeLabel = '\u2014';
         this.activeIsRest = true;
         this.postCounter = 0;
+        this.hasPowerIn = false;
+        this.lastPowerOn = true;
 
         this.port.onmessage = e => {
             if (e.data.type === 'SET_EVENTS') {
@@ -44,6 +46,9 @@ export class PatProcessor extends AudioWorkletProcessor {
                     }
                     this.running = e.data.running;
                 }
+                if (typeof e.data.hasPowerIn === 'boolean') {
+                    this.hasPowerIn = e.data.hasPowerIn;
+                }
             } else if (e.data.type === 'RESET') {
                 this.phase = 0.0;
                 this.cycleCount = 0;
@@ -57,6 +62,7 @@ export class PatProcessor extends AudioWorkletProcessor {
 
     process(ins, outs, params) {
         const cvOut = outs[0]?.[0], gOut = outs[1]?.[0];
+        const pIn = ins[0]?.[0];
         const len = (cvOut || gOut || []).length || 128;
         const sr = getSR();
         const bpm = params.bpm[0] || 120.0;
@@ -70,6 +76,14 @@ export class PatProcessor extends AudioWorkletProcessor {
                 if (gOut) gOut[i] = 0;
                 continue;
             }
+
+            const isPowerOn = this.hasPowerIn ? ((pIn ? pIn[i] : 0.0) > 0.3) : true;
+            if (isPowerOn && !this.lastPowerOn) {
+                this.phase = 0.0;
+                this.gap = 0;
+                this.activeIdx = -1;
+            }
+            this.lastPowerOn = isPowerOn;
 
             this.phase += phaseInc;
             if (this.phase >= 1.0) {
@@ -113,7 +127,7 @@ export class PatProcessor extends AudioWorkletProcessor {
             if (this.gap > 0) {
                 this.gap--;
                 this.gate = 0.0;
-            } else if (curEv && !curEv.isRest) {
+            } else if (curEv && !curEv.isRest && isPowerOn) {
                 const evDur = curEv.end - curEv.start;
                 const evProg = (this.phase - curEv.start) / Math.max(0.0001, evDur);
                 const gRatio = this.gateLen ?? 0.80;
@@ -136,7 +150,8 @@ export class PatProcessor extends AudioWorkletProcessor {
                 activeIdx: this.activeIdx,
                 activeLabel: this.activeLabel,
                 isRest: this.activeIsRest,
-                gate: this.gate > 0
+                gate: this.gate > 0,
+                powerOn: this.hasPowerIn ? this.lastPowerOn : true
             });
         }
 

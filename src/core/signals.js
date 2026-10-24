@@ -76,6 +76,10 @@ export const getPortSignalType = (portName = '', modId = '') => {
         if (p === 'out' || p.includes('cv') || p.startsWith('in_')) return SIGNAL_TYPES.CV;
     }
 
+    if (p.includes('power')) {
+        return SIGNAL_TYPES.GATE;
+    }
+
     if (m.startsWith('CLK') || p.includes('clk')) {
         return SIGNAL_TYPES.CLOCK;
     }

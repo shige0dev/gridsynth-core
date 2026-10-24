@@ -37,6 +37,8 @@ export class ClockProcessor extends AudioWorkletProcessor {
         this.div = 'x2';
         this.limitPct = 90.0;
         this.running = false;
+        this.hasPowerIn = false;
+        this.lastPowerOn = true;
         this.port.onmessage = e => {
             if (e.data.type === 'SET_STATE') {
                 if (typeof e.data.running === 'boolean') {
@@ -45,6 +47,9 @@ export class ClockProcessor extends AudioWorkletProcessor {
                 }
                 if (e.data.div) this.div = e.data.div;
                 if (e.data.limitPct !== undefined) this.limitPct = Math.min(90.0, e.data.limitPct);
+                if (typeof e.data.hasPowerIn === 'boolean') {
+                    this.hasPowerIn = e.data.hasPowerIn;
+                }
             }
         };
     }
@@ -52,6 +57,7 @@ export class ClockProcessor extends AudioWorkletProcessor {
     process(ins, outs, params) {
         const out = outs[0]?.[0];
         if (!out) return true;
+        const pIn = ins[0]?.[0];
         const mult = parseClockRate(this.div);
         const sr = getSR();
         const bpm = params.bpm[0] || 120.0;
@@ -67,12 +73,23 @@ export class ClockProcessor extends AudioWorkletProcessor {
                 out[i] = 0;
                 continue;
             }
-            if (this.cnt >= sPerInt) {
+            const isPowerOn = this.hasPowerIn ? ((pIn ? pIn[i] : 0.0) > 0.3) : true;
+            if (isPowerOn && !this.lastPowerOn) {
+                this.cnt = 0;
+                this.left = pDur;
+            } else if (this.cnt >= sPerInt) {
                 this.cnt = 0;
                 this.left = pDur;
             }
             this.cnt++;
-            out[i] = this.left > 0 ? (this.left--, 1.0) : 0.0;
+            this.lastPowerOn = isPowerOn;
+
+            if (this.left > 0) {
+                this.left--;
+                out[i] = isPowerOn ? 1.0 : 0.0;
+            } else {
+                out[i] = 0.0;
+            }
         }
         return true;
     }

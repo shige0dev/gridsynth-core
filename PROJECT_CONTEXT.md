@@ -552,6 +552,34 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
       - `KEY` モジュールの仕様リファレンスを更新（初期CV設定プロパティの説明を追加）。
     - バージョンを `v1.0.0355`、キャッシュバスターを `v=355` に更新。
 
+ 27. **CLK および PAT モジュールへの power_in 入力ポート新設（楽曲パート管理・小節セレクター＆ワンショットアルペジオ対応）**:
+    - `src/dsp/processors/clock.js`:
+      - `hasPowerIn` および `lastPowerOn` ステートを追加。
+      - 入力ポート `ins[0]`（`power_in`）の CV 判定（`> 0.3V` で High、`<= 0.3V` で Low）。
+      - 立ち上がりエッジ（`0 -> 1`）検出時、`this.cnt = 0; this.left = pDur` によりゼロレイテンシーで即座に第1パルスを出力。
+      - 未結線時は内部 `1.0`（常時稼働）を維持し完全な下位互換性を確保。結線時は外部CVが優先。
+      - `power_in <= 0.3V` の停止中もテンポ同期カウンタ `this.cnt++` を進め、楽曲の小節同期を維持。
+    - `src/dsp/processors/pat.js`:
+      - `hasPowerIn` および `lastPowerOn` ステートを追加。
+      - 立ち上がりエッジ（`0 -> 1`）検出時、`this.phase = 0.0` により先頭ステップから瞬時に発音開始。
+      - `power_in <= 0.3V` 時はゲート出力を 0.0V に遮断しつつ、ピッチCVは直前の音程をホールド。
+      - PLAYHEAD メッセージに `powerOn` ステートを追加。
+    - `src/audio/defs/mod.js` & `src/audio/defs/pat.js`:
+      - `CLK` および `PAT` の `AudioWorkletNode` を `numberOfInputs: 1` に拡張。
+      - 入力ゲインノード `pIn` を生成し Worklet の input 0 に結線。
+      - `patch` 状態から `power_in` 結線の有無を検出し、`SET_STATE` メッセージ（`hasPowerIn`）を DSP へ動的伝達。
+    - `src/modules/defs/mod.js` & `src/modules/defs/pat.js`:
+      - `CLK.ports`: `in: [{ port: 'power_in', color: 'bg-red-500' }]` を追加。
+      - `PAT.ports`: `in: [{ port: 'power_in', color: 'bg-red-500' }]` を追加。
+      - `PAT.updateLive`: `powerOn === false` の停止時は `'OFF'`（slate-600）で消灯表示。
+    - `src/core/signals.js`:
+      - `power` を含むポート名を `SIGNAL_TYPES.GATE`（橙/赤）として判定するよう優先度を調整。
+    - `GRIDSYNTH_AI_PATCH_SPEC.md`:
+      - `CLK` および `PAT` の入出力仕様に `power_in` を追記。
+      - `GATE4` や `MARKOV` を用いた「小節セレクターによるパート管理」および `KEY` / `PAD` + `AR` を用いた「ワンショットアルペジオ / フィル」の設計手法を明文化。
+    - バージョンを `v1.0.0356`、キャッシュバスターを `v=356` に更新。
+
+
 
 
 

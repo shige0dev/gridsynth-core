@@ -116,20 +116,26 @@ export const LFO = {
 export const CLK = {
     create: (ctx, d, patch, eng) => {
         const w = new AudioWorkletNode(ctx, 'clock-processor', {
+            numberOfInputs: 1,
+            numberOfOutputs: 1,
             parameterData: {
                 bpm: eng.masterBPM || 120,
                 pulseWidthMs: d.pulseWidthMs ?? 15,
                 limitPct: Math.min(90, d.limitPct ?? 90)
             }
         });
+        const hasPower = patch ? (patch.has('power_in') || patch.has('power')) : false;
         w.port.postMessage({
             type: 'SET_STATE',
             running: eng.isPlaying,
             div: d.div || 'x2',
-            limitPct: Math.min(90, d.limitPct ?? 90)
+            limitPct: Math.min(90, d.limitPct ?? 90),
+            hasPowerIn: hasPower
         });
+        const pIn = ctx.createGain();
+        pIn.connect(w, 0, 0);
         if (eng?.silentSink) w.connect(eng.silentSink);
-        return { nodes: { w }, inputs: {}, outputs: { gate_out: w } };
+        return { nodes: { w, pIn }, inputs: { power_in: pIn }, outputs: { gate_out: w } };
     },
     update: (ctx, inst, d, patch, eng) => {
         AudioHelpers.set(inst.nodes.w.parameters.get('bpm'), eng.masterBPM || 120, ctx, 0.02);
@@ -139,10 +145,12 @@ export const CLK = {
         if (d.limitPct !== undefined) {
             AudioHelpers.set(inst.nodes.w.parameters.get('limitPct'), Math.min(90, d.limitPct), ctx, 0.02);
         }
+        const hasPower = patch ? (patch.has('power_in') || patch.has('power')) : false;
         inst.nodes.w.port.postMessage({
             type: 'SET_STATE',
             div: d.div,
-            limitPct: Math.min(90, d.limitPct ?? 90)
+            limitPct: Math.min(90, d.limitPct ?? 90),
+            hasPowerIn: hasPower
         });
     }
 };

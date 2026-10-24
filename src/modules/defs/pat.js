@@ -37,7 +37,7 @@ export const PAT = {
         presetName: '4-on-floor'
     }),
     ports: () => ({
-        in: [],
+        in: [{ port: 'power_in', color: 'bg-red-500' }],
         out: [
             { port: 'cv_out', color: 'bg-yellow-400' },
             { port: 'gate_out', color: 'bg-red-500' }
@@ -54,6 +54,9 @@ export const PAT = {
         if (stateEl) {
             if (!isP || !data) {
                 stateEl.textContent = '\u2014';
+                stateEl.className = 'pat-state-disp text-[17px] font-mono font-bold text-slate-600 tracking-wider';
+            } else if (data.powerOn === false) {
+                stateEl.textContent = 'OFF';
                 stateEl.className = 'pat-state-disp text-[17px] font-mono font-bold text-slate-600 tracking-wider';
             } else {
                 const label = data.activeLabel || (data.activeIdx >= 0 ? `STEP ${data.activeIdx + 1}` : '\u2014');

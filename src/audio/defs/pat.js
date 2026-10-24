@@ -4,12 +4,13 @@ import { parseStrudelPatternCycles } from '../../core/strudel-parser.js';
 export const PAT = {
     create: (ctx, d, patch, eng) => {
         const w = new AudioWorkletNode(ctx, 'pat-processor', {
-            numberOfInputs: 0,
+            numberOfInputs: 1,
             numberOfOutputs: 2,
             parameterData: {
                 bpm: eng?.masterBPM || 120
             }
         });
+        const hasPower = patch ? (patch.has('power_in') || patch.has('power')) : false;
         const cycles = parseStrudelPatternCycles(d.pattern || 'c2 c2 c2 c2', d.cycleBeats || 4, 16);
         w.port.postMessage({
             type: 'SET_EVENTS',
@@ -19,8 +20,12 @@ export const PAT = {
         });
         w.port.postMessage({
             type: 'SET_STATE',
-            running: eng?.isPlaying || false
+            running: eng?.isPlaying || false,
+            hasPowerIn: hasPower
         });
+
+        const pIn = ctx.createGain();
+        pIn.connect(w, 0, 0);
 
         const cv = ctx.createGain(), gt = ctx.createGain();
         w.connect(cv, 0, 0);
@@ -29,7 +34,7 @@ export const PAT = {
             gt.connect(eng.silentSink);
         }
 
-        let latestPhase = 0, latestIdx = -1, latestCycle = 0, latestLabel = '\u2014', latestIsRest = true, latestGate = false;
+        let latestPhase = 0, latestIdx = -1, latestCycle = 0, latestLabel = '\u2014', latestIsRest = true, latestGate = false, latestPowerOn = true;
         w.port.onmessage = e => {
             if (e.data.type === 'PLAYHEAD') {
                 latestPhase = e.data.phase;
@@ -38,12 +43,15 @@ export const PAT = {
                 latestLabel = e.data.activeLabel || '\u2014';
                 latestIsRest = !!e.data.isRest;
                 latestGate = !!e.data.gate;
+                if (typeof e.data.powerOn === 'boolean') {
+                    latestPowerOn = e.data.powerOn;
+                }
             }
         };
 
         return {
-            nodes: { w, cv, gt },
-            inputs: {},
+            nodes: { w, cv, gt, pIn },
+            inputs: { power_in: pIn },
             outputs: { cv_out: cv, gate_out: gt },
             resetStep: () => {
                 latestPhase = 0;
@@ -52,6 +60,7 @@ export const PAT = {
                 latestLabel = '\u2014';
                 latestIsRest = true;
                 latestGate = false;
+                latestPowerOn = true;
             },
             read: () => ({
                 phase: latestPhase,
@@ -59,7 +68,8 @@ export const PAT = {
                 cycleCount: latestCycle,
                 activeLabel: latestLabel,
                 isRest: latestIsRest,
-                gate: latestGate
+                gate: latestGate,
+                powerOn: latestPowerOn
             })
         };
     },
@@ -71,6 +81,11 @@ export const PAT = {
             cycles,
             cycleBeats: d.cycleBeats || 4,
             gateLen: d.gateLen ?? 0.80
+        });
+        const hasPower = patch ? (patch.has('power_in') || patch.has('power')) : false;
+        inst.nodes.w.port.postMessage({
+            type: 'SET_STATE',
+            hasPowerIn: hasPower
         });
     }
 };
