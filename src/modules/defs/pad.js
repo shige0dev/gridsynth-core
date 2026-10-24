@@ -94,8 +94,8 @@ function drawPadCanvas(ctx2d, w, h, state, isModal = false) {
     const isDown = Boolean(state?.isDown);
     const pressure = state?.pressure ?? (isDown ? 0.6 : 0.0);
 
-    // High contrast dual-ring marker
-    const baseR = isModal ? (isDown ? 14 + pressure * 26 : 8) : (isDown ? 7 + pressure * 14 : 4);
+    // High contrast dual-ring marker (fixed radius, no expansion on touch)
+    const baseR = isModal ? 8 : 4;
 
     if (isDown) {
         // Outer touch pressure shadow
@@ -117,13 +117,6 @@ function drawPadCanvas(ctx2d, w, h, state, isModal = false) {
         ctx2d.beginPath();
         ctx2d.arc(px, py, isModal ? 3.5 : 2.0, 0, Math.PI * 2);
         ctx2d.fill();
-
-        // Extra outer pulse ring for active touch
-        ctx2d.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-        ctx2d.lineWidth = 1.0;
-        ctx2d.beginPath();
-        ctx2d.arc(px, py, baseR * 1.35, 0, Math.PI * 2);
-        ctx2d.stroke();
     } else {
         // Latched last touched position marker (subtle cursor)
         ctx2d.strokeStyle = isBrightBg ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.6)';
@@ -149,11 +142,10 @@ export const PAD = {
             { port: 'bright_cv', pin: 3, color: 'bg-yellow-400' }
         ],
         out: [
-            { port: 'trig_out', pin: 8, color: 'bg-red-500' },
-            { port: 'gate_out', pin: 9, color: 'bg-red-500' },
-            { port: 'x_cv', pin: 10, color: 'bg-yellow-400' },
-            { port: 'y_cv', pin: 11, color: 'bg-yellow-400' },
-            { port: 'pressure_cv', pin: 12, color: 'bg-yellow-400' }
+            { port: 'gate_out', pin: 11, color: 'bg-red-500' },
+            { port: 'x_cv', pin: 5, color: 'bg-yellow-400' },
+            { port: 'y_cv', pin: 6, color: 'bg-yellow-400' },
+            { port: 'pressure_cv', pin: 7, color: 'bg-yellow-400' }
         ]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
@@ -167,21 +159,21 @@ export const PAD = {
                 <div class="space-y-1">
                     <div class="flex items-center justify-between text-[8.5px] font-bold h-4">
                         <span class="text-slate-400 uppercase tracking-wider">SAT</span>
-                        <span id="pad-sat-disp" class="font-mono text-cyan-300 font-bold cursor-ew-resize select-none">${(m.sat ?? 1.0).toFixed(2)}</span>
+                        <span id="pad-sat-slider-disp" class="font-mono text-cyan-300 font-bold cursor-ew-resize select-none">${(m.sat ?? 1.0).toFixed(2)}</span>
                     </div>
                     <input type="range" id="pad-sat-slider" min="0" max="1" step="0.01" value="${m.sat ?? 1.0}" class="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
                 </div>
                 <div class="space-y-1">
                     <div class="flex items-center justify-between text-[8.5px] font-bold h-4">
                         <span class="text-slate-400 uppercase tracking-wider">HUE</span>
-                        <span id="pad-hue-disp" class="font-mono text-cyan-300 font-bold cursor-ew-resize select-none">${(m.hue ?? 0.5).toFixed(2)}</span>
+                        <span id="pad-hue-slider-disp" class="font-mono text-cyan-300 font-bold cursor-ew-resize select-none">${(m.hue ?? 0.5).toFixed(2)}</span>
                     </div>
                     <input type="range" id="pad-hue-slider" min="0" max="1" step="0.01" value="${m.hue ?? 0.5}" class="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
                 </div>
                 <div class="space-y-1">
                     <div class="flex items-center justify-between text-[8.5px] font-bold h-4">
                         <span class="text-slate-400 uppercase tracking-wider">BRIGHT</span>
-                        <span id="pad-bright-disp" class="font-mono text-cyan-300 font-bold cursor-ew-resize select-none">${(m.bright ?? 0.0).toFixed(2)}</span>
+                        <span id="pad-bright-slider-disp" class="font-mono text-cyan-300 font-bold cursor-ew-resize select-none">${(m.bright ?? 0.0).toFixed(2)}</span>
                     </div>
                     <input type="range" id="pad-bright-slider" min="0" max="1" step="0.01" value="${m.bright ?? 0.0}" class="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
                 </div>
@@ -189,22 +181,10 @@ export const PAD = {
 
             <div class="relative w-full aspect-square bg-black rounded-lg border border-slate-700/80 overflow-hidden shadow-inner select-none touch-none overscroll-contain mx-auto" id="pad-modal-touch-area">
                 <canvas id="pad-modal-canvas" class="w-full h-full block cursor-crosshair" width="400" height="400"></canvas>
-                <div class="absolute top-2 left-2 text-[10px] font-mono font-semibold text-slate-300 pointer-events-none select-none drop-shadow">
-                    TOUCH &amp; DRAG PAD
-                </div>
-                <div class="absolute bottom-2 left-2 flex items-center gap-1.5 font-mono text-[9px] select-none pointer-events-none">
-                    <div class="bg-black/60 backdrop-blur-xs border border-white/20 rounded px-2 py-0.5 flex items-center gap-1 shadow">
-                        <span class="text-slate-400 text-[8px] font-sans font-bold">X</span>
-                        <span id="pad-stat-x" class="text-cyan-300 font-bold">0.50</span>
-                    </div>
-                    <div class="bg-black/60 backdrop-blur-xs border border-white/20 rounded px-2 py-0.5 flex items-center gap-1 shadow">
-                        <span class="text-slate-400 text-[8px] font-sans font-bold">Y</span>
-                        <span id="pad-stat-y" class="text-cyan-300 font-bold">0.50</span>
-                    </div>
-                    <div class="bg-black/60 backdrop-blur-xs border border-white/20 rounded px-2 py-0.5 flex items-center gap-1 shadow">
-                        <span class="text-slate-400 text-[8px] font-sans font-bold">PRES</span>
-                        <span id="pad-stat-press" class="text-amber-400 font-bold">0.00</span>
-                    </div>
+                <div class="absolute top-2 left-2 flex items-center gap-2.5 font-mono text-[9px] select-none pointer-events-none drop-shadow">
+                    <span class="text-slate-400 text-[8px] font-sans font-bold">X</span><span id="pad-stat-x" class="text-cyan-300 font-bold">0.50</span>
+                    <span class="text-slate-400 text-[8px] font-sans font-bold">Y</span><span id="pad-stat-y" class="text-cyan-300 font-bold">0.50</span>
+                    <span class="text-slate-400 text-[8px] font-sans font-bold">PRES</span><span id="pad-stat-press" class="text-amber-400 font-bold">0.00</span>
                 </div>
             </div>
         </div>`,
@@ -213,31 +193,19 @@ export const PAD = {
         UIHelpers.bindSlider('pad-hue-slider', v => v.toFixed(2), v => {
             m.hue = v;
             onChange();
-        }, 2, 0.0, 1.0);
-        UIHelpers.bindScrubber('pad-hue-disp', 'pad-hue-slider', v => v.toFixed(2), v => {
-            m.hue = v;
-            onChange();
-        }, 2, 0.0, 1.0);
+        }, 1, 0.0, 1.0);
 
         // SATURATION Slider (0.0: Monotone / 1.0: Full Color)
         UIHelpers.bindSlider('pad-sat-slider', v => v.toFixed(2), v => {
             m.sat = v;
             onChange();
-        }, 2, 0.0, 1.0);
-        UIHelpers.bindScrubber('pad-sat-disp', 'pad-sat-slider', v => v.toFixed(2), v => {
-            m.sat = v;
-            onChange();
-        }, 2, 0.0, 1.0);
+        }, 1, 0.0, 1.0);
 
         // BRIGHTNESS Slider (0.0: Black / 1.0: Full Bright)
         UIHelpers.bindSlider('pad-bright-slider', v => v.toFixed(2), v => {
             m.bright = v;
             onChange();
-        }, 2, 0.0, 1.0);
-        UIHelpers.bindScrubber('pad-bright-disp', 'pad-bright-slider', v => v.toFixed(2), v => {
-            m.bright = v;
-            onChange();
-        }, 2, 0.0, 1.0);
+        }, 1, 0.0, 1.0);
 
         // Touch Pad interactions in Modal
         const touchArea = document.getElementById('pad-modal-touch-area');
