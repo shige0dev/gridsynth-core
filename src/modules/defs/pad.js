@@ -193,23 +193,22 @@ export const PAD = {
                 <div class="absolute top-2 left-2 text-[10px] font-mono font-semibold text-slate-300 pointer-events-none select-none drop-shadow">
                     TOUCH &amp; DRAG PAD
                 </div>
+                <div class="absolute bottom-2 left-2 flex items-center gap-1.5 font-mono text-[9px] select-none pointer-events-none">
+                    <div class="bg-black/60 backdrop-blur-xs border border-white/20 rounded px-2 py-0.5 flex items-center gap-1 shadow">
+                        <span class="text-slate-400 text-[8px] font-sans font-bold">X</span>
+                        <span id="pad-stat-x" class="text-cyan-300 font-bold">0.50</span>
+                    </div>
+                    <div class="bg-black/60 backdrop-blur-xs border border-white/20 rounded px-2 py-0.5 flex items-center gap-1 shadow">
+                        <span class="text-slate-400 text-[8px] font-sans font-bold">Y</span>
+                        <span id="pad-stat-y" class="text-cyan-300 font-bold">0.50</span>
+                    </div>
+                    <div class="bg-black/60 backdrop-blur-xs border border-white/20 rounded px-2 py-0.5 flex items-center gap-1 shadow">
+                        <span class="text-slate-400 text-[8px] font-sans font-bold">PRES</span>
+                        <span id="pad-stat-press" class="text-amber-400 font-bold">0.00</span>
+                    </div>
+                </div>
             </div>
-
-            <div class="flex items-center gap-2 pt-1 font-mono text-[9px] select-none justify-start">
-                <div class="bg-slate-950 border border-slate-800 rounded px-2.5 py-1 flex items-center gap-1.5 shadow-sm">
-                    <span class="text-slate-500 text-[8px] font-sans font-bold">X</span>
-                    <span id="pad-stat-x" class="text-cyan-300 font-bold">0.50</span>
-                </div>
-                <div class="bg-slate-950 border border-slate-800 rounded px-2.5 py-1 flex items-center gap-1.5 shadow-sm">
-                    <span class="text-slate-500 text-[8px] font-sans font-bold">Y</span>
-                    <span id="pad-stat-y" class="text-cyan-300 font-bold">0.50</span>
-                </div>
-                <div class="bg-slate-950 border border-slate-800 rounded px-2.5 py-1 flex items-center gap-1.5 shadow-sm">
-                    <span class="text-slate-500 text-[8px] font-sans font-bold">PRES</span>
-                    <span id="pad-stat-press" class="text-amber-400 font-bold">0.00</span>
-                </div>
-            </div>
-        </div>`,
+        </div>`,Target:
     bindEvents: (m, ctx, onChange) => {
         // HUE Slider
         UIHelpers.bindSlider('pad-hue-slider', v => v.toFixed(2), v => {
