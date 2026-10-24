@@ -160,7 +160,6 @@ export const PAD = {
     renderGrid: () => `
         <div class="absolute inset-0.5 bg-black rounded-sm border border-slate-800/90 overflow-hidden z-0 pointer-events-auto pad-grid-container">
             <canvas class="pad-grid-canvas w-full h-full block" width="100" height="100"></canvas>
-            <div class="absolute top-1 left-1.5 text-[8px] font-mono font-bold text-slate-300 pointer-events-none tracking-wider opacity-60 drop-shadow">XY PAD</div>
         </div>`,
     renderModal: (m) => `
         <div class="space-y-3 p-1">
