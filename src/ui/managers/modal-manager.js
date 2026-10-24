@@ -55,7 +55,7 @@ export const MODAL_WIDTHS = {
     SUB: 'w-[240px]'
 };
 
-import { DockManager, DOCK_TITLES, DOCK_ICONS } from './dock-manager.js?v=347';
+import { DockManager, DOCK_TITLES, DOCK_ICONS } from './dock-manager.js?v=348';
 export { DOCK_TITLES, DOCK_ICONS, DockManager };
 
 export class ModalManager {
