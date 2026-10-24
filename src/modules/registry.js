@@ -6,11 +6,11 @@
 import { vcoDefs } from './defs/vco.js';
 import { filterDefs } from './defs/filter.js?v=297';
 import { ampDefs } from './defs/amp.js?v=187';
-import { effectsDefs } from './defs/effects.js?v=345';
+import { effectsDefs } from './defs/effects.js?v=346';
 import { adsrDefs, ADSR_CURVES } from './defs/adsr.js';
 import { modDefs } from './defs/mod.js?v=297';
 import { ioDefs } from './defs/io.js?v=297';
-import { scopeDefs } from './defs/scope.js?v=345';
+import { scopeDefs } from './defs/scope.js?v=346';
 import { subDefs } from './defs/sub.js?v=297';
 import { controllerDefs } from './defs/controllers.js?v=297';
 import { seqDefs } from './defs/seq.js';
@@ -23,7 +23,7 @@ import { scaleDefs } from './defs/scale.js?v=217';
 import { rfDefs } from './defs/rf.js?v=217';
 import { arDefs } from './defs/ar.js?v=217';
 import { waveDefs } from './defs/wave.js?v=297';
-import { padDefs } from './defs/pad.js?v=345';
+import { padDefs } from './defs/pad.js?v=346';
 
 export const MODULE_REGISTRY = {
     ...vcoDefs,

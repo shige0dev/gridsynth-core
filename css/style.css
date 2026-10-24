@@ -222,12 +222,19 @@ body {
     transform: none !important;
 }
 
-/* Performance Mode: Hide all ports and disable module editing affordances */
+/* Performance Mode: Hide all ports, row handles, and disable editing affordances */
 .is-performance-mode .port,
 .is-performance-mode .port-node,
-.is-performance-mode .port-node-wrapper {
+.is-performance-mode .port-node-wrapper,
+.is-performance-mode #row-handle-overlay,
+.is-performance-mode .row-overlay-track,
+.is-performance-mode .row-handle-btn,
+.is-performance-mode .row-handle-bar,
+.is-performance-mode .row-handle-right,
+.is-performance-mode .row-insert-beam {
     display: none !important;
     pointer-events: none !important;
+    opacity: 0 !important;
 }
 
 .is-performance-mode .grid-cell {

@@ -80,6 +80,13 @@ export class RowManager {
             return;
         }
 
+        if (this.ui.isPerformanceMode) {
+            overlay.style.display = 'none';
+            overlay.style.opacity = '0';
+            overlay.style.pointerEvents = 'none';
+            return;
+        }
+
         const cell0 = document.getElementById('cell-0');
         const cellLast = document.getElementById(`cell-${(this.ui.ROWS - 1) * this.ui.COLS}`);
         // If grid cells are not yet laid out (height 0 or offsetTop uncomputed)
@@ -243,6 +250,7 @@ export class RowManager {
         };
 
         rightHandle.addEventListener('pointerdown', (e) => {
+            if (this.ui.isPerformanceMode) return;
             e.preventDefault();
             e.stopPropagation();
             originalRow = parseInt(rightHandle.dataset.row);

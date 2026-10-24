@@ -1,13 +1,13 @@
-import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=345';
-import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=345';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=345';
-import { UIHelpers } from './helpers.js?v=345';
-import { PresetManager } from './managers/preset-manager.js?v=345';
-import { ModalManager } from './managers/modal-manager.js?v=345';
-import { CableManager } from './managers/cable-manager.js?v=345';
-import { PageManager } from './managers/page-manager.js?v=345';
-import { InteractionManager } from './managers/interaction-manager.js?v=345';
-import { WaveCodec } from '../audio/wave-codec.js?v=345';
+import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=346';
+import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=346';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=346';
+import { UIHelpers } from './helpers.js?v=346';
+import { PresetManager } from './managers/preset-manager.js?v=346';
+import { ModalManager } from './managers/modal-manager.js?v=346';
+import { CableManager } from './managers/cable-manager.js?v=346';
+import { PageManager } from './managers/page-manager.js?v=346';
+import { InteractionManager } from './managers/interaction-manager.js?v=346';
+import { WaveCodec } from '../audio/wave-codec.js?v=346';
 
 export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'LISS', 'XY', 'SPEC', 'MON', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD'];
 
@@ -185,11 +185,13 @@ export class UIController {
         const btn = document.getElementById('perf-mode-btn');
         if (btn) {
             if (isPerf) {
-                btn.className = "h-5 px-1.5 bg-amber-500/20 text-amber-300 border border-amber-500/80 rounded flex items-center justify-center gap-0.5 transition shadow-[0_0_8px_rgba(245,158,11,0.25)] cursor-pointer font-mono text-[7.5px] font-bold";
+                btn.className = "h-5 px-1.5 bg-amber-500/20 text-amber-300 border border-amber-500/80 rounded flex items-center justify-center transition shadow-[0_0_8px_rgba(245,158,11,0.25)] cursor-pointer font-mono text-[7.5px] font-bold";
             } else {
-                btn.className = "h-5 px-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-400 hover:text-amber-400 rounded flex items-center justify-center gap-0.5 transition shadow-sm cursor-pointer font-mono text-[7.5px] font-bold";
+                btn.className = "h-5 px-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-400 hover:text-amber-400 rounded flex items-center justify-center transition shadow-sm cursor-pointer font-mono text-[7.5px] font-bold";
             }
         }
+
+        this.interactionManager?.updateRowHandleRail?.();
 
         if (isPerf) {
             // Clear any selections
