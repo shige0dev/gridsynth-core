@@ -23,7 +23,7 @@ import { scaleAudioDefs } from './defs/scale.js?v=217';
 import { rfAudioDefs } from './defs/rf.js?v=217';
 import { arAudioDefs } from './defs/ar.js?v=217';
 import { waveAudioDefs } from './defs/wave.js?v=297';
-import { padAudioDefs } from './defs/pad.js?v=341';
+import { padAudioDefs } from './defs/pad.js?v=342';
 
 export const AUDIO_REGISTRY = {
     ...vcoAudioDefs,

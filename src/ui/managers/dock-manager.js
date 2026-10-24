@@ -143,11 +143,14 @@ export class DockManager {
 
         dialogEl.innerHTML = `
             <div class="dock-dialog-header border-b border-slate-800 pb-1 flex items-center justify-between cursor-move touch-none select-none shrink-0">
-                <div class="flex items-center gap-1.5 pointer-events-none">
-                    <i data-lucide="${iconName}" class="w-3.5 h-3.5 text-cyan-400"></i>
-                    <h3 class="dock-dialog-title text-[10px] font-bold text-cyan-300 uppercase tracking-wider">${titleText}</h3>
+                <div class="flex items-center gap-1.5 flex-1 min-w-0 mr-2">
+                    <i data-lucide="${iconName}" class="w-3.5 h-3.5 text-cyan-400 pointer-events-none shrink-0"></i>
+                    <h3 class="dock-dialog-title text-[10px] font-bold text-cyan-300 uppercase tracking-wider pointer-events-none shrink-0">${titleText}</h3>
+                    ${m.type === 'PAD' ? `
+                        <input type="text" class="dock-title-name-input bg-slate-950/90 border border-slate-700/80 hover:border-cyan-400 focus:border-cyan-400 rounded px-1.5 py-0 text-[9.5px] font-mono font-bold text-cyan-300 focus:outline-none focus:ring-1 focus:ring-cyan-400/50 h-[20px] w-28 select-text cursor-text leading-none shadow-inner ml-1" value="${m.name || 'PAD'}" placeholder="PAD" maxlength="12" title="PADの名前を編集">
+                    ` : ''}
                 </div>
-                <div class="flex items-center gap-1">
+                <div class="flex items-center gap-1 shrink-0">
                     <button class="dock-lock-btn h-5 px-1.5 rounded text-[8.5px] font-bold flex items-center gap-1 border transition-colors bg-slate-800 text-slate-400 border-slate-700 cursor-pointer" title="ロック/ピン留め">
                         <i data-lucide="pin" class="w-2.5 h-2.5 pointer-events-none"></i>
                         <span class="pointer-events-none">LOCK</span>
@@ -171,6 +174,35 @@ export class DockManager {
 
         // Render content
         this.reRenderDockModal(mId);
+
+        // Bind title name input if PAD
+        if (m.type === 'PAD') {
+            const titleNameInput = dialogEl.querySelector('.dock-title-name-input');
+            if (titleNameInput) {
+                titleNameInput.addEventListener('pointerdown', (e) => e.stopPropagation());
+                titleNameInput.addEventListener('mousedown', (e) => e.stopPropagation());
+                titleNameInput.addEventListener('keydown', (e) => e.stopPropagation());
+                titleNameInput.addEventListener('input', (e) => {
+                    m.name = e.target.value;
+                    const bodyNameInput = dialogEl.querySelector('#pad-name-input');
+                    if (bodyNameInput && bodyNameInput.value !== m.name) {
+                        bodyNameInput.value = m.name;
+                    }
+                    this.ui.synth.updateModule(`${this.ui.currentPageId}/${mId}`, m, this.ui.getPatchState(mId));
+                    this.ui.renderCell(m.row * this.ui.COLS + m.col);
+                });
+                titleNameInput.addEventListener('blur', (e) => {
+                    if (!m.name || !m.name.trim()) {
+                        m.name = 'PAD';
+                        e.target.value = 'PAD';
+                        const bodyNameInput = dialogEl.querySelector('#pad-name-input');
+                        if (bodyNameInput) bodyNameInput.value = 'PAD';
+                        this.ui.synth.updateModule(`${this.ui.currentPageId}/${mId}`, m, this.ui.getPatchState(mId));
+                        this.ui.renderCell(m.row * this.ui.COLS + m.col);
+                    }
+                });
+            }
+        }
 
         // Bring to front on pointerdown anywhere on this dialog, and stop propagation to prevent background grid interaction/scroll
         dialogEl.addEventListener('pointerdown', (e) => {
@@ -384,6 +416,11 @@ export class DockManager {
             else if (reg.schema) bodyEl.innerHTML = UIHelpers.renderSchemaModal(m, ctx, reg.schema);
             if (reg.bindEvents) reg.bindEvents(m, ctx, onChange);
             else if (reg.schema) UIHelpers.bindSchemaEvents(m, ctx, reg.schema, onChange);
+
+            const headerInput = info.element.querySelector('.dock-title-name-input');
+            if (headerInput && headerInput !== document.activeElement) {
+                headerInput.value = m.name || 'PAD';
+            }
         });
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }
