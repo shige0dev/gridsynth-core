@@ -540,16 +540,18 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
       - 音名とCV電圧（1V/Oct規格、C1=0.0V, C2=1.0V, C3=2.0V）の対照表を掲載。
     - バージョンを `v1.0.0352`、キャッシュバスターを `v=352` に更新。
 
- 25. **デモ09をFM Neo-Soul Trio（エレピ＋キック＋ベース）へ刷新**:
-    - `src/presets/demos/09_fm_heavy_techno_groove.js`:
-      - 旧テクノパッチを「FM Neo-Soul Trio」パッチへ全面刷新。
-      - パート1: Rhodes風エレピ（`SEQ16_1` + `FM1` + `DELAY1` + `REVERB1`）
-      - パート2: アタック明瞭な改良キック（`SEQ16_2` + `FM2`）
-      - パート3: ウォーキング・フィンガーベース（`SEQ16_3` + `FM3`）
-      - 単一ミキサー `MIX1`（Ch1〜Ch3）で4パート原則に適合したクリーンなミックス設計。
-    - `src/presets/default.js`:
-      - デモキーを `'09_FM_NEO_SOUL_TRIO'` に更新。
-    - バージョンを `v1.0.0354`、キャッシュバスターを `v=354` に更新。
+ 26. **KEY（キーボード）モジュールのデフォルトC2化 & 発音前初期CV設定機能の追加**:
+    - `src/modules/defs/controllers.js`:
+      - デフォルトを `octave: 2, lastNote: 'C2', currentMidi: 36, cv: 1.0` に変更。
+      - `onNormalize` 処理を新設:
+        - JSON定義時の `cv`、`initialCv`、`lastNote`、`note`、`currentMidi` から初期CV電圧および音名表示を自動正規化。
+    - `src/audio/defs/controllers.js`:
+      - `create` および `update` において `resolveKeyCv` を実装。
+      - 鍵盤がタップされる前（`gate_out = 0.0` の待機状態）でも、JSONで指定された初期CV電圧（例: `0.0V` で C1、`1.0V` で C2 等）を `cv_out` から即座に出力。
+    - `GRIDSYNTH_AI_PATCH_SPEC.md`:
+      - `KEY` モジュールの仕様リファレンスを更新（初期CV設定プロパティの説明を追加）。
+    - バージョンを `v1.0.0355`、キャッシュバスターを `v=355` に更新。
+
 
 
 

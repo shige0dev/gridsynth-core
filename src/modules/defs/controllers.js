@@ -1,8 +1,61 @@
-import { UIHelpers } from '../../ui/helpers.js?v=297';
+import { UIHelpers } from '../../ui/helpers.js?v=354';
+
+export function parseKeyNoteToCv(val) {
+    if (typeof val === 'number') return val;
+    if (typeof val !== 'string') return 1.0;
+    const s = val.trim();
+    const num = Number(s);
+    if (!isNaN(num)) return num;
+    const m = s.match(/^([a-gA-G])([#bB]?)(-?\d+)?$/);
+    if (!m) return 1.0;
+    const letter = m[1].toUpperCase();
+    const accidental = m[2] || '';
+    const oct = m[3] !== undefined ? parseInt(m[3], 10) : 2;
+    const baseMap = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+    let semi = baseMap[letter] ?? 0;
+    if (accidental === '#') semi += 1;
+    else if (accidental.toLowerCase() === 'b') semi -= 1;
+    return (semi + (oct - 1) * 12) / 12.0;
+}
 
 export const KEY = {
     color: 'sky',
-    defaults: () => ({ type: 'KEY', octave: 4, lastNote: 'C4', currentMidi: 60 }),
+    defaults: () => ({ type: 'KEY', octave: 2, lastNote: 'C2', currentMidi: 36, cv: 1.0 }),
+    onNormalize: (m) => {
+        if (m.cv !== undefined) {
+            m.cv = Number(m.cv);
+            m.currentMidi = Math.round(m.cv * 12) + 24;
+            m.octave = Math.floor(m.currentMidi / 12) - 1;
+            m.lastNote = UIHelpers.cvToNoteName ? UIHelpers.cvToNoteName(m.cv) : `C${m.octave}`;
+        } else if (m.initialCv !== undefined) {
+            m.cv = Number(m.initialCv);
+            m.currentMidi = Math.round(m.cv * 12) + 24;
+            m.octave = Math.floor(m.currentMidi / 12) - 1;
+            m.lastNote = UIHelpers.cvToNoteName ? UIHelpers.cvToNoteName(m.cv) : `C${m.octave}`;
+        } else if (m.note !== undefined) {
+            m.cv = parseKeyNoteToCv(m.note);
+            m.currentMidi = Math.round(m.cv * 12) + 24;
+            m.octave = Math.floor(m.currentMidi / 12) - 1;
+            m.lastNote = m.note;
+        } else if (m.lastNote !== undefined) {
+            m.cv = parseKeyNoteToCv(m.lastNote);
+            m.currentMidi = Math.round(m.cv * 12) + 24;
+            m.octave = Math.floor(m.currentMidi / 12) - 1;
+        } else if (m.currentMidi !== undefined) {
+            m.cv = (m.currentMidi - 24) / 12.0;
+            m.octave = Math.floor(m.currentMidi / 12) - 1;
+            m.lastNote = UIHelpers.cvToNoteName ? UIHelpers.cvToNoteName(m.cv) : `C${m.octave}`;
+        } else if (m.octave !== undefined) {
+            m.currentMidi = (m.octave + 1) * 12;
+            m.cv = (m.currentMidi - 24) / 12.0;
+            m.lastNote = `C${m.octave}`;
+        } else {
+            m.octave = 2;
+            m.currentMidi = 36;
+            m.lastNote = 'C2';
+            m.cv = 1.0;
+        }
+    },
     ports: () => ({
         in: [],
         out: [
@@ -21,17 +74,19 @@ export const KEY = {
         { s: 13, l: 85.833 },
         { s: 15, l: 97.5 }
     ],
-    renderGrid: (m) => `<div class="flex flex-col items-center justify-center leading-tight gap-0.5 pointer-events-none text-cyan-400"><span class="text-[9px] font-bold text-sky-300">KEYBOARD</span><span class="text-[14px] font-mono font-bold text-white">${m.lastNote||'C4'}</span></div>`,
+    renderGrid: (m) => `<div class="flex flex-col items-center justify-center leading-tight gap-0.5 pointer-events-none text-cyan-400"><span class="text-[9px] font-bold text-sky-300">KEYBOARD</span><span class="text-[14px] font-mono font-bold text-white">${m.lastNote||'C2'}</span></div>`,
     renderModal: (m) => {
         const W = KEY.WHITE_KEYS, B = KEY.BLACK_KEYS;
+        const curOct = m.octave ?? 2;
+        const curNote = m.lastNote || `C${curOct}`;
         return `
             <div class="space-y-2">
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800">
                     <div class="flex items-center gap-1.5"><span class="text-[8px] text-slate-400 uppercase font-semibold">OCTAVE</span>
                     <button id="key-oct-down" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold">−</button>
-                    <span id="key-oct-disp" class="w-5 text-center text-[10px] font-mono font-bold text-cyan-300">${m.octave||4}</span>
+                    <span id="key-oct-disp" class="w-5 text-center text-[10px] font-mono font-bold text-cyan-300">${curOct}</span>
                     <button id="key-oct-up" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold">＋</button></div>
-                    <span class="text-[9px] font-mono font-bold text-sky-300" id="key-active-note">${m.lastNote||'C4'}</span>
+                    <span class="text-[9px] font-mono font-bold text-sky-300" id="key-active-note">${curNote}</span>
                 </div>
                 <div class="relative h-28 bg-slate-950 border-2 border-slate-400 flex select-none touch-none overflow-hidden" id="kb-box">
                     ${W.map(k => `<div class="key-white flex-1 bg-slate-950 border-r-2 border-slate-400 last:border-r-0 flex flex-col justify-end items-center pb-1 cursor-pointer select-none transition-colors" data-semi="${k.s}"><span class="text-[7.5px] font-bold text-slate-400 pointer-events-none">${k.n}</span></div>`).join('')}
@@ -44,13 +99,38 @@ export const KEY = {
     },
     bindEvents: (m, ctx, cb) => {
         const octD = document.getElementById('key-oct-disp'), nD = document.getElementById('key-active-note');
-        document.getElementById('key-oct-down')?.addEventListener('click', () => { if ((m.octave||4) > 1) { m.octave--; if (octD) octD.textContent = m.octave; cb(); } });
-        document.getElementById('key-oct-up')?.addEventListener('click', () => { if ((m.octave||4) < 7) { m.octave++; if (octD) octD.textContent = m.octave; cb(); } });
+        document.getElementById('key-oct-down')?.addEventListener('click', () => {
+            if ((m.octave ?? 2) > 1) {
+                m.octave = (m.octave ?? 2) - 1;
+                if (octD) octD.textContent = m.octave;
+                m.currentMidi = (m.octave + 1) * 12;
+                m.lastNote = `C${m.octave}`;
+                m.cv = (m.currentMidi - 24) / 12.0;
+                if (nD) nD.textContent = m.lastNote;
+                cb();
+            }
+        });
+        document.getElementById('key-oct-up')?.addEventListener('click', () => {
+            if ((m.octave ?? 2) < 7) {
+                m.octave = (m.octave ?? 2) + 1;
+                if (octD) octD.textContent = m.octave;
+                m.currentMidi = (m.octave + 1) * 12;
+                m.lastNote = `C${m.octave}`;
+                m.cv = (m.currentMidi - 24) / 12.0;
+                if (nD) nD.textContent = m.lastNote;
+                cb();
+            }
+        });
         const play = (s, isDown) => {
-            const midi = ((m.octave||4) + 1) * 12 + s;
+            const oct = m.octave ?? 2;
+            const midi = (oct + 1) * 12 + s;
             const name = `${UIHelpers.NOTES[((s%12)+12)%12]}${Math.floor(midi/12)-1}`;
-            m.lastNote = name; if (nD && isDown) nD.textContent = name;
-            ctx.sendKeyNote?.(midi, isDown); if (isDown) cb();
+            m.lastNote = name;
+            m.currentMidi = midi;
+            m.cv = (midi - 24) / 12.0;
+            if (nD && isDown) nD.textContent = name;
+            ctx.sendKeyNote?.(midi, isDown);
+            if (isDown) cb();
         };
         const kb = document.getElementById('kb-box');
         const setKeyHighlight = (semi, isPressed) => {
