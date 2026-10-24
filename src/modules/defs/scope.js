@@ -549,7 +549,6 @@ export const SPEC = {
 export const scopeDefs = {
     SCOPE,
     LISS,
-    XY: LISS,
     MON,
     SPEC
 };
