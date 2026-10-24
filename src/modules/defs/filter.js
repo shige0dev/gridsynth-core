@@ -5,7 +5,7 @@ export const VCF = {
     defaults: () => ({ type: 'VCF', filterType: 'lowpass', cutoff: 1800, q: 2.5, modDepth: 1200 }),
     ports: () => ({
         in: [
-            { port: 'wave_in', color: 'bg-emerald-500' },
+            { port: 'wave_in', color: 'bg-blue-500' },
             { port: 'cv_in', color: 'bg-yellow-400' }
         ],
         out: [{ port: 'wave_out', color: 'bg-blue-500' }]

@@ -40,7 +40,7 @@ export const PAT = {
         in: [],
         out: [
             { port: 'cv_out', color: 'bg-yellow-400' },
-            { port: 'gate_out', color: 'bg-orange-500' }
+            { port: 'gate_out', color: 'bg-red-500' }
         ]
     }),
     renderGrid: (m) => {

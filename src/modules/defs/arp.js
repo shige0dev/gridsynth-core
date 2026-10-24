@@ -97,7 +97,7 @@ export const ARP = {
         ],
         out: [
             { port: 'cv_out', pin: 9, alias: 'out', color: 'bg-yellow-400' },
-            { port: 'gate_out', pin: 10, color: 'bg-orange-500' }
+            { port: 'gate_out', pin: 10, color: 'bg-red-500' }
         ]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
