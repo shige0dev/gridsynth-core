@@ -1,13 +1,13 @@
-import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=343';
-import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=343';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=343';
-import { UIHelpers } from './helpers.js?v=343';
-import { PresetManager } from './managers/preset-manager.js?v=343';
-import { ModalManager } from './managers/modal-manager.js?v=343';
-import { CableManager } from './managers/cable-manager.js?v=343';
-import { PageManager } from './managers/page-manager.js?v=343';
-import { InteractionManager } from './managers/interaction-manager.js?v=343';
-import { WaveCodec } from '../audio/wave-codec.js?v=343';
+import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=344';
+import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=344';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=344';
+import { UIHelpers } from './helpers.js?v=344';
+import { PresetManager } from './managers/preset-manager.js?v=344';
+import { ModalManager } from './managers/modal-manager.js?v=344';
+import { CableManager } from './managers/cable-manager.js?v=344';
+import { PageManager } from './managers/page-manager.js?v=344';
+import { InteractionManager } from './managers/interaction-manager.js?v=344';
+import { WaveCodec } from '../audio/wave-codec.js?v=344';
 
 export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'LISS', 'XY', 'SPEC', 'MON', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD'];
 
@@ -433,7 +433,13 @@ export class UIController {
                     <div class="absolute top-[2px] left-0 right-0 px-1 flex justify-center items-center pointer-events-none z-20">
                         <span class="w-full text-center font-bold text-[7.5px] tracking-tight text-white truncate select-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">${displayName}</span>
                     </div>`;
-            } else if (m.type === 'PAD' || m.type === 'SCOPE' || m.type === 'LISS' || m.type === 'XY') {
+            } else if (m.type === 'PAD') {
+                const displayName = m.name || 'PAD';
+                titleHTML = `
+                    <div class="absolute top-[2px] left-[2px] right-[2px] flex justify-center items-center pointer-events-none z-20">
+                        <span class="text-black font-bold text-[8px] tracking-wider select-none truncate">${displayName}</span>
+                    </div>`;
+            } else if (m.type === 'SCOPE' || m.type === 'LISS' || m.type === 'XY') {
                 const displayName = m.name || m.type;
                 titleHTML = `
                     <div class="absolute top-[2px] left-[2px] right-[2px] flex justify-center items-center pointer-events-none z-20">

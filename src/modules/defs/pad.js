@@ -1,5 +1,5 @@
 // src/modules/defs/pad.js
-import { UIHelpers } from '../../ui/helpers.js?v=343';
+import { UIHelpers } from '../../ui/helpers.js?v=344';
 
 function calcPressure(e) {
     if (e.pointerType === 'mouse') {
@@ -126,14 +126,14 @@ export const PAD = {
     defaults: () => ({ type: 'PAD', name: 'PAD', hue: 0.5, sat: 1.0, bright: 0.0, opacity: 0.8 }),
     ports: () => ({
         in: [
-            { port: 'hue_cv', pin: 2, color: 'bg-yellow-400' },
-            { port: 'bright_cv', pin: 3, color: 'bg-yellow-400' }
+            { port: 'hue_cv', pin: 4, color: 'bg-yellow-400' },
+            { port: 'bright_cv', pin: 5, color: 'bg-yellow-400' }
         ],
         out: [
-            { port: 'gate_out', pin: 11, color: 'bg-red-500' },
-            { port: 'x_cv', pin: 5, color: 'bg-yellow-400' },
-            { port: 'y_cv', pin: 6, color: 'bg-yellow-400' },
-            { port: 'pressure_cv', pin: 7, color: 'bg-yellow-400' }
+            { port: 'x_cv', pin: 10, color: 'bg-yellow-400' },
+            { port: 'y_cv', pin: 11, color: 'bg-yellow-400' },
+            { port: 'pressure_cv', pin: 12, color: 'bg-yellow-400' },
+            { port: 'gate_out', pin: 13, color: 'bg-red-500' }
         ]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
@@ -143,22 +143,6 @@ export const PAD = {
         </div>`,
     renderModal: (m) => `
         <div class="space-y-3 p-1">
-            <div class="grid grid-cols-2 gap-3 pb-2 border-b border-slate-800 items-center">
-                <div class="space-y-1">
-                    <div class="flex items-center justify-between text-[8.5px] font-bold h-4">
-                        <span class="text-slate-400 uppercase tracking-wider">NAME</span>
-                    </div>
-                    <input type="text" id="pad-name-input" value="${m.name || 'PAD'}" placeholder="PAD" maxlength="12" class="w-full bg-slate-950 border border-slate-700/80 rounded px-2 py-0.5 text-[10px] font-mono font-bold text-cyan-300 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/50 transition-colors h-[22px]">
-                </div>
-                <div class="space-y-1">
-                    <div class="flex items-center justify-between text-[8.5px] font-bold h-4">
-                        <span class="text-slate-400 uppercase tracking-wider">OPACITY</span>
-                        <span id="pad-opacity-slider-disp" class="font-mono text-cyan-300 font-bold cursor-ew-resize select-none">${(m.opacity ?? 0.8).toFixed(2)}</span>
-                    </div>
-                    <input type="range" id="pad-opacity-slider" min="0" max="1" step="0.01" value="${m.opacity ?? 0.8}" class="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
-                </div>
-            </div>
-
             <div class="grid grid-cols-3 gap-2 pb-2 border-b border-slate-800 items-start">
                 <div class="space-y-1">
                     <div class="flex items-center justify-between text-[8.5px] font-bold h-4">
@@ -193,42 +177,6 @@ export const PAD = {
             </div>
         </div>`,
     bindEvents: (m, ctx, onChange) => {
-        // NAME input
-        const nameInput = document.getElementById('pad-name-input');
-        if (nameInput) {
-            nameInput.addEventListener('input', (e) => {
-                m.name = e.target.value;
-                const headerInput = document.querySelector('.dock-title-name-input');
-                if (headerInput && headerInput.value !== m.name) {
-                    headerInput.value = m.name;
-                }
-                onChange();
-            });
-            nameInput.addEventListener('blur', (e) => {
-                if (!m.name || !m.name.trim()) {
-                    m.name = 'PAD';
-                    e.target.value = 'PAD';
-                    const headerInput = document.querySelector('.dock-title-name-input');
-                    if (headerInput) headerInput.value = 'PAD';
-                    onChange();
-                }
-            });
-            nameInput.addEventListener('keydown', (e) => {
-                e.stopPropagation();
-            });
-            nameInput.addEventListener('pointerdown', (e) => {
-                e.stopPropagation();
-            });
-        }
-
-        // OPACITY Slider
-        UIHelpers.bindSlider('pad-opacity-slider', v => v.toFixed(2), v => {
-            m.opacity = v;
-            const touchArea = document.getElementById('pad-modal-touch-area');
-            if (touchArea) touchArea.style.opacity = String(v);
-            onChange();
-        }, 1, 0.0, 1.0);
-
         // HUE Slider
         UIHelpers.bindSlider('pad-hue-slider', v => v.toFixed(2), v => {
             m.hue = v;

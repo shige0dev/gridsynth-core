@@ -184,10 +184,6 @@ export class DockManager {
                 titleNameInput.addEventListener('keydown', (e) => e.stopPropagation());
                 titleNameInput.addEventListener('input', (e) => {
                     m.name = e.target.value;
-                    const bodyNameInput = dialogEl.querySelector('#pad-name-input');
-                    if (bodyNameInput && bodyNameInput.value !== m.name) {
-                        bodyNameInput.value = m.name;
-                    }
                     this.ui.synth.updateModule(`${this.ui.currentPageId}/${mId}`, m, this.ui.getPatchState(mId));
                     this.ui.renderCell(m.row * this.ui.COLS + m.col);
                 });
@@ -195,8 +191,6 @@ export class DockManager {
                     if (!m.name || !m.name.trim()) {
                         m.name = 'PAD';
                         e.target.value = 'PAD';
-                        const bodyNameInput = dialogEl.querySelector('#pad-name-input');
-                        if (bodyNameInput) bodyNameInput.value = 'PAD';
                         this.ui.synth.updateModule(`${this.ui.currentPageId}/${mId}`, m, this.ui.getPatchState(mId));
                         this.ui.renderCell(m.row * this.ui.COLS + m.col);
                     }
