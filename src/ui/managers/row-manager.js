@@ -194,6 +194,7 @@ export class RowManager {
         const cleanupDragVisuals = () => {
             this.hideInsertBeam();
             rightHandle.classList.remove('dragging');
+            this.rowTracks?.forEach(t => t?.classList.remove('row-source-dragging'));
         };
 
         const onPointerMove = (e) => {
@@ -205,6 +206,8 @@ export class RowManager {
                     isRowDragging = true;
                     this.draggingRow = originalRow;
                     rightHandle.classList.add('dragging');
+                    const sourceTrack = this.rowTracks?.[originalRow];
+                    if (sourceTrack) sourceTrack.classList.add('row-source-dragging');
                     if (navigator.vibrate) {
                         try { navigator.vibrate(15); } catch (_) {}
                     }
@@ -253,6 +256,9 @@ export class RowManager {
             currentTargetBoundary = null;
             startY = e.clientY;
             isRowDragging = false;
+            const sourceTrack = this.rowTracks?.[originalRow];
+            if (sourceTrack) sourceTrack.classList.add('row-source-dragging');
+            rightHandle.classList.add('dragging');
 
             try { rightHandle.setPointerCapture(e.pointerId); } catch (_) {}
             window.addEventListener('pointermove', onPointerMove, { passive: false });
