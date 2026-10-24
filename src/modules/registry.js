@@ -23,6 +23,7 @@ import { scaleDefs } from './defs/scale.js?v=217';
 import { rfDefs } from './defs/rf.js?v=217';
 import { arDefs } from './defs/ar.js?v=217';
 import { waveDefs } from './defs/wave.js?v=297';
+import { padDefs } from './defs/pad.js';
 
 export const MODULE_REGISTRY = {
     ...vcoDefs,
@@ -44,7 +45,8 @@ export const MODULE_REGISTRY = {
     ...scaleDefs,
     ...rfDefs,
     ...arDefs,
-    ...waveDefs
+    ...waveDefs,
+    ...padDefs
 };
 
 export { ADSR_CURVES };

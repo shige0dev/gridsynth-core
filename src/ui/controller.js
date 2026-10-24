@@ -1,15 +1,15 @@
-import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=325';
-import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=325';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=325';
-import { UIHelpers } from './helpers.js?v=325';
-import { PresetManager } from './managers/preset-manager.js?v=325';
-import { ModalManager } from './managers/modal-manager.js?v=325';
-import { CableManager } from './managers/cable-manager.js?v=325';
-import { PageManager } from './managers/page-manager.js?v=325';
-import { InteractionManager } from './managers/interaction-manager.js?v=325';
-import { WaveCodec } from '../audio/wave-codec.js?v=325';
+import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=326';
+import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=326';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=326';
+import { UIHelpers } from './helpers.js?v=326';
+import { PresetManager } from './managers/preset-manager.js?v=326';
+import { ModalManager } from './managers/modal-manager.js?v=326';
+import { CableManager } from './managers/cable-manager.js?v=326';
+import { PageManager } from './managers/page-manager.js?v=326';
+import { InteractionManager } from './managers/interaction-manager.js?v=326';
+import { WaveCodec } from '../audio/wave-codec.js?v=326';
 
-export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'LISS', 'XY', 'SPEC', 'MON', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE'];
+export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'LISS', 'XY', 'SPEC', 'MON', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD'];
 
 
 export class UIController {
@@ -407,6 +407,9 @@ export class UIController {
                 ${titleHTML}
                 <div class="absolute inset-0 flex flex-col items-center justify-center module-body cursor-pointer p-1 z-0 overflow-hidden" data-module-id="${mId}">${reg.renderGrid(m, ctx)}</div>
                 ${portsHTML}`;
+            if (reg.bindGridEvents) {
+                reg.bindGridEvents(cell, m, this);
+            }
         } else {
             if (cell.dataset.renderedState !== 'empty') {
                 cell.dataset.renderedState = 'empty';

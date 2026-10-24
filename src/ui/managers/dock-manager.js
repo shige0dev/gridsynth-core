@@ -4,6 +4,7 @@ import { UIHelpers } from '../helpers.js?v=297';
 
 export const DOCK_TITLES = {
     KEY: 'KEYBOARD',
+    PAD: 'TOUCH PAD',
     PAT: 'STRUDEL PATTERN',
     SEQ16: '16-STEP SEQUENCER',
     SEQ8: '8-STEP SEQUENCER',
@@ -44,6 +45,7 @@ export const DOCK_TITLES = {
 
 export const DOCK_ICONS = {
     KEY: 'music',
+    PAD: 'fingerprint',
     SCALE: 'music',
     PAT: 'code',
     SEQ16: 'sliders',
@@ -137,10 +139,10 @@ export class DockManager {
         const dialogEl = document.createElement('div');
         dialogEl.id = `dock-dialog-${mId}`;
         dialogEl.dataset.moduleId = mId;
-        dialogEl.className = "dock-dialog absolute bg-slate-900/95 border border-cyan-500/70 rounded-xl p-2 shadow-2xl backdrop-blur-md pointer-events-auto transition-none left-2 right-2 w-[calc(100%-16px)] max-h-[calc(100%-58px)] overflow-hidden";
+        dialogEl.className = "dock-dialog absolute bg-slate-900/95 border border-cyan-500/70 rounded-xl p-2 shadow-2xl backdrop-blur-md pointer-events-auto transition-none left-2 right-2 w-[calc(100%-16px)] max-h-[calc(100%-84px)] overflow-hidden flex flex-col";
 
         dialogEl.innerHTML = `
-            <div class="dock-dialog-header border-b border-slate-800 pb-1 flex items-center justify-between cursor-move touch-none select-none">
+            <div class="dock-dialog-header border-b border-slate-800 pb-1 flex items-center justify-between cursor-move touch-none select-none shrink-0">
                 <div class="flex items-center gap-1.5 pointer-events-none">
                     <i data-lucide="${iconName}" class="w-3.5 h-3.5 text-cyan-400"></i>
                     <h3 class="dock-dialog-title text-[10px] font-bold text-cyan-300 uppercase tracking-wider">${titleText}</h3>
@@ -152,7 +154,7 @@ export class DockManager {
                     </button>
                 </div>
             </div>
-            <div class="dock-dialog-body text-xs mt-1"></div>
+            <div class="dock-dialog-body text-xs mt-1 overflow-y-auto flex-1 min-h-0"></div>
         `;
 
         container.appendChild(dialogEl);
@@ -203,7 +205,7 @@ export class DockManager {
 
             const otherDocks = Array.from(this.openDocks.values()).filter(d => d.element !== dialogEl);
             if (otherDocks.length === 0) {
-                dialogEl.style.top = `${Math.max(6, fR.height - cR.height - 52)}px`;
+                dialogEl.style.top = `${Math.max(6, fR.height - cR.height - 84)}px`;
             } else {
                 const lastOther = otherDocks[otherDocks.length - 1];
                 const lastTop = parseFloat(lastOther.element.style.top) || lastOther.element.offsetTop;
@@ -211,7 +213,7 @@ export class DockManager {
                 if (targetTop >= 6) {
                     dialogEl.style.top = `${targetTop}px`;
                 } else {
-                    const cascadeTop = Math.max(6, Math.min(fR.height - cR.height - 52, lastTop + 28));
+                    const cascadeTop = Math.max(6, Math.min(fR.height - cR.height - 84, lastTop + 28));
                     dialogEl.style.top = `${cascadeTop}px`;
                 }
             }

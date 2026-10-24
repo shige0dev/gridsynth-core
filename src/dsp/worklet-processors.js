@@ -18,3 +18,4 @@ import './processors/scale.js';
 import './processors/rf.js';
 import './processors/ar.js';
 import './processors/wave.js?v=297';
+import './processors/pad.js';
