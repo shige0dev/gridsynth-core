@@ -48,9 +48,6 @@ export class CableManager {
             el.style.removeProperty('--conn-glow');
             el.style.removeProperty('--conn-bright');
         });
-        document.querySelectorAll('.grid-cell').forEach(cell => {
-            cell.classList.remove('has-selected-port');
-        });
         if (this.ui.selectedModuleIds.length > 0) {
             this.selectedTargetForConnection = null;
             this.renderCables();
@@ -62,8 +59,6 @@ export class CableManager {
             if (el) {
                 el.classList.remove('shadow-sm');
                 el.classList.add('port-selected');
-                const cell = el.closest('.grid-cell');
-                if (cell) cell.classList.add('has-selected-port');
             }
 
             // Highlight all connected opposite ports

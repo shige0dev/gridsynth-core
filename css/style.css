@@ -189,11 +189,6 @@ body {
     border-radius: inherit;
 }
 
-.grid-cell.has-selected-port {
-    z-index: 35 !important;
-    border-color: rgba(255, 255, 255, 0.6) !important;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.25), 0 0 2px rgba(255, 255, 255, 0.4) !important;
-}
 
 .port {
     touch-action: manipulation;

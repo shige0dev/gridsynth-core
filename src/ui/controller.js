@@ -314,8 +314,7 @@ export class UIController {
         const cell = this.cells[idx] || document.getElementById(`cell-${idx}`);
         if (!cell) return;
         const mId = this.gridMap[idx], m = mId ? this.modules[mId] : null;
-        const hasSelectedPort = !this.selectedModuleIds.length && this.selectedTargetForConnection && this.selectedTargetForConnection.moduleId === mId;
-        cell.className = `grid-cell relative aspect-square border transition-all select-none touch-none ${hasSelectedPort ? 'has-selected-port' : ''} ${m ? `border-slate-600 bg-white/10 backdrop-blur-sm shadow-md shadow-black/50 ${this.selectedModuleIds.includes(mId)?'selected-module':''}` : 'border-transparent cursor-pointer empty-cell'}`;
+        cell.className = `grid-cell relative aspect-square border transition-all select-none touch-none ${m ? `border-slate-600 bg-white/10 backdrop-blur-sm shadow-md shadow-black/50 ${this.selectedModuleIds.includes(mId)?'selected-module':''}` : 'border-transparent cursor-pointer empty-cell'}`;
         if (m) {
             cell.dataset.renderedState = 'module';
             const reg = MODULE_REGISTRY[m.type];
