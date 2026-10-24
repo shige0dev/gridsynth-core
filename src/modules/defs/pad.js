@@ -343,28 +343,64 @@ export const PAD = {
         const state = data || { x: 0.5, y: 0.5, pressure: 0.0, isDown: false, hue: m.hue ?? 0.5, sat: m.sat ?? 1.0, bright: m.bright ?? 0.0 };
         // Ensure module-level settings are preserved if not overridden by data
         if (state.sat === undefined) state.sat = m.sat ?? 1.0;
+        if (state.hue === undefined) state.hue = m.hue ?? 0.5;
+        if (state.bright === undefined) state.bright = m.bright ?? 0.0;
 
-        // 1. Render on Cell Canvas
+        const isDown = Boolean(state.isDown);
+        const x = state.x ?? 0.5;
+        const y = state.y ?? 0.5;
+        const press = state.pressure ?? (isDown ? 0.6 : 0.0);
+        const hue = state.hue;
+        const sat = state.sat;
+        const bright = state.bright;
+
+        // 1. Render on Cell Canvas with Dirty caching (skips rendering when unchanged)
         const cvs = cell.querySelector('.pad-grid-canvas');
         if (cvs) {
-            const ctx = cvs.getContext('2d');
-            drawPadCanvas(ctx, cvs.width, cvs.height, state, false);
+            const last = cvs._lastRenderState;
+            const isDirty = !last ||
+                last.isDown !== isDown ||
+                last.x !== x ||
+                last.y !== y ||
+                last.press !== press ||
+                last.hue !== hue ||
+                last.sat !== sat ||
+                last.bright !== bright;
+
+            if (isDirty) {
+                const ctx = cvs.getContext('2d');
+                drawPadCanvas(ctx, cvs.width, cvs.height, state, false);
+                cvs._lastRenderState = { isDown, x, y, press, hue, sat, bright };
+            }
         }
 
-        // 2. Render on Modal Canvas & Stats if open
+        // 2. Render on Modal Canvas & Stats if open with Dirty caching
         const modalCvs = targetModal?.querySelector('#pad-modal-canvas');
         if (modalCvs) {
-            const mCtx = modalCvs.getContext('2d');
-            drawPadCanvas(mCtx, modalCvs.width, modalCvs.height, state, true);
+            const mLast = modalCvs._lastRenderState;
+            const isMDirty = !mLast ||
+                mLast.isDown !== isDown ||
+                mLast.x !== x ||
+                mLast.y !== y ||
+                mLast.press !== press ||
+                mLast.hue !== hue ||
+                mLast.sat !== sat ||
+                mLast.bright !== bright;
 
-            // Update stats (X, Y, PRES)
-            const xEl = targetModal.querySelector('#pad-stat-x');
-            const yEl = targetModal.querySelector('#pad-stat-y');
-            const pressEl = targetModal.querySelector('#pad-stat-press');
+            if (isMDirty) {
+                const mCtx = modalCvs.getContext('2d');
+                drawPadCanvas(mCtx, modalCvs.width, modalCvs.height, state, true);
+                modalCvs._lastRenderState = { isDown, x, y, press, hue, sat, bright };
 
-            if (xEl) xEl.textContent = (state.x ?? 0.5).toFixed(2);
-            if (yEl) yEl.textContent = (state.y ?? 0.5).toFixed(2);
-            if (pressEl) pressEl.textContent = (state.pressure ?? 0.0).toFixed(2);
+                // Update stats (X, Y, PRES)
+                const xEl = targetModal.querySelector('#pad-stat-x');
+                const yEl = targetModal.querySelector('#pad-stat-y');
+                const pressEl = targetModal.querySelector('#pad-stat-press');
+
+                if (xEl) xEl.textContent = x.toFixed(2);
+                if (yEl) yEl.textContent = y.toFixed(2);
+                if (pressEl) pressEl.textContent = press.toFixed(2);
+            }
         }
     }
 };
