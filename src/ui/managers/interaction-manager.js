@@ -251,7 +251,7 @@ export class InteractionManager {
 
             const container = document.getElementById('canvas-container');
             if (e.pointerType === 'mouse' && e.button === 0 && container) {
-                const isControl = e.target.closest('.port, input, button, select, textarea');
+                const isControl = e.target.closest('.port, input, button, select, textarea, .pad-grid-container, .pad-grid-canvas');
                 if (!isControl) {
                     this._scrollStartY = e.clientY;
                     this._scrollStartTop = container.scrollTop;
@@ -343,7 +343,7 @@ export class InteractionManager {
             // Desktop mouse drag-to-scroll support (simulate touch swipe on PC)
             const container = document.getElementById('canvas-container');
             if (e.pointerType === 'mouse' && (e.buttons & 1) && !this.isDragging && !this.moduleLongPressed && container) {
-                if (e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal')) {
+                if (e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal, .pad-grid-container, .pad-grid-canvas')) {
                     this._isMouseScrollDragging = false;
                     return;
                 }

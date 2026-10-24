@@ -1,5 +1,5 @@
 // src/modules/defs/pad.js
-import { UIHelpers } from '../../ui/helpers.js?v=344';
+import { UIHelpers } from '../../ui/helpers.js?v=345';
 
 function calcPressure(e) {
     if (e.pointerType === 'mouse') {
@@ -126,14 +126,14 @@ export const PAD = {
     defaults: () => ({ type: 'PAD', name: 'PAD', hue: 0.5, sat: 1.0, bright: 0.0, opacity: 0.8 }),
     ports: () => ({
         in: [
-            { port: 'hue_cv', pin: 4, color: 'bg-yellow-400' },
-            { port: 'bright_cv', pin: 5, color: 'bg-yellow-400' }
+            { port: 'hue_cv', pin: 4, color: 'bg-yellow-400', extraClass: 'pad-chassis-port' },
+            { port: 'bright_cv', pin: 5, color: 'bg-yellow-400', extraClass: 'pad-chassis-port' }
         ],
         out: [
-            { port: 'x_cv', pin: 10, color: 'bg-yellow-400' },
-            { port: 'y_cv', pin: 11, color: 'bg-yellow-400' },
-            { port: 'pressure_cv', pin: 12, color: 'bg-yellow-400' },
-            { port: 'gate_out', pin: 13, color: 'bg-red-500' }
+            { port: 'x_cv', pin: 10, color: 'bg-yellow-400', extraClass: 'pad-chassis-port' },
+            { port: 'y_cv', pin: 11, color: 'bg-yellow-400', extraClass: 'pad-chassis-port' },
+            { port: 'pressure_cv', pin: 12, color: 'bg-yellow-400', extraClass: 'pad-chassis-port' },
+            { port: 'gate_out', pin: 13, color: 'bg-red-500', extraClass: 'pad-chassis-port' }
         ]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
@@ -205,9 +205,11 @@ export const PAD = {
             const rect = touchArea.getBoundingClientRect();
             const clientX = e.clientX ?? (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
             const clientY = e.clientY ?? (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
-            const normX = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+            // Generous edge tolerance so right edge reaches 1.0 and bottom edge reaches 0.0 smoothly
+            const edgePad = 8;
+            const normX = Math.max(0, Math.min(1, (clientX - (rect.left + edgePad)) / Math.max(1, rect.width - edgePad * 2)));
             // Y is 0.0 at bottom, 1.0 at top
-            const normY = Math.max(0, Math.min(1, 1.0 - (clientY - rect.top) / rect.height));
+            const normY = Math.max(0, Math.min(1, 1.0 - (clientY - (rect.top + edgePad)) / Math.max(1, rect.height - edgePad * 2)));
             const press = type === 'PAD_UP' ? 0.0 : calcPressure(e);
 
             ctx?.sendControl?.({
@@ -255,8 +257,11 @@ export const PAD = {
             const rect = padBox.getBoundingClientRect();
             const clientX = e.clientX;
             const clientY = e.clientY;
-            const normX = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-            const normY = Math.max(0, Math.min(1, 1.0 - (clientY - rect.top) / rect.height));
+            // Pad tolerance: ensures 0.0 and 1.0 are fully reached on all edges
+            const edgePadX = 6;
+            const edgePadY = 6;
+            const normX = Math.max(0, Math.min(1, (clientX - (rect.left + edgePadX)) / Math.max(1, rect.width - edgePadX * 2)));
+            const normY = Math.max(0, Math.min(1, 1.0 - (clientY - (rect.top + edgePadY)) / Math.max(1, rect.height - edgePadY * 2)));
             const press = type === 'PAD_UP' ? 0.0 : calcPressure(e);
 
             ui?.synth?.sendControlEvent(m.id, {
@@ -269,11 +274,12 @@ export const PAD = {
 
         padBox.addEventListener('pointerdown', (e) => {
             // If user clicked a pin port or header, do not capture
-            if (e.target.closest('.port-node') || e.target.closest('.module-header')) return;
+            if (e.target.closest('.port') || e.target.closest('.module-header')) return;
             activePointerId = e.pointerId;
             try { padBox.setPointerCapture(e.pointerId); } catch (err) {}
             sendGridPad('PAD_DOWN', e);
             e.stopPropagation();
+            e.preventDefault();
         });
 
         padBox.addEventListener('pointermove', (e) => {

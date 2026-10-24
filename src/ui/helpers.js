@@ -570,7 +570,7 @@ export const UIHelpers = {
             const leftPins = leftSlots.map(renderSlot).join('');
             const isDense = Boolean(pinSlots[14]);
             const posCls = isDense ? 'bottom-[4px] gap-1' : 'bottom-[16px] gap-1.5';
-            html += `<div class="absolute left-[3px] ${posCls} flex flex-col-reverse items-center pointer-events-auto z-10">${leftPins}</div>`;
+            html += `<div class="absolute left-[3px] ${posCls} flex flex-col-reverse items-center pointer-events-none z-10">${leftPins}</div>`;
         }
 
         // Right Edge: PIN10, PIN11, PIN12, PIN13 (bottom to top)
@@ -578,13 +578,13 @@ export const UIHelpers = {
             const rightSlots = [10, 11, 12];
             if (pinSlots[13]) rightSlots.push(13);
             const rightPins = rightSlots.map(renderSlot).join('');
-            html += `<div class="absolute right-[3px] bottom-[16px] flex flex-col-reverse gap-1.5 items-center pointer-events-auto z-10">${rightPins}</div>`;
+            html += `<div class="absolute right-[3px] bottom-[16px] flex flex-col-reverse gap-1.5 items-center pointer-events-none z-10">${rightPins}</div>`;
         }
 
         // Bottom Edge: PIN4, PIN5, PIN6, PIN7, PIN8, PIN9 (6 slots fixed)
         if (pinSlots[4] || pinSlots[5] || pinSlots[6] || pinSlots[7] || pinSlots[8] || pinSlots[9]) {
             const bottomPins = [4, 5, 6, 7, 8, 9].map(renderSlot).join('');
-            html += `<div class="absolute bottom-[3px] left-[3px] right-[3px] flex justify-between items-center pointer-events-auto z-10">${bottomPins}</div>`;
+            html += `<div class="absolute bottom-[3px] left-[3px] right-[3px] flex justify-between items-center pointer-events-none z-10">${bottomPins}</div>`;
         }
 
         return html;

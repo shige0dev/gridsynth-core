@@ -551,3 +551,8 @@ body {
     width: 9px !important;
     height: 9px !important;
 }
+
+/* Compact hitbox for PAD chassis ports to maximize touchable surface */
+.pad-chassis-port::before {
+    inset: -2px !important;
+}
