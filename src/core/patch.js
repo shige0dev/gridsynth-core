@@ -384,12 +384,13 @@ export function parsePatch(patchData, cols = 4, userSubpatches = null, errorSink
         });
 
         // Pass 2: Modules specified via slots (index-based)
+        const srcCols = patchData?.grid?.cols || patchData?.cols || 5;
         Object.entries(slots).forEach(([slotStr, id]) => {
             if (Object.values(finalSlots).includes(id)) return;
             const oldIdx = parseInt(slotStr, 10);
             let r, c;
-            // Legacy patches were 5 cols
-            if (cols !== 5) {
+            // Legacy patches were 5 cols (only remap if source was 5 cols and target is different)
+            if (cols !== 5 && srcCols === 5) {
                 r = Math.floor(oldIdx / 5);
                 c = oldIdx % 5;
                 if (c >= cols) {

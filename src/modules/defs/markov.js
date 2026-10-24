@@ -1,4 +1,4 @@
-import { UIHelpers } from '../../ui/helpers.js?v=348';
+import { UIHelpers } from '../../ui/helpers.js?v=349';
 
 export const MARKOV = {
     color: 'amber',
