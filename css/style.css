@@ -91,9 +91,24 @@ body {
     background: #030712;
     color: #f8fafc;
     font-family: system-ui, sans-serif;
-    touch-action: none;
     overscroll-behavior: none;
     -webkit-tap-highlight-color: transparent;
+}
+
+#canvas-container {
+    touch-action: pan-y pinch-zoom;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+}
+
+#canvas-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+#canvas-container::-webkit-scrollbar-thumb {
+    background-color: rgba(148, 163, 184, 0.3);
+    border-radius: 9999px;
 }
 
 .bg-grid {

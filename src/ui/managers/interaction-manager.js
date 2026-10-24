@@ -36,7 +36,7 @@ export class InteractionManager {
 
     updateSelectionClasses() {
         this.ui.gridBoard?.classList.toggle('has-selected-module', this.selectedModuleIds.length > 0);
-        for (let i = 0; i < 40; i++) {
+        for (let i = 0; i < (this.ui.TOTAL_SLOTS || 40); i++) {
             const cell = document.getElementById(`cell-${i}`);
             if (!cell) continue;
             const mId = this.ui.gridMap[i];
@@ -296,6 +296,8 @@ export class InteractionManager {
                     }
                     this.isDragging = true;
                     this.dragMode = 'move';
+                    const container = document.getElementById('canvas-container');
+                    if (container) container.style.overflowY = 'hidden';
 
                     const baseM = this.ui.modules[this._dragCandidate];
                     this.dragGroupOffsets = this.selectedModuleIds.map(id => {
@@ -356,6 +358,8 @@ export class InteractionManager {
             }
             if (this.isDragging) {
                 this.isDragging = false;
+                const container = document.getElementById('canvas-container');
+                if (container) container.style.overflowY = 'auto';
                 this.lastHighlightedCells.forEach(c => c.classList.remove('drop-highlight-valid', 'drop-highlight-invalid', 'drop-highlight-copy-valid'));
                 this.lastHighlightedCells = [];
                 if (this.dropTargetIndex !== null && this.dragGroupValid) {

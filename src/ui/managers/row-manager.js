@@ -184,6 +184,8 @@ export class RowManager {
             this.hideInsertBeam();
             rightHandle.classList.remove('dragging');
             this.rowTracks?.forEach(t => t?.classList.remove('row-source-dragging'));
+            const container = document.getElementById('canvas-container');
+            if (container) container.style.overflowY = 'auto';
         };
 
         const onPointerMove = (e) => {
@@ -195,6 +197,8 @@ export class RowManager {
                     isRowDragging = true;
                     this.draggingRow = originalRow;
                     rightHandle.classList.add('dragging');
+                    const container = document.getElementById('canvas-container');
+                    if (container) container.style.overflowY = 'hidden';
                     const sourceTrack = this.rowTracks?.[originalRow];
                     if (sourceTrack) sourceTrack.classList.add('row-source-dragging');
                     if (navigator.vibrate) {

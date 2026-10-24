@@ -312,7 +312,7 @@ export function validateConnectionDirection(c, fromMod, toMod, fromManifest = nu
 /**
  * Normalizes any patch data format (full pages or single-page) into standard { bpm, pages, errors }
  */
-export function parsePatch(patchData, cols = 5, userSubpatches = null, errorSink = null) {
+export function parsePatch(patchData, cols = 4, userSubpatches = null, errorSink = null) {
     const errors = errorSink && Array.isArray(errorSink) ? errorSink : [];
     if (!patchData) {
         return { bpm: 120, pages: { "0": { name: '', slots: {}, modules: {}, connections: [] } }, errors };
@@ -356,23 +356,77 @@ export function parsePatch(patchData, cols = 5, userSubpatches = null, errorSink
             }
         });
 
-        // Ensure any module in rawMods that wasn't in slots is assigned a slot
-        const existingSlotModuleIds = new Set(Object.values(slots));
+        // Collect all modules with explicit row/col or slot placement
+        // If source was created for different columns (e.g. 5 cols) or module has explicit row/col,
+        // safely remap onto current cols
+        const finalSlots = {};
+        const placedPositions = new Set(); // "r,c"
+
+        // Pass 1: Modules that have explicit row/col
         Object.entries(rawMods).forEach(([id, raw]) => {
-            if (!existingSlotModuleIds.has(id)) {
-                let slotIdx;
-                if (raw && raw.row !== undefined && raw.col !== undefined) {
-                    slotIdx = raw.row * cols + raw.col;
-                } else {
-                    let s = 0;
-                    while (slots[String(s)]) s++;
-                    slotIdx = s;
+            if (raw && raw.row !== undefined && raw.col !== undefined) {
+                let r = raw.row;
+                let c = raw.col;
+                if (c >= cols) {
+                    c = c % cols;
+                    r = r + 1;
                 }
-                slots[String(slotIdx)] = id;
+                while (placedPositions.has(`${r},${c}`)) {
+                    c++;
+                    if (c >= cols) {
+                        c = 0;
+                        r++;
+                    }
+                }
+                placedPositions.add(`${r},${c}`);
+                finalSlots[String(r * cols + c)] = id;
             }
         });
 
+        // Pass 2: Modules specified via slots (index-based)
         Object.entries(slots).forEach(([slotStr, id]) => {
+            if (Object.values(finalSlots).includes(id)) return;
+            const oldIdx = parseInt(slotStr, 10);
+            let r, c;
+            // Legacy patches were 5 cols
+            if (cols !== 5) {
+                r = Math.floor(oldIdx / 5);
+                c = oldIdx % 5;
+                if (c >= cols) {
+                    c = c % cols;
+                    r = r + 1;
+                }
+            } else {
+                r = Math.floor(oldIdx / cols);
+                c = oldIdx % cols;
+            }
+            while (placedPositions.has(`${r},${c}`)) {
+                c++;
+                if (c >= cols) {
+                    c = 0;
+                    r++;
+                }
+            }
+            placedPositions.add(`${r},${c}`);
+            finalSlots[String(r * cols + c)] = id;
+        });
+
+        // Pass 3: Any leftover module
+        Object.entries(rawMods).forEach(([id, raw]) => {
+            if (Object.values(finalSlots).includes(id)) return;
+            let r = 0, c = 0;
+            while (placedPositions.has(`${r},${c}`)) {
+                c++;
+                if (c >= cols) {
+                    c = 0;
+                    r++;
+                }
+            }
+            placedPositions.add(`${r},${c}`);
+            finalSlots[String(r * cols + c)] = id;
+        });
+
+        Object.entries(finalSlots).forEach(([slotStr, id]) => {
             const slotIdx = parseInt(slotStr, 10);
             const raw = rawMods[id] || {};
             const type = raw.type || id.replace(/[0-9]/g, '').toUpperCase();
@@ -471,7 +525,7 @@ export function exportModuleData(m) {
 /**
  * Exports current pagesData structure into a clean, portable patch JSON object
  */
-export function exportPatch(pagesData, bpm = 120, cols = 5) {
+export function exportPatch(pagesData, bpm = 120, cols = 4) {
     const exportPages = {};
 
     Object.entries(pagesData || {}).forEach(([pId, pData]) => {
@@ -520,6 +574,7 @@ export function exportPatch(pagesData, bpm = 120, cols = 5) {
 
     return {
         bpm: bpm || 120,
+        grid: { cols, rows: 12 },
         pages: exportPages
     };
 }

@@ -15,10 +15,11 @@ export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'LISS', 'XY',
 export class UIController {
     constructor(synth) {
         this.synth = synth;
-        this.COLS = 5;
-        this.ROWS = 8;
-        this.gridMap = Array(40).fill(null);
-        this.cells = new Array(40);
+        this.COLS = 4;
+        this.ROWS = 12;
+        this.TOTAL_SLOTS = this.COLS * this.ROWS;
+        this.gridMap = Array(this.TOTAL_SLOTS).fill(null);
+        this.cells = new Array(this.TOTAL_SLOTS);
         this._lastUiUpdate = 0;
 
         this.presetManager = new PresetManager(this);
@@ -100,7 +101,7 @@ export class UIController {
         }
     }
 
-    static parsePatch(patchData, cols = 5, userSubpatches = null, errorSink = null) {
+    static parsePatch(patchData, cols = 4, userSubpatches = null, errorSink = null) {
         return parsePatch(patchData, cols, userSubpatches, errorSink);
     }
 
@@ -108,22 +109,32 @@ export class UIController {
         this.gridBoard = document.getElementById('grid-board');
         this.cableCanvas = document.getElementById('cable-canvas');
         const baseGrid = document.getElementById('base-grid');
-        if (baseGrid && !baseGrid.hasChildNodes()) {
+
+        // Apply grid column styles dynamically
+        if (this.gridBoard) {
+            this.gridBoard.style.gridTemplateColumns = `repeat(${this.COLS}, minmax(0, 1fr))`;
+        }
+        if (baseGrid) {
+            baseGrid.style.gridTemplateColumns = `repeat(${this.COLS}, minmax(0, 1fr))`;
+            baseGrid.innerHTML = '';
             const fragment = document.createDocumentFragment();
-            for (let i = 0; i < 40; i++) {
+            for (let i = 0; i < this.TOTAL_SLOTS; i++) {
                 const bgCell = document.createElement('div');
                 bgCell.className = 'aspect-square border border-solid border-slate-700/50 rounded-xs';
                 fragment.appendChild(bgCell);
             }
             baseGrid.appendChild(fragment);
         }
-        this.gridBoard.innerHTML = '';
-        for (let i = 0; i < 40; i++) {
-            const c = document.createElement('div');
-            c.id = `cell-${i}`;
-            c.dataset.index = i;
-            this.cells[i] = c;
-            this.gridBoard.appendChild(c);
+
+        if (this.gridBoard) {
+            this.gridBoard.innerHTML = '';
+            for (let i = 0; i < this.TOTAL_SLOTS; i++) {
+                const c = document.createElement('div');
+                c.id = `cell-${i}`;
+                c.dataset.index = i;
+                this.cells[i] = c;
+                this.gridBoard.appendChild(c);
+            }
         }
         const savedOp = parseFloat(localStorage.getItem('gridsynth_cable_opacity'));
         this.cableOpacity = (!isNaN(savedOp) && [1.0, 0.2].some(s => Math.abs(s - savedOp) < 0.05)) ? savedOp : 1.0;
@@ -275,7 +286,7 @@ export class UIController {
         this.gridMap.fill(null);
         Object.entries(this.modules).forEach(([id, m]) => {
             const idx = m.row * this.COLS + m.col;
-            if (idx >= 0 && idx < 40) this.gridMap[idx] = id;
+            if (idx >= 0 && idx < this.TOTAL_SLOTS) this.gridMap[idx] = id;
         });
     }
 
@@ -403,10 +414,53 @@ export class UIController {
 
     updateAllCells() {
         this.gridBoard?.classList.toggle('has-selected-module', this.selectedModuleIds.length > 0);
-        for (let i = 0; i < 40; i++) this.renderCell(i);
+        for (let i = 0; i < this.TOTAL_SLOTS; i++) this.renderCell(i);
         if (typeof lucide !== 'undefined') lucide.createIcons();
         this.updatePortHighlight();
         this.interactionManager?.updateRowHandleRail?.();
+    }
+
+    setGridColumns(newCols) {
+        if (newCols !== 4 && newCols !== 5) return;
+        const oldCols = this.COLS;
+        if (oldCols === newCols) return;
+
+        this.COLS = newCols;
+        this.ROWS = newCols === 4 ? 12 : 10;
+        this.TOTAL_SLOTS = this.COLS * this.ROWS;
+        this.gridMap = Array(this.TOTAL_SLOTS).fill(null);
+        this.cells = new Array(this.TOTAL_SLOTS);
+
+        // Update AB test indicator display
+        const disp = document.getElementById('grid-cols-disp');
+        if (disp) disp.textContent = `${newCols}COL`;
+
+        // Re-map module coordinates safely
+        const placed = new Set();
+        Object.values(this.modules).forEach(m => {
+            let r = m.row, c = m.col;
+            if (c >= newCols) {
+                c = c % newCols;
+                r = r + 1;
+            }
+            while (placed.has(`${r},${c}`)) {
+                c++;
+                if (c >= newCols) {
+                    c = 0;
+                    r++;
+                }
+            }
+            placed.add(`${r},${c}`);
+            m.row = r;
+            m.col = c;
+        });
+
+        this.initDOM();
+        this.interactionManager?.initRowHandleUI?.();
+        this.syncGridMap();
+        this.updateAllCells();
+        this.renderCables();
+        this.showToast(`グリッドを ${newCols}列 (${this.TOTAL_SLOTS}スロット) に切り替えました`);
     }
 
     renderCables() {
@@ -788,6 +842,17 @@ export class UIController {
                 this.saveCurrentSubpatchToLibrary(res.trim());
             }
         });
+        document.getElementById('grid-cols-toggle-btn')?.addEventListener('click', () => {
+            const nextCols = this.COLS === 4 ? 5 : 4;
+            this.setGridColumns(nextCols);
+        });
+
+        // Sync cables and row overlay handles smoothly during vertical scrolling
+        document.getElementById('canvas-container')?.addEventListener('scroll', () => {
+            this.renderCables();
+            this.interactionManager?.updateRowHandleRail?.();
+        }, { passive: true });
+
         document.getElementById('preset-trigger-btn')?.addEventListener('click', () => {
             this.renderPresetList();
             document.getElementById('preset-manager-modal').classList.remove('hidden');
