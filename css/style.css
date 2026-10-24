@@ -113,6 +113,7 @@ body {
 
 #grid-scroll-content {
     width: 100%;
+    touch-action: pan-y;
 }
 
 #grid-board, #base-grid {
@@ -195,11 +196,13 @@ body {
 
 .grid-cell {
     overflow: visible !important;
+    touch-action: pan-y;
 }
 
 .grid-cell .module-body {
     overflow: hidden;
     border-radius: inherit;
+    touch-action: pan-y;
 }
 
 

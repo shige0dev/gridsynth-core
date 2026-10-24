@@ -34,6 +34,18 @@ export class InteractionManager {
         this.mode = 'edit';
     }
 
+    cancelPendingPresses() {
+        if (this._pTimer) {
+            clearTimeout(this._pTimer);
+            this._pTimer = null;
+        }
+        if (this._lpTimer) {
+            clearTimeout(this._lpTimer);
+            this._lpTimer = null;
+        }
+        this._dragCandidate = null;
+    }
+
     updateSelectionClasses() {
         this.ui.gridBoard?.classList.toggle('has-selected-module', this.selectedModuleIds.length > 0);
         for (let i = 0; i < (this.ui.TOTAL_SLOTS || 40); i++) {
@@ -288,7 +300,7 @@ export class InteractionManager {
                 this._lpTimer = null;
             }
             if (!this.isDragging && this._dragCandidate && distSq > 64) {
-                if (this.selectedModuleIds.includes(this._dragCandidate)) {
+                if (this.moduleLongPressed && this.selectedModuleIds.includes(this._dragCandidate)) {
                     if (this.ui.selectedTargetForConnection) {
                         this.ui.selectedTargetForConnection = null;
                     }

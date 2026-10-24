@@ -1,13 +1,13 @@
-import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=319';
-import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=319';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=319';
-import { UIHelpers } from './helpers.js?v=319';
-import { PresetManager } from './managers/preset-manager.js?v=319';
-import { ModalManager } from './managers/modal-manager.js?v=319';
-import { CableManager } from './managers/cable-manager.js?v=319';
-import { PageManager } from './managers/page-manager.js?v=319';
-import { InteractionManager } from './managers/interaction-manager.js?v=319';
-import { WaveCodec } from '../audio/wave-codec.js?v=319';
+import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=320';
+import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=320';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=320';
+import { UIHelpers } from './helpers.js?v=320';
+import { PresetManager } from './managers/preset-manager.js?v=320';
+import { ModalManager } from './managers/modal-manager.js?v=320';
+import { CableManager } from './managers/cable-manager.js?v=320';
+import { PageManager } from './managers/page-manager.js?v=320';
+import { InteractionManager } from './managers/interaction-manager.js?v=320';
+import { WaveCodec } from '../audio/wave-codec.js?v=320';
 
 export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'LISS', 'XY', 'SPEC', 'MON', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE'];
 
@@ -318,7 +318,7 @@ export class UIController {
         const cell = this.cells[idx] || document.getElementById(`cell-${idx}`);
         if (!cell) return;
         const mId = this.gridMap[idx], m = mId ? this.modules[mId] : null;
-        cell.className = `grid-cell relative aspect-square border transition-all select-none touch-none ${m ? `border-slate-600 bg-white/10 backdrop-blur-sm shadow-md shadow-black/50 ${this.selectedModuleIds.includes(mId)?'selected-module':''}` : 'border-transparent cursor-pointer empty-cell'}`;
+        cell.className = `grid-cell relative aspect-square border transition-all select-none ${m ? `border-slate-600 bg-white/10 backdrop-blur-sm shadow-md shadow-black/50 ${this.selectedModuleIds.includes(mId)?'selected-module':''}` : 'border-transparent cursor-pointer empty-cell'}`;
         if (m) {
             cell.dataset.renderedState = 'module';
             const reg = MODULE_REGISTRY[m.type];
@@ -850,10 +850,9 @@ export class UIController {
             this.setGridColumns(nextCols);
         });
 
-        // Sync cables and row overlay handles smoothly during vertical scrolling
+        // Scrolling cancels pending long-presses without blocking the compositor thread
         document.getElementById('canvas-container')?.addEventListener('scroll', () => {
-            this.renderCables();
-            this.interactionManager?.updateRowHandleRail?.();
+            this.interactionManager?.cancelPendingPresses?.();
         }, { passive: true });
 
         document.getElementById('preset-trigger-btn')?.addEventListener('click', () => {
