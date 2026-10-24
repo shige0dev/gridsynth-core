@@ -9,7 +9,7 @@ import { PageManager } from './managers/page-manager.js?v=351';
 import { InteractionManager } from './managers/interaction-manager.js?v=359';
 import { WaveCodec } from '../audio/wave-codec.js?v=351';
 
-export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'LISS', 'XY', 'SPEC', 'MON', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD'];
+export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'LISS', 'XY', 'SPEC', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD'];
 
 
 export class UIController {

@@ -50,7 +50,6 @@ export const MODAL_WIDTHS = {
     SCOPE: 'w-[235px]',
     LISS: 'w-[235px]',
     SPEC: 'w-[235px]',
-    MON: 'w-[195px]',
     SPK: 'w-[185px]',
     SUB: 'w-[240px]'
 };
@@ -289,7 +288,7 @@ export class ModalManager {
                         name: 'CV',
                         sub: 'CV (変調・演算・エンベロープ)',
                         color: 'purple',
-                        types: ['LFO', 'ADSR', 'RF', 'AR', 'CHORD', 'SCALE', 'MATH1', 'MATH2', 'SH', 'CVDELAY', 'SLIDER', 'THROUGH', 'MON', 'SUB_IO']
+                        types: ['LFO', 'ADSR', 'RF', 'AR', 'CHORD', 'SCALE', 'MATH1', 'MATH2', 'SH', 'CVDELAY', 'SLIDER', 'THROUGH', 'SUB_IO']
                     }
                 ];
 

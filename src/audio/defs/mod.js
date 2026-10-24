@@ -10,7 +10,7 @@ const createMathAudio = (ctx, d, patch, eng, hasTwoInputs) => {
     const hasB = hasTwoInputs ? (patch?.has('CV_inB') || patch?.has('cv_inb') || patch?.has('b') || patch?.has('in_b') || false) : false;
     w.port.postMessage({
         type: 'SET_PARAMS',
-        mode: d.mode || (hasTwoInputs ? 'ADD' : 'ABS'),
+        mode: d.mode || (hasTwoInputs ? 'ADD' : '-'),
         valA: d.valA ?? 0.0,
         valB: hasTwoInputs ? (d.valB ?? 1.0) : 0.0,
         hasA,
@@ -50,7 +50,7 @@ const updateMathAudio = (inst, d, patch, hasTwoInputs) => {
     const hasB = hasTwoInputs ? (patch?.has('CV_inB') || patch?.has('cv_inb') || patch?.has('b') || patch?.has('in_b') || false) : false;
     inst.nodes.w.port.postMessage({
         type: 'SET_PARAMS',
-        mode: d.mode || (hasTwoInputs ? 'ADD' : 'ABS'),
+        mode: d.mode || (hasTwoInputs ? 'ADD' : '-'),
         valA: d.valA ?? 0.0,
         valB: hasTwoInputs ? (d.valB ?? 1.0) : 0.0,
         hasA,

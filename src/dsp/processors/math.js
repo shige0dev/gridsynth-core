@@ -29,6 +29,11 @@ export class MathProcessor extends AudioWorkletProcessor {
             const b = hasB ? inB[i] : defB;
             let v = 0;
             switch (mode) {
+                case '-':
+                case 'RAW':
+                case 'THRU':
+                    v = a;
+                    break;
                 case 'ADD':
                     v = a + b;
                     break;

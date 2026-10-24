@@ -277,33 +277,7 @@ export const LISS = {
 };
 
 // -------------------------------------------------------------
-// 3. Monitor Module (MON)
-// -------------------------------------------------------------
-export const MON = {
-    color: 'slate',
-    defaults: () => ({ type: 'MON' }),
-    ports: () => ({
-        in: [
-            { port: 'cv_in1', color: 'bg-yellow-400' },
-            { port: 'cv_in2', color: 'bg-yellow-400' },
-            { port: 'cv_in3', color: 'bg-yellow-400' },
-            { port: 'cv_in4', color: 'bg-yellow-400' }
-        ],
-        out: []
-    }),
-    renderGrid: () => `<div class="flex items-center justify-center w-full h-full pointer-events-none">${UIHelpers.renderPanelBars(Array.from({ length: 4 }, (_, i) => ({ pct: 0, innerCls: `mon-bar-${i+1}` })), { gapCls: 'gap-1', theme: 'cv' })}</div>`,
-    updateLive: (cell, data) => {
-        if (!data || !data.values) return;
-        data.values.forEach((v, i) => {
-            const b = cell.querySelector(`.mon-bar-${i+1}`);
-            if (b) b.style.height = `${Math.max(0, Math.min(100, (v + 1) * 50))}%`;
-        });
-    },
-    renderModal: () => `<div class="text-[9px] text-slate-400 p-2 text-center">4チャンネル CV/オーディオ信号リアルタイムモニター</div>`
-};
-
-// -------------------------------------------------------------
-// 4. Spectrum Analyzer Module (SPEC)
+// 3. Spectrum Analyzer Module (SPEC)
 // -------------------------------------------------------------
 const extractBands = (freqs, numBands = 96, sampleRate = 48000) => {
     const fftSize = freqs.length * 2;
@@ -549,6 +523,5 @@ export const SPEC = {
 export const scopeDefs = {
     SCOPE,
     LISS,
-    MON,
     SPEC
 };

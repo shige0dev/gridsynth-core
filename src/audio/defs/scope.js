@@ -77,23 +77,6 @@ export const LISS = {
     }
 };
 
-export const MON = {
-    create: (ctx, d, patch, eng) => {
-        const inputs = {}, nodes = {}, bufs = [new Float32Array(256), new Float32Array(256), new Float32Array(256), new Float32Array(256)];
-        for (let c = 1; c <= 4; c++) {
-            const an = ctx.createAnalyser(), inG = ctx.createGain(); an.fftSize = 256; inG.connect(an);
-            if (eng?.silentSink) inG.connect(eng.silentSink);
-            inputs[`cv_in${c}`] = inG; inputs[`in${c}`] = inG; nodes[`in${c}`] = inG; nodes[`an${c}`] = an;
-        }
-        return {
-            nodes, inputs, outputs: {}, read: () => {
-                const vals = []; for (let c = 1; c <= 4; c++) { nodes[`an${c}`].getFloatTimeDomainData(bufs[c - 1]); vals.push(bufs[c - 1][0] || 0); }
-                return { values: vals };
-            }
-        };
-    }
-};
-
 export const SPEC = {
     create: (ctx, d, patch, eng) => {
         const inG = ctx.createGain();
@@ -132,6 +115,5 @@ export const scopeAudioDefs = {
     SCOPE,
     LISS,
     XY: LISS,
-    MON,
     SPEC
 };

@@ -624,6 +624,21 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
       - 4列スクロールグリッド（Cols 0〜3）において、最上段行（Row 0）の右端スロット（セル 003）に `SPK1` がデフォルト配置されるよう最適化。
     - バージョンを `v1.0.0360`、キャッシュバスターを `v=360` に更新。
 
+ 32. **MON（4chモニター）モジュールの廃止・完全削除および MATH1 モジュールへの `-`（数値モニター / スルー）モード新設（デフォルト化）**:
+    - **MON モジュールの削除**:
+      - 音声エンジン (`src/audio/defs/scope.js`)、UI定義 (`src/modules/defs/scope.js`, `src/modules/registry.js`)、ライブ型一覧 (`src/ui/controller.js`)、モジュールモーダル選択肢・サイズ定義 (`src/ui/managers/modal-manager.js`) から `MON` を完全に撤去。
+    - **MATH1 モジュールへの `-`（数値モニター / 透過スルー）機能追加**:
+      - `src/dsp/processors/math.js`:
+        - `MathProcessor` に `case '-': case 'RAW': case 'THRU': v = a; break;` を追加し、入力電圧 `a` をそのまま歪みやレイテンシなく出力するスルーモードをサポート。
+      - `src/audio/defs/mod.js`:
+        - `createMathAudio` / `updateMathAudio` の単一入力デフォルトモードを `'ABS'` から `'-'` に変更。
+      - `src/modules/defs/mod.js`:
+        - `MATH1` のモード選択肢を `MODES: ['-', 'ABS', 'FLOOR', 'CEIL', 'ROUND', 'INT']`（計6種、モーダル幅を6列均等配置）に更新。
+        - デフォルト初期状態を `mode: '-'` に設定。
+        - グリッドセル上では上部にモード名 `'-'`、下部にアナライザー直結のリアルタイム電圧数値（例: `+0.00`）が常時表示され、1chの精密な数値モニターとして即時機能。
+    - バージョンを `v1.0.0361`、キャッシュバスターを `v=361` に更新。
+
+
 
 
 

@@ -59,7 +59,7 @@ const bindMathEventsUI = (m, ctx, cb, valKeys) => {
 };
 
 const renderMathGridUI = (m) => {
-    const mode = m.mode || (m.type === 'MATH1' ? 'ABS' : 'ADD');
+    const mode = m.mode || (m.type === 'MATH1' ? '-' : 'ADD');
     const escMode = mode === '<' ? '&lt;' : (mode === '<=' ? '&lt;=' : mode);
     return `
         <div class="flex flex-col items-center justify-center leading-none gap-0.5 pointer-events-none text-cyan-400">
@@ -334,15 +334,15 @@ export const THROUGH = {
 
 export const MATH1 = {
     color: 'purple',
-    MODES: ['ABS', 'FLOOR', 'CEIL', 'ROUND', 'INT'],
-    defaults: () => ({ type: 'MATH1', mode: 'ABS', valA: 0.0 }),
+    MODES: ['-', 'ABS', 'FLOOR', 'CEIL', 'ROUND', 'INT'],
+    defaults: () => ({ type: 'MATH1', mode: '-', valA: 0.0 }),
     ports: () => ({
         in: [{ port: 'CV_inA', color: 'bg-yellow-400' }],
         out: [{ port: 'CV_OUT', color: 'bg-yellow-400' }]
     }),
     renderGrid: renderMathGridUI,
     updateLive: updateMathLiveUI,
-    renderModal: (m, ctx) => renderMathModalUI(m, ctx, [{ label: 'Functions (A)', cols: 5, modes: MATH1.MODES }], ['A']),
+    renderModal: (m, ctx) => renderMathModalUI(m, ctx, [{ label: 'Functions (A)', cols: 6, modes: MATH1.MODES }], ['A']),
     bindEvents: (m, ctx, cb) => bindMathEventsUI(m, ctx, cb, ['A'])
 };
 
