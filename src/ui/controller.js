@@ -1,13 +1,13 @@
-import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=297';
-import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=297';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=297';
-import { UIHelpers } from './helpers.js?v=229';
-import { PresetManager } from './managers/preset-manager.js?v=297';
-import { ModalManager } from './managers/modal-manager.js?v=297';
-import { CableManager } from './managers/cable-manager.js?v=314';
-import { PageManager } from './managers/page-manager.js?v=297';
-import { InteractionManager } from './managers/interaction-manager.js?v=314';
-import { WaveCodec } from '../audio/wave-codec.js?v=297';
+import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=319';
+import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=319';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=319';
+import { UIHelpers } from './helpers.js?v=319';
+import { PresetManager } from './managers/preset-manager.js?v=319';
+import { ModalManager } from './managers/modal-manager.js?v=319';
+import { CableManager } from './managers/cable-manager.js?v=319';
+import { PageManager } from './managers/page-manager.js?v=319';
+import { InteractionManager } from './managers/interaction-manager.js?v=319';
+import { WaveCodec } from '../audio/wave-codec.js?v=319';
 
 export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'LISS', 'XY', 'SPEC', 'MON', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE'];
 
@@ -112,10 +112,14 @@ export class UIController {
 
         // Apply grid column styles dynamically
         if (this.gridBoard) {
-            this.gridBoard.style.gridTemplateColumns = `repeat(${this.COLS}, minmax(0, 1fr))`;
+            this.gridBoard.classList.remove('grid-cols-4', 'grid-cols-5');
+            this.gridBoard.classList.add(`grid-cols-${this.COLS}`);
+            this.gridBoard.style.setProperty('grid-template-columns', `repeat(${this.COLS}, minmax(0, 1fr))`, 'important');
         }
         if (baseGrid) {
-            baseGrid.style.gridTemplateColumns = `repeat(${this.COLS}, minmax(0, 1fr))`;
+            baseGrid.classList.remove('grid-cols-4', 'grid-cols-5');
+            baseGrid.classList.add(`grid-cols-${this.COLS}`);
+            baseGrid.style.setProperty('grid-template-columns', `repeat(${this.COLS}, minmax(0, 1fr))`, 'important');
             baseGrid.innerHTML = '';
             const fragment = document.createDocumentFragment();
             for (let i = 0; i < this.TOTAL_SLOTS; i++) {

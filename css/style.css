@@ -111,6 +111,19 @@ body {
     border-radius: 9999px;
 }
 
+#grid-scroll-content {
+    width: 100%;
+}
+
+#grid-board, #base-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+
+#grid-board.grid-cols-5, #base-grid.grid-cols-5 {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+}
+
 .bg-grid {
     background-size: 20px 20px;
     background-image: radial-gradient(circle, rgba(255, 255, 255, 0.06) 1px, transparent 1px);

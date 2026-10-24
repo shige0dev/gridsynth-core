@@ -11,7 +11,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230284c7'/><circle cx='50' cy='50' r='25' fill='%2338bdf8'/></svg>">
-    <link rel="stylesheet" href="./css/style.css?v=318">
+    <link rel="stylesheet" href="./css/style.css?v=319">
     <script>
         (function() {
             var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
@@ -87,8 +87,8 @@
         <!-- Main Workspace (Grid & Cables - Scrollable) -->
         <main id="canvas-container" class="flex-1 relative overflow-y-auto overflow-x-hidden px-3.5 py-2 flex flex-col items-center justify-start pb-[env(safe-area-inset-bottom,0px)] overscroll-contain">
             <div id="grid-scroll-content" class="relative w-full mt-1 mb-6 shrink-0">
-                <div id="base-grid" class="grid gap-1.5 w-full absolute inset-0 pointer-events-none z-0"></div>
-                <div id="grid-board" class="grid gap-1.5 w-full relative z-20"></div>
+                <div id="base-grid" class="grid grid-cols-4 gap-1.5 w-full absolute inset-0 pointer-events-none z-0"></div>
+                <div id="grid-board" class="grid grid-cols-4 gap-1.5 w-full relative z-20"></div>
                 <svg id="cable-canvas" class="absolute inset-0 w-full h-full z-10 pointer-events-none transition-opacity duration-300" shape-rendering="geometricPrecision"></svg>
             </div>
         </main>
@@ -194,6 +194,6 @@
         <div id="toast" class="absolute bottom-20 left-1/2 -translate-x-1/2 px-3.5 py-1.5 bg-slate-900/95 border border-cyan-400 text-cyan-200 rounded-full text-[11px] font-bold shadow-2xl pointer-events-none opacity-0 transition-opacity duration-200 z-[100] whitespace-nowrap ring-1 ring-cyan-500/40">Message</div>
     </div>
 
-    <script type="module" src="./src/main.js?v=318"></script>
+    <script type="module" src="./src/main.js?v=319"></script>
 </body>
 </html>
