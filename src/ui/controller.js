@@ -4,9 +4,9 @@ import { MODULE_REGISTRY } from '../modules/registry.js?v=297';
 import { UIHelpers } from './helpers.js?v=229';
 import { PresetManager } from './managers/preset-manager.js?v=297';
 import { ModalManager } from './managers/modal-manager.js?v=297';
-import { CableManager } from './managers/cable-manager.js?v=313';
+import { CableManager } from './managers/cable-manager.js?v=314';
 import { PageManager } from './managers/page-manager.js?v=297';
-import { InteractionManager } from './managers/interaction-manager.js?v=313';
+import { InteractionManager } from './managers/interaction-manager.js?v=314';
 import { WaveCodec } from '../audio/wave-codec.js?v=297';
 
 export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'LISS', 'XY', 'SPEC', 'MON', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE'];
@@ -683,14 +683,14 @@ export class UIController {
             if (this.synth.isRunning()) {
                 this.synth.suspend();
                 this.synth.clearAllBuffers();
-                btn.className = "h-7 w-7 bg-slate-900 text-slate-400 rounded-lg border border-slate-700 flex items-center justify-center shrink-0";
+                btn.className = "h-5 w-5 bg-slate-900 text-slate-400 rounded-md border border-slate-700 flex items-center justify-center shrink-0";
                 this.showToast('AUDIO STOPPED');
             } else {
                 this.synth.resume();
                 if (!this.synth.hasModules()) {
                     this.synth.rebuildAll(this.pagesData, (pId, id) => this.getPatchState(id, pId));
                 }
-                btn.className = "h-7 w-7 bg-red-950 text-red-400 rounded-lg border border-red-500 shadow-md shadow-red-500/40 flex items-center justify-center shrink-0";
+                btn.className = "h-5 w-5 bg-red-950 text-red-400 rounded-md border border-red-500 shadow-md shadow-red-500/40 flex items-center justify-center shrink-0";
                 this.showToast('AUDIO RUNNING');
             }
         });
@@ -702,13 +702,13 @@ export class UIController {
                 this.synth.rebuildAll(this.pagesData, (pId, id) => this.getPatchState(id, pId));
             }
             this.synth.setPlaybackState(true);
-            document.getElementById('seq-play-btn').className = "h-7 w-7 bg-red-950 text-red-400 rounded-lg border border-red-500 shadow-md shadow-red-500/40 flex items-center justify-center shrink-0";
+            document.getElementById('seq-play-btn').className = "h-5 w-5 bg-red-950 text-red-400 rounded-md border border-red-500 shadow-md shadow-red-500/40 flex items-center justify-center shrink-0";
         });
 
         document.getElementById('seq-stop-btn')?.addEventListener('click', () => {
             this.synth.setPlaybackState(false);
             this.synth.clearAllBuffers();
-            document.getElementById('seq-play-btn').className = "h-7 w-7 bg-slate-900 text-slate-400 rounded-lg border border-slate-700 flex items-center justify-center shrink-0";
+            document.getElementById('seq-play-btn').className = "h-5 w-5 bg-slate-900 text-slate-400 rounded-md border border-slate-700 flex items-center justify-center shrink-0";
         });
 
         document.getElementById('seq-reset-btn')?.addEventListener('click', () => {

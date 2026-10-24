@@ -43,7 +43,7 @@ export const WaveModal = {
         }
         const pwrBtn = document.getElementById('audio-power-btn');
         if (pwrBtn && !pwrBtn.classList.contains('border-red-500')) {
-            pwrBtn.className = "h-7 w-7 bg-red-950 text-red-400 rounded-lg border border-red-500 shadow-md shadow-red-500/40 flex items-center justify-center shrink-0";
+            pwrBtn.className = "h-5 w-5 bg-red-950 text-red-400 rounded-md border border-red-500 shadow-md shadow-red-500/40 flex items-center justify-center shrink-0";
         }
         return this.getActiveInst(ctx, m);
     },

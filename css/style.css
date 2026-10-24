@@ -109,7 +109,7 @@ body {
 .drop-highlight-valid {
     border: 1.5px solid #ffffff !important;
     background: transparent !important;
-    border-radius: 4px !important;
+    border-radius: 0 !important;
     box-shadow: 0 0 4px 1px rgba(255, 255, 255, 0.95), 0 0 8px 2px rgba(255, 255, 255, 0.5) !important;
     z-index: 40 !important;
 }
@@ -117,7 +117,7 @@ body {
 .drop-highlight-copy-valid {
     border: 1.5px solid #eab308 !important;
     background: transparent !important;
-    border-radius: 4px !important;
+    border-radius: 0 !important;
     box-shadow: 0 0 4px 1px rgba(234, 179, 8, 0.95), 0 0 8px 2px rgba(234, 179, 8, 0.5) !important;
     z-index: 40 !important;
 }
@@ -125,7 +125,7 @@ body {
 .drop-highlight-invalid {
     border: 1.5px solid #ef4444 !important;
     background: transparent !important;
-    border-radius: 4px !important;
+    border-radius: 0 !important;
     box-shadow: 0 0 4px 1px rgba(239, 68, 68, 0.95), 0 0 8px 2px rgba(239, 68, 68, 0.5) !important;
     z-index: 40 !important;
 }
@@ -460,4 +460,65 @@ body {
 .empty-cell {
     border-color: transparent !important;
     background: transparent !important;
+}
+
+
+/* Top Playback Menu Bar: Standardized to 70% scale (20px buttons / 10px icons / 31px bar) */
+#main-menu-bar {
+    min-height: 31px !important;
+    padding-top: calc(env(safe-area-inset-top, 0px) + 2px) !important;
+    padding-bottom: 2px !important;
+}
+
+#main-menu-bar button,
+#main-menu-bar #master-bpm-container {
+    height: 20px !important;
+    min-height: 20px !important;
+    max-height: 20px !important;
+    border-radius: 6px !important;
+}
+
+#main-menu-bar #audio-power-btn,
+#main-menu-bar #seq-play-btn,
+#main-menu-bar #seq-stop-btn,
+#main-menu-bar #seq-reset-btn,
+#main-menu-bar #undo-btn {
+    width: 20px !important;
+    min-width: 20px !important;
+    max-width: 20px !important;
+    padding: 0 !important;
+}
+
+#main-menu-bar button svg,
+#main-menu-bar button i {
+    width: 10px !important;
+    height: 10px !important;
+}
+
+#main-menu-bar #camera-hole-spacer {
+    width: 20px !important;
+}
+
+#main-menu-bar #master-bpm-container {
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+    gap: 2px !important;
+}
+
+#main-menu-bar #master-bpm-disp {
+    font-size: 8px !important;
+    width: 18px !important;
+}
+
+#main-menu-bar #preset-trigger-btn {
+    font-size: 8px !important;
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+    max-width: 140px !important;
+}
+
+#main-menu-bar #preset-trigger-btn svg,
+#main-menu-bar #preset-trigger-btn i {
+    width: 9px !important;
+    height: 9px !important;
 }
