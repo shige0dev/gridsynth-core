@@ -91,14 +91,12 @@ export class InteractionManager {
             const mId = port.dataset.moduleId, p = port.dataset.port;
             if (!mId || !p) return;
             const m = this.ui.modules[mId];
-            if (m && isSubModule(m.type)) {
+            if (m) {
                 hoverPortTimer = setTimeout(() => {
                     const info = this.ui.getPortDisplayInfo ? this.ui.getPortDisplayInfo(mId, p) : null;
-                    if (info) {
-                        const toastLabel = info.hasAlias ? info.label : p;
-                        this.ui.showToast(`[${mId}] ${toastLabel}`, 1200);
-                    }
-                }, 300);
+                    const toastLabel = (info && info.hasAlias) ? info.label : p;
+                    this.ui.showToast(`[${mId}:${toastLabel}]`, 1200);
+                }, 120);
             }
         });
         this.ui.gridBoard.addEventListener('pointerout', (e) => {

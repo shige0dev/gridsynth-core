@@ -27,14 +27,14 @@ export const MARKOV = {
         const weights = m?.weights || [0, 0, 0, 0];
         return {
             in: [
-                { port: 'clk_in', pin: 4, color: 'bg-rose-500' },
-                { port: 'transition_in', pin: 5, color: 'bg-amber-500' }
+                { port: 'clk_in', pin: 3, color: 'bg-rose-500' },
+                { port: 'transition_in', pin: 4, color: 'bg-amber-500' }
             ],
             out: [
-                { port: 'transition_out1', pin: 6, color: (weights[0] > 0) ? 'bg-amber-500' : 'bg-slate-500' },
-                { port: 'transition_out2', pin: 7, color: (weights[1] > 0) ? 'bg-amber-500' : 'bg-slate-500' },
-                { port: 'transition_out3', pin: 8, color: (weights[2] > 0) ? 'bg-amber-500' : 'bg-slate-500' },
-                { port: 'transition_out4', pin: 9, color: (weights[3] > 0) ? 'bg-amber-500' : 'bg-slate-500' },
+                { port: 'transition_out1', pin: 5, color: (weights[0] > 0) ? 'bg-amber-500' : 'bg-slate-500' },
+                { port: 'transition_out2', pin: 6, color: (weights[1] > 0) ? 'bg-amber-500' : 'bg-slate-500' },
+                { port: 'transition_out3', pin: 7, color: (weights[2] > 0) ? 'bg-amber-500' : 'bg-slate-500' },
+                { port: 'transition_out4', pin: 8, color: (weights[3] > 0) ? 'bg-amber-500' : 'bg-slate-500' },
                 { port: 'trig_out', pin: 10, color: 'bg-rose-500' },
                 { port: 'gate_out', pin: 11, color: 'bg-rose-500' },
                 { port: 'cv_out', pin: 12, color: 'bg-yellow-400' }
@@ -129,7 +129,7 @@ export const MARKOV = {
                             <span class="text-[7.5px] font-mono text-slate-400 truncate shrink-0">自己</span>
                         </div>
 
-                        <!-- Output 1..4 Sliders (OUT 1 to OUT 4 from left to right, matching bottom PIN6..PIN9) -->
+                        <!-- Output 1..4 Sliders (OUT 1 to OUT 4 from left to right, matching bottom PIN5..PIN8) -->
                         ${[0, 1, 2, 3].map(idx => `
                             <div class="flex flex-col items-center gap-1 flex-1 min-w-0 shrink-0">
                                 <span class="text-[8px] font-bold text-slate-300 uppercase tracking-tight truncate w-full text-center shrink-0">OUT ${idx + 1}</span>
