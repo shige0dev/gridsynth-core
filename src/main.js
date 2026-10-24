@@ -1,8 +1,8 @@
-export const APP_VERSION = 'v1.0.0308';
+export const APP_VERSION = 'v1.0.0309';
 
-import { SynthEngine } from './audio/engine.js?v=308';
-import { UIController } from './ui/controller.js?v=308';
-import { initExternalAPI } from './core/api.js?v=308';
+import { SynthEngine } from './audio/engine.js?v=309';
+import { UIController } from './ui/controller.js?v=309';
+import { initExternalAPI } from './core/api.js?v=309';
 
 document.addEventListener('DOMContentLoaded', () => {
     const verDisp = document.getElementById('app-version-disp');
