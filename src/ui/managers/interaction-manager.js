@@ -28,7 +28,6 @@ export class InteractionManager {
         this.moduleLongPressed = false;
 
         // Row Movement & Handle states
-        this._cableRafId = null;
         this.rowManager = new RowManager(this.ui, this);
 
         // Ready for future modes: 'edit', 'performance', 'visualizer'
@@ -444,27 +443,6 @@ export class InteractionManager {
         this.initRowHandleUI();
     }
 
-    scheduleCableRender(animateDurationMs = 0) {
-        if (this._cableRafId) return;
-        const startTime = performance.now();
-        const renderLoop = (now) => {
-            this.ui.renderCables();
-            if (animateDurationMs > 0 && (now - startTime) < animateDurationMs) {
-                this._cableRafId = requestAnimationFrame(renderLoop);
-            } else {
-                this._cableRafId = null;
-            }
-        };
-        this._cableRafId = requestAnimationFrame(renderLoop);
-    }
-
-    cancelCableRender() {
-        if (this._cableRafId) {
-            cancelAnimationFrame(this._cableRafId);
-            this._cableRafId = null;
-        }
-    }
-
     initRowHandleUI() {
         return this.rowManager.initRowHandleUI();
     }
@@ -488,9 +466,6 @@ export class InteractionManager {
     }
     get rowTracks() {
         return this.rowManager.rowTracks;
-    }
-    get rowTargetSlotIndicatorEl() {
-        return this.rowManager.rowTargetSlotIndicatorEl;
     }
     get rowInsertBeamEl() {
         return this.rowManager?.rowInsertBeamEl;

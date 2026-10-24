@@ -6,20 +6,9 @@ export class RowManager {
         this.interactionManager = interactionManager;
         this.rowHandleOverlayEl = null;
         this.rowTracks = [];
-        this.rowTargetSlotIndicatorEl = null;
         this.rowInsertBeamEl = null;
         this.draggingRow = null;
         this._ro = null;
-    }
-
-    scheduleCableRender(animateDurationMs = 0) {
-        // Cable animations during move are disabled per user request
-    }
-
-    cancelCableRender() {
-        if (this.interactionManager) {
-            this.interactionManager.cancelCableRender();
-        }
     }
 
     initRowHandleUI() {

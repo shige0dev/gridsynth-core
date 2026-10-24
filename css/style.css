@@ -389,11 +389,6 @@ body {
     transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
-.row-handle-left {
-    left: -17px;
-    display: none; /* Right-only handle */
-}
-
 .row-handle-right {
     right: -17px;
 }
@@ -411,12 +406,6 @@ body {
     background-color: #94a3b8; /* slate-400 */
     box-shadow: 0 0 4px rgba(255, 255, 255, 0.4);
     transform: scale(1.15);
-}
-
-.row-handle-btn.row-arming .row-handle-bar {
-    background-color: #d946ef !important;
-    box-shadow: 0 0 10px #d946ef, 0 0 15px rgba(217, 70, 239, 0.6) !important;
-    transform: scale(1.3);
 }
 
 .row-handle-btn:active,
