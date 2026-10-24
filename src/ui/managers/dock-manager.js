@@ -139,7 +139,7 @@ export class DockManager {
         const dialogEl = document.createElement('div');
         dialogEl.id = `dock-dialog-${mId}`;
         dialogEl.dataset.moduleId = mId;
-        dialogEl.className = "dock-dialog absolute bg-slate-900/95 border border-cyan-500/70 rounded-xl p-2 shadow-2xl backdrop-blur-md pointer-events-auto transition-none left-2 right-2 w-[calc(100%-16px)] max-h-[calc(100%-84px)] overflow-hidden flex flex-col";
+        dialogEl.className = "dock-dialog absolute bg-slate-900/95 border border-cyan-500/70 rounded-xl p-2 shadow-2xl backdrop-blur-md pointer-events-auto transition-none left-2 right-2 w-[calc(100%-16px)] max-h-[calc(100%-84px)] overflow-hidden flex flex-col overscroll-contain";
 
         dialogEl.innerHTML = `
             <div class="dock-dialog-header border-b border-slate-800 pb-1 flex items-center justify-between cursor-move touch-none select-none shrink-0">
@@ -154,7 +154,7 @@ export class DockManager {
                     </button>
                 </div>
             </div>
-            <div class="dock-dialog-body text-xs mt-1 overflow-y-auto flex-1 min-h-0"></div>
+            <div class="dock-dialog-body text-xs mt-1 overflow-y-auto overscroll-contain flex-1 min-h-0"></div>
         `;
 
         container.appendChild(dialogEl);
@@ -172,10 +172,16 @@ export class DockManager {
         // Render content
         this.reRenderDockModal(mId);
 
-        // Bring to front on pointerdown anywhere on this dialog
-        dialogEl.addEventListener('pointerdown', () => {
+        // Bring to front on pointerdown anywhere on this dialog, and stop propagation to prevent background grid interaction/scroll
+        dialogEl.addEventListener('pointerdown', (e) => {
+            e.stopPropagation();
             this.bringToFront(mId);
         });
+
+        // Prevent wheel scrolling on dialog from propagating to background workspace
+        dialogEl.addEventListener('wheel', (e) => {
+            e.stopPropagation();
+        }, { passive: false });
 
         // Lock button toggle
         const lockBtn = dialogEl.querySelector('.dock-lock-btn');

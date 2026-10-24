@@ -16,9 +16,10 @@ export class PadProcessor extends AudioWorkletProcessor {
         this.targetY = 0.5;
         this.targetPressure = 0.0;
 
-        // Base slider values for HUE and BRIGHT (0.0 - 1.0)
+        // Base slider values for HUE, SATURATION, and BRIGHT (0.0 - 1.0)
         this.baseHue = 0.5;
-        this.baseBright = 0.8;
+        this.baseSat = 1.0;
+        this.baseBright = 0.0;
 
         // Current measured input values from CV inputs
         this.inHueVal = 0.0;
@@ -58,6 +59,7 @@ export class PadProcessor extends AudioWorkletProcessor {
                 }
                 case 'SET_CONFIG': {
                     if (typeof data.hue === 'number') this.baseHue = Math.max(0, Math.min(1, data.hue));
+                    if (typeof data.sat === 'number') this.baseSat = Math.max(0, Math.min(1, data.sat));
                     if (typeof data.bright === 'number') this.baseBright = Math.max(0, Math.min(1, data.bright));
                     break;
                 }
@@ -127,8 +129,10 @@ export class PadProcessor extends AudioWorkletProcessor {
                 pressure: this.currPressure,
                 isDown: this.isDown,
                 hue: effectiveHue,
+                sat: this.baseSat,
                 bright: effectiveBright,
                 baseHue: this.baseHue,
+                baseSat: this.baseSat,
                 baseBright: this.baseBright,
                 inHue: this.inHueVal,
                 inBright: this.inBrightVal
@@ -140,3 +144,4 @@ export class PadProcessor extends AudioWorkletProcessor {
 }
 
 registerProcessor('pad-processor', PadProcessor);
+

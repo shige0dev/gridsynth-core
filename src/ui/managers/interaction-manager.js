@@ -239,6 +239,9 @@ export class InteractionManager {
         });
 
         this.ui.gridBoard.addEventListener('pointerdown', (e) => {
+            if (e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal')) {
+                return;
+            }
             this._sX = e.clientX;
             this._sY = e.clientY;
             this._isMouseScrollDragging = false;
@@ -335,6 +338,10 @@ export class InteractionManager {
             // Desktop mouse drag-to-scroll support (simulate touch swipe on PC)
             const container = document.getElementById('canvas-container');
             if (e.pointerType === 'mouse' && (e.buttons & 1) && !this.isDragging && !this.moduleLongPressed && container) {
+                if (e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal')) {
+                    this._isMouseScrollDragging = false;
+                    return;
+                }
                 if (distSq > 36 || this._isMouseScrollDragging) {
                     this._isMouseScrollDragging = true;
                     this._wasScrollDragging = true;

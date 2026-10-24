@@ -10,7 +10,8 @@ export const PAD = {
         w.port.postMessage({
             type: 'SET_CONFIG',
             hue: d.hue ?? 0.5,
-            bright: d.bright ?? 0.8
+            sat: d.sat ?? 1.0,
+            bright: d.bright ?? 0.0
         });
 
         const inHue = ctx.createGain();
@@ -45,9 +46,11 @@ export const PAD = {
             pressure: 0.0,
             isDown: false,
             hue: d.hue ?? 0.5,
-            bright: d.bright ?? 0.8,
+            sat: d.sat ?? 1.0,
+            bright: d.bright ?? 0.0,
             baseHue: d.hue ?? 0.5,
-            baseBright: d.bright ?? 0.8
+            baseSat: d.sat ?? 1.0,
+            baseBright: d.bright ?? 0.0
         };
 
         w.port.onmessage = (e) => {
@@ -84,7 +87,8 @@ export const PAD = {
         inst.nodes.w.port.postMessage({
             type: 'SET_CONFIG',
             hue: d.hue ?? 0.5,
-            bright: d.bright ?? 0.8
+            sat: d.sat ?? 1.0,
+            bright: d.bright ?? 0.0
         });
     }
 };
@@ -92,3 +96,4 @@ export const PAD = {
 export const padAudioDefs = {
     PAD
 };
+
