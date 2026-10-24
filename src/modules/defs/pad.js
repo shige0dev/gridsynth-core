@@ -207,7 +207,7 @@ export const PAD = {
                     </div>
                 </div>
             </div>
-        </div>`,Target:
+        </div>`,
     bindEvents: (m, ctx, onChange) => {
         // HUE Slider
         UIHelpers.bindSlider('pad-hue-slider', v => v.toFixed(2), v => {
