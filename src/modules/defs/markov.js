@@ -31,10 +31,10 @@ export const MARKOV = {
                 { port: 'transition_in', pin: 4, color: 'bg-amber-500' }
             ],
             out: [
-                { port: 'transition_out1', pin: 5, color: (weights[0] > 0) ? 'bg-amber-500' : 'bg-slate-500' },
-                { port: 'transition_out2', pin: 6, color: (weights[1] > 0) ? 'bg-amber-500' : 'bg-slate-500' },
-                { port: 'transition_out3', pin: 7, color: (weights[2] > 0) ? 'bg-amber-500' : 'bg-slate-500' },
-                { port: 'transition_out4', pin: 8, color: (weights[3] > 0) ? 'bg-amber-500' : 'bg-slate-500' },
+                { port: 'transition_out1', pin: 6, color: (weights[0] > 0) ? 'bg-amber-500' : 'bg-slate-500' },
+                { port: 'transition_out2', pin: 7, color: (weights[1] > 0) ? 'bg-amber-500' : 'bg-slate-500' },
+                { port: 'transition_out3', pin: 8, color: (weights[2] > 0) ? 'bg-amber-500' : 'bg-slate-500' },
+                { port: 'transition_out4', pin: 9, color: (weights[3] > 0) ? 'bg-amber-500' : 'bg-slate-500' },
                 { port: 'trig_out', pin: 10, color: 'bg-rose-500' },
                 { port: 'gate_out', pin: 11, color: 'bg-rose-500' },
                 { port: 'cv_out', pin: 12, color: 'bg-yellow-400' }

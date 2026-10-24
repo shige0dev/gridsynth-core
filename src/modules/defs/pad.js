@@ -1,5 +1,5 @@
 // src/modules/defs/pad.js
-import { UIHelpers } from '../../ui/helpers.js?v=346';
+import { UIHelpers } from '../../ui/helpers.js?v=347';
 
 function calcPressure(e) {
     if (e.pointerType === 'mouse') {

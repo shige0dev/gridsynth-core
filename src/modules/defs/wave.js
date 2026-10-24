@@ -1,5 +1,5 @@
 // src/modules/defs/wave.js
-import { UIHelpers } from '../../ui/helpers.js?v=297';
+import { UIHelpers } from '../../ui/helpers.js?v=347';
 import { WaveCodec } from '../../audio/wave-codec.js?v=297';
 import { WaveView } from '../../ui/wave-view.js?v=297';
 import { WaveModal } from '../../ui/wave-modal.js?v=297';
@@ -48,13 +48,35 @@ export const WAVE = {
             { port: 'start_cv', color: 'bg-yellow-400', pin: 5 },
             { port: 'end_cv', color: 'bg-yellow-400', pin: 6 },
             { port: 'speed_cv', color: 'bg-yellow-400', pin: 7 },
-            { port: 'link_in', color: 'bg-slate-300', pin: 0 }
+            { port: 'link_in', color: 'bg-slate-300' }
         ],
         out: [
             { port: 'wave_out', color: 'bg-blue-500', pin: 9 },
-            { port: 'link_out', color: 'bg-slate-300', pin: 13 }
+            { port: 'link_out', color: 'bg-slate-300' }
         ]
     }),
+    renderPorts: (m, renderP, ports) => {
+        const inPorts = ports.in || [];
+        const outPorts = ports.out || [];
+        const linkIn = inPorts.find(p => p.port === 'link_in');
+        const linkOut = outPorts.find(p => p.port === 'link_out');
+        const otherIn = inPorts.filter(p => p.port !== 'link_in');
+        const otherOut = outPorts.filter(p => p.port !== 'link_out');
+
+        const chassisHTML = UIHelpers.renderChassisPorts(renderP, { in: otherIn, out: otherOut });
+
+        const linkInHTML = linkIn ? `
+            <div class="absolute left-[3px] top-[3px] flex items-center pointer-events-auto z-10">
+                ${renderP([linkIn])}
+            </div>` : '';
+
+        const linkOutHTML = linkOut ? `
+            <div class="absolute right-[3px] top-[3px] flex items-center pointer-events-auto z-10">
+                ${renderP([linkOut])}
+            </div>` : '';
+
+        return `${chassisHTML}${linkInHTML}${linkOutHTML}`;
+    },
     renderGrid: (m, ctx) => {
         const bounds = WaveView.resolveEffectiveBounds(m);
         const rMin = Math.min(bounds.effStart, bounds.effEnd) * 100;

@@ -1,13 +1,13 @@
-import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=346';
-import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=346';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=346';
-import { UIHelpers } from './helpers.js?v=346';
-import { PresetManager } from './managers/preset-manager.js?v=346';
-import { ModalManager } from './managers/modal-manager.js?v=346';
-import { CableManager } from './managers/cable-manager.js?v=346';
-import { PageManager } from './managers/page-manager.js?v=346';
-import { InteractionManager } from './managers/interaction-manager.js?v=346';
-import { WaveCodec } from '../audio/wave-codec.js?v=346';
+import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=347';
+import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=347';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=347';
+import { UIHelpers } from './helpers.js?v=347';
+import { PresetManager } from './managers/preset-manager.js?v=347';
+import { ModalManager } from './managers/modal-manager.js?v=347';
+import { CableManager } from './managers/cable-manager.js?v=347';
+import { PageManager } from './managers/page-manager.js?v=347';
+import { InteractionManager } from './managers/interaction-manager.js?v=347';
+import { WaveCodec } from '../audio/wave-codec.js?v=347';
 
 export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'LISS', 'XY', 'SPEC', 'MON', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD'];
 
@@ -442,22 +442,21 @@ export class UIController {
                         <span class="text-slate-700 font-bold text-[8px] tracking-wider select-none truncate">${displayName}</span>
                     </div>`;
             } else {
-                    let titleClass = 'text-slate-700 font-bold';
-                    let extraTitleAttrs = '';
-                    if (m.type === 'MARKOV') {
-                        const weights = Array.isArray(m.weights) ? m.weights : [0, 0, 0, 0];
-                        const patched = ctx.patched;
-                        const hasUnconnected = weights.some((w, idx) => Number(w) > 0 && !patched.has(`transition_out${idx + 1}`) && !patched.has(`trig_out${idx + 1}`));
-                        if (hasUnconnected) {
-                            titleClass = 'text-rose-500 font-extrabold drop-shadow-[0_0_2px_rgba(244,63,94,0.9)] animate-pulse';
-                            extraTitleAttrs = 'title="未結線の出力端子にウエイトが設定されています"';
-                        }
+                let titleClass = 'text-slate-700 font-bold';
+                let extraTitleAttrs = '';
+                if (m.type === 'MARKOV') {
+                    const weights = Array.isArray(m.weights) ? m.weights : [0, 0, 0, 0];
+                    const patched = ctx.patched;
+                    const hasUnconnected = weights.some((w, idx) => Number(w) > 0 && !patched.has(`transition_out${idx + 1}`) && !patched.has(`trig_out${idx + 1}`));
+                    if (hasUnconnected) {
+                        titleClass = 'text-rose-500 font-extrabold drop-shadow-[0_0_2px_rgba(244,63,94,0.9)] animate-pulse';
+                        extraTitleAttrs = 'title="未結線の出力端子にウエイトが設定されています"';
                     }
-                    titleHTML = `
-                        <div class="absolute top-[2px] left-[2px] right-[2px] flex justify-center items-center pointer-events-none z-20">
-                            <span class="${titleClass} text-[8px] tracking-wider select-none truncate" ${extraTitleAttrs}>${m.type}</span>
-                        </div>`;
                 }
+                titleHTML = `
+                    <div class="absolute top-[2px] left-[2px] right-[2px] flex justify-center items-center pointer-events-none z-20">
+                        <span class="${titleClass} text-[8px] tracking-wider select-none truncate" ${extraTitleAttrs}>${m.type}</span>
+                    </div>`;
             }
             cell.innerHTML = `
                 ${titleHTML}
