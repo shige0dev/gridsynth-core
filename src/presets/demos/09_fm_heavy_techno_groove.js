@@ -43,9 +43,8 @@ export const preset09 = {
         // Row 11: [Blank]
         // --- Row 12: Master Mix & Audio Output ---
         "48": "MIX2",
-        "49": "MIX3",
-        "50": "SCOPE1",
-        "51": "SPK1"
+        "49": "SCOPE1",
+        "50": "SPK1"
       },
       "modules": {
         // --- Clock Section (Row 0) ---
@@ -307,28 +306,20 @@ export const preset09 = {
           "row": 12,
           "col": 0,
           "channels": 4,
-          "lvl1": 0.90,
-          "lvl2": 0.75,
-          "lvl3": 0.0,
-          "lvl4": 0.0
-        },
-        "MIX3": {
-          "type": "MIX",
-          "row": 12,
-          "col": 1,
-          "channels": 2,
           "lvl1": 0.85,
-          "lvl2": 0.80
+          "lvl2": 0.85,
+          "lvl3": 0.75,
+          "lvl4": 0.65
         },
         "SCOPE1": {
           "type": "SCOPE",
           "row": 12,
-          "col": 2
+          "col": 1
         },
         "SPK1": {
           "type": "SPK",
           "row": 12,
-          "col": 3,
+          "col": 2,
           "masterVol": 0.22
         }
       },
@@ -359,7 +350,7 @@ export const preset09 = {
         "SEQ8_1:gate_out > FM4:gate_in",
         "FM4:wave_out > VCF1:wave_in",
         "LFO1:cv_out > VCF1:cv_in",
-        "VCF1:wave_out > MIX2:wave_in1",
+        "VCF1:wave_out > MIX2:wave_in2",
 
         "MARKOV1:transition_out1 > MARKOV2:transition_in",
         "MARKOV2:transition_out1 > MARKOV3:transition_in",
@@ -376,15 +367,15 @@ export const preset09 = {
         "FM5:wave_out > VCF2:wave_in",
         "VCF2:wave_out > DELAY1:wave_in",
         "DELAY1:wave_out > REVERB1:wave_in",
-        "REVERB1:wave_out > MIX2:wave_in2",
+        "DELAY1:wave_out > MIX2:wave_in3",
+        "REVERB1:wave_out > MIX2:wave_in4",
 
-        "MIX1:wave_out > MIX3:wave_in1",
-        "MIX2:wave_out > MIX3:wave_in2",
+        "MIX1:wave_out > MIX2:wave_in1",
 
-        "MIX3:wave_out > SCOPE1:in1",
+        "MIX2:wave_out > SCOPE1:in1",
         "CLK2:gate_out > SCOPE1:trig",
-        "MIX3:wave_out > SPK1:wave_inL",
-        "MIX3:wave_out > SPK1:wave_inR"
+        "MIX2:wave_out > SPK1:wave_inL",
+        "MIX2:wave_out > SPK1:wave_inR"
       ]
     }
   }

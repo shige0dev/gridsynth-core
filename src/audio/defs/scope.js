@@ -1,7 +1,7 @@
 export const SCOPE = {
     create: (ctx, d, patch, eng) => {
         const w = new AudioWorkletNode(ctx, 'scope-processor', { numberOfInputs: 3, numberOfOutputs: 0 });
-        w.port.postMessage({ type: 'SET_CONFIG', timeSpan: d.timeSpan ?? 0.05 });
+        w.port.postMessage({ type: 'SET_CONFIG', timeSpan: d.timeSpan ?? 0.1 });
 
         const gWave = ctx.createGain(), gTrig = ctx.createGain();
         gWave.connect(w, 0, 0);
@@ -36,7 +36,7 @@ export const SCOPE = {
     },
     update: (ctx, inst, d, patch) => {
         inst._hasTrig = patch?.has('trig_in') || patch?.has('trig');
-        inst.nodes.w.port.postMessage({ type: 'SET_CONFIG', timeSpan: d.timeSpan ?? 0.05 });
+        inst.nodes.w.port.postMessage({ type: 'SET_CONFIG', timeSpan: d.timeSpan ?? 0.1 });
     }
 };
 

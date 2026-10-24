@@ -1,4 +1,4 @@
-import { UIHelpers } from '../../ui/helpers.js?v=349';
+import { UIHelpers } from '../../ui/helpers.js?v=350';
 
 // -------------------------------------------------------------
 // 1. Single-Channel Oscilloscope Canvas
@@ -8,7 +8,7 @@ const drawScopeCanvas = (ctx2d, w, h, data, m, isModal = false) => {
 
     UIHelpers.drawGraticule(ctx2d, w, h, { isModal, cols: 10, rows: 8 });
 
-    const vR = m.vRange || 5.0;
+    const vR = m.vRange || 2.0;
     const b1 = data?.buf1, trg = data?.trigBuf;
     if (!b1) return;
     const len = b1.length;
@@ -44,7 +44,7 @@ const drawScopeCanvas = (ctx2d, w, h, data, m, isModal = false) => {
 
 export const SCOPE = {
     color: 'cyan',
-    defaults: () => ({ type: 'SCOPE', timeSpan: 0.05, vRange: 5.0, trigMode: 'auto', opacity: 0.8 }),
+    defaults: () => ({ type: 'SCOPE', timeSpan: 0.1, vRange: 2.0, trigMode: 'auto', opacity: 0.8 }),
     ports: () => ({
         in: [
             { port: 'wave_in', pin: 4, alias: 'wave_in1', color: 'bg-yellow-400' },
@@ -74,8 +74,8 @@ export const SCOPE = {
         }
     },
     renderModal: (m) => {
-        const curT = m.timeSpan || 0.05;
-        const curV = m.vRange || 5.0;
+        const curT = m.timeSpan || 0.1;
+        const curV = m.vRange || 2.0;
         const curTrig = m.trigMode || 'auto';
 
         return `
@@ -115,7 +115,7 @@ export const SCOPE = {
         const vSteps = SCOPE.V_STEPS;
 
         document.getElementById('scope-t-down')?.addEventListener('click', () => {
-            const cur = m.timeSpan || 0.05;
+            const cur = m.timeSpan || 0.1;
             let idx = tSteps.findIndex(v => v >= cur - 0.0001);
             if (idx > 0) {
                 m.timeSpan = tSteps[idx - 1];
@@ -124,7 +124,7 @@ export const SCOPE = {
             }
         });
         document.getElementById('scope-t-up')?.addEventListener('click', () => {
-            const cur = m.timeSpan || 0.05;
+            const cur = m.timeSpan || 0.1;
             let idx = tSteps.findIndex(v => v >= cur - 0.0001);
             if (idx >= 0 && idx < tSteps.length - 1) {
                 m.timeSpan = tSteps[idx + 1];
@@ -134,7 +134,7 @@ export const SCOPE = {
         });
 
         document.getElementById('scope-v-down')?.addEventListener('click', () => {
-            const cur = m.vRange || 5.0;
+            const cur = m.vRange || 2.0;
             let idx = vSteps.findIndex(v => v >= cur - 0.001);
             if (idx > 0) {
                 m.vRange = vSteps[idx - 1];
@@ -143,7 +143,7 @@ export const SCOPE = {
             }
         });
         document.getElementById('scope-v-up')?.addEventListener('click', () => {
-            const cur = m.vRange || 5.0;
+            const cur = m.vRange || 2.0;
             let idx = vSteps.findIndex(v => v >= cur - 0.001);
             if (idx >= 0 && idx < vSteps.length - 1) {
                 m.vRange = vSteps[idx + 1];
@@ -168,7 +168,7 @@ const drawLissajousCanvas = (ctx2d, w, h, data, m, isModal = false) => {
 
     UIHelpers.drawGraticule(ctx2d, w, h, { isModal, cols: 8, rows: 8 });
 
-    const vR = m.vRange || 5.0;
+    const vR = m.vRange || 2.0;
     const b1 = data?.buf1, b2 = data?.buf2;
     if (!b1) return;
     const len = b1.length;
