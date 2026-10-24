@@ -296,7 +296,7 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
 | **`06_STRUDEL_HOUSE_BASSLINE`** | PATモジュール（Strudel mini-notation）を活用した16ステップオクターブベースライン |
 | **`07_DUB_TECHNO_DEEP_SPACE`** | 16拍ロングサイクルコードスタブ、ディープサブベース、S&Hフィルター揺らぎ、サブパッチによる控えめなダブドラム |
 | **`08_MARKOV_GENERATIVE_CHAINS`** | マルコフ連鎖（MARKOV）確率遷移ネットワークによる有機的ジェネラティブ旋律シーケンス |
-| **`09_FM_HEAVY_TECHNO`** | FMx3を多数駆使した重厚なハード・インダストリアル・テクノグルーヴ |
+| **`09_FM_NEO_SOUL_TRIO`** | FMx3を3基駆使したNeo-Soulトリオ（Fender Rhodesエレピ＋キック＋ベース） |
 | **`10_FM_SIMPLE_TEST`** | FMx3（アルゴリズム1〜3）を聴き比べるためのシンプルなテストパッチ |
 | **`11_FMCORE_2OP_DEMO`** | 単機能PMコア（FMCORE）を2基パッチングしたモジュラー2オペレーターFMデモ（キャリア×モジュレータ、エンベロープによる動的インデックス変調） |
 | **`12_CHORD_ARPEGGIO`** | CHORDとARPによる4ボイス・コードアルペジエーター（SEQ8によるコード進行、GATE4によるビートアクセント、ディレイ・リバーブ空間処理） |
@@ -540,14 +540,17 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
       - 音名とCV電圧（1V/Oct規格、C1=0.0V, C2=1.0V, C3=2.0V）の対照表を掲載。
     - バージョンを `v1.0.0352`、キャッシュバスターを `v=352` に更新。
 
- 24. **モジュール追加ダイアログからの冗長エイリアス XY 削除 & OTHERカテゴリ自動解消**:
-    - `src/modules/defs/scope.js`:
-      - `scopeDefs` から `LISS` の旧別名エイリアスであった `XY: LISS` を完全削除。
-    - `src/ui/managers/modal-manager.js`:
-      - `openAddModal` の基本モジュール取得フィルタに `t === 'XY'` の除外条件を追加。
-      - これにより未分類モジュールが 0 件となり、不要な `OTHER / その他` カテゴリ枠自体も完全に消滅。
-      - リサージュオシロスコープは本来の `SOUND` カテゴリの `LISS`（LISSAJOUS X-Y）のみに統一。
-    - バージョンを `v1.0.0353`、キャッシュバスターを `v=353` に更新。
+ 25. **デモ09をFM Neo-Soul Trio（エレピ＋キック＋ベース）へ刷新**:
+    - `src/presets/demos/09_fm_heavy_techno_groove.js`:
+      - 旧テクノパッチを「FM Neo-Soul Trio」パッチへ全面刷新。
+      - パート1: Rhodes風エレピ（`SEQ16_1` + `FM1` + `DELAY1` + `REVERB1`）
+      - パート2: アタック明瞭な改良キック（`SEQ16_2` + `FM2`）
+      - パート3: ウォーキング・フィンガーベース（`SEQ16_3` + `FM3`）
+      - 単一ミキサー `MIX1`（Ch1〜Ch3）で4パート原則に適合したクリーンなミックス設計。
+    - `src/presets/default.js`:
+      - デモキーを `'09_FM_NEO_SOUL_TRIO'` に更新。
+    - バージョンを `v1.0.0354`、キャッシュバスターを `v=354` に更新。
+
 
 
 
