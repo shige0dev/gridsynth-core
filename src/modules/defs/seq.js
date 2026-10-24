@@ -1,4 +1,252 @@
-import { UIHelpers } from '../../ui/helpers.js';
+import { UIHelpers } from '../../ui/helpers.js?v=352';
+import { JsonIoDialog } from '../../ui/json-io-dialog.js?v=352';
+
+export function parseNoteToCv(val) {
+    if (typeof val === 'number') {
+        return Math.max(0, Math.min(2.0, val));
+    }
+    if (typeof val !== 'string') return 0;
+    const s = val.trim();
+    if (!s) return 0;
+    const num = Number(s);
+    if (!isNaN(num)) {
+        return Math.max(0, Math.min(2.0, num));
+    }
+    const m = s.match(/^([a-gA-G])([#bB]?)(-?\d+)?$/);
+    if (!m) return 0;
+    const letter = m[1].toUpperCase();
+    const accidental = m[2] || '';
+    const oct = m[3] !== undefined ? parseInt(m[3], 10) : 1;
+    const baseMap = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+    let semi = baseMap[letter] ?? 0;
+    if (accidental === '#') semi += 1;
+    else if (accidental.toLowerCase() === 'b') semi -= 1;
+    const totalSemis = semi + (oct - 1) * 12;
+    const cv = totalSemis / 12.0;
+    return Math.max(0, Math.min(2.0, cv));
+}
+
+export function extractSeqPayload(parsed, targetType) {
+    if (!parsed) return null;
+    if (Array.isArray(parsed)) {
+        return { steps: parsed };
+    }
+    if (typeof parsed !== 'object') return null;
+
+    if (Array.isArray(parsed.steps)) return parsed;
+    if (Array.isArray(parsed.pattern)) return { steps: parsed.pattern, ...parsed };
+    if (Array.isArray(parsed.notes)) return { steps: parsed.notes, ...parsed };
+
+    for (const val of Object.values(parsed)) {
+        if (val && typeof val === 'object') {
+            if (Array.isArray(val.steps) && (!val.type || val.type === targetType)) {
+                return val;
+            }
+        }
+    }
+
+    if (parsed.pages && typeof parsed.pages === 'object') {
+        for (const p of Object.values(parsed.pages)) {
+            if (p?.modules && typeof p.modules === 'object') {
+                for (const mod of Object.values(p.modules)) {
+                    if (mod && mod.type === targetType && Array.isArray(mod.steps)) {
+                        return mod;
+                    }
+                }
+            }
+        }
+    }
+
+    return null;
+}
+
+export function normalizeImportSteps(rawSteps, maxSteps = 16) {
+    if (!Array.isArray(rawSteps) || rawSteps.length === 0) {
+        return Array.from({ length: maxSteps }, (_, i) => ({
+            cv: i === 0 ? 0 : 0.25,
+            active: true,
+            cvActive: true,
+            gate: true
+        }));
+    }
+
+    const restRegex = /^(rest|r|-|\.|off|pause)$/i;
+
+    let parsed = rawSteps.map((item) => {
+        if (typeof item === 'number') {
+            if (item < 0) {
+                return { cv: 0, active: true, cvActive: false, gate: false };
+            }
+            return {
+                cv: Math.max(0, Math.min(2.0, item)),
+                active: true,
+                cvActive: true,
+                gate: true
+            };
+        }
+
+        if (item === null || item === false) {
+            return { cv: 0, active: true, cvActive: false, gate: false };
+        }
+
+        if (typeof item === 'string') {
+            const s = item.trim();
+            if (!s || restRegex.test(s)) {
+                return { cv: 0, active: true, cvActive: false, gate: false };
+            }
+            const cv = parseNoteToCv(s);
+            return { cv, active: true, cvActive: true, gate: true };
+        }
+
+        if (typeof item === 'object') {
+            const isRest = item.rest === true || item.pause === true ||
+                (typeof item.note === 'string' && restRegex.test(item.note.trim()));
+
+            let cv = 0.25;
+            if (item.cv !== undefined) {
+                cv = parseNoteToCv(item.cv);
+            } else if (item.note !== undefined) {
+                cv = parseNoteToCv(item.note);
+            } else if (item.pitch !== undefined) {
+                cv = parseNoteToCv(item.pitch);
+            }
+
+            const active = item.active !== false;
+            const gate = isRest ? false : (item.gate !== false);
+            const cvActive = isRest ? false : (item.cvActive !== false);
+
+            return {
+                cv,
+                active,
+                cvActive,
+                gate
+            };
+        }
+
+        return { cv: 0.25, active: true, cvActive: true, gate: true };
+    });
+
+    if (parsed.length < maxSteps) {
+        if (parsed.length > 0 && maxSteps % parsed.length === 0) {
+            const times = maxSteps / parsed.length;
+            const looped = [];
+            for (let t = 0; t < times; t++) {
+                looped.push(...parsed.map(s => ({ ...s })));
+            }
+            parsed = looped;
+        } else {
+            while (parsed.length < maxSteps) {
+                parsed.push({ cv: 0.25, active: true, cvActive: true, gate: true });
+            }
+        }
+    } else if (parsed.length > maxSteps) {
+        parsed = parsed.slice(0, maxSteps);
+    }
+
+    return parsed;
+}
+
+export function openSeqExport(m, ctx, cb, maxSteps = 16) {
+    const steps = (m.steps || []).slice(0, maxSteps).map((st, i) => {
+        const val = typeof st === 'number' ? st : (st?.cv ?? 0);
+        const isAct = typeof st === 'object' ? (st.active !== false) : true;
+        const isCvAct = typeof st === 'object' ? (st.cvActive !== false) : true;
+        const isGateAct = typeof st === 'object' ? (st.gate !== false) : true;
+        return {
+            step: i + 1,
+            note: isAct ? (isGateAct ? UIHelpers.cvToNoteName(val) : 'REST') : 'SKIP',
+            cv: Number(val.toFixed(4)),
+            gate: isGateAct,
+            active: isAct,
+            cvActive: isCvAct
+        };
+    });
+
+    const exportObj = {
+        type: m.type || (maxSteps === 8 ? 'SEQ8' : 'SEQ16'),
+        quantize: m.quantize !== false,
+        steps
+    };
+    const jsonStr = JSON.stringify(exportObj, null, 2);
+
+    JsonIoDialog.openExport({
+        title: `${m.type || 'SEQ'} PATTERN EXPORT (${m.id || m.type})`,
+        icon: 'upload',
+        jsonStr,
+        infoBadges: [
+            `STEPS: ${steps.length}`,
+            `ACTIVE: ${steps.filter(s => s.active && s.gate).length} ON`,
+            `QLZ: ${m.quantize !== false ? 'ON' : 'OFF'}`
+        ],
+        copyToast: 'シーケンスパターンのJSONをクリップボードにコピーしました',
+        showToast: (msg) => ctx.showToast?.(msg),
+        leftActionHtml: `
+            <button id="seq-switch-import-btn" class="h-6 px-2.5 bg-slate-800 hover:bg-slate-700 text-purple-300 font-bold text-[9px] rounded-lg transition border border-slate-700 flex items-center gap-1 cursor-pointer">
+                <i data-lucide="download" class="w-3 h-3 pointer-events-none"></i>IMPORT
+            </button>
+        `,
+        onBindFooter: (footer) => {
+            footer.querySelector('#seq-switch-import-btn')?.addEventListener('click', () => {
+                openSeqImport(m, ctx, cb, maxSteps);
+            });
+        }
+    });
+}
+
+export function openSeqImport(m, ctx, cb, maxSteps = 16) {
+    JsonIoDialog.openImport({
+        title: `${m.type || 'SEQ'} PATTERN IMPORT (${m.id || m.type})`,
+        icon: 'download',
+        placeholder: 'ここにシーケンスパターンの JSON を貼り付けてください...\n\n【対応フォーマット例】\n・音名配列: ["C1", "-", "E1", "G1", ...]\n・数値配列: [0.42, 0.0, 0.58, ...]\n・詳細オブジェクト: { "steps": [{ "note": "C1", "gate": true }, ...] }',
+        showToast: (msg) => ctx.showToast?.(msg),
+        actions: [
+            {
+                id: 'json-seq-switch-export-btn',
+                label: 'VIEW EXPORT',
+                icon: 'upload',
+                cls: 'bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700',
+                onClick: () => {
+                    openSeqExport(m, ctx, cb, maxSteps);
+                }
+            },
+            {
+                id: 'json-seq-import-btn',
+                label: `LOAD (${m.type || 'SEQ'} に適用)`,
+                icon: 'check',
+                cls: 'bg-cyan-600 hover:bg-cyan-500 text-white shadow-md shadow-cyan-600/30',
+                onClick: (rawText, modal) => {
+                    const res = JsonIoDialog.parseJsonText(rawText);
+                    if (res.empty) {
+                        ctx.showToast?.('JSONテキストが空です');
+                        return;
+                    }
+                    if (res.syntaxError) {
+                        const info = res.info;
+                        alert(`【JSON構文エラー】\n${info.line}行目・${info.col}文字目付近に文法ミス（カンマや括弧の過不足など）があります。\n\n詳細: ${info.message}\n\n${info.snippet}`);
+                        return;
+                    }
+                    const payload = extractSeqPayload(res.data, m.type || (maxSteps === 8 ? 'SEQ8' : 'SEQ16'));
+                    if (!payload || !payload.steps || !Array.isArray(payload.steps)) {
+                        alert('【インポートエラー】\n有効なシーケンスパターン（steps配列、数値配列、音名配列）が見つかりません。');
+                        return;
+                    }
+
+                    if (typeof payload.quantize === 'boolean') {
+                        m.quantize = payload.quantize;
+                    }
+
+                    const normalizedSteps = normalizeImportSteps(payload.steps, maxSteps);
+                    m.steps = normalizedSteps;
+
+                    modal.classList.add('hidden');
+                    ctx.reRenderModal();
+                    cb?.();
+                    ctx.showToast?.(`${m.id || m.type} にパターン (${normalizedSteps.length}ステップ) を読み込みました ✅`);
+                }
+            }
+        ]
+    });
+}
 
 const renderSeqStepButtons = (idx, isAct, isCvAct, isGateAct, isSeq16 = false) => `
     <div class="flex flex-col gap-0.5 w-full mt-0.5 shrink-0">
@@ -71,7 +319,17 @@ export const SEQ8 = {
         <div id="seq-modal-root" class="space-y-1.5">
             <div class="flex items-center justify-between pb-1 border-b border-slate-800">
                 <span class="text-[8px] text-slate-400 uppercase font-semibold">8-STEP SEQUENCER</span>
-                <button id="seq-qlz-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${m.quantize!==false?'bg-cyan-600 text-white border-cyan-500':'bg-slate-800 text-slate-400 border-slate-700'}">QLZ: ${m.quantize!==false?'ON':'OFF'}</button>
+                <div class="flex items-center gap-1">
+                    <button id="seq8-json-export-btn" class="h-4 px-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-cyan-300 rounded text-[7.5px] font-bold cursor-pointer transition shadow-sm flex items-center gap-0.5 shrink-0" title="シーケンスパターンをJSONとしてエクスポート">
+                        <i data-lucide="upload" class="w-2.5 h-2.5 pointer-events-none"></i>
+                        <span>EXP</span>
+                    </button>
+                    <button id="seq8-json-import-btn" class="h-4 px-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-purple-300 rounded text-[7.5px] font-bold cursor-pointer transition shadow-sm flex items-center gap-0.5 shrink-0" title="JSONテキストからパターンをインポート">
+                        <i data-lucide="download" class="w-2.5 h-2.5 pointer-events-none"></i>
+                        <span>IMP</span>
+                    </button>
+                    <button id="seq-qlz-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${m.quantize!==false?'bg-cyan-600 text-white border-cyan-500':'bg-slate-800 text-slate-400 border-slate-700'}">QLZ: ${m.quantize!==false?'ON':'OFF'}</button>
+                </div>
             </div>
             <div class="flex items-center justify-between py-1 bg-slate-950/60 p-1 rounded-xl border border-slate-800/80 gap-1 overflow-x-auto">
                 ${(m.steps||[]).map((st, i) => {
@@ -93,6 +351,15 @@ export const SEQ8 = {
     bindEvents: (m, ctx, cb) => {
         const root = document.getElementById('seq-modal-root');
         if (!root) return;
+        if (typeof lucide !== 'undefined') {
+            try { lucide.createIcons({ root }); } catch (_) {}
+        }
+        root.querySelector('#seq8-json-export-btn')?.addEventListener('click', () => {
+            openSeqExport(m, ctx, cb, 8);
+        });
+        root.querySelector('#seq8-json-import-btn')?.addEventListener('click', () => {
+            openSeqImport(m, ctx, cb, 8);
+        });
         root.addEventListener('click', (e) => {
             if (e.target.closest('#seq-qlz-btn')) {
                 m.quantize = !(m.quantize !== false);
@@ -227,7 +494,17 @@ export const SEQ16 = {
             <div id="seq16-modal-root" class="space-y-1">
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800">
                     <span class="text-[8px] text-slate-400 uppercase font-semibold">16-STEP SEQUENCER</span>
-                    <button id="seq16-qlz-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${m.quantize!==false?'bg-cyan-600 text-white border-cyan-500':'bg-slate-800 text-slate-400 border-slate-700'}">QLZ: ${m.quantize!==false?'ON':'OFF'}</button>
+                    <div class="flex items-center gap-1">
+                        <button id="seq16-json-export-btn" class="h-4 px-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-cyan-300 rounded text-[7.5px] font-bold cursor-pointer transition shadow-sm flex items-center gap-0.5 shrink-0" title="シーケンスパターンをJSONとしてエクスポート">
+                            <i data-lucide="upload" class="w-2.5 h-2.5 pointer-events-none"></i>
+                            <span>EXP</span>
+                        </button>
+                        <button id="seq16-json-import-btn" class="h-4 px-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-purple-300 rounded text-[7.5px] font-bold cursor-pointer transition shadow-sm flex items-center gap-0.5 shrink-0" title="JSONテキストからパターンをインポート">
+                            <i data-lucide="download" class="w-2.5 h-2.5 pointer-events-none"></i>
+                            <span>IMP</span>
+                        </button>
+                        <button id="seq16-qlz-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${m.quantize!==false?'bg-cyan-600 text-white border-cyan-500':'bg-slate-800 text-slate-400 border-slate-700'}">QLZ: ${m.quantize!==false?'ON':'OFF'}</button>
+                    </div>
                 </div>
                 ${renderStepRow(steps.slice(0, 8), 0)}
                 ${renderStepRow(steps.slice(8, 16), 8)}
@@ -237,6 +514,15 @@ export const SEQ16 = {
     bindEvents: (m, ctx, cb) => {
         const root = document.getElementById('seq16-modal-root');
         if (!root) return;
+        if (typeof lucide !== 'undefined') {
+            try { lucide.createIcons({ root }); } catch (_) {}
+        }
+        root.querySelector('#seq16-json-export-btn')?.addEventListener('click', () => {
+            openSeqExport(m, ctx, cb, 16);
+        });
+        root.querySelector('#seq16-json-import-btn')?.addEventListener('click', () => {
+            openSeqImport(m, ctx, cb, 16);
+        });
         root.addEventListener('click', (e) => {
             if (e.target.closest('#seq16-qlz-btn')) {
                 m.quantize = !(m.quantize !== false);
