@@ -581,15 +581,16 @@ export function exportPatch(pagesData, bpm = 120, cols = 4, rows = 32) {
 }
 
 /**
- * Creates default blank patch structure (with SPK1 at slot 4)
+ * Creates default blank patch structure (with SPK1 at slot 3)
  */
 export function createDefaultPatchData(bpm = 120) {
     return {
         bpm,
+        grid: { cols: 4, rows: 32 },
         pages: {
             "0": {
                 name: '',
-                slots: { "4": "SPK1" },
+                slots: { "3": "SPK1" },
                 modules: { "SPK1": { type: "SPK", masterVol: 0.12 } },
                 connections: []
             }
