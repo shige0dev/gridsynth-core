@@ -125,6 +125,18 @@ body {
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.25), 0 0 2px rgba(255, 255, 255, 0.4) !important;
 }
 
+.port {
+    touch-action: manipulation;
+}
+
+.port::before {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border-radius: 9999px;
+    pointer-events: auto;
+}
+
 .selected-module .port,
 .has-selected-module .port {
     pointer-events: none !important;

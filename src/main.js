@@ -1,8 +1,13 @@
-import { SynthEngine } from './audio/engine.js?v=306';
-import { UIController } from './ui/controller.js?v=306';
-import { initExternalAPI } from './core/api.js?v=306';
+export const APP_VERSION = 'v1.0.0308';
+
+import { SynthEngine } from './audio/engine.js?v=308';
+import { UIController } from './ui/controller.js?v=308';
+import { initExternalAPI } from './core/api.js?v=308';
 
 document.addEventListener('DOMContentLoaded', () => {
+    const verDisp = document.getElementById('app-version-disp');
+    if (verDisp) verDisp.textContent = APP_VERSION;
+    window.__APP_VERSION__ = APP_VERSION;
     const synth = new SynthEngine();
     const ui = new UIController(synth);
     initExternalAPI(ui, synth);

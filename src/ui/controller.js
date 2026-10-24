@@ -4,9 +4,9 @@ import { MODULE_REGISTRY } from '../modules/registry.js?v=297';
 import { UIHelpers } from './helpers.js?v=229';
 import { PresetManager } from './managers/preset-manager.js?v=297';
 import { ModalManager } from './managers/modal-manager.js?v=297';
-import { CableManager } from './managers/cable-manager.js?v=306';
+import { CableManager } from './managers/cable-manager.js?v=308';
 import { PageManager } from './managers/page-manager.js?v=297';
-import { InteractionManager } from './managers/interaction-manager.js?v=297';
+import { InteractionManager } from './managers/interaction-manager.js?v=308';
 import { WaveCodec } from '../audio/wave-codec.js?v=297';
 
 export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'LISS', 'XY', 'SPEC', 'MON', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE'];
@@ -352,7 +352,7 @@ export class UIController {
                 const dimCls = p.dimmed ? 'opacity-35 grayscale' : '';
                 const extraCls = p.extraClass || '';
                 const shadowCls = isSel ? 'port-selected' : 'shadow-sm shadow-black/60';
-                const portEl = `<div class="w-2 h-2 rounded-full ${p.color} border border-slate-950/90 ${shadowCls} port cursor-pointer hover:scale-150 transition relative z-10 flex items-center justify-center before:absolute before:inset-[-6px] ${dimCls} ${extraCls} ${isOpp ? 'port-connected-highlight' : ''}" style="${oppStyle}" data-module-id="${mId}" data-port="${p.port}" data-port-id="${mId}:${p.port}" title="${portTitle}"></div>`;
+                const portEl = `<div class="w-2 h-2 rounded-full ${p.color} border border-slate-950/90 ${shadowCls} port cursor-pointer hover:scale-150 transition relative z-10 flex items-center justify-center before:absolute before:inset-[-6px] before:content-[''] ${dimCls} ${extraCls} ${isOpp ? 'port-connected-highlight' : ''}" style="${oppStyle}" data-module-id="${mId}" data-port="${p.port}" data-port-id="${mId}:${p.port}" title="${portTitle}"></div>`;
                 if (p.badgeColor) {
                     return `<div class="relative inline-flex items-center justify-center"><span class="absolute -top-[1.5px] -left-[1.5px] w-[3.5px] h-[3.5px] rounded-full ${p.badgeColor} pointer-events-none z-0 ring-[0.5px] ring-black/70"></span>${portEl}</div>`;
                 }
