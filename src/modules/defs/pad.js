@@ -135,7 +135,7 @@ function drawPadCanvas(ctx2d, w, h, state, isModal = false) {
 
 export const PAD = {
     color: 'amber',
-    defaults: () => ({ type: 'PAD', hue: 0.5, sat: 1.0, bright: 0.0 }),
+    defaults: () => ({ type: 'PAD', name: 'PAD', hue: 0.5, sat: 1.0, bright: 0.0, opacity: 1.0 }),
     ports: () => ({
         in: [
             { port: 'hue_cv', pin: 2, color: 'bg-yellow-400' },
@@ -149,12 +149,28 @@ export const PAD = {
         ]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
-    renderGrid: () => `
-        <div class="absolute inset-0.5 bg-black rounded-sm border border-slate-800/90 overflow-hidden z-0 pointer-events-auto pad-grid-container">
+    renderGrid: (m) => `
+        <div class="absolute inset-0.5 bg-black rounded-sm border border-slate-800/90 overflow-hidden z-0 pointer-events-auto pad-grid-container" style="opacity: ${m?.opacity ?? 1.0};">
             <canvas class="pad-grid-canvas w-full h-full block" width="100" height="100"></canvas>
         </div>`,
     renderModal: (m) => `
         <div class="space-y-3 p-1">
+            <div class="grid grid-cols-2 gap-3 pb-2 border-b border-slate-800 items-center">
+                <div class="space-y-1">
+                    <div class="flex items-center justify-between text-[8.5px] font-bold h-4">
+                        <span class="text-slate-400 uppercase tracking-wider">NAME</span>
+                    </div>
+                    <input type="text" id="pad-name-input" value="${m.name || 'PAD'}" placeholder="PAD" maxlength="12" class="w-full bg-slate-950 border border-slate-700/80 rounded px-2 py-0.5 text-[10px] font-mono font-bold text-cyan-300 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/50 transition-colors h-[22px]">
+                </div>
+                <div class="space-y-1">
+                    <div class="flex items-center justify-between text-[8.5px] font-bold h-4">
+                        <span class="text-slate-400 uppercase tracking-wider">OPACITY</span>
+                        <span id="pad-opacity-slider-disp" class="font-mono text-cyan-300 font-bold cursor-ew-resize select-none">${(m.opacity ?? 1.0).toFixed(2)}</span>
+                    </div>
+                    <input type="range" id="pad-opacity-slider" min="0" max="1" step="0.01" value="${m.opacity ?? 1.0}" class="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
+                </div>
+            </div>
+
             <div class="grid grid-cols-3 gap-2 pb-2 border-b border-slate-800 items-start">
                 <div class="space-y-1">
                     <div class="flex items-center justify-between text-[8.5px] font-bold h-4">
@@ -179,7 +195,7 @@ export const PAD = {
                 </div>
             </div>
 
-            <div class="relative w-full aspect-square bg-black rounded-lg border border-slate-700/80 overflow-hidden shadow-inner select-none touch-none overscroll-contain mx-auto" id="pad-modal-touch-area">
+            <div class="relative w-full aspect-square bg-black rounded-lg border border-slate-700/80 overflow-hidden shadow-inner select-none touch-none overscroll-contain mx-auto" id="pad-modal-touch-area" style="opacity: ${m.opacity ?? 1.0};">
                 <canvas id="pad-modal-canvas" class="w-full h-full block cursor-crosshair" width="400" height="400"></canvas>
                 <div class="absolute top-2 left-2 flex items-center gap-2.5 font-mono text-[9px] select-none pointer-events-none drop-shadow">
                     <span class="text-slate-400 text-[8px] font-sans font-bold">X</span><span id="pad-stat-x" class="text-cyan-300 font-bold">0.50</span>
@@ -189,6 +205,36 @@ export const PAD = {
             </div>
         </div>`,
     bindEvents: (m, ctx, onChange) => {
+        // NAME input
+        const nameInput = document.getElementById('pad-name-input');
+        if (nameInput) {
+            nameInput.addEventListener('input', (e) => {
+                m.name = e.target.value;
+                onChange();
+            });
+            nameInput.addEventListener('blur', (e) => {
+                if (!m.name || !m.name.trim()) {
+                    m.name = 'PAD';
+                    e.target.value = 'PAD';
+                    onChange();
+                }
+            });
+            nameInput.addEventListener('keydown', (e) => {
+                e.stopPropagation();
+            });
+            nameInput.addEventListener('pointerdown', (e) => {
+                e.stopPropagation();
+            });
+        }
+
+        // OPACITY Slider
+        UIHelpers.bindSlider('pad-opacity-slider', v => v.toFixed(2), v => {
+            m.opacity = v;
+            const touchArea = document.getElementById('pad-modal-touch-area');
+            if (touchArea) touchArea.style.opacity = String(v);
+            onChange();
+        }, 1, 0.0, 1.0);
+
         // HUE Slider
         UIHelpers.bindSlider('pad-hue-slider', v => v.toFixed(2), v => {
             m.hue = v;

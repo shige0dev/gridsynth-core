@@ -231,7 +231,7 @@ export class ModalManager {
             const titleEl = document.getElementById('modal-title');
             if (!titleEl) return;
             titleEl.className = "text-[10px] font-bold text-cyan-300 uppercase tracking-wider pointer-events-none";
-            titleEl.textContent = m.type;
+            titleEl.textContent = (m.type === 'PAD' && m.name) ? `PAD: ${m.name}` : (m.name || m.type);
         };
 
         const onChange = () => {
