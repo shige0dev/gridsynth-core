@@ -13,6 +13,52 @@ export const UIHelpers = {
         if (v < 1.0) return Math.round(v * 1000) + 'ms';
         return v.toFixed(2) + 's';
     },
+    /**
+     * Standardized 2D canvas grid and crosshair renderer
+     * Used across SCOPE, LISS / XY, and PAD
+     */
+    drawGraticule: (ctx2d, w, h, options = {}) => {
+        const isModal = options.isModal ?? false;
+        const cols = options.cols ?? (options.divisions ?? (isModal ? 8 : 4));
+        const rows = options.rows ?? (options.divisions ?? (isModal ? 8 : 4));
+        const showSubgrid = options.showSubgrid ?? isModal;
+        const gridColor = options.gridColor ?? (isModal ? '#1e293b' : 'rgba(30, 41, 59, 0.5)');
+        const axisColor = options.axisColor ?? (isModal ? '#334155' : '#1e293b');
+        const axisWidth = options.axisWidth ?? (isModal ? 1.0 : 0.8);
+        const gridWidth = options.gridWidth ?? 0.5;
+
+        // Subgrid lines
+        if (showSubgrid) {
+            ctx2d.save();
+            ctx2d.strokeStyle = gridColor;
+            ctx2d.lineWidth = gridWidth;
+            ctx2d.beginPath();
+            for (let i = 1; i < cols; i++) {
+                const x = (w / cols) * i;
+                ctx2d.moveTo(x, 0);
+                ctx2d.lineTo(x, h);
+            }
+            for (let i = 1; i < rows; i++) {
+                const y = (h / rows) * i;
+                ctx2d.moveTo(0, y);
+                ctx2d.lineTo(w, y);
+            }
+            ctx2d.stroke();
+            ctx2d.restore();
+        }
+
+        // Center crosshair axes
+        ctx2d.save();
+        ctx2d.strokeStyle = axisColor;
+        ctx2d.lineWidth = axisWidth;
+        ctx2d.beginPath();
+        ctx2d.moveTo(0, h / 2);
+        ctx2d.lineTo(w, h / 2);
+        ctx2d.moveTo(w / 2, 0);
+        ctx2d.lineTo(w / 2, h);
+        ctx2d.stroke();
+        ctx2d.restore();
+    },
     createVSliderHTML: (id, label, min, max, step, val, unitStr, accentColor = 'cyan', isPatched = false, customDisp = null, power = 1) => {
         const disp = customDisp ?? (Math.abs(val) < 10 && step < 1 ? Number(val).toFixed(2) : Math.round(val));
         let sMin = min, sMax = max, sStep = step, sVal = val;

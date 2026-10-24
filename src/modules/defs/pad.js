@@ -1,5 +1,5 @@
 // src/modules/defs/pad.js
-import { UIHelpers } from '../../ui/helpers.js?v=297';
+import { UIHelpers } from '../../ui/helpers.js?v=343';
 
 function calcPressure(e) {
     if (e.pointerType === 'mouse') {
@@ -58,32 +58,20 @@ function drawPadCanvas(ctx2d, w, h, state, isModal = false) {
         ctx2d.fillRect(0, 0, w, h);
     }
 
-    // 2. High-contrast grid crosshairs adaptive to background brightness
+    // 2. High-contrast grid crosshairs adaptive to background brightness (standardized graticule)
     const isBrightBg = lightPct > 45;
-    const gridLineColor = isBrightBg ? 'rgba(0, 0, 0, 0.25)' : 'rgba(255, 255, 255, 0.15)';
-    const axisLineColor = isBrightBg ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.35)';
+    const gridLineColor = isBrightBg ? 'rgba(0, 0, 0, 0.25)' : (isModal ? '#1e293b' : 'rgba(255, 255, 255, 0.15)');
+    const axisLineColor = isBrightBg ? 'rgba(0, 0, 0, 0.5)' : (isModal ? '#475569' : 'rgba(255, 255, 255, 0.35)');
 
-    ctx2d.lineWidth = isModal ? 1.0 : 0.6;
-    ctx2d.strokeStyle = gridLineColor;
-
-    if (isModal) {
-        ctx2d.beginPath();
-        for (let i = 1; i < 4; i++) {
-            const x = (w / 4) * i;
-            ctx2d.moveTo(x, 0); ctx2d.lineTo(x, h);
-            const y = (h / 4) * i;
-            ctx2d.moveTo(0, y); ctx2d.lineTo(w, y);
-        }
-        ctx2d.stroke();
-    }
-
-    // Center axes
-    ctx2d.lineWidth = isModal ? 1.2 : 0.8;
-    ctx2d.strokeStyle = axisLineColor;
-    ctx2d.beginPath();
-    ctx2d.moveTo(0, h / 2); ctx2d.lineTo(w, h / 2);
-    ctx2d.moveTo(w / 2, 0); ctx2d.lineTo(w / 2, h);
-    ctx2d.stroke();
+    UIHelpers.drawGraticule(ctx2d, w, h, {
+        isModal,
+        cols: 4,
+        rows: 4,
+        gridColor: gridLineColor,
+        axisColor: axisLineColor,
+        axisWidth: isModal ? 1.2 : 0.8,
+        gridWidth: isModal ? 1.0 : 0.6
+    });
 
     // 3. Touch Point Marker (X, Y)
     const xNorm = state?.x ?? 0.5;

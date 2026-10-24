@@ -1,4 +1,4 @@
-import { UIHelpers } from '../../ui/helpers.js?v=297';
+import { UIHelpers } from '../../ui/helpers.js?v=343';
 
 // -------------------------------------------------------------
 // 1. Single-Channel Oscilloscope Canvas
@@ -6,33 +6,7 @@ import { UIHelpers } from '../../ui/helpers.js?v=297';
 const drawScopeCanvas = (ctx2d, w, h, data, m, isModal = false) => {
     ctx2d.clearRect(0, 0, w, h);
 
-    // Graticule grid
-    if (isModal) {
-        ctx2d.strokeStyle = '#1e293b';
-        ctx2d.lineWidth = 0.5;
-        for (let i = 1; i < 8; i++) {
-            const y = (h / 8) * i;
-            ctx2d.beginPath();
-            ctx2d.moveTo(0, y);
-            ctx2d.lineTo(w, y);
-            ctx2d.stroke();
-        }
-        for (let i = 1; i < 10; i++) {
-            const x = (w / 10) * i;
-            ctx2d.beginPath();
-            ctx2d.moveTo(x, 0);
-            ctx2d.lineTo(x, h);
-            ctx2d.stroke();
-        }
-    }
-
-    // Center crosshair axes
-    ctx2d.strokeStyle = isModal ? '#334155' : '#1e293b';
-    ctx2d.lineWidth = isModal ? 1.0 : 0.8;
-    ctx2d.beginPath();
-    ctx2d.moveTo(0, h / 2); ctx2d.lineTo(w, h / 2);
-    ctx2d.moveTo(w / 2, 0); ctx2d.lineTo(w / 2, h);
-    ctx2d.stroke();
+    UIHelpers.drawGraticule(ctx2d, w, h, { isModal, cols: 10, rows: 8 });
 
     const vR = m.vRange || 5.0;
     const b1 = data?.buf1, trg = data?.trigBuf;
@@ -70,7 +44,7 @@ const drawScopeCanvas = (ctx2d, w, h, data, m, isModal = false) => {
 
 export const SCOPE = {
     color: 'cyan',
-    defaults: () => ({ type: 'SCOPE', timeSpan: 0.05, vRange: 5.0, trigMode: 'auto' }),
+    defaults: () => ({ type: 'SCOPE', timeSpan: 0.05, vRange: 5.0, trigMode: 'auto', opacity: 0.8 }),
     ports: () => ({
         in: [
             { port: 'wave_in', pin: 4, alias: 'wave_in1', color: 'bg-yellow-400' },
@@ -82,8 +56,8 @@ export const SCOPE = {
     T_STEPS: [0.001, 0.005, 0.01, 0.02, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
     V_STEPS: [0.5, 1.0, 2.0, 5.0, 10.0],
     formatTime: (v) => v < 1 ? `${Math.round(v * 1000)}ms` : `${v.toFixed(1)}s`,
-    renderGrid: () => `
-        <div class="absolute inset-0.5 bg-slate-950 rounded-sm border border-slate-800/90 overflow-hidden z-0 pointer-events-none">
+    renderGrid: (m) => `
+        <div class="absolute inset-0.5 bg-slate-950 rounded-sm border border-slate-800/90 overflow-hidden z-0 pointer-events-none scope-grid-container" style="opacity: ${m?.opacity ?? 0.8};">
             <canvas class="scope-canvas w-full h-full block" width="100" height="100"></canvas>
         </div>`,
     updateLive: (cell, data, isP, modal, m) => {
@@ -125,7 +99,7 @@ export const SCOPE = {
                         </div>
                     </div>
                 </div>
-                <div class="h-[108px] bg-slate-950 p-1 rounded-lg border border-slate-800 select-none shadow-sm overflow-hidden">
+                <div class="h-[108px] bg-slate-950 p-1 rounded-lg border border-slate-800 select-none shadow-sm overflow-hidden" style="opacity: ${m?.opacity ?? 0.8};">
                     <canvas id="scope-modal-canvas" class="w-full h-full block rounded bg-slate-950" width="360" height="106"></canvas>
                 </div>
                 <div class="flex items-center justify-between text-[8px] text-slate-400 select-none pt-0.5">
@@ -192,26 +166,7 @@ export const SCOPE = {
 const drawLissajousCanvas = (ctx2d, w, h, data, m, isModal = false) => {
     ctx2d.clearRect(0, 0, w, h);
 
-    if (isModal) {
-        ctx2d.strokeStyle = '#1e293b';
-        ctx2d.lineWidth = 0.5;
-        for (let i = 1; i < 8; i++) {
-            const y = (h / 8) * i;
-            ctx2d.beginPath(); ctx2d.moveTo(0, y); ctx2d.lineTo(w, y); ctx2d.stroke();
-        }
-        for (let i = 1; i < 10; i++) {
-            const x = (w / 10) * i;
-            ctx2d.beginPath(); ctx2d.moveTo(x, 0); ctx2d.lineTo(x, h); ctx2d.stroke();
-        }
-    }
-
-    // Center crosshair axes
-    ctx2d.strokeStyle = isModal ? '#334155' : '#1e293b';
-    ctx2d.lineWidth = isModal ? 1.0 : 0.8;
-    ctx2d.beginPath();
-    ctx2d.moveTo(0, h / 2); ctx2d.lineTo(w, h / 2);
-    ctx2d.moveTo(w / 2, 0); ctx2d.lineTo(w / 2, h);
-    ctx2d.stroke();
+    UIHelpers.drawGraticule(ctx2d, w, h, { isModal, cols: 8, rows: 8 });
 
     const vR = m.vRange || 5.0;
     const b1 = data?.buf1, b2 = data?.buf2;
@@ -247,7 +202,7 @@ const drawLissajousCanvas = (ctx2d, w, h, data, m, isModal = false) => {
 
 export const LISS = {
     color: 'emerald',
-    defaults: () => ({ type: 'LISS', vRange: 5.0 }),
+    defaults: () => ({ type: 'LISS', vRange: 5.0, opacity: 0.8 }),
     ports: () => ({
         in: [
             { port: 'x_in', pin: 4, alias: 'wave_in1', color: 'bg-yellow-400' },
@@ -257,10 +212,9 @@ export const LISS = {
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
     V_STEPS: [0.5, 1.0, 2.0, 5.0, 10.0],
-    renderGrid: () => `
-        <div class="absolute inset-0.5 bg-slate-950 rounded-sm border border-slate-800/90 overflow-hidden z-0 pointer-events-none">
+    renderGrid: (m) => `
+        <div class="absolute inset-0.5 bg-slate-950 rounded-sm border border-slate-800/90 overflow-hidden z-0 pointer-events-none liss-grid-container" style="opacity: ${m?.opacity ?? 0.8};">
             <canvas class="liss-canvas w-full h-full block" width="100" height="100"></canvas>
-            <div class="absolute top-1 left-1.5 text-[7.5px] font-mono font-bold text-emerald-400/80 pointer-events-none select-none">LISS</div>
         </div>`,
     updateLive: (cell, data, isP, modal, m) => {
         if (!data || !m) return;
@@ -290,7 +244,7 @@ export const LISS = {
                         <button id="liss-v-up" class="h-4 w-4 rounded bg-slate-800 border border-slate-700 text-slate-200 text-[10px] font-bold flex items-center justify-center leading-none active:bg-slate-700">＋</button>
                     </div>
                 </div>
-                <div class="h-[108px] bg-slate-950 p-1 rounded-lg border border-slate-800 select-none shadow-sm overflow-hidden">
+                <div class="h-[108px] bg-slate-950 p-1 rounded-lg border border-slate-800 select-none shadow-sm overflow-hidden" style="opacity: ${m?.opacity ?? 0.8};">
                     <canvas id="liss-modal-canvas" class="w-full h-full block rounded bg-slate-950" width="360" height="106"></canvas>
                 </div>
                 <div class="flex items-center justify-between text-[8px] text-slate-400 select-none pt-0.5">
