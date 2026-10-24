@@ -1,7 +1,7 @@
 // src/ui/managers/interaction-manager.js
 import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=297';
 import { MODULE_REGISTRY } from '../../modules/registry.js?v=297';
-import { RowManager } from './row-manager.js?v=305';
+import { RowManager } from './row-manager.js?v=358';
 
 export class InteractionManager {
     constructor(ui) {
@@ -256,7 +256,7 @@ export class InteractionManager {
 
             const container = document.getElementById('canvas-container');
             if (e.pointerType === 'mouse' && e.button === 0 && container) {
-                const isControl = e.target.closest('.port, input, button, select, textarea, .pad-grid-container, .pad-grid-canvas');
+                const isControl = e.target.closest('.port, input, button, select, textarea, .pad-grid-container, .pad-grid-canvas, .row-handle-btn, .row-overlay-track, #row-handle-overlay');
                 if (!isControl) {
                     this._scrollStartY = e.clientY;
                     this._scrollStartTop = container.scrollTop;
@@ -340,6 +340,10 @@ export class InteractionManager {
         });
 
         window.addEventListener('pointermove', (e) => {
+            if (this.rowManager?.draggingRow !== null && this.rowManager?.draggingRow !== undefined) {
+                return;
+            }
+
             const dx = e.clientX - this._sX;
             const dy = e.clientY - this._sY;
             const distSq = dx * dx + dy * dy;
@@ -358,7 +362,7 @@ export class InteractionManager {
             // Desktop mouse drag-to-scroll support (simulate touch swipe on PC)
             const container = document.getElementById('canvas-container');
             if (e.pointerType === 'mouse' && (e.buttons & 1) && !this.isDragging && !this.moduleLongPressed && !isCandidateSelected && container) {
-                if (e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal, .pad-grid-container, .pad-grid-canvas')) {
+                if (e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal, .pad-grid-container, .pad-grid-canvas, .row-handle-btn, .row-overlay-track, #row-handle-overlay')) {
                     this._isMouseScrollDragging = false;
                     return;
                 }

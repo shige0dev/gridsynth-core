@@ -594,6 +594,23 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
       - `.selected-module` に `touch-action: none !important;` を追加。モバイルブラウザのネイティブスクロールによるドラッグ奪取を根本から防止し、スムーズな指追従を実現。
     - バージョンを `v1.0.0357`、キャッシュバスターを `v=357` に更新。
 
+ 29. **行移動（Row Drag）のスクロール優先問題解消＆画面端オートスクロール機能の実装**:
+    - **ハンドル保持時のスクロール優先問題の根本解決**:
+      - `css/style.css`:
+        - `.row-handle-btn` のヒットエリアを `width: 38px, height: 100%（行全体の高さ）` に大幅拡張し、`touch-action: none !important;` を付与。見た目の6pxドット（`.row-handle-bar`）は中央のまま、指で触れた際に確実にハンドルが反応。
+      - `src/ui/managers/row-manager.js`:
+        - `pointerdown` の瞬間に `canvas-container.style.overflowY = 'hidden'` を即座に適用し、モバイルブラウザのネイティブスクロールによるドラッグ奪取を完全防止。
+      - `src/ui/managers/interaction-manager.js`:
+        - デスクトップ用マウスクリック・スクロールの除外対象に `.row-handle-btn, .row-overlay-track, #row-handle-overlay` を追加し、行ドラッグ中は `pointermove` のモジュール処理を即座にバイパス。
+    - **画面端（上端・下端）への追従オートスクロール**:
+      - `src/ui/managers/row-manager.js`:
+        - `canvas-container` の表示境界に対して上下 70px のエッジ検出ゾーンを設定。
+        - 行ハンドルを画面上端付近へ持っていくと上方向へ、画面下端付近へ持っていくと下方向へ `requestAnimationFrame` による可変速オートスクロール（最大 14px/frame）を駆動。
+        - スクロール中も `getNearestBoundary` および `showInsertBeam` が毎フレーム追従更新され、画面外にあった遠くの行（全32行の任意の位置）へもシームレスに差し込み移動が可能。
+        - ポインタ解放（`pointerup` / `pointercancel`）時にオートスクロールを即時停止し、`overflowY = 'auto'` を復元。
+    - バージョンを `v1.0.0358`、キャッシュバスターを `v=358` に更新。
+
+
 
 
 

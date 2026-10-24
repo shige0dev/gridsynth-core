@@ -186,8 +186,50 @@ export class RowManager {
         let startY = 0;
         let originalRow = r;
         let currentTargetBoundary = null;
+        let autoScrollRaf = null;
+        let autoScrollVelocity = 0;
+        let lastPointerClientY = 0;
+
+        const updateBoundaryAt = (clientY) => {
+            const boundary = this.getNearestBoundary(clientY);
+
+            // Boundaries originalRow (above originalRow) and originalRow + 1 (below originalRow)
+            // represent no change in position. Outside of those, light up the boundary line!
+            if (boundary !== null && boundary !== originalRow && boundary !== originalRow + 1) {
+                currentTargetBoundary = boundary;
+                this.showInsertBeam(boundary);
+            } else {
+                currentTargetBoundary = null;
+                this.hideInsertBeam();
+            }
+        };
+
+        const autoScrollStep = () => {
+            if (!isRowDragging || autoScrollVelocity === 0) {
+                autoScrollRaf = null;
+                return;
+            }
+            const container = document.getElementById('canvas-container');
+            if (container) {
+                const prevScroll = container.scrollTop;
+                container.scrollTop += autoScrollVelocity;
+                if (container.scrollTop !== prevScroll) {
+                    updateBoundaryAt(lastPointerClientY);
+                }
+            }
+            autoScrollRaf = requestAnimationFrame(autoScrollStep);
+        };
+
+        const stopAutoScroll = () => {
+            if (autoScrollRaf) {
+                cancelAnimationFrame(autoScrollRaf);
+                autoScrollRaf = null;
+            }
+            autoScrollVelocity = 0;
+        };
 
         const cleanupDragVisuals = () => {
+            stopAutoScroll();
             this.hideInsertBeam();
             rightHandle.classList.remove('dragging');
             this.rowTracks?.forEach(t => t?.classList.remove('row-source-dragging'));
@@ -196,10 +238,12 @@ export class RowManager {
         };
 
         const onPointerMove = (e) => {
+            if (e.cancelable) e.preventDefault();
             const deltaY = e.clientY - startY;
+            lastPointerClientY = e.clientY;
 
             if (!isRowDragging) {
-                // Immediate response without long-press: start drag on 3px movement
+                // Immediate response: start drag on 3px movement
                 if (Math.abs(deltaY) > 3) {
                     isRowDragging = true;
                     this.draggingRow = originalRow;
@@ -215,16 +259,29 @@ export class RowManager {
             }
 
             if (isRowDragging) {
-                const boundary = this.getNearestBoundary(e.clientY);
+                updateBoundaryAt(e.clientY);
 
-                // Boundaries originalRow (above originalRow) and originalRow + 1 (below originalRow)
-                // represent no change in position. Outside of those, light up the boundary line!
-                if (boundary !== null && boundary !== originalRow && boundary !== originalRow + 1) {
-                    currentTargetBoundary = boundary;
-                    this.showInsertBeam(boundary);
-                } else {
-                    currentTargetBoundary = null;
-                    this.hideInsertBeam();
+                // Auto-scroll when pointer is near top or bottom edge of canvas-container
+                const container = document.getElementById('canvas-container');
+                if (container) {
+                    const rect = container.getBoundingClientRect();
+                    const edgeZone = 70; // 70px threshold from top and bottom edge
+                    const topThreshold = rect.top + edgeZone;
+                    const bottomThreshold = rect.bottom - edgeZone;
+
+                    if (e.clientY < topThreshold) {
+                        const factor = Math.min(1.0, Math.max(0.1, (topThreshold - e.clientY) / edgeZone));
+                        autoScrollVelocity = -Math.round(factor * 14);
+                    } else if (e.clientY > bottomThreshold) {
+                        const factor = Math.min(1.0, Math.max(0.1, (e.clientY - bottomThreshold) / edgeZone));
+                        autoScrollVelocity = Math.round(factor * 14);
+                    } else {
+                        autoScrollVelocity = 0;
+                    }
+
+                    if (autoScrollVelocity !== 0 && !autoScrollRaf) {
+                        autoScrollRaf = requestAnimationFrame(autoScrollStep);
+                    }
                 }
             }
         };
@@ -234,6 +291,8 @@ export class RowManager {
             window.removeEventListener('pointermove', onPointerMove);
             window.removeEventListener('pointerup', onPointerUp);
             window.removeEventListener('pointercancel', onPointerUp);
+
+            stopAutoScroll();
 
             const boundary = currentTargetBoundary;
             const didDrag = isRowDragging;
@@ -256,7 +315,13 @@ export class RowManager {
             originalRow = parseInt(rightHandle.dataset.row);
             currentTargetBoundary = null;
             startY = e.clientY;
+            lastPointerClientY = e.clientY;
             isRowDragging = false;
+            this.draggingRow = originalRow;
+
+            const container = document.getElementById('canvas-container');
+            if (container) container.style.overflowY = 'hidden';
+
             const sourceTrack = this.rowTracks?.[originalRow];
             if (sourceTrack) sourceTrack.classList.add('row-source-dragging');
             rightHandle.classList.add('dragging');

@@ -419,13 +419,13 @@ body {
 
 .row-handle-btn {
     user-select: none;
-    touch-action: none;
+    touch-action: none !important;
     -webkit-user-select: none;
     position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 20px;
-    height: 20px;
+    top: 0;
+    bottom: 0;
+    width: 38px;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -434,11 +434,12 @@ body {
     background: transparent;
     border: none;
     padding: 0;
+    box-sizing: border-box;
     transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
 .row-handle-right {
-    right: -17px;
+    right: -24px;
 }
 
 .row-handle-bar {
