@@ -164,56 +164,49 @@ export const PAD = {
         </div>`,
     renderModal: (m) => `
         <div class="space-y-3 p-1">
-            <div class="grid grid-cols-3 gap-2 pb-2 border-b border-slate-800">
+            <div class="grid grid-cols-3 gap-2 pb-2 border-b border-slate-800 items-start">
                 <div class="space-y-1">
-                    <div class="flex items-center justify-between text-[8.5px] font-bold">
+                    <div class="flex items-center justify-between text-[8.5px] font-bold h-4">
+                        <span class="text-slate-400 uppercase tracking-wider">SAT</span>
+                        <span id="pad-sat-disp" class="font-mono text-cyan-300 font-bold cursor-ew-resize select-none">${(m.sat ?? 1.0).toFixed(2)}</span>
+                    </div>
+                    <input type="range" id="pad-sat-slider" min="0" max="1" step="0.01" value="${m.sat ?? 1.0}" class="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
+                </div>
+                <div class="space-y-1">
+                    <div class="flex items-center justify-between text-[8.5px] font-bold h-4">
                         <span class="text-slate-400 uppercase tracking-wider">HUE</span>
                         <span id="pad-hue-disp" class="font-mono text-cyan-300 font-bold cursor-ew-resize select-none">${(m.hue ?? 0.5).toFixed(2)}</span>
                     </div>
                     <input type="range" id="pad-hue-slider" min="0" max="1" step="0.01" value="${m.hue ?? 0.5}" class="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
                 </div>
                 <div class="space-y-1">
-                    <div class="flex items-center justify-between text-[8.5px] font-bold">
-                        <span class="text-slate-400 uppercase tracking-wider">SAT (COLOR/MONO)</span>
-                        <span id="pad-sat-disp" class="font-mono text-cyan-300 font-bold cursor-ew-resize select-none">${(m.sat ?? 1.0).toFixed(2)}</span>
-                    </div>
-                    <input type="range" id="pad-sat-slider" min="0" max="1" step="0.01" value="${m.sat ?? 1.0}" class="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
-                </div>
-                <div class="space-y-1">
-                    <div class="flex items-center justify-between text-[8.5px] font-bold">
-                        <span class="text-slate-400 uppercase tracking-wider">BRIGHTNESS</span>
+                    <div class="flex items-center justify-between text-[8.5px] font-bold h-4">
+                        <span class="text-slate-400 uppercase tracking-wider">BRIGHT</span>
                         <span id="pad-bright-disp" class="font-mono text-cyan-300 font-bold cursor-ew-resize select-none">${(m.bright ?? 0.0).toFixed(2)}</span>
                     </div>
                     <input type="range" id="pad-bright-slider" min="0" max="1" step="0.01" value="${m.bright ?? 0.0}" class="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
                 </div>
             </div>
 
-            <div class="relative w-full h-52 bg-black rounded-lg border border-slate-700/80 overflow-hidden shadow-inner select-none touch-none overscroll-contain" id="pad-modal-touch-area">
-                <canvas id="pad-modal-canvas" class="w-full h-full block cursor-crosshair" width="400" height="260"></canvas>
+            <div class="relative w-full aspect-square bg-black rounded-lg border border-slate-700/80 overflow-hidden shadow-inner select-none touch-none overscroll-contain mx-auto" id="pad-modal-touch-area">
+                <canvas id="pad-modal-canvas" class="w-full h-full block cursor-crosshair" width="400" height="400"></canvas>
                 <div class="absolute top-2 left-2 text-[10px] font-mono font-semibold text-slate-300 pointer-events-none select-none drop-shadow">
                     TOUCH &amp; DRAG PAD
                 </div>
-                <div id="pad-modal-gate-badge" class="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-slate-800/90 text-slate-400 border border-slate-700 shadow backdrop-blur-xs">
-                    GATE OFF
-                </div>
             </div>
 
-            <div class="grid grid-cols-4 gap-2 pt-1 text-center font-mono text-[9px] select-none">
-                <div class="bg-slate-950 border border-slate-800 rounded p-1.5 flex flex-col items-center">
-                    <span class="text-slate-500 text-[8px] font-sans font-bold">X (CV)</span>
-                    <span id="pad-stat-x" class="text-cyan-300 font-bold mt-0.5">0.50</span>
+            <div class="flex items-center gap-2 pt-1 font-mono text-[9px] select-none justify-start">
+                <div class="bg-slate-950 border border-slate-800 rounded px-2.5 py-1 flex items-center gap-1.5 shadow-sm">
+                    <span class="text-slate-500 text-[8px] font-sans font-bold">X</span>
+                    <span id="pad-stat-x" class="text-cyan-300 font-bold">0.50</span>
                 </div>
-                <div class="bg-slate-950 border border-slate-800 rounded p-1.5 flex flex-col items-center">
-                    <span class="text-slate-500 text-[8px] font-sans font-bold">Y (CV)</span>
-                    <span id="pad-stat-y" class="text-cyan-300 font-bold mt-0.5">0.50</span>
+                <div class="bg-slate-950 border border-slate-800 rounded px-2.5 py-1 flex items-center gap-1.5 shadow-sm">
+                    <span class="text-slate-500 text-[8px] font-sans font-bold">Y</span>
+                    <span id="pad-stat-y" class="text-cyan-300 font-bold">0.50</span>
                 </div>
-                <div class="bg-slate-950 border border-slate-800 rounded p-1.5 flex flex-col items-center">
-                    <span class="text-slate-500 text-[8px] font-sans font-bold">PRESSURE</span>
-                    <span id="pad-stat-press" class="text-amber-400 font-bold mt-0.5">0.00</span>
-                </div>
-                <div class="bg-slate-950 border border-slate-800 rounded p-1.5 flex flex-col items-center">
-                    <span class="text-slate-500 text-[8px] font-sans font-bold">TRIGGER</span>
-                    <span id="pad-stat-trig" class="text-red-400 font-bold mt-0.5">IDLE</span>
+                <div class="bg-slate-950 border border-slate-800 rounded px-2.5 py-1 flex items-center gap-1.5 shadow-sm">
+                    <span class="text-slate-500 text-[8px] font-sans font-bold">PRES</span>
+                    <span id="pad-stat-press" class="text-amber-400 font-bold">0.00</span>
                 </div>
             </div>
         </div>`,
@@ -366,29 +359,14 @@ export const PAD = {
             const mCtx = modalCvs.getContext('2d');
             drawPadCanvas(mCtx, modalCvs.width, modalCvs.height, state, true);
 
-            // Update stats
+            // Update stats (X, Y, PRES)
             const xEl = targetModal.querySelector('#pad-stat-x');
             const yEl = targetModal.querySelector('#pad-stat-y');
             const pressEl = targetModal.querySelector('#pad-stat-press');
-            const trigEl = targetModal.querySelector('#pad-stat-trig');
-            const gateBadge = targetModal.querySelector('#pad-modal-gate-badge');
 
             if (xEl) xEl.textContent = (state.x ?? 0.5).toFixed(2);
             if (yEl) yEl.textContent = (state.y ?? 0.5).toFixed(2);
             if (pressEl) pressEl.textContent = (state.pressure ?? 0.0).toFixed(2);
-            if (gateBadge) {
-                if (state.isDown) {
-                    gateBadge.className = 'absolute top-2 right-2 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-red-600 text-white border border-red-400 shadow';
-                    gateBadge.textContent = 'GATE ON';
-                } else {
-                    gateBadge.className = 'absolute top-2 right-2 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-slate-800/90 text-slate-400 border border-slate-700 shadow backdrop-blur-xs';
-                    gateBadge.textContent = 'GATE OFF';
-                }
-            }
-            if (trigEl) {
-                trigEl.textContent = state.isDown ? 'PULSE' : 'IDLE';
-                trigEl.className = state.isDown ? 'text-red-400 font-bold mt-0.5 animate-pulse' : 'text-slate-500 font-bold mt-0.5';
-            }
         }
     }
 };
