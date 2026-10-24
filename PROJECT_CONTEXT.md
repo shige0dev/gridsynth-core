@@ -515,4 +515,11 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
         - `timeSpan` のデフォルトを `0.1`（100ms）に更新。
         - モーダル初期表示およびステート fallback 値も `2.0V / 100ms` へ統一。
 
+ 22. **FM関連モジュール（FMx3 / FM）内包ADSRカーブのデフォルトLIN統一**:
+    - `src/modules/defs/fm.js`, `src/audio/defs/fm.js`, `src/dsp/processors/fm.js`:
+      - 全オペレーター（`op1`, `op2`, `op3`）の内包ADSRカーブのデフォルト値を `'exp'` から **`'lin'`（直線）** に統一変更。
+      - `defaults()`, `DEFAULTS`, `onNormalize`、および AudioWorklet 側の初期化パラメータをすべて `curve: 'lin'` / `aCurve: 'lin', dCurve: 'lin', rCurve: 'lin'` へ統一。
+      - `worklet-processors.js` および `engine.js` のキャッシュバスターを更新。
+      - `GRIDSYNTH_AI_PATCH_SPEC.md` の FM モジュール仕様書を更新。
+
 

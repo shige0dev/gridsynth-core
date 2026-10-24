@@ -205,7 +205,7 @@ $$\text{slotIndex} = \text{row} \times 5 + \text{col} \quad (0 \le \text{row} \l
   - `"sine"`: サイン波（`feedback`: 0.0〜1.0 で自己変調）
   - `"noise"`: ホワイトノイズ（スネアのスナッピー、ハイハットの擦れ音、打撃アタックノイズをFMだけで生成可能）
 - **オペレータ内包ADSR**:
-  - `curve`: `"exp"` (指数減衰 / キレのあるパーカッション), `"lin"` (直線), `"log"` (対数)
+  - 各オペレーター（`op1`, `op2`, `op3`）のADSRカーブのデフォルトは **`"lin"`（直線）** です。個別に `aCurve`, `dCurve`, `rCurve`（または包括指定の `curve`）で `"lin"`, `"exp"`, `"log"` を設定可能です。
   - `attack` (0.0005〜2.0s), `decay` (0.005〜3.0s), `sustain` (0.0〜1.0), `release` (0.005〜5.0s)
 
 ---

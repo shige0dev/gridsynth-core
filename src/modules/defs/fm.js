@@ -1,4 +1,4 @@
-import { UIHelpers } from '../../ui/helpers.js?v=187';
+import { UIHelpers } from '../../ui/helpers.js?v=351';
 
 const FM_OPERATORS = [
     { num: 3, key: 'op3', label: 'OP 3', sub: 'MOD 2', color: 'amber', hasWave: true, hasFb: true },
@@ -24,9 +24,9 @@ export const FMx3 = {
     onNormalize: (m) => {
         const curveVal = (c) => c === 'log' ? 0.75 : (c === 'exp' ? -0.75 : 0.0);
         const DEFAULTS = {
-            op1: { ratio: 1.0, level: 0.85, attack: 0.005, decay: 0.4, sustain: 0.0, release: 0.1 },
-            op2: { ratio: 2.0, level: 1.5, attack: 0.005, decay: 0.15, sustain: 0.0, release: 0.05 },
-            op3: { ratio: 3.5, level: 1.8, feedback: 0.0, wave: 'sine', attack: 0.005, decay: 0.05, sustain: 0.0, release: 0.02 }
+            op1: { ratio: 1.0, level: 0.85, attack: 0.005, decay: 0.4, sustain: 0.0, release: 0.1, aCurve: 'lin', dCurve: 'lin', rCurve: 'lin', curve: 'lin' },
+            op2: { ratio: 2.0, level: 1.5, attack: 0.005, decay: 0.15, sustain: 0.0, release: 0.05, aCurve: 'lin', dCurve: 'lin', rCurve: 'lin', curve: 'lin' },
+            op3: { ratio: 3.5, level: 1.8, feedback: 0.0, wave: 'sine', attack: 0.005, decay: 0.05, sustain: 0.0, release: 0.02, aCurve: 'lin', dCurve: 'lin', rCurve: 'lin', curve: 'lin' }
         };
         FM_OPERATORS.forEach(op => {
             const def = DEFAULTS[op.key];

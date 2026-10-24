@@ -10,7 +10,7 @@ import './processors/scope.js';
 import './processors/pat.js';
 import './processors/markov.js';
 import './processors/chord.js';
-import './processors/fm.js';
+import './processors/fm.js?v=351';
 import './processors/fm-core.js';
 import './processors/gate4.js';
 import './processors/arp.js';

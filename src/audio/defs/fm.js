@@ -22,9 +22,9 @@ export const FM = {
             hasGateIn: hasGate,
             algorithm: d.algorithm ?? 1,
             rootMidi: d.rootMidi ?? 48,
-            op1: d.op1 || { ratio: 1.0, level: 0.85, attack: 0.005, decay: 0.4, sustain: 0.0, release: 0.1, curve: 'exp' },
-            op2: d.op2 || { ratio: 2.0, level: 1.5, attack: 0.005, decay: 0.15, sustain: 0.0, release: 0.05, curve: 'exp' },
-            op3: d.op3 || { ratio: 3.5, level: 1.8, feedback: 0.0, wave: 'sine', attack: 0.005, decay: 0.05, sustain: 0.0, release: 0.02, curve: 'exp' }
+            op1: d.op1 || { ratio: 1.0, level: 0.85, attack: 0.005, decay: 0.4, sustain: 0.0, release: 0.1, aCurve: 'lin', dCurve: 'lin', rCurve: 'lin', curve: 'lin' },
+            op2: d.op2 || { ratio: 2.0, level: 1.5, attack: 0.005, decay: 0.15, sustain: 0.0, release: 0.05, aCurve: 'lin', dCurve: 'lin', rCurve: 'lin', curve: 'lin' },
+            op3: d.op3 || { ratio: 3.5, level: 1.8, feedback: 0.0, wave: 'sine', attack: 0.005, decay: 0.05, sustain: 0.0, release: 0.02, aCurve: 'lin', dCurve: 'lin', rCurve: 'lin', curve: 'lin' }
         };
         w.port.postMessage(payload);
 

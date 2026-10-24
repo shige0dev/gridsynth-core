@@ -60,7 +60,7 @@ export const preset10 = {
             "decay": 0.45,
             "sustain": 0.0,
             "release": 0.15,
-            "curve": "exp"
+            "curve": "lin"
           },
           "op2": {
             "ratio": 2.0,
@@ -69,7 +69,7 @@ export const preset10 = {
             "decay": 0.22,
             "sustain": 0.0,
             "release": 0.08,
-            "curve": "exp"
+            "curve": "lin"
           },
           "op3": {
             "ratio": 4.0,
@@ -80,7 +80,7 @@ export const preset10 = {
             "decay": 0.06,
             "sustain": 0.0,
             "release": 0.03,
-            "curve": "exp"
+            "curve": "lin"
           }
         },
         "FM2": {
@@ -94,7 +94,7 @@ export const preset10 = {
             "decay": 0.28,
             "sustain": 0.0,
             "release": 0.04,
-            "curve": "exp"
+            "curve": "lin"
           },
           "op2": {
             "ratio": 1.0,
@@ -103,7 +103,7 @@ export const preset10 = {
             "decay": 0.04,
             "sustain": 0.0,
             "release": 0.02,
-            "curve": "exp"
+            "curve": "lin"
           },
           "op3": {
             "ratio": 8.0,
@@ -114,7 +114,7 @@ export const preset10 = {
             "decay": 0.008,
             "sustain": 0.0,
             "release": 0.005,
-            "curve": "exp"
+            "curve": "lin"
           }
         },
         "FM3": {
@@ -128,7 +128,7 @@ export const preset10 = {
             "decay": 0.22,
             "sustain": 0.08,
             "release": 0.05,
-            "curve": "exp"
+            "curve": "lin"
           },
           "op2": {
             "ratio": 1.0,
@@ -137,7 +137,7 @@ export const preset10 = {
             "decay": 0.15,
             "sustain": 0.04,
             "release": 0.03,
-            "curve": "exp"
+            "curve": "lin"
           },
           "op3": {
             "ratio": 3.0,
@@ -148,7 +148,7 @@ export const preset10 = {
             "decay": 0.07,
             "sustain": 0.0,
             "release": 0.02,
-            "curve": "exp"
+            "curve": "lin"
           }
         },
         "DELAY1": {

@@ -21,9 +21,9 @@ export class FmProcessor extends AudioWorkletProcessor {
         this.op2 = { ratio: 2.0, level: 1.5 };
         this.op3 = { ratio: 3.5, level: 1.8, feedback: 0.0, wave: 'sine' };
 
-        this.env1 = new AdsrCore({ attack: 0.005, decay: 0.4, sustain: 0.0, release: 0.1, curve: 'exp' });
-        this.env2 = new AdsrCore({ attack: 0.005, decay: 0.15, sustain: 0.0, release: 0.05, curve: 'exp' });
-        this.env3 = new AdsrCore({ attack: 0.005, decay: 0.05, sustain: 0.0, release: 0.02, curve: 'exp' });
+        this.env1 = new AdsrCore({ attack: 0.005, decay: 0.4, sustain: 0.0, release: 0.1, curve: 'lin' });
+        this.env2 = new AdsrCore({ attack: 0.005, decay: 0.15, sustain: 0.0, release: 0.05, curve: 'lin' });
+        this.env3 = new AdsrCore({ attack: 0.005, decay: 0.05, sustain: 0.0, release: 0.02, curve: 'lin' });
 
         this.port.onmessage = e => {
             if (e.data.type === 'SET_PARAMS') {
