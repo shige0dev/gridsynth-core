@@ -335,7 +335,7 @@ export class PresetManager {
 
     exportCurrentPreset() {
         this.ui.persistCurrentPage();
-        return exportPatch(this.ui.pagesData, this.ui.synth.masterBPM, this.ui.COLS);
+        return exportPatch(this.ui.pagesData, this.ui.synth.masterBPM, this.ui.COLS, this.ui.ROWS);
     }
 
     loadPatchData(p, name = null) {

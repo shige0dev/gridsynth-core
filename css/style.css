@@ -98,6 +98,7 @@ body {
 #canvas-container {
     touch-action: pan-y pinch-zoom;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: auto !important;
     scrollbar-width: thin;
     scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
 }

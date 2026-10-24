@@ -525,7 +525,7 @@ export function exportModuleData(m) {
 /**
  * Exports current pagesData structure into a clean, portable patch JSON object
  */
-export function exportPatch(pagesData, bpm = 120, cols = 4) {
+export function exportPatch(pagesData, bpm = 120, cols = 4, rows = 32) {
     const exportPages = {};
 
     Object.entries(pagesData || {}).forEach(([pId, pData]) => {
@@ -574,7 +574,7 @@ export function exportPatch(pagesData, bpm = 120, cols = 4) {
 
     return {
         bpm: bpm || 120,
-        grid: { cols, rows: 12 },
+        grid: { cols, rows },
         pages: exportPages
     };
 }
