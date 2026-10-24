@@ -1,8 +1,17 @@
-export const APP_VERSION = 'v1.0.0309';
+export const APP_VERSION = 'v1.0.0310';
 
-import { SynthEngine } from './audio/engine.js?v=309';
-import { UIController } from './ui/controller.js?v=309';
-import { initExternalAPI } from './core/api.js?v=309';
+import { SynthEngine } from './audio/engine.js?v=310';
+import { UIController } from './ui/controller.js?v=310';
+import { initExternalAPI } from './core/api.js?v=310';
+
+function applyDeviceMode() {
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+        (window.matchMedia && window.matchMedia('(pointer: coarse)').matches && window.innerWidth < 768);
+    document.documentElement.classList.toggle('is-mobile-device', isMobile);
+    document.documentElement.classList.toggle('is-desktop-device', !isMobile);
+}
+applyDeviceMode();
+window.addEventListener('resize', applyDeviceMode);
 
 document.addEventListener('DOMContentLoaded', () => {
     const verDisp = document.getElementById('app-version-disp');

@@ -16,22 +16,24 @@ html, body {
     max-width: 360px;
     max-height: 780px;
     border-radius: 1.5rem;
-    margin: auto;
+    margin: 0 auto;
     flex-shrink: 0;
 }
 
-/* PC / Desktop (Mouse / Trackpad or Screen >= 768px): Strictly lock to 360px x 780px without scaling */
+/* PC / Desktop: Strictly lock to 360px x 780px, align from top (y=0) so header is NEVER clipped */
+html.is-desktop-device body,
 @media (pointer: fine), (min-width: 768px) {
     html, body {
-        height: 100%;
+        min-height: 100%;
         width: 100%;
         margin: 0;
         padding: 0;
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
-        overflow: auto;
+        justify-content: flex-start;
+        overflow-x: hidden;
+        overflow-y: auto;
     }
 
     #phone-frame {
@@ -42,13 +44,14 @@ html, body {
         max-width: 360px !important;
         max-height: 780px !important;
         border-radius: 1.5rem !important;
-        margin: auto !important;
+        margin: max(0px, calc((100vh - 780px) / 2)) auto !important;
         flex-shrink: 0 !important;
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
     }
 }
 
-/* Mobile Touch Devices (Smartphones): full viewport fit, zero bounce, pinned header */
+/* Mobile Touch Devices (Smartphones): full viewport fit, zero bounce, header pinned at top */
+html.is-mobile-device body,
 @media (pointer: coarse) and (max-width: 767px) {
     html, body {
         height: 100% !important;
@@ -60,6 +63,10 @@ html, body {
         overflow: hidden !important;
         overscroll-behavior: none !important;
         -webkit-overflow-scrolling: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        justify-content: flex-start !important;
     }
 
     #phone-frame {
