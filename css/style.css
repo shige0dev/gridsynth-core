@@ -99,17 +99,14 @@ body {
     touch-action: pan-y pinch-zoom;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: auto !important;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
 }
 
 #canvas-container::-webkit-scrollbar {
-    width: 4px;
-}
-
-#canvas-container::-webkit-scrollbar-thumb {
-    background-color: rgba(148, 163, 184, 0.3);
-    border-radius: 9999px;
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
 }
 
 #grid-scroll-content {
