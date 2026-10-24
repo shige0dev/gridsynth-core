@@ -97,27 +97,40 @@ export class InteractionManager {
     bindGridEvents() {
         if (!this.ui.gridBoard) return;
 
+        let currentHoverPort = null;
         let hoverPortTimer = null;
+
         this.ui.gridBoard.addEventListener('pointerover', (e) => {
             const port = e.target.closest('.port');
+            if (!port) return;
+            const mId = port.dataset.moduleId, p = port.dataset.port;
+            if (!mId || !p) return;
+            const portKey = `${mId}:${p}`;
+            if (currentHoverPort === portKey) return;
+            currentHoverPort = portKey;
+
             if (hoverPortTimer) {
                 clearTimeout(hoverPortTimer);
                 hoverPortTimer = null;
             }
-            if (!port) return;
-            const mId = port.dataset.moduleId, p = port.dataset.port;
-            if (!mId || !p) return;
+
             const m = this.ui.modules[mId];
             if (m) {
                 hoverPortTimer = setTimeout(() => {
                     const info = this.ui.getPortDisplayInfo ? this.ui.getPortDisplayInfo(mId, p) : null;
                     const toastLabel = (info && info.hasAlias) ? info.label : p;
-                    this.ui.showToast(`[${mId}:${toastLabel}]`, 1200);
-                }, 120);
+                    this.ui.showToast(`[${mId}:${toastLabel}]`, 1500);
+                }, 50);
             }
         });
+
         this.ui.gridBoard.addEventListener('pointerout', (e) => {
-            if (e.target.closest('.port')) {
+            const port = e.target.closest('.port');
+            if (port) {
+                if (e.relatedTarget && e.relatedTarget.closest('.port') === port) {
+                    return;
+                }
+                currentHoverPort = null;
                 if (hoverPortTimer) {
                     clearTimeout(hoverPortTimer);
                     hoverPortTimer = null;
