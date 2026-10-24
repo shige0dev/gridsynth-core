@@ -28,6 +28,11 @@ export class InteractionManager {
         this.moduleLongPressed = false;
         this._wasModuleDragging = false;
 
+        this._moduleAutoScrollRaf = null;
+        this._moduleAutoScrollVelocity = 0;
+        this._lastPointerX = 0;
+        this._lastPointerY = 0;
+
         this._isMouseScrollDragging = false;
         this._wasScrollDragging = false;
         this._scrollStartY = 0;
@@ -41,6 +46,7 @@ export class InteractionManager {
     }
 
     cancelPendingPresses() {
+        this._stopModuleAutoScroll();
         if (this._pTimer) {
             clearTimeout(this._pTimer);
             this._pTimer = null;
@@ -93,6 +99,57 @@ export class InteractionManager {
 
         const cls = !this.dragGroupValid ? HIGHLIGHT_CLASSES.invalid : HIGHLIGHT_CLASSES[this.dragMode];
         this.lastHighlightedCells.forEach(cell => cell.classList.add(cls));
+    }
+
+    _updateDropTargetAt(clientX, clientY) {
+        if (!this.isDragging) return;
+        const targetCell = document.elementFromPoint(clientX, clientY)?.closest('.grid-cell');
+        const nIdx = targetCell ? parseInt(targetCell.dataset.index) : null;
+        if (this.dropTargetIndex !== nIdx) {
+            this.dropTargetIndex = nIdx;
+            if (this.dragMode !== 'move') this.dragMode = 'move';
+            if (this._copyTimer) {
+                clearTimeout(this._copyTimer);
+                this._copyTimer = null;
+            }
+            if (nIdx !== null) {
+                this._copyTimer = setTimeout(() => {
+                    if (this.isDragging) {
+                        this.dragMode = 'copy';
+                        this.updateDropHighlight();
+                    }
+                }, 1200);
+            }
+            this.updateDropHighlight();
+        }
+    }
+
+    _startModuleAutoScroll() {
+        if (this._moduleAutoScrollRaf) return;
+        const step = () => {
+            if (!this.isDragging || this._moduleAutoScrollVelocity === 0) {
+                this._moduleAutoScrollRaf = null;
+                return;
+            }
+            const container = document.getElementById('canvas-container');
+            if (container) {
+                const prevScroll = container.scrollTop;
+                container.scrollTop += this._moduleAutoScrollVelocity;
+                if (container.scrollTop !== prevScroll) {
+                    this._updateDropTargetAt(this._lastPointerX, this._lastPointerY);
+                }
+            }
+            this._moduleAutoScrollRaf = requestAnimationFrame(step);
+        };
+        this._moduleAutoScrollRaf = requestAnimationFrame(step);
+    }
+
+    _stopModuleAutoScroll() {
+        if (this._moduleAutoScrollRaf) {
+            cancelAnimationFrame(this._moduleAutoScrollRaf);
+            this._moduleAutoScrollRaf = null;
+        }
+        this._moduleAutoScrollVelocity = 0;
     }
 
     bindGridEvents() {
@@ -400,29 +457,36 @@ export class InteractionManager {
             }
             if (this.isDragging) {
                 if (e.cancelable) e.preventDefault();
-                const targetCell = document.elementFromPoint(e.clientX, e.clientY)?.closest('.grid-cell');
-                const nIdx = targetCell ? parseInt(targetCell.dataset.index) : null;
-                if (this.dropTargetIndex !== nIdx) {
-                    this.dropTargetIndex = nIdx;
-                    if (this.dragMode !== 'move') this.dragMode = 'move';
-                    if (this._copyTimer) {
-                        clearTimeout(this._copyTimer);
-                        this._copyTimer = null;
+                this._lastPointerX = e.clientX;
+                this._lastPointerY = e.clientY;
+                this._updateDropTargetAt(e.clientX, e.clientY);
+
+                // Auto-scroll when pointer is near top or bottom edge of canvas-container
+                if (container) {
+                    const rect = container.getBoundingClientRect();
+                    const edgeZone = 70; // 70px edge threshold
+                    const topThreshold = rect.top + edgeZone;
+                    const bottomThreshold = rect.bottom - edgeZone;
+
+                    if (e.clientY < topThreshold) {
+                        const factor = Math.min(1.0, Math.max(0.1, (topThreshold - e.clientY) / edgeZone));
+                        this._moduleAutoScrollVelocity = -Math.round(factor * 14);
+                    } else if (e.clientY > bottomThreshold) {
+                        const factor = Math.min(1.0, Math.max(0.1, (e.clientY - bottomThreshold) / edgeZone));
+                        this._moduleAutoScrollVelocity = Math.round(factor * 14);
+                    } else {
+                        this._moduleAutoScrollVelocity = 0;
                     }
-                    if (nIdx !== null) {
-                        this._copyTimer = setTimeout(() => {
-                            if (this.isDragging) {
-                                this.dragMode = 'copy';
-                                this.updateDropHighlight();
-                            }
-                        }, 1200);
+
+                    if (this._moduleAutoScrollVelocity !== 0 && !this._moduleAutoScrollRaf) {
+                        this._startModuleAutoScroll();
                     }
-                    this.updateDropHighlight();
                 }
             }
         });
 
         const stopDrag = () => {
+            this._stopModuleAutoScroll();
             if (this._pTimer) {
                 clearTimeout(this._pTimer);
                 this._pTimer = null;

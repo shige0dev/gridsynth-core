@@ -610,6 +610,15 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
         - ポインタ解放（`pointerup` / `pointercancel`）時にオートスクロールを即時停止し、`overflowY = 'auto'` を復元。
     - バージョンを `v1.0.0358`、キャッシュバスターを `v=358` に更新。
 
+ 30. **単独・複数モジュール移動時の画面端オートスクロール機能の実装**:
+    - `src/ui/managers/interaction-manager.js`:
+      - モジュール選択移動（`isDragging = true`）中にポインタを画面の上端付近または下端付近（70px エッジゾーン）へ持っていくと、自動的に画面が追従スクロールするオートスクロール機構（`_startModuleAutoScroll` / `_stopModuleAutoScroll`）を新設。
+      - `requestAnimationFrame` による可変速スクロール（最大 14px/frame）駆動中、毎フレーム `_updateDropTargetAt(clientX, clientY)` を呼び出し、スクロールで新たに画面内に入ってきたセルをリアルタイムで検知・ハイライト。
+      - これにより、単独モジュールおよび複数選択グループを、画面外にある遠くの行（Row 0〜31 の任意のスロット）へスムーズにスクロールしながらドラッグ＆ドロップ移動が可能。
+      - ポインタ解放（`stopDrag`）およびキャンセル時にオートスクロールを即時停止し、`overflowY = 'auto'` を復元。
+    - バージョンを `v1.0.0359`、キャッシュバスターを `v=359` に更新。
+
+
 
 
 
