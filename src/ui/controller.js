@@ -1,13 +1,13 @@
-import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=321';
-import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=321';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=321';
-import { UIHelpers } from './helpers.js?v=321';
-import { PresetManager } from './managers/preset-manager.js?v=321';
-import { ModalManager } from './managers/modal-manager.js?v=321';
-import { CableManager } from './managers/cable-manager.js?v=321';
-import { PageManager } from './managers/page-manager.js?v=321';
-import { InteractionManager } from './managers/interaction-manager.js?v=321';
-import { WaveCodec } from '../audio/wave-codec.js?v=321';
+import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=322';
+import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=322';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=322';
+import { UIHelpers } from './helpers.js?v=322';
+import { PresetManager } from './managers/preset-manager.js?v=322';
+import { ModalManager } from './managers/modal-manager.js?v=322';
+import { CableManager } from './managers/cable-manager.js?v=322';
+import { PageManager } from './managers/page-manager.js?v=322';
+import { InteractionManager } from './managers/interaction-manager.js?v=322';
+import { WaveCodec } from '../audio/wave-codec.js?v=322';
 
 export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'LISS', 'XY', 'SPEC', 'MON', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE'];
 
@@ -853,6 +853,16 @@ export class UIController {
         // Scrolling cancels pending long-presses without blocking the compositor thread
         document.getElementById('canvas-container')?.addEventListener('scroll', () => {
             this.interactionManager?.cancelPendingPresses?.();
+        }, { passive: true });
+
+        // Desktop mouse wheel scroll enhancement (smoothly scroll 32-row workspace)
+        window.addEventListener('wheel', (e) => {
+            const container = document.getElementById('canvas-container');
+            if (!container) return;
+            const activeModal = document.querySelector('#shared-modal:not(.hidden), #preset-manager-modal:not(.hidden), #dock-modal:not(.hidden), #custom-alert-modal:not(.hidden)');
+            if (activeModal) return;
+            if (e.target.closest('input, select, textarea, .overflow-y-auto:not(#canvas-container)')) return;
+            container.scrollTop += e.deltaY;
         }, { passive: true });
 
         document.getElementById('preset-trigger-btn')?.addEventListener('click', () => {

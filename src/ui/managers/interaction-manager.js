@@ -27,6 +27,11 @@ export class InteractionManager {
         this.portLongPressed = false;
         this.moduleLongPressed = false;
 
+        this._isMouseScrollDragging = false;
+        this._wasScrollDragging = false;
+        this._scrollStartY = 0;
+        this._scrollStartTop = 0;
+
         // Row Movement & Handle states
         this.rowManager = new RowManager(this.ui, this);
 
@@ -121,6 +126,10 @@ export class InteractionManager {
         });
 
         this.ui.gridBoard.addEventListener('click', async (e) => {
+            if (this._wasScrollDragging) {
+                this._wasScrollDragging = false;
+                return;
+            }
             const port = e.target.closest('.port');
             if (port) {
                 if (this.portLongPressed) {
@@ -219,6 +228,16 @@ export class InteractionManager {
         this.ui.gridBoard.addEventListener('pointerdown', (e) => {
             this._sX = e.clientX;
             this._sY = e.clientY;
+            this._isMouseScrollDragging = false;
+
+            const container = document.getElementById('canvas-container');
+            if (e.pointerType === 'mouse' && e.button === 0 && container) {
+                const isControl = e.target.closest('.port, input, button, select, textarea');
+                if (!isControl) {
+                    this._scrollStartY = e.clientY;
+                    this._scrollStartTop = container.scrollTop;
+                }
+            }
 
             const port = e.target.closest('.port');
             if (port) {
@@ -299,6 +318,18 @@ export class InteractionManager {
                 clearTimeout(this._lpTimer);
                 this._lpTimer = null;
             }
+
+            // Desktop mouse drag-to-scroll support (simulate touch swipe on PC)
+            const container = document.getElementById('canvas-container');
+            if (e.pointerType === 'mouse' && (e.buttons & 1) && !this.isDragging && !this.moduleLongPressed && container) {
+                if (distSq > 36 || this._isMouseScrollDragging) {
+                    this._isMouseScrollDragging = true;
+                    this._wasScrollDragging = true;
+                    const deltaY = e.clientY - this._scrollStartY;
+                    container.scrollTop = this._scrollStartTop - deltaY;
+                    return;
+                }
+            }
             if (!this.isDragging && this._dragCandidate && distSq > 64) {
                 if (this.moduleLongPressed && this.selectedModuleIds.includes(this._dragCandidate)) {
                     if (this.ui.selectedTargetForConnection) {
@@ -358,6 +389,10 @@ export class InteractionManager {
             if (this._copyTimer) {
                 clearTimeout(this._copyTimer);
                 this._copyTimer = null;
+            }
+            if (this._isMouseScrollDragging) {
+                this._isMouseScrollDragging = false;
+                setTimeout(() => { this._wasScrollDragging = false; }, 120);
             }
             this._dragCandidate = null;
             if (this.portLongPressed) {
