@@ -1,13 +1,13 @@
-import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=332';
-import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=332';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=332';
-import { UIHelpers } from './helpers.js?v=332';
-import { PresetManager } from './managers/preset-manager.js?v=332';
-import { ModalManager } from './managers/modal-manager.js?v=332';
-import { CableManager } from './managers/cable-manager.js?v=332';
-import { PageManager } from './managers/page-manager.js?v=332';
-import { InteractionManager } from './managers/interaction-manager.js?v=332';
-import { WaveCodec } from '../audio/wave-codec.js?v=332';
+import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=333';
+import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=333';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=333';
+import { UIHelpers } from './helpers.js?v=333';
+import { PresetManager } from './managers/preset-manager.js?v=333';
+import { ModalManager } from './managers/modal-manager.js?v=333';
+import { CableManager } from './managers/cable-manager.js?v=333';
+import { PageManager } from './managers/page-manager.js?v=333';
+import { InteractionManager } from './managers/interaction-manager.js?v=333';
+import { WaveCodec } from '../audio/wave-codec.js?v=333';
 
 export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'LISS', 'XY', 'SPEC', 'MON', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD'];
 
@@ -21,6 +21,8 @@ export class UIController {
         this.gridMap = Array(this.TOTAL_SLOTS).fill(null);
         this.cells = new Array(this.TOTAL_SLOTS);
         this._lastUiUpdate = 0;
+        this.isPerformanceMode = localStorage.getItem('gridsynth_perf_mode') === 'true';
+        this._savedCableOpacity = undefined;
 
         this.presetManager = new PresetManager(this);
         this.modalManager = new ModalManager(this);
@@ -166,6 +168,53 @@ export class UIController {
         }
         localStorage.setItem('gridsynth_cable_opacity', String(op));
         this.renderCables();
+    }
+
+    togglePerformanceMode(force = null) {
+        this.isPerformanceMode = (typeof force === 'boolean') ? force : !this.isPerformanceMode;
+        localStorage.setItem('gridsynth_perf_mode', String(this.isPerformanceMode));
+        this.applyPerformanceMode();
+        this.showToast(this.isPerformanceMode ? 'パフォーマンスモード: ON' : 'パフォーマンスモード: OFF');
+    }
+
+    applyPerformanceMode() {
+        const isPerf = Boolean(this.isPerformanceMode);
+        document.documentElement.classList.toggle('is-performance-mode', isPerf);
+        document.getElementById('phone-frame')?.classList.toggle('is-performance-mode', isPerf);
+
+        const btn = document.getElementById('perf-mode-btn');
+        if (btn) {
+            if (isPerf) {
+                btn.className = "h-5 px-1.5 bg-amber-500/20 text-amber-300 border border-amber-500/80 rounded flex items-center justify-center gap-0.5 transition shadow-[0_0_8px_rgba(245,158,11,0.25)] cursor-pointer font-mono text-[7.5px] font-bold";
+            } else {
+                btn.className = "h-5 px-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-400 hover:text-amber-400 rounded flex items-center justify-center gap-0.5 transition shadow-sm cursor-pointer font-mono text-[7.5px] font-bold";
+            }
+        }
+
+        if (isPerf) {
+            // Clear any selections
+            if (this.selectedModuleIds.length > 0) {
+                this.selectedModuleIds = [];
+                this.interactionManager?.updateSelectionClasses?.();
+            }
+            if (this.selectedTargetForConnection) {
+                this.selectedTargetForConnection = null;
+                this.updatePortHighlight();
+            }
+            // Save current cable opacity and force dim cables (~0.2)
+            if (this._savedCableOpacity === undefined) {
+                this._savedCableOpacity = this.cableOpacity ?? 1.0;
+            }
+            this.setCableOpacity(0.2);
+        } else {
+            // Restore previous cable opacity
+            if (this._savedCableOpacity !== undefined) {
+                this.setCableOpacity(this._savedCableOpacity);
+                this._savedCableOpacity = undefined;
+            }
+        }
+        this.renderCables();
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
     showToast(msg, duration = 1800) {
@@ -731,9 +780,17 @@ export class UIController {
             if (idx === -1) idx = 0;
             const nextIdx = (idx + 1) % steps.length;
             const nextOp = steps[nextIdx];
+            if (this.isPerformanceMode) {
+                this._savedCableOpacity = nextOp;
+            }
             this.setCableOpacity(nextOp);
             this.showToast(nextOp < 0.5 ? 'CABLE: DIM (20%)' : 'CABLE: BRIGHT (100%)');
         });
+
+        document.getElementById('perf-mode-btn')?.addEventListener('click', () => {
+            this.togglePerformanceMode();
+        });
+        this.applyPerformanceMode();
 
 
 

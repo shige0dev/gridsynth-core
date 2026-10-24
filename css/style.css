@@ -222,6 +222,22 @@ body {
     transform: none !important;
 }
 
+/* Performance Mode: Hide all ports and disable module editing affordances */
+.is-performance-mode .port,
+.is-performance-mode .port-node,
+.is-performance-mode .port-node-wrapper {
+    display: none !important;
+    pointer-events: none !important;
+}
+
+.is-performance-mode .grid-cell {
+    cursor: default !important;
+}
+
+.is-performance-mode .empty-cell {
+    cursor: default !important;
+}
+
 .port.port-selected,
 .port-selected {
     border: none !important;

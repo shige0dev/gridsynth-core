@@ -143,6 +143,9 @@ export class InteractionManager {
                 this._wasScrollDragging = false;
                 return;
             }
+            if (this.ui.isPerformanceMode) {
+                return;
+            }
             const port = e.target.closest('.port');
             if (port) {
                 if (this.portLongPressed) {
@@ -257,6 +260,7 @@ export class InteractionManager {
 
             const port = e.target.closest('.port');
             if (port) {
+                if (this.ui.isPerformanceMode) return;
                 const mId = port.dataset.moduleId, p = port.dataset.port;
                 this._pTimer = setTimeout(() => {
                     this._pTimer = null;
@@ -303,6 +307,7 @@ export class InteractionManager {
 
             const body = e.target.closest('.module-body');
             if (!body) return;
+            if (this.ui.isPerformanceMode) return;
             const mId = body.dataset.moduleId;
             this._dragCandidate = mId;
             this._lpTimer = setTimeout(() => {
