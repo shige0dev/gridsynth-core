@@ -26,6 +26,7 @@ export class InteractionManager {
         this._dragCandidate = null;
         this.portLongPressed = false;
         this.moduleLongPressed = false;
+        this._wasModuleDragging = false;
 
         this._isMouseScrollDragging = false;
         this._wasScrollDragging = false;
@@ -175,6 +176,10 @@ export class InteractionManager {
             const body = e.target.closest('.module-body');
             if (body) {
                 const mId = body.dataset.moduleId;
+                if (this._wasModuleDragging) {
+                    this._wasModuleDragging = false;
+                    return;
+                }
                 if (this.moduleLongPressed) {
                     this.moduleLongPressed = false;
                     return;
@@ -308,22 +313,30 @@ export class InteractionManager {
             const body = e.target.closest('.module-body');
             if (!body) return;
             if (this.ui.isPerformanceMode) return;
+            const isControl = e.target.closest('.port, input, button, select, textarea, .pad-grid-container, .pad-grid-canvas');
+            if (isControl) return;
+
             const mId = body.dataset.moduleId;
             this._dragCandidate = mId;
-            this._lpTimer = setTimeout(() => {
-                this._lpTimer = null;
-                this.moduleLongPressed = true;
-                if (!this.selectedModuleIds.includes(mId)) {
-                    this.selectedModuleIds = [...this.selectedModuleIds, mId];
-                }
-                if (this.ui.selectedTargetForConnection) {
-                    this.ui.selectedTargetForConnection = null;
-                }
-                this.updateSelectionClasses();
-                if (navigator.vibrate) {
-                    try { navigator.vibrate(25); } catch (_) {}
-                }
-            }, 350);
+
+            // If the module is NOT already selected, require a long press (350ms) to select it or add to multi-selection.
+            // If it is ALREADY selected, do not start the timer — it is immediately ready to drag!
+            if (!this.selectedModuleIds.includes(mId)) {
+                this._lpTimer = setTimeout(() => {
+                    this._lpTimer = null;
+                    this.moduleLongPressed = true;
+                    if (!this.selectedModuleIds.includes(mId)) {
+                        this.selectedModuleIds = [...this.selectedModuleIds, mId];
+                    }
+                    if (this.ui.selectedTargetForConnection) {
+                        this.ui.selectedTargetForConnection = null;
+                    }
+                    this.updateSelectionClasses();
+                    if (navigator.vibrate) {
+                        try { navigator.vibrate(25); } catch (_) {}
+                    }
+                }, 350);
+            }
         });
 
         window.addEventListener('pointermove', (e) => {
@@ -340,9 +353,11 @@ export class InteractionManager {
                 this._lpTimer = null;
             }
 
+            const isCandidateSelected = this._dragCandidate && this.selectedModuleIds.includes(this._dragCandidate);
+
             // Desktop mouse drag-to-scroll support (simulate touch swipe on PC)
             const container = document.getElementById('canvas-container');
-            if (e.pointerType === 'mouse' && (e.buttons & 1) && !this.isDragging && !this.moduleLongPressed && container) {
+            if (e.pointerType === 'mouse' && (e.buttons & 1) && !this.isDragging && !this.moduleLongPressed && !isCandidateSelected && container) {
                 if (e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal, .pad-grid-container, .pad-grid-canvas')) {
                     this._isMouseScrollDragging = false;
                     return;
@@ -355,14 +370,14 @@ export class InteractionManager {
                     return;
                 }
             }
-            if (!this.isDragging && this._dragCandidate && distSq > 64) {
-                if (this.moduleLongPressed && this.selectedModuleIds.includes(this._dragCandidate)) {
+            if (!this.isDragging && this._dragCandidate && distSq > 36) {
+                if (this.selectedModuleIds.includes(this._dragCandidate)) {
                     if (this.ui.selectedTargetForConnection) {
                         this.ui.selectedTargetForConnection = null;
                     }
                     this.isDragging = true;
+                    this._wasModuleDragging = true;
                     this.dragMode = 'move';
-                    const container = document.getElementById('canvas-container');
                     if (container) container.style.overflowY = 'hidden';
 
                     const baseM = this.ui.modules[this._dragCandidate];
@@ -380,6 +395,7 @@ export class InteractionManager {
                 }
             }
             if (this.isDragging) {
+                if (e.cancelable) e.preventDefault();
                 const targetCell = document.elementFromPoint(e.clientX, e.clientY)?.closest('.grid-cell');
                 const nIdx = targetCell ? parseInt(targetCell.dataset.index) : null;
                 if (this.dropTargetIndex !== nIdx) {
@@ -428,6 +444,8 @@ export class InteractionManager {
             }
             if (this.isDragging) {
                 this.isDragging = false;
+                this._wasModuleDragging = true;
+                setTimeout(() => { this._wasModuleDragging = false; }, 250);
                 const container = document.getElementById('canvas-container');
                 if (container) container.style.overflowY = 'auto';
                 this.lastHighlightedCells.forEach(c => c.classList.remove('drop-highlight-valid', 'drop-highlight-invalid', 'drop-highlight-copy-valid'));

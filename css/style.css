@@ -161,6 +161,7 @@ body {
     box-shadow: 0 0 15px rgba(217, 70, 239, 0.5) !important;
     border-color: #d946ef !important;
     border-width: 2px !important;
+    touch-action: none !important;
 }
 
 .native-vslider,
