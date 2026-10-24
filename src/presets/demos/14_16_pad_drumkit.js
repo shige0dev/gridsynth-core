@@ -211,9 +211,9 @@ export const preset14 = {
             },
             connections: [
                 "SUB_IO1:PIN4_out > ADSR1:gate_in",
-                "SUB_IO1:PIN4_out > CVDELAY1:cv_in",
+                "SUB_IO1:PIN4_out > CVDELAY1:sig_in",
                 "CVDELAY1:cv_out > ADSR2:gate_in",
-                "SUB_IO1:PIN4_out > CVDELAY2:cv_in",
+                "SUB_IO1:PIN4_out > CVDELAY2:sig_in",
                 "CVDELAY2:cv_out > ADSR3:gate_in",
                 "ADSR1:cv_out > VCA1:cv_in",
                 "ADSR2:cv_out > VCA1:cv_in",

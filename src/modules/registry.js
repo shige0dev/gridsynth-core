@@ -23,7 +23,7 @@ import { scaleDefs } from './defs/scale.js?v=217';
 import { rfDefs } from './defs/rf.js?v=217';
 import { arDefs } from './defs/ar.js?v=217';
 import { waveDefs } from './defs/wave.js?v=297';
-import { padDefs } from './defs/pad.js?v=337';
+import { padDefs } from './defs/pad.js?v=338';
 
 export const MODULE_REGISTRY = {
     ...vcoDefs,

@@ -1,8 +1,8 @@
-export const APP_VERSION = 'v1.0.0337';
+export const APP_VERSION = 'v1.0.0338';
 
-import { SynthEngine } from './audio/engine.js?v=337';
-import { UIController } from './ui/controller.js?v=337';
-import { initExternalAPI } from './core/api.js?v=337';
+import { SynthEngine } from './audio/engine.js?v=338';
+import { UIController } from './ui/controller.js?v=338';
+import { initExternalAPI } from './core/api.js?v=338';
 
 function applyDeviceMode() {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
@@ -13,7 +13,7 @@ function applyDeviceMode() {
 applyDeviceMode();
 window.addEventListener('resize', applyDeviceMode);
 
-document.addEventListener('DOMContentLoaded', () => {
+function initApp() {
     const verDisp = document.getElementById('app-version-disp');
     if (verDisp) verDisp.textContent = APP_VERSION;
     window.__APP_VERSION__ = APP_VERSION;
@@ -29,4 +29,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 50));
     const frame = document.getElementById('phone-frame');
     if (frame) ro.observe(frame);
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
+}
