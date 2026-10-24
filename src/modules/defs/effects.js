@@ -21,7 +21,7 @@ export const CVDELAY = {
     defaults: () => ({ type: 'CVDELAY', timeMs: 50, cvDepth: 1.0 }),
     ports: () => ({
         in: [
-            { port: 'sig_in', color: 'bg-yellow-400' },
+            { port: 'sig_in', alias: 'cv_in', color: 'bg-yellow-400' },
             { port: 'time_cv', color: 'bg-yellow-400' }
         ],
         out: [{ port: 'cv_out', color: 'bg-yellow-400' }]
