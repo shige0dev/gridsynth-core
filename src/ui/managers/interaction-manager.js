@@ -34,11 +34,20 @@ export class InteractionManager {
         this._lastPointerX = 0;
         this._lastPointerY = 0;
         this._rowLpTimer = null;
+        this._stage2X = undefined;
+        this._stage2Y = undefined;
+        this._lastKnownClientX = 0;
+        this._lastKnownClientY = 0;
+        this._justLongPressedTimestamp = 0;
 
+        this._isScrollDragging = false;
         this._isMouseScrollDragging = false;
         this._wasScrollDragging = false;
         this._scrollStartY = 0;
         this._scrollStartTop = 0;
+        this._lastScrollY = 0;
+        this._lastScrollTime = 0;
+        this._scrollVelocity = 0;
 
         // Row Movement & Handle states
         this.rowManager = new RowManager(this.ui, this);
@@ -66,6 +75,8 @@ export class InteractionManager {
             this._copyTimer = null;
         }
         this._dragCandidate = null;
+        this._stage2X = undefined;
+        this._stage2Y = undefined;
     }
 
     updateSelectionClasses() {
@@ -173,7 +184,7 @@ export class InteractionManager {
         this._moduleAutoScrollVelocity = 0;
     }
 
-    _startRowLongPress(targetRow, clientY, delay = 300) {
+    _startRowLongPress(targetRow, clientY, delay = 350) {
         if (this._rowLpTimer) {
             clearTimeout(this._rowLpTimer);
             this._rowLpTimer = null;
@@ -184,6 +195,7 @@ export class InteractionManager {
             this._rowLpTimer = null;
             if (this.isDragging) return;
             this.rowLongPressed = true;
+            this._justLongPressedTimestamp = Date.now();
             this.rowManager?.startRowDragFromModule(targetRow, clientY);
         }, delay);
     }
@@ -273,6 +285,12 @@ export class InteractionManager {
                     this._wasModuleDragging = false;
                     return;
                 }
+                if (this._wasScrollDragging) {
+                    return;
+                }
+                if (Date.now() - this._justLongPressedTimestamp < 500) {
+                    return;
+                }
                 if (this.moduleLongPressed) {
                     this.moduleLongPressed = false;
                     return;
@@ -332,6 +350,12 @@ export class InteractionManager {
             }
             const empty = e.target.closest('.empty-cell');
             if (empty) {
+                if (this._wasScrollDragging) {
+                    return;
+                }
+                if (Date.now() - this._justLongPressedTimestamp < 500) {
+                    return;
+                }
                 if (this.rowLongPressed) {
                     this.rowLongPressed = false;
                     return;
@@ -353,14 +377,20 @@ export class InteractionManager {
             }
             this._sX = e.clientX;
             this._sY = e.clientY;
+            this._lastKnownClientX = e.clientX;
+            this._lastKnownClientY = e.clientY;
+            this._isScrollDragging = false;
             this._isMouseScrollDragging = false;
+            this._scrollVelocity = 0;
 
             const container = document.getElementById('canvas-container');
-            if (!this.ui.isPerformanceMode && e.pointerType === 'mouse' && e.button === 0 && container) {
+            if (!this.ui.isPerformanceMode && container) {
                 const isControl = e.target.closest('.port, input, button, select, textarea, .pad-grid-container, .pad-grid-canvas, .row-handle-btn, .row-overlay-track, #row-handle-overlay');
                 if (!isControl) {
                     this._scrollStartY = e.clientY;
                     this._scrollStartTop = container.scrollTop;
+                    this._lastScrollY = e.clientY;
+                    this._lastScrollTime = Date.now();
                 }
             }
 
@@ -425,11 +455,11 @@ export class InteractionManager {
 
                 if (!this.selectedModuleIds.includes(mId)) {
                     // Unselected module:
-                    // 300ms hold -> selects module.
-                    // continuing to hold without moving for another 300ms (total 600ms) -> selects row.
+                    // Stage 1: 300ms hold -> selects module.
                     this._lpTimer = setTimeout(() => {
                         this._lpTimer = null;
                         this.moduleLongPressed = true;
+                        this._justLongPressedTimestamp = Date.now();
                         if (!this.selectedModuleIds.includes(mId)) {
                             this.selectedModuleIds = [...this.selectedModuleIds, mId];
                         }
@@ -438,18 +468,27 @@ export class InteractionManager {
                         }
                         this.updateSelectionClasses();
                         if (navigator.vibrate) {
-                            try { navigator.vibrate(25); } catch (_) {}
+                            try { navigator.vibrate(30); } catch (_) {}
                         }
-                        // Continuing to hold without moving selects and drags the entire row!
+                        this.ui.showToast('モジュールを選択（長押し継続で行移動）', 1000);
+
+                        // Stage 2 anchor: record current position so Stage 2 has its own jitter margin
+                        this._stage2X = this._lastKnownClientX ?? e.clientX;
+                        this._stage2Y = this._lastKnownClientY ?? e.clientY;
+
+                        // Stage 2: continuing to hold for another 350ms without releasing -> row reorder mode!
                         if (targetRow !== undefined) {
-                            this._startRowLongPress(targetRow, clientY, 300);
+                            this._startRowLongPress(targetRow, clientY, 350);
                         }
                     }, 300);
                 } else {
-                    // Already selected: continuing to hold 300ms without moving triggers row selection!
-                    // If moved before 300ms, pointermove immediately enters module dragging.
+                    // Already selected module:
+                    // If finger continues holding 350ms without moving -> triggers row reorder mode!
+                    // If moved > 12px, pointermove immediately enters module dragging.
+                    this._stage2X = e.clientX;
+                    this._stage2Y = e.clientY;
                     if (targetRow !== undefined) {
-                        this._startRowLongPress(targetRow, clientY, 300);
+                        this._startRowLongPress(targetRow, clientY, 350);
                     }
                 }
                 return;
@@ -473,42 +512,63 @@ export class InteractionManager {
                 return;
             }
 
+            this._lastKnownClientX = e.clientX;
+            this._lastKnownClientY = e.clientY;
+
             const dx = e.clientX - this._sX;
             const dy = e.clientY - this._sY;
             const distSq = dx * dx + dy * dy;
 
-            if (this._pTimer && distSq > 100) {
+            if (this._pTimer && distSq > 144) {
                 clearTimeout(this._pTimer);
                 this._pTimer = null;
             }
-            if (this._lpTimer && distSq > 100) {
+            if (this._lpTimer && distSq > 144) {
                 clearTimeout(this._lpTimer);
                 this._lpTimer = null;
             }
-            if (this._rowLpTimer && distSq > 100) {
-                clearTimeout(this._rowLpTimer);
-                this._rowLpTimer = null;
+            if (this._rowLpTimer) {
+                const s2dx = this._stage2X !== undefined ? e.clientX - this._stage2X : dx;
+                const s2dy = this._stage2Y !== undefined ? e.clientY - this._stage2Y : dy;
+                const s2distSq = s2dx * s2dx + s2dy * s2dy;
+                if (s2distSq > 144) {
+                    clearTimeout(this._rowLpTimer);
+                    this._rowLpTimer = null;
+                }
             }
 
             const isCandidateSelected = this._dragCandidate && this.selectedModuleIds.includes(this._dragCandidate);
 
-            // Desktop mouse drag-to-scroll support (simulate touch swipe on PC)
+            // Drag-to-scroll support (Touch & Mouse swipe before selection)
             const container = document.getElementById('canvas-container');
-            if (!this.ui.isPerformanceMode && e.pointerType === 'mouse' && (e.buttons & 1) && !this.isDragging && !this.moduleLongPressed && !isCandidateSelected && container) {
+            if (!this.ui.isPerformanceMode && !this.isDragging && !this.moduleLongPressed && !isCandidateSelected && container) {
                 if (e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal, .pad-grid-container, .pad-grid-canvas, .row-handle-btn, .row-overlay-track, #row-handle-overlay')) {
+                    this._isScrollDragging = false;
                     this._isMouseScrollDragging = false;
                     return;
                 }
-                if (distSq > 100 || this._isMouseScrollDragging) {
+                if (distSq > 144 || this._isScrollDragging || this._isMouseScrollDragging) {
+                    this._isScrollDragging = true;
                     this._isMouseScrollDragging = true;
                     this._wasScrollDragging = true;
                     const deltaY = e.clientY - this._scrollStartY;
+                    const now = Date.now();
+                    const dt = now - (this._lastScrollTime || now);
+                    if (dt > 10) {
+                        this._scrollVelocity = (e.clientY - (this._lastScrollY || e.clientY)) / dt;
+                        this._lastScrollTime = now;
+                        this._lastScrollY = e.clientY;
+                    }
                     container.scrollTop = this._scrollStartTop - deltaY;
                     return;
                 }
             }
-            if (!this.isDragging && this._dragCandidate && distSq > 100) {
-                if (this.selectedModuleIds.includes(this._dragCandidate)) {
+            if (!this.isDragging && this._dragCandidate) {
+                const s2dx = this._stage2X !== undefined ? e.clientX - this._stage2X : dx;
+                const s2dy = this._stage2Y !== undefined ? e.clientY - this._stage2Y : dy;
+                const moveDistSq = Math.max(distSq, s2dx * s2dx + s2dy * s2dy);
+
+                if (moveDistSq > 144 && this.selectedModuleIds.includes(this._dragCandidate)) {
                     if (this.ui.selectedTargetForConnection) {
                         this.ui.selectedTargetForConnection = null;
                     }
@@ -584,19 +644,35 @@ export class InteractionManager {
                 clearTimeout(this._copyTimer);
                 this._copyTimer = null;
             }
-            if (this._isMouseScrollDragging) {
+            if (this._isScrollDragging || this._isMouseScrollDragging) {
+                const container = document.getElementById('canvas-container');
+                if (container && this._scrollVelocity && Math.abs(this._scrollVelocity) > 0.25) {
+                    let vel = this._scrollVelocity * 14;
+                    const inertiaStep = () => {
+                        if (Math.abs(vel) < 0.5) return;
+                        container.scrollTop -= vel;
+                        vel *= 0.90;
+                        requestAnimationFrame(inertiaStep);
+                    };
+                    requestAnimationFrame(inertiaStep);
+                }
+                this._isScrollDragging = false;
                 this._isMouseScrollDragging = false;
                 setTimeout(() => { this._wasScrollDragging = false; }, 120);
             }
             this._dragCandidate = null;
+            this._stage2X = undefined;
+            this._stage2Y = undefined;
             if (this.portLongPressed) {
-                setTimeout(() => { this.portLongPressed = false; }, 80);
+                setTimeout(() => { this.portLongPressed = false; }, 150);
             }
             if (this.moduleLongPressed) {
-                setTimeout(() => { this.moduleLongPressed = false; }, 80);
+                this._justLongPressedTimestamp = Date.now();
+                setTimeout(() => { this.moduleLongPressed = false; }, 150);
             }
             if (this.rowLongPressed) {
-                setTimeout(() => { this.rowLongPressed = false; }, 80);
+                this._justLongPressedTimestamp = Date.now();
+                setTimeout(() => { this.rowLongPressed = false; }, 150);
             }
             if (this.isDragging) {
                 this.isDragging = false;

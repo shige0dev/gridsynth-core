@@ -185,8 +185,6 @@ export class RowManager {
         if (this.interactionManager) {
             this.interactionManager.isDragging = false;
             this.interactionManager._dragCandidate = null;
-            this.interactionManager.selectedModuleIds = [];
-            this.interactionManager.updateSelectionClasses();
             this.interactionManager.clearHighlight();
             if (this.interactionManager._copyTimer) {
                 clearTimeout(this.interactionManager._copyTimer);
@@ -202,9 +200,9 @@ export class RowManager {
         if (sourceTrack) sourceTrack.classList.add('row-source-dragging');
 
         if (navigator.vibrate) {
-            try { navigator.vibrate([35, 45, 35]); } catch (_) {}
+            try { navigator.vibrate([40, 50, 40]); } catch (_) {}
         }
-        this.ui.showToast(`行 ${originalRow + 1} を選択（ドラッグで行を移動）`);
+        this.ui.showToast(`行 ${originalRow + 1} を選択（上下ドラッグで行を移動）`);
 
         const updateBoundaryAt = (clientY) => {
             const boundary = this.getNearestBoundary(clientY);
@@ -291,6 +289,10 @@ export class RowManager {
 
             if (didDrag && boundary !== null && boundary !== originalRow && boundary !== originalRow + 1) {
                 const destRow = (boundary < originalRow) ? boundary : (boundary - 1);
+                if (this.interactionManager) {
+                    this.interactionManager.selectedModuleIds = [];
+                    this.interactionManager.updateSelectionClasses();
+                }
                 this.moveRowTo(originalRow, destRow);
             }
         };

@@ -207,13 +207,13 @@ body.is-row-dragging * {
 
 .grid-cell {
     overflow: visible !important;
-    touch-action: pan-y;
+    touch-action: none !important;
 }
 
 .grid-cell .module-body {
     overflow: hidden;
     border-radius: inherit;
-    touch-action: pan-y;
+    touch-action: none !important;
 }
 
 
