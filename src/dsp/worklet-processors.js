@@ -2,7 +2,7 @@ import './processors/clock.js?v=356';
 import './processors/seq.js';
 import './processors/adsr.js';
 import './processors/lfo.js?v=297';
-import './processors/math.js?v=361';
+import './processors/math.js?v=363';
 import './processors/sh.js';
 import './processors/fold.js';
 import './processors/cv-delay.js';

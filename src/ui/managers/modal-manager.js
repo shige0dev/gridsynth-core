@@ -19,8 +19,9 @@ export const MODAL_WIDTHS = {
 
     // Logic & Math
     SCALE: 'w-[260px]',
-    MATH1: 'w-[220px]',
-    MATH2: 'w-[230px]',
+    MATH: 'w-[260px]',
+    MATH1: 'w-[260px]',
+    MATH2: 'w-[260px]',
     SH: 'w-[200px]',
     CLK: 'w-[200px]',
     THROUGH: 'w-[170px]',
@@ -288,7 +289,7 @@ export class ModalManager {
                         name: 'CV',
                         sub: 'CV (変調・演算・エンベロープ)',
                         color: 'purple',
-                        types: ['LFO', 'ADSR', 'RF', 'AR', 'CHORD', 'SCALE', 'MATH1', 'MATH2', 'SH', 'CVDELAY', 'SLIDER', 'THROUGH', 'SUB_IO']
+                        types: ['LFO', 'ADSR', 'RF', 'AR', 'CHORD', 'SCALE', 'MATH', 'SH', 'CVDELAY', 'SLIDER', 'THROUGH', 'SUB_IO']
                     }
                 ];
 

@@ -1,39 +1,34 @@
 import { AudioHelpers } from '../helpers.js';
 
-const createMathAudio = (ctx, d, patch, eng, hasTwoInputs) => {
-    const gA = ctx.createGain(), out = ctx.createGain(), an = ctx.createAnalyser();
-    const gB = hasTwoInputs ? ctx.createGain() : null;
+const createMathAudio = (ctx, d, patch, eng) => {
+    const gA = ctx.createGain(), gB = ctx.createGain(), gC = ctx.createGain(), out = ctx.createGain(), an = ctx.createAnalyser();
     an.fftSize = 256; out.connect(an);
     if (eng?.silentSink) out.connect(eng.silentSink);
-    const w = new AudioWorkletNode(ctx, 'math-processor', { numberOfInputs: 2, numberOfOutputs: 1 });
+    const w = new AudioWorkletNode(ctx, 'math-processor', { numberOfInputs: 3, numberOfOutputs: 1 });
     const hasA = patch?.has('CV_inA') || patch?.has('cv_ina') || patch?.has('a') || patch?.has('in_a') || false;
-    const hasB = hasTwoInputs ? (patch?.has('CV_inB') || patch?.has('cv_inb') || patch?.has('b') || patch?.has('in_b') || false) : false;
+    const hasB = patch?.has('CV_inB') || patch?.has('cv_inb') || patch?.has('b') || patch?.has('in_b') || false;
+    const hasC = patch?.has('CV_inC') || patch?.has('cv_inc') || patch?.has('c') || patch?.has('in_c') || false;
     w.port.postMessage({
         type: 'SET_PARAMS',
-        mode: d.mode || (hasTwoInputs ? 'ADD' : '-'),
+        expr: d.expr || d.mode || 'A',
         valA: d.valA ?? 0.0,
-        valB: hasTwoInputs ? (d.valB ?? 1.0) : 0.0,
+        valB: d.valB ?? 1.0,
+        valC: d.valC ?? 0.0,
         hasA,
-        hasB
+        hasB,
+        hasC
     });
     gA.connect(w, 0, 0);
-    if (gB) gB.connect(w, 0, 1);
+    gB.connect(w, 0, 1);
+    gC.connect(w, 0, 2);
     w.connect(out);
     const buf = new Float32Array(an.frequencyBinCount);
-    const nodes = { gA, out, an, w };
+    const nodes = { gA, gB, gC, out, an, w };
     const inputs = {
-        CV_inA: gA,
-        cv_ina: gA,
-        a: gA,
-        in_a: gA
+        CV_inA: gA, cv_ina: gA, a: gA, in_a: gA,
+        CV_inB: gB, cv_inb: gB, b: gB, in_b: gB,
+        CV_inC: gC, cv_inc: gC, c: gC, in_c: gC
     };
-    if (gB) {
-        nodes.gB = gB;
-        inputs.CV_inB = gB;
-        inputs.cv_inb = gB;
-        inputs.b = gB;
-        inputs.in_b = gB;
-    }
     return {
         nodes,
         inputs,
@@ -45,16 +40,19 @@ const createMathAudio = (ctx, d, patch, eng, hasTwoInputs) => {
     };
 };
 
-const updateMathAudio = (inst, d, patch, hasTwoInputs) => {
+const updateMathAudio = (inst, d, patch) => {
     const hasA = patch?.has('CV_inA') || patch?.has('cv_ina') || patch?.has('a') || patch?.has('in_a') || false;
-    const hasB = hasTwoInputs ? (patch?.has('CV_inB') || patch?.has('cv_inb') || patch?.has('b') || patch?.has('in_b') || false) : false;
+    const hasB = patch?.has('CV_inB') || patch?.has('cv_inb') || patch?.has('b') || patch?.has('in_b') || false;
+    const hasC = patch?.has('CV_inC') || patch?.has('cv_inc') || patch?.has('c') || patch?.has('in_c') || false;
     inst.nodes.w.port.postMessage({
         type: 'SET_PARAMS',
-        mode: d.mode || (hasTwoInputs ? 'ADD' : '-'),
+        expr: d.expr || d.mode || 'A',
         valA: d.valA ?? 0.0,
-        valB: hasTwoInputs ? (d.valB ?? 1.0) : 0.0,
+        valB: d.valB ?? 1.0,
+        valC: d.valC ?? 0.0,
         hasA,
-        hasB
+        hasB,
+        hasC
     });
 };
 
@@ -163,15 +161,13 @@ export const THROUGH = {
     update: (ctx, inst, d) => AudioHelpers.set(inst.nodes.g.gain, d.state !== false ? 1.0 : 0.0, ctx, 0.003)
 };
 
-export const MATH1 = {
-    create: (ctx, d, patch, eng) => createMathAudio(ctx, d, patch, eng, false),
-    update: (ctx, inst, d, patch) => updateMathAudio(inst, d, patch, false)
+export const MATH = {
+    create: (ctx, d, patch, eng) => createMathAudio(ctx, d, patch, eng),
+    update: (ctx, inst, d, patch) => updateMathAudio(inst, d, patch)
 };
 
-export const MATH2 = {
-    create: (ctx, d, patch, eng) => createMathAudio(ctx, d, patch, eng, true),
-    update: (ctx, inst, d, patch) => updateMathAudio(inst, d, patch, true)
-};
+export const MATH1 = MATH;
+export const MATH2 = MATH;
 
 export const SH = {
     create: (ctx, d, patch) => {
@@ -193,6 +189,7 @@ export const modAudioDefs = {
     LFO,
     CLK,
     THROUGH,
+    MATH,
     MATH1,
     MATH2,
     SH
