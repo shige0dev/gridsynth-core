@@ -422,10 +422,9 @@ body {
     touch-action: none !important;
     -webkit-user-select: none;
     position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 38px;
-    height: 100%;
+    top: calc(50% - 16px);
+    width: 14px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -439,7 +438,7 @@ body {
 }
 
 .row-handle-right {
-    right: -24px;
+    right: -15px;
 }
 
 .row-handle-bar {
