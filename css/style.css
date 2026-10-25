@@ -247,6 +247,13 @@ body {
 }
 
 /* Performance Mode: Restrict scrolling strictly to outside the grid (left & right gutters) */
+.is-performance-mode #canvas-container {
+    overflow-y: hidden !important;
+    touch-action: none !important;
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+}
+
 .is-performance-mode #grid-scroll-content,
 .is-performance-mode #grid-board,
 .is-performance-mode #grid-board *,
@@ -255,30 +262,26 @@ body {
     touch-action: none !important;
 }
 
-.is-performance-mode #canvas-container {
-    touch-action: pan-y !important;
-}
-
 .perf-scroll-rail {
     display: none;
     position: absolute;
     top: 0;
     bottom: 0;
-    width: 14px;
+    width: 20px;
     z-index: 25;
-    touch-action: pan-y !important;
     cursor: ns-resize;
     pointer-events: auto;
     user-select: none;
     -webkit-user-select: none;
+    touch-action: none !important;
 }
 
 .perf-scroll-rail-left {
-    left: -14px;
+    left: -20px;
 }
 
 .perf-scroll-rail-right {
-    right: -14px;
+    right: -20px;
 }
 
 .is-performance-mode .perf-scroll-rail {
@@ -291,17 +294,37 @@ body {
 .is-performance-mode .perf-scroll-rail::before {
     content: '';
     position: absolute;
-    top: 12px;
+    top: 10px;
     bottom: 24px;
-    width: 2px;
-    background: rgba(148, 163, 184, 0.12);
+    width: 3px;
+    background: rgba(245, 158, 11, 0.25);
     border-radius: 9999px;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .is-performance-mode .perf-scroll-rail:hover::before,
 .is-performance-mode .perf-scroll-rail:active::before {
-    background: rgba(245, 158, 11, 0.5);
+    background: rgba(245, 158, 11, 0.85);
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.7);
+}
+
+.is-performance-mode .pad-grid-container {
+    top: 2px !important;
+}
+
+.module-header {
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.module-header:hover {
+    background: rgba(148, 163, 184, 0.12);
+    border-radius: 4px 4px 0 0;
+}
+
+.is-performance-mode .module-header {
+    pointer-events: none !important;
 }
 
 .port.port-selected,

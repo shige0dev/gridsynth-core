@@ -835,6 +835,26 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
       - パフォームモード時のデスクトップマウスホイール／トラックパッド操作も、ポインタが左右グリッド外にある場合のみスクロールを許可するよう境界判定を追加。
     - バージョンを `v1.0.0381`、キャッシュバスターを `v=381` に更新。
 
+ 53. **パフォームモードスクロールの完全遮断修正 & PADモジュール長押し／演奏競合の分離解決（v1.0.0382）**:
+    - **パフォームモードスクロールの完全遮断**:
+      - `css/style.css`:
+        - `.is-performance-mode #canvas-container` に **`overflow-y: hidden !important; touch-action: none !important;`** および左右20pxパディング（`padding-left: 20px !important; padding-right: 20px !important;`）を適用。モバイルWebKit/Chrome等全環境でグリッド上のネイティブスクロールを100%物理的に完全無効化。
+        - 左右スクロールレール（`.perf-scroll-rail`）の幅を 20px（`left: -20px; right: -20px;`）に拡張し、タッチ領域と視認性を向上。
+      - `src/ui/managers/interaction-manager.js`:
+        - 左右スクロールレール（`.perf-scroll-rail`）に直接 `pointerdown` / `pointermove`（`setPointerCapture` 付き）をバインドし、左右ガターの直接ドラッグで `canvas-container.scrollTop` を1:1確実にスクロール操作可能に。
+      - `src/ui/controller.js`:
+        - 非パッシブ（`{ passive: false }`）の `wheel` リスナーを適用。パフォームモード時にグリッド領域上でのホイール回転は `e.preventDefault()` で完全遮断し、左右ガター上でのみ `scrollTop += e.deltaY` を許可。
+    - **PADモジュールのモジュール選定長押しと演奏タッチの完全分離**:
+      - `src/ui/controller.js`:
+        - すべてのモジュール上部に専用ヘッダー領域（`.module-header`、高さ 16px、`pointer-events-auto`、`data-module-id`）を導入。
+      - `src/modules/defs/pad.js`:
+        - エディットモード時のPADタッチ面（`.pad-grid-container`）を上部ヘッダー直下（`top-3.5`）に配置。
+        - パフォームモード時は `.is-performance-mode .pad-grid-container { top: 2px !important; }` によりセル全面へ自動拡張。
+        - PADタッチ面上のタッチは `e.stopPropagation()` によりグリッド親へのイベント伝播を完全に遮断。長押し（350ms）による意図しないモジュール選択やドラッグを100%防止し、高速連打・長押しサステイン・XYスワイプ変調が自由に演奏可能に。
+      - `src/ui/managers/interaction-manager.js`:
+        - エディットモードでのモジュール選択・移動・複製・ダイアログ表示は、上部ヘッダー（`.module-header`）の長押し／タップ／ダブルタップで直感的に操作可能に。
+    - バージョンを `v1.0.0382`、キャッシュバスターを `v=382` に更新。
+
 
 
 

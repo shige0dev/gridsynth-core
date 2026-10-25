@@ -145,7 +145,7 @@ export const PAD = {
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
     renderGrid: (m) => `
-        <div class="absolute inset-0.5 bg-black rounded-sm border border-slate-800/90 overflow-hidden z-0 pointer-events-auto pad-grid-container" style="opacity: ${m?.opacity ?? 0.8};">
+        <div class="absolute inset-x-0.5 bottom-0.5 top-3.5 bg-black rounded-sm border border-slate-800/90 overflow-hidden z-0 pointer-events-auto pad-grid-container" style="opacity: ${m?.opacity ?? 0.8};">
             <canvas class="pad-grid-canvas w-full h-full block" width="100" height="100"></canvas>
         </div>`,
     renderModal: (m) => {

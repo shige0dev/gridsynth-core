@@ -235,7 +235,7 @@ export class InteractionManager {
                 this.ui.selectedTargetForConnection = null;
                 this.ui.updatePortHighlight();
             }
-            const body = e.target.closest('.module-body');
+            const body = e.target.closest('.module-body, .module-header');
             if (body) {
                 const mId = body.dataset.moduleId;
                 if (this._wasModuleDragging) {
@@ -328,6 +328,38 @@ export class InteractionManager {
             });
         }
 
+        // Direct drag support on performance scroll rails
+        document.querySelectorAll('.perf-scroll-rail').forEach(rail => {
+            if (rail._bound) return;
+            rail._bound = true;
+            rail.addEventListener('pointerdown', (e) => {
+                const container = document.getElementById('canvas-container');
+                if (!container) return;
+                this._isGutterScrollDragging = true;
+                this._gutterScrollStartY = e.clientY;
+                this._gutterScrollStartTop = container.scrollTop;
+                try { rail.setPointerCapture(e.pointerId); } catch (_) {}
+                e.stopPropagation();
+            });
+            rail.addEventListener('pointermove', (e) => {
+                if (!this._isGutterScrollDragging) return;
+                const container = document.getElementById('canvas-container');
+                if (!container) return;
+                const deltaY = e.clientY - this._gutterScrollStartY;
+                container.scrollTop = this._gutterScrollStartTop - deltaY;
+                e.stopPropagation();
+            });
+            const stopRail = (e) => {
+                if (this._isGutterScrollDragging) {
+                    this._isGutterScrollDragging = false;
+                    try { rail.releasePointerCapture(e.pointerId); } catch (_) {}
+                    e.stopPropagation();
+                }
+            };
+            rail.addEventListener('pointerup', stopRail);
+            rail.addEventListener('pointercancel', stopRail);
+        });
+
         this.ui.gridBoard.addEventListener('pointerdown', (e) => {
             if (e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal')) {
                 return;
@@ -392,11 +424,11 @@ export class InteractionManager {
                 return;
             }
 
-            const body = e.target.closest('.module-body');
+            const body = e.target.closest('.module-body, .module-header');
             if (!body) return;
             if (this.ui.isPerformanceMode) return;
             const isControl = e.target.closest('.port, input, button, select, textarea, .pad-grid-container, .pad-grid-canvas');
-            if (isControl) return;
+            if (isControl && !e.target.closest('.module-header')) return;
 
             const mId = body.dataset.moduleId;
             this._dragCandidate = mId;
