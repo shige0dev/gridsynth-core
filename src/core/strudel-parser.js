@@ -1,46 +1,8 @@
 // src/core/strudel-parser.js
 // Lightweight Strudel / TidalCycles Mini-Notation Parser for GridSynth
 
-export const NOTE_SEMITONES = {
-    'c': 0, 'c#': 1, 'db': 1,
-    'd': 2, 'd#': 3, 'eb': 3,
-    'e': 4,
-    'f': 5, 'f#': 6, 'gb': 6,
-    'g': 7, 'g#': 8, 'ab': 8,
-    'a': 9, 'a#': 10, 'bb': 10,
-    'b': 11
-};
-
-/**
- * Converts a note string (e.g. "c2", "eb3", "f#4", "0.5") to 1V/Oct CV voltage.
- * Calibration: 0V = C1 (32.7Hz), 1V = C2, 2V = C3, 3V = C4 (261.6Hz), etc.
- */
-export function noteToCv(str) {
-    if (typeof str === 'number') return str;
-    let s = String(str).trim().toLowerCase();
-    
-    // Check if it's already a direct floating point voltage number (e.g. "0.25")
-    if (!isNaN(parseFloat(s)) && !/[a-g]/i.test(s)) {
-        return parseFloat(s);
-    }
-
-    let octShift = 0;
-    const shiftMatch = s.match(/^(.*?)\^([+-]?\d+)$/);
-    if (shiftMatch) {
-        s = shiftMatch[1];
-        octShift = parseInt(shiftMatch[2], 10) || 0;
-    }
-
-    const match = s.match(/^([a-g][#b]?)(-?\d+)?$/);
-    if (!match) return 0.0;
-
-    const noteName = match[1];
-    const oct = (match[2] !== undefined ? parseInt(match[2], 10) : 2) + octShift; // Default to octave 2 + shift
-    const semi = NOTE_SEMITONES[noteName] ?? 0;
-
-    // 0V = C1 (octave 1, semi 0)
-    return Math.max(0, (oct - 1) + semi / 12.0);
-}
+import { NOTE_SEMITONES, noteToCv } from './musical.js?v=365';
+export { NOTE_SEMITONES, noteToCv };
 
 /**
  * Generates Bjorklund Euclidean rhythm of k pulses over n steps.

@@ -1,20 +1,4 @@
-function parseKeyNoteToCv(val) {
-    if (typeof val === 'number') return val;
-    if (typeof val !== 'string') return 1.0;
-    const s = val.trim();
-    const num = Number(s);
-    if (!isNaN(num)) return num;
-    const m = s.match(/^([a-gA-G])([#bB]?)(-?\d+)?$/);
-    if (!m) return 1.0;
-    const letter = m[1].toUpperCase();
-    const accidental = m[2] || '';
-    const oct = m[3] !== undefined ? parseInt(m[3], 10) : 2;
-    const baseMap = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-    let semi = baseMap[letter] ?? 0;
-    if (accidental === '#') semi += 1;
-    else if (accidental.toLowerCase() === 'b') semi -= 1;
-    return (semi + (oct - 1) * 12) / 12.0;
-}
+import { parseKeyNoteToCv } from '../../core/musical.js?v=365';
 
 function resolveKeyCv(d) {
     if (!d) return 1.0;

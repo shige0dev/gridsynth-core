@@ -18,11 +18,7 @@ export const AR = {
             { port: 'cv_out', color: 'bg-yellow-400' }
         ]
     }),
-    formatTime: (sec) => {
-        const ms = sec * 1000;
-        if (ms < 1000) return `${Math.round(ms)}ms`;
-        return `${(ms / 1000).toFixed(2)}s`;
-    },
+    formatTime: (v) => UIHelpers.formatTime(v),
     renderSvgCurve: (m) => {
         const padX = 8, padY = 6, W = 160 - padX * 2, H = 40 - padY * 2;
         const yTop = padY, yBot = padY + H;

@@ -1,30 +1,8 @@
 import { UIHelpers } from '../../ui/helpers.js?v=352';
 import { JsonIoDialog } from '../../ui/json-io-dialog.js?v=352';
+import { parseNoteToCv as parseCommonNoteToCv } from '../../core/musical.js?v=365';
 
-export function parseNoteToCv(val) {
-    if (typeof val === 'number') {
-        return Math.max(0, Math.min(2.0, val));
-    }
-    if (typeof val !== 'string') return 0;
-    const s = val.trim();
-    if (!s) return 0;
-    const num = Number(s);
-    if (!isNaN(num)) {
-        return Math.max(0, Math.min(2.0, num));
-    }
-    const m = s.match(/^([a-gA-G])([#bB]?)(-?\d+)?$/);
-    if (!m) return 0;
-    const letter = m[1].toUpperCase();
-    const accidental = m[2] || '';
-    const oct = m[3] !== undefined ? parseInt(m[3], 10) : 1;
-    const baseMap = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-    let semi = baseMap[letter] ?? 0;
-    if (accidental === '#') semi += 1;
-    else if (accidental.toLowerCase() === 'b') semi -= 1;
-    const totalSemis = semi + (oct - 1) * 12;
-    const cv = totalSemis / 12.0;
-    return Math.max(0, Math.min(2.0, cv));
-}
+export const parseNoteToCv = (val) => parseCommonNoteToCv(val, 1, 0, 2.0);
 
 export function extractSeqPayload(parsed, targetType) {
     if (!parsed) return null;

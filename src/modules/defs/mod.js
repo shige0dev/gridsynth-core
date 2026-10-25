@@ -1,5 +1,5 @@
-import { UIHelpers } from '../../ui/helpers.js';
-import { parseClockRate } from '../../core/utils.js';
+import { UIHelpers } from '../../ui/helpers.js?v=365';
+import { parseClockRate } from '../../core/signals.js?v=365';
 
 const renderMathModalUI = (m, ctx, modeGroups, valKeys) => {
     const curMode = m.mode || modeGroups[0].modes[0];

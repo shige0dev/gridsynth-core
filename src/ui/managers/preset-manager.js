@@ -4,8 +4,6 @@ import { getDefaultPresets } from '../../presets/default.js?v=354';
 import { AI_PATCH_SPEC_CONTENT } from '../../presets/ai-spec-content.js';
 import { JsonIoDialog, analyzeJsonError } from '../json-io-dialog.js?v=297';
 
-export { analyzeJsonError };
-
 export class PresetManager {
     showImportError(opts) {
         return this.ui.openCustomAlert(

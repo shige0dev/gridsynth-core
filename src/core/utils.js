@@ -104,8 +104,6 @@ export const isPortMatching = (p1, p2) => {
     return a1Lower.includes(p2.toLowerCase());
 };
 
-export const connKey = (c) => `${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}`;
-
 export const isSameConn = (a, b) => {
     if (!a || !b) return false;
     const aFromM = a.from?.moduleId, bFromM = b.from?.moduleId;

@@ -658,6 +658,24 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
       - ケーブル結線時は自動的に `CABLED / EXT CV` としてディゼーブル表示され、外部CVが優先入力されるスマートな操作性を実現。
     - バージョンを `v1.0.0364`、キャッシュバスターを `v=364` に更新。
 
+ 36. **プロジェクト全体の不要・冗長コード削除および共通関数集約リファクタリング**:
+    - **完全なデッドコードの削除**:
+      - `src/dsp/worklet-code.js`: 単一ファイル時代の大規模Worklet残骸ファイルを完全削除。
+      - `src/ui/helpers.js`: スキーマ駆動UI導入前の旧VCO手動生成ヘルパー群（`createChannelControlHTML`, `bindChannelControl`, `renderPitchSlidersHTML`, `bindPitchSliders`, `getMultiPitchInPorts`）を削除。
+      - `src/core/utils.js`: 未使用関数 `connKey` を削除。
+      - `src/ui/managers/modal-manager.js`: 未使用再エクスポート `DOCK_TITLES, DOCK_ICONS, DockManager` を削除。
+      - `src/ui/managers/preset-manager.js`: 未使用再エクスポート `analyzeJsonError` を削除。
+    - **音名・CV変換ロジックの集約 (`src/core/musical.js`)**:
+      - `src/core/musical.js` に `NOTE_SEMITONES`, `parseNoteToCv`, `noteToCv`, `parseKeyNoteToCv` を集約定義。
+      - 従来各所で分散・重複実装されていた `parseKeyNoteToCv`（`audio/defs/controllers.js` / `modules/defs/controllers.js`）、`parseNoteToCv`（`modules/defs/seq.js`）、`noteToCv`（`core/strudel-parser.js`）を `musical.js` からのインポートに統一。
+      - `src/ui/helpers.js` の重複音楽計算（`NOTES`, `midiToNoteName`, `midiToFreq`, `freqToMidi`, `cvToNoteName`）を `musical.js` からの委任に集約。
+    - **時間フォーマット関数の統一**:
+      - `src/modules/defs/ar.js` および `src/modules/defs/rf.js` のローカル `formatTime` を `UIHelpers.formatTime` に集約。
+    - **HTMLソースの静的バージョン不整合解消**:
+      - `index.html` のプレースホルダーを最新バージョン `v1.0.0365` に整合。
+    - バージョンを `v1.0.0365`、キャッシュバスターを `v=365` に更新。
+
+
 
 
 

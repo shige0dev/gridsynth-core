@@ -1,13 +1,11 @@
+import { NOTES, midiToNoteName, midiToFreq, freqToMidi, cvToNoteName } from '../core/musical.js?v=365';
+
 export const UIHelpers = {
-    NOTES: ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'],
-    midiToNoteName: (midi) => {
-        const m = Math.round(midi);
-        const n = UIHelpers.NOTES[((m % 12) + 12) % 12];
-        const oct = Math.floor(m / 12) - 1;
-        return `${n}${oct}`;
-    },
-    midiToFreq: (midi) => 440 * Math.pow(2, (midi - 69) / 12),
-    freqToMidi: (freq) => Math.round(69 + 12 * Math.log2(Math.max(10, freq) / 440)),
+    NOTES,
+    midiToNoteName,
+    midiToFreq,
+    freqToMidi,
+    cvToNoteName,
     formatTime: (v) => {
         if (v < 0.01) return (v * 1000).toFixed(1) + 'ms';
         if (v < 1.0) return Math.round(v * 1000) + 'ms';
@@ -165,81 +163,6 @@ export const UIHelpers = {
                 cb(e.target.dataset.val);
             });
         });
-    },
-    cvToNoteName: (cv) => {
-        const s = Math.round(cv * 12);
-        return `${UIHelpers.NOTES[((s % 12) + 12) % 12]}${1 + Math.floor(s / 12)}`;
-    },
-    getMultiPitchInPorts: (m, maxCh = 4) => {
-        const ch = Math.min(maxCh, Math.max(1, m?.channels || 1));
-        const inPorts = [];
-        for (let c = 1; c <= ch; c++) inPorts.push({ port: c === 1 ? 'cv_in' : `cv_in${c}`, color: 'bg-yellow-400' });
-        return inPorts;
-    },
-    createChannelControlHTML: (prefix, label, ch) => `
-        <div class="flex items-center gap-1.5">
-            <span class="text-[8px] text-slate-400 font-semibold uppercase">${label}</span>
-            <div class="flex items-center gap-1 bg-slate-950 px-1 py-0.5 rounded border border-slate-800">
-                <button id="${prefix}-dec-btn" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold">−</button>
-                <span class="w-4 text-center text-[10px] font-mono font-bold text-cyan-300">${ch}</span>
-                <button id="${prefix}-inc-btn" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold">＋</button>
-            </div>
-        </div>`,
-    bindChannelControl: (prefix, m, ctx, maxCh = 4, cb) => {
-        const ch = Math.min(maxCh, Math.max(1, m.channels || 1));
-        document.getElementById(`${prefix}-dec-btn`)?.addEventListener('click', () => {
-            if (ch > 1) {
-                ctx.removeConnectionsForPort(ch === 2 ? 'cv_in2' : `cv_in${ch}`);
-                m.channels = ch - 1;
-                ctx.rebuildModule?.();
-                ctx.reRenderModal();
-                cb();
-            }
-        });
-        document.getElementById(`${prefix}-inc-btn`)?.addEventListener('click', () => {
-            if (ch < maxCh) {
-                m.channels = ch + 1;
-                ctx.rebuildModule?.();
-                ctx.reRenderModal();
-                cb();
-            }
-        });
-    },
-    renderPitchSlidersHTML: (m, ctx, prefix, accentColor = 'blue', isQ = false) => {
-        const ch = Math.min(4, Math.max(1, m.channels || 1));
-        let html = '';
-        for (let c = 1; c <= ch; c++) {
-            const portName = c === 1 ? 'cv_in' : `cv_in${c}`;
-            const isP = ctx.patched?.has(portName);
-            const curFreq = m[`freq${c}`] ?? 220;
-            if (isQ) {
-                const curMidi = isP ? 24 : UIHelpers.freqToMidi(curFreq);
-                html += UIHelpers.createVSliderHTML(`${prefix}-freq${c}`, `OSC${c}`, 24, 84, 1, curMidi, isP ? 'PATCHED' : 'note', accentColor, isP, isP ? '1V/OCT' : UIHelpers.midiToNoteName(curMidi));
-            } else {
-                const v = isP ? 32.7 : curFreq;
-                html += UIHelpers.createVSliderHTML(`${prefix}-freq${c}`, `OSC${c}`, 40, 2000, 5, v, isP ? 'PATCHED' : 'hz', accentColor, isP, isP ? '1V/OCT' : `${Math.round(v)}hz`);
-            }
-        }
-        return html;
-    },
-    bindPitchSliders: (m, ctx, prefix, isQ = false, cb) => {
-        const ch = Math.min(4, Math.max(1, m.channels || 1));
-        for (let c = 1; c <= ch; c++) {
-            const portName = c === 1 ? 'cv_in' : `cv_in${c}`;
-            if (!ctx.patched?.has(portName)) {
-                if (isQ) {
-                    UIHelpers.bindSlider(`${prefix}-freq${c}`, v => UIHelpers.midiToNoteName(v), v => {
-                        m[`freq${c}`] = UIHelpers.midiToFreq(Math.round(v));
-                        cb();
-                    });
-                } else {
-                    UIHelpers.bindSlider(`${prefix}-freq${c}`, v => `${Math.round(v)}hz`, v => {
-                        m[`freq${c}`] = v;
-                        cb();
-                    });
-                }
-            }
-        }
     },
     resolveSliderState: (sl, mod, ctx) => {
         const hasPatched = (portDef) => {
