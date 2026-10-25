@@ -1,29 +1,6 @@
 // src/modules/defs/pad.js
 import { UIHelpers } from '../../ui/helpers.js?v=351';
 
-function calcPressure(e) {
-    if (e.pointerType === 'mouse') {
-        return e.buttons ? 0.8 : 0.0;
-    }
-    let area = 0;
-    if (typeof e.width === 'number' && typeof e.height === 'number' && (e.width > 1 || e.height > 1)) {
-        area = e.width * e.height;
-    } else if (typeof e.radiusX === 'number' && typeof e.radiusY === 'number') {
-        area = e.radiusX * e.radiusY * 4;
-    }
-    if (area > 0) {
-        // Normal contact area for fingertip: ~100 to ~1600 px^2
-        const minA = 120;
-        const maxA = 1500;
-        const norm = Math.max(0, Math.min(1, (area - minA) / (maxA - minA)));
-        return Math.max(0.1, Math.min(1.0, 0.15 + 0.85 * norm));
-    }
-    if (typeof e.pressure === 'number' && e.pressure > 0) {
-        return e.pressure;
-    }
-    return 0.6;
-}
-
 function drawPadCanvas(ctx2d, w, h, state, isModal = false, hasX = false, hasY = false) {
     ctx2d.clearRect(0, 0, w, h);
 
@@ -140,10 +117,9 @@ export const PAD = {
             { port: 'bright_cv', pin: 5, color: 'bg-yellow-400', extraClass: 'pad-chassis-port' }
         ],
         out: [
-            { port: 'x_cv', pin: 10, color: 'bg-yellow-400', extraClass: 'pad-chassis-port' },
-            { port: 'y_cv', pin: 11, color: 'bg-yellow-400', extraClass: 'pad-chassis-port' },
-            { port: 'pressure_cv', pin: 12, color: 'bg-yellow-400', extraClass: 'pad-chassis-port' },
-            { port: 'gate_out', pin: 13, color: 'bg-red-500', extraClass: 'pad-chassis-port' }
+            { port: 'gate_out', pin: 10, color: 'bg-red-500', extraClass: 'pad-chassis-port' },
+            { port: 'x_cv', pin: 11, color: 'bg-yellow-400', extraClass: 'pad-chassis-port' },
+            { port: 'y_cv', pin: 12, color: 'bg-yellow-400', extraClass: 'pad-chassis-port' }
         ]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
@@ -182,7 +158,6 @@ export const PAD = {
                 <div class="absolute top-2 left-2 flex items-center gap-2.5 font-mono text-[9px] select-none pointer-events-none drop-shadow">
                     <span class="text-slate-400 text-[8px] font-sans font-bold">X</span><span id="pad-stat-x" class="text-cyan-300 font-bold">0.50</span>
                     <span class="text-slate-400 text-[8px] font-sans font-bold">Y</span><span id="pad-stat-y" class="text-cyan-300 font-bold">0.50</span>
-                    <span class="text-slate-400 text-[8px] font-sans font-bold">PRES</span><span id="pad-stat-press" class="text-amber-400 font-bold">0.00</span>
                 </div>
             </div>
         </div>`,
@@ -220,13 +195,11 @@ export const PAD = {
             const normX = Math.max(0, Math.min(1, (clientX - (rect.left + edgePad)) / Math.max(1, rect.width - edgePad * 2)));
             // Y is 0.0 at bottom, 1.0 at top
             const normY = Math.max(0, Math.min(1, 1.0 - (clientY - (rect.top + edgePad)) / Math.max(1, rect.height - edgePad * 2)));
-            const press = type === 'PAD_UP' ? 0.0 : calcPressure(e);
 
             ctx?.sendControl?.({
                 type,
                 x: normX,
-                y: normY,
-                pressure: press
+                y: normY
             });
         };
 
@@ -272,13 +245,11 @@ export const PAD = {
             const edgePadY = 6;
             const normX = Math.max(0, Math.min(1, (clientX - (rect.left + edgePadX)) / Math.max(1, rect.width - edgePadX * 2)));
             const normY = Math.max(0, Math.min(1, 1.0 - (clientY - (rect.top + edgePadY)) / Math.max(1, rect.height - edgePadY * 2)));
-            const press = type === 'PAD_UP' ? 0.0 : calcPressure(e);
 
             ui?.synth?.sendControlEvent(m.id, {
                 type,
                 x: normX,
-                y: normY,
-                pressure: press
+                y: normY
             });
         };
 
@@ -312,7 +283,7 @@ export const PAD = {
     },
     updateLive: (cell, data, isPlaying, targetModal, m, patchState = null) => {
         if (!m) return;
-        const state = data || { x: 0.5, y: 0.5, pressure: 0.0, isDown: false, hue: m.hue ?? 0.5, sat: m.sat ?? 1.0, bright: m.bright ?? 0.0 };
+        const state = data || { x: 0.5, y: 0.5, isDown: false, hue: m.hue ?? 0.5, sat: m.sat ?? 1.0, bright: m.bright ?? 0.0 };
         // Ensure module-level settings are preserved if not overridden by data
         if (state.sat === undefined) state.sat = m.sat ?? 1.0;
         if (state.hue === undefined) state.hue = m.hue ?? 0.5;
@@ -321,14 +292,13 @@ export const PAD = {
         const isDown = Boolean(state.isDown);
         const x = state.x ?? 0.5;
         const y = state.y ?? 0.5;
-        const press = state.pressure ?? (isDown ? 0.6 : 0.0);
         const hue = state.hue;
         const sat = state.sat;
         const bright = state.bright;
 
         const patched = patchState || (typeof window !== 'undefined' && window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(m.id) : null);
-        const hasX = Boolean(patched && (patched.has('x_cv') || patched.has('cv_x') || patched.has('PIN10') || patched.has('PIN10_out')));
-        const hasY = Boolean(patched && (patched.has('y_cv') || patched.has('cv_y') || patched.has('PIN11') || patched.has('PIN11_out')));
+        const hasX = Boolean(patched && (patched.has('x_cv') || patched.has('cv_x') || patched.has('PIN11') || patched.has('PIN11_out')));
+        const hasY = Boolean(patched && (patched.has('y_cv') || patched.has('cv_y') || patched.has('PIN12') || patched.has('PIN12_out')));
 
         // 1. Render on Cell Canvas with Dirty caching (skips rendering when unchanged)
         const cvs = cell.querySelector('.pad-grid-canvas');
@@ -338,7 +308,6 @@ export const PAD = {
                 last.isDown !== isDown ||
                 last.x !== x ||
                 last.y !== y ||
-                last.press !== press ||
                 last.hue !== hue ||
                 last.sat !== sat ||
                 last.bright !== bright ||
@@ -348,7 +317,7 @@ export const PAD = {
             if (isDirty) {
                 const ctx = cvs.getContext('2d');
                 drawPadCanvas(ctx, cvs.width, cvs.height, state, false, hasX, hasY);
-                cvs._lastRenderState = { isDown, x, y, press, hue, sat, bright, hasX, hasY };
+                cvs._lastRenderState = { isDown, x, y, hue, sat, bright, hasX, hasY };
             }
         }
 
@@ -360,7 +329,6 @@ export const PAD = {
                 mLast.isDown !== isDown ||
                 mLast.x !== x ||
                 mLast.y !== y ||
-                mLast.press !== press ||
                 mLast.hue !== hue ||
                 mLast.sat !== sat ||
                 mLast.bright !== bright ||
@@ -370,16 +338,14 @@ export const PAD = {
             if (isMDirty) {
                 const mCtx = modalCvs.getContext('2d');
                 drawPadCanvas(mCtx, modalCvs.width, modalCvs.height, state, true, hasX, hasY);
-                modalCvs._lastRenderState = { isDown, x, y, press, hue, sat, bright, hasX, hasY };
+                modalCvs._lastRenderState = { isDown, x, y, hue, sat, bright, hasX, hasY };
 
-                // Update stats (X, Y, PRES)
+                // Update stats (X, Y)
                 const xEl = targetModal.querySelector('#pad-stat-x');
                 const yEl = targetModal.querySelector('#pad-stat-y');
-                const pressEl = targetModal.querySelector('#pad-stat-press');
 
                 if (xEl) xEl.textContent = x.toFixed(2);
                 if (yEl) yEl.textContent = y.toFixed(2);
-                if (pressEl) pressEl.textContent = press.toFixed(2);
             }
         }
     }
