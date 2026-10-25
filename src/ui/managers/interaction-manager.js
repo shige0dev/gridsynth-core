@@ -89,10 +89,7 @@ export class InteractionManager {
 
     resetAllInteractions({ keepSelection = false } = {}) {
         this.clearHighlight();
-        if (this._pTimer) { clearTimeout(this._pTimer); this._pTimer = null; }
-        if (this._lpTimer) { clearTimeout(this._lpTimer); this._lpTimer = null; }
-        if (this._rowLpTimer) { clearTimeout(this._rowLpTimer); this._rowLpTimer = null; }
-        if (this._copyTimer) { clearTimeout(this._copyTimer); this._copyTimer = null; }
+        this.cancelPendingPresses();
 
         this.portLongPressed = false;
         this.moduleLongPressed = false;
@@ -100,20 +97,22 @@ export class InteractionManager {
         this.isDragging = false;
         this._isScrollDragging = false;
         this._scrollVelocity = 0;
-        this._dragCandidate = null;
-        this._stage2X = undefined;
-        this._stage2Y = undefined;
         this.dropTargetIndex = null;
         this.dragGroupOffsets = [];
         if (!keepSelection) {
+            const hadSelection = this.selectedModuleIds.length > 0 || this.ui.gridBoard?.classList.contains('has-selected-module');
             this.selectedModuleIds = [];
-            this.updateSelectionClasses();
-            this.rowManager?.clearRowSelection?.();
+            if (hadSelection) {
+                this.updateSelectionClasses();
+            }
+            if (this.rowManager?.selectedRow !== null) {
+                this.rowManager?.clearRowSelection?.();
+            }
         }
 
         document.body.classList.remove('is-module-dragging', 'is-row-dragging');
         const container = document.getElementById('canvas-container');
-        if (container) {
+        if (container && container.style.overflowY === 'hidden') {
             container.style.overflowY = 'auto';
         }
         this._justLongPressedTimestamp = 0;
@@ -750,7 +749,6 @@ export class InteractionManager {
                     this.ui.persistCurrentPage();
                     this.selectedModuleIds = [];
                     this.ui.updateAllCells();
-                    this.ui.renderCables();
                 } else {
                     // Dropped outside grid or on invalid slot: always return cleanly to normal mode
                     this.selectedModuleIds = [];
@@ -771,5 +769,29 @@ export class InteractionManager {
         window.addEventListener('blur', () => {
             this.resetAllInteractions({ keepSelection: false });
         });
+
+        // Scrolling cancels pending long-presses without blocking the compositor thread
+        document.getElementById('canvas-container')?.addEventListener('scroll', () => {
+            this.cancelPendingPresses();
+        }, { passive: true });
+
+        // On mobile touch: cancel scrolling specifically when touching/swiping over a PAD module
+        document.getElementById('canvas-container')?.addEventListener('touchmove', (e) => {
+            if (e.target.closest('.pad-grid-container, .pad-grid-canvas')) {
+                if (e.cancelable) e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Desktop mouse wheel scroll enhancement (smoothly scroll 32-row workspace)
+        window.addEventListener('wheel', (e) => {
+            const container = document.getElementById('canvas-container');
+            if (!container) return;
+            if (e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal, #custom-alert-modal')) return;
+            const activeModal = document.querySelector('#shared-modal:not(.hidden), #preset-manager-modal:not(.hidden), #custom-alert-modal:not(.hidden)');
+            if (activeModal) return;
+            if (e.target.closest('input, select, textarea, .overflow-y-auto:not(#canvas-container)')) return;
+
+            container.scrollTop += e.deltaY;
+        }, { passive: true });
     }
 }

@@ -103,8 +103,8 @@ export class CableManager {
         return null;
     }
 
-    updatePortHighlight() {
-        document.querySelectorAll('.port').forEach(el => {
+    updatePortHighlight(skipCableRender = false) {
+        document.querySelectorAll('.port-selected, .port-connected-highlight').forEach(el => {
             el.classList.remove('port-selected', 'port-connected-highlight');
             el.classList.add('shadow-sm');
             el.style.removeProperty('--conn-glow');
@@ -112,7 +112,7 @@ export class CableManager {
         });
         if (this.ui.selectedModuleIds.length > 0) {
             this.selectedTargetForConnection = null;
-            this.renderCables();
+            if (!skipCableRender) this.renderCables();
             return;
         }
         if (this.selectedTargetForConnection) {
@@ -151,7 +151,7 @@ export class CableManager {
                 }
             });
         }
-        this.renderCables();
+        if (!skipCableRender) this.renderCables();
     }
 
     _collectSubActiveIOPorts(subConns) {
@@ -221,7 +221,6 @@ export class CableManager {
                 const remaining = parentConns.filter(c => !orphanConns.includes(c));
                 if (parentPId === this.ui.currentPageId) {
                     this.ui.connections = remaining;
-                    this.renderCables();
                     this.ui.updateAllCells();
                 }
                 pData.connections = remaining;
@@ -372,6 +371,7 @@ export class CableManager {
             const normalOpacity = String(this.ui.cableOpacity ?? 1.0);
 
             if (isMatched) {
+                path.classList.add('cable-highlighted');
                 path.setAttribute('stroke', brightStrokeColor);
                 path.setAttribute('stroke-width', '5');
                 path.setAttribute('stroke-opacity', '1.0');
@@ -396,7 +396,6 @@ export class CableManager {
         });
         this.ui.persistCurrentPage();
         this.cleanupOrphanSubConnections(this.ui.currentPageId);
-        this.renderCables();
         this.ui.updateAllCells();
         const isDockAffected = Array.from(this.ui.modalManager?.openDocks?.keys() || []).some(id => affectedIds.has(id)) || (this.ui.activeDockModuleId && affectedIds.has(this.ui.activeDockModuleId));
         if (isDockAffected) this.ui.reRenderDockModal();

@@ -2,12 +2,12 @@ import { isSubModule } from '../core/utils.js?v=351';
 import { parsePatch } from '../core/patch.js?v=396';
 import { MODULE_REGISTRY } from '../modules/registry.js?v=397';
 import { UIHelpers } from './helpers.js?v=396';
-import { PresetManager } from './managers/preset-manager.js?v=396';
-import { ModalManager } from './managers/modal-manager.js?v=399';
-import { CableManager } from './managers/cable-manager.js?v=399';
-import { PageManager } from './managers/page-manager.js?v=399';
-import { InteractionManager } from './managers/interaction-manager.js?v=398';
-import { ToolbarManager } from './managers/toolbar-manager.js?v=399';
+import { PresetManager } from './managers/preset-manager.js?v=400';
+import { ModalManager } from './managers/modal-manager.js?v=400';
+import { CableManager } from './managers/cable-manager.js?v=400';
+import { PageManager } from './managers/page-manager.js?v=400';
+import { InteractionManager } from './managers/interaction-manager.js?v=400';
+import { ToolbarManager } from './managers/toolbar-manager.js?v=400';
 
 export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'LISS', 'XY', 'SPEC', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD'];
 
@@ -116,6 +116,8 @@ export class UIController {
 
     bindGlobalEvents() {
         this.toolbarManager.init();
+        this.modalManager.bindModalEvents();
+        this.presetManager.bindPresetEvents();
         this.interactionManager.bindGridEvents();
     }
 
@@ -167,7 +169,7 @@ export class UIController {
                 const extraCls = p.extraClass || '';
                 const portEl = `<div class="w-2 h-2 rounded-full ${p.color} border border-slate-950/90 shadow-sm shadow-black/60 port cursor-pointer hover:scale-150 transition relative z-10 flex items-center justify-center before:absolute before:inset-[-6px] before:content-[''] ${dimCls} ${extraCls}" data-module-id="${mId}" data-port="${p.port}" data-port-id="${mId}:${p.port}" title="${portTitle}"></div>`;
                 if (p.badgeColor) {
-                    return `<div class="relative inline-flex items-center justify-center"><span class="absolute -top-[1.5px] -left-[1.5px] w-[3.5px] h-[3.5px] rounded-full ${p.badgeColor} pointer-events-none z-0 ring-[0.5px] ring-black/70"></span>${portEl}</div>`;
+                    return `<div class="relative inline-flex items-center justify-center"><span class="port-badge absolute -top-[1.5px] -left-[1.5px] w-[3.5px] h-[3.5px] rounded-full ${p.badgeColor} pointer-events-none z-0 ring-[0.5px] ring-black/70"></span>${portEl}</div>`;
                 }
                 return portEl;
             }).join('');
@@ -275,14 +277,14 @@ export class UIController {
     }
 
     // --- Manager Delegators ---
-    setCableOpacity(op) { return this.toolbarManager.setCableOpacity(op); }
+    setCableOpacity(op, persist = true) { return this.toolbarManager.setCableOpacity(op, persist); }
     togglePerformanceMode(force = null) { return this.toolbarManager.togglePerformanceMode(force); }
     applyPerformanceMode() { return this.toolbarManager.applyPerformanceMode(); }
 
     getSubManifest(moduleId, pageId = null) { return this.cableManager.getSubManifest(moduleId, pageId); }
     getPortDisplayInfo(moduleId, port, pageId = null) { return this.cableManager.getPortDisplayInfo(moduleId, port, pageId); }
     getPatchState(mId, pageId = this.currentPageId) { return this.cableManager.getPatchState(mId, pageId); }
-    updatePortHighlight() { return this.cableManager.updatePortHighlight(); }
+    updatePortHighlight(skipCableRender = false) { return this.cableManager.updatePortHighlight(skipCableRender); }
     getSubActivePorts(m) { return this.cableManager.getSubActivePorts(m); }
     cleanupOrphanSubConnections(subPageId = null) { return this.cableManager.cleanupOrphanSubConnections(subPageId); }
     getConnectedPortColor(mId, portName, m) { return this.cableManager.getConnectedPortColor(mId, portName, m); }

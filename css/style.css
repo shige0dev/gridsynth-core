@@ -131,7 +131,12 @@ body {
 
 #cable-canvas {
     pointer-events: none;
-    opacity: 0.85;
+    opacity: 1;
+    --cable-opacity: 1;
+}
+
+#cable-canvas path:not(.cable-highlighted) {
+    stroke-opacity: var(--cable-opacity, 1);
 }
 
 .drop-highlight-valid {
@@ -235,8 +240,8 @@ body.is-row-dragging .grid-cell * {
 }
 
 /* Performance Mode: Hide all ports and disable editing affordances */
-.is-performance-mode .port {
-    display: none !important;
+.is-performance-mode .port,
+.is-performance-mode .port-badge {
     pointer-events: none !important;
     opacity: 0 !important;
 }
@@ -495,4 +500,25 @@ body.is-row-dragging .grid-cell * {
 /* Compact hitbox for PAD chassis ports to maximize touchable surface */
 .pad-chassis-port::before {
     inset: -2px !important;
+}
+
+/* Toolbar & Nav Button Active States */
+#perf-mode-btn.is-active {
+    background-color: rgba(245, 158, 11, 0.2) !important;
+    color: #fcd34d !important;
+    border-color: rgba(245, 158, 11, 0.8) !important;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.25) !important;
+}
+
+#audio-power-btn.is-active,
+#seq-play-btn.is-active {
+    background-color: #450a0a !important;
+    color: #f87171 !important;
+    border-color: #ef4444 !important;
+    box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.4) !important;
+}
+
+#cable-opacity-btn.is-dim {
+    color: #475569 !important;
+    border-color: #1e293b !important;
 }

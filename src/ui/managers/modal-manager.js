@@ -82,6 +82,74 @@ export class ModalManager {
         return null;
     }
 
+    bindModalEvents() {
+        document.getElementById('close-modal-bg')?.addEventListener('click', () => {
+            document.getElementById('shared-modal')?.classList.add('hidden');
+            this.activePopupModuleId = null;
+        });
+
+        document.getElementById('dock-backdrop')?.addEventListener('pointerdown', () => {
+            this.closeUnlockedDocks();
+        });
+        document.getElementById('dock-backdrop')?.addEventListener('click', () => {
+            this.closeUnlockedDocks();
+        });
+
+        // Global outside-tap dismiss for unlocked dock dialogs
+        document.addEventListener('pointerdown', (e) => {
+            if (this.openDocks.size === 0) return;
+            const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
+            if (targetEl?.closest?.('.dock-dialog') || targetEl?.closest?.('#custom-prompt-modal') || targetEl?.closest?.('#alert-modal') || targetEl?.closest?.('#about-modal')) return;
+            const hasUnlocked = Array.from(this.openDocks.values()).some(d => !d.isLocked);
+            if (hasUnlocked) {
+                this.closeUnlockedDocks();
+            }
+        });
+
+        const frame = document.getElementById('phone-frame');
+        const headerEl = document.getElementById('modal-header');
+        const contentEl = document.getElementById('modal-content');
+        if (headerEl && contentEl && frame) {
+            const minMargin = 6;
+            let drag = false, dX = 0, dY = 0, initL = 0, initT = 0;
+            headerEl.addEventListener('pointerdown', (e) => {
+                if (e.target.closest('#dock-lock-btn') || e.target.closest('.dock-lock-btn')) return;
+                e.preventDefault();
+                drag = true;
+                headerEl.setPointerCapture(e.pointerId);
+                dX = e.clientX;
+                dY = e.clientY;
+                contentEl.style.bottom = 'auto';
+                initL = parseFloat(contentEl.style.left) || contentEl.offsetLeft;
+                initT = parseFloat(contentEl.style.top) || contentEl.offsetTop;
+            });
+            headerEl.addEventListener('pointermove', (e) => {
+                if (!drag) return;
+                const fR = frame.getBoundingClientRect(), cR = contentEl.getBoundingClientRect();
+                const isAddModal = document.getElementById('modal-title')?.textContent === 'ADD MODULE';
+                if (!isAddModal) {
+                    contentEl.style.left = `${Math.max(minMargin, Math.min(fR.width - cR.width - minMargin, initL + e.clientX - dX))}px`;
+                }
+                contentEl.style.top = `${Math.max(minMargin, Math.min(fR.height - cR.height - minMargin, initT + e.clientY - dY))}px`;
+                contentEl.style.bottom = 'auto';
+            });
+            const stop = (e) => {
+                if (drag) {
+                    drag = false;
+                    try { headerEl.releasePointerCapture(e.pointerId); } catch (_) {}
+                }
+            };
+            headerEl.addEventListener('pointerup', stop);
+            headerEl.addEventListener('pointercancel', stop);
+        }
+
+        const closeAboutModal = () => document.getElementById('about-modal')?.classList.add('hidden');
+        document.getElementById('about-backdrop')?.addEventListener('click', closeAboutModal);
+        document.getElementById('about-backdrop')?.addEventListener('pointerdown', closeAboutModal);
+        document.getElementById('json-io-backdrop')?.addEventListener('click', () => document.getElementById('json-io-modal')?.classList.add('hidden'));
+        document.getElementById('close-json-io-btn')?.addEventListener('click', () => document.getElementById('json-io-modal')?.classList.add('hidden'));
+    }
+
     showToast(msg, duration = 1800) {
         const t = document.getElementById('toast');
         if (!t) return Promise.resolve();

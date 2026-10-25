@@ -707,5 +707,37 @@ export class PresetManager {
             });
         }
     }
+
+    bindPresetEvents() {
+        document.getElementById('preset-trigger-btn')?.addEventListener('click', () => {
+            this.renderPresetList();
+            document.getElementById('preset-manager-modal')?.classList.remove('hidden');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        });
+        document.getElementById('close-preset-bg')?.addEventListener('click', () => document.getElementById('preset-manager-modal')?.classList.add('hidden'));
+        document.getElementById('close-preset-modal-btn')?.addEventListener('click', () => document.getElementById('preset-manager-modal')?.classList.add('hidden'));
+        document.getElementById('preset-new-top-btn')?.addEventListener('click', () => this.createNewPatch());
+        document.getElementById('preset-save-top-btn')?.addEventListener('click', () => this.saveCurrentPatch());
+        document.getElementById('preset-saveas-top-btn')?.addEventListener('click', async () => {
+            const name = await this.ui.openCustomPrompt('SAVE AS', `PATCH_${Date.now().toString().slice(-4)}`);
+            if (name) {
+                this.presets[name] = this.exportCurrentPreset();
+                this.presetOrder.unshift(name);
+                this.currentPresetKey = name;
+                this.savePresetsDB();
+                this.loadActivePreset();
+                this.renderPresetList();
+                this.ui.showToast(`"${name}" を保存しました`);
+            }
+        });
+        document.getElementById('preset-export-top-btn')?.addEventListener('click', () => this.openJsonExportModal());
+        document.getElementById('preset-import-top-btn')?.addEventListener('click', () => this.openJsonImportModal());
+        document.getElementById('preset-ai-spec-top-btn')?.addEventListener('click', () => this.openAiSpecModal());
+        document.getElementById('main-ai-spec-btn')?.addEventListener('click', () => this.openAiSpecModal());
+        document.getElementById('preset-about-btn')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('about-modal')?.classList.remove('hidden');
+        });
+    }
 }
 

@@ -122,9 +122,8 @@ export class PageManager {
         this.ui.selectedTargetForConnection = null;
 
         this.ui.syncGridMap();
-        this.ui.updateAllCells();
-        this.ui.renderCables();
         this.updatePageNavUI();
+        this.ui.updateAllCells();
 
         const pName = this.pagesData[targetId]?.name;
         this.ui.showToast(targetId === "0" ? 'MAIN' : (pName || `SUBPATCH ${targetId}`));
@@ -195,9 +194,8 @@ export class PageManager {
         this.ui.connections = curPage.connections || [];
         this.ui.syncGridMap();
         this.ui.synth.rebuildAll(this.pagesData, (p, id) => this.ui.getPatchState(id, p));
-        this.ui.updateAllCells();
-        this.ui.renderCables();
         this.updatePageNavUI();
+        this.ui.updateAllCells();
         if (!this.historyStack.length) {
             const undoBtn = document.getElementById('undo-btn');
             if (undoBtn) {
@@ -221,7 +219,6 @@ export class PageManager {
             this.ui.syncGridMap();
             this.updatePageNavUI();
             this.ui.updateAllCells();
-            this.ui.renderCables();
         }
 
         // Completely delete subpage container from memory
@@ -378,7 +375,6 @@ export class PageManager {
 
         this.ui.renderCell(slotIdx);
         if (typeof lucide !== 'undefined') lucide.createIcons();
-        this.updatePageNavUI();
         this.ui.showToast(`${type} を追加しました`);
         return d;
     }
