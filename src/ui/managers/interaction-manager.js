@@ -1,7 +1,7 @@
 // src/ui/managers/interaction-manager.js
 import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=297';
 import { MODULE_REGISTRY } from '../../modules/registry.js?v=297';
-import { RowManager } from './row-manager.js?v=389';
+import { RowManager } from './row-manager.js?v=390';
 
 export class InteractionManager {
     constructor(ui) {
@@ -96,6 +96,39 @@ export class InteractionManager {
         this.lastHighlightedCells.forEach(c => c.classList.remove('drop-highlight-valid', 'drop-highlight-invalid', 'drop-highlight-copy-valid'));
         this.lastHighlightedCells = [];
         this.dropTargetIndex = null;
+    }
+
+    resetAllInteractions({ keepSelection = false } = {}) {
+        this.clearHighlight();
+        if (this._pTimer) { clearTimeout(this._pTimer); this._pTimer = null; }
+        if (this._lpTimer) { clearTimeout(this._lpTimer); this._lpTimer = null; }
+        if (this._rowLpTimer) { clearTimeout(this._rowLpTimer); this._rowLpTimer = null; }
+        if (this._copyTimer) { clearTimeout(this._copyTimer); this._copyTimer = null; }
+        this._stopModuleAutoScroll();
+
+        this.portLongPressed = false;
+        this.moduleLongPressed = false;
+        this.rowLongPressed = false;
+        this.isDragging = false;
+        this._isScrollDragging = false;
+        this._isMouseScrollDragging = false;
+        this._scrollVelocity = 0;
+        this._dragCandidate = null;
+        this._stage2X = undefined;
+        this._stage2Y = undefined;
+        this.dropTargetIndex = null;
+        this.dragGroupOffsets = [];
+        if (!keepSelection) {
+            this.selectedModuleIds = [];
+            this.updateSelectionClasses();
+        }
+
+        document.body.classList.remove('is-module-dragging', 'is-row-dragging');
+        const container = document.getElementById('canvas-container');
+        if (container) {
+            container.style.overflowY = 'auto';
+        }
+        this._justLongPressedTimestamp = 0;
     }
 
     updateDropHighlight() {
@@ -197,7 +230,7 @@ export class InteractionManager {
         this._moduleAutoScrollVelocity = 0;
     }
 
-    _startRowLongPress(targetRow, clientY, delay = 350) {
+    _startRowLongPress(targetRow, clientY, delay = 600) {
         if (this._rowLpTimer) {
             clearTimeout(this._rowLpTimer);
             this._rowLpTimer = null;
@@ -207,6 +240,14 @@ export class InteractionManager {
         this._rowLpTimer = setTimeout(() => {
             this._rowLpTimer = null;
             if (this.isDragging) return;
+
+            // When transitioning to row selection at 600ms, cancel individual module selection
+            this.selectedModuleIds = [];
+            this.updateSelectionClasses();
+            this.clearHighlight();
+            this._dragCandidate = null;
+            this.moduleLongPressed = false;
+
             this.rowLongPressed = true;
             this._justLongPressedTimestamp = Date.now();
             this.rowManager?.startRowDragFromModule(targetRow, clientY);
@@ -395,6 +436,8 @@ export class InteractionManager {
             this._isScrollDragging = false;
             this._isMouseScrollDragging = false;
             this._scrollVelocity = 0;
+            this.moduleLongPressed = false;
+            this.rowLongPressed = false;
 
             const container = document.getElementById('canvas-container');
             if (!this.ui.isPerformanceMode && container) {
@@ -490,9 +533,9 @@ export class InteractionManager {
 
                         if (this.selectedModuleIds.length === 1) {
                             this.ui.showToast('モジュールを選択（長押し継続で行移動）', 1000);
-                            // Stage 2: continuing to hold for another 350ms without releasing -> row reorder mode!
+                            // Stage 2: continuing to hold for another 300ms (total 600ms from touch down) -> row reorder mode!
                             if (targetRow !== undefined) {
-                                this._startRowLongPress(targetRow, this._stage2Y, 350);
+                                this._startRowLongPress(targetRow, this._stage2Y, 300);
                             }
                         } else {
                             this.ui.showToast(`${this.selectedModuleIds.length}個選択中（ドラッグで一括移動・複製）`, 1000);
@@ -500,12 +543,12 @@ export class InteractionManager {
                     }, 300);
                 } else {
                     // Already selected module:
-                    // If single module selected & held 350ms without moving -> triggers row reorder mode!
+                    // If single module selected & held 600ms without moving -> triggers row reorder mode!
                     // If moved > 8px, pointermove immediately enters module/group dragging.
                     this._stage2X = e.clientX;
                     this._stage2Y = e.clientY;
                     if (this.selectedModuleIds.length === 1 && targetRow !== undefined) {
-                        this._startRowLongPress(targetRow, clientY, 350);
+                        this._startRowLongPress(targetRow, clientY, 600);
                     }
                 }
                 return;
@@ -517,8 +560,8 @@ export class InteractionManager {
                 if (!isNaN(idx)) {
                     const targetRow = Math.floor(idx / this.ui.COLS);
                     const clientY = e.clientY;
-                    // User requested: "空セルは300MSとしてください"
-                    this._startRowLongPress(targetRow, clientY, 300);
+                    // Unified row selection: 600ms from touch down
+                    this._startRowLongPress(targetRow, clientY, 600);
                 }
                 return;
             }
@@ -641,7 +684,9 @@ export class InteractionManager {
 
         const stopDrag = () => {
             this._stopModuleAutoScroll();
-            document.body.classList.remove('is-module-dragging');
+            document.body.classList.remove('is-module-dragging', 'is-row-dragging');
+            const container = document.getElementById('canvas-container');
+            if (container) container.style.overflowY = 'auto';
             if (this._pTimer) {
                 clearTimeout(this._pTimer);
                 this._pTimer = null;

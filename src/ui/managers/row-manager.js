@@ -195,6 +195,9 @@ export class RowManager {
             this.interactionManager.selectedModuleIds = [];
             this.interactionManager.updateSelectionClasses?.();
             this.interactionManager.clearHighlight?.();
+            this.interactionManager.moduleLongPressed = false;
+            this.interactionManager._isScrollDragging = false;
+            this.interactionManager._isMouseScrollDragging = false;
             if (this.interactionManager._copyTimer) {
                 clearTimeout(this.interactionManager._copyTimer);
                 this.interactionManager._copyTimer = null;
@@ -252,8 +255,11 @@ export class RowManager {
             stopAutoScroll();
             this.hideInsertBeam();
             this.rowTracks?.forEach(t => t?.classList.remove('row-source-dragging'));
-            document.body.classList.remove('is-row-dragging');
+            document.body.classList.remove('is-row-dragging', 'is-module-dragging');
             if (container) container.style.overflowY = 'auto';
+            if (this.interactionManager) {
+                this.interactionManager.resetAllInteractions?.({ keepSelection: false });
+            }
         };
 
         const onPointerMove = (e) => {
@@ -363,6 +369,12 @@ export class RowManager {
         });
 
         this.updateRowHandleRail();
+        if (this.interactionManager) {
+            this.interactionManager.resetAllInteractions?.({ keepSelection: false });
+        }
+        const container = document.getElementById('canvas-container');
+        if (container) container.style.overflowY = 'auto';
+        document.body.classList.remove('is-row-dragging', 'is-module-dragging');
         this.ui.showToast(`行 ${sourceRow + 1} を 行 ${destRow + 1} に差し込み移動しました`);
     }
 }

@@ -6,7 +6,7 @@ import { PresetManager } from './managers/preset-manager.js?v=360';
 import { ModalManager } from './managers/modal-manager.js?v=353';
 import { CableManager } from './managers/cable-manager.js?v=351';
 import { PageManager } from './managers/page-manager.js?v=351';
-import { InteractionManager } from './managers/interaction-manager.js?v=389';
+import { InteractionManager } from './managers/interaction-manager.js?v=390';
 import { WaveCodec } from '../audio/wave-codec.js?v=351';
 
 export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'LISS', 'XY', 'SPEC', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD'];
@@ -369,7 +369,7 @@ export class UIController {
         const cell = this.cells[idx] || document.getElementById(`cell-${idx}`);
         if (!cell) return;
         const mId = this.gridMap[idx], m = mId ? this.modules[mId] : null;
-        cell.className = `grid-cell relative aspect-square border transition-all select-none ${m ? `border-slate-600 bg-white/10 backdrop-blur-sm shadow-md shadow-black/50 ${this.selectedModuleIds.includes(mId)?'selected-module':''}` : 'border-transparent cursor-pointer empty-cell'}`;
+        cell.className = `grid-cell relative aspect-square border transition-all select-none ${m ? `border-slate-600 bg-white/10 backdrop-blur-sm shadow-md shadow-black/50 ${this.selectedModuleIds.includes(mId)?'selected-module':''}` : 'border-transparent cursor-default empty-cell'}`;
         if (m) {
             cell.dataset.renderedState = 'module';
             const reg = MODULE_REGISTRY[m.type];
@@ -460,7 +460,7 @@ export class UIController {
             }
             cell.innerHTML = `
                 ${titleHTML}
-                <div class="absolute inset-0 flex flex-col items-center justify-center module-body cursor-pointer p-1 z-0 overflow-hidden" data-module-id="${mId}">${reg.renderGrid(m, ctx)}</div>
+                <div class="absolute inset-0 flex flex-col items-center justify-center module-body cursor-default p-1 z-0 overflow-hidden" data-module-id="${mId}">${reg.renderGrid(m, ctx)}</div>
                 ${portsHTML}`;
             if (reg.bindGridEvents) {
                 reg.bindGridEvents(cell, m, this);
