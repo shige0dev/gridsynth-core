@@ -114,13 +114,14 @@ body {
     touch-action: pan-y;
 }
 
-#grid-board, #base-grid {
-    display: grid !important;
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+#grid-board {
+    display: flex !important;
+    flex-direction: column !important;
 }
 
-#grid-board.grid-cols-5, #base-grid.grid-cols-5 {
-    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+.grid-row, #base-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
 }
 
 .bg-grid {
@@ -182,6 +183,11 @@ body.is-row-dragging * {
     touch-action: none !important;
     user-select: none !important;
     cursor: ns-resize !important;
+}
+
+body.is-module-dragging .grid-cell *,
+body.is-row-dragging .grid-cell * {
+    pointer-events: none !important;
 }
 
 .native-vslider,
@@ -419,53 +425,47 @@ body.is-row-dragging * {
     cursor: text;
 }
 
-/* Row Handle Mode Overlay & Reordering */
-#row-handle-overlay {
-    transition: opacity 0.15s ease;
-}
-.row-overlay-track {
-    position: absolute;
-    left: 0;
-    right: 0;
-    pointer-events: none;
-    z-index: 45;
-    border: 2px solid transparent;
-    border-radius: 0 !important;
-    box-sizing: border-box;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+/* DOM-based Row Selection & Inter-row Insertion Guide Line */
+.grid-row {
+    position: relative;
 }
 
-.row-overlay-track.row-source-dragging {
-    border-color: #d946ef !important;
+.grid-row.row-source-dragging::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 2px solid #d946ef !important;
     border-radius: 0 !important;
     box-shadow: 0 0 15px rgba(217, 70, 239, 0.5) !important;
     background-color: rgba(217, 70, 239, 0.06) !important;
+    pointer-events: none;
+    z-index: 45;
 }
 
-/* Inter-row Insertion Guide Line (Simple Thin White) */
-.row-insert-beam {
+.grid-row.row-insert-before::before,
+.grid-row.row-insert-after::before {
+    content: '';
     position: absolute;
     left: 0;
     right: 0;
-    height: 4px;
-    transform: translateY(-50%);
-    pointer-events: none;
-    z-index: 55;
-    display: none;
-    align-items: center;
-    transition: top 0.04s ease-out;
-}
-
-.row-insert-beam.active {
-    display: flex;
-}
-
-.row-insert-line {
-    width: 100%;
     height: 1.5px;
     border-radius: 9999px;
     background-color: #ffffff;
     box-shadow: 0 0 4px 1px rgba(255, 255, 255, 0.95), 0 0 8px 2px rgba(255, 255, 255, 0.5);
+    pointer-events: none;
+    z-index: 55;
+}
+
+.grid-row.row-insert-before::before {
+    top: -3.75px;
+}
+
+.grid-row[data-row="0"].row-insert-before::before {
+    top: 0px;
+}
+
+.grid-row.row-insert-after::before {
+    bottom: -3.75px;
 }
 
 .empty-cell {

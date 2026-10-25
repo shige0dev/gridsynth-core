@@ -909,7 +909,20 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
         - `pointerdown` 開始時にも古い長押しフラグを完全リセット。
       - **カーソル形状（cursor）の適正化**:
         - 盤面の空セルおよびモジュール本体の Tailwind クラスを `cursor-pointer` から `cursor-default` に変更。常時指形状になっていた問題を解消し、通常時は標準矢印カーソル、モジュール選択時は `grab`、ドラッグ時は `grabbing` / `ns-resize`、移動完了後は矢印（`default`）へ確実に復帰。
-    - バージョンを `v1.0.0390`、キャッシュバスターを `v=390` に更新。
+    - **DOMベースの `.grid-row` 階層化・5列ABテスト削除・端部オートスクロール廃止・イベント一元化（v1.0.0391）**:
+      - **5列ABテストコードの完全削除**:
+        - `index.html` の `#grid-cols-toggle-btn`、`style.css` の `.grid-cols-5`、`controller.js` の `setGridColumns()` 等を削除し、4列×32行（128スロット）構成に一本化。
+      - **端部オートスクロール機能の削除**:
+        - モジュール移動および行移動における画面上下端での自動スクロール処理（RAFループ）を一旦すべて削除し、画面外移動時のロック残留要因を排除。
+      - **DOMベースの `.grid-row` 階層構造への刷新と冗長オーバーレイの廃止**:
+        - `#grid-board` 内に32個の `<div class="grid-row" id="grid-row-0..31" data-row="0..31">` を構築し、各行が4つの `.grid-cell` を包む真のDOM階層に刷新。
+        - 行選択時の「4セルまとめたピンク枠（`.grid-row.row-source-dragging::after`）」および「行間の白挿入ライン（`.row-insert-before::before` / `.row-insert-after::before`）」を `.grid-row` の純粋なCSS疑似要素で描画。これにより従来の `#row-handle-overlay`、32個の `.row-overlay-track`、`#row-insert-beam`、`ResizeObserver`、`offsetTop` 座標計算コードを全廃。
+        - ドラッグ中（`body.is-module-dragging` / `body.is-row-dragging`）は `.grid-cell * { pointer-events: none !important; }` とし、DOM要素（`.grid-cell` / `.grid-row`）のみで確実にヒットテストが行われるよう整理。
+      - **イベント管理の一元化と行移動キャンセル問題の解決**:
+        - `RowManager` 側の重複 `window` イベントリスナーを廃止し、`InteractionManager` の `pointerdown` / `pointermove` / `pointerup` に完全一本化。
+        - `#grid-board` の `contextmenu` を抑止して長押し600ms時のブラウザ強制 `pointercancel` 割り込みを防止。
+        - 600msで行選択された後に一度指を離しても行選択状態（ピンク枠）を維持し、そのまま次のタッチで行をドラッグ移動できる2ステップ操作と、指を離さずそのまま上下ドラッグする1モーション操作の両方に対応。
+    - バージョンを `v1.0.0391`、キャッシュバスターを `v=391` に更新。
 
 
 

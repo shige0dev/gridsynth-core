@@ -6,7 +6,7 @@ import { PresetManager } from './managers/preset-manager.js?v=360';
 import { ModalManager } from './managers/modal-manager.js?v=353';
 import { CableManager } from './managers/cable-manager.js?v=351';
 import { PageManager } from './managers/page-manager.js?v=351';
-import { InteractionManager } from './managers/interaction-manager.js?v=390';
+import { InteractionManager } from './managers/interaction-manager.js?v=391';
 import { WaveCodec } from '../audio/wave-codec.js?v=351';
 
 export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'LISS', 'XY', 'SPEC', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD'];
@@ -19,6 +19,7 @@ export class UIController {
         this.ROWS = 32;
         this.TOTAL_SLOTS = this.COLS * this.ROWS;
         this.gridMap = Array(this.TOTAL_SLOTS).fill(null);
+        this.rows = new Array(this.ROWS);
         this.cells = new Array(this.TOTAL_SLOTS);
         this._lastUiUpdate = 0;
         this.isPerformanceMode = localStorage.getItem('gridsynth_perf_mode') === 'true';
@@ -112,16 +113,7 @@ export class UIController {
         this.cableCanvas = document.getElementById('cable-canvas');
         const baseGrid = document.getElementById('base-grid');
 
-        // Apply grid column styles dynamically
-        if (this.gridBoard) {
-            this.gridBoard.classList.remove('grid-cols-4', 'grid-cols-5');
-            this.gridBoard.classList.add(`grid-cols-${this.COLS}`);
-            this.gridBoard.style.setProperty('grid-template-columns', `repeat(${this.COLS}, minmax(0, 1fr))`, 'important');
-        }
         if (baseGrid) {
-            baseGrid.classList.remove('grid-cols-4', 'grid-cols-5');
-            baseGrid.classList.add(`grid-cols-${this.COLS}`);
-            baseGrid.style.setProperty('grid-template-columns', `repeat(${this.COLS}, minmax(0, 1fr))`, 'important');
             baseGrid.innerHTML = '';
             const fragment = document.createDocumentFragment();
             for (let i = 0; i < this.TOTAL_SLOTS; i++) {
@@ -134,13 +126,27 @@ export class UIController {
 
         if (this.gridBoard) {
             this.gridBoard.innerHTML = '';
-            for (let i = 0; i < this.TOTAL_SLOTS; i++) {
-                const c = document.createElement('div');
-                c.id = `cell-${i}`;
-                c.dataset.index = i;
-                this.cells[i] = c;
-                this.gridBoard.appendChild(c);
+            const boardFragment = document.createDocumentFragment();
+            for (let r = 0; r < this.ROWS; r++) {
+                const rowEl = document.createElement('div');
+                rowEl.id = `grid-row-${r}`;
+                rowEl.className = 'grid-row grid grid-cols-4 gap-1.5 w-full relative';
+                rowEl.dataset.row = String(r);
+                this.rows[r] = rowEl;
+
+                for (let col = 0; col < this.COLS; col++) {
+                    const i = r * this.COLS + col;
+                    const c = document.createElement('div');
+                    c.id = `cell-${i}`;
+                    c.dataset.index = String(i);
+                    c.dataset.row = String(r);
+                    c.dataset.col = String(col);
+                    this.cells[i] = c;
+                    rowEl.appendChild(c);
+                }
+                boardFragment.appendChild(rowEl);
             }
+            this.gridBoard.appendChild(boardFragment);
         }
         const savedOp = parseFloat(localStorage.getItem('gridsynth_cable_opacity'));
         this.cableOpacity = (!isNaN(savedOp) && [1.0, 0.2].some(s => Math.abs(s - savedOp) < 0.05)) ? savedOp : 1.0;
@@ -191,9 +197,8 @@ export class UIController {
             }
         }
 
-        this.interactionManager?.updateRowHandleRail?.();
-
         if (isPerf) {
+            this.interactionManager?.resetAllInteractions?.({ keepSelection: false });
             // Clear any selections
             if (this.selectedModuleIds.length > 0) {
                 this.selectedModuleIds = [];
@@ -478,50 +483,6 @@ export class UIController {
         for (let i = 0; i < this.TOTAL_SLOTS; i++) this.renderCell(i);
         if (typeof lucide !== 'undefined') lucide.createIcons();
         this.updatePortHighlight();
-        this.interactionManager?.updateRowHandleRail?.();
-    }
-
-    setGridColumns(newCols) {
-        if (newCols !== 4 && newCols !== 5) return;
-        const oldCols = this.COLS;
-        if (oldCols === newCols) return;
-
-        this.COLS = newCols;
-        this.ROWS = newCols === 4 ? 32 : 26;
-        this.TOTAL_SLOTS = this.COLS * this.ROWS;
-        this.gridMap = Array(this.TOTAL_SLOTS).fill(null);
-        this.cells = new Array(this.TOTAL_SLOTS);
-
-        // Update AB test indicator display
-        const disp = document.getElementById('grid-cols-disp');
-        if (disp) disp.textContent = `${newCols}COL`;
-
-        // Re-map module coordinates safely
-        const placed = new Set();
-        Object.values(this.modules).forEach(m => {
-            let r = m.row, c = m.col;
-            if (c >= newCols) {
-                c = c % newCols;
-                r = r + 1;
-            }
-            while (placed.has(`${r},${c}`)) {
-                c++;
-                if (c >= newCols) {
-                    c = 0;
-                    r++;
-                }
-            }
-            placed.add(`${r},${c}`);
-            m.row = r;
-            m.col = c;
-        });
-
-        this.initDOM();
-        this.interactionManager?.initRowHandleUI?.();
-        this.syncGridMap();
-        this.updateAllCells();
-        this.renderCables();
-        this.showToast(`グリッドを ${newCols}列 (${this.TOTAL_SLOTS}スロット) に切り替えました`);
     }
 
     renderCables() {
@@ -910,10 +871,6 @@ export class UIController {
             if (res !== null && res.trim() !== '') {
                 this.saveCurrentSubpatchToLibrary(res.trim());
             }
-        });
-        document.getElementById('grid-cols-toggle-btn')?.addEventListener('click', () => {
-            const nextCols = this.COLS === 4 ? 5 : 4;
-            this.setGridColumns(nextCols);
         });
 
         // Scrolling cancels pending long-presses without blocking the compositor thread

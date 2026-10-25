@@ -11,7 +11,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230284c7'/><circle cx='50' cy='50' r='25' fill='%2338bdf8'/></svg>">
-    <link rel="stylesheet" href="./css/style.css?v=390">
+    <link rel="stylesheet" href="./css/style.css?v=391">
     <script>
         (function() {
             var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
@@ -59,9 +59,6 @@
                 <button id="fullscreen-btn" class="h-5 px-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200 rounded flex items-center justify-center gap-1 transition shadow-sm text-[8px] font-bold cursor-pointer" title="全画面表示切替">
                     <i id="fullscreen-icon" data-lucide="maximize" class="w-2.5 h-2.5 pointer-events-none"></i>
                 </button>
-                <button id="grid-cols-toggle-btn" class="h-5 px-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-cyan-300 rounded flex items-center justify-center transition shadow-sm cursor-pointer font-mono text-[7.5px] font-bold" title="列数切替 (ABテスト: 4列 ⇔ 5列)">
-                    <span id="grid-cols-disp">4COL</span>
-                </button>
                 <button id="cable-opacity-btn" class="h-5 px-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200 rounded flex items-center justify-center transition shadow-sm cursor-pointer" title="ケーブル表示切替（透明度）">
                     <svg id="cable-opacity-indicator" viewBox="0 0 16 16" class="w-2.5 h-2.5 pointer-events-none transition-opacity duration-200" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
                         <path d="M2 13 C 2 6, 14 10, 14 3"></path>
@@ -83,7 +80,7 @@
                 <button id="page-nav-save-btn" class="h-5 px-1.5 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/70 text-emerald-300 rounded flex items-center gap-1 transition shadow-sm text-[8px] font-bold cursor-pointer" style="display: none;" title="ライブラリにストック">
                     <i data-lucide="archive" class="w-2.5 h-2.5 pointer-events-none"></i><span>STOCK</span>
                 </button>
-                <span id="app-version-disp" class="font-mono text-[8.5px] font-bold text-cyan-400/90 tracking-tight select-none">v1.0.0390</span>
+                <span id="app-version-disp" class="font-mono text-[8.5px] font-bold text-cyan-400/90 tracking-tight select-none">v1.0.0391</span>
             </div>
         </div>
 
@@ -91,7 +88,7 @@
         <main id="canvas-container" class="flex-1 relative overflow-y-auto overflow-x-hidden px-3.5 py-2 flex flex-col items-center justify-start pb-[env(safe-area-inset-bottom,0px)]">
             <div id="grid-scroll-content" class="relative w-full mt-1 mb-16 shrink-0">
                 <div id="base-grid" class="grid grid-cols-4 gap-1.5 w-full absolute inset-0 pointer-events-none z-0"></div>
-                <div id="grid-board" class="grid grid-cols-4 gap-1.5 w-full relative z-20"></div>
+                <div id="grid-board" class="flex flex-col gap-1.5 w-full relative z-20"></div>
                 <svg id="cable-canvas" class="absolute inset-0 w-full h-full z-10 pointer-events-none transition-opacity duration-300" shape-rendering="geometricPrecision"></svg>
             </div>
         </main>
@@ -197,6 +194,6 @@
         <div id="toast" class="absolute bottom-20 left-1/2 -translate-x-1/2 px-3.5 py-1.5 bg-slate-900/95 border border-cyan-400 text-cyan-200 rounded-full text-[11px] font-bold shadow-2xl pointer-events-none opacity-0 transition-opacity duration-200 z-[100] whitespace-nowrap ring-1 ring-cyan-500/40">Message</div>
     </div>
 
-    <script type="module" src="./src/main.js?v=390"></script>
+    <script type="module" src="./src/main.js?v=391"></script>
 </body>
 </html>

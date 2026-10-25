@@ -1,7 +1,7 @@
 // src/ui/managers/interaction-manager.js
 import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=297';
 import { MODULE_REGISTRY } from '../../modules/registry.js?v=297';
-import { RowManager } from './row-manager.js?v=390';
+import { RowManager } from './row-manager.js?v=391';
 
 export class InteractionManager {
     constructor(ui) {
@@ -29,8 +29,6 @@ export class InteractionManager {
         this.rowLongPressed = false;
         this._wasModuleDragging = false;
 
-        this._moduleAutoScrollRaf = null;
-        this._moduleAutoScrollVelocity = 0;
         this._lastPointerX = 0;
         this._lastPointerY = 0;
         this._rowLpTimer = null;
@@ -57,7 +55,6 @@ export class InteractionManager {
     }
 
     cancelPendingPresses() {
-        this._stopModuleAutoScroll();
         if (this._pTimer) {
             clearTimeout(this._pTimer);
             this._pTimer = null;
@@ -104,7 +101,6 @@ export class InteractionManager {
         if (this._lpTimer) { clearTimeout(this._lpTimer); this._lpTimer = null; }
         if (this._rowLpTimer) { clearTimeout(this._rowLpTimer); this._rowLpTimer = null; }
         if (this._copyTimer) { clearTimeout(this._copyTimer); this._copyTimer = null; }
-        this._stopModuleAutoScroll();
 
         this.portLongPressed = false;
         this.moduleLongPressed = false;
@@ -121,6 +117,7 @@ export class InteractionManager {
         if (!keepSelection) {
             this.selectedModuleIds = [];
             this.updateSelectionClasses();
+            this.rowManager?.clearRowSelection?.();
         }
 
         document.body.classList.remove('is-module-dragging', 'is-row-dragging');
@@ -202,34 +199,6 @@ export class InteractionManager {
         }
     }
 
-    _startModuleAutoScroll() {
-        if (this._moduleAutoScrollRaf) return;
-        const step = () => {
-            if (!this.isDragging || this._moduleAutoScrollVelocity === 0) {
-                this._moduleAutoScrollRaf = null;
-                return;
-            }
-            const container = document.getElementById('canvas-container');
-            if (container) {
-                const prevScroll = container.scrollTop;
-                container.scrollTop += this._moduleAutoScrollVelocity;
-                if (container.scrollTop !== prevScroll) {
-                    this._updateDropTargetAt(this._lastPointerX, this._lastPointerY);
-                }
-            }
-            this._moduleAutoScrollRaf = requestAnimationFrame(step);
-        };
-        this._moduleAutoScrollRaf = requestAnimationFrame(step);
-    }
-
-    _stopModuleAutoScroll() {
-        if (this._moduleAutoScrollRaf) {
-            cancelAnimationFrame(this._moduleAutoScrollRaf);
-            this._moduleAutoScrollRaf = null;
-        }
-        this._moduleAutoScrollVelocity = 0;
-    }
-
     _startRowLongPress(targetRow, clientY, delay = 600) {
         if (this._rowLpTimer) {
             clearTimeout(this._rowLpTimer);
@@ -298,12 +267,25 @@ export class InteractionManager {
             }
         });
 
+        this.ui.gridBoard.addEventListener('contextmenu', (e) => {
+            if (!this.ui.isPerformanceMode) {
+                e.preventDefault();
+            }
+        });
+
         this.ui.gridBoard.addEventListener('click', async (e) => {
             if (this._wasScrollDragging) {
                 this._wasScrollDragging = false;
                 return;
             }
             if (this.ui.isPerformanceMode) {
+                return;
+            }
+            if (this.rowManager?.selectedRow !== null && this.rowManager?.selectedRow !== undefined) {
+                if (Date.now() - this._justLongPressedTimestamp < 500) {
+                    return;
+                }
+                this.rowManager.clearRowSelection();
                 return;
             }
             const port = e.target.closest('.port');
@@ -439,9 +421,20 @@ export class InteractionManager {
             this.moduleLongPressed = false;
             this.rowLongPressed = false;
 
+            if (!this.ui.isPerformanceMode && this.rowManager?.selectedRow !== null && this.rowManager?.selectedRow !== undefined) {
+                const rowEl = e.target.closest('.grid-row');
+                const touchedRow = rowEl ? parseInt(rowEl.dataset.row, 10) : null;
+                if (touchedRow === this.rowManager.selectedRow) {
+                    this.rowManager.resumeSelectedRowDrag();
+                    return;
+                } else {
+                    this.rowManager.clearRowSelection();
+                }
+            }
+
             const container = document.getElementById('canvas-container');
             if (!this.ui.isPerformanceMode && container) {
-                const isControl = e.target.closest('.port, input, button, select, textarea, .pad-grid-container, .pad-grid-canvas, .row-handle-btn, .row-overlay-track, #row-handle-overlay');
+                const isControl = e.target.closest('.port, input, button, select, textarea, .pad-grid-container, .pad-grid-canvas');
                 if (!isControl) {
                     this._scrollStartY = e.clientY;
                     this._scrollStartTop = container.scrollTop;
@@ -554,14 +547,12 @@ export class InteractionManager {
                 return;
             }
 
-            const empty = e.target.closest('.empty-cell');
-            if (empty) {
-                const idx = parseInt(empty.dataset.index);
-                if (!isNaN(idx)) {
-                    const targetRow = Math.floor(idx / this.ui.COLS);
-                    const clientY = e.clientY;
+            const rowEl = e.target.closest('.grid-row');
+            if (rowEl) {
+                const targetRow = parseInt(rowEl.dataset.row, 10);
+                if (!isNaN(targetRow)) {
                     // Unified row selection: 600ms from touch down
-                    this._startRowLongPress(targetRow, clientY, 600);
+                    this._startRowLongPress(targetRow, e.clientY, 600);
                 }
                 return;
             }
@@ -569,6 +560,8 @@ export class InteractionManager {
 
         window.addEventListener('pointermove', (e) => {
             if (this.rowManager?.draggingRow !== null && this.rowManager?.draggingRow !== undefined) {
+                if (e.cancelable) e.preventDefault();
+                this.rowManager.updateBoundaryFromPointer(e.clientX, e.clientY);
                 return;
             }
 
@@ -591,7 +584,7 @@ export class InteractionManager {
                 const s2dx = this._stage2X !== undefined ? e.clientX - this._stage2X : dx;
                 const s2dy = this._stage2Y !== undefined ? e.clientY - this._stage2Y : dy;
                 const s2distSq = s2dx * s2dx + s2dy * s2dy;
-                if (s2distSq > 100) {
+                if (s2distSq > 256) {
                     clearTimeout(this._rowLpTimer);
                     this._rowLpTimer = null;
                 }
@@ -602,7 +595,7 @@ export class InteractionManager {
             // Drag-to-scroll support (Touch & Mouse swipe before selection)
             const container = document.getElementById('canvas-container');
             if (!this.ui.isPerformanceMode && !this.isDragging && !this.moduleLongPressed && !isCandidateSelected && container) {
-                if (e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal, .pad-grid-container, .pad-grid-canvas, .row-handle-btn, .row-overlay-track, #row-handle-overlay')) {
+                if (e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal, .pad-grid-container, .pad-grid-canvas')) {
                     this._isScrollDragging = false;
                     this._isMouseScrollDragging = false;
                     return;
@@ -657,33 +650,10 @@ export class InteractionManager {
                 this._lastPointerX = e.clientX;
                 this._lastPointerY = e.clientY;
                 this._updateDropTargetAt(e.clientX, e.clientY);
-
-                // Auto-scroll when pointer is near top or bottom edge of canvas-container
-                if (container) {
-                    const rect = container.getBoundingClientRect();
-                    const edgeZone = 70; // 70px edge threshold
-                    const topThreshold = rect.top + edgeZone;
-                    const bottomThreshold = rect.bottom - edgeZone;
-
-                    if (e.clientY < topThreshold) {
-                        const factor = Math.min(1.0, Math.max(0.1, (topThreshold - e.clientY) / edgeZone));
-                        this._moduleAutoScrollVelocity = -Math.round(factor * 14);
-                    } else if (e.clientY > bottomThreshold) {
-                        const factor = Math.min(1.0, Math.max(0.1, (e.clientY - bottomThreshold) / edgeZone));
-                        this._moduleAutoScrollVelocity = Math.round(factor * 14);
-                    } else {
-                        this._moduleAutoScrollVelocity = 0;
-                    }
-
-                    if (this._moduleAutoScrollVelocity !== 0 && !this._moduleAutoScrollRaf) {
-                        this._startModuleAutoScroll();
-                    }
-                }
             }
         });
 
         const stopDrag = () => {
-            this._stopModuleAutoScroll();
             document.body.classList.remove('is-module-dragging', 'is-row-dragging');
             const container = document.getElementById('canvas-container');
             if (container) container.style.overflowY = 'auto';
@@ -732,6 +702,9 @@ export class InteractionManager {
             if (this.rowLongPressed) {
                 this._justLongPressedTimestamp = Date.now();
                 setTimeout(() => { this.rowLongPressed = false; }, 150);
+            }
+            if (this.rowManager?.draggingRow !== null && this.rowManager?.draggingRow !== undefined) {
+                this.rowManager.finishRowDrag();
             }
             if (this.isDragging) {
                 this.isDragging = false;
@@ -812,7 +785,13 @@ export class InteractionManager {
                     this.selectedModuleIds = [];
                     this.ui.updateAllCells();
                     this.ui.renderCables();
+                } else {
+                    // Dropped outside grid or on invalid slot: always return cleanly to normal mode
+                    this.selectedModuleIds = [];
+                    this.updateSelectionClasses();
                 }
+                this.dropTargetIndex = null;
+                this.dragGroupOffsets = [];
             }
         };
 
@@ -823,17 +802,9 @@ export class InteractionManager {
             this.moduleLongPressed = false;
             this.rowLongPressed = false;
         });
-
-        // Initialize Row Handle UI elements
-        this.initRowHandleUI();
-    }
-
-    initRowHandleUI() {
-        return this.rowManager.initRowHandleUI();
-    }
-
-    updateRowHandleRail() {
-        return this.rowManager.updateRowHandleRail();
+        window.addEventListener('blur', () => {
+            this.resetAllInteractions({ keepSelection: false });
+        });
     }
 
     moveRowTo(sourceRow, targetInsertRow) {
@@ -845,14 +816,5 @@ export class InteractionManager {
     }
     set draggingRow(v) {
         this.rowManager.draggingRow = v;
-    }
-    get rowHandleOverlayEl() {
-        return this.rowManager.rowHandleOverlayEl;
-    }
-    get rowTracks() {
-        return this.rowManager.rowTracks;
-    }
-    get rowInsertBeamEl() {
-        return this.rowManager?.rowInsertBeamEl;
     }
 }
