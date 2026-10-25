@@ -128,11 +128,6 @@ export class RowManager {
         const originalRow = this.draggingRow;
         const boundary = this.currentTargetBoundary;
 
-        this.draggingRow = null;
-        document.body.classList.remove('is-row-dragging');
-        const container = document.getElementById('canvas-container');
-        if (container) container.style.overflowY = 'auto';
-
         if (boundary !== null && boundary !== originalRow && boundary !== originalRow + 1) {
             const destRow = boundary < originalRow ? boundary : (boundary - 1);
             this.clearRowSelection();
@@ -141,7 +136,6 @@ export class RowManager {
         }
 
         // If user lifted finger without dragging to another row yet, clear selection cleanly and return to normal mode
-        this.clearInsertBeam();
         this.clearRowSelection();
         return false;
     }

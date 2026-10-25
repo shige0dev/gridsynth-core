@@ -1,7 +1,7 @@
 // src/ui/managers/interaction-manager.js
 import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=297';
 import { MODULE_REGISTRY } from '../../modules/registry.js?v=297';
-import { RowManager } from './row-manager.js?v=392';
+import { RowManager } from './row-manager.js?v=393';
 
 export class InteractionManager {
     constructor(ui) {
@@ -594,8 +594,10 @@ export class InteractionManager {
             const isRowBusy = this.rowLongPressed || (this.rowManager?.draggingRow !== null && this.rowManager?.draggingRow !== undefined) || (this.rowManager?.selectedRow !== null && this.rowManager?.selectedRow !== undefined);
 
             // Drag-to-scroll support (Touch & Mouse swipe before selection)
+            // On mouse, require primary button held (e.buttons & 1); on touch, pointermove only fires when touching.
+            const isButtonHeld = e.pointerType === 'mouse' ? ((e.buttons & 1) !== 0) : (e.buttons > 0 || e.pressure > 0);
             const container = document.getElementById('canvas-container');
-            if (!this.ui.isPerformanceMode && !this.isDragging && !this.moduleLongPressed && !isCandidateSelected && !isRowBusy && container) {
+            if (isButtonHeld && !this.ui.isPerformanceMode && !this.isDragging && !this.moduleLongPressed && !isCandidateSelected && !isRowBusy && container) {
                 if (e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal, .pad-grid-container, .pad-grid-canvas')) {
                     this._isScrollDragging = false;
                     this._isMouseScrollDragging = false;
@@ -616,6 +618,9 @@ export class InteractionManager {
                     container.scrollTop = this._scrollStartTop - deltaY;
                     return;
                 }
+            } else if (!isButtonHeld) {
+                this._isScrollDragging = false;
+                this._isMouseScrollDragging = false;
             }
             if (!this.isDragging && this._dragCandidate) {
                 const s2dx = this._stage2X !== undefined ? e.clientX - this._stage2X : dx;
@@ -655,6 +660,10 @@ export class InteractionManager {
         });
 
         const stopDrag = () => {
+            if (this.rowManager?.draggingRow !== null && this.rowManager?.draggingRow !== undefined) {
+                this.rowManager.finishRowDrag();
+            }
+            this.rowLongPressed = false;
             document.body.classList.remove('is-module-dragging', 'is-row-dragging');
             const container = document.getElementById('canvas-container');
             if (container) container.style.overflowY = 'auto';
@@ -704,10 +713,6 @@ export class InteractionManager {
                 this._justLongPressedTimestamp = Date.now();
                 setTimeout(() => { this.rowLongPressed = false; }, 150);
             }
-            if (this.rowManager?.draggingRow !== null && this.rowManager?.draggingRow !== undefined) {
-                this.rowManager.finishRowDrag();
-            }
-            this.rowLongPressed = false;
             if (this.isDragging) {
                 this.isDragging = false;
                 this._wasModuleDragging = true;
