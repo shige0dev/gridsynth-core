@@ -1,6 +1,8 @@
 // src/ui/managers/page-manager.js
 import { safeClone, generateModuleId, parseConn } from '../../core/utils.js?v=297';
 import { parsePatch, resolveSubpatchTemplate } from '../../core/patch.js?v=396';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=397';
+import { WaveCodec } from '../../audio/wave-codec.js?v=351';
 
 export class PageManager {
     constructor(ui) {
@@ -349,6 +351,105 @@ export class PageManager {
         this.persistCurrentPage();
         this.ui.showToast(`サブパッチ「${res.name}」を配置しました`);
         return { success: true, page: res.pageNum, pageId: res.pageId, moduleId: res.moduleId, subpatch: res.name };
+    }
+
+    addModuleAtSlot(type, slotIdx) {
+        this.saveHistory();
+        if (type === 'SUB') {
+            const res = this.createSubpatchInstance({ slotIdx });
+            this.ui.renderCell(slotIdx);
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            this.updatePageNavUI();
+            this.ui.showToast(`SUBPATCH「${res.name}」を追加しました`);
+            return res;
+        }
+
+        const def = MODULE_REGISTRY[type];
+        if (!def) return null;
+        const d = def.defaults();
+        const newId = generateModuleId(type, this.ui.modules);
+        d.id = newId;
+        d.col = slotIdx % this.ui.COLS;
+        d.row = Math.floor(slotIdx / this.ui.COLS);
+
+        this.ui.modules[newId] = d;
+        this.ui.syncGridMap();
+        this.ui.synth.addModule(`${this.currentPageId}/${newId}`, type, d, this.ui.getPatchState(newId));
+
+        this.ui.renderCell(slotIdx);
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        this.updatePageNavUI();
+        this.ui.showToast(`${type} を追加しました`);
+        return d;
+    }
+
+    rebuildModule(id) {
+        const m = this.ui.modules[id];
+        if (!m) return;
+        const fullId = `${this.currentPageId}/${id}`;
+        this.ui.synth.addModule(fullId, m.type, m, this.ui.getPatchState(id));
+        this.ui.connections
+            .filter(c => c.from.moduleId === id || c.to.moduleId === id)
+            .forEach(c => this.ui.synth.connect(`${this.currentPageId}/${c.from.moduleId}`, c.from.port, `${this.currentPageId}/${c.to.moduleId}`, c.to.port));
+        this.ui.renderCables();
+    }
+
+    async destroyModule(pageId, moduleId) {
+        const pId = String(pageId ?? this.currentPageId);
+        const pData = this.pagesData[pId];
+
+        const mod = pData?.modules?.[moduleId];
+        if (!mod) return false;
+
+        // 1. Disconnect and remove all connections attached to this module
+        const conns = pData.connections || [];
+        const toRemove = conns.filter(c => c.from.moduleId === moduleId || c.to.moduleId === moduleId);
+        toRemove.forEach(c => {
+            this.ui.synth.disconnect(`${pId}/${c.from.moduleId}`, c.from.port, `${pId}/${c.to.moduleId}`, c.to.port);
+        });
+        pData.connections = conns.filter(c => c.from.moduleId !== moduleId && c.to.moduleId !== moduleId);
+
+        this.ui.cleanupOrphanSubConnections(pId);
+
+        // 2. Module-specific lifecycle teardown (SUB cleans up its subordinate subpage & modules)
+        const reg = MODULE_REGISTRY[mod.type];
+        if (reg?.onDestroy) {
+            await reg.onDestroy(mod, {
+                pageId: pId,
+                destroyModule: async (childPId, childMId) => await this.destroyModule(childPId, childMId),
+                destroyPage: (targetPId) => this.destroyPage(targetPId),
+                pagesData: this.pagesData
+            });
+        }
+
+        // 3. Remove Web Audio Engine node
+        this.ui.synth.removeModule(`${pId}/${moduleId}`);
+
+        // 4. Remove module from data structures
+        delete pData.modules[moduleId];
+        if (pData.slots) {
+            Object.entries(pData.slots).forEach(([slotIdx, mId]) => {
+                if (mId === moduleId) delete pData.slots[slotIdx];
+            });
+        }
+        WaveCodec.syncWaveLinks(pData, this.ui.synth, pId);
+        if (pId === this.currentPageId) {
+            this.ui.syncGridMap();
+        }
+
+        // 5. Automatically remove open pinned dock dialog or popup modal for this module
+        if (this.ui.modalManager) {
+            if (this.ui.modalManager.openDocks?.has(moduleId)) {
+                this.ui.modalManager.closeDockModal(moduleId);
+            }
+            if (this.ui.modalManager.activePopupModuleId === moduleId) {
+                document.getElementById('shared-modal')?.classList.add('hidden');
+                this.ui.modalManager.activePopupModuleId = null;
+            }
+        }
+
+        this.ui._destroyCount = (this.ui._destroyCount || 0) + 1;
+        return true;
     }
 }
 

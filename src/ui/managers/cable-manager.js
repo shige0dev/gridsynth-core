@@ -1,6 +1,7 @@
 // src/ui/managers/cable-manager.js
-import { parseConn, isSameConn, getPortSignalType, resolveConnectionSignalType, isSubModule, isSubIOModule, normalizeSubPort, getOppositeSubPort, getPortAliases, isPortMatching } from '../../core/utils.js?v=297';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=297';
+import { parseConn, isSameConn, getPortSignalType, resolveConnectionSignalType, isSubModule, normalizeSubPort, getOppositeSubPort, getPortAliases, isPortMatching, getSubPortAlias } from '../../core/utils.js?v=297';
+import { resolveModManifest } from '../../core/patch.js?v=396';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=397';
 import { WaveCodec } from '../../audio/wave-codec.js?v=297';
 
 export class CableManager {
@@ -11,6 +12,67 @@ export class CableManager {
 
     get cableCanvas() {
         return this.ui.cableCanvas;
+    }
+
+    getSubManifest(moduleId, pageId = null) {
+        const pId = String(pageId ?? this.ui.currentPageId);
+        const mod = (pId === this.ui.currentPageId ? this.ui.modules[moduleId] : this.ui.pagesData[pId]?.modules?.[moduleId]) || null;
+        return resolveModManifest(mod, this.ui.pagesData, pId, this.ui.userSubpatches);
+    }
+
+    getPortDisplayInfo(moduleId, port, pageId = null) {
+        const pId = String(pageId ?? this.ui.currentPageId);
+        const mod = (pId === this.ui.currentPageId ? this.ui.modules[moduleId] : this.ui.pagesData[pId]?.modules?.[moduleId]) || null;
+        if (!mod) return { label: port, desc: null, hasAlias: false };
+
+        if (isSubModule(mod.type)) {
+            const manifest = this.getSubManifest(moduleId, pId);
+            const aliasInfo = getSubPortAlias(port, mod.type, manifest);
+            if (aliasInfo && aliasInfo.alias) {
+                return {
+                    label: aliasInfo.label,
+                    desc: aliasInfo.desc,
+                    alias: aliasInfo.alias,
+                    aliasUpper: aliasInfo.aliasUpper,
+                    pin: aliasInfo.pin,
+                    physicalPort: aliasInfo.physicalPort,
+                    hasAlias: true
+                };
+            }
+            const norm = normalizeSubPort(port, mod.type, manifest);
+            return {
+                label: norm,
+                desc: null,
+                alias: null,
+                aliasUpper: null,
+                pin: aliasInfo?.pin || null,
+                physicalPort: norm,
+                hasAlias: false
+            };
+        }
+
+        return { label: port, desc: null, hasAlias: false };
+    }
+
+    getPatchState(mId, pageId = this.ui.currentPageId) {
+        const s = new Set();
+        const pId = String(pageId);
+        const conns = pId === this.ui.currentPageId ? this.ui.connections : (this.ui.pagesData[pId]?.connections || []);
+        const isSub = isSubModule(mId);
+        conns.forEach(c => {
+            const connObj = typeof c === 'string' ? parseConn(c) : c;
+            if (connObj) {
+                if (connObj.to.moduleId === mId) {
+                    s.add(connObj.to.port);
+                    if (isSub) s.add(normalizeSubPort(connObj.to.port));
+                }
+                if (connObj.from.moduleId === mId) {
+                    s.add(connObj.from.port);
+                    if (isSub) s.add(normalizeSubPort(connObj.from.port));
+                }
+            }
+        });
+        return s;
     }
 
     getModuleIdByCell(cellIndex) {
@@ -323,9 +385,27 @@ export class CableManager {
         });
     }
 
+    _syncAfterConnectionChange(baseModuleIds) {
+        const affectedIds = new Set(baseModuleIds);
+        const linkedWaveIds = WaveCodec.syncWaveLinks({ modules: this.ui.modules, connections: this.ui.connections }, this.ui.synth, this.ui.currentPageId);
+        linkedWaveIds.forEach(id => affectedIds.add(id));
+        affectedIds.forEach(id => {
+            if (this.ui.modules[id]) {
+                this.ui.synth.updateModule(`${this.ui.currentPageId}/${id}`, this.ui.modules[id], this.getPatchState(id));
+            }
+        });
+        this.ui.persistCurrentPage();
+        this.cleanupOrphanSubConnections(this.ui.currentPageId);
+        this.renderCables();
+        this.ui.updateAllCells();
+        const isDockAffected = Array.from(this.ui.modalManager?.openDocks?.keys() || []).some(id => affectedIds.has(id)) || (this.ui.activeDockModuleId && affectedIds.has(this.ui.activeDockModuleId));
+        if (isDockAffected) this.ui.reRenderDockModal();
+        if (this.ui.activePopupModuleId && affectedIds.has(this.ui.activePopupModuleId)) this.ui.reRenderModal();
+    }
+
     handlePortTap(mId, pName) {
         const cur = { moduleId: mId, port: pName };
-        const info = this.ui.getPortDisplayInfo ? this.ui.getPortDisplayInfo(mId, pName) : { label: pName, desc: null, hasAlias: false };
+        const info = this.getPortDisplayInfo(mId, pName);
         if (!this.selectedTargetForConnection) {
             this.selectedTargetForConnection = cur;
             this.updatePortHighlight();
@@ -355,7 +435,7 @@ export class CableManager {
                         getPortColor: (pName) => this.getConnectedPortColor(m.id, pName, m)
                     };
                     const isSub = isSubModule(m.type);
-                    const manifest = isSub ? this.ui.getSubManifest(m.id) : null;
+                    const manifest = isSub ? this.getSubManifest(m.id) : null;
                     const pNorm = isSub ? normalizeSubPort(p, m.type, manifest) : p;
                     return MODULE_REGISTRY[m?.type]?.ports(m, ctx)?.out?.some(x => x.port === p || (isSub && normalizeSubPort(x.port, m.type, manifest) === pNorm));
                 };
@@ -399,16 +479,7 @@ export class CableManager {
                     regDst?.onConnect?.(mDst, { port: dst.port, isSource: false, otherMod: mSrc, otherPort: src.port });
 
                     this.ui.synth.connect(`${this.ui.currentPageId}/${src.moduleId}`, src.port, `${this.ui.currentPageId}/${dst.moduleId}`, dst.port);
-                    const linkedWaveIds = WaveCodec.syncWaveLinks({ modules: this.ui.modules, connections: this.ui.connections }, this.ui.synth, this.ui.currentPageId);
-                    this.ui.synth.updateModule(`${this.ui.currentPageId}/${src.moduleId}`, this.ui.modules[src.moduleId], this.ui.getPatchState(src.moduleId));
-                    this.ui.synth.updateModule(`${this.ui.currentPageId}/${dst.moduleId}`, this.ui.modules[dst.moduleId], this.ui.getPatchState(dst.moduleId));
-                    this.ui.persistCurrentPage();
-                    this.cleanupOrphanSubConnections(this.ui.currentPageId);
-                    this.ui.updateAllCells();
-                    const affectedSet = new Set([src.moduleId, dst.moduleId, ...linkedWaveIds]);
-                    const isDockAffected = Array.from(affectedSet).some(id => this.ui.modalManager?.openDocks?.has(id) || this.ui.activeDockModuleId === id);
-                    if (isDockAffected) this.ui.reRenderDockModal();
-                    if (this.ui.activePopupModuleId && affectedSet.has(this.ui.activePopupModuleId)) this.ui.reRenderModal();
+                    this._syncAfterConnectionChange([src.moduleId, dst.moduleId]);
                     this.ui.showToast('結線しました');
                 }
             }
@@ -432,25 +503,11 @@ export class CableManager {
         if (toRemove.length === 0) return 0;
         toRemove.forEach(c => this.ui.synth.disconnect(`${this.ui.currentPageId}/${c.from.moduleId}`, c.from.port, `${this.ui.currentPageId}/${c.to.moduleId}`, c.to.port));
         this.ui.connections = this.ui.connections.filter(c => !(matches(c.to.moduleId, c.to.port) || matches(c.from.moduleId, c.from.port)));
-        const affectedIds = new Set();
+        const affectedIds = [];
         toRemove.forEach(c => {
-            affectedIds.add(c.from.moduleId);
-            affectedIds.add(c.to.moduleId);
+            affectedIds.push(c.from.moduleId, c.to.moduleId);
         });
-        const linkedWaveIds = WaveCodec.syncWaveLinks({ modules: this.ui.modules, connections: this.ui.connections }, this.ui.synth, this.ui.currentPageId);
-        linkedWaveIds.forEach(id => affectedIds.add(id));
-        affectedIds.forEach(id => {
-            if (this.ui.modules[id]) {
-                this.ui.synth.updateModule(`${this.ui.currentPageId}/${id}`, this.ui.modules[id], this.ui.getPatchState(id));
-            }
-        });
-        this.ui.persistCurrentPage();
-        this.cleanupOrphanSubConnections(this.ui.currentPageId);
-        this.renderCables();
-        this.ui.updateAllCells();
-        const isDockAffected = Array.from(this.ui.modalManager?.openDocks?.keys() || []).some(id => affectedIds.has(id)) || (this.ui.activeDockModuleId && affectedIds.has(this.ui.activeDockModuleId));
-        if (isDockAffected) this.ui.reRenderDockModal();
-        if (this.ui.activePopupModuleId && affectedIds.has(this.ui.activePopupModuleId)) this.ui.reRenderModal();
+        this._syncAfterConnectionChange(affectedIds);
         return toRemove.length;
     }
 }

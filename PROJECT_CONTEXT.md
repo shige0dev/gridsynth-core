@@ -959,6 +959,21 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
         - `src/ui/helpers.js`, `src/modules/defs/ar.js`, `src/modules/defs/rf.js`: `bindSlider` 内部で既にバインドされている `bindScrubber` の二重登録（計4箇所）と冗長な `formatTime` ラッパーを削除。
         - `src/audio/engine.js`, `src/core/api.js`, `src/core/patch.js`, `src/presets/subpatches.js`, `src/ui/managers/page-manager.js`: `connect`/`disconnect` のノード解決共通化（`_resolvePortNodes`）、`PAD` の `WORKLET_MODULE_TYPES` 追加、未使用メソッド削除、`parseCableArgs` によるAPI引数解析の共通化、`findSubpatchTemplate` の `resolveSubpatchTemplate` への一本化を実施。
       - バージョンを `v1.0.0396`、キャッシュバスターを `v=396` に更新。
+    - **SEQ8・SEQ16出力端子の配置最適化と長押し選択タイミング改善（v1.0.0397〜v1.0.0398）**:
+      - `src/modules/defs/seq.js`: `SEQ8` および `SEQ16` の出力端子（`gate_out`, `cv_out`）のピン配置を `pin: 10, 11` から1つずつ下げ、`pin: 9, 10` に変更。
+      - `src/ui/managers/interaction-manager.js`: モジュール長押し選択（第1段階）の検知時間を `300ms` → `220ms` に短縮し、モジュール選択から行選択（第2段階）への移行猶予時間を `400ms` → `600ms`（0.6秒）に設定。また `updateSelectionClasses()` のDOM走査を `this.ui.cells` キャッシュ参照に高速化。
+    - **コードベース軽量化 Step 2（UI層の責務分離・疎結合化とUIControllerのスリム化）（v1.0.0399）**:
+      - **`ToolbarManager`（`src/ui/managers/toolbar-manager.js`）の新設・分離**:
+        - `UIController` に混在していた上部メニューバー・トランスポート制御（Audio Power, Play, Stop, Reset, BPMドラッグ）、画面モード（パフォーマンスモード、全画面切替、ケーブル透過度）、サブパッチナビ操作、プリセットバーイベント（約290行）を `ToolbarManager` へ分離。
+      - **`CableManager`（`src/ui/managers/cable-manager.js`）への端子・結線ロジックの完全一元化**:
+        - `getSubManifest`, `getPortDisplayInfo`, `getPatchState` を `CableManager` に集約。
+        - 結線時・切断時に重複していた後処理（WAVEリンク同期、Synth更新、サブパッチ孤立結線クリーンアップ、UI再描画）を `_syncAfterConnectionChange()` に統合。
+        - `UIController.renderCell()` 内に二重実装されていた端子接続ハイライト計算（`isSel`, `isOpp`, `matchConn`）を廃止し、`CableManager.updatePortHighlight()` に一本化。
+      - **`PageManager`（`src/ui/managers/page-manager.js`）へのモジュールライフサイクル集約**:
+        - `ModalManager.openAddModal` 内に直書きされていたモジュール生成処理を `PageManager.addModuleAtSlot()` へ移管し、`rebuildModule` / `destroyModule` も `PageManager` に集約。これによりモジュールの生成・再構築・破棄・サブパッチ展開がすべて `PageManager` で一元管理される構造に整理。
+      - **`UIController`（`src/ui/controller.js`）のスリム化**:
+        - 978行あった `UIController` を 322行にスリム化し、グリッドDOM初期化・セル描画・30fps Live更新ループ・各Managerの統括に専念する構成へ刷新。
+      - バージョンを `v1.0.0399`、キャッシュバスターを `v=399` に更新。
 
 
 

@@ -2,7 +2,6 @@
 import { MODULE_REGISTRY } from '../../modules/registry.js?v=397';
 import { FACTORY_SUBPATCHES } from '../../presets/subpatches.js';
 import { UIHelpers } from '../helpers.js?v=187';
-import { generateModuleId } from '../../core/utils.js?v=297';
 
 export const MODAL_WIDTHS = {
     // Complex Synthesizers
@@ -387,34 +386,8 @@ export class ModalManager {
 
                 // Basic module & SUB click
                 body.querySelectorAll('[data-type]').forEach(btn => btn.addEventListener('click', () => {
-                    this.ui.saveHistory();
-                    const type = btn.dataset.type;
-
-                    if (type === 'SUB') {
-                        const res = this.ui.pageManager.createSubpatchInstance({ slotIdx });
-                        document.getElementById('shared-modal')?.classList.add('hidden');
-                        this.ui.renderCell(slotIdx);
-                        if (typeof lucide !== 'undefined') lucide.createIcons();
-                        this.ui.updatePageNavUI();
-                        this.showToast(`SUBPATCH「${res.name}」を追加しました`);
-                        return;
-                    }
-
-                    const d = MODULE_REGISTRY[type].defaults();
-                    const newId = generateModuleId(type, this.ui.modules);
-                    d.id = newId;
-                    d.col = slotIdx % this.ui.COLS;
-                    d.row = Math.floor(slotIdx / this.ui.COLS);
-
-                    this.ui.modules[newId] = d;
-                    this.ui.syncGridMap();
-                    this.ui.synth.addModule(`${this.ui.currentPageId}/${newId}`, type, d, this.ui.getPatchState(newId));
-
                     document.getElementById('shared-modal')?.classList.add('hidden');
-                    this.ui.renderCell(slotIdx);
-                    if (typeof lucide !== 'undefined') lucide.createIcons();
-                    this.ui.updatePageNavUI();
-                    this.showToast(`${type} を追加しました`);
+                    this.ui.pageManager.addModuleAtSlot(btn.dataset.type, slotIdx);
                 }));
 
                 // Factory subpatch click (Direct place)
