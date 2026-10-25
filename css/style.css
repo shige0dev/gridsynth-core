@@ -246,6 +246,14 @@ body {
     cursor: default !important;
 }
 
+/* PAD Module: Strictly disable all touch/gesture scrolling on Android */
+.pad-grid-container,
+.pad-grid-canvas {
+    touch-action: none !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+}
+
 .port.port-selected,
 .port-selected {
     border: none !important;

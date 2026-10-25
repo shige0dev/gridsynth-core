@@ -921,6 +921,13 @@ export class UIController {
             this.interactionManager?.cancelPendingPresses?.();
         }, { passive: true });
 
+        // On mobile touch: cancel scrolling specifically when touching/swiping over a PAD module
+        document.getElementById('canvas-container')?.addEventListener('touchmove', (e) => {
+            if (e.target.closest('.pad-grid-container, .pad-grid-canvas')) {
+                if (e.cancelable) e.preventDefault();
+            }
+        }, { passive: false });
+
         // Desktop mouse wheel scroll enhancement (smoothly scroll 32-row workspace)
         window.addEventListener('wheel', (e) => {
             const container = document.getElementById('canvas-container');

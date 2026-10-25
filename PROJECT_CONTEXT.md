@@ -852,13 +852,15 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
         - スクロールレールのポインタードラッグおよびグリッド内外のホイール制限を解除し、元のスクロール挙動に復元。
     - バージョンを `v1.0.0383`、キャッシュバスターを `v=383` に更新。
 
- 55. **PADモジュール上でのスマホスワイプ・スクロールキャンセル（v1.0.0384）**:
+ 55. **Android環境に特化したPADモジュール上のスワイプスクロール完全キャンセル（v1.0.0385）**:
+    - `css/style.css`:
+      - `.pad-grid-container, .pad-grid-canvas` に直接 **`touch-action: none !important; user-select: none !important;`** を適用。CSSの `touch-action` が非継承（Inherited: no）である仕様に対応し、実際にタッチが当たる子要素 `canvas` に直接当てることで Android Chrome のジェスチャーコンポジタによるスクロール判定を完全に遮断。
     - `src/modules/defs/pad.js`:
-      - グリッド上のPADセル（`.pad-grid-container`）に `touch-none` / `touch-action: none !important;` を指定。
-      - `pointerdown` / `pointermove` / `pointerup` ハンドラ内で `if (e.cancelable) e.preventDefault();` を実行し、ブラウザのスクロール奪取を防止。
-      - モバイルWebKit/Blink環境向けに非パッシブ（`{ passive: false }`）の `touchmove` リスナーを追加し、PADモジュール上で指をスワイプした際の画面全体のネイティブスクロールを物理的に完全遮断。
-      - PAD以外の通常セルや余白部分ではスマホの標準スワイプスクロールがそのまま機能。
-    - バージョンを `v1.0.0384`、キャッシュバスターを `v=384` に更新。
+      - `renderGrid` の `<canvas class="pad-grid-canvas">` に直接 `touch-none select-none` および `style="touch-action: none;"` を指定。
+    - `src/ui/controller.js`:
+      - スクロール親コンテナ（`#canvas-container`）に非パッシブ（`{ passive: false }`）の `touchmove` リスナーを追加。タッチ対象が `e.target.closest('.pad-grid-container, .pad-grid-canvas')` の場合は確実に `e.preventDefault()` を実行し、親コンテナへのスクロール伝播を物理遮断。
+      - PAD以外の通常セルや余白部分では Android の標準スワイプスクロールが100%滑らかに動作。
+    - バージョンを `v1.0.0385`、キャッシュバスターを `v=385` に更新。
 
 
 
