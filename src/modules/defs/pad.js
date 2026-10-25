@@ -145,7 +145,7 @@ export const PAD = {
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
     renderGrid: (m) => `
-        <div class="absolute inset-0.5 bg-black rounded-sm border border-slate-800/90 overflow-hidden z-0 pointer-events-auto pad-grid-container" style="opacity: ${m?.opacity ?? 0.8};">
+        <div class="absolute inset-0.5 bg-black rounded-sm border border-slate-800/90 overflow-hidden z-0 pointer-events-auto touch-none select-none pad-grid-container" style="opacity: ${m?.opacity ?? 0.8}; touch-action: none;">
             <canvas class="pad-grid-canvas w-full h-full block" width="100" height="100"></canvas>
         </div>`,
     renderModal: (m) => {
@@ -324,19 +324,20 @@ export const PAD = {
         };
 
         padBox.addEventListener('pointerdown', (e) => {
-            // If user clicked a pin port or header, do not capture
-            if (e.target.closest('.port') || e.target.closest('.module-header')) return;
+            // If user clicked a pin port, do not capture
+            if (e.target.closest('.port')) return;
             activePointerId = e.pointerId;
             try { padBox.setPointerCapture(e.pointerId); } catch (err) {}
             sendGridPad('PAD_DOWN', e);
             e.stopPropagation();
-            e.preventDefault();
+            if (e.cancelable) e.preventDefault();
         });
 
         padBox.addEventListener('pointermove', (e) => {
             if (activePointerId === null || e.pointerId !== activePointerId) return;
             sendGridPad('PAD_MOVE', e);
             e.stopPropagation();
+            if (e.cancelable) e.preventDefault();
         });
 
         const handleEnd = (e) => {
@@ -345,11 +346,17 @@ export const PAD = {
                 activePointerId = null;
                 try { padBox.releasePointerCapture(e.pointerId); } catch (err) {}
                 e.stopPropagation();
+                if (e.cancelable) e.preventDefault();
             }
         };
 
         padBox.addEventListener('pointerup', handleEnd);
         padBox.addEventListener('pointercancel', handleEnd);
+
+        // Native touchmove cancellation on mobile WebKit/Blink to completely prevent screen scrolling over pad
+        padBox.addEventListener('touchmove', (e) => {
+            if (e.cancelable) e.preventDefault();
+        }, { passive: false });
     },
     updateLive: (cell, data, isPlaying, targetModal, m, patchState = null) => {
         if (!m) return;

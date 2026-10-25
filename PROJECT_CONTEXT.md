@@ -852,6 +852,14 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
         - スクロールレールのポインタードラッグおよびグリッド内外のホイール制限を解除し、元のスクロール挙動に復元。
     - バージョンを `v1.0.0383`、キャッシュバスターを `v=383` に更新。
 
+ 55. **PADモジュール上でのスマホスワイプ・スクロールキャンセル（v1.0.0384）**:
+    - `src/modules/defs/pad.js`:
+      - グリッド上のPADセル（`.pad-grid-container`）に `touch-none` / `touch-action: none !important;` を指定。
+      - `pointerdown` / `pointermove` / `pointerup` ハンドラ内で `if (e.cancelable) e.preventDefault();` を実行し、ブラウザのスクロール奪取を防止。
+      - モバイルWebKit/Blink環境向けに非パッシブ（`{ passive: false }`）の `touchmove` リスナーを追加し、PADモジュール上で指をスワイプした際の画面全体のネイティブスクロールを物理的に完全遮断。
+      - PAD以外の通常セルや余白部分ではスマホの標準スワイプスクロールがそのまま機能。
+    - バージョンを `v1.0.0384`、キャッシュバスターを `v=384` に更新。
+
 
 
 
