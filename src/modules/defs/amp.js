@@ -17,17 +17,23 @@ export const VCA = {
             { key: 'cvDepth', label: 'CV MOD', min: 0, max: 2.0, step: 0.05, default: 1.0, unit: 'xDEPTH', color: 'amber', requirePort: 'cv_in', format: v => v.toFixed(2) }
         ]
     },
-    renderGrid: (m, ctx) => `<div class="flex items-center justify-center w-full h-full pointer-events-none">${UIHelpers.renderPanelBars([{
-        pct: (ctx?.patched?.has('cv_in') ? 0 : Math.round((m.level ?? 1) * 100)),
-        innerCls: 'vca-meter-bar',
-        width: 'w-3.5'
-    }], { theme: 'cv' })}</div>`,
+    renderGrid: (m, ctx) => {
+        const isExt = Boolean(ctx?.patched?.has('cv_in'));
+        const dispText = isExt ? 'EXT' : `${Math.round((m.level ?? 1.0) * 100)}%`;
+        const textCls = isExt ? 'text-amber-300' : 'text-emerald-400';
+        return `<div class="flex items-center justify-center w-full h-full pointer-events-none">
+            <span class="vca-disp-val text-[14px] font-mono font-bold tracking-tight ${textCls}">${dispText}</span>
+        </div>`;
+    },
     updateLive: (cell, data, isP, modal, m) => {
-        const b = cell.querySelector('.vca-meter-bar');
-        if (b) {
-            const hasCv = data?.hasCvIn ?? isP ?? false;
-            const val = hasCv ? (data?.values?.[0] || 0) : (m?.level ?? 1);
-            b.style.height = `${Math.max(0, Math.min(100, Math.round(val * 100)))}%`;
+        const d = cell.querySelector('.vca-disp-val');
+        if (d && m) {
+            const isExt = Boolean(data?.hasCvIn);
+            const dispText = isExt ? 'EXT' : `${Math.round((m.level ?? 1.0) * 100)}%`;
+            if (d.textContent !== dispText) {
+                d.textContent = dispText;
+                d.className = `vca-disp-val text-[14px] font-mono font-bold tracking-tight ${isExt ? 'text-amber-300' : 'text-emerald-400'}`;
+            }
         }
     }
 };
