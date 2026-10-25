@@ -1,7 +1,7 @@
 // src/core/strudel-parser.js
 // Lightweight Strudel / TidalCycles Mini-Notation Parser for GridSynth
 
-import { NOTE_SEMITONES, noteToCv } from './musical.js?v=365';
+import { NOTE_SEMITONES, noteToCv } from './musical.js?v=367';
 export { NOTE_SEMITONES, noteToCv };
 
 /**

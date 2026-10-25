@@ -1,4 +1,4 @@
-import { parseKeyNoteToCv } from '../../core/musical.js?v=365';
+import { parseKeyNoteToCv } from '../../core/musical.js?v=367';
 
 function resolveKeyCv(d) {
     if (!d) return 1.0;

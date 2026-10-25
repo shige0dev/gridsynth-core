@@ -1,6 +1,6 @@
 import { UIHelpers } from '../../ui/helpers.js?v=352';
 import { JsonIoDialog } from '../../ui/json-io-dialog.js?v=352';
-import { parseNoteToCv as parseCommonNoteToCv } from '../../core/musical.js?v=365';
+import { parseNoteToCv as parseCommonNoteToCv } from '../../core/musical.js?v=367';
 
 export const parseNoteToCv = (val) => parseCommonNoteToCv(val, 1, 0, 2.0);
 

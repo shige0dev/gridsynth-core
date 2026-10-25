@@ -1,4 +1,4 @@
-import { NOTES, midiToNoteName, midiToFreq, freqToMidi, cvToNoteName } from '../core/musical.js?v=365';
+import { NOTES, midiToNoteName, midiToFreq, freqToMidi, cvToNoteName } from '../core/musical.js?v=367';
 
 export const UIHelpers = {
     NOTES,
@@ -163,6 +163,12 @@ export const UIHelpers = {
                 cb(e.target.dataset.val);
             });
         });
+    },
+    getMultiPitchInPorts: (m, maxCh = 4) => {
+        const ch = Math.min(maxCh, Math.max(1, m?.channels || 1));
+        const inPorts = [];
+        for (let c = 1; c <= ch; c++) inPorts.push({ port: c === 1 ? 'cv_in' : `cv_in${c}`, color: 'bg-yellow-400' });
+        return inPorts;
     },
     resolveSliderState: (sl, mod, ctx) => {
         const hasPatched = (portDef) => {

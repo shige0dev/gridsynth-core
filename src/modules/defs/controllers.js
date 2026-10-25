@@ -1,5 +1,5 @@
 import { UIHelpers } from '../../ui/helpers.js?v=354';
-import { parseKeyNoteToCv } from '../../core/musical.js?v=365';
+import { parseKeyNoteToCv } from '../../core/musical.js?v=367';
 export { parseKeyNoteToCv };
 
 export const KEY = {
