@@ -140,8 +140,9 @@ export class RowManager {
             return true;
         }
 
-        // If user lifted finger without dragging to another row yet, keep the row selected
+        // If user lifted finger without dragging to another row yet, clear selection cleanly and return to normal mode
         this.clearInsertBeam();
+        this.clearRowSelection();
         return false;
     }
 

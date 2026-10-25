@@ -1,7 +1,7 @@
 // src/ui/managers/interaction-manager.js
 import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=297';
 import { MODULE_REGISTRY } from '../../modules/registry.js?v=297';
-import { RowManager } from './row-manager.js?v=391';
+import { RowManager } from './row-manager.js?v=392';
 
 export class InteractionManager {
     constructor(ui) {
@@ -421,10 +421,11 @@ export class InteractionManager {
             this.moduleLongPressed = false;
             this.rowLongPressed = false;
 
+            const rowEl = e.target.closest('.grid-row');
+            const touchedRow = rowEl ? parseInt(rowEl.dataset.row, 10) : null;
             if (!this.ui.isPerformanceMode && this.rowManager?.selectedRow !== null && this.rowManager?.selectedRow !== undefined) {
-                const rowEl = e.target.closest('.grid-row');
-                const touchedRow = rowEl ? parseInt(rowEl.dataset.row, 10) : null;
                 if (touchedRow === this.rowManager.selectedRow) {
+                    this.rowLongPressed = true;
                     this.rowManager.resumeSelectedRowDrag();
                     return;
                 } else {
@@ -525,10 +526,10 @@ export class InteractionManager {
                         this._stage2Y = this._lastKnownClientY ?? e.clientY;
 
                         if (this.selectedModuleIds.length === 1) {
-                            this.ui.showToast('モジュールを選択（長押し継続で行移動）', 1000);
-                            // Stage 2: continuing to hold for another 300ms (total 600ms from touch down) -> row reorder mode!
+                            this.ui.showToast('モジュールを選択（さらに長押しで行移動）', 1200);
+                            // Stage 2: continuing to hold for another 400ms (total 700ms from touch down) -> row reorder mode!
                             if (targetRow !== undefined) {
-                                this._startRowLongPress(targetRow, this._stage2Y, 300);
+                                this._startRowLongPress(targetRow, this._stage2Y, 400);
                             }
                         } else {
                             this.ui.showToast(`${this.selectedModuleIds.length}個選択中（ドラッグで一括移動・複製）`, 1000);
@@ -536,12 +537,12 @@ export class InteractionManager {
                     }, 300);
                 } else {
                     // Already selected module:
-                    // If single module selected & held 600ms without moving -> triggers row reorder mode!
+                    // If single module selected & held 700ms without moving -> triggers row reorder mode!
                     // If moved > 8px, pointermove immediately enters module/group dragging.
                     this._stage2X = e.clientX;
                     this._stage2Y = e.clientY;
                     if (this.selectedModuleIds.length === 1 && targetRow !== undefined) {
-                        this._startRowLongPress(targetRow, clientY, 600);
+                        this._startRowLongPress(targetRow, clientY, 700);
                     }
                 }
                 return;
@@ -551,8 +552,8 @@ export class InteractionManager {
             if (rowEl) {
                 const targetRow = parseInt(rowEl.dataset.row, 10);
                 if (!isNaN(targetRow)) {
-                    // Unified row selection: 600ms from touch down
-                    this._startRowLongPress(targetRow, e.clientY, 600);
+                    // Direct row selection on empty grid space: 700ms from touch down
+                    this._startRowLongPress(targetRow, e.clientY, 700);
                 }
                 return;
             }
@@ -591,10 +592,11 @@ export class InteractionManager {
             }
 
             const isCandidateSelected = this._dragCandidate && this.selectedModuleIds.includes(this._dragCandidate);
+            const isRowBusy = this.rowLongPressed || (this.rowManager?.draggingRow !== null && this.rowManager?.draggingRow !== undefined) || (this.rowManager?.selectedRow !== null && this.rowManager?.selectedRow !== undefined);
 
             // Drag-to-scroll support (Touch & Mouse swipe before selection)
             const container = document.getElementById('canvas-container');
-            if (!this.ui.isPerformanceMode && !this.isDragging && !this.moduleLongPressed && !isCandidateSelected && container) {
+            if (!this.ui.isPerformanceMode && !this.isDragging && !this.moduleLongPressed && !isCandidateSelected && !isRowBusy && container) {
                 if (e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal, .pad-grid-container, .pad-grid-canvas')) {
                     this._isScrollDragging = false;
                     this._isMouseScrollDragging = false;
@@ -706,6 +708,7 @@ export class InteractionManager {
             if (this.rowManager?.draggingRow !== null && this.rowManager?.draggingRow !== undefined) {
                 this.rowManager.finishRowDrag();
             }
+            this.rowLongPressed = false;
             if (this.isDragging) {
                 this.isDragging = false;
                 this._wasModuleDragging = true;
