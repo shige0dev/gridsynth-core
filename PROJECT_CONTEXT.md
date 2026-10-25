@@ -937,6 +937,14 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
       - **1モーションドラッグと2ステップドラッグの両立**:
         - 長押しから指を離さずそのままドラッグ＆ドロップする1モーションと、長押しで行選択（ピンク枠）後に指を離し、次のタッチで移動する2ステップ操作の両方で確実に移動が実行されるよう整理。
       - バージョンを `v1.0.0394`、キャッシュバスターを `v=394` に更新。
+    - **ブラウザ警告・非推奨プロパティ・追跡防止メッセージの全面クリーンアップ（v1.0.0395）**:
+      - **スライダー非推奨警告の解消**:
+        - `css/style.css` の `.native-vslider`, `.native-vslider-sm`, `.scope-vslider` から非標準の `appearance: slider-vertical` および `-webkit-appearance: slider-vertical` を削除。標準の `writing-mode: vertical-lr; direction: rtl;` 単独指定とし、DevToolsの `[Deprecation]` 警告を完全消去。
+      - **Tracking Prevention（追跡防止）メッセージの解消**:
+        - 外部CDN（`unpkg.com`）依存だった `lucide.min.js` をローカル（`src/vendor/lucide.min.js`）に内包し直接配信に変更。CDNトラッキング防止ブロック警告を全廃し、オフライン動作と読込速度を向上。
+      - **Tailwind Play CDN本番警告の抑制**:
+        - `index.html` にて Tailwind Play CDN がコンソールに出力する定型警告をフィルタリングし、F12コンソールログをクリーン化。
+      - バージョンを `v1.0.0395`、キャッシュバスターを `v=395` に更新。
 
 
 

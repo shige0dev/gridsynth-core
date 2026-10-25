@@ -194,8 +194,6 @@ body.is-row-dragging .grid-cell * {
 .native-vslider-sm {
     writing-mode: vertical-lr;
     direction: rtl;
-    appearance: slider-vertical;
-    -webkit-appearance: slider-vertical;
     width: 18px;
     height: 48px;
     min-height: 48px;
@@ -209,8 +207,6 @@ body.is-row-dragging .grid-cell * {
 .scope-vslider {
     writing-mode: vertical-lr;
     direction: rtl;
-    appearance: slider-vertical;
-    -webkit-appearance: slider-vertical;
     width: 16px;
     height: 68px;
     flex-shrink: 0;
