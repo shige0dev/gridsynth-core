@@ -92,11 +92,8 @@ export class CableManager {
         this.renderCables();
     }
 
-    getSubActivePorts(m) {
-        if (!m || m.type !== 'SUB') return null;
-        const targetPage = String(m.targetPage ?? 1);
+    _collectSubActiveIOPorts(subConns) {
         const active = new Set();
-        const subConns = (this.ui.currentPageId === targetPage) ? this.ui.connections : (this.ui.pagesData[targetPage]?.connections || []);
         subConns.forEach(c => {
             const o = typeof c === 'string' ? parseConn(c) : c;
             if (o) {
@@ -115,6 +112,13 @@ export class CableManager {
         return active;
     }
 
+    getSubActivePorts(m) {
+        if (!m || m.type !== 'SUB') return null;
+        const targetPage = String(m.targetPage ?? 1);
+        const subConns = (this.ui.currentPageId === targetPage) ? this.ui.connections : (this.ui.pagesData[targetPage]?.connections || []);
+        return this._collectSubActiveIOPorts(subConns);
+    }
+
     cleanupOrphanSubConnections(subPageId = null) {
         const pId = String(subPageId ?? this.ui.currentPageId);
         if (pId === "0") return;
@@ -124,22 +128,7 @@ export class CableManager {
         }
 
         const subConns = (pId === this.ui.currentPageId) ? this.ui.connections : (this.ui.pagesData[pId]?.connections || []);
-        const activeIOPorts = new Set();
-        subConns.forEach(c => {
-            const o = typeof c === 'string' ? parseConn(c) : c;
-            if (o) {
-                if (isSubModule(o.from.moduleId)) {
-                    const norm = normalizeSubPort(o.from.port, o.from.moduleId);
-                    activeIOPorts.add(norm);
-                    activeIOPorts.add(getOppositeSubPort(norm));
-                }
-                if (isSubModule(o.to.moduleId)) {
-                    const norm = normalizeSubPort(o.to.port, o.to.moduleId);
-                    activeIOPorts.add(norm);
-                    activeIOPorts.add(getOppositeSubPort(norm));
-                }
-            }
-        });
+        const activeIOPorts = this._collectSubActiveIOPorts(subConns);
 
         Object.entries(this.ui.pagesData).forEach(([parentPId, pData]) => {
             if (parentPId === pId || !pData?.modules) return;
@@ -440,6 +429,7 @@ export class CableManager {
         };
 
         const toRemove = this.ui.connections.filter(c => matches(c.to.moduleId, c.to.port) || matches(c.from.moduleId, c.from.port));
+        if (toRemove.length === 0) return 0;
         toRemove.forEach(c => this.ui.synth.disconnect(`${this.ui.currentPageId}/${c.from.moduleId}`, c.from.port, `${this.ui.currentPageId}/${c.to.moduleId}`, c.to.port));
         this.ui.connections = this.ui.connections.filter(c => !(matches(c.to.moduleId, c.to.port) || matches(c.from.moduleId, c.from.port)));
         const affectedIds = new Set();
@@ -461,5 +451,6 @@ export class CableManager {
         const isDockAffected = Array.from(this.ui.modalManager?.openDocks?.keys() || []).some(id => affectedIds.has(id)) || (this.ui.activeDockModuleId && affectedIds.has(this.ui.activeDockModuleId));
         if (isDockAffected) this.ui.reRenderDockModal();
         if (this.ui.activePopupModuleId && affectedIds.has(this.ui.activePopupModuleId)) this.ui.reRenderModal();
+        return toRemove.length;
     }
 }

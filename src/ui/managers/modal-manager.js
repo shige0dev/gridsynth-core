@@ -54,7 +54,7 @@ export const MODAL_WIDTHS = {
     SUB: 'w-[240px]'
 };
 
-import { DockManager } from './dock-manager.js?v=351';
+import { DockManager } from './dock-manager.js?v=396';
 
 export class ModalManager {
     constructor(ui) {
@@ -172,7 +172,7 @@ export class ModalManager {
     openDockModal(mId) { return this.dockManager.openDockModal(mId); }
     makeDialogDraggable(headerEl, dialogEl) { return this.dockManager.makeDialogDraggable(headerEl, dialogEl); }
     bringToFront(mId) { return this.dockManager.bringToFront(mId); }
-    closeDockModal(mId = null, isCancel = false) { return this.dockManager.closeDockModal(mId, isCancel); }
+    closeDockModal(mId = null) { return this.dockManager.closeDockModal(mId); }
     closeUnlockedDocks() { return this.dockManager.closeUnlockedDocks(); }
     toggleDockLock(mId) { return this.dockManager.toggleDockLock(mId); }
     setDockLock(lock, mId = null) { return this.dockManager.setDockLock(lock, mId); }

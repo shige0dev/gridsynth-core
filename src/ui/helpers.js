@@ -398,20 +398,6 @@ export const UIHelpers = {
                 sl.min,
                 sl.max
             );
-
-            UIHelpers.bindScrubber(
-                `schema-slider-${sl.key}-disp`,
-                `schema-slider-${sl.key}`,
-                fmt,
-                val => {
-                    setter(mod, val);
-                    if (sl.reRender) ctx.reRenderModal();
-                    onChange();
-                },
-                sl.power || 1,
-                sl.min,
-                sl.max
-            );
         });
     },
     /**

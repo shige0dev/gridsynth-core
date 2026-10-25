@@ -1,7 +1,6 @@
 // src/ui/managers/page-manager.js
 import { safeClone, generateModuleId, parseConn } from '../../core/utils.js?v=297';
-import { parsePatch } from '../../core/patch.js?v=297';
-import { FACTORY_SUBPATCHES, findSubpatchTemplate } from '../../presets/subpatches.js';
+import { parsePatch, resolveSubpatchTemplate } from '../../core/patch.js?v=396';
 
 export class PageManager {
     constructor(ui) {
@@ -249,9 +248,6 @@ export class PageManager {
             if (pageData.pages) {
                 const normalized = parsePatch(pageData, this.ui.COLS, this.ui.userSubpatches);
                 clonedPageData = normalized.pages["0"] || normalized.pages[Object.keys(normalized.pages)[0]];
-            } else if (pageData.modules) {
-                const normalized = parsePatch({ pages: { "0": pageData } }, this.ui.COLS, this.ui.userSubpatches);
-                clonedPageData = normalized.pages["0"];
             } else {
                 const normalized = parsePatch({ pages: { "0": pageData } }, this.ui.COLS, this.ui.userSubpatches);
                 clonedPageData = normalized.pages["0"];
@@ -321,7 +317,7 @@ export class PageManager {
     }
 
     instantiateSubpatch(subpatchId, slotIdx) {
-        const template = findSubpatchTemplate(subpatchId) || (this.ui.userSubpatches && this.ui.userSubpatches[subpatchId]);
+        const template = resolveSubpatchTemplate(subpatchId, this.ui.userSubpatches);
         if (!template) {
             return { success: false, error: `Subpatch template '${subpatchId}' not found` };
         }

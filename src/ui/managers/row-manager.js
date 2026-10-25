@@ -63,7 +63,6 @@ export class RowManager {
             this.interactionManager.clearHighlight?.();
             this.interactionManager.moduleLongPressed = false;
             this.interactionManager._isScrollDragging = false;
-            this.interactionManager._isMouseScrollDragging = false;
             if (this.interactionManager._copyTimer) {
                 clearTimeout(this.interactionManager._copyTimer);
                 this.interactionManager._copyTimer = null;

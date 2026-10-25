@@ -560,9 +560,3 @@ export const FACTORY_SUBPATCHES = {
         }
     }
 };
-
-export const findSubpatchTemplate = (idOrSubType) => {
-    if (!idOrSubType) return null;
-    if (FACTORY_SUBPATCHES[idOrSubType]) return FACTORY_SUBPATCHES[idOrSubType];
-    return Object.values(FACTORY_SUBPATCHES).find(s => s.subType === idOrSubType || s.id === idOrSubType) || null;
-};

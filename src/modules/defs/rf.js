@@ -19,7 +19,6 @@ export const RF = {
             { port: 'trig_out', color: 'bg-red-500' }
         ]
     }),
-    formatTime: (v) => UIHelpers.formatTime(v),
     renderSvgCurve: (m) => {
         const padX = 8, padY = 6, W = 160 - padX * 2, H = 40 - padY * 2;
         const yTop = padY, yBot = padY + H;
@@ -64,7 +63,7 @@ export const RF = {
         const isTimePatched = ctx?.patched?.has('time_cv') || ctx?.patched?.has('cv_time');
         const isPeakPatched = ctx?.patched?.has('peak_cv') || ctx?.patched?.has('cv_peak');
 
-        const timeDisp = isTimePatched ? 'EXT' : RF.formatTime(m.time ?? 0.2);
+        const timeDisp = isTimePatched ? 'EXT' : UIHelpers.formatTime(m.time ?? 0.2);
         const peakDisp = isPeakPatched ? 'EXT' : `${Math.round((m.peak ?? 0.5) * 100)}%`;
         const lvlDisp = `${Math.round((m.level ?? 1.0) * 100)}%`;
 
@@ -111,17 +110,14 @@ export const RF = {
         const isPeakPatched = ctx?.patched?.has('peak_cv') || ctx?.patched?.has('cv_peak');
 
         if (!isTimePatched) {
-            UIHelpers.bindSlider('rf-slider-time', RF.formatTime, v => { m.time = v; onSliderChange(); }, 2.5, 0.02, 2.0);
-            UIHelpers.bindScrubber('rf-slider-time-disp', 'rf-slider-time', RF.formatTime, v => { m.time = v; onSliderChange(); }, 2.5, 0.02, 2.0);
+            UIHelpers.bindSlider('rf-slider-time', UIHelpers.formatTime, v => { m.time = v; onSliderChange(); }, 2.5, 0.02, 2.0);
         }
 
         if (!isPeakPatched) {
             UIHelpers.bindSlider('rf-slider-peak', v => `${Math.round(v * 100)}%`, v => { m.peak = v; onSliderChange(); }, 1, 0.01, 0.99);
-            UIHelpers.bindScrubber('rf-slider-peak-disp', 'rf-slider-peak', v => `${Math.round(v * 100)}%`, v => { m.peak = v; onSliderChange(); }, 1, 0.01, 0.99);
         }
 
         UIHelpers.bindSlider('rf-slider-level', v => `${Math.round(v * 100)}%`, v => { m.level = v; onSliderChange(); }, 1, 0.0, 1.0);
-        UIHelpers.bindScrubber('rf-slider-level-disp', 'rf-slider-level', v => `${Math.round(v * 100)}%`, v => { m.level = v; onSliderChange(); }, 1, 0.0, 1.0);
 
         if (trigBtn) {
             trigBtn.addEventListener('click', () => {

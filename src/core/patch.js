@@ -1,6 +1,6 @@
 import { safeClone, parseConn, isSubModule, normalizeSubPort, isPortMatching } from './utils.js?v=297';
 import { MODULE_REGISTRY } from '../modules/registry.js?v=297';
-import { findSubpatchTemplate, FACTORY_SUBPATCHES } from '../presets/subpatches.js';
+import { FACTORY_SUBPATCHES } from '../presets/subpatches.js';
 import { WaveCodec } from '../audio/wave-codec.js?v=297';
 
 /**
@@ -55,7 +55,7 @@ export function resolveSubpatchTemplate(idOrSubType, userSubpatches = null) {
     return null;
 }
 
-function resolveModManifest(mod, rawPages, pageId, userSubpatches = null) {
+export function resolveModManifest(mod, rawPages, pageId, userSubpatches = null) {
     if (!mod) return null;
     if (mod.manifest) return mod.manifest;
     if (mod.type === 'SUB') {

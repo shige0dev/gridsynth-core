@@ -18,7 +18,6 @@ export const AR = {
             { port: 'cv_out', color: 'bg-yellow-400' }
         ]
     }),
-    formatTime: (v) => UIHelpers.formatTime(v),
     renderSvgCurve: (m) => {
         const padX = 8, padY = 6, W = 160 - padX * 2, H = 40 - padY * 2;
         const yTop = padY, yBot = padY + H;
@@ -86,8 +85,8 @@ export const AR = {
         const isAPatched = ctx?.patched?.has('attack_in') || ctx?.patched?.has('a_cv') || ctx?.patched?.has('cv_a') || ctx?.patched?.has('attack_cv');
         const isRPatched = ctx?.patched?.has('release_in') || ctx?.patched?.has('r_cv') || ctx?.patched?.has('cv_r') || ctx?.patched?.has('release_cv');
 
-        const attDisp = isAPatched ? 'EXT' : AR.formatTime(m.attack ?? 0.05);
-        const relDisp = isRPatched ? 'EXT' : AR.formatTime(m.release ?? 0.2);
+        const attDisp = isAPatched ? 'EXT' : UIHelpers.formatTime(m.attack ?? 0.05);
+        const relDisp = isRPatched ? 'EXT' : UIHelpers.formatTime(m.release ?? 0.2);
         const lvlDisp = `${Math.round((m.level ?? 1.0) * 100)}%`;
 
         return `
@@ -128,17 +127,14 @@ export const AR = {
         const isRPatched = ctx?.patched?.has('release_in') || ctx?.patched?.has('r_cv') || ctx?.patched?.has('cv_r') || ctx?.patched?.has('release_cv');
 
         if (!isAPatched) {
-            UIHelpers.bindSlider('ar-slider-attack', AR.formatTime, v => { m.attack = v; onSliderChange(); }, 2.5, 0.005, 2.0);
-            UIHelpers.bindScrubber('ar-slider-attack-disp', 'ar-slider-attack', AR.formatTime, v => { m.attack = v; onSliderChange(); }, 2.5, 0.005, 2.0);
+            UIHelpers.bindSlider('ar-slider-attack', UIHelpers.formatTime, v => { m.attack = v; onSliderChange(); }, 2.5, 0.005, 2.0);
         }
 
         if (!isRPatched) {
-            UIHelpers.bindSlider('ar-slider-release', AR.formatTime, v => { m.release = v; onSliderChange(); }, 2.5, 0.005, 3.0);
-            UIHelpers.bindScrubber('ar-slider-release-disp', 'ar-slider-release', AR.formatTime, v => { m.release = v; onSliderChange(); }, 2.5, 0.005, 3.0);
+            UIHelpers.bindSlider('ar-slider-release', UIHelpers.formatTime, v => { m.release = v; onSliderChange(); }, 2.5, 0.005, 3.0);
         }
 
         UIHelpers.bindSlider('ar-slider-level', v => `${Math.round(v * 100)}%`, v => { m.level = v; onSliderChange(); }, 1, 0.0, 1.0);
-        UIHelpers.bindScrubber('ar-slider-level-disp', 'ar-slider-level', v => `${Math.round(v * 100)}%`, v => { m.level = v; onSliderChange(); }, 1, 0.0, 1.0);
     },
     updateLive: (cell, data, isPlaying, targetModal, m) => {
         const stage = data?.stage ?? -1;

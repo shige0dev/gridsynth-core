@@ -1,12 +1,12 @@
 import { parseConn, resolveConnectionSignalType, isSubModule, normalizeSubPort, getSubPortAlias } from '../core/utils.js?v=351';
-import { parsePatch, resolveSubpatchTemplate } from '../core/patch.js?v=351';
+import { parsePatch, resolveSubpatchTemplate, resolveModManifest } from '../core/patch.js?v=396';
 import { MODULE_REGISTRY } from '../modules/registry.js?v=364';
-import { UIHelpers } from './helpers.js?v=351';
-import { PresetManager } from './managers/preset-manager.js?v=360';
-import { ModalManager } from './managers/modal-manager.js?v=353';
-import { CableManager } from './managers/cable-manager.js?v=351';
-import { PageManager } from './managers/page-manager.js?v=351';
-import { InteractionManager } from './managers/interaction-manager.js?v=395';
+import { UIHelpers } from './helpers.js?v=396';
+import { PresetManager } from './managers/preset-manager.js?v=396';
+import { ModalManager } from './managers/modal-manager.js?v=396';
+import { CableManager } from './managers/cable-manager.js?v=396';
+import { PageManager } from './managers/page-manager.js?v=396';
+import { InteractionManager } from './managers/interaction-manager.js?v=396';
 import { WaveCodec } from '../audio/wave-codec.js?v=351';
 
 export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'LISS', 'XY', 'SPEC', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD'];
@@ -47,17 +47,12 @@ export class UIController {
     set presetOrder(v) { this.presetManager.presetOrder = v; }
     get currentPresetKey() { return this.presetManager.currentPresetKey; }
     set currentPresetKey(v) { this.presetManager.currentPresetKey = v; }
-    get DEMO_KEYS() { return this.presetManager.DEMO_KEYS; }
-    get demoAccordionOpen() { return this.presetManager.demoAccordionOpen; }
-    set demoAccordionOpen(v) { this.presetManager.demoAccordionOpen = v; }
     get userSubpatches() { return this.presetManager.userSubpatches; }
     set userSubpatches(v) { this.presetManager.userSubpatches = v; }
     get activePopupModuleId() { return this.modalManager.activePopupModuleId; }
     set activePopupModuleId(v) { this.modalManager.activePopupModuleId = v; }
     get activeDockModuleId() { return this.modalManager.activeDockModuleId; }
     set activeDockModuleId(v) { this.modalManager.activeDockModuleId = v; }
-    get isDockLocked() { return this.modalManager.isDockLocked; }
-    set isDockLocked(v) { this.modalManager.isDockLocked = v; }
     get selectedTargetForConnection() { return this.cableManager.selectedTargetForConnection; }
     set selectedTargetForConnection(v) { this.cableManager.selectedTargetForConnection = v; }
     get pagesData() { return this.pageManager.pagesData; }
@@ -70,20 +65,6 @@ export class UIController {
     set historyStack(v) { this.pageManager.historyStack = v; }
     get selectedModuleIds() { return this.interactionManager.selectedModuleIds; }
     set selectedModuleIds(v) { this.interactionManager.selectedModuleIds = v; }
-    get isDragging() { return this.interactionManager.isDragging; }
-    set isDragging(v) { this.interactionManager.isDragging = v; }
-    get dropTargetIndex() { return this.interactionManager.dropTargetIndex; }
-    set dropTargetIndex(v) { this.interactionManager.dropTargetIndex = v; }
-    get isLayoutMode() { return this.interactionManager.isLayoutMode; }
-    set isLayoutMode(v) { this.interactionManager.isLayoutMode = v; }
-    get dragMode() { return this.interactionManager.dragMode; }
-    set dragMode(v) { this.interactionManager.dragMode = v; }
-    get dragGroupOffsets() { return this.interactionManager.dragGroupOffsets; }
-    set dragGroupOffsets(v) { this.interactionManager.dragGroupOffsets = v; }
-    get dragGroupValid() { return this.interactionManager.dragGroupValid; }
-    set dragGroupValid(v) { this.interactionManager.dragGroupValid = v; }
-    get lastHighlightedCells() { return this.interactionManager.lastHighlightedCells; }
-    set lastHighlightedCells(v) { this.interactionManager.lastHighlightedCells = v; }
 
     getNestingDepth(pageId) {
         return this.pageManager.getNestingDepth(pageId);
@@ -230,31 +211,8 @@ export class UIController {
 
     getSubManifest(moduleId, pageId = null) {
         const pId = String(pageId ?? this.currentPageId);
-        const pData = this.pagesData[pId];
-        const mod = (pId === this.currentPageId ? this.modules[moduleId] : pData?.modules?.[moduleId]) || null;
-        if (!mod) return null;
-
-        if (mod.manifest) return mod.manifest;
-
-        if (mod.type === 'SUB') {
-            const targetPage = String(mod.targetPage ?? 1);
-            const targetPData = this.pagesData[targetPage];
-            if (targetPData?.manifest) return targetPData.manifest;
-
-            const tId = mod.subType || targetPData?.subType || targetPData?.sourceTemplateId;
-            if (tId) {
-                const tmpl = resolveSubpatchTemplate(tId, this.userSubpatches);
-                if (tmpl?.manifest) return tmpl.manifest;
-            }
-        } else if (mod.type === 'SUB_IO') {
-            if (pData?.manifest) return pData.manifest;
-            const tId = pData?.subType || pData?.sourceTemplateId;
-            if (tId) {
-                const tmpl = resolveSubpatchTemplate(tId, this.userSubpatches);
-                if (tmpl?.manifest) return tmpl.manifest;
-            }
-        }
-        return null;
+        const mod = (pId === this.currentPageId ? this.modules[moduleId] : this.pagesData[pId]?.modules?.[moduleId]) || null;
+        return resolveModManifest(mod, this.pagesData, pId, this.userSubpatches);
     }
 
     getPortDisplayInfo(moduleId, port, pageId = null) {
@@ -584,8 +542,9 @@ export class UIController {
             if (this.modalManager.openDocks?.has(moduleId)) {
                 this.modalManager.closeDockModal(moduleId);
             }
-            if (this.modalManager.activeModuleId === moduleId) {
-                this.modalManager.closeModal();
+            if (this.modalManager.activePopupModuleId === moduleId) {
+                document.getElementById('shared-modal')?.classList.add('hidden');
+                this.modalManager.activePopupModuleId = null;
             }
         }
 
@@ -931,10 +890,6 @@ export class UIController {
         document.getElementById('about-backdrop')?.addEventListener('pointerdown', closeAboutModal);
         document.getElementById('json-io-backdrop')?.addEventListener('click', () => document.getElementById('json-io-modal')?.classList.add('hidden'));
         document.getElementById('close-json-io-btn')?.addEventListener('click', () => document.getElementById('json-io-modal')?.classList.add('hidden'));
-    }
-
-    updateDropHighlight() {
-        return this.interactionManager.updateDropHighlight();
     }
 
     exportCurrentPreset() {

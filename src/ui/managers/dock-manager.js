@@ -12,41 +12,12 @@ export const DOCK_TITLES = {
     SCOPE: 'OSCILLOSCOPE',
     LISS: 'LISSAJOUS (X-Y)',
     XY: 'LISSAJOUS (X-Y)',
-    SCALE: 'SCALE QUANTIZER',
-    CHORD: 'CHORD GENERATOR',
-    ARP: 'ARPEGGIATOR',
-    MARKOV: 'MARKOV SEQUENCER',
-    FM: '4-OP FM SYNTH',
-    FM3OP: '3-OP FM SYNTH',
-    FMx3: '3-OPERATOR FM',
-    FMCORE: 'FM OPERATOR',
-    GATE4: '4-STEP GATE SEQUENCER',
-    WAVE: 'WAVE RECORDER & SLICER',
-    ADSR: 'ENVELOPE GENERATOR',
-    LFO: 'LFO MODULATOR',
-    MATH1: 'MATH UTILITY 1',
-    MATH2: 'MATH UTILITY 2',
-    SH: 'SAMPLE & HOLD',
-    FOLD: 'WAVE FOLDER',
-    CVDELAY: 'CV DELAY',
-    RF: 'RISE/FALL GENERATOR',
-    AR: 'ATTACK/RELEASE ENVELOPE',
-    VCO: 'VOLTAGE CONTROLLED OSCILLATOR',
-    VCF: 'VOLTAGE CONTROLLED FILTER',
-    VCA: 'VOLTAGE CONTROLLED AMPLIFIER',
-    DELAY: 'STEREO DELAY',
-    REVERB: 'DIGITAL REVERB',
-    NOISE: 'NOISE GENERATOR',
-    CLK: 'MASTER CLOCK',
-    SPK: 'SPEAKER OUTPUT',
-    SUB: 'SUBPATCH INSTANCE',
-    SUB_IO: 'SUBPATCH I/O BUS'
+    WAVE: 'WAVE RECORDER & SLICER'
 };
 
 export const DOCK_ICONS = {
     KEY: 'music',
     PAD: 'fingerprint',
-    SCALE: 'music',
     PAT: 'code',
     SEQ16: 'sliders',
     SEQ8: 'sliders',
@@ -54,41 +25,14 @@ export const DOCK_ICONS = {
     SCOPE: 'activity',
     LISS: 'activity',
     XY: 'activity',
-    CHORD: 'layers',
-    ARP: 'trending-up',
-    MARKOV: 'shuffle',
-    FM: 'cpu',
-    FM3OP: 'cpu',
-    FMx3: 'cpu',
-    FMCORE: 'cpu',
-    GATE4: 'binary',
-    WAVE: 'audio-waveform',
-    ADSR: 'activity',
-    LFO: 'waves',
-    MATH1: 'calculator',
-    MATH2: 'calculator',
-    SH: 'pause-circle',
-    FOLD: 'fold-vertical',
-    CVDELAY: 'clock',
-    RF: 'trending-up',
-    AR: 'activity',
-    VCO: 'radio',
-    VCF: 'filter',
-    VCA: 'volume-2',
-    DELAY: 'clock',
-    REVERB: 'disc',
-    NOISE: 'wind',
-    CLK: 'watch',
-    SPK: 'volume-2',
-    SUB: 'box',
-    SUB_IO: 'share-2'
+    WAVE: 'audio-waveform'
 };
 
 export class DockManager {
     constructor(ui, modalManager) {
         this.ui = ui;
         this.modalManager = modalManager;
-        this.openDocks = new Map(); // moduleId -> { moduleId, element, isLocked, zIndex, snapshot }
+        this.openDocks = new Map(); // moduleId -> { moduleId, element, isLocked, zIndex }
         this.highestZIndex = 40;
     }
 
@@ -166,8 +110,7 @@ export class DockManager {
             moduleId: mId,
             element: dialogEl,
             isLocked: false,
-            zIndex: ++this.highestZIndex,
-            snapshot: JSON.parse(JSON.stringify(m))
+            zIndex: ++this.highestZIndex
         };
         dialogEl.style.zIndex = dockInfo.zIndex;
         this.openDocks.set(mId, dockInfo);
@@ -304,36 +247,16 @@ export class DockManager {
         });
     }
 
-    closeDockModal(mId = null, isCancel = false) {
+    closeDockModal(mId = null) {
         if (mId) {
             const info = this.openDocks.get(mId);
             if (info) {
-                if (isCancel && info.snapshot) {
-                    const m = this.ui.modules[mId];
-                    if (m) {
-                        Object.assign(m, JSON.parse(JSON.stringify(info.snapshot)));
-                        this.ui.synth.updateModule(`${this.ui.currentPageId}/${mId}`, m, this.ui.getPatchState(mId));
-                        this.ui.renderCell(m.row * this.ui.COLS + m.col);
-                        this.modalManager.showToast('変更を中止しました');
-                    }
-                }
                 info.element.remove();
                 this.openDocks.delete(mId);
             }
         } else {
-            this.openDocks.forEach((info, id) => {
-                if (isCancel && info.snapshot) {
-                    const m = this.ui.modules[id];
-                    if (m) {
-                        Object.assign(m, JSON.parse(JSON.stringify(info.snapshot)));
-                        this.ui.synth.updateModule(`${this.ui.currentPageId}/${id}`, m, this.ui.getPatchState(id));
-                        this.ui.renderCell(m.row * this.ui.COLS + m.col);
-                    }
-                }
-                info.element.remove();
-            });
+            this.openDocks.forEach(info => info.element.remove());
             this.openDocks.clear();
-            if (isCancel) this.modalManager.showToast('変更を中止しました');
         }
         if (this.openDocks.size === 0) {
             document.getElementById('dock-modal')?.classList.add('hidden');
@@ -356,10 +279,6 @@ export class DockManager {
         const info = this.openDocks.get(mId);
         if (!info) return;
         info.isLocked = !info.isLocked;
-        if (info.isLocked) {
-            const m = this.ui.modules[mId];
-            if (m) info.snapshot = JSON.parse(JSON.stringify(m));
-        }
         this.updateDockLockUI(mId);
         this.updateBackdrop();
     }

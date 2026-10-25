@@ -1,7 +1,6 @@
 import { safeClone, parseConn } from '../../core/utils.js?v=297';
-import { parsePatch, exportPatch, createDefaultPatchData } from '../../core/patch.js?v=360';
+import { parsePatch, exportPatch, createDefaultPatchData } from '../../core/patch.js?v=396';
 import { getDefaultPresets } from '../../presets/default.js?v=354';
-import { AI_PATCH_SPEC_CONTENT } from '../../presets/ai-spec-content.js';
 import { JsonIoDialog, analyzeJsonError } from '../json-io-dialog.js?v=297';
 
 export class PresetManager {
@@ -596,8 +595,14 @@ export class PresetManager {
         });
     }
 
-    openAiSpecModal() {
-        const specText = AI_PATCH_SPEC_CONTENT;
+    async openAiSpecModal() {
+        if (!this._aiSpecCache) {
+            try {
+                const res = await fetch('./GRIDSYNTH_AI_PATCH_SPEC.md');
+                if (res.ok) this._aiSpecCache = await res.text();
+            } catch (_) {}
+        }
+        const specText = this._aiSpecCache || '# GRIDSYNTH AI PATCH SPEC (Failed to load ./GRIDSYNTH_AI_PATCH_SPEC.md)';
         JsonIoDialog.openExport({
             title: 'AI PATCH SPEC (Markdown)',
             icon: 'bot',

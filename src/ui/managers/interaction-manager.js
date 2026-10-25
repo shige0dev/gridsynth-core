@@ -1,7 +1,7 @@
 // src/ui/managers/interaction-manager.js
 import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=297';
 import { MODULE_REGISTRY } from '../../modules/registry.js?v=297';
-import { RowManager } from './row-manager.js?v=395';
+import { RowManager } from './row-manager.js?v=396';
 
 export class InteractionManager {
     constructor(ui) {
@@ -29,8 +29,6 @@ export class InteractionManager {
         this.rowLongPressed = false;
         this._wasModuleDragging = false;
 
-        this._lastPointerX = 0;
-        this._lastPointerY = 0;
         this._rowLpTimer = null;
         this._stage2X = undefined;
         this._stage2Y = undefined;
@@ -39,7 +37,6 @@ export class InteractionManager {
         this._justLongPressedTimestamp = 0;
 
         this._isScrollDragging = false;
-        this._isMouseScrollDragging = false;
         this._wasScrollDragging = false;
         this._scrollStartY = 0;
         this._scrollStartTop = 0;
@@ -49,9 +46,6 @@ export class InteractionManager {
 
         // Row Movement & Handle states
         this.rowManager = new RowManager(this.ui, this);
-
-        // Ready for future modes: 'edit', 'performance', 'visualizer'
-        this.mode = 'edit';
     }
 
     cancelPendingPresses() {
@@ -107,7 +101,6 @@ export class InteractionManager {
         this.rowLongPressed = false;
         this.isDragging = false;
         this._isScrollDragging = false;
-        this._isMouseScrollDragging = false;
         this._scrollVelocity = 0;
         this._dragCandidate = null;
         this._stage2X = undefined;
@@ -416,7 +409,6 @@ export class InteractionManager {
             this._lastKnownClientX = e.clientX;
             this._lastKnownClientY = e.clientY;
             this._isScrollDragging = false;
-            this._isMouseScrollDragging = false;
             this._scrollVelocity = 0;
             this.moduleLongPressed = false;
             this.rowLongPressed = false;
@@ -450,40 +442,12 @@ export class InteractionManager {
                 const mId = port.dataset.moduleId, p = port.dataset.port;
                 this._pTimer = setTimeout(() => {
                     this._pTimer = null;
-                    const toRemove = this.ui.connections.filter(c => (c.from.moduleId === mId && c.from.port === p) || (c.to.moduleId === mId && c.to.port === p));
-                    if (toRemove.length > 0) {
+                    const hasConn = this.ui.connections.some(c => (c.from.moduleId === mId && c.from.port === p) || (c.to.moduleId === mId && c.to.port === p));
+                    if (hasConn) {
                         this.portLongPressed = true;
                         this.ui.selectedTargetForConnection = null;
-                        this.ui.updatePortHighlight();
                         this.ui.saveHistory();
-                        toRemove.forEach(c => {
-                            this.ui.synth.disconnect(`${this.ui.currentPageId}/${c.from.moduleId}`, c.from.port, `${this.ui.currentPageId}/${c.to.moduleId}`, c.to.port);
-                        });
-                        this.ui.connections = this.ui.connections.filter(c => !((c.from.moduleId === mId && c.from.port === p) || (c.to.moduleId === mId && c.to.port === p)));
-
-                        const affectedIds = new Set();
-                        toRemove.forEach(c => {
-                            affectedIds.add(c.from.moduleId);
-                            affectedIds.add(c.to.moduleId);
-                        });
-                        affectedIds.forEach(id => {
-                            if (this.ui.modules[id]) {
-                                this.ui.synth.updateModule(`${this.ui.currentPageId}/${id}`, this.ui.modules[id], this.ui.getPatchState(id));
-                            }
-                        });
-
-                        this.ui.persistCurrentPage();
-                        if (this.ui.currentPageId !== 'PAGE 0' && this.ui.currentPageId !== '0') {
-                            this.ui.cleanupOrphanSubConnections(this.ui.currentPageId);
-                        }
-                        this.ui.renderCables();
-                        affectedIds.forEach(id => {
-                            const mod = this.ui.modules[id];
-                            if (mod) this.ui.renderCell(mod.row * this.ui.COLS + mod.col);
-                        });
-                        const isDockAffected = Array.from(this.ui.modalManager?.openDocks?.keys() || []).some(id => affectedIds.has(id)) || (this.ui.activeDockModuleId && affectedIds.has(this.ui.activeDockModuleId));
-                        if (isDockAffected) this.ui.reRenderDockModal();
-                        if (this.ui.activePopupModuleId && affectedIds.has(this.ui.activePopupModuleId)) this.ui.reRenderModal();
+                        this.ui.removeConnectionsForPort(mId, p);
                         this.ui.updatePortHighlight();
                         this.ui.showToast('端子の結線を切断しました');
                     }
@@ -600,12 +564,10 @@ export class InteractionManager {
             if (isButtonHeld && !this.ui.isPerformanceMode && !this.isDragging && !this.moduleLongPressed && !isCandidateSelected && !isRowBusy && container) {
                 if (e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal, .pad-grid-container, .pad-grid-canvas')) {
                     this._isScrollDragging = false;
-                    this._isMouseScrollDragging = false;
                     return;
                 }
-                if (distSq > 144 || this._isScrollDragging || this._isMouseScrollDragging) {
+                if (distSq > 144 || this._isScrollDragging) {
                     this._isScrollDragging = true;
-                    this._isMouseScrollDragging = true;
                     this._wasScrollDragging = true;
                     const deltaY = e.clientY - this._scrollStartY;
                     const now = Date.now();
@@ -620,7 +582,6 @@ export class InteractionManager {
                 }
             } else if (!isButtonHeld) {
                 this._isScrollDragging = false;
-                this._isMouseScrollDragging = false;
             }
             if (!this.isDragging && this._dragCandidate) {
                 const s2dx = this._stage2X !== undefined ? e.clientX - this._stage2X : dx;
@@ -653,8 +614,6 @@ export class InteractionManager {
             }
             if (this.isDragging) {
                 if (e.cancelable) e.preventDefault();
-                this._lastPointerX = e.clientX;
-                this._lastPointerY = e.clientY;
                 this._updateDropTargetAt(e.clientX, e.clientY);
             }
         });
@@ -686,7 +645,7 @@ export class InteractionManager {
                 clearTimeout(this._copyTimer);
                 this._copyTimer = null;
             }
-            if (this._isScrollDragging || this._isMouseScrollDragging) {
+            if (this._isScrollDragging) {
                 const container = document.getElementById('canvas-container');
                 if (container && this._scrollVelocity && Math.abs(this._scrollVelocity) > 0.25) {
                     let vel = this._scrollVelocity * 14;
@@ -699,7 +658,6 @@ export class InteractionManager {
                     requestAnimationFrame(inertiaStep);
                 }
                 this._isScrollDragging = false;
-                this._isMouseScrollDragging = false;
                 setTimeout(() => { this._wasScrollDragging = false; }, 120);
             }
             this._dragCandidate = null;
@@ -815,16 +773,5 @@ export class InteractionManager {
         window.addEventListener('blur', () => {
             this.resetAllInteractions({ keepSelection: false });
         });
-    }
-
-    moveRowTo(sourceRow, targetInsertRow) {
-        return this.rowManager.moveRowTo(sourceRow, targetInsertRow);
-    }
-
-    get draggingRow() {
-        return this.rowManager.draggingRow;
-    }
-    set draggingRow(v) {
-        this.rowManager.draggingRow = v;
     }
 }

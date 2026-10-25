@@ -1,8 +1,8 @@
-export const APP_VERSION = 'v1.0.0395';
+export const APP_VERSION = 'v1.0.0396';
 
-import { SynthEngine } from './audio/engine.js?v=395';
-import { UIController } from './ui/controller.js?v=395';
-import { initExternalAPI } from './core/api.js?v=395';
+import { SynthEngine } from './audio/engine.js?v=396';
+import { UIController } from './ui/controller.js?v=396';
+import { initExternalAPI } from './core/api.js?v=396';
 
 function applyDeviceMode() {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
@@ -25,7 +25,6 @@ function initApp() {
 
     const ro = new ResizeObserver(() => setTimeout(() => {
         ui.renderCables();
-        ui.interactionManager?.updateRowHandleRail?.();
     }, 50));
     const frame = document.getElementById('phone-frame');
     if (frame) ro.observe(frame);

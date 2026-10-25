@@ -204,17 +204,6 @@ body.is-row-dragging .grid-cell * {
     background: transparent;
 }
 
-.scope-vslider {
-    writing-mode: vertical-lr;
-    direction: rtl;
-    width: 16px;
-    height: 68px;
-    flex-shrink: 0;
-    cursor: pointer;
-    touch-action: none;
-    background: transparent;
-}
-
 .grid-cell {
     overflow: visible !important;
     touch-action: none !important;
@@ -245,13 +234,8 @@ body.is-row-dragging .grid-cell * {
     transform: none !important;
 }
 
-/* Performance Mode: Hide all ports, row handles, and disable editing affordances */
-.is-performance-mode .port,
-.is-performance-mode .port-node,
-.is-performance-mode .port-node-wrapper,
-.is-performance-mode #row-handle-overlay,
-.is-performance-mode .row-overlay-track,
-.is-performance-mode .row-insert-beam {
+/* Performance Mode: Hide all ports and disable editing affordances */
+.is-performance-mode .port {
     display: none !important;
     pointer-events: none !important;
     opacity: 0 !important;
@@ -295,28 +279,6 @@ body.is-row-dragging .grid-cell * {
     box-shadow: none !important;
     filter: none !important;
     z-index: 28;
-}
-
-.pat-track-container {
-    mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-    -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-}
-
-@keyframes pat-marquee-slow {
-    0% {
-        transform: translateX(0%);
-    }
-    100% {
-        transform: translateX(-50%);
-    }
-}
-
-.pat-marquee-track {
-    display: inline-flex;
-    align-items: center;
-    white-space: nowrap;
-    animation: pat-marquee-slow 28s linear infinite;
-    will-change: transform;
 }
 
 .pat-tok {

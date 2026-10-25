@@ -945,6 +945,20 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
       - **Tailwind Play CDN本番警告の抑制**:
         - `index.html` にて Tailwind Play CDN がコンソールに出力する定型警告をフィルタリングし、F12コンソールログをクリーン化。
       - バージョンを `v1.0.0395`、キャッシュバスターを `v=395` に更新。
+    - **コードベース軽量化 Step 1（死蔵コード・重複処理の削減とAI仕様書のオンデマンド読込化）（v1.0.0396）**:
+      - **AIパッチ仕様書バンドルの遅延読込化（初期ロード -73.5 KB）**:
+        - 起動時に毎回読み込まれていた旧版の巨大文字列モジュール `src/presets/ai-spec-content.js`（73.5 KB）を廃止・削除。
+        - `PresetManager.openAiSpecModal()` にて `MD` ボタン押下時に最新の `./GRIDSYNTH_AI_PATCH_SPEC.md` を `fetch` でオンデマンド取得＆メモリキャッシュする方式に刷新。
+      - **死蔵CSSセレクタの削除（`css/style.css`）**:
+        - 未使用の `.scope-vslider`、旧行オーバーレイ時代の `.port-node` / `#row-handle-overlay` / `.row-overlay-track` / `.row-insert-beam`、および未使用の `.pat-track-container` / `@keyframes pat-marquee-slow` / `.pat-marquee-track` を削除。
+      - **UIController・各Managerの死蔵プロキシ・デッドコード整理とバグ修正**:
+        - `src/main.js`: 廃止済みの `updateRowHandleRail` 呼び出しを削除。
+        - `src/ui/controller.js`: 外部から参照されないプロキシ getter/setter 10組および `updateDropHighlight` を削除。`getSubManifest` を `patch.js` の `resolveModManifest` 共通関数呼び出しに統合。また `destroyModule` 内で存在しない `closeModal()` を呼んでいた不具合を修正し、開いているポップアップ（`#shared-modal`）が確実に閉じるよう修正。
+        - `src/ui/managers/interaction-manager.js` & `cable-manager.js` & `row-manager.js`: 端子長押し時のケーブル切断処理を `CableManager.removeConnectionsForPort()` 呼び出しに一本化。`getSubActivePorts` と `cleanupOrphanSubConnections` の重複ループを `_collectSubActiveIOPorts()` に統合。重複フラグ `_isMouseScrollDragging` や未使用の `_lastPointerX/Y`, `mode`, `moveRowTo`, `draggingRow` を削除。
+        - `src/ui/managers/dock-manager.js` & `modal-manager.js`: ドックモーダル対象外の28モジュール分の死蔵辞書定義と、未使用の `snapshot` ディープコピーおよび `isCancel` ロールバック処理を削除。
+        - `src/ui/helpers.js`, `src/modules/defs/ar.js`, `src/modules/defs/rf.js`: `bindSlider` 内部で既にバインドされている `bindScrubber` の二重登録（計4箇所）と冗長な `formatTime` ラッパーを削除。
+        - `src/audio/engine.js`, `src/core/api.js`, `src/core/patch.js`, `src/presets/subpatches.js`, `src/ui/managers/page-manager.js`: `connect`/`disconnect` のノード解決共通化（`_resolvePortNodes`）、`PAD` の `WORKLET_MODULE_TYPES` 追加、未使用メソッド削除、`parseCableArgs` によるAPI引数解析の共通化、`findSubpatchTemplate` の `resolveSubpatchTemplate` への一本化を実施。
+      - バージョンを `v1.0.0396`、キャッシュバスターを `v=396` に更新。
 
 
 

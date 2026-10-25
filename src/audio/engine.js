@@ -2,7 +2,7 @@ import { AUDIO_REGISTRY } from './registry.js?v=353';
 import { AudioHelpers } from './helpers.js';
 import { parseConn, normalizeSubPort } from '../core/utils.js?v=297';
 
-export const WORKLET_MODULE_TYPES = ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'ADSR', 'LFO', 'MATH1', 'MATH2', 'SH', 'FOLD', 'CVDELAY', 'SCOPE', 'LISS', 'XY', 'MARKOV', 'CHORD', 'FM', 'FM3OP', 'FMx3', 'FMCORE', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE'];
+export const WORKLET_MODULE_TYPES = ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'ADSR', 'LFO', 'MATH1', 'MATH2', 'SH', 'FOLD', 'CVDELAY', 'SCOPE', 'LISS', 'XY', 'MARKOV', 'CHORD', 'FM', 'FM3OP', 'FMx3', 'FMCORE', 'GATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD'];
 
 
 export class SynthEngine {
@@ -124,31 +124,28 @@ export class SynthEngine {
         }
     }
 
-    connect(sId, sPort, dId, dPort) {
+    _resolvePortNodes(sId, sPort, dId, dPort) {
         const s = this.modules[sId] || this.modules[`0/${sId}`];
         const d = this.modules[dId] || this.modules[`0/${dId}`];
         const sNorm = (s?.type === 'SUB' || s?.type === 'SUB_IO') ? normalizeSubPort(sPort, s?.type, s?.manifest) : sPort;
         const dNorm = (d?.type === 'SUB' || d?.type === 'SUB_IO') ? normalizeSubPort(dPort, d?.type, d?.manifest) : dPort;
-        const sOut = s?.outputs[sNorm] || s?.outputs[sPort];
-        const dIn = d?.inputs[dNorm] || d?.inputs[dPort];
+        return {
+            sOut: s?.outputs[sNorm] || s?.outputs[sPort],
+            dIn: d?.inputs[dNorm] || d?.inputs[dPort]
+        };
+    }
+
+    connect(sId, sPort, dId, dPort) {
+        const { sOut, dIn } = this._resolvePortNodes(sId, sPort, dId, dPort);
         if (sOut && dIn) {
-            try {
-                sOut.connect(dIn);
-            } catch (e) {}
+            try { sOut.connect(dIn); } catch (e) {}
         }
     }
 
     disconnect(sId, sPort, dId, dPort) {
-        const s = this.modules[sId] || this.modules[`0/${sId}`];
-        const d = this.modules[dId] || this.modules[`0/${dId}`];
-        const sNorm = (s?.type === 'SUB' || s?.type === 'SUB_IO') ? normalizeSubPort(sPort, s?.type, s?.manifest) : sPort;
-        const dNorm = (d?.type === 'SUB' || d?.type === 'SUB_IO') ? normalizeSubPort(dPort, d?.type, d?.manifest) : dPort;
-        const sOut = s?.outputs[sNorm] || s?.outputs[sPort];
-        const dIn = d?.inputs[dNorm] || d?.inputs[dPort];
+        const { sOut, dIn } = this._resolvePortNodes(sId, sPort, dId, dPort);
         if (sOut && dIn) {
-            try {
-                sOut.disconnect(dIn);
-            } catch (e) {}
+            try { sOut.disconnect(dIn); } catch (e) {}
         }
     }
 
@@ -199,14 +196,6 @@ export class SynthEngine {
                 break;
             }
         }
-    }
-
-    setKeyNote(id, midi, isDown) {
-        this.sendControlEvent(id, { type: 'NOTE', midi, isDown });
-    }
-
-    triggerManualSample(id) {
-        this.sendControlEvent(id, { type: 'TRIG' });
     }
 
     linkSubBridges() {

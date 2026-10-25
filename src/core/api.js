@@ -2,6 +2,28 @@ import { MODULE_REGISTRY } from '../modules/registry.js?v=297';
 import { parseConn, isSameConn, safeClone } from './utils.js?v=297';
 import { FACTORY_SUBPATCHES } from '../presets/subpatches.js';
 
+function parseCableArgs(arg1, arg2) {
+    let p = "0", from = null, to = null;
+    if (typeof arg1 === 'object' && arg1 !== null && (arg1.from || arg1.connection)) {
+        p = String(arg1.page ?? "0");
+        if (arg1.connection) {
+            const c = parseConn(arg1.connection);
+            if (c) { from = c.from; to = c.to; }
+        } else {
+            from = arg1.from;
+            to = arg1.to;
+        }
+    } else if (arg2 === undefined) {
+        const c = parseConn(arg1);
+        if (c) { from = c.from; to = c.to; }
+    } else {
+        p = String(arg1);
+        const c = parseConn(arg2);
+        if (c) { from = c.from; to = c.to; }
+    }
+    return { p, from, to };
+}
+
 export function initExternalAPI(ui, synth) {
     window.GridSynthAPI = {
         getCatalog: () => ({
@@ -101,26 +123,7 @@ export function initExternalAPI(ui, synth) {
         },
 
         connectCable: (arg1, arg2) => {
-            let p = "0", from = null, to = null;
-            if (typeof arg1 === 'object' && arg1 !== null && (arg1.from || arg1.connection)) {
-                p = String(arg1.page ?? "0");
-                if (arg1.connection) {
-                    const c = parseConn(arg1.connection);
-                    if (c) { from = c.from; to = c.to; }
-                } else {
-                    from = arg1.from;
-                    to = arg1.to;
-                }
-            } else if (arg2 === undefined) {
-                p = "0";
-                const c = parseConn(arg1);
-                if (c) { from = c.from; to = c.to; }
-            } else {
-                p = String(arg1);
-                const c = parseConn(arg2);
-                if (c) { from = c.from; to = c.to; }
-            }
-
+            const { p, from, to } = parseCableArgs(arg1, arg2);
             if (!from || !to) return { success: false, error: "Invalid connection descriptor" };
             const cObj = { from, to };
             if (!ui.pagesData[p]) {
@@ -136,26 +139,7 @@ export function initExternalAPI(ui, synth) {
         },
 
         disconnectCable: (arg1, arg2) => {
-            let p = "0", from = null, to = null;
-            if (typeof arg1 === 'object' && arg1 !== null && (arg1.from || arg1.connection)) {
-                p = String(arg1.page ?? "0");
-                if (arg1.connection) {
-                    const c = parseConn(arg1.connection);
-                    if (c) { from = c.from; to = c.to; }
-                } else {
-                    from = arg1.from;
-                    to = arg1.to;
-                }
-            } else if (arg2 === undefined) {
-                p = "0";
-                const c = parseConn(arg1);
-                if (c) { from = c.from; to = c.to; }
-            } else {
-                p = String(arg1);
-                const c = parseConn(arg2);
-                if (c) { from = c.from; to = c.to; }
-            }
-
+            const { p, from, to } = parseCableArgs(arg1, arg2);
             if (!from || !to || !ui.pagesData[p]) return { success: false, error: "Invalid connection or page not found" };
             const cObj = { from, to };
             ui.pagesData[p].connections = ui.pagesData[p].connections.filter(x => !isSameConn(x, cObj));
