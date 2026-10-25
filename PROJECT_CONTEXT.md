@@ -297,9 +297,10 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
 | **`07_DUB_TECHNO_DEEP_SPACE`** | 16拍ロングサイクルコードスタブ、ディープサブベース、S&Hフィルター揺らぎ、サブパッチによる控えめなダブドラム |
 | **`08_MARKOV_GENERATIVE_CHAINS`** | マルコフ連鎖（MARKOV）確率遷移ネットワークによる有機的ジェネラティブ旋律シーケンス |
 | **`09_FM_NEO_SOUL_TRIO`** | FMx3を3基駆使したNeo-Soulトリオ（Fender Rhodesエレピ＋キック＋ベース） |
-| **`10_FM_SIMPLE_TEST`** | FMx3（アルゴリズム1〜3）を聴き比べるためのシンプルなテストパッチ |
 | **`11_FMCORE_2OP_DEMO`** | 単機能PMコア（FMCORE）を2基パッチングしたモジュラー2オペレーターFMデモ（キャリア×モジュレータ、エンベロープによる動的インデックス変調） |
 | **`12_CHORD_ARPEGGIO`** | CHORDとARPによる4ボイス・コードアルペジエーター（SEQ8によるコード進行、GATE4によるビートアクセント、ディレイ・リバーブ空間処理） |
+| **`13_WAVE_CHOP`** | WAVE波形チョップ＆スライスデモパッチ |
+| **`14_16_PAD_DRUMKIT`** | 16基のタッチPAD（全パッドXYユニポーラ 0〜2V）と6系統のサブパッチドラム音源によるフィンガードラムキット |
 
 ---
 
@@ -785,6 +786,17 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
       - これにより、下辺左側に配置された入力端子（PIN4: HUE, PIN5: BRIGHT）との間に1スロットの空き（PIN6）が生まれ、下辺右寄せで整然と「X → Y → GATE」が並ぶ直感的なレイアウトを実現。右辺は端子なしとなりタッチ領域の視認性が向上。
       - `updateLive` での結線判定（`hasX`, `hasY`）を `PIN7` / `PIN8` に追従更新。
     - バージョンを `v1.0.0377`、キャッシュバスターを `v=377` に更新。
+
+ 49. **DEMO 10（10_FM_SIMPLE_TEST / 10_FM_CRYSTAL_GROOVE）の完全削除および DEMO 14（16_PAD_DRUMKIT）の全パッドXYユニポーラ設定化**:
+    - デモ10の削除:
+      - `src/presets/demos/10_fm_simple_test.js` ファイルを削除。
+      - `src/presets/default.js` より `preset10` の import および `10_FM_CRYSTAL_GROOVE` の登録を削除。
+      - `src/ui/managers/preset-manager.js` にて、ユーザーの `localStorage`（`gridsynth_presets_db`, `gridsynth_preset_order`）に残存する旧デモ10のキー（`10_FM_CRYSTAL_GROOVE`, `10_FM_SIMPLE_TEST`）を自動的にパージ・除外するクリーンアップ処理を実装。
+    - DEMO 14 の全16パッドユニポーラ化:
+      - `src/presets/demos/14_16_pad_drumkit.js`:
+        - `PAD1` 〜 `PAD16` の全16基に `polX: 'uni', polY: 'uni'` を明示設定。
+        - X/Y 出力CVが 0〜2V のユニポーラレンジで統一され、パッド背景の 0V 中心クロスヘア線が消灯したドラムパッド専用のすっきりとしたデザインに刷新。
+    - バージョンを `v1.0.0378`、キャッシュバスターを `v=378` に更新。
 
 
 

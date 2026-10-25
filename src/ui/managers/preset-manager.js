@@ -30,11 +30,12 @@ export class PresetManager {
             this.userSubpatches = {};
         }
 
+        const obsoleteKeys = ['10_FM_CRYSTAL_GROOVE', '10_FM_SIMPLE_TEST'];
         try {
             const stored = JSON.parse(localStorage.getItem('gridsynth_presets_db')) || {};
             this.presets = {};
             Object.entries(stored).forEach(([k, v]) => {
-                if (v && v.pages && v.pages["0"] && !k.startsWith('DEMO')) {
+                if (v && v.pages && v.pages["0"] && !k.startsWith('DEMO') && !obsoleteKeys.includes(k)) {
                     this.presets[k] = v;
                 }
             });
@@ -48,7 +49,7 @@ export class PresetManager {
 
         try {
             const order = JSON.parse(localStorage.getItem('gridsynth_preset_order')) || [];
-            this.presetOrder = order.filter(k => this.presets[k] && !k.startsWith('DEMO'));
+            this.presetOrder = order.filter(k => this.presets[k] && !k.startsWith('DEMO') && !obsoleteKeys.includes(k));
             this.DEMO_KEYS.forEach(k => {
                 if (!this.presetOrder.includes(k)) this.presetOrder.push(k);
             });
