@@ -72,13 +72,11 @@ export class InteractionManager {
 
     updateSelectionClasses() {
         this.ui.gridBoard?.classList.toggle('has-selected-module', this.selectedModuleIds.length > 0);
-        for (let i = 0; i < (this.ui.TOTAL_SLOTS || 40); i++) {
-            const cell = document.getElementById(`cell-${i}`);
+        for (let i = 0; i < (this.ui.TOTAL_SLOTS || 128); i++) {
+            const cell = this.ui.cells?.[i] || document.getElementById(`cell-${i}`);
             if (!cell) continue;
             const mId = this.ui.gridMap[i];
-            if (mId) {
-                cell.classList.toggle('selected-module', this.selectedModuleIds.includes(mId));
-            }
+            cell.classList.toggle('selected-module', Boolean(mId && this.selectedModuleIds.includes(mId)));
         }
         this.ui.updatePortHighlight();
     }
@@ -469,7 +467,7 @@ export class InteractionManager {
 
                 if (!this.selectedModuleIds.includes(mId)) {
                     // Unselected module:
-                    // Stage 1: 300ms hold -> selects module.
+                    // Stage 1: 220ms hold -> selects module quickly.
                     this._lpTimer = setTimeout(() => {
                         this._lpTimer = null;
                         this.moduleLongPressed = true;
@@ -491,22 +489,22 @@ export class InteractionManager {
 
                         if (this.selectedModuleIds.length === 1) {
                             this.ui.showToast('モジュールを選択（さらに長押しで行移動）', 1200);
-                            // Stage 2: continuing to hold for another 400ms (total 700ms from touch down) -> row reorder mode!
+                            // Stage 2: continuing to hold for another 600ms (0.6s after module selection) -> row reorder mode!
                             if (targetRow !== undefined) {
-                                this._startRowLongPress(targetRow, this._stage2Y, 400);
+                                this._startRowLongPress(targetRow, this._stage2Y, 600);
                             }
                         } else {
                             this.ui.showToast(`${this.selectedModuleIds.length}個選択中（ドラッグで一括移動・複製）`, 1000);
                         }
-                    }, 300);
+                    }, 220);
                 } else {
                     // Already selected module:
-                    // If single module selected & held 700ms without moving -> triggers row reorder mode!
+                    // If single module selected & held 600ms without moving -> triggers row reorder mode!
                     // If moved > 8px, pointermove immediately enters module/group dragging.
                     this._stage2X = e.clientX;
                     this._stage2Y = e.clientY;
                     if (this.selectedModuleIds.length === 1 && targetRow !== undefined) {
-                        this._startRowLongPress(targetRow, clientY, 700);
+                        this._startRowLongPress(targetRow, clientY, 600);
                     }
                 }
                 return;
@@ -515,8 +513,8 @@ export class InteractionManager {
             if (rowEl) {
                 const targetRow = parseInt(rowEl.dataset.row, 10);
                 if (!isNaN(targetRow)) {
-                    // Direct row selection on empty grid space: 700ms from touch down
-                    this._startRowLongPress(targetRow, e.clientY, 700);
+                    // Direct row selection on empty grid space: 600ms from touch down
+                    this._startRowLongPress(targetRow, e.clientY, 600);
                 }
                 return;
             }
