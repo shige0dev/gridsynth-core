@@ -166,44 +166,50 @@ export const PAD = {
                 </div>
             </div>
 
-            <!-- Axis Polarity Selectors -->
-            <div class="grid grid-cols-2 gap-2 pb-2 border-b border-slate-800">
-                <div class="flex items-center justify-between bg-slate-950/60 p-1.5 rounded-lg border border-slate-800/80">
-                    <span class="text-[8px] font-bold text-slate-400 pl-1">X-AXIS</span>
-                    <div class="flex items-center gap-1">
-                        <button class="pad-pol-x-btn px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${polX === 'bi' ? 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/30' : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'}" data-val="bi">BI (-1~1)</button>
-                        <button class="pad-pol-x-btn px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${polX === 'uni' ? 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/30' : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'}" data-val="uni">UNI (0~2)</button>
+            <div class="relative w-full aspect-square pl-5 pb-5 mx-auto select-none">
+                <!-- Inner Touch Area (Canvas) -->
+                <div class="relative w-full h-full bg-black rounded-lg border border-slate-700/80 overflow-hidden shadow-inner select-none touch-none overscroll-contain" id="pad-modal-touch-area" style="opacity: ${m.opacity ?? 0.8};">
+                    <canvas id="pad-modal-canvas" class="w-full h-full block cursor-crosshair" width="400" height="400"></canvas>
+                    <div class="absolute top-2 left-2 flex items-center gap-2.5 font-mono text-[9px] select-none pointer-events-none drop-shadow">
+                        <span class="text-slate-400 text-[8px] font-sans font-bold">X</span><span id="pad-stat-x" class="text-cyan-300 font-bold">${dispInitX}</span>
+                        <span class="text-slate-400 text-[8px] font-sans font-bold">Y</span><span id="pad-stat-y" class="text-cyan-300 font-bold">${dispInitY}</span>
                     </div>
                 </div>
-                <div class="flex items-center justify-between bg-slate-950/60 p-1.5 rounded-lg border border-slate-800/80">
-                    <span class="text-[8px] font-bold text-slate-400 pl-1">Y-AXIS</span>
-                    <div class="flex items-center gap-1">
-                        <button class="pad-pol-y-btn px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${polY === 'bi' ? 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/30' : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'}" data-val="bi">BI (-1~1)</button>
-                        <button class="pad-pol-y-btn px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${polY === 'uni' ? 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/30' : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'}" data-val="uni">UNI (0~2)</button>
-                    </div>
-                </div>
-            </div>
 
-            <div class="relative w-full aspect-square bg-black rounded-lg border border-slate-700/80 overflow-hidden shadow-inner select-none touch-none overscroll-contain mx-auto" id="pad-modal-touch-area" style="opacity: ${m.opacity ?? 0.8};">
-                <canvas id="pad-modal-canvas" class="w-full h-full block cursor-crosshair" width="400" height="400"></canvas>
-                <div class="absolute top-2 left-2 flex items-center gap-2.5 font-mono text-[9px] select-none pointer-events-none drop-shadow">
-                    <span class="text-slate-400 text-[8px] font-sans font-bold">X</span><span id="pad-stat-x" class="text-cyan-300 font-bold">${dispInitX}</span>
-                    <span class="text-slate-400 text-[8px] font-sans font-bold">Y</span><span id="pad-stat-y" class="text-cyan-300 font-bold">${dispInitY}</span>
-                </div>
+                <!-- Y-Axis Polarity Toggle Buttons (Left of Canvas, pointing Right ▶) -->
+                <!-- Center (BI: 0V at Center Line) -->
+                <button class="pad-pol-toggle-y absolute left-0 top-[calc(50%-10px)] -translate-y-1/2 w-5 h-5 flex items-center justify-center text-[10px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polY === 'bi' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="bi" title="Y軸: BI (-1~1V)">▶</button>
+                <!-- Bottom (UNI: 0V at Bottom Edge) -->
+                <button class="pad-pol-toggle-y absolute left-0 bottom-[20px] translate-y-1/2 w-5 h-5 flex items-center justify-center text-[10px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polY === 'uni' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="uni" title="Y軸: UNI (0~2V)">▶</button>
+
+                <!-- X-Axis Polarity Toggle Buttons (Below Canvas, pointing Up ▲) -->
+                <!-- Left (UNI: 0V at Left Edge) -->
+                <button class="pad-pol-toggle-x absolute left-[20px] -translate-x-1/2 bottom-0 w-5 h-5 flex items-center justify-center text-[10px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polX === 'uni' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="uni" title="X軸: UNI (0~2V)">▲</button>
+                <!-- Center (BI: 0V at Center Line) -->
+                <button class="pad-pol-toggle-x absolute left-[calc(50%+10px)] -translate-x-1/2 bottom-0 w-5 h-5 flex items-center justify-center text-[10px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polX === 'bi' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="bi" title="X軸: BI (-1~1V)">▲</button>
             </div>
         </div>`;
     },
     bindEvents: (m, ctx, onChange) => {
-        // Axis Polarity Selectors
-        UIHelpers.bindButtonGroup('.pad-pol-x-btn', 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/30', 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800', val => {
-            m.polX = val;
-            ctx.reRenderModal();
-            onChange();
+        // Axis Polarity Toggle Buttons (X: ▲, Y: ▶)
+        document.querySelectorAll('.pad-pol-toggle-x').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const targetVal = btn.dataset.val;
+                m.polX = (m.polX === targetVal) ? (targetVal === 'uni' ? 'bi' : 'uni') : targetVal;
+                ctx.reRenderModal();
+                onChange();
+            });
         });
-        UIHelpers.bindButtonGroup('.pad-pol-y-btn', 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/30', 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800', val => {
-            m.polY = val;
-            ctx.reRenderModal();
-            onChange();
+
+        document.querySelectorAll('.pad-pol-toggle-y').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const targetVal = btn.dataset.val;
+                m.polY = (m.polY === targetVal) ? (targetVal === 'uni' ? 'bi' : 'uni') : targetVal;
+                ctx.reRenderModal();
+                onChange();
+            });
         });
 
         // HUE Slider
