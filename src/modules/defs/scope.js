@@ -202,7 +202,7 @@ const drawLissajousCanvas = (ctx2d, w, h, data, m, isModal = false) => {
 
 export const LISS = {
     color: 'emerald',
-    defaults: () => ({ type: 'LISS', vRange: 5.0, opacity: 0.8 }),
+    defaults: () => ({ type: 'LISS', vRange: 2.0, opacity: 0.8 }),
     ports: () => ({
         in: [
             { port: 'x_in', pin: 4, alias: 'wave_in1', color: 'bg-yellow-400' },
@@ -230,7 +230,7 @@ export const LISS = {
         }
     },
     renderModal: (m) => {
-        const curV = m.vRange || 5.0;
+        const curV = m.vRange || 2.0;
         return `
             <div class="space-y-1.5">
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800 select-none">
@@ -256,7 +256,7 @@ export const LISS = {
     bindEvents: (m, ctx, cb) => {
         const vSteps = LISS.V_STEPS;
         document.getElementById('liss-v-down')?.addEventListener('click', () => {
-            const cur = m.vRange || 5.0;
+            const cur = m.vRange || 2.0;
             let idx = vSteps.findIndex(v => v >= cur - 0.001);
             if (idx > 0) {
                 m.vRange = vSteps[idx - 1];
@@ -265,7 +265,7 @@ export const LISS = {
             }
         });
         document.getElementById('liss-v-up')?.addEventListener('click', () => {
-            const cur = m.vRange || 5.0;
+            const cur = m.vRange || 2.0;
             let idx = vSteps.findIndex(v => v >= cur - 0.001);
             if (idx >= 0 && idx < vSteps.length - 1) {
                 m.vRange = vSteps[idx + 1];
