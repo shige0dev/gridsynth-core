@@ -1,7 +1,7 @@
 // src/modules/defs/pad.js
 import { UIHelpers } from '../../ui/helpers.js?v=351';
 
-function drawPadCanvas(ctx2d, w, h, state, isModal = false, hasX = false, hasY = false) {
+function drawPadCanvas(ctx2d, w, h, state, isModal = false, hasX = false, hasY = false, polX = 'bi', polY = 'bi') {
     ctx2d.clearRect(0, 0, w, h);
 
     const hueVal = ((state?.hue ?? 0.5) % 1.0 + 1.0) % 1.0;
@@ -40,6 +40,9 @@ function drawPadCanvas(ctx2d, w, h, state, isModal = false, hasX = false, hasY =
     const gridLineColor = isBrightBg ? 'rgba(0, 0, 0, 0.25)' : (isModal ? '#1e293b' : 'rgba(255, 255, 255, 0.15)');
     const axisLineColor = isBrightBg ? 'rgba(0, 0, 0, 0.5)' : (isModal ? '#475569' : 'rgba(255, 255, 255, 0.35)');
 
+    const showAxisX = polX !== 'uni';
+    const showAxisY = polY !== 'uni';
+
     UIHelpers.drawGraticule(ctx2d, w, h, {
         isModal,
         cols: 4,
@@ -47,7 +50,9 @@ function drawPadCanvas(ctx2d, w, h, state, isModal = false, hasX = false, hasY =
         gridColor: gridLineColor,
         axisColor: axisLineColor,
         axisWidth: isModal ? 1.2 : 0.8,
-        gridWidth: isModal ? 1.0 : 0.6
+        gridWidth: isModal ? 1.0 : 0.6,
+        showAxisX,
+        showAxisY
     });
 
     // 3. Touch Value Indicator Lines (CVX: Vertical line, CVY: Horizontal line, Both: Crossline)
@@ -110,7 +115,7 @@ function drawPadCanvas(ctx2d, w, h, state, isModal = false, hasX = false, hasY =
 
 export const PAD = {
     color: 'amber',
-    defaults: () => ({ type: 'PAD', name: 'PAD', hue: 0.5, sat: 1.0, bright: 0.0, opacity: 0.8 }),
+    defaults: () => ({ type: 'PAD', name: 'PAD', polX: 'bi', polY: 'bi', hue: 0.5, sat: 1.0, bright: 0.0, opacity: 0.8 }),
     ports: () => ({
         in: [
             { port: 'hue_cv', pin: 4, color: 'bg-yellow-400', extraClass: 'pad-chassis-port' },
@@ -127,8 +132,16 @@ export const PAD = {
         <div class="absolute inset-0.5 bg-black rounded-sm border border-slate-800/90 overflow-hidden z-0 pointer-events-auto pad-grid-container" style="opacity: ${m?.opacity ?? 0.8};">
             <canvas class="pad-grid-canvas w-full h-full block" width="100" height="100"></canvas>
         </div>`,
-    renderModal: (m) => `
-        <div class="space-y-3 p-1">
+    renderModal: (m) => {
+        const polX = m.polX || 'bi';
+        const polY = m.polY || 'bi';
+        const initValX = polX === 'uni' ? 1.0 : 0.0;
+        const initValY = polY === 'uni' ? 1.0 : 0.0;
+        const dispInitX = (polX === 'bi' && initValX >= 0 ? '+' : '') + initValX.toFixed(2);
+        const dispInitY = (polY === 'bi' && initValY >= 0 ? '+' : '') + initValY.toFixed(2);
+
+        return `
+        <div class="space-y-2 p-1">
             <div class="grid grid-cols-3 gap-2 pb-2 border-b border-slate-800 items-start">
                 <div class="space-y-1">
                     <div class="flex items-center justify-between text-[8.5px] font-bold h-4">
@@ -153,15 +166,46 @@ export const PAD = {
                 </div>
             </div>
 
+            <!-- Axis Polarity Selectors -->
+            <div class="grid grid-cols-2 gap-2 pb-2 border-b border-slate-800">
+                <div class="flex items-center justify-between bg-slate-950/60 p-1.5 rounded-lg border border-slate-800/80">
+                    <span class="text-[8px] font-bold text-slate-400 pl-1">X-AXIS</span>
+                    <div class="flex items-center gap-1">
+                        <button class="pad-pol-x-btn px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${polX === 'bi' ? 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/30' : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'}" data-val="bi">BI (-1~1)</button>
+                        <button class="pad-pol-x-btn px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${polX === 'uni' ? 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/30' : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'}" data-val="uni">UNI (0~2)</button>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between bg-slate-950/60 p-1.5 rounded-lg border border-slate-800/80">
+                    <span class="text-[8px] font-bold text-slate-400 pl-1">Y-AXIS</span>
+                    <div class="flex items-center gap-1">
+                        <button class="pad-pol-y-btn px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${polY === 'bi' ? 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/30' : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'}" data-val="bi">BI (-1~1)</button>
+                        <button class="pad-pol-y-btn px-2 py-0.5 rounded text-[8px] font-bold border transition-colors ${polY === 'uni' ? 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/30' : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'}" data-val="uni">UNI (0~2)</button>
+                    </div>
+                </div>
+            </div>
+
             <div class="relative w-full aspect-square bg-black rounded-lg border border-slate-700/80 overflow-hidden shadow-inner select-none touch-none overscroll-contain mx-auto" id="pad-modal-touch-area" style="opacity: ${m.opacity ?? 0.8};">
                 <canvas id="pad-modal-canvas" class="w-full h-full block cursor-crosshair" width="400" height="400"></canvas>
                 <div class="absolute top-2 left-2 flex items-center gap-2.5 font-mono text-[9px] select-none pointer-events-none drop-shadow">
-                    <span class="text-slate-400 text-[8px] font-sans font-bold">X</span><span id="pad-stat-x" class="text-cyan-300 font-bold">0.50</span>
-                    <span class="text-slate-400 text-[8px] font-sans font-bold">Y</span><span id="pad-stat-y" class="text-cyan-300 font-bold">0.50</span>
+                    <span class="text-slate-400 text-[8px] font-sans font-bold">X</span><span id="pad-stat-x" class="text-cyan-300 font-bold">${dispInitX}</span>
+                    <span class="text-slate-400 text-[8px] font-sans font-bold">Y</span><span id="pad-stat-y" class="text-cyan-300 font-bold">${dispInitY}</span>
                 </div>
             </div>
-        </div>`,
+        </div>`;
+    },
     bindEvents: (m, ctx, onChange) => {
+        // Axis Polarity Selectors
+        UIHelpers.bindButtonGroup('.pad-pol-x-btn', 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/30', 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800', val => {
+            m.polX = val;
+            ctx.reRenderModal();
+            onChange();
+        });
+        UIHelpers.bindButtonGroup('.pad-pol-y-btn', 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/30', 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800', val => {
+            m.polY = val;
+            ctx.reRenderModal();
+            onChange();
+        });
+
         // HUE Slider
         UIHelpers.bindSlider('pad-hue-slider', v => v.toFixed(2), v => {
             m.hue = v;
@@ -289,6 +333,9 @@ export const PAD = {
         if (state.hue === undefined) state.hue = m.hue ?? 0.5;
         if (state.bright === undefined) state.bright = m.bright ?? 0.0;
 
+        const polX = m.polX || 'bi';
+        const polY = m.polY || 'bi';
+
         const isDown = Boolean(state.isDown);
         const x = state.x ?? 0.5;
         const y = state.y ?? 0.5;
@@ -312,12 +359,14 @@ export const PAD = {
                 last.sat !== sat ||
                 last.bright !== bright ||
                 last.hasX !== hasX ||
-                last.hasY !== hasY;
+                last.hasY !== hasY ||
+                last.polX !== polX ||
+                last.polY !== polY;
 
             if (isDirty) {
                 const ctx = cvs.getContext('2d');
-                drawPadCanvas(ctx, cvs.width, cvs.height, state, false, hasX, hasY);
-                cvs._lastRenderState = { isDown, x, y, hue, sat, bright, hasX, hasY };
+                drawPadCanvas(ctx, cvs.width, cvs.height, state, false, hasX, hasY, polX, polY);
+                cvs._lastRenderState = { isDown, x, y, hue, sat, bright, hasX, hasY, polX, polY };
             }
         }
 
@@ -333,19 +382,24 @@ export const PAD = {
                 mLast.sat !== sat ||
                 mLast.bright !== bright ||
                 mLast.hasX !== hasX ||
-                mLast.hasY !== hasY;
+                mLast.hasY !== hasY ||
+                mLast.polX !== polX ||
+                mLast.polY !== polY;
 
             if (isMDirty) {
                 const mCtx = modalCvs.getContext('2d');
-                drawPadCanvas(mCtx, modalCvs.width, modalCvs.height, state, true, hasX, hasY);
-                modalCvs._lastRenderState = { isDown, x, y, hue, sat, bright, hasX, hasY };
+                drawPadCanvas(mCtx, modalCvs.width, modalCvs.height, state, true, hasX, hasY, polX, polY);
+                modalCvs._lastRenderState = { isDown, x, y, hue, sat, bright, hasX, hasY, polX, polY };
 
                 // Update stats (X, Y)
                 const xEl = targetModal.querySelector('#pad-stat-x');
                 const yEl = targetModal.querySelector('#pad-stat-y');
 
-                if (xEl) xEl.textContent = x.toFixed(2);
-                if (yEl) yEl.textContent = y.toFixed(2);
+                const valX = data?.valX ?? (polX === 'uni' ? (x * 2.0) : ((x * 2.0) - 1.0));
+                const valY = data?.valY ?? (polY === 'uni' ? (y * 2.0) : ((y * 2.0) - 1.0));
+
+                if (xEl) xEl.textContent = (polX === 'bi' && valX >= 0 ? '+' : '') + valX.toFixed(2);
+                if (yEl) yEl.textContent = (polY === 'bi' && valY >= 0 ? '+' : '') + valY.toFixed(2);
             }
         }
     }

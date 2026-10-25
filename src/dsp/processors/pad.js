@@ -16,6 +16,10 @@ export class PadProcessor extends AudioWorkletProcessor {
         this.targetY = 0.5;
         this.targetPressure = 0.0;
 
+        // Axis Polarity: 'bi' (-1.0 to +1.0) or 'uni' (0.0 to 2.0)
+        this.polX = 'bi';
+        this.polY = 'bi';
+
         // Base slider values for HUE, SATURATION, and BRIGHT (0.0 - 1.0)
         this.baseHue = 0.5;
         this.baseSat = 1.0;
@@ -61,6 +65,8 @@ export class PadProcessor extends AudioWorkletProcessor {
                     if (typeof data.hue === 'number') this.baseHue = Math.max(0, Math.min(1, data.hue));
                     if (typeof data.sat === 'number') this.baseSat = Math.max(0, Math.min(1, data.sat));
                     if (typeof data.bright === 'number') this.baseBright = Math.max(0, Math.min(1, data.bright));
+                    if (typeof data.polX === 'string') this.polX = data.polX;
+                    if (typeof data.polY === 'string') this.polY = data.polY;
                     break;
                 }
             }
@@ -106,10 +112,14 @@ export class PadProcessor extends AudioWorkletProcessor {
             // Gate output: 1.0 when touching, 0.0 when released
             const gateVal = this.isDown ? 1.0 : 0.0;
 
+            // Calculate scaled outputs according to axis polarity
+            const valX = this.polX === 'uni' ? (this.currX * 2.0) : ((this.currX * 2.0) - 1.0);
+            const valY = this.polY === 'uni' ? (this.currY * 2.0) : ((this.currY * 2.0) - 1.0);
+
             if (outTrig) outTrig[i] = trigVal;
             if (outGate) outGate[i] = gateVal;
-            if (outX) outX[i] = this.currX;
-            if (outY) outY[i] = this.currY;
+            if (outX) outX[i] = valX;
+            if (outY) outY[i] = valY;
             if (outPress) outPress[i] = this.currPressure;
 
             if (inHue) this.inHueVal = inHue[i];
@@ -122,10 +132,16 @@ export class PadProcessor extends AudioWorkletProcessor {
             this.postCounter = 0;
             const effectiveHue = ((this.baseHue + this.inHueVal) % 1.0 + 1.0) % 1.0;
             const effectiveBright = Math.max(0.0, Math.min(1.0, this.baseBright + this.inBrightVal));
+            const liveValX = this.polX === 'uni' ? (this.currX * 2.0) : ((this.currX * 2.0) - 1.0);
+            const liveValY = this.polY === 'uni' ? (this.currY * 2.0) : ((this.currY * 2.0) - 1.0);
             this.port.postMessage({
                 type: 'PAD_DATA',
                 x: this.currX,
                 y: this.currY,
+                valX: liveValX,
+                valY: liveValY,
+                polX: this.polX,
+                polY: this.polY,
                 pressure: this.currPressure,
                 isDown: this.isDown,
                 hue: effectiveHue,

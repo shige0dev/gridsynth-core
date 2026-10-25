@@ -45,17 +45,26 @@ export const UIHelpers = {
             ctx2d.restore();
         }
 
+        const showAxisX = options.showAxisX ?? true;
+        const showAxisY = options.showAxisY ?? true;
+
         // Center crosshair axes
-        ctx2d.save();
-        ctx2d.strokeStyle = axisColor;
-        ctx2d.lineWidth = axisWidth;
-        ctx2d.beginPath();
-        ctx2d.moveTo(0, h / 2);
-        ctx2d.lineTo(w, h / 2);
-        ctx2d.moveTo(w / 2, 0);
-        ctx2d.lineTo(w / 2, h);
-        ctx2d.stroke();
-        ctx2d.restore();
+        if (showAxisX || showAxisY) {
+            ctx2d.save();
+            ctx2d.strokeStyle = axisColor;
+            ctx2d.lineWidth = axisWidth;
+            ctx2d.beginPath();
+            if (showAxisY) {
+                ctx2d.moveTo(0, h / 2);
+                ctx2d.lineTo(w, h / 2);
+            }
+            if (showAxisX) {
+                ctx2d.moveTo(w / 2, 0);
+                ctx2d.lineTo(w / 2, h);
+            }
+            ctx2d.stroke();
+            ctx2d.restore();
+        }
     },
     createVSliderHTML: (id, label, min, max, step, val, unitStr, accentColor = 'cyan', isPatched = false, customDisp = null, power = 1) => {
         const disp = customDisp ?? (Math.abs(val) < 10 && step < 1 ? Number(val).toFixed(2) : Math.round(val));

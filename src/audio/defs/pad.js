@@ -11,7 +11,9 @@ export const PAD = {
             type: 'SET_CONFIG',
             hue: d.hue ?? 0.5,
             sat: d.sat ?? 1.0,
-            bright: d.bright ?? 0.0
+            bright: d.bright ?? 0.0,
+            polX: d.polX ?? 'bi',
+            polY: d.polY ?? 'bi'
         });
 
         const inHue = ctx.createGain();
@@ -88,7 +90,9 @@ export const PAD = {
             type: 'SET_CONFIG',
             hue: d.hue ?? 0.5,
             sat: d.sat ?? 1.0,
-            bright: d.bright ?? 0.0
+            bright: d.bright ?? 0.0,
+            polX: d.polX ?? 'bi',
+            polY: d.polY ?? 'bi'
         });
     }
 };
