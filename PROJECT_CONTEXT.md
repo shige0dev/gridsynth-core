@@ -823,6 +823,18 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
         - これにより、UNI設定時（例: DEMO 14）でも左端・下端のゼロ点位置がくっきりと視認でき、外縁の `▲` / `▶` ボタンの先端と完全に合致する明快なグラフィックを実現。
     - バージョンを `v1.0.0380`、キャッシュバスターを `v=380` に更新。
 
+ 52. **パフォームモード（PERFOM）におけるスクロール検知範囲の左右グリッド外限定化**:
+    - `css/style.css`:
+      - パフォームモード時（`.is-performance-mode`）、グリッド内部（`#grid-board`, `#grid-board *`, `.grid-cell`, `.empty-cell`, `#base-grid`, `#cable-canvas`）の CSS `touch-action` を **`none !important;`** に強制指定。
+        - これにより、スマホ・タブレット等のタッチデバイスで PAD のフィンガードラム連打、KEY のスワイプ演奏、ノブ・スライダー操作時に、画面全体が誤って上下スクロールしてしまう問題を根本解決。
+      - 左右ガター領域専用のスクロールレール（`.perf-scroll-rail`）および `#canvas-container` に **`touch-action: pan-y !important;`** を適用。外縁部に極細のガイドライン（hover/activeでアンバー発光）を表示。
+    - `src/ui/managers/interaction-manager.js`:
+      - `gridBoard` 内でのマウスドラッグスクロールをパフォームモード時は無効化（`!this.ui.isPerformanceMode` ガード）。
+      - `#canvas-container` の左右外縁領域（`e.clientX < gridRect.left || e.clientX > gridRect.right`）をクリック/タッチした時のみ `_isGutterScrollDragging` によるドラッグスクロールを発動するよう限定。
+    - `src/ui/controller.js`:
+      - パフォームモード時のデスクトップマウスホイール／トラックパッド操作も、ポインタが左右グリッド外にある場合のみスクロールを許可するよう境界判定を追加。
+    - バージョンを `v1.0.0381`、キャッシュバスターを `v=381` に更新。
+
 
 
 

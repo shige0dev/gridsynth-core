@@ -38,6 +38,10 @@ export class InteractionManager {
         this._scrollStartY = 0;
         this._scrollStartTop = 0;
 
+        this._isGutterScrollDragging = false;
+        this._gutterScrollStartY = 0;
+        this._gutterScrollStartTop = 0;
+
         // Row Movement & Handle states
         this.rowManager = new RowManager(this.ui, this);
 
@@ -47,6 +51,7 @@ export class InteractionManager {
 
     cancelPendingPresses() {
         this._stopModuleAutoScroll();
+        this._isGutterScrollDragging = false;
         if (this._pTimer) {
             clearTimeout(this._pTimer);
             this._pTimer = null;
@@ -303,6 +308,26 @@ export class InteractionManager {
             }
         });
 
+        const mainContainer = document.getElementById('canvas-container');
+        if (mainContainer && !mainContainer._gutterScrollBound) {
+            mainContainer._gutterScrollBound = true;
+            mainContainer.addEventListener('pointerdown', (e) => {
+                if (e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal')) {
+                    return;
+                }
+                const gridRect = this.ui.gridBoard?.getBoundingClientRect();
+                if (!gridRect) return;
+
+                const isOutsideGrid = (e.clientX < gridRect.left || e.clientX > gridRect.right) || Boolean(e.target.closest('.perf-scroll-rail'));
+                if (isOutsideGrid && (e.button === 0 || e.pointerType !== 'mouse')) {
+                    this._isGutterScrollDragging = true;
+                    this._gutterScrollStartY = e.clientY;
+                    this._gutterScrollStartTop = mainContainer.scrollTop;
+                    try { mainContainer.setPointerCapture(e.pointerId); } catch (_) {}
+                }
+            });
+        }
+
         this.ui.gridBoard.addEventListener('pointerdown', (e) => {
             if (e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal')) {
                 return;
@@ -312,7 +337,7 @@ export class InteractionManager {
             this._isMouseScrollDragging = false;
 
             const container = document.getElementById('canvas-container');
-            if (e.pointerType === 'mouse' && e.button === 0 && container) {
+            if (!this.ui.isPerformanceMode && e.pointerType === 'mouse' && e.button === 0 && container) {
                 const isControl = e.target.closest('.port, input, button, select, textarea, .pad-grid-container, .pad-grid-canvas, .row-handle-btn, .row-overlay-track, #row-handle-overlay');
                 if (!isControl) {
                     this._scrollStartY = e.clientY;
@@ -414,11 +439,18 @@ export class InteractionManager {
                 this._lpTimer = null;
             }
 
+            // Gutter drag scroll (outside the grid on left & right)
+            const container = document.getElementById('canvas-container');
+            if (this._isGutterScrollDragging && container) {
+                const deltaY = e.clientY - this._gutterScrollStartY;
+                container.scrollTop = this._gutterScrollStartTop - deltaY;
+                return;
+            }
+
             const isCandidateSelected = this._dragCandidate && this.selectedModuleIds.includes(this._dragCandidate);
 
-            // Desktop mouse drag-to-scroll support (simulate touch swipe on PC)
-            const container = document.getElementById('canvas-container');
-            if (e.pointerType === 'mouse' && (e.buttons & 1) && !this.isDragging && !this.moduleLongPressed && !isCandidateSelected && container) {
+            // Desktop mouse drag-to-scroll support (simulate touch swipe on PC - disabled in performance mode inside grid)
+            if (!this.ui.isPerformanceMode && e.pointerType === 'mouse' && (e.buttons & 1) && !this.isDragging && !this.moduleLongPressed && !isCandidateSelected && container) {
                 if (e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal, .pad-grid-container, .pad-grid-canvas, .row-handle-btn, .row-overlay-track, #row-handle-overlay')) {
                     this._isMouseScrollDragging = false;
                     return;
@@ -498,6 +530,11 @@ export class InteractionManager {
             if (this._copyTimer) {
                 clearTimeout(this._copyTimer);
                 this._copyTimer = null;
+            }
+            if (this._isGutterScrollDragging) {
+                this._isGutterScrollDragging = false;
+                const container = document.getElementById('canvas-container');
+                try { container?.releasePointerCapture?.(e.pointerId); } catch (_) {}
             }
             if (this._isMouseScrollDragging) {
                 this._isMouseScrollDragging = false;

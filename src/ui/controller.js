@@ -929,6 +929,16 @@ export class UIController {
             const activeModal = document.querySelector('#shared-modal:not(.hidden), #preset-manager-modal:not(.hidden), #custom-alert-modal:not(.hidden)');
             if (activeModal) return;
             if (e.target.closest('input, select, textarea, .overflow-y-auto:not(#canvas-container)')) return;
+
+            // In performance mode, restrict wheel scrolling to outside the grid (left & right gutters)
+            if (this.isPerformanceMode) {
+                const gridRect = this.gridBoard?.getBoundingClientRect();
+                if (gridRect) {
+                    const isOutsideGrid = (e.clientX < gridRect.left || e.clientX > gridRect.right) || Boolean(e.target.closest('.perf-scroll-rail'));
+                    if (!isOutsideGrid) return;
+                }
+            }
+
             container.scrollTop += e.deltaY;
         }, { passive: true });
 

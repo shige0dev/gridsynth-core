@@ -83,13 +83,15 @@
                 <button id="page-nav-save-btn" class="h-5 px-1.5 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/70 text-emerald-300 rounded flex items-center gap-1 transition shadow-sm text-[8px] font-bold cursor-pointer" style="display: none;" title="ライブラリにストック">
                     <i data-lucide="archive" class="w-2.5 h-2.5 pointer-events-none"></i><span>STOCK</span>
                 </button>
-                <span id="app-version-disp" class="font-mono text-[8.5px] font-bold text-cyan-400/90 tracking-tight select-none">v1.0.0380</span>
+                <span id="app-version-disp" class="font-mono text-[8.5px] font-bold text-cyan-400/90 tracking-tight select-none">v1.0.0381</span>
             </div>
         </div>
 
         <!-- Main Workspace (Grid & Cables - Scrollable) -->
         <main id="canvas-container" class="flex-1 relative overflow-y-auto overflow-x-hidden px-3.5 py-2 flex flex-col items-center justify-start pb-[env(safe-area-inset-bottom,0px)]">
             <div id="grid-scroll-content" class="relative w-full mt-1 mb-16 shrink-0">
+                <div id="perf-scroll-rail-left" class="perf-scroll-rail perf-scroll-rail-left" title="SCROLL"></div>
+                <div id="perf-scroll-rail-right" class="perf-scroll-rail perf-scroll-rail-right" title="SCROLL"></div>
                 <div id="base-grid" class="grid grid-cols-4 gap-1.5 w-full absolute inset-0 pointer-events-none z-0"></div>
                 <div id="grid-board" class="grid grid-cols-4 gap-1.5 w-full relative z-20"></div>
                 <svg id="cable-canvas" class="absolute inset-0 w-full h-full z-10 pointer-events-none transition-opacity duration-300" shape-rendering="geometricPrecision"></svg>
@@ -197,6 +199,6 @@
         <div id="toast" class="absolute bottom-20 left-1/2 -translate-x-1/2 px-3.5 py-1.5 bg-slate-900/95 border border-cyan-400 text-cyan-200 rounded-full text-[11px] font-bold shadow-2xl pointer-events-none opacity-0 transition-opacity duration-200 z-[100] whitespace-nowrap ring-1 ring-cyan-500/40">Message</div>
     </div>
 
-    <script type="module" src="./src/main.js?v=380"></script>
+    <script type="module" src="./src/main.js?v=381"></script>
 </body>
 </html>
