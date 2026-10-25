@@ -7,6 +7,7 @@ export class RowManager {
         this.selectedRow = null;
         this.draggingRow = null;
         this.currentTargetBoundary = null;
+        this.lastValidBoundary = null;
     }
 
     getRowEl(r) {
@@ -42,6 +43,8 @@ export class RowManager {
         }
         this.selectedRow = null;
         this.draggingRow = null;
+        this.currentTargetBoundary = null;
+        this.lastValidBoundary = null;
         document.body.classList.remove('is-row-dragging');
         const container = document.getElementById('canvas-container');
         if (container) container.style.overflowY = 'auto';
@@ -70,6 +73,8 @@ export class RowManager {
         this.clearRowSelection();
         this.selectedRow = r;
         this.draggingRow = r;
+        this.currentTargetBoundary = null;
+        this.lastValidBoundary = null;
 
         const rowEl = this.getRowEl(r);
         if (rowEl) rowEl.classList.add('row-source-dragging');
@@ -87,38 +92,69 @@ export class RowManager {
     resumeSelectedRowDrag() {
         if (this.selectedRow === null) return;
         this.draggingRow = this.selectedRow;
+        this.currentTargetBoundary = null;
+        this.lastValidBoundary = null;
         this.clearInsertBeam();
         document.body.classList.add('is-row-dragging');
         const container = document.getElementById('canvas-container');
         if (container) container.style.overflowY = 'hidden';
     }
 
+    calculateBoundary(clientY) {
+        const ROWS = this.ui.ROWS;
+        if (!ROWS || ROWS <= 0) return null;
+
+        const firstRowEl = this.getRowEl(0);
+        const lastRowEl = this.getRowEl(ROWS - 1);
+        if (!firstRowEl || !lastRowEl) return null;
+
+        const firstRect = firstRowEl.getBoundingClientRect();
+        if (clientY < firstRect.top + firstRect.height * 0.5) {
+            return 0;
+        }
+
+        const lastRect = lastRowEl.getBoundingClientRect();
+        if (clientY >= lastRect.bottom - lastRect.height * 0.5) {
+            return ROWS;
+        }
+
+        for (let r = 0; r < ROWS - 1; r++) {
+            const rowEl = this.getRowEl(r);
+            const nextRowEl = this.getRowEl(r + 1);
+            if (!rowEl || !nextRowEl) continue;
+
+            const rect = rowEl.getBoundingClientRect();
+            const nextRect = nextRowEl.getBoundingClientRect();
+
+            const midR = rect.top + rect.height * 0.5;
+            const midNext = nextRect.top + nextRect.height * 0.5;
+
+            if (clientY >= midR && clientY < midNext) {
+                return r + 1;
+            }
+        }
+
+        return null;
+    }
+
     updateBoundaryFromPointer(clientX, clientY) {
         if (this.draggingRow === null) return;
         const originalRow = this.draggingRow;
+        const boundary = this.calculateBoundary(clientY);
 
-        const el = document.elementFromPoint(clientX, clientY);
-        const rowEl = el?.closest?.('.grid-row');
-        if (!rowEl) {
+        if (boundary === null) {
             this.clearInsertBeam();
+            this.lastValidBoundary = null;
             return;
         }
-
-        const rowIdx = parseInt(rowEl.dataset.row, 10);
-        if (isNaN(rowIdx)) {
-            this.clearInsertBeam();
-            return;
-        }
-
-        const rect = rowEl.getBoundingClientRect();
-        const midY = rect.top + rect.height / 2;
-        const boundary = clientY < midY ? rowIdx : rowIdx + 1;
 
         if (boundary !== originalRow && boundary !== originalRow + 1) {
             this.currentTargetBoundary = boundary;
+            this.lastValidBoundary = boundary;
             this.showInsertBeam(boundary);
         } else {
             this.clearInsertBeam();
+            this.lastValidBoundary = null;
         }
     }
 
@@ -126,17 +162,28 @@ export class RowManager {
         if (this.draggingRow === null) return false;
 
         const originalRow = this.draggingRow;
-        const boundary = this.currentTargetBoundary;
+        const boundary = (this.currentTargetBoundary !== null && this.currentTargetBoundary !== undefined)
+            ? this.currentTargetBoundary
+            : this.lastValidBoundary;
 
-        if (boundary !== null && boundary !== originalRow && boundary !== originalRow + 1) {
+        if (boundary !== null && boundary !== undefined && boundary !== originalRow && boundary !== originalRow + 1) {
             const destRow = boundary < originalRow ? boundary : (boundary - 1);
+            this.lastValidBoundary = null;
+            this.currentTargetBoundary = null;
+            this.clearInsertBeam();
             this.clearRowSelection();
             this.moveRowTo(originalRow, destRow);
             return true;
         }
 
-        // If user lifted finger without dragging to another row yet, clear selection cleanly and return to normal mode
-        this.clearRowSelection();
+        // Pointer released without dragging to another row yet
+        this.lastValidBoundary = null;
+        this.currentTargetBoundary = null;
+        this.clearInsertBeam();
+        this.draggingRow = null;
+        document.body.classList.remove('is-row-dragging');
+        const container = document.getElementById('canvas-container');
+        if (container) container.style.overflowY = 'auto';
         return false;
     }
 

@@ -1,7 +1,7 @@
 // src/ui/managers/interaction-manager.js
 import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=297';
 import { MODULE_REGISTRY } from '../../modules/registry.js?v=297';
-import { RowManager } from './row-manager.js?v=393';
+import { RowManager } from './row-manager.js?v=394';
 
 export class InteractionManager {
     constructor(ui) {
@@ -659,8 +659,11 @@ export class InteractionManager {
             }
         });
 
-        const stopDrag = () => {
+        const stopDrag = (e) => {
             if (this.rowManager?.draggingRow !== null && this.rowManager?.draggingRow !== undefined) {
+                if (e && typeof e.clientY === 'number') {
+                    this.rowManager.updateBoundaryFromPointer(e.clientX, e.clientY);
+                }
                 this.rowManager.finishRowDrag();
             }
             this.rowLongPressed = false;
@@ -803,8 +806,8 @@ export class InteractionManager {
         };
 
         window.addEventListener('pointerup', stopDrag);
-        window.addEventListener('pointercancel', () => {
-            stopDrag();
+        window.addEventListener('pointercancel', (e) => {
+            stopDrag(e);
             this.portLongPressed = false;
             this.moduleLongPressed = false;
             this.rowLongPressed = false;
