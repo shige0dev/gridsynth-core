@@ -1,42 +1,23 @@
 import { UIHelpers } from '../../ui/helpers.js';
 import { parseClockRate } from '../../core/utils.js';
 
-const MATH_PRESETS = [
-    { label: 'A (THRU)', expr: 'A', desc: '数値モニタ/スルー' },
-    { label: 'A * B + C', expr: 'A * B + C', desc: 'スケール&オフセット' },
-    { label: 'A + B', expr: 'A + B', desc: '加算 (Sum)' },
-    { label: 'A - B', expr: 'A - B', desc: '減算 (Diff)' },
-    { label: 'A * B', expr: 'A * B', desc: '乗算 / 変調' },
-    { label: 'abs(A)', expr: 'abs(A)', desc: '全波整流 / 絶対値' },
-    { label: 'min(A, B)', expr: 'min(A, B)', desc: '最小値 / アナログOR' },
-    { label: 'max(A, B)', expr: 'max(A, B)', desc: '最大値 / アナログAND' },
-    { label: 'clamp(A, B, C)', expr: 'clamp(A, B, C)', desc: 'リミッター (B〜C)' },
-    { label: 'A % B', expr: 'A % B', desc: '剰余 / 周期フォールド' },
-    { label: 'A > B', expr: 'A > B', desc: '比較コンパレータ' }
-];
-
-const renderMathModalUI = (m, ctx) => {
-    const curExpr = m.expr || m.mode || 'A';
-    const escExpr = curExpr.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const renderMathModalUI = (m, ctx, modeGroups, valKeys) => {
+    const curMode = m.mode || modeGroups[0].modes[0];
     const fmt = v => (v >= 0 ? '+' : '') + Number(v || 0).toFixed(2);
-
     return `
-        <div class="space-y-2 p-0.5">
-            <!-- 1. Expression Display Screen -->
-            <div class="bg-slate-950/90 border border-purple-500/50 rounded-lg p-1.5 flex items-center justify-between gap-1 shadow-inner">
-                <div class="flex items-center gap-1.5 overflow-hidden flex-1 min-w-0">
-                    <span class="text-[7.5px] font-bold uppercase text-purple-400 font-mono tracking-wider shrink-0">EXPR:</span>
-                    <span id="math-expr-disp" class="font-mono text-cyan-300 font-bold text-[10.5px] truncate select-all" title="${escExpr}">${escExpr}</span>
+        <div class="space-y-1.5 p-0.5">
+            ${modeGroups.map(g => `
+                <div>
+                    <div class="text-[7.5px] font-bold text-slate-400 mb-0.5 uppercase tracking-wider">${g.label}</div>
+                    <div class="grid grid-cols-${g.cols} gap-0.5">
+                        ${g.modes.map(md => `
+                            <button class="math-mode-btn h-4 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${curMode === md ? 'bg-purple-600 text-white border-purple-500 shadow-sm shadow-purple-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}" data-mode="${md}">${md === '<' ? '&lt;' : (md === '<=' ? '&lt;=' : md)}</button>
+                        `).join('')}
+                    </div>
                 </div>
-                <div class="flex items-center gap-1 shrink-0">
-                    <button id="math-btn-backspace" class="h-5 px-1.5 rounded text-[8px] font-mono font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 active:scale-95 transition" title="1文字削除">⌫</button>
-                    <button id="math-btn-clear" class="h-5 px-1.5 rounded text-[8px] font-mono font-bold bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-800/80 active:scale-95 transition" title="Aにリセット">CLR</button>
-                </div>
-            </div>
-
-            <!-- 2. Constant Sliders (Val A, Val B, Val C) - Disabled when patched -->
-            <div class="grid grid-cols-3 gap-1">
-                ${['A', 'B', 'C'].map(k => {
+            `).join('')}
+            <div class="grid grid-cols-${valKeys.length} gap-1 pt-0.5">
+                ${valKeys.map(k => {
                     const port = k.toLowerCase();
                     const isPatched = ctx.patched?.has('CV_in' + k) || ctx.patched?.has('cv_in' + port) || ctx.patched?.has(port);
                     const val = m[`val${k}`] ?? (k === 'B' ? 1.0 : 0.0);
@@ -44,7 +25,7 @@ const renderMathModalUI = (m, ctx) => {
                         return `
                             <div class="flex flex-col gap-0.5 bg-slate-950/40 p-1 rounded-md border border-slate-800 opacity-50 cursor-not-allowed select-none">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-[7.5px] font-bold text-slate-500 font-mono">${k}</span>
+                                    <span class="text-[7.5px] font-bold text-slate-500 font-mono">VAL ${k}</span>
                                     <span class="text-[6.5px] font-mono px-1 rounded bg-slate-800/80 text-emerald-400 font-bold">CABLED</span>
                                 </div>
                                 <div class="text-[8px] font-mono text-slate-500 text-center py-0.5 font-bold">EXT CV</div>
@@ -60,115 +41,19 @@ const renderMathModalUI = (m, ctx) => {
                         </div>`;
                 }).join('')}
             </div>
-
-            <!-- 3. Function Tokens (MATH1 & MATH2 features) -->
-            <div class="space-y-1">
-                <div class="text-[7.5px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
-                    <span>Tokens</span>
-                    <span class="text-[6.5px] text-slate-500 font-normal">タップで式に追加</span>
-                </div>
-                <!-- Inputs & Numbers -->
-                <div class="grid grid-cols-8 gap-0.5">
-                    ${['A', 'B', 'C', '(', ')', '0.5', '1.0', '2.0'].map(t => `
-                        <button class="math-token-btn h-4 rounded text-[7.5px] font-mono font-bold border border-slate-700 bg-slate-800/90 hover:bg-purple-900/60 text-purple-200 active:scale-95 transition" data-token="${t}">${t}</button>
-                    `).join('')}
-                </div>
-                <!-- Operators -->
-                <div class="grid grid-cols-6 gap-0.5">
-                    ${['+', '-', '*', '/', '%', '^'].map(t => `
-                        <button class="math-token-btn h-4 rounded text-[8px] font-mono font-bold border border-slate-700 bg-slate-800 hover:bg-purple-900/60 text-amber-300 active:scale-95 transition" data-token="${t}">${t}</button>
-                    `).join('')}
-                </div>
-                <!-- Functions (MATH1 & MATH2) -->
-                <div class="grid grid-cols-4 gap-0.5">
-                    ${['abs', 'floor', 'ceil', 'round', 'int', 'min', 'max', 'clamp'].map(t => `
-                        <button class="math-token-btn h-4 rounded text-[7.5px] font-mono font-bold border border-slate-700 bg-slate-800 hover:bg-purple-900/60 text-cyan-300 active:scale-95 transition" data-token="${t}">${t}</button>
-                    `).join('')}
-                </div>
-                <!-- Comparisons (MATH2) -->
-                <div class="grid grid-cols-5 gap-0.5">
-                    ${['<', '<=', '==', '>=', '>'].map(t => `
-                        <button class="math-token-btn h-4 rounded text-[7.5px] font-mono font-bold border border-slate-700 bg-slate-800 hover:bg-purple-900/60 text-emerald-300 active:scale-95 transition" data-token="${t}">${t === '<' ? '&lt;' : (t === '<=' ? '&lt;=' : t)}</button>
-                    `).join('')}
-                </div>
-            </div>
-
-            <!-- 4. Common Function Examples (Presets) -->
-            <div class="space-y-1 pt-0.5">
-                <div class="text-[7.5px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
-                    <span>Presets (よくある関数例)</span>
-                    <span class="text-[6.5px] text-slate-500 font-normal">ワンタップ即時反映</span>
-                </div>
-                <div class="grid grid-cols-3 gap-0.5">
-                    ${MATH_PRESETS.map(p => {
-                        const isSel = (m.expr || m.mode || 'A') === p.expr;
-                        return `
-                            <button class="math-preset-btn h-5 rounded text-[7.5px] font-mono font-bold border leading-none px-1 inline-flex items-center justify-center transition truncate ${isSel ? 'bg-purple-600 text-white border-purple-400 shadow-sm shadow-purple-500/40' : 'bg-slate-800/90 text-slate-300 border-slate-700 hover:bg-slate-700'}" data-expr="${p.expr}" title="${p.desc}">${p.label}</button>
-                        `;
-                    }).join('')}
-                </div>
-            </div>
         </div>`;
 };
 
-const bindMathEventsUI = (m, ctx, cb) => {
-    // 1. Presets buttons
-    document.querySelectorAll('.math-preset-btn').forEach(btn => {
+const bindMathEventsUI = (m, ctx, cb, valKeys) => {
+    document.querySelectorAll('.math-mode-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            const expr = e.currentTarget.dataset.expr;
-            m.expr = expr;
-            m.mode = expr;
+            m.mode = e.currentTarget.dataset.mode;
             ctx.reRenderModal();
             cb();
         });
     });
-
-    // 2. Token buttons
-    document.querySelectorAll('.math-token-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const token = e.currentTarget.dataset.token;
-            let cur = (m.expr || 'A').trim();
-            if (cur === 'A' && ['abs', 'floor', 'ceil', 'round', 'int', 'min', 'max', 'clamp', 'B', 'C'].includes(token)) {
-                cur = '';
-            }
-            if (['abs', 'floor', 'ceil', 'round', 'int', 'min', 'max', 'clamp'].includes(token)) {
-                m.expr = (cur ? cur + ' ' : '') + token + '(';
-            } else if (['+', '-', '*', '/', '%', '^', '<', '<=', '==', '>=', '>'].includes(token)) {
-                m.expr = cur + ' ' + token + ' ';
-            } else {
-                m.expr = (cur ? cur + (cur.endsWith('(') || cur.endsWith(' ') ? '' : ' ') : '') + token;
-            }
-            m.mode = m.expr;
-            ctx.reRenderModal();
-            cb();
-        });
-    });
-
-    // 3. Backspace button
-    document.getElementById('math-btn-backspace')?.addEventListener('click', () => {
-        let cur = (m.expr || 'A').trim();
-        if (cur.length > 1) {
-            m.expr = cur.slice(0, -1).trim();
-            if (!m.expr) m.expr = 'A';
-        } else {
-            m.expr = 'A';
-        }
-        m.mode = m.expr;
-        ctx.reRenderModal();
-        cb();
-    });
-
-    // 4. Clear button
-    document.getElementById('math-btn-clear')?.addEventListener('click', () => {
-        m.expr = 'A';
-        m.mode = 'A';
-        ctx.reRenderModal();
-        cb();
-    });
-
-    // 5. Sliders and Prompts for A, B, C
-    ['a', 'b', 'c'].forEach(port => {
-        const k = port.toUpperCase();
+    valKeys.forEach(k => {
+        const port = k.toLowerCase();
         const slider = document.getElementById(`math-val-${port}-slider`);
         if (slider) {
             slider.addEventListener('input', (e) => {
@@ -198,11 +83,11 @@ const bindMathEventsUI = (m, ctx, cb) => {
 };
 
 const renderMathGridUI = (m) => {
-    const expr = m.expr || m.mode || 'A';
-    const escExpr = expr.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const mode = m.mode || (m.type === 'MATH1' ? '-' : 'ADD');
+    const escMode = mode === '<' ? '&lt;' : (mode === '<=' ? '&lt;=' : mode);
     return `
-        <div class="flex flex-col items-center justify-center leading-none gap-0.5 pointer-events-none text-cyan-400 w-full px-1">
-            <span class="math-expr-title text-[8px] font-mono font-bold uppercase text-purple-400 tracking-tight truncate max-w-[56px] text-center" title="${escExpr}">${escExpr}</span>
+        <div class="flex flex-col items-center justify-center leading-none gap-0.5 pointer-events-none text-cyan-400">
+            <span class="text-[9px] font-bold uppercase text-purple-400 tracking-tight">${escMode}</span>
             <span class="math-disp-val text-[12px] font-mono font-bold text-cyan-300 tracking-tight">+0.00</span>
         </div>`;
 };
@@ -471,31 +356,39 @@ export const THROUGH = {
     bindEvents: (m, ctx, cb) => { document.getElementById('toggle-switch-btn')?.addEventListener('click', () => { m.state = !m.state; ctx.reRenderModal(); cb(); }); }
 };
 
-export const MATH = {
+export const MATH1 = {
     color: 'purple',
-    defaults: () => ({ type: 'MATH', expr: 'A', valA: 0.0, valB: 1.0, valC: 0.0 }),
+    MODES: ['-', 'ABS', 'FLOOR', 'CEIL', 'ROUND', 'INT'],
+    defaults: () => ({ type: 'MATH1', mode: '-', valA: 0.0 }),
+    ports: () => ({
+        in: [{ port: 'CV_inA', pin: 4, alias: 'a', color: 'bg-yellow-400' }],
+        out: [{ port: 'CV_OUT', pin: 9, alias: 'out', color: 'bg-yellow-400' }]
+    }),
+    renderGrid: renderMathGridUI,
+    updateLive: updateMathLiveUI,
+    renderModal: (m, ctx) => renderMathModalUI(m, ctx, [{ label: 'Functions (A)', cols: 6, modes: MATH1.MODES }], ['A']),
+    bindEvents: (m, ctx, cb) => bindMathEventsUI(m, ctx, cb, ['A'])
+};
+
+export const MATH2 = {
+    color: 'purple',
+    ARITHMETIC_MODES: ['ADD', 'DIFF', 'MULTI', 'MOD', 'A^B', 'MIN', 'MAX'],
+    COMPARISON_MODES: ['<', '<=', '==', '>=', '>'],
+    defaults: () => ({ type: 'MATH2', mode: 'ADD', valA: 0.0, valB: 1.0 }),
     ports: () => ({
         in: [
             { port: 'CV_inA', pin: 4, alias: 'a', color: 'bg-yellow-400' },
-            { port: 'CV_inB', pin: 5, alias: 'b', color: 'bg-yellow-400' },
-            { port: 'CV_inC', pin: 6, alias: 'c', color: 'bg-yellow-400' }
+            { port: 'CV_inB', pin: 5, alias: 'b', color: 'bg-yellow-400' }
         ],
         out: [{ port: 'CV_OUT', pin: 9, alias: 'out', color: 'bg-yellow-400' }]
     }),
     renderGrid: renderMathGridUI,
     updateLive: updateMathLiveUI,
-    renderModal: renderMathModalUI,
-    bindEvents: bindMathEventsUI
-};
-
-export const MATH1 = {
-    ...MATH,
-    defaults: () => ({ type: 'MATH1', expr: 'A', valA: 0.0, valB: 1.0, valC: 0.0 })
-};
-
-export const MATH2 = {
-    ...MATH,
-    defaults: () => ({ type: 'MATH2', expr: 'A + B', valA: 0.0, valB: 1.0, valC: 0.0 })
+    renderModal: (m, ctx) => renderMathModalUI(m, ctx, [
+        { label: 'Arithmetic', cols: 4, modes: MATH2.ARITHMETIC_MODES },
+        { label: 'Comparison (A vs B)', cols: 5, modes: MATH2.COMPARISON_MODES }
+    ], ['A', 'B']),
+    bindEvents: (m, ctx, cb) => bindMathEventsUI(m, ctx, cb, ['A', 'B'])
 };
 
 export const SH = {
@@ -533,7 +426,6 @@ export const modDefs = {
     LFO,
     CLK,
     THROUGH,
-    MATH,
     MATH1,
     MATH2,
     SH
