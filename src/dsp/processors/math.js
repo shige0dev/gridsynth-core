@@ -65,6 +65,18 @@ export class MathProcessor extends AudioWorkletProcessor {
                 case 'INT':
                     v = Math.trunc(a);
                     break;
+                case 'NOT':
+                    v = a > 0.5 ? 0.0 : 1.0;
+                    break;
+                case 'AND':
+                    v = (a > 0.5 && b > 0.5) ? 1.0 : 0.0;
+                    break;
+                case 'OR':
+                    v = (a > 0.5 || b > 0.5) ? 1.0 : 0.0;
+                    break;
+                case 'NAND':
+                    v = !(a > 0.5 && b > 0.5) ? 1.0 : 0.0;
+                    break;
                 case 'MIN':
                     v = Math.min(a, b);
                     break;

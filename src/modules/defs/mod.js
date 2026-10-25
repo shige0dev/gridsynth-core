@@ -358,7 +358,7 @@ export const THROUGH = {
 
 export const MATH1 = {
     color: 'purple',
-    MODES: ['-', 'ABS', 'FLOOR', 'CEIL', 'ROUND', 'INT'],
+    MODES: ['-', 'ABS', 'FLOOR', 'CEIL', 'ROUND', 'INT', 'NOT'],
     defaults: () => ({ type: 'MATH1', mode: '-', valA: 0.0 }),
     ports: () => ({
         in: [{ port: 'CV_inA', pin: 4, alias: 'a', color: 'bg-yellow-400' }],
@@ -366,7 +366,7 @@ export const MATH1 = {
     }),
     renderGrid: renderMathGridUI,
     updateLive: updateMathLiveUI,
-    renderModal: (m, ctx) => renderMathModalUI(m, ctx, [{ label: 'Functions (A)', cols: 6, modes: MATH1.MODES }], ['A']),
+    renderModal: (m, ctx) => renderMathModalUI(m, ctx, [{ label: 'Functions (A)', cols: 4, modes: MATH1.MODES }], ['A']),
     bindEvents: (m, ctx, cb) => bindMathEventsUI(m, ctx, cb, ['A'])
 };
 
@@ -374,6 +374,7 @@ export const MATH2 = {
     color: 'purple',
     ARITHMETIC_MODES: ['ADD', 'DIFF', 'MULTI', 'MOD', 'A^B', 'MIN', 'MAX'],
     COMPARISON_MODES: ['<', '<=', '==', '>=', '>'],
+    LOGIC_MODES: ['AND', 'OR', 'NAND'],
     defaults: () => ({ type: 'MATH2', mode: 'ADD', valA: 0.0, valB: 1.0 }),
     ports: () => ({
         in: [
@@ -386,7 +387,8 @@ export const MATH2 = {
     updateLive: updateMathLiveUI,
     renderModal: (m, ctx) => renderMathModalUI(m, ctx, [
         { label: 'Arithmetic', cols: 4, modes: MATH2.ARITHMETIC_MODES },
-        { label: 'Comparison (A vs B)', cols: 5, modes: MATH2.COMPARISON_MODES }
+        { label: 'Comparison (A vs B)', cols: 5, modes: MATH2.COMPARISON_MODES },
+        { label: 'Logic (A, B > 0.5)', cols: 3, modes: MATH2.LOGIC_MODES }
     ], ['A', 'B']),
     bindEvents: (m, ctx, cb) => bindMathEventsUI(m, ctx, cb, ['A', 'B'])
 };
