@@ -548,7 +548,6 @@ export class InteractionManager {
                 return;
             }
 
-            const rowEl = e.target.closest('.grid-row');
             if (rowEl) {
                 const targetRow = parseInt(rowEl.dataset.row, 10);
                 if (!isNaN(targetRow)) {
