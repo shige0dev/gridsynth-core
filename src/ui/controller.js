@@ -1036,7 +1036,7 @@ export class UIController {
                 const idx = m.row * this.COLS + m.col;
                 const cell = this.cells[idx] || document.getElementById(`cell-${idx}`);
                 const targetModal = this.modalManager.getDialogElement(m.id);
-                if (cell) reg.updateLive(cell, readData, this.synth.isPlaying, targetModal, m);
+                if (cell) reg.updateLive(cell, readData, this.synth.isPlaying, targetModal, m, this.getPatchState(m.id));
             }
         });
     }

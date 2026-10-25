@@ -24,7 +24,7 @@ function calcPressure(e) {
     return 0.6;
 }
 
-function drawPadCanvas(ctx2d, w, h, state, isModal = false) {
+function drawPadCanvas(ctx2d, w, h, state, isModal = false, hasX = false, hasY = false) {
     ctx2d.clearRect(0, 0, w, h);
 
     const hueVal = ((state?.hue ?? 0.5) % 1.0 + 1.0) % 1.0;
@@ -73,51 +73,61 @@ function drawPadCanvas(ctx2d, w, h, state, isModal = false) {
         gridWidth: isModal ? 1.0 : 0.6
     });
 
-    // 3. Touch Point Marker (X, Y)
-    const xNorm = state?.x ?? 0.5;
-    const yNorm = state?.y ?? 0.5;
-    const px = Math.max(0, Math.min(w, xNorm * w));
-    const py = Math.max(0, Math.min(h, (1.0 - yNorm) * h));
+    // 3. Touch Value Indicator Lines (CVX: Vertical line, CVY: Horizontal line, Both: Crossline)
+    // Only rendered when respective CV output port is connected. Dot and circle are removed per specification.
+    if (hasX || hasY) {
+        const xNorm = state?.x ?? 0.5;
+        const yNorm = state?.y ?? 0.5;
+        const px = Math.max(0, Math.min(w, xNorm * w));
+        const py = Math.max(0, Math.min(h, (1.0 - yNorm) * h));
 
-    const isDown = Boolean(state?.isDown);
-    const pressure = state?.pressure ?? (isDown ? 0.6 : 0.0);
+        const isDown = Boolean(state?.isDown);
+        const lineColor = isDown
+            ? (isBrightBg ? '#000000' : '#ffffff')
+            : (isBrightBg ? 'rgba(0, 0, 0, 0.55)' : 'rgba(255, 255, 255, 0.55)');
+        const lineWidth = isModal ? (isDown ? 1.8 : 1.2) : (isDown ? 1.2 : 0.8);
+        const shadowColor = isBrightBg ? 'rgba(255, 255, 255, 0.45)' : 'rgba(0, 0, 0, 0.7)';
+        const shadowWidth = lineWidth + (isModal ? 1.6 : 1.0);
 
-    // High contrast dual-ring marker (fixed radius, no expansion on touch)
-    const baseR = isModal ? 8 : 4;
+        if (hasX) {
+            // Shadow / contrast line for vertical X position
+            ctx2d.save();
+            ctx2d.strokeStyle = shadowColor;
+            ctx2d.lineWidth = shadowWidth;
+            ctx2d.beginPath();
+            ctx2d.moveTo(px, 0);
+            ctx2d.lineTo(px, h);
+            ctx2d.stroke();
 
-    if (isDown) {
-        // Outer touch pressure shadow
-        ctx2d.strokeStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx2d.lineWidth = isModal ? 3.5 : 2.5;
-        ctx2d.beginPath();
-        ctx2d.arc(px, py, baseR, 0, Math.PI * 2);
-        ctx2d.stroke();
+            // Main vertical line
+            ctx2d.strokeStyle = lineColor;
+            ctx2d.lineWidth = lineWidth;
+            ctx2d.beginPath();
+            ctx2d.moveTo(px, 0);
+            ctx2d.lineTo(px, h);
+            ctx2d.stroke();
+            ctx2d.restore();
+        }
 
-        // Inner crisp white ring
-        ctx2d.strokeStyle = '#ffffff';
-        ctx2d.lineWidth = isModal ? 2.0 : 1.4;
-        ctx2d.beginPath();
-        ctx2d.arc(px, py, baseR, 0, Math.PI * 2);
-        ctx2d.stroke();
+        if (hasY) {
+            // Shadow / contrast line for horizontal Y position
+            ctx2d.save();
+            ctx2d.strokeStyle = shadowColor;
+            ctx2d.lineWidth = shadowWidth;
+            ctx2d.beginPath();
+            ctx2d.moveTo(0, py);
+            ctx2d.lineTo(w, py);
+            ctx2d.stroke();
 
-        // Center solid core
-        ctx2d.fillStyle = '#ffffff';
-        ctx2d.beginPath();
-        ctx2d.arc(px, py, isModal ? 3.5 : 2.0, 0, Math.PI * 2);
-        ctx2d.fill();
-    } else {
-        // Latched last touched position marker (subtle cursor)
-        ctx2d.strokeStyle = isBrightBg ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.6)';
-        ctx2d.lineWidth = 1.2;
-        ctx2d.beginPath();
-        ctx2d.arc(px, py, baseR, 0, Math.PI * 2);
-        ctx2d.stroke();
-
-        // Center dot
-        ctx2d.fillStyle = isBrightBg ? '#000000' : '#ffffff';
-        ctx2d.beginPath();
-        ctx2d.arc(px, py, isModal ? 2.0 : 1.2, 0, Math.PI * 2);
-        ctx2d.fill();
+            // Main horizontal line
+            ctx2d.strokeStyle = lineColor;
+            ctx2d.lineWidth = lineWidth;
+            ctx2d.beginPath();
+            ctx2d.moveTo(0, py);
+            ctx2d.lineTo(w, py);
+            ctx2d.stroke();
+            ctx2d.restore();
+        }
     }
 }
 
@@ -300,7 +310,7 @@ export const PAD = {
         padBox.addEventListener('pointerup', handleEnd);
         padBox.addEventListener('pointercancel', handleEnd);
     },
-    updateLive: (cell, data, isPlaying, targetModal, m) => {
+    updateLive: (cell, data, isPlaying, targetModal, m, patchState = null) => {
         if (!m) return;
         const state = data || { x: 0.5, y: 0.5, pressure: 0.0, isDown: false, hue: m.hue ?? 0.5, sat: m.sat ?? 1.0, bright: m.bright ?? 0.0 };
         // Ensure module-level settings are preserved if not overridden by data
@@ -316,6 +326,10 @@ export const PAD = {
         const sat = state.sat;
         const bright = state.bright;
 
+        const patched = patchState || (typeof window !== 'undefined' && window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(m.id) : null);
+        const hasX = Boolean(patched && (patched.has('x_cv') || patched.has('cv_x') || patched.has('PIN10') || patched.has('PIN10_out')));
+        const hasY = Boolean(patched && (patched.has('y_cv') || patched.has('cv_y') || patched.has('PIN11') || patched.has('PIN11_out')));
+
         // 1. Render on Cell Canvas with Dirty caching (skips rendering when unchanged)
         const cvs = cell.querySelector('.pad-grid-canvas');
         if (cvs) {
@@ -327,12 +341,14 @@ export const PAD = {
                 last.press !== press ||
                 last.hue !== hue ||
                 last.sat !== sat ||
-                last.bright !== bright;
+                last.bright !== bright ||
+                last.hasX !== hasX ||
+                last.hasY !== hasY;
 
             if (isDirty) {
                 const ctx = cvs.getContext('2d');
-                drawPadCanvas(ctx, cvs.width, cvs.height, state, false);
-                cvs._lastRenderState = { isDown, x, y, press, hue, sat, bright };
+                drawPadCanvas(ctx, cvs.width, cvs.height, state, false, hasX, hasY);
+                cvs._lastRenderState = { isDown, x, y, press, hue, sat, bright, hasX, hasY };
             }
         }
 
@@ -347,12 +363,14 @@ export const PAD = {
                 mLast.press !== press ||
                 mLast.hue !== hue ||
                 mLast.sat !== sat ||
-                mLast.bright !== bright;
+                mLast.bright !== bright ||
+                mLast.hasX !== hasX ||
+                mLast.hasY !== hasY;
 
             if (isMDirty) {
                 const mCtx = modalCvs.getContext('2d');
-                drawPadCanvas(mCtx, modalCvs.width, modalCvs.height, state, true);
-                modalCvs._lastRenderState = { isDown, x, y, press, hue, sat, bright };
+                drawPadCanvas(mCtx, modalCvs.width, modalCvs.height, state, true, hasX, hasY);
+                modalCvs._lastRenderState = { isDown, x, y, press, hue, sat, bright, hasX, hasY };
 
                 // Update stats (X, Y, PRES)
                 const xEl = targetModal.querySelector('#pad-stat-x');
