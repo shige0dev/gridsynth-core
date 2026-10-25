@@ -122,9 +122,9 @@ export const PAD = {
             { port: 'bright_cv', pin: 5, color: 'bg-yellow-400', extraClass: 'pad-chassis-port' }
         ],
         out: [
-            { port: 'gate_out', pin: 9, color: 'bg-red-500', extraClass: 'pad-chassis-port' },
-            { port: 'x_cv', pin: 10, color: 'bg-yellow-400', extraClass: 'pad-chassis-port' },
-            { port: 'y_cv', pin: 11, color: 'bg-yellow-400', extraClass: 'pad-chassis-port' }
+            { port: 'x_cv', pin: 7, color: 'bg-yellow-400', extraClass: 'pad-chassis-port' },
+            { port: 'y_cv', pin: 8, color: 'bg-yellow-400', extraClass: 'pad-chassis-port' },
+            { port: 'gate_out', pin: 9, color: 'bg-red-500', extraClass: 'pad-chassis-port' }
         ]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
@@ -344,8 +344,8 @@ export const PAD = {
         const bright = state.bright;
 
         const patched = patchState || (typeof window !== 'undefined' && window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(m.id) : null);
-        const hasX = Boolean(patched && (patched.has('x_cv') || patched.has('cv_x') || patched.has('PIN10') || patched.has('PIN10_out')));
-        const hasY = Boolean(patched && (patched.has('y_cv') || patched.has('cv_y') || patched.has('PIN11') || patched.has('PIN11_out')));
+        const hasX = Boolean(patched && (patched.has('x_cv') || patched.has('cv_x') || patched.has('PIN7') || patched.has('PIN7_out')));
+        const hasY = Boolean(patched && (patched.has('y_cv') || patched.has('cv_y') || patched.has('PIN8') || patched.has('PIN8_out')));
 
         // 1. Render on Cell Canvas with Dirty caching (skips rendering when unchanged)
         const cvs = cell.querySelector('.pad-grid-canvas');
