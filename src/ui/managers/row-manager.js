@@ -185,6 +185,8 @@ export class RowManager {
         if (this.interactionManager) {
             this.interactionManager.isDragging = false;
             this.interactionManager._dragCandidate = null;
+            this.interactionManager.selectedModuleIds = [];
+            this.interactionManager.updateSelectionClasses();
             this.interactionManager.clearHighlight();
             if (this.interactionManager._copyTimer) {
                 clearTimeout(this.interactionManager._copyTimer);
@@ -192,6 +194,7 @@ export class RowManager {
             }
         }
 
+        document.body.classList.add('is-row-dragging');
         const container = document.getElementById('canvas-container');
         if (container) container.style.overflowY = 'hidden';
 
@@ -241,6 +244,7 @@ export class RowManager {
             stopAutoScroll();
             this.hideInsertBeam();
             this.rowTracks?.forEach(t => t?.classList.remove('row-source-dragging'));
+            document.body.classList.remove('is-row-dragging');
             if (container) container.style.overflowY = 'auto';
         };
 

@@ -164,6 +164,18 @@ body {
     touch-action: none !important;
 }
 
+.selected-module .module-body {
+    touch-action: none !important;
+}
+
+body.is-module-dragging,
+body.is-module-dragging *,
+body.is-row-dragging,
+body.is-row-dragging * {
+    touch-action: none !important;
+    user-select: none !important;
+}
+
 .native-vslider,
 .native-vslider-sm {
     writing-mode: vertical-lr;

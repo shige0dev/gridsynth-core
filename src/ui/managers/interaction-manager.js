@@ -26,6 +26,7 @@ export class InteractionManager {
         this._dragCandidate = null;
         this.portLongPressed = false;
         this.moduleLongPressed = false;
+        this.rowLongPressed = false;
         this._wasModuleDragging = false;
 
         this._moduleAutoScrollRaf = null;
@@ -59,6 +60,10 @@ export class InteractionManager {
         if (this._rowLpTimer) {
             clearTimeout(this._rowLpTimer);
             this._rowLpTimer = null;
+        }
+        if (this._copyTimer) {
+            clearTimeout(this._copyTimer);
+            this._copyTimer = null;
         }
         this._dragCandidate = null;
     }
@@ -108,7 +113,18 @@ export class InteractionManager {
 
     _updateDropTargetAt(clientX, clientY) {
         if (!this.isDragging) return;
-        const targetCell = document.elementFromPoint(clientX, clientY)?.closest('.grid-cell');
+        let targetCell = document.elementFromPoint(clientX, clientY)?.closest('.grid-cell');
+        if (!targetCell && this.ui.gridBoard) {
+            // Check small offsets in case pointer is over a grid gap
+            const offsets = [[0, 6], [0, -6], [6, 0], [-6, 0]];
+            for (const [ox, oy] of offsets) {
+                const el = document.elementFromPoint(clientX + ox, clientY + oy)?.closest('.grid-cell');
+                if (el) {
+                    targetCell = el;
+                    break;
+                }
+            }
+        }
         const nIdx = targetCell ? parseInt(targetCell.dataset.index) : null;
         if (this.dropTargetIndex !== nIdx) {
             this.dropTargetIndex = nIdx;
@@ -157,20 +173,19 @@ export class InteractionManager {
         this._moduleAutoScrollVelocity = 0;
     }
 
-    _startRowLongPress(mId, clientY) {
+    _startRowLongPress(targetRow, clientY, delay = 300) {
         if (this._rowLpTimer) {
             clearTimeout(this._rowLpTimer);
             this._rowLpTimer = null;
         }
-        const mod = this.ui.modules[mId];
-        if (!mod || mod.row === undefined) return;
-        const targetRow = mod.row;
+        if (targetRow === null || targetRow === undefined || targetRow < 0 || targetRow >= this.ui.ROWS) return;
 
         this._rowLpTimer = setTimeout(() => {
             this._rowLpTimer = null;
             if (this.isDragging) return;
+            this.rowLongPressed = true;
             this.rowManager?.startRowDragFromModule(targetRow, clientY);
-        }, 450);
+        }, delay);
     }
 
     bindGridEvents() {
@@ -262,6 +277,10 @@ export class InteractionManager {
                     this.moduleLongPressed = false;
                     return;
                 }
+                if (this.rowLongPressed) {
+                    this.rowLongPressed = false;
+                    return;
+                }
                 if (this.selectedModuleIds.length > 0) {
                     if (this.selectedModuleIds.includes(mId)) {
                         const hasLocked = this.selectedModuleIds.some(id => this.ui.modules[id]?.type === 'SUB_IO');
@@ -313,6 +332,10 @@ export class InteractionManager {
             }
             const empty = e.target.closest('.empty-cell');
             if (empty) {
+                if (this.rowLongPressed) {
+                    this.rowLongPressed = false;
+                    return;
+                }
                 if (this.selectedModuleIds.length > 0) {
                     this.selectedModuleIds = [];
                     this.updateSelectionClasses();
@@ -388,38 +411,60 @@ export class InteractionManager {
                 return;
             }
 
-            const body = e.target.closest('.module-body');
-            if (!body) return;
             if (this.ui.isPerformanceMode) return;
             const isControl = e.target.closest('.port, input, button, select, textarea, .pad-grid-container, .pad-grid-canvas');
             if (isControl) return;
 
-            const mId = body.dataset.moduleId;
-            this._dragCandidate = mId;
+            const body = e.target.closest('.module-body');
+            if (body) {
+                const mId = body.dataset.moduleId;
+                this._dragCandidate = mId;
+                const clientY = e.clientY;
+                const mod = this.ui.modules[mId];
+                const targetRow = mod?.row;
 
-            // If the module is NOT already selected, require a long press (350ms) to select it or add to multi-selection.
-            // If it is ALREADY selected, continuing to hold triggers row selection!
-            const clientY = e.clientY;
-            if (!this.selectedModuleIds.includes(mId)) {
-                this._lpTimer = setTimeout(() => {
-                    this._lpTimer = null;
-                    this.moduleLongPressed = true;
-                    if (!this.selectedModuleIds.includes(mId)) {
-                        this.selectedModuleIds = [...this.selectedModuleIds, mId];
+                if (!this.selectedModuleIds.includes(mId)) {
+                    // Unselected module:
+                    // 300ms hold -> selects module.
+                    // continuing to hold without moving for another 300ms (total 600ms) -> selects row.
+                    this._lpTimer = setTimeout(() => {
+                        this._lpTimer = null;
+                        this.moduleLongPressed = true;
+                        if (!this.selectedModuleIds.includes(mId)) {
+                            this.selectedModuleIds = [...this.selectedModuleIds, mId];
+                        }
+                        if (this.ui.selectedTargetForConnection) {
+                            this.ui.selectedTargetForConnection = null;
+                        }
+                        this.updateSelectionClasses();
+                        if (navigator.vibrate) {
+                            try { navigator.vibrate(25); } catch (_) {}
+                        }
+                        // Continuing to hold without moving selects and drags the entire row!
+                        if (targetRow !== undefined) {
+                            this._startRowLongPress(targetRow, clientY, 300);
+                        }
+                    }, 300);
+                } else {
+                    // Already selected: continuing to hold 300ms without moving triggers row selection!
+                    // If moved before 300ms, pointermove immediately enters module dragging.
+                    if (targetRow !== undefined) {
+                        this._startRowLongPress(targetRow, clientY, 300);
                     }
-                    if (this.ui.selectedTargetForConnection) {
-                        this.ui.selectedTargetForConnection = null;
-                    }
-                    this.updateSelectionClasses();
-                    if (navigator.vibrate) {
-                        try { navigator.vibrate(25); } catch (_) {}
-                    }
-                    // Continuing to hold without moving selects and drags the entire row!
-                    this._startRowLongPress(mId, clientY);
-                }, 350);
-            } else {
-                // Already selected: continuing to hold without moving triggers row selection!
-                this._startRowLongPress(mId, clientY);
+                }
+                return;
+            }
+
+            const empty = e.target.closest('.empty-cell');
+            if (empty) {
+                const idx = parseInt(empty.dataset.index);
+                if (!isNaN(idx)) {
+                    const targetRow = Math.floor(idx / this.ui.COLS);
+                    const clientY = e.clientY;
+                    // User requested: "空セルは300MSとしてください"
+                    this._startRowLongPress(targetRow, clientY, 300);
+                }
+                return;
             }
         });
 
@@ -432,15 +477,15 @@ export class InteractionManager {
             const dy = e.clientY - this._sY;
             const distSq = dx * dx + dy * dy;
 
-            if (this._pTimer && distSq > 64) {
+            if (this._pTimer && distSq > 100) {
                 clearTimeout(this._pTimer);
                 this._pTimer = null;
             }
-            if (this._lpTimer && distSq > 64) {
+            if (this._lpTimer && distSq > 100) {
                 clearTimeout(this._lpTimer);
                 this._lpTimer = null;
             }
-            if (this._rowLpTimer && distSq > 64) {
+            if (this._rowLpTimer && distSq > 100) {
                 clearTimeout(this._rowLpTimer);
                 this._rowLpTimer = null;
             }
@@ -454,7 +499,7 @@ export class InteractionManager {
                     this._isMouseScrollDragging = false;
                     return;
                 }
-                if (distSq > 36 || this._isMouseScrollDragging) {
+                if (distSq > 100 || this._isMouseScrollDragging) {
                     this._isMouseScrollDragging = true;
                     this._wasScrollDragging = true;
                     const deltaY = e.clientY - this._scrollStartY;
@@ -462,13 +507,14 @@ export class InteractionManager {
                     return;
                 }
             }
-            if (!this.isDragging && this._dragCandidate && distSq > 36) {
+            if (!this.isDragging && this._dragCandidate && distSq > 100) {
                 if (this.selectedModuleIds.includes(this._dragCandidate)) {
                     if (this.ui.selectedTargetForConnection) {
                         this.ui.selectedTargetForConnection = null;
                     }
                     this.isDragging = true;
                     this._wasModuleDragging = true;
+                    document.body.classList.add('is-module-dragging');
                     this.dragMode = 'move';
                     if (container) container.style.overflowY = 'hidden';
 
@@ -477,6 +523,9 @@ export class InteractionManager {
                         const mod = this.ui.modules[id];
                         return { id, dRow: mod && baseM ? mod.row - baseM.row : 0, dCol: mod && baseM ? mod.col - baseM.col : 0 };
                     });
+
+                    this.dropTargetIndex = null;
+                    this._updateDropTargetAt(e.clientX, e.clientY);
 
                     this._copyTimer = setTimeout(() => {
                         if (this.isDragging) {
@@ -518,6 +567,7 @@ export class InteractionManager {
 
         const stopDrag = () => {
             this._stopModuleAutoScroll();
+            document.body.classList.remove('is-module-dragging');
             if (this._pTimer) {
                 clearTimeout(this._pTimer);
                 this._pTimer = null;
@@ -544,6 +594,9 @@ export class InteractionManager {
             }
             if (this.moduleLongPressed) {
                 setTimeout(() => { this.moduleLongPressed = false; }, 80);
+            }
+            if (this.rowLongPressed) {
+                setTimeout(() => { this.rowLongPressed = false; }, 80);
             }
             if (this.isDragging) {
                 this.isDragging = false;
@@ -632,6 +685,7 @@ export class InteractionManager {
             stopDrag();
             this.portLongPressed = false;
             this.moduleLongPressed = false;
+            this.rowLongPressed = false;
         });
 
         // Initialize Row Handle UI elements
