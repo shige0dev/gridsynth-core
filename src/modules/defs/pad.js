@@ -38,22 +38,38 @@ function drawPadCanvas(ctx2d, w, h, state, isModal = false, hasX = false, hasY =
     // 2. High-contrast grid crosshairs adaptive to background brightness (standardized graticule)
     const isBrightBg = lightPct > 45;
     const gridLineColor = isBrightBg ? 'rgba(0, 0, 0, 0.25)' : (isModal ? '#1e293b' : 'rgba(255, 255, 255, 0.15)');
-    const axisLineColor = isBrightBg ? 'rgba(0, 0, 0, 0.5)' : (isModal ? '#475569' : 'rgba(255, 255, 255, 0.35)');
+    const zeroLineColor = isBrightBg ? 'rgba(0, 0, 0, 0.65)' : (isModal ? '#64748b' : 'rgba(255, 255, 255, 0.45)');
+    const zeroLineWidth = isModal ? 1.5 : 1.0;
 
-    const showAxisX = polX !== 'uni';
-    const showAxisY = polY !== 'uni';
-
+    // Subgrid lines (4x4 divisions)
     UIHelpers.drawGraticule(ctx2d, w, h, {
         isModal,
         cols: 4,
         rows: 4,
         gridColor: gridLineColor,
-        axisColor: axisLineColor,
-        axisWidth: isModal ? 1.2 : 0.8,
-        gridWidth: isModal ? 1.0 : 0.6,
-        showAxisX,
-        showAxisY
+        showSubgrid: true,
+        showAxisX: false,
+        showAxisY: false
     });
+
+    // Zero reference lines (0V position: Center for BI, Left / Bottom edge for UNI)
+    ctx2d.save();
+    ctx2d.strokeStyle = zeroLineColor;
+    ctx2d.lineWidth = zeroLineWidth;
+    ctx2d.beginPath();
+
+    // X Zero Line (vertical line at 0V)
+    const zeroX = polX === 'uni' ? (zeroLineWidth / 2) : (w / 2);
+    ctx2d.moveTo(zeroX, 0);
+    ctx2d.lineTo(zeroX, h);
+
+    // Y Zero Line (horizontal line at 0V)
+    const zeroY = polY === 'uni' ? (h - zeroLineWidth / 2) : (h / 2);
+    ctx2d.moveTo(0, zeroY);
+    ctx2d.lineTo(w, zeroY);
+
+    ctx2d.stroke();
+    ctx2d.restore();
 
     // 3. Touch Value Indicator Lines (CVX: Vertical line, CVY: Horizontal line, Both: Crossline)
     // Only rendered when respective CV output port is connected. Dot and circle are removed per specification.
@@ -168,7 +184,7 @@ export const PAD = {
 
             <div class="relative w-full aspect-square pl-5 pb-5 mx-auto select-none">
                 <!-- Inner Touch Area (Canvas) -->
-                <div class="relative w-full h-full bg-black rounded-lg border border-slate-700/80 overflow-hidden shadow-inner select-none touch-none overscroll-contain" id="pad-modal-touch-area" style="opacity: ${m.opacity ?? 0.8};">
+                <div class="relative w-full h-full bg-black rounded-none border border-slate-700/80 overflow-hidden shadow-inner select-none touch-none overscroll-contain" id="pad-modal-touch-area" style="opacity: ${m.opacity ?? 0.8};">
                     <canvas id="pad-modal-canvas" class="w-full h-full block cursor-crosshair" width="400" height="400"></canvas>
                     <div class="absolute top-2 left-2 flex items-center gap-2.5 font-mono text-[9px] select-none pointer-events-none drop-shadow">
                         <span class="text-slate-400 text-[8px] font-sans font-bold">X</span><span id="pad-stat-x" class="text-cyan-300 font-bold">${dispInitX}</span>
@@ -176,29 +192,31 @@ export const PAD = {
                     </div>
                 </div>
 
-                <!-- Y-Axis Polarity Toggle Buttons (Left of Canvas, pointing Right ▶) -->
+                <!-- Y-Axis Polarity Option Buttons (Left of Canvas, pointing Right ▶) -->
                 <!-- Center (BI: 0V at Center Line) -->
-                <button class="pad-pol-toggle-y absolute left-0 top-[calc(50%-10px)] -translate-y-1/2 w-5 h-5 flex items-center justify-center text-[10px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polY === 'bi' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="bi" title="Y軸: BI (-1~1V)">▶</button>
+                <button class="pad-pol-toggle-y absolute left-0 top-[calc(50%-10px)] -translate-y-1/2 w-5 h-5 flex items-center justify-center text-[10px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polY === 'bi' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="bi" title="Y軸 0点: 中央 (BI -1~1V)">▶</button>
                 <!-- Bottom (UNI: 0V at Bottom Edge) -->
-                <button class="pad-pol-toggle-y absolute left-0 bottom-[20px] translate-y-1/2 w-5 h-5 flex items-center justify-center text-[10px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polY === 'uni' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="uni" title="Y軸: UNI (0~2V)">▶</button>
+                <button class="pad-pol-toggle-y absolute left-0 bottom-[20px] translate-y-1/2 w-5 h-5 flex items-center justify-center text-[10px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polY === 'uni' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="uni" title="Y軸 0点: 下端 (UNI 0~2V)">▶</button>
 
-                <!-- X-Axis Polarity Toggle Buttons (Below Canvas, pointing Up ▲) -->
+                <!-- X-Axis Polarity Option Buttons (Below Canvas, pointing Up ▲) -->
                 <!-- Left (UNI: 0V at Left Edge) -->
-                <button class="pad-pol-toggle-x absolute left-[20px] -translate-x-1/2 bottom-0 w-5 h-5 flex items-center justify-center text-[10px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polX === 'uni' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="uni" title="X軸: UNI (0~2V)">▲</button>
+                <button class="pad-pol-toggle-x absolute left-[20px] -translate-x-1/2 bottom-0 w-5 h-5 flex items-center justify-center text-[10px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polX === 'uni' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="uni" title="X軸 0点: 左端 (UNI 0~2V)">▲</button>
                 <!-- Center (BI: 0V at Center Line) -->
-                <button class="pad-pol-toggle-x absolute left-[calc(50%+10px)] -translate-x-1/2 bottom-0 w-5 h-5 flex items-center justify-center text-[10px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polX === 'bi' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="bi" title="X軸: BI (-1~1V)">▲</button>
+                <button class="pad-pol-toggle-x absolute left-[calc(50%+10px)] -translate-x-1/2 bottom-0 w-5 h-5 flex items-center justify-center text-[10px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polX === 'bi' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="bi" title="X軸 0点: 中央 (BI -1~1V)">▲</button>
             </div>
         </div>`;
     },
     bindEvents: (m, ctx, onChange) => {
-        // Axis Polarity Toggle Buttons (X: ▲, Y: ▶)
+        // Axis Polarity Option Buttons (X: ▲, Y: ▶)
         document.querySelectorAll('.pad-pol-toggle-x').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const targetVal = btn.dataset.val;
-                m.polX = (m.polX === targetVal) ? (targetVal === 'uni' ? 'bi' : 'uni') : targetVal;
-                ctx.reRenderModal();
-                onChange();
+                if (targetVal && m.polX !== targetVal) {
+                    m.polX = targetVal;
+                    ctx.reRenderModal();
+                    onChange();
+                }
             });
         });
 
@@ -206,9 +224,11 @@ export const PAD = {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const targetVal = btn.dataset.val;
-                m.polY = (m.polY === targetVal) ? (targetVal === 'uni' ? 'bi' : 'uni') : targetVal;
-                ctx.reRenderModal();
-                onChange();
+                if (targetVal && m.polY !== targetVal) {
+                    m.polY = targetVal;
+                    ctx.reRenderModal();
+                    onChange();
+                }
             });
         });
 
