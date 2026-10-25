@@ -59,7 +59,7 @@ export const KEY = {
         { s: 13, l: 85.833 },
         { s: 15, l: 97.5 }
     ],
-    renderGrid: (m) => `<div class="flex flex-col items-center justify-center leading-tight gap-0.5 pointer-events-none text-cyan-400"><span class="text-[9px] font-bold text-sky-300">KEYBOARD</span><span class="text-[14px] font-mono font-bold text-white">${m.lastNote||'C2'}</span></div>`,
+    renderGrid: (m) => `<div class="flex items-center justify-center w-full h-full pointer-events-none text-cyan-400"><span class="text-[15px] font-mono font-bold text-white tracking-tight">${m.lastNote || 'C2'}</span></div>`,
     renderModal: (m) => {
         const W = KEY.WHITE_KEYS, B = KEY.BLACK_KEYS;
         const curOct = m.octave ?? 2;
