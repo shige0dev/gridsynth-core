@@ -229,9 +229,6 @@ body {
 .is-performance-mode .port-node-wrapper,
 .is-performance-mode #row-handle-overlay,
 .is-performance-mode .row-overlay-track,
-.is-performance-mode .row-handle-btn,
-.is-performance-mode .row-handle-bar,
-.is-performance-mode .row-handle-right,
 .is-performance-mode .row-insert-beam {
     display: none !important;
     pointer-events: none !important;
@@ -423,57 +420,6 @@ body {
     border-radius: 0 !important;
     box-shadow: 0 0 15px rgba(217, 70, 239, 0.5) !important;
     background-color: rgba(217, 70, 239, 0.06) !important;
-}
-
-.row-handle-btn {
-    user-select: none;
-    touch-action: none !important;
-    -webkit-user-select: none;
-    position: absolute;
-    top: calc(50% - 16px);
-    width: 14px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: grab;
-    pointer-events: auto !important;
-    background: transparent;
-    border: none;
-    padding: 0;
-    box-sizing: border-box;
-    transition: transform 0.15s ease, opacity 0.15s ease;
-}
-
-.row-handle-right {
-    right: -15px;
-}
-
-.row-handle-bar {
-    width: 6px;
-    height: 6px;
-    background-color: #475569; /* slate-600 */
-    border-radius: 1.5px;
-    box-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
-    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-.row-handle-btn:hover .row-handle-bar {
-    background-color: #94a3b8; /* slate-400 */
-    box-shadow: 0 0 4px rgba(255, 255, 255, 0.4);
-    transform: scale(1.15);
-}
-
-.row-handle-btn:active,
-.row-handle-btn.dragging {
-    cursor: grabbing !important;
-}
-
-.row-handle-btn:active .row-handle-bar,
-.row-handle-btn.dragging .row-handle-bar {
-    background-color: #d946ef !important;
-    box-shadow: 0 0 10px #d946ef, 0 0 15px rgba(217, 70, 239, 0.6) !important;
-    transform: scale(1.4);
 }
 
 /* Inter-row Insertion Guide Line (Simple Thin White) */

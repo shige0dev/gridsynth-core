@@ -32,6 +32,7 @@ export class InteractionManager {
         this._moduleAutoScrollVelocity = 0;
         this._lastPointerX = 0;
         this._lastPointerY = 0;
+        this._rowLpTimer = null;
 
         this._isMouseScrollDragging = false;
         this._wasScrollDragging = false;
@@ -54,6 +55,10 @@ export class InteractionManager {
         if (this._lpTimer) {
             clearTimeout(this._lpTimer);
             this._lpTimer = null;
+        }
+        if (this._rowLpTimer) {
+            clearTimeout(this._rowLpTimer);
+            this._rowLpTimer = null;
         }
         this._dragCandidate = null;
     }
@@ -150,6 +155,22 @@ export class InteractionManager {
             this._moduleAutoScrollRaf = null;
         }
         this._moduleAutoScrollVelocity = 0;
+    }
+
+    _startRowLongPress(mId, clientY) {
+        if (this._rowLpTimer) {
+            clearTimeout(this._rowLpTimer);
+            this._rowLpTimer = null;
+        }
+        const mod = this.ui.modules[mId];
+        if (!mod || mod.row === undefined) return;
+        const targetRow = mod.row;
+
+        this._rowLpTimer = setTimeout(() => {
+            this._rowLpTimer = null;
+            if (this.isDragging) return;
+            this.rowManager?.startRowDragFromModule(targetRow, clientY);
+        }, 450);
     }
 
     bindGridEvents() {
@@ -377,7 +398,8 @@ export class InteractionManager {
             this._dragCandidate = mId;
 
             // If the module is NOT already selected, require a long press (350ms) to select it or add to multi-selection.
-            // If it is ALREADY selected, do not start the timer — it is immediately ready to drag!
+            // If it is ALREADY selected, continuing to hold triggers row selection!
+            const clientY = e.clientY;
             if (!this.selectedModuleIds.includes(mId)) {
                 this._lpTimer = setTimeout(() => {
                     this._lpTimer = null;
@@ -392,7 +414,12 @@ export class InteractionManager {
                     if (navigator.vibrate) {
                         try { navigator.vibrate(25); } catch (_) {}
                     }
+                    // Continuing to hold without moving selects and drags the entire row!
+                    this._startRowLongPress(mId, clientY);
                 }, 350);
+            } else {
+                // Already selected: continuing to hold without moving triggers row selection!
+                this._startRowLongPress(mId, clientY);
             }
         });
 
@@ -412,6 +439,10 @@ export class InteractionManager {
             if (this._lpTimer && distSq > 64) {
                 clearTimeout(this._lpTimer);
                 this._lpTimer = null;
+            }
+            if (this._rowLpTimer && distSq > 64) {
+                clearTimeout(this._rowLpTimer);
+                this._rowLpTimer = null;
             }
 
             const isCandidateSelected = this._dragCandidate && this.selectedModuleIds.includes(this._dragCandidate);
@@ -494,6 +525,10 @@ export class InteractionManager {
             if (this._lpTimer) {
                 clearTimeout(this._lpTimer);
                 this._lpTimer = null;
+            }
+            if (this._rowLpTimer) {
+                clearTimeout(this._rowLpTimer);
+                this._rowLpTimer = null;
             }
             if (this._copyTimer) {
                 clearTimeout(this._copyTimer);

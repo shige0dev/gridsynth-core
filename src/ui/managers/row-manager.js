@@ -25,24 +25,14 @@ export class RowManager {
         }
         this.rowHandleOverlayEl = overlay;
 
-        // Build 8 row overlay tracks with permanently displayed right handles
+        // Build row overlay tracks (without side handles)
         overlay.innerHTML = '';
         this.rowTracks = [];
         for (let r = 0; r < this.ui.ROWS; r++) {
             const track = document.createElement('div');
             track.id = `row-overlay-track-${r}`;
-            track.className = 'row-overlay-track';
+            track.className = 'row-overlay-track pointer-events-none';
             track.dataset.row = String(r);
-
-            const rightHandle = document.createElement('div');
-            rightHandle.id = `row-handle-right-${r}`;
-            rightHandle.className = 'row-handle-btn row-handle-right';
-            rightHandle.dataset.row = String(r);
-            rightHandle.title = `行 ${r + 1}（ドラッグで行を差し込み移動）`;
-            rightHandle.innerHTML = `<span class="row-handle-bar pointer-events-none"></span>`;
-
-            this.bindRowHandleEvents(rightHandle, r);
-            track.appendChild(rightHandle);
             overlay.appendChild(track);
             this.rowTracks[r] = track;
         }
@@ -181,20 +171,40 @@ export class RowManager {
         this.rowInsertBeamEl.classList.remove('active');
     }
 
-    bindRowHandleEvents(rightHandle, r) {
-        let isRowDragging = false;
-        let startY = 0;
-        let originalRow = r;
+    startRowDragFromModule(r, startClientY) {
+        if (this.ui.isPerformanceMode) return;
+        const originalRow = r;
+        let isRowDragging = true;
+        this.draggingRow = originalRow;
         let currentTargetBoundary = null;
         let autoScrollRaf = null;
         let autoScrollVelocity = 0;
-        let lastPointerClientY = 0;
+        let lastPointerClientY = startClientY;
+
+        // Cancel any pending module dragging or copy timers in interactionManager
+        if (this.interactionManager) {
+            this.interactionManager.isDragging = false;
+            this.interactionManager._dragCandidate = null;
+            this.interactionManager.clearHighlight();
+            if (this.interactionManager._copyTimer) {
+                clearTimeout(this.interactionManager._copyTimer);
+                this.interactionManager._copyTimer = null;
+            }
+        }
+
+        const container = document.getElementById('canvas-container');
+        if (container) container.style.overflowY = 'hidden';
+
+        const sourceTrack = this.rowTracks?.[originalRow] || document.getElementById(`row-overlay-track-${originalRow}`);
+        if (sourceTrack) sourceTrack.classList.add('row-source-dragging');
+
+        if (navigator.vibrate) {
+            try { navigator.vibrate([35, 45, 35]); } catch (_) {}
+        }
+        this.ui.showToast(`行 ${originalRow + 1} を選択（ドラッグで行を移動）`);
 
         const updateBoundaryAt = (clientY) => {
             const boundary = this.getNearestBoundary(clientY);
-
-            // Boundaries originalRow (above originalRow) and originalRow + 1 (below originalRow)
-            // represent no change in position. Outside of those, light up the boundary line!
             if (boundary !== null && boundary !== originalRow && boundary !== originalRow + 1) {
                 currentTargetBoundary = boundary;
                 this.showInsertBeam(boundary);
@@ -209,7 +219,6 @@ export class RowManager {
                 autoScrollRaf = null;
                 return;
             }
-            const container = document.getElementById('canvas-container');
             if (container) {
                 const prevScroll = container.scrollTop;
                 container.scrollTop += autoScrollVelocity;
@@ -231,63 +240,38 @@ export class RowManager {
         const cleanupDragVisuals = () => {
             stopAutoScroll();
             this.hideInsertBeam();
-            rightHandle.classList.remove('dragging');
             this.rowTracks?.forEach(t => t?.classList.remove('row-source-dragging'));
-            const container = document.getElementById('canvas-container');
             if (container) container.style.overflowY = 'auto';
         };
 
         const onPointerMove = (e) => {
             if (e.cancelable) e.preventDefault();
-            const deltaY = e.clientY - startY;
             lastPointerClientY = e.clientY;
+            updateBoundaryAt(e.clientY);
 
-            if (!isRowDragging) {
-                // Immediate response: start drag on 3px movement
-                if (Math.abs(deltaY) > 3) {
-                    isRowDragging = true;
-                    this.draggingRow = originalRow;
-                    rightHandle.classList.add('dragging');
-                    const container = document.getElementById('canvas-container');
-                    if (container) container.style.overflowY = 'hidden';
-                    const sourceTrack = this.rowTracks?.[originalRow];
-                    if (sourceTrack) sourceTrack.classList.add('row-source-dragging');
-                    if (navigator.vibrate) {
-                        try { navigator.vibrate(15); } catch (_) {}
-                    }
+            if (container) {
+                const rect = container.getBoundingClientRect();
+                const edgeZone = 70;
+                const topThreshold = rect.top + edgeZone;
+                const bottomThreshold = rect.bottom - edgeZone;
+
+                if (e.clientY < topThreshold) {
+                    const factor = Math.min(1.0, Math.max(0.1, (topThreshold - e.clientY) / edgeZone));
+                    autoScrollVelocity = -Math.round(factor * 14);
+                } else if (e.clientY > bottomThreshold) {
+                    const factor = Math.min(1.0, Math.max(0.1, (e.clientY - bottomThreshold) / edgeZone));
+                    autoScrollVelocity = Math.round(factor * 14);
+                } else {
+                    autoScrollVelocity = 0;
                 }
-            }
 
-            if (isRowDragging) {
-                updateBoundaryAt(e.clientY);
-
-                // Auto-scroll when pointer is near top or bottom edge of canvas-container
-                const container = document.getElementById('canvas-container');
-                if (container) {
-                    const rect = container.getBoundingClientRect();
-                    const edgeZone = 70; // 70px threshold from top and bottom edge
-                    const topThreshold = rect.top + edgeZone;
-                    const bottomThreshold = rect.bottom - edgeZone;
-
-                    if (e.clientY < topThreshold) {
-                        const factor = Math.min(1.0, Math.max(0.1, (topThreshold - e.clientY) / edgeZone));
-                        autoScrollVelocity = -Math.round(factor * 14);
-                    } else if (e.clientY > bottomThreshold) {
-                        const factor = Math.min(1.0, Math.max(0.1, (e.clientY - bottomThreshold) / edgeZone));
-                        autoScrollVelocity = Math.round(factor * 14);
-                    } else {
-                        autoScrollVelocity = 0;
-                    }
-
-                    if (autoScrollVelocity !== 0 && !autoScrollRaf) {
-                        autoScrollRaf = requestAnimationFrame(autoScrollStep);
-                    }
+                if (autoScrollVelocity !== 0 && !autoScrollRaf) {
+                    autoScrollRaf = requestAnimationFrame(autoScrollStep);
                 }
             }
         };
 
         const onPointerUp = (e) => {
-            try { rightHandle.releasePointerCapture(e.pointerId); } catch (_) {}
             window.removeEventListener('pointermove', onPointerMove);
             window.removeEventListener('pointerup', onPointerUp);
             window.removeEventListener('pointercancel', onPointerUp);
@@ -299,7 +283,6 @@ export class RowManager {
 
             isRowDragging = false;
             this.draggingRow = null;
-
             cleanupDragVisuals();
 
             if (didDrag && boundary !== null && boundary !== originalRow && boundary !== originalRow + 1) {
@@ -308,29 +291,9 @@ export class RowManager {
             }
         };
 
-        rightHandle.addEventListener('pointerdown', (e) => {
-            if (this.ui.isPerformanceMode) return;
-            e.preventDefault();
-            e.stopPropagation();
-            originalRow = parseInt(rightHandle.dataset.row);
-            currentTargetBoundary = null;
-            startY = e.clientY;
-            lastPointerClientY = e.clientY;
-            isRowDragging = false;
-            this.draggingRow = originalRow;
-
-            const container = document.getElementById('canvas-container');
-            if (container) container.style.overflowY = 'hidden';
-
-            const sourceTrack = this.rowTracks?.[originalRow];
-            if (sourceTrack) sourceTrack.classList.add('row-source-dragging');
-            rightHandle.classList.add('dragging');
-
-            try { rightHandle.setPointerCapture(e.pointerId); } catch (_) {}
-            window.addEventListener('pointermove', onPointerMove, { passive: false });
-            window.addEventListener('pointerup', onPointerUp);
-            window.addEventListener('pointercancel', onPointerUp);
-        });
+        window.addEventListener('pointermove', onPointerMove, { passive: false });
+        window.addEventListener('pointerup', onPointerUp, { once: true });
+        window.addEventListener('pointercancel', onPointerUp, { once: true });
     }
 
     moveRowTo(sourceRow, destRow) {
