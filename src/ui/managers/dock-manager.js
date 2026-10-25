@@ -199,23 +199,28 @@ export class DockManager {
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
-    makeDialogDraggable(headerEl, dialogEl) {
+    makeDialogDraggable(headerEl, dialogEl, { minMargin = 4, canMoveX = () => false } = {}) {
         const frame = document.getElementById('phone-frame');
         if (!headerEl || !dialogEl || !frame) return;
-        let drag = false, dY = 0, initT = 0;
+        let drag = false, dX = 0, dY = 0, initL = 0, initT = 0;
         headerEl.addEventListener('pointerdown', (e) => {
-            if (e.target.closest('.dock-lock-btn')) return;
+            if (e.target.closest('#dock-lock-btn') || e.target.closest('.dock-lock-btn')) return;
             e.preventDefault();
             drag = true;
             headerEl.setPointerCapture(e.pointerId);
+            dX = e.clientX;
             dY = e.clientY;
             dialogEl.style.bottom = 'auto';
+            initL = parseFloat(dialogEl.style.left) || dialogEl.offsetLeft;
             initT = parseFloat(dialogEl.style.top) || dialogEl.offsetTop;
         });
         headerEl.addEventListener('pointermove', (e) => {
             if (!drag) return;
             const fR = frame.getBoundingClientRect(), cR = dialogEl.getBoundingClientRect();
-            dialogEl.style.top = `${Math.max(4, Math.min(fR.height - cR.height - 4, initT + e.clientY - dY))}px`;
+            if (canMoveX()) {
+                dialogEl.style.left = `${Math.max(minMargin, Math.min(fR.width - cR.width - minMargin, initL + e.clientX - dX))}px`;
+            }
+            dialogEl.style.top = `${Math.max(minMargin, Math.min(fR.height - cR.height - minMargin, initT + e.clientY - dY))}px`;
             dialogEl.style.bottom = 'auto';
         });
         const stop = (e) => {
@@ -320,15 +325,7 @@ export class DockManager {
             if (!reg || !bodyEl) return;
 
             bodyEl.className = "dock-dialog-body text-xs mt-1";
-            const ctx = this.modalManager.createModuleContext(id, true);
-            const onChange = () => {
-                this.ui.synth.updateModule(`${this.ui.currentPageId}/${id}`, m, this.ui.getPatchState(id));
-                this.ui.renderCell(m.row * this.ui.COLS + m.col);
-            };
-            if (reg.renderModal) bodyEl.innerHTML = reg.renderModal(m, ctx);
-            else if (reg.schema) bodyEl.innerHTML = UIHelpers.renderSchemaModal(m, ctx, reg.schema);
-            if (reg.bindEvents) reg.bindEvents(m, ctx, onChange);
-            else if (reg.schema) UIHelpers.bindSchemaEvents(m, ctx, reg.schema, onChange);
+            this.modalManager.renderAndBindModuleModal(id, m, reg, bodyEl, true);
 
             const headerInput = info.element.querySelector('.dock-title-name-input');
             if (headerInput && headerInput !== document.activeElement) {

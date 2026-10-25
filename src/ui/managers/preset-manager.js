@@ -1,7 +1,7 @@
 import { safeClone, parseConn } from '../../core/utils.js?v=297';
 import { parsePatch, exportPatch, createDefaultPatchData } from '../../core/patch.js?v=396';
 import { getDefaultPresets } from '../../presets/default.js?v=354';
-import { JsonIoDialog, analyzeJsonError } from '../json-io-dialog.js?v=297';
+import { JsonIoDialog } from '../json-io-dialog.js?v=297';
 
 export class PresetManager {
     showImportError(opts) {
@@ -85,6 +85,122 @@ export class PresetManager {
         return false;
     }
 
+    _buildSubpatchTemplate({ id, name, pageData, source = {} }) {
+        const template = {
+            id,
+            subType: source.subType || pageData.subType || id,
+            format: 'gridsynth-submodule',
+            version: '2.1',
+            name,
+            category: source.category || 'User Custom',
+            author: source.author || 'User',
+            isSystem: false,
+            description: source.description || source.manifest?.description || pageData.manifest?.description || `${Object.keys(pageData.modules || {}).length} modules`,
+            manifest: source.manifest || pageData.manifest || { description: source.description || '', ports: {} },
+            pins: source.pins || {},
+            pageData: safeClone(pageData)
+        };
+        delete template.pageData.sourceTemplateId;
+        template.pageData.name = name;
+        return template;
+    }
+
+    _parseImportObject(rawVal, { isSubpatch = false } = {}) {
+        const label = isSubpatch ? 'サブパッチ' : 'パッチ';
+        const titlePrefix = isSubpatch ? 'SUBPATCH IMPORT ERROR' : 'IMPORT ERROR';
+        const res = JsonIoDialog.parseJsonText(rawVal);
+
+        if (res.empty) {
+            this.showImportError({
+                title: `${titlePrefix}: EMPTY TEXT`,
+                message: `${label}のJSONテキストが空です。`,
+                details: [`インポートする${label}のJSON文字列を貼り付けてください。`],
+                copyText: `[Gridsynth ${isSubpatch ? 'Subpatch' : 'Patch'} Import Error]\nエラー: ${label}JSONテキストが空です。\n${label}のJSONを貼り付けてからインポートを実行してください。`
+            });
+            return null;
+        }
+
+        if (res.syntaxError) {
+            const info = res.info;
+            this.showImportError({
+                title: `${titlePrefix}: JSON SYNTAX`,
+                message: `JSON構文エラー: ${res.err.message}`,
+                details: [
+                    `位置: 行 ${info.line}, 列 ${info.col}`,
+                    '',
+                    '--- 周辺コード ---',
+                    info.snippet,
+                    '',
+                    '※「COPY ERROR」を押すとエラー内容とAIへの修正指示がコピーされます。'
+                ],
+                copyText: [
+                    `[Gridsynth ${isSubpatch ? 'Subpatch' : 'Patch'} Import Error - JSON Syntax]`,
+                    `エラー内容: ${res.err.message}`,
+                    `発生箇所: 行 ${info.line}, 列 ${info.col}`,
+                    ``,
+                    `--- 周辺コード ---`,
+                    info.snippet,
+                    ``,
+                    `--- AIへの修正指示 ---`,
+                    `Gridsynth${label}JSONのパース中に構文エラーが発生しました。`,
+                    `上記の行・位置にある不要なカンマや構文違反を修正し、完全な${label}JSONを再生成してください。`
+                ].join('\n')
+            });
+            return null;
+        }
+
+        const parsed = res.data;
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+            this.showImportError({
+                title: `${titlePrefix}: INVALID TYPE`,
+                message: `${label}形式が無効です (JSONオブジェクトである必要があります)`,
+                details: [`${label}データはJSONオブジェクト形式である必要があります。`],
+                copyText: `[Gridsynth ${isSubpatch ? 'Subpatch' : 'Patch'} Import Error - Invalid Type]\nエラー: ${label}データがオブジェクト形式ではありません。\n修正指示: Gridsynthの${label}仕様に従い、JSONオブジェクトを再生成してください。`
+            });
+            return null;
+        }
+
+        return parsed;
+    }
+
+    _showWarningsAlert(errors, { isSubpatch = false, name = '' } = {}) {
+        if (!errors || errors.length === 0) return;
+        const label = isSubpatch ? `サブパッチ "${name}"` : 'パッチ';
+        setTimeout(() => {
+            this.ui.openCustomAlert(
+                isSubpatch ? 'サブパッチ結線警告 (SUBPATCH WARNINGS)' : 'パッチ結線警告 (IMPORT WARNINGS)',
+                `${label}を展開しましたが、${errors.length}件の結線/モジュールエラーが検出されました。AIに修正を依頼する場合は「COPY ERRORS」を押してください。`,
+                errors,
+                {
+                    isError: false,
+                    copyBtnLabel: 'COPY ERRORS',
+                    copyText: [
+                        `[Gridsynth ${isSubpatch ? 'Subpatch' : 'Patch'} Import Warnings - Connections / Modules]`,
+                        `${label}の読み込み時に以下の結線/モジュールエラーが検出されました (${errors.length}件):`,
+                        '',
+                        ...errors.map((e, idx) => `${idx + 1}. ${e}`),
+                        '',
+                        `--- AIへの修正指示 ---`,
+                        `上記の結線/モジュールエラーを修正してください。`,
+                        `- 送信元 (from) は必ずモジュールの有効な出力端子 (_out)`,
+                        `- 送信先 (to) は必ずモジュールの有効な入力端子 (_in)`,
+                        `- 正しい端子名とモジュールIDを指定し、修正した完全な${isSubpatch ? 'サブパッチ' : 'パッチ'}JSONを再生成してください。`
+                    ].join('\n')
+                }
+            );
+        }, 100);
+    }
+
+    _registerAndActivatePreset(name, data, toastMsg = null) {
+        this.presets[name] = data;
+        this.presetOrder.unshift(name);
+        this.currentPresetKey = name;
+        this.savePresetsDB();
+        this.loadActivePreset();
+        this.renderPresetList();
+        if (toastMsg) this.ui.showToast(toastMsg);
+    }
+
     saveCurrentSubpatchToLibrary(customName) {
         if (this.ui.currentPageId === "0") {
             this.ui.showToast("メインページはサブパッチとして保存できません");
@@ -110,23 +226,7 @@ export class PresetManager {
 
         const id = existingEntry ? existingEntry.id : `USER_SUB_${Date.now()}`;
         const isOverwrite = !!existingEntry;
-
-        const template = {
-            id,
-            subType: pData.subType || id,
-            format: 'gridsynth-submodule',
-            version: '2.1',
-            name,
-            category: 'User Custom',
-            author: 'User',
-            isSystem: false,
-            description: pData.manifest?.description || `${Object.keys(pData.modules || {}).length} modules`,
-            manifest: pData.manifest || { description: '', ports: {} },
-            pins: {},
-            pageData: safeClone(pData)
-        };
-        delete template.pageData.sourceTemplateId;
-        template.pageData.name = name;
+        const template = this._buildSubpatchTemplate({ id, name, pageData: pData });
         this.saveUserSubpatch(template, isOverwrite);
         pData.sourceTemplateId = id;
     }
@@ -176,71 +276,8 @@ export class PresetManager {
                     icon: 'archive',
                     cls: 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/30',
                     onClick: (rawVal, modal) => {
-                        const rawText = (rawVal || '').trim();
-                        if (!rawText) {
-                            this.showImportError({
-                                title: 'SUBPATCH IMPORT ERROR: EMPTY TEXT',
-                                message: 'サブパッチのJSONテキストが空です。',
-                                details: ['インポートするサブパッチのJSON文字列を貼り付けてください。'],
-                                copyText: [
-                                    '[Gridsynth Subpatch Import Error]',
-                                    'エラー: サブパッチJSONテキストが空です。',
-                                    'サブパッチのJSONを貼り付けてからインポートを実行してください。'
-                                ].join('\n')
-                            });
-                            return;
-                        }
-
-                        let text = rawText;
-                        if (text.startsWith('```')) {
-                            text = text.replace(/^```[a-zA-Z]*\n?/, '').replace(/\n?```$/, '').trim();
-                        }
-
-                        let parsed;
-                        try {
-                            parsed = JSON.parse(text);
-                        } catch (err) {
-                            const info = analyzeJsonError(text, err);
-                            this.showImportError({
-                                title: 'SUBPATCH IMPORT ERROR: JSON SYNTAX',
-                                message: `JSON構文エラー: ${err.message}`,
-                                details: [
-                                    `位置: 行 ${info.line}, 列 ${info.col}`,
-                                    '',
-                                    '--- 周辺コード ---',
-                                    info.snippet,
-                                    '',
-                                    '※「COPY ERROR」を押すとエラー内容とAIへの修正指示がコピーされます。'
-                                ],
-                                copyText: [
-                                    `[Gridsynth Subpatch Import Error - JSON Syntax]`,
-                                    `エラー内容: ${err.message}`,
-                                    `発生箇所: 行 ${info.line}, 列 ${info.col}`,
-                                    ``,
-                                    `--- 周辺コード ---`,
-                                    info.snippet,
-                                    ``,
-                                    `--- AIへの修正指示 ---`,
-                                    `GridsynthサブパッチJSONのパース中に構文エラーが発生しました。`,
-                                    `上記の行・位置にある不要なカンマや構文違反を修正し、完全なサブパッチJSONを再生成してください。`
-                                ].join('\n')
-                            });
-                            return;
-                        }
-
-                        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-                            this.showImportError({
-                                title: 'SUBPATCH IMPORT ERROR: INVALID TYPE',
-                                message: 'サブパッチ形式が無効です (JSONオブジェクトである必要があります)',
-                                details: ['サブパッチデータはJSONオブジェクト形式である必要があります。'],
-                                copyText: [
-                                    `[Gridsynth Subpatch Import Error - Invalid Type]`,
-                                    `エラー: サブパッチデータがオブジェクト形式ではありません。`,
-                                    `修正指示: Gridsynthのサブパッチ仕様に従い、JSONオブジェクトを再生成してください。`
-                                ].join('\n')
-                            });
-                            return;
-                        }
+                        const parsed = this._parseImportObject(rawVal, { isSubpatch: true });
+                        if (!parsed) return;
 
                         let pageData = null;
                         if (parsed.pageData && (parsed.pageData.modules || parsed.pageData.slots)) {
@@ -264,15 +301,7 @@ export class PresetManager {
                                     `検出されたキー: ${keys}`,
                                     'サブパッチJSONには "pageData.modules" または "modules" の定義が必要です。'
                                 ],
-                                copyText: [
-                                    `[Gridsynth Subpatch Import Error - Missing Modules]`,
-                                    `エラー: 有効なサブパッチデータが見つかりません。`,
-                                    `理由: "pageData.modules" または "modules" が定義されていません。`,
-                                    `検出されたキー: ${keys}`,
-                                    ``,
-                                    `--- AIへの修正指示 ---`,
-                                    `Gridsynthサブパッチ仕様（format: "gridsynth-submodule" または pageData.modules を含む構造）に従って再生成してください。`
-                                ].join('\n')
+                                copyText: `[Gridsynth Subpatch Import Error - Missing Modules]\nエラー: 有効なサブパッチデータが見つかりません。\n検出されたキー: ${keys}\n--- AIへの修正指示 ---\nGridsynthサブパッチ仕様（format: "gridsynth-submodule" または pageData.modules を含む構造）に従って再生成してください。`
                             });
                             return;
                         }
@@ -281,50 +310,17 @@ export class PresetManager {
                         parsePatch({ pages: { "0": pageData } }, this.ui.COLS, this.ui.userSubpatches, subErrors);
 
                         const name = (parsed.name || pageData.name || `IMPORTED_${Date.now().toString().slice(-4)}`).trim();
-                        const template = {
+                        const template = this._buildSubpatchTemplate({
                             id: `USER_SUB_${Date.now()}`,
-                            subType: parsed.subType || undefined,
-                            format: 'gridsynth-submodule',
-                            version: '2.1',
                             name,
-                            category: parsed.category || 'User Custom',
-                            author: parsed.author || 'User',
-                            isSystem: false,
-                            description: parsed.description || parsed.manifest?.description || `${Object.keys(pageData.modules || {}).length} modules`,
-                            manifest: parsed.manifest || { description: parsed.description || '', ports: {} },
-                            pins: parsed.pins || {},
-                            pageData: safeClone(pageData)
-                        };
-                        delete template.pageData.sourceTemplateId;
-                        template.pageData.name = name;
+                            pageData,
+                            source: parsed
+                        });
 
                         this.saveUserSubpatch(template, false);
                         modal.classList.add('hidden');
                         if (typeof onImported === 'function') onImported(template);
-
-                        if (subErrors.length > 0) {
-                            setTimeout(() => {
-                                this.ui.openCustomAlert(
-                                    'サブパッチ結線警告 (SUBPATCH WARNINGS)',
-                                    `サブパッチ "${name}" をストックにインポートしましたが、${subErrors.length}件の結線/モジュールエラーが検出されました。AIに修正を依頼する場合は「COPY ERRORS」を押してください。`,
-                                    subErrors,
-                                    {
-                                        isError: false,
-                                        copyBtnLabel: 'COPY ERRORS',
-                                        copyText: [
-                                            `[Gridsynth Subpatch Import Warnings - Connections / Modules]`,
-                                            `サブパッチ "${name}" の読み込み時に以下のエラーが検出されました (${subErrors.length}件):`,
-                                            ``,
-                                            ...subErrors.map((e, idx) => `${idx + 1}. ${e}`),
-                                            ``,
-                                            `--- AIへの修正指示 ---`,
-                                            `上記の結線/モジュールエラーを修正してください。`,
-                                            `修正した完全なサブパッチJSONを再生成してください。`
-                                        ].join('\n')
-                                    }
-                                );
-                            }, 100);
-                        }
+                        this._showWarningsAlert(subErrors, { isSubpatch: true, name });
                     }
                 }
             ]
@@ -366,32 +362,7 @@ export class PresetManager {
         requestAnimationFrame(() => this.ui.renderCables());
 
         // パッチ展開時の結線・モジュール警告チェック
-        if (parseErrors.length > 0) {
-            setTimeout(() => {
-                this.ui.openCustomAlert(
-                    'パッチ結線警告 (IMPORT WARNINGS)',
-                    `パッチを展開しましたが、${parseErrors.length}件の結線/モジュールエラーが検出され無効な接続はスキップされました。AIに修正を依頼する場合は「COPY ERRORS」を押してください。`,
-                    parseErrors,
-                    {
-                        isError: false,
-                        copyBtnLabel: 'COPY ERRORS',
-                        copyText: [
-                            `[Gridsynth Patch Import - Connection/Module Warnings]`,
-                            `パッチ読み込み時に以下の結線/モジュールエラーが検出されました (${parseErrors.length}件):`,
-                            '',
-                            ...parseErrors.map((e, idx) => `${idx + 1}. ${e}`),
-                            '',
-                            `--- AIへの修正指示 ---`,
-                            `上記の結線/モジュールエラーを修正してください。`,
-                            `Gridsynthの結線規則:`,
-                            `- 送信元 (from) は必ずモジュールの有効な出力端子 (_out)`,
-                            `- 送信先 (to) は必ずモジュールの有効な入力端子 (_in)`,
-                            `- 正しい端子名とモジュールIDを指定し、修正した完全なパッチJSONを再生成してください。`
-                        ].join('\n')
-                    }
-                );
-            }, 100);
-        }
+        this._showWarningsAlert(parseErrors);
     }
 
     loadActivePreset() {
@@ -417,13 +388,7 @@ export class PresetManager {
 
     createNewPatch() {
         const name = `PATCH_${Date.now().toString().slice(-4)}`;
-        this.presets[name] = createDefaultPatchData(120);
-        this.presetOrder.unshift(name);
-        this.currentPresetKey = name;
-        this.savePresetsDB();
-        this.loadActivePreset();
-        this.renderPresetList();
-        this.ui.showToast(`新規作成: ${name}`);
+        this._registerAndActivatePreset(name, createDefaultPatchData(120), `新規作成: ${name}`);
     }
 
     openJsonExportModal() {
@@ -444,71 +409,8 @@ export class PresetManager {
 
     openJsonImportModal() {
         const parseAndValidate = (rawVal) => {
-            const rawText = (rawVal || '').trim();
-            if (!rawText) {
-                this.showImportError({
-                    title: 'IMPORT ERROR: EMPTY TEXT',
-                    message: 'パッチのJSONテキストが空です。',
-                    details: ['インポートするパッチのJSON文字列をテキストエリアに貼り付けてください。'],
-                    copyText: [
-                        '[Gridsynth Patch Import Error]',
-                        'エラー: パッチJSONテキストが空です。',
-                        'テキストエリアにパッチJSONを貼り付けてから [LOAD] または [SAVE AS NEW] を実行してください。'
-                    ].join('\n')
-                });
-                return null;
-            }
-
-            let text = rawText;
-            if (text.startsWith('```')) {
-                text = text.replace(/^```[a-zA-Z]*\n?/, '').replace(/\n?```$/, '').trim();
-            }
-
-            let parsed;
-            try {
-                parsed = JSON.parse(text);
-            } catch (err) {
-                const info = analyzeJsonError(text, err);
-                this.showImportError({
-                    title: 'IMPORT ERROR: JSON SYNTAX',
-                    message: `JSON構文エラー: ${err.message}`,
-                    details: [
-                        `位置: 行 ${info.line}, 列 ${info.col}`,
-                        '',
-                        '--- 周辺コード ---',
-                        info.snippet,
-                        '',
-                        '※「COPY ERROR」を押すとエラー内容とAIへの修正指示がコピーされます。そのままAIに貼り付けて修正を指示できます。'
-                    ],
-                    copyText: [
-                        `[Gridsynth Patch Import Error - JSON Syntax]`,
-                        `エラー内容: ${err.message}`,
-                        `発生箇所: 行 ${info.line}, 列 ${info.col}`,
-                        ``,
-                        `--- 周辺コード ---`,
-                        info.snippet,
-                        ``,
-                        `--- AIへの修正指示 ---`,
-                        `GridsynthパッチJSONのパース中に構文エラーが発生しました。`,
-                        `上記の行・位置にある不要なカンマや構文違反を修正し、完全なパッチJSONを再生成してください。`
-                    ].join('\n')
-                });
-                return null;
-            }
-
-            if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-                this.showImportError({
-                    title: 'IMPORT ERROR: INVALID TYPE',
-                    message: 'パッチ形式が無効です (JSONオブジェクトである必要があります)',
-                    details: ['パッチデータは { "bpm": 120, "pages": { ... } } のようなJSONオブジェクト形式である必要があります。'],
-                    copyText: [
-                        `[Gridsynth Patch Import Error - Invalid Type]`,
-                        `エラー: パッチデータがオブジェクト形式ではありません。`,
-                        `修正指示: Gridsynthのパッチ仕様に従い、{ "bpm": 120, "pages": { ... } } 形式のJSONオブジェクトを再生成してください。`
-                    ].join('\n')
-                });
-                return null;
-            }
+            const parsed = this._parseImportObject(rawVal, { isSubpatch: false });
+            if (!parsed) return null;
 
             if (!parsed.pages && !parsed["0"] && !parsed.slots && !parsed.modules) {
                 const keys = Object.keys(parsed).join(', ') || '(なし)';
@@ -578,15 +480,9 @@ export class PresetManager {
                             const name = await this.ui.openCustomPrompt('SAVE AS NEW PATCH', `IMPORT_${Date.now().toString().slice(-4)}`);
                             if (name) {
                                 this.ui.saveHistory();
-                                this.presets[name] = data;
-                                this.presetOrder.unshift(name);
-                                this.currentPresetKey = name;
-                                this.savePresetsDB();
-                                this.loadActivePreset();
-                                this.renderPresetList();
+                                this._registerAndActivatePreset(name, data, `"${name}" として保存・展開しました`);
                                 modal.classList.add('hidden');
                                 document.getElementById('preset-manager-modal')?.classList.add('hidden');
-                                this.ui.showToast(`"${name}" として保存・展開しました`);
                             }
                         }
                     }
@@ -721,13 +617,7 @@ export class PresetManager {
         document.getElementById('preset-saveas-top-btn')?.addEventListener('click', async () => {
             const name = await this.ui.openCustomPrompt('SAVE AS', `PATCH_${Date.now().toString().slice(-4)}`);
             if (name) {
-                this.presets[name] = this.exportCurrentPreset();
-                this.presetOrder.unshift(name);
-                this.currentPresetKey = name;
-                this.savePresetsDB();
-                this.loadActivePreset();
-                this.renderPresetList();
-                this.ui.showToast(`"${name}" を保存しました`);
+                this._registerAndActivatePreset(name, this.exportCurrentPreset(), `"${name}" を保存しました`);
             }
         });
         document.getElementById('preset-export-top-btn')?.addEventListener('click', () => this.openJsonExportModal());

@@ -234,310 +234,173 @@ const renderSeqStepButtons = (idx, isAct, isCvAct, isGateAct, isSeq16 = false) =
     </div>
 `;
 
-export const SEQ8 = {
-    color: 'blue',
-    defaults: () => ({
-        type: 'SEQ8',
-        quantize: true,
-        steps: Array.from({ length: 8 }, (_, i) => ({
-            cv: i === 0 ? 0 : 0.25,
-            active: true,
-            cvActive: true,
-            gate: true
-        }))
-    }),
-    onNormalize: (m) => {
-        if (Array.isArray(m.steps) && typeof m.steps[0] === 'number') {
-            m.steps = m.steps.map(cv => ({ cv, active: true, cvActive: true, gate: true }));
-        }
-    },
-    ports: () => ({
-        in: [{ port: 'gate_in', pin: 4, color: 'bg-red-500' }],
-        out: [
-            { port: 'gate_out', pin: 9, color: 'bg-red-500' },
-            { port: 'cv_out', pin: 10, color: 'bg-yellow-400' }
-        ]
-    }),
-    renderGrid: (m) => `<div class="flex items-center justify-center w-full h-full pointer-events-none">
-        ${UIHelpers.renderPanelBars(
-            (m.steps || []).map((st, i) => {
-                const val = typeof st === 'number' ? st : (st?.cv ?? 0);
-                const isAct = typeof st === 'object' ? (st.active !== false) : true;
-                const h = isAct ? Math.max(6, Math.min(100, Math.round((val / 2.0) * 100))) : 4;
-                const barColor = isAct ? 'bg-gradient-to-t from-amber-600 to-yellow-400' : 'bg-slate-800';
-                return {
-                    pct: h,
-                    color: barColor,
-                    width: 'flex-1',
-                    attrs: `data-step-bar="${i}"`
-                };
-            }),
-            {
-                gapCls: 'gap-px',
-                containerCls: 'w-[50px]',
-                theme: 'cv'
-            }
-        )}
-    </div>`,
-    updateLive: (cell, data, isP, modal, m) => {
-        const step = data?.step ?? -1;
-        cell.querySelectorAll('[data-step-bar]').forEach((b, i) => {
-            const stepIdx = parseInt(b.getAttribute('data-step-bar') ?? i, 10);
-            b.classList.toggle('bar-active', isP && stepIdx === step);
-        });
-        modal?.querySelectorAll('[data-step-col]').forEach((col, i) => {
-            const colIdx = parseInt(col.getAttribute('data-step-col') ?? i, 10);
-            const cur = isP && colIdx === step;
-            col.classList.toggle('border-yellow-400', cur);
-            col.classList.toggle('bg-slate-800/90', cur);
-            col.classList.toggle('border-slate-800', !cur);
-        });
-    },
-    renderModal: (m) => `
-        <div id="seq-modal-root" class="space-y-1.5">
-            <div class="flex items-center justify-between pb-1 border-b border-slate-800">
-                <span class="text-[8px] text-slate-400 uppercase font-semibold">8-STEP SEQUENCER</span>
-                <div class="flex items-center gap-1">
-                    <button id="seq8-json-export-btn" class="h-4 px-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-cyan-300 rounded text-[7.5px] font-bold cursor-pointer transition shadow-sm flex items-center gap-0.5 shrink-0" title="シーケンスパターンをJSONとしてエクスポート">
-                        <i data-lucide="upload" class="w-2.5 h-2.5 pointer-events-none"></i>
-                        <span>EXP</span>
-                    </button>
-                    <button id="seq8-json-import-btn" class="h-4 px-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-purple-300 rounded text-[7.5px] font-bold cursor-pointer transition shadow-sm flex items-center gap-0.5 shrink-0" title="JSONテキストからパターンをインポート">
-                        <i data-lucide="download" class="w-2.5 h-2.5 pointer-events-none"></i>
-                        <span>IMP</span>
-                    </button>
-                    <button id="seq-qlz-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${m.quantize!==false?'bg-cyan-600 text-white border-cyan-500':'bg-slate-800 text-slate-400 border-slate-700'}">QLZ: ${m.quantize!==false?'ON':'OFF'}</button>
-                </div>
-            </div>
-            <div class="flex items-center justify-between py-1 bg-slate-950/60 p-1 rounded-xl border border-slate-800/80 gap-1 overflow-x-auto">
-                ${(m.steps||[]).map((st, i) => {
-                    const val = typeof st === 'number' ? st : (st?.cv ?? 0);
-                    const isAct = typeof st === 'object' ? (st.active !== false) : true;
-                    const isCvAct = typeof st === 'object' ? (st.cvActive !== false) : true;
-                    const isGateAct = typeof st === 'object' ? (st.gate !== false) : true;
-                    return `
-                    <div data-step-col="${i}" class="flex flex-col items-center gap-1 flex-1 min-w-[34px] p-1 rounded-lg border transition-all shrink-0 ${isAct ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-950/80 border-slate-800/40 opacity-40 grayscale'}">
-                        <span id="seq-slider-${i}-disp" class="text-[8.5px] ${isAct ? 'text-cyan-300' : 'text-slate-500'} font-mono font-bold cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-1 py-0.5 rounded transition-colors shrink-0" title="上下ドラッグで微調整">${m.quantize!==false?UIHelpers.cvToNoteName(val):val.toFixed(2)}</span>
-                        <div class="h-12 min-h-[48px] flex items-center justify-center my-0.5 shrink-0">
-                            <input type="range" data-seq-slider="${i}" id="seq-slider-${i}" min="0" max="2.0" step="${m.quantize!==false?0.083333:0.01}" value="${val}" class="native-vslider ${isAct ? 'accent-blue-500' : 'accent-slate-600'} shrink-0">
-                        </div>
-                        ${renderSeqStepButtons(i, isAct, isCvAct, isGateAct, false)}
-                    </div>`;
-                }).join('')}
-            </div>
-        </div>`,
-    bindEvents: (m, ctx, cb) => {
-        const root = document.getElementById('seq-modal-root');
-        if (!root) return;
-        if (typeof lucide !== 'undefined') {
-            try { lucide.createIcons({ root }); } catch (_) {}
-        }
-        root.querySelector('#seq8-json-export-btn')?.addEventListener('click', () => {
-            openSeqExport(m, ctx, cb, 8);
-        });
-        root.querySelector('#seq8-json-import-btn')?.addEventListener('click', () => {
-            openSeqImport(m, ctx, cb, 8);
-        });
-        root.addEventListener('click', (e) => {
-            if (e.target.closest('#seq-qlz-btn')) {
-                m.quantize = !(m.quantize !== false);
-                ctx.reRenderModal();
-                cb();
-                return;
-            }
-            const btn = e.target.closest('[data-act]');
-            if (btn) {
-                const idx = parseInt(btn.dataset.step), act = btn.dataset.act;
-                if (!isNaN(idx) && m.steps[idx]) {
-                    m.steps[idx][act] = !(m.steps[idx][act] !== false);
-                    ctx.reRenderModal();
-                    cb();
-                }
-            }
-        });
-        root.addEventListener('input', (e) => {
-            const sl = e.target.closest('[data-seq-slider]');
-            if (sl) {
-                const idx = parseInt(sl.dataset.seqSlider), val = parseFloat(sl.value);
-                if (!isNaN(idx) && m.steps[idx]) {
-                    m.steps[idx].cv = val;
-                    const disp = document.getElementById(`seq-slider-${idx}-disp`);
-                    if (disp) disp.textContent = m.quantize !== false ? UIHelpers.cvToNoteName(val) : val.toFixed(2);
-                    cb();
-                }
-            }
-        });
-        (m.steps || []).forEach((st, i) => {
-            UIHelpers.bindScrubber(`seq-slider-${i}-disp`, `seq-slider-${i}`, v => m.quantize !== false ? UIHelpers.cvToNoteName(v) : v.toFixed(2), v => {
-                st.cv = v;
-                cb();
-            });
-        });
-    }
-};
+function createSeqModule(maxSteps) {
+    const is16 = maxSteps === 16;
+    const typeName = is16 ? 'SEQ16' : 'SEQ8';
+    const prefix = is16 ? 'seq16' : 'seq';
+    const btnPrefix = is16 ? 'seq16' : 'seq8';
 
-export const SEQ16 = {
-    color: 'blue',
-    defaults: () => ({
-        type: 'SEQ16',
-        quantize: true,
-        steps: Array.from({ length: 16 }, (_, i) => ({
-            cv: i === 0 ? 0 : 0.25,
-            active: true,
-            cvActive: true,
-            gate: true
-        }))
-    }),
-    onNormalize: (m) => {
-        if (Array.isArray(m.steps)) {
-            if (typeof m.steps[0] === 'number') {
-                m.steps = m.steps.map(cv => ({ cv, active: true, cvActive: true, gate: true }));
-            }
-            while (m.steps.length < 16) {
-                m.steps.push({ cv: 0.25, active: true, cvActive: true, gate: true });
-            }
-        }
-    },
-    ports: () => ({
-        in: [{ port: 'gate_in', pin: 4, color: 'bg-red-500' }],
-        out: [
-            { port: 'gate_out', pin: 9, color: 'bg-red-500' },
-            { port: 'cv_out', pin: 10, color: 'bg-yellow-400' }
-        ]
-    }),
-    renderGrid: (m) => {
-        const steps = m.steps || [];
-        const renderRow = (slice, startIdx) => UIHelpers.renderPanelBars(
-            slice.map((st, i) => {
+    const mapStepBars = (slice, startIdx = 0) => slice.map((st, i) => {
+        const idx = startIdx + i;
+        const val = typeof st === 'number' ? st : (st?.cv ?? 0);
+        const isAct = typeof st === 'object' ? (st.active !== false) : true;
+        return {
+            pct: isAct ? Math.max(6, Math.min(100, Math.round((val / 2.0) * 100))) : 4,
+            color: isAct ? 'bg-gradient-to-t from-amber-600 to-yellow-400' : 'bg-slate-800',
+            width: 'flex-1',
+            attrs: `data-step-bar="${idx}"`
+        };
+    });
+
+    const renderStepRow = (m, slice, startIdx = 0) => `
+        <div class="flex items-center justify-between py-1 ${is16 ? 'px-1' : 'p-1'} bg-slate-950/60 rounded-xl border border-slate-800/80 gap-1 overflow-x-auto">
+            ${slice.map((st, i) => {
                 const idx = startIdx + i;
                 const val = typeof st === 'number' ? st : (st?.cv ?? 0);
                 const isAct = typeof st === 'object' ? (st.active !== false) : true;
-                const h = isAct ? Math.max(6, Math.min(100, Math.round((val / 2.0) * 100))) : 4;
-                const barColor = isAct ? 'bg-gradient-to-t from-amber-600 to-yellow-400' : 'bg-slate-800';
-                return {
-                    pct: h,
-                    color: barColor,
-                    width: 'flex-1',
-                    attrs: `data-step-bar="${idx}"`
-                };
-            }),
-            {
-                heightCls: 'h-6',
-                gapCls: 'gap-px',
-                containerCls: 'w-[52px]',
-                theme: 'cv'
-            }
-        );
-        return `<div class="flex flex-col items-center justify-center w-full h-full pointer-events-none gap-0.5">
-            ${renderRow(steps.slice(0, 8), 0)}
-            ${renderRow(steps.slice(8, 16), 8)}
-        </div>`;
-    },
-    updateLive: (cell, data, isP, modal) => {
-        const step = data?.step ?? -1;
-        cell.querySelectorAll('[data-step-bar]').forEach((b) => {
-            const stepIdx = parseInt(b.getAttribute('data-step-bar'), 10);
-            b.classList.toggle('bar-active', isP && stepIdx === step);
-        });
-        modal?.querySelectorAll('[data-step-col]').forEach((col) => {
-            const colIdx = parseInt(col.getAttribute('data-step-col'), 10);
-            const cur = isP && colIdx === step;
-            col.classList.toggle('border-yellow-400', cur);
-            col.classList.toggle('bg-slate-800/90', cur);
-            col.classList.toggle('border-slate-800', !cur);
-        });
-    },
-    renderModal: (m) => {
-        const steps = m.steps || [];
-        const renderStepRow = (slice, startIdx) => `
-            <div class="flex items-center justify-between py-1 px-1 bg-slate-950/60 rounded-xl border border-slate-800/80 gap-1 overflow-x-auto">
-                ${slice.map((st, i) => {
-                    const idx = startIdx + i;
-                    const val = typeof st === 'number' ? st : (st?.cv ?? 0);
-                    const isAct = typeof st === 'object' ? (st.active !== false) : true;
-                    const isCvAct = typeof st === 'object' ? (st.cvActive !== false) : true;
-                    const isGateAct = typeof st === 'object' ? (st.gate !== false) : true;
-                    return `
-                    <div data-step-col="${idx}" class="flex flex-col items-center gap-0.5 flex-1 min-w-[34px] p-1 rounded-lg border transition-all shrink-0 ${isAct ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-950/80 border-slate-800/40 opacity-40 grayscale'}">
-                        <span id="seq16-slider-${idx}-disp" class="text-[8px] ${isAct ? 'text-cyan-300' : 'text-slate-500'} font-mono font-bold cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 py-0.5 rounded transition-colors shrink-0" title="上下ドラッグで微調整">${m.quantize!==false?UIHelpers.cvToNoteName(val):val.toFixed(2)}</span>
-                        <div class="h-12 min-h-[48px] flex items-center justify-center my-0.5 shrink-0">
-                            <input type="range" data-seq-slider="${idx}" id="seq16-slider-${idx}" min="0" max="2.0" step="${m.quantize!==false?0.083333:0.01}" value="${val}" class="native-vslider ${isAct ? 'accent-blue-500' : 'accent-slate-600'} shrink-0">
-                        </div>
-                        ${renderSeqStepButtons(idx, isAct, isCvAct, isGateAct, true)}
-                    </div>`;
-                }).join('')}
-            </div>
-        `;
-        return `
-            <div id="seq16-modal-root" class="space-y-1">
-                <div class="flex items-center justify-between pb-1 border-b border-slate-800">
-                    <span class="text-[8px] text-slate-400 uppercase font-semibold">16-STEP SEQUENCER</span>
-                    <div class="flex items-center gap-1">
-                        <button id="seq16-json-export-btn" class="h-4 px-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-cyan-300 rounded text-[7.5px] font-bold cursor-pointer transition shadow-sm flex items-center gap-0.5 shrink-0" title="シーケンスパターンをJSONとしてエクスポート">
-                            <i data-lucide="upload" class="w-2.5 h-2.5 pointer-events-none"></i>
-                            <span>EXP</span>
-                        </button>
-                        <button id="seq16-json-import-btn" class="h-4 px-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-purple-300 rounded text-[7.5px] font-bold cursor-pointer transition shadow-sm flex items-center gap-0.5 shrink-0" title="JSONテキストからパターンをインポート">
-                            <i data-lucide="download" class="w-2.5 h-2.5 pointer-events-none"></i>
-                            <span>IMP</span>
-                        </button>
-                        <button id="seq16-qlz-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${m.quantize!==false?'bg-cyan-600 text-white border-cyan-500':'bg-slate-800 text-slate-400 border-slate-700'}">QLZ: ${m.quantize!==false?'ON':'OFF'}</button>
+                const isCvAct = typeof st === 'object' ? (st.cvActive !== false) : true;
+                const isGateAct = typeof st === 'object' ? (st.gate !== false) : true;
+                return `
+                <div data-step-col="${idx}" class="flex flex-col items-center ${is16 ? 'gap-0.5' : 'gap-1'} flex-1 min-w-[34px] p-1 rounded-lg border transition-all shrink-0 ${isAct ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-950/80 border-slate-800/40 opacity-40 grayscale'}">
+                    <span id="${prefix}-slider-${idx}-disp" class="text-[${is16 ? '8px' : '8.5px'}] ${isAct ? 'text-cyan-300' : 'text-slate-500'} font-mono font-bold cursor-ns-resize touch-none select-none hover:bg-slate-800/80 ${is16 ? 'px-0.5' : 'px-1'} py-0.5 rounded transition-colors shrink-0" title="上下ドラッグで微調整">${m.quantize !== false ? UIHelpers.cvToNoteName(val) : val.toFixed(2)}</span>
+                    <div class="h-12 min-h-[48px] flex items-center justify-center my-0.5 shrink-0">
+                        <input type="range" data-seq-slider="${idx}" id="${prefix}-slider-${idx}" min="0" max="2.0" step="${m.quantize !== false ? 0.083333 : 0.01}" value="${val}" class="native-vslider ${isAct ? 'accent-blue-500' : 'accent-slate-600'} shrink-0">
                     </div>
-                </div>
-                ${renderStepRow(steps.slice(0, 8), 0)}
-                ${renderStepRow(steps.slice(8, 16), 8)}
-            </div>
-        `;
-    },
-    bindEvents: (m, ctx, cb) => {
-        const root = document.getElementById('seq16-modal-root');
-        if (!root) return;
-        if (typeof lucide !== 'undefined') {
-            try { lucide.createIcons({ root }); } catch (_) {}
-        }
-        root.querySelector('#seq16-json-export-btn')?.addEventListener('click', () => {
-            openSeqExport(m, ctx, cb, 16);
-        });
-        root.querySelector('#seq16-json-import-btn')?.addEventListener('click', () => {
-            openSeqImport(m, ctx, cb, 16);
-        });
-        root.addEventListener('click', (e) => {
-            if (e.target.closest('#seq16-qlz-btn')) {
-                m.quantize = !(m.quantize !== false);
-                ctx.reRenderModal();
-                cb();
-                return;
+                    ${renderSeqStepButtons(idx, isAct, isCvAct, isGateAct, is16)}
+                </div>`;
+            }).join('')}
+        </div>`;
+
+    return {
+        color: 'blue',
+        defaults: () => ({
+            type: typeName,
+            quantize: true,
+            steps: Array.from({ length: maxSteps }, (_, i) => ({
+                cv: i === 0 ? 0 : 0.25,
+                active: true,
+                cvActive: true,
+                gate: true
+            }))
+        }),
+        onNormalize: (m) => {
+            if (Array.isArray(m.steps)) {
+                if (typeof m.steps[0] === 'number') {
+                    m.steps = m.steps.map(cv => ({ cv, active: true, cvActive: true, gate: true }));
+                }
+                if (is16) {
+                    while (m.steps.length < 16) {
+                        m.steps.push({ cv: 0.25, active: true, cvActive: true, gate: true });
+                    }
+                }
             }
-            const btn = e.target.closest('[data-act]');
-            if (btn) {
-                const idx = parseInt(btn.dataset.step), act = btn.dataset.act;
-                if (!isNaN(idx) && m.steps[idx]) {
-                    m.steps[idx][act] = !(m.steps[idx][act] !== false);
+        },
+        ports: () => ({
+            in: [{ port: 'gate_in', pin: 4, color: 'bg-red-500' }],
+            out: [
+                { port: 'gate_out', pin: 9, color: 'bg-red-500' },
+                { port: 'cv_out', pin: 10, color: 'bg-yellow-400' }
+            ]
+        }),
+        renderGrid: (m) => {
+            const steps = m.steps || [];
+            if (!is16) {
+                return `<div class="flex items-center justify-center w-full h-full pointer-events-none">
+                    ${UIHelpers.renderPanelBars(mapStepBars(steps, 0), { gapCls: 'gap-px', containerCls: 'w-[50px]', theme: 'cv' })}
+                </div>`;
+            }
+            const opts = { heightCls: 'h-6', gapCls: 'gap-px', containerCls: 'w-[52px]', theme: 'cv' };
+            return `<div class="flex flex-col items-center justify-center w-full h-full pointer-events-none gap-0.5">
+                ${UIHelpers.renderPanelBars(mapStepBars(steps.slice(0, 8), 0), opts)}
+                ${UIHelpers.renderPanelBars(mapStepBars(steps.slice(8, 16), 8), opts)}
+            </div>`;
+        },
+        updateLive: (cell, data, isP, modal) => {
+            const step = data?.step ?? -1;
+            cell.querySelectorAll('[data-step-bar]').forEach((b, i) => {
+                const stepIdx = parseInt(b.getAttribute('data-step-bar') ?? i, 10);
+                b.classList.toggle('bar-active', isP && stepIdx === step);
+            });
+            modal?.querySelectorAll('[data-step-col]').forEach((col, i) => {
+                const colIdx = parseInt(col.getAttribute('data-step-col') ?? i, 10);
+                const cur = isP && colIdx === step;
+                col.classList.toggle('border-yellow-400', cur);
+                col.classList.toggle('bg-slate-800/90', cur);
+                col.classList.toggle('border-slate-800', !cur);
+            });
+        },
+        renderModal: (m) => {
+            const steps = m.steps || [];
+            return `
+                <div id="${prefix}-modal-root" class="${is16 ? 'space-y-1' : 'space-y-1.5'}">
+                    <div class="flex items-center justify-between pb-1 border-b border-slate-800">
+                        <span class="text-[8px] text-slate-400 uppercase font-semibold">${maxSteps}-STEP SEQUENCER</span>
+                        <div class="flex items-center gap-1">
+                            <button id="${btnPrefix}-json-export-btn" class="h-4 px-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-cyan-300 rounded text-[7.5px] font-bold cursor-pointer transition shadow-sm flex items-center gap-0.5 shrink-0" title="シーケンスパターンをJSONとしてエクスポート">
+                                <i data-lucide="upload" class="w-2.5 h-2.5 pointer-events-none"></i>
+                                <span>EXP</span>
+                            </button>
+                            <button id="${btnPrefix}-json-import-btn" class="h-4 px-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-purple-300 rounded text-[7.5px] font-bold cursor-pointer transition shadow-sm flex items-center gap-0.5 shrink-0" title="JSONテキストからパターンをインポート">
+                                <i data-lucide="download" class="w-2.5 h-2.5 pointer-events-none"></i>
+                                <span>IMP</span>
+                            </button>
+                            <button id="${prefix}-qlz-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${m.quantize !== false ? 'bg-cyan-600 text-white border-cyan-500' : 'bg-slate-800 text-slate-400 border-slate-700'}">QLZ: ${m.quantize !== false ? 'ON' : 'OFF'}</button>
+                        </div>
+                    </div>
+                    ${is16
+                        ? `${renderStepRow(m, steps.slice(0, 8), 0)}${renderStepRow(m, steps.slice(8, 16), 8)}`
+                        : renderStepRow(m, steps, 0)}
+                </div>`;
+        },
+        bindEvents: (m, ctx, cb) => {
+            const root = document.getElementById(`${prefix}-modal-root`);
+            if (!root) return;
+            if (typeof lucide !== 'undefined') {
+                try { lucide.createIcons({ root }); } catch (_) {}
+            }
+            root.querySelector(`#${btnPrefix}-json-export-btn`)?.addEventListener('click', () => openSeqExport(m, ctx, cb, maxSteps));
+            root.querySelector(`#${btnPrefix}-json-import-btn`)?.addEventListener('click', () => openSeqImport(m, ctx, cb, maxSteps));
+            root.addEventListener('click', (e) => {
+                if (e.target.closest(`#${prefix}-qlz-btn`)) {
+                    m.quantize = !(m.quantize !== false);
                     ctx.reRenderModal();
                     cb();
+                    return;
                 }
-            }
-        });
-        root.addEventListener('input', (e) => {
-            const sl = e.target.closest('[data-seq-slider]');
-            if (sl) {
-                const idx = parseInt(sl.dataset.seqSlider), val = parseFloat(sl.value);
-                if (!isNaN(idx) && m.steps[idx]) {
-                    m.steps[idx].cv = val;
-                    const disp = document.getElementById(`seq16-slider-${idx}-disp`);
-                    if (disp) disp.textContent = m.quantize !== false ? UIHelpers.cvToNoteName(val) : val.toFixed(2);
-                    cb();
+                const btn = e.target.closest('[data-act]');
+                if (btn) {
+                    const idx = parseInt(btn.dataset.step), act = btn.dataset.act;
+                    if (!isNaN(idx) && m.steps[idx]) {
+                        m.steps[idx][act] = !(m.steps[idx][act] !== false);
+                        ctx.reRenderModal();
+                        cb();
+                    }
                 }
-            }
-        });
-        (m.steps || []).forEach((st, i) => {
-            UIHelpers.bindScrubber(`seq16-slider-${i}-disp`, `seq16-slider-${i}`, v => m.quantize !== false ? UIHelpers.cvToNoteName(v) : v.toFixed(2), v => {
-                st.cv = v;
-                cb();
             });
-        });
-    }
-};
+            root.addEventListener('input', (e) => {
+                const sl = e.target.closest('[data-seq-slider]');
+                if (sl) {
+                    const idx = parseInt(sl.dataset.seqSlider), val = parseFloat(sl.value);
+                    if (!isNaN(idx) && m.steps[idx]) {
+                        m.steps[idx].cv = val;
+                        const disp = document.getElementById(`${prefix}-slider-${idx}-disp`);
+                        if (disp) disp.textContent = m.quantize !== false ? UIHelpers.cvToNoteName(val) : val.toFixed(2);
+                        cb();
+                    }
+                }
+            });
+            (m.steps || []).forEach((st, i) => {
+                UIHelpers.bindScrubber(`${prefix}-slider-${i}-disp`, `${prefix}-slider-${i}`, v => m.quantize !== false ? UIHelpers.cvToNoteName(v) : v.toFixed(2), v => {
+                    st.cv = v;
+                    cb();
+                });
+            });
+        }
+    };
+}
+
+export const SEQ8 = createSeqModule(8);
+export const SEQ16 = createSeqModule(16);
 
 export const seqDefs = {
     SEQ8,

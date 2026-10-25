@@ -1,5 +1,5 @@
 // src/ui/managers/modal-manager.js
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=397';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=402';
 import { FACTORY_SUBPATCHES } from '../../presets/subpatches.js';
 import { UIHelpers } from '../helpers.js?v=187';
 
@@ -53,7 +53,7 @@ export const MODAL_WIDTHS = {
     SUB: 'w-[240px]'
 };
 
-import { DockManager } from './dock-manager.js?v=396';
+import { DockManager } from './dock-manager.js?v=402';
 
 export class ModalManager {
     constructor(ui) {
@@ -106,42 +106,11 @@ export class ModalManager {
             }
         });
 
-        const frame = document.getElementById('phone-frame');
-        const headerEl = document.getElementById('modal-header');
-        const contentEl = document.getElementById('modal-content');
-        if (headerEl && contentEl && frame) {
-            const minMargin = 6;
-            let drag = false, dX = 0, dY = 0, initL = 0, initT = 0;
-            headerEl.addEventListener('pointerdown', (e) => {
-                if (e.target.closest('#dock-lock-btn') || e.target.closest('.dock-lock-btn')) return;
-                e.preventDefault();
-                drag = true;
-                headerEl.setPointerCapture(e.pointerId);
-                dX = e.clientX;
-                dY = e.clientY;
-                contentEl.style.bottom = 'auto';
-                initL = parseFloat(contentEl.style.left) || contentEl.offsetLeft;
-                initT = parseFloat(contentEl.style.top) || contentEl.offsetTop;
-            });
-            headerEl.addEventListener('pointermove', (e) => {
-                if (!drag) return;
-                const fR = frame.getBoundingClientRect(), cR = contentEl.getBoundingClientRect();
-                const isAddModal = document.getElementById('modal-title')?.textContent === 'ADD MODULE';
-                if (!isAddModal) {
-                    contentEl.style.left = `${Math.max(minMargin, Math.min(fR.width - cR.width - minMargin, initL + e.clientX - dX))}px`;
-                }
-                contentEl.style.top = `${Math.max(minMargin, Math.min(fR.height - cR.height - minMargin, initT + e.clientY - dY))}px`;
-                contentEl.style.bottom = 'auto';
-            });
-            const stop = (e) => {
-                if (drag) {
-                    drag = false;
-                    try { headerEl.releasePointerCapture(e.pointerId); } catch (_) {}
-                }
-            };
-            headerEl.addEventListener('pointerup', stop);
-            headerEl.addEventListener('pointercancel', stop);
-        }
+        this.makeDialogDraggable(
+            document.getElementById('modal-header'),
+            document.getElementById('modal-content'),
+            { minMargin: 6, canMoveX: () => document.getElementById('modal-title')?.textContent !== 'ADD MODULE' }
+        );
 
         const closeAboutModal = () => document.getElementById('about-modal')?.classList.add('hidden');
         document.getElementById('about-backdrop')?.addEventListener('click', closeAboutModal);
@@ -169,20 +138,11 @@ export class ModalManager {
         const content = document.getElementById('modal-content');
         if (!modal || !content) return;
 
-        if (title === 'ADD MODULE') {
-            content.style.width = 'calc(100% - 16px)';
-            content.style.maxWidth = 'none';
-            content.style.left = '8px';
-            content.style.right = '8px';
-            content.style.margin = '0';
-            content.style.bottom = 'auto';
-        } else {
-            content.style.width = '';
-            content.style.maxWidth = '';
-            content.style.right = 'auto';
-            content.style.bottom = 'auto';
-            content.style.margin = '0';
-        }
+        const isAdd = title === 'ADD MODULE';
+        Object.assign(content.style, isAdd
+            ? { width: 'calc(100% - 16px)', maxWidth: 'none', left: '8px', right: '8px', margin: '0', bottom: 'auto' }
+            : { width: '', maxWidth: '', right: 'auto', bottom: 'auto', margin: '0' }
+        );
 
         content.className = `absolute bg-slate-900/95 border border-slate-700 rounded-xl ${widthCls} p-2 shadow-2xl backdrop-blur-md`;
         const titleEl = document.getElementById('modal-title');
@@ -198,29 +158,13 @@ export class ModalManager {
             const fR = frame.getBoundingClientRect();
             const pR = content.getBoundingClientRect();
 
-            if (title === 'ADD MODULE') {
-                content.style.left = '8px';
-                content.style.right = '8px';
-                content.style.width = 'calc(100% - 16px)';
-                content.style.maxWidth = 'none';
-                content.style.margin = '0';
-                content.style.bottom = 'auto';
-                const idealTop = (cR.top - fR.top) - pR.height - 8;
-                const topPos = idealTop < 10 ? (cR.bottom - fR.top + 8) : idealTop;
-                content.style.top = `${Math.max(6, Math.min(fR.height - pR.height - 52, topPos))}px`;
-            } else {
-                content.style.width = '';
-                content.style.maxWidth = '';
-                content.style.right = 'auto';
-                content.style.margin = '0';
-                content.style.bottom = 'auto';
+            if (!isAdd) {
                 const idealLeft = (cR.left - fR.left) + (cR.width - pR.width) / 2;
                 content.style.left = `${Math.max(6, Math.min(fR.width - pR.width - 6, idealLeft))}px`;
-
-                const idealTop = (cR.top - fR.top) - pR.height - 8;
-                const topPos = idealTop < 10 ? (cR.bottom - fR.top + 8) : idealTop;
-                content.style.top = `${Math.max(6, Math.min(fR.height - pR.height - 52, topPos))}px`;
             }
+            const idealTop = (cR.top - fR.top) - pR.height - 8;
+            const topPos = idealTop < 10 ? (cR.bottom - fR.top + 8) : idealTop;
+            content.style.top = `${Math.max(6, Math.min(fR.height - pR.height - 52, topPos))}px`;
         });
     }
 
@@ -237,7 +181,7 @@ export class ModalManager {
     }
 
     openDockModal(mId) { return this.dockManager.openDockModal(mId); }
-    makeDialogDraggable(headerEl, dialogEl) { return this.dockManager.makeDialogDraggable(headerEl, dialogEl); }
+    makeDialogDraggable(headerEl, dialogEl, opts) { return this.dockManager.makeDialogDraggable(headerEl, dialogEl, opts); }
     bringToFront(mId) { return this.dockManager.bringToFront(mId); }
     closeDockModal(mId = null) { return this.dockManager.closeDockModal(mId); }
     closeUnlockedDocks() { return this.dockManager.closeUnlockedDocks(); }
@@ -281,6 +225,20 @@ export class ModalManager {
 
     reRenderDockModal(mId = null) { return this.dockManager.reRenderDockModal(mId); }
 
+    renderAndBindModuleModal(id, m, reg, containerEl, isDock = false, afterChange = null) {
+        const ctx = this.createModuleContext(id, isDock);
+        const onChange = () => {
+            this.ui.synth.updateModule(`${this.ui.currentPageId}/${id}`, m, this.ui.getPatchState(id));
+            this.ui.renderCell(m.row * this.ui.COLS + m.col);
+            if (afterChange) afterChange();
+        };
+        if (reg.renderModal) containerEl.innerHTML = reg.renderModal(m, ctx);
+        else if (reg.schema) containerEl.innerHTML = UIHelpers.renderSchemaModal(m, ctx, reg.schema);
+
+        if (reg.bindEvents) reg.bindEvents(m, ctx, onChange);
+        else if (reg.schema) UIHelpers.bindSchemaEvents(m, ctx, reg.schema, onChange);
+    }
+
     reRenderModal() {
         const id = this.activePopupModuleId;
         const m = this.ui.modules[id];
@@ -290,7 +248,6 @@ export class ModalManager {
         if (!reg || !b) return;
 
         b.className = "text-xs mt-1";
-        const ctx = this.createModuleContext(id, false);
 
         const updateModalTitle = () => {
             const titleEl = document.getElementById('modal-title');
@@ -299,25 +256,8 @@ export class ModalManager {
             titleEl.textContent = (m.type === 'PAD' && m.name) ? `PAD: ${m.name}` : (m.name || m.type);
         };
 
-        const onChange = () => {
-            this.ui.synth.updateModule(`${this.ui.currentPageId}/${id}`, m, this.ui.getPatchState(id));
-            this.ui.renderCell(m.row * this.ui.COLS + m.col);
-            updateModalTitle();
-        };
-
         updateModalTitle();
-
-        if (reg.renderModal) {
-            b.innerHTML = reg.renderModal(m, ctx);
-        } else if (reg.schema) {
-            b.innerHTML = UIHelpers.renderSchemaModal(m, ctx, reg.schema);
-        }
-
-        if (reg.bindEvents) {
-            reg.bindEvents(m, ctx, onChange);
-        } else if (reg.schema) {
-            UIHelpers.bindSchemaEvents(m, ctx, reg.schema, onChange);
-        }
+        this.renderAndBindModuleModal(id, m, reg, b, false, updateModalTitle);
     }
 
     openAddModal(slotIdx) {
@@ -452,97 +392,52 @@ export class ModalManager {
                     ` : ''}
                 `;
 
-                // Basic module & SUB click
-                body.querySelectorAll('[data-type]').forEach(btn => btn.addEventListener('click', () => {
-                    document.getElementById('shared-modal')?.classList.add('hidden');
+            body.onclick = (e) => {
+                const closeShared = () => document.getElementById('shared-modal')?.classList.add('hidden');
+                const btn = e.target.closest('button, .factory-sub-item, .select-user-sub');
+                if (!btn || !body.contains(btn)) return;
+
+                if (btn.dataset.type) {
+                    closeShared();
                     this.ui.pageManager.addModuleAtSlot(btn.dataset.type, slotIdx);
-                }));
-
-                // Factory subpatch click (Direct place)
-                body.querySelectorAll('.factory-sub-item').forEach(item => {
-                    item.addEventListener('click', (e) => {
-                        if (e.target.closest('.sub-info-btn') || e.target.closest('.export-factory-sub-btn')) return;
-                        const subId = item.dataset.id;
-                        this.ui.instantiateSubpatch(subId, slotIdx);
-                        document.getElementById('shared-modal')?.classList.add('hidden');
-                    });
-                });
-
-                // Factory subpatch export
-                body.querySelectorAll('.export-factory-sub-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const subId = btn.dataset.id;
-                        const sub = FACTORY_SUBPATCHES[subId];
-                        if (sub) this.ui.openSubpatchExportModal(sub);
-                    });
-                });
-
-                // Factory subpatch info button click (Toast description)
-                body.querySelectorAll('.sub-info-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const subId = btn.dataset.id;
-                        const sub = FACTORY_SUBPATCHES[subId] || (this.ui.userSubpatches && this.ui.userSubpatches[subId]);
-                        if (sub) {
-                            this.showToast(`【${sub.name}】${sub.description || '説明なし'}`, 3000);
-                        }
-                    });
-                });
-
-                // User subpatch click (Direct place)
-                body.querySelectorAll('.select-user-sub').forEach(item => {
-                    item.addEventListener('click', (e) => {
-                        if (e.target.closest('.edit-user-sub-btn') || e.target.closest('.delete-user-sub-btn') || e.target.closest('.export-user-sub-btn')) return;
-                        const subId = item.dataset.id;
-                        this.ui.instantiateSubpatch(subId, slotIdx);
-                        document.getElementById('shared-modal')?.classList.add('hidden');
-                    });
-                });
-
-                // User subpatch export
-                body.querySelectorAll('.export-user-sub-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const subId = btn.dataset.id;
-                        const sub = this.ui.getUserSubpatches()[subId];
-                        if (sub) this.ui.openSubpatchExportModal(sub);
-                    });
-                });
-
-                // User subpatch import
-                body.querySelector('.import-user-sub-btn')?.addEventListener('click', (e) => {
+                    return;
+                }
+                if (btn.classList.contains('import-user-sub-btn')) {
                     e.stopPropagation();
                     this.ui.openSubpatchImportModal(() => renderContent());
-                });
+                    return;
+                }
 
-                // User subpatch edit (Place and immediately open internal subpatch page)
-                body.querySelectorAll('.edit-user-sub-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const subId = btn.dataset.id;
-                        const res = this.ui.instantiateSubpatch(subId, slotIdx);
-                        if (res && res.success) {
-                            document.getElementById('shared-modal')?.classList.add('hidden');
-                            this.ui.switchPage(res.page);
-                            this.showToast(`サブパッチ「${res.subpatch}」の編集画面を開きました（上部の STOCK ボタンで更新可能）`);
-                        }
-                    });
-                });
+                const subId = btn.dataset.id;
+                if (!subId) return;
 
-                // User subpatch delete
-                body.querySelectorAll('.delete-user-sub-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const subId = btn.dataset.id;
-                        const sub = this.ui.userSubpatches[subId];
-                        if (!sub) return;
-                        if (confirm(`サブパッチ「${sub.name}」をライブラリから削除しますか？\n（※配置済みのモジュールには影響しません）`)) {
-                            this.ui.deleteUserSubpatch(subId);
-                            renderContent();
-                        }
-                    });
-                });
+                if (btn.classList.contains('export-factory-sub-btn') || btn.classList.contains('export-user-sub-btn')) {
+                    e.stopPropagation();
+                    const sub = FACTORY_SUBPATCHES[subId] || this.ui.getUserSubpatches()[subId];
+                    if (sub) this.ui.openSubpatchExportModal(sub);
+                } else if (btn.classList.contains('sub-info-btn')) {
+                    e.stopPropagation();
+                    const sub = FACTORY_SUBPATCHES[subId] || this.ui.userSubpatches?.[subId];
+                    if (sub) this.showToast(`【${sub.name}】${sub.description || '説明なし'}`, 3000);
+                } else if (btn.classList.contains('edit-user-sub-btn')) {
+                    e.stopPropagation();
+                    const res = this.ui.instantiateSubpatch(subId, slotIdx);
+                    if (res?.success) {
+                        closeShared();
+                        this.ui.switchPage(res.page);
+                        this.showToast(`サブパッチ「${res.subpatch}」の編集画面を開きました（上部の STOCK ボタンで更新可能）`);
+                    }
+                } else if (btn.classList.contains('delete-user-sub-btn')) {
+                    e.stopPropagation();
+                    const sub = this.ui.userSubpatches?.[subId];
+                    if (sub && confirm(`サブパッチ「${sub.name}」をライブラリから削除しますか？\n（※配置済みのモジュールには影響しません）`)) {
+                        this.ui.deleteUserSubpatch(subId);
+                        renderContent();
+                    }
+                } else if (btn.classList.contains('factory-sub-item') || btn.classList.contains('select-user-sub')) {
+                    this.ui.instantiateSubpatch(subId, slotIdx);
+                    closeShared();
+                }
             };
 
             renderContent();

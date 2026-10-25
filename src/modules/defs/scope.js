@@ -1,5 +1,27 @@
 import { UIHelpers } from '../../ui/helpers.js?v=351';
 
+const bindStepPair = (downId, upId, steps, m, prop, defVal, ctx, cb) => {
+    const step = (dir) => {
+        const cur = m[prop] || defVal;
+        const idx = steps.findIndex(v => v >= cur - 0.0001);
+        const nextIdx = idx + dir;
+        if (idx >= 0 && nextIdx >= 0 && nextIdx < steps.length) {
+            m[prop] = steps[nextIdx];
+            ctx.reRenderModal();
+            cb();
+        }
+    };
+    document.getElementById(downId)?.addEventListener('click', () => step(-1));
+    document.getElementById(upId)?.addEventListener('click', () => step(1));
+};
+
+const renderDualCanvases = (cell, modal, cellSel, modalSel, drawFn) => {
+    const cvs = cell.querySelector(cellSel);
+    if (cvs) drawFn(cvs.getContext('2d'), cvs.width, cvs.height, false);
+    const modalCvs = modal?.querySelector(modalSel);
+    if (modalCvs) drawFn(modalCvs.getContext('2d'), modalCvs.width, modalCvs.height, true);
+};
+
 // -------------------------------------------------------------
 // 1. Single-Channel Oscilloscope Canvas
 // -------------------------------------------------------------
@@ -62,16 +84,7 @@ export const SCOPE = {
         </div>`,
     updateLive: (cell, data, isP, modal, m) => {
         if (!data || !m) return;
-        const cvs = cell.querySelector('.scope-canvas');
-        if (cvs) {
-            const ctx = cvs.getContext('2d');
-            drawScopeCanvas(ctx, cvs.width, cvs.height, data, m, false);
-        }
-        const modalCvs = modal?.querySelector('#scope-modal-canvas');
-        if (modalCvs) {
-            const mCtx = modalCvs.getContext('2d');
-            drawScopeCanvas(mCtx, modalCvs.width, modalCvs.height, data, m, true);
-        }
+        renderDualCanvases(cell, modal, '.scope-canvas', '#scope-modal-canvas', (c, w, h, isM) => drawScopeCanvas(c, w, h, data, m, isM));
     },
     renderModal: (m) => {
         const curT = m.timeSpan || 0.1;
@@ -111,47 +124,8 @@ export const SCOPE = {
             </div>`;
     },
     bindEvents: (m, ctx, cb) => {
-        const tSteps = SCOPE.T_STEPS;
-        const vSteps = SCOPE.V_STEPS;
-
-        document.getElementById('scope-t-down')?.addEventListener('click', () => {
-            const cur = m.timeSpan || 0.1;
-            let idx = tSteps.findIndex(v => v >= cur - 0.0001);
-            if (idx > 0) {
-                m.timeSpan = tSteps[idx - 1];
-                ctx.reRenderModal();
-                cb();
-            }
-        });
-        document.getElementById('scope-t-up')?.addEventListener('click', () => {
-            const cur = m.timeSpan || 0.1;
-            let idx = tSteps.findIndex(v => v >= cur - 0.0001);
-            if (idx >= 0 && idx < tSteps.length - 1) {
-                m.timeSpan = tSteps[idx + 1];
-                ctx.reRenderModal();
-                cb();
-            }
-        });
-
-        document.getElementById('scope-v-down')?.addEventListener('click', () => {
-            const cur = m.vRange || 2.0;
-            let idx = vSteps.findIndex(v => v >= cur - 0.001);
-            if (idx > 0) {
-                m.vRange = vSteps[idx - 1];
-                ctx.reRenderModal();
-                cb();
-            }
-        });
-        document.getElementById('scope-v-up')?.addEventListener('click', () => {
-            const cur = m.vRange || 2.0;
-            let idx = vSteps.findIndex(v => v >= cur - 0.001);
-            if (idx >= 0 && idx < vSteps.length - 1) {
-                m.vRange = vSteps[idx + 1];
-                ctx.reRenderModal();
-                cb();
-            }
-        });
-
+        bindStepPair('scope-t-down', 'scope-t-up', SCOPE.T_STEPS, m, 'timeSpan', 0.1, ctx, cb);
+        bindStepPair('scope-v-down', 'scope-v-up', SCOPE.V_STEPS, m, 'vRange', 2.0, ctx, cb);
         document.getElementById('scope-trig-toggle')?.addEventListener('click', () => {
             m.trigMode = (m.trigMode || 'auto') === 'auto' ? 'free' : 'auto';
             ctx.reRenderModal();
@@ -218,16 +192,7 @@ export const LISS = {
         </div>`,
     updateLive: (cell, data, isP, modal, m) => {
         if (!data || !m) return;
-        const cvs = cell.querySelector('.liss-canvas');
-        if (cvs) {
-            const ctx = cvs.getContext('2d');
-            drawLissajousCanvas(ctx, cvs.width, cvs.height, data, m, false);
-        }
-        const modalCvs = modal?.querySelector('#liss-modal-canvas');
-        if (modalCvs) {
-            const mCtx = modalCvs.getContext('2d');
-            drawLissajousCanvas(mCtx, modalCvs.width, modalCvs.height, data, m, true);
-        }
+        renderDualCanvases(cell, modal, '.liss-canvas', '#liss-modal-canvas', (c, w, h, isM) => drawLissajousCanvas(c, w, h, data, m, isM));
     },
     renderModal: (m) => {
         const curV = m.vRange || 2.0;
@@ -254,25 +219,7 @@ export const LISS = {
             </div>`;
     },
     bindEvents: (m, ctx, cb) => {
-        const vSteps = LISS.V_STEPS;
-        document.getElementById('liss-v-down')?.addEventListener('click', () => {
-            const cur = m.vRange || 2.0;
-            let idx = vSteps.findIndex(v => v >= cur - 0.001);
-            if (idx > 0) {
-                m.vRange = vSteps[idx - 1];
-                ctx.reRenderModal();
-                cb();
-            }
-        });
-        document.getElementById('liss-v-up')?.addEventListener('click', () => {
-            const cur = m.vRange || 2.0;
-            let idx = vSteps.findIndex(v => v >= cur - 0.001);
-            if (idx >= 0 && idx < vSteps.length - 1) {
-                m.vRange = vSteps[idx + 1];
-                ctx.reRenderModal();
-                cb();
-            }
-        });
+        bindStepPair('liss-v-down', 'liss-v-up', LISS.V_STEPS, m, 'vRange', 2.0, ctx, cb);
     }
 };
 
@@ -455,23 +402,9 @@ export const SPEC = {
         </div>`,
     updateLive: (cell, data, isP, modal, m) => {
         if (!data?.freqs) return;
-        const freqs = data.freqs;
-        const sampleRate = data.sampleRate || 48000;
+        const { bands } = extractBands(data.freqs, 96, data.sampleRate || 48000);
         const mode = m.mode || 'bar';
-
-        const cvs = cell.querySelector('.spec-canvas');
-        if (cvs) {
-            const cellRes = extractBands(freqs, 96, sampleRate);
-            const ctx = cvs.getContext('2d');
-            drawSpectrumCanvas(ctx, cvs.width, cvs.height, cellRes.bands, mode, false);
-        }
-
-        const modalCvs = modal?.querySelector('#spec-modal-canvas');
-        if (modalCvs) {
-            const modalRes = extractBands(freqs, 96, sampleRate);
-            const mCtx = modalCvs.getContext('2d');
-            drawSpectrumCanvas(mCtx, modalCvs.width, modalCvs.height, modalRes.bands, mode, true);
-        }
+        renderDualCanvases(cell, modal, '.spec-canvas', '#spec-modal-canvas', (c, w, h, isM) => drawSpectrumCanvas(c, w, h, bands, mode, isM));
     },
     renderModal: (m) => {
         const curMode = m.mode || 'bar';

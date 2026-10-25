@@ -2,7 +2,7 @@
 import { UIHelpers } from '../../ui/helpers.js?v=351';
 import { WaveCodec } from '../../audio/wave-codec.js?v=351';
 import { WaveView } from '../../ui/wave-view.js?v=351';
-import { WaveModal } from '../../ui/wave-modal.js?v=351';
+import { WaveModal } from '../../ui/wave-modal.js?v=402';
 
 export const WAVE = {
     color: 'cyan',

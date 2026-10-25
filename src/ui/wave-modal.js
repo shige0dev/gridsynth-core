@@ -41,11 +41,41 @@ export const WaveModal = {
                 synth.rebuildAll(pagesData, resolvePatch);
             }
         }
-        const pwrBtn = document.getElementById('audio-power-btn');
-        if (pwrBtn && !pwrBtn.classList.contains('border-red-500')) {
-            pwrBtn.className = "h-5 w-5 bg-red-950 text-red-400 rounded-md border border-red-500 shadow-md shadow-red-500/40 flex items-center justify-center shrink-0";
-        }
+        document.getElementById('audio-power-btn')?.classList.add('is-active');
         return this.getActiveInst(ctx, m);
+    },
+
+    applyAudioBuffer(m, ctx, buffer, sampleRate, opts = {}) {
+        if (!buffer) return;
+        if (opts.name !== undefined) m.name = opts.name;
+        m._buffer = buffer;
+        m.duration = opts.duration ?? (buffer.length / sampleRate);
+        m.sampleRate = sampleRate;
+        m.bpm = opts.bpm || WaveCodec.detectBPM(buffer, sampleRate);
+        if (opts.forcePeaks || !m.peaks?.length) {
+            m.peaks = WaveCodec.extractPeaks(buffer, 64);
+        }
+        m._peaks = m.peaks;
+
+        const inst = opts.activeInst || this.getActiveInst(ctx, m);
+        inst?.setAudioBuffer?.(buffer, sampleRate);
+        if (opts.updateInst) {
+            const audioCtx = opts.audioCtx || (ctx?.synth || window.__GS_SYNTH__)?.ctx;
+            inst?.update?.(audioCtx, inst, m);
+        }
+        this.propagateLinks(ctx);
+        opts.redrawSvg?.();
+        if (opts.reRender) ctx.reRenderModal?.();
+        opts.cb?.();
+        if (opts.toast) ctx.showToast?.(opts.toast);
+
+        if (opts.encode) {
+            const audioCtx = opts.audioCtx || (ctx?.synth || window.__GS_SYNTH__)?.ctx;
+            WaveCodec.encodeToOpusBase64(buffer, sampleRate, audioCtx).then(b64 => {
+                m.data = b64;
+                opts.cb?.();
+            }).catch(() => {});
+        }
     },
 
     extractWavePayload(parsed) {
@@ -155,15 +185,11 @@ export const WaveModal = {
                                 ctx.showToast?.('DECODING WAVE JSON...');
                                 const decoded = await WaveCodec.decodeFromBase64(m.data, synth?.ctx || null);
                                 if (decoded?.buffer) {
-                                    m._buffer = decoded.buffer;
-                                    m.duration = decoded.duration;
-                                    m.sampleRate = decoded.sampleRate;
-                                    m.bpm = decoded.bpm || WaveCodec.detectBPM(decoded.buffer, decoded.sampleRate);
-                                    if (!m.peaks?.length) {
-                                        m.peaks = WaveCodec.extractPeaks(decoded.buffer, 64);
-                                    }
-                                    m._peaks = m.peaks;
-                                    (activeInst || this.getActiveInst(ctx, m))?.setAudioBuffer?.(decoded.buffer, decoded.sampleRate);
+                                    this.applyAudioBuffer(m, ctx, decoded.buffer, decoded.sampleRate, {
+                                        duration: decoded.duration,
+                                        bpm: decoded.bpm,
+                                        activeInst
+                                    });
                                 }
                             } catch (err) {
                                 ctx.showToast?.(`DECODE ERROR: ${(err?.message || String(err)).slice(0, 28)}`);
@@ -328,28 +354,18 @@ export const WaveModal = {
                         for (let i = 0; i < finalBuf.length; i++) finalBuf[i] *= scale;
                     }
 
-                    m.name = recName;
-                    m.duration = finalBuf.length / sRate;
-                    m.sampleRate = sRate;
-                    m.bpm = WaveCodec.detectBPM(finalBuf, sRate);
-                    m.peaks = WaveCodec.extractPeaks(finalBuf, 64);
-                    m._peaks = m.peaks;
-                    m._buffer = finalBuf;
-
-                    const inst = activeInst || this.getActiveInst(ctx, m);
-                    inst?.setAudioBuffer?.(finalBuf, sRate);
-                    inst?.update?.(audioCtx, inst, m);
-
-                    this.propagateLinks(ctx);
-                    redrawSvg?.();
-                    ctx.reRenderModal?.();
-                    cb?.();
-                    ctx.showToast?.(`RECORDED: ${m.name} (${m.duration.toFixed(1)}s)`);
-
-                    WaveCodec.encodeToOpusBase64(finalBuf, sRate, audioCtx).then(b64 => {
-                        m.data = b64;
-                        cb?.();
-                    }).catch(() => {});
+                    this.applyAudioBuffer(m, ctx, finalBuf, sRate, {
+                        name: recName,
+                        forcePeaks: true,
+                        activeInst,
+                        updateInst: true,
+                        audioCtx,
+                        redrawSvg,
+                        reRender: true,
+                        cb,
+                        toast: `RECORDED: ${recName} (${(finalBuf.length / sRate).toFixed(1)}s)`,
+                        encode: true
+                    });
                 }
             };
         } catch (err) {
@@ -575,16 +591,12 @@ export const WaveModal = {
             const synth = ctx?.synth || window.__GS_SYNTH__;
             WaveCodec.decodeFromBase64(m.data, synth?.ctx).then(res => {
                 if (res?.buffer) {
-                    m._buffer = res.buffer;
-                    m.duration = res.duration;
-                    m.sampleRate = res.sampleRate;
-                    m.bpm = res.bpm || WaveCodec.detectBPM(res.buffer, res.sampleRate);
-                    if (!m.peaks?.length) m.peaks = WaveCodec.extractPeaks(res.buffer, 64);
-                    m._peaks = m.peaks;
-                    this.getActiveInst(ctx, m)?.setAudioBuffer?.(res.buffer, res.sampleRate);
-                    this.propagateLinks(ctx);
-                    redrawSvg();
-                    cb();
+                    this.applyAudioBuffer(m, ctx, res.buffer, res.sampleRate, {
+                        duration: res.duration,
+                        bpm: res.bpm,
+                        redrawSvg,
+                        cb
+                    });
                 }
             }).catch(() => {});
         }
@@ -625,25 +637,19 @@ export const WaveModal = {
                 const synth = ctx?.synth || window.__GS_SYNTH__;
                 const res = await WaveCodec.loadAudioFromFile(file, synth?.ctx || null);
 
-                m.name = file.name.replace(/\.[^/.]+$/, '').slice(0, 24);
-                m.duration = res.duration;
-                m.sampleRate = res.sampleRate;
-                m.bpm = res.bpm || WaveCodec.detectBPM(res.buffer, res.sampleRate);
-                m.peaks = WaveCodec.extractPeaks(res.buffer, 64);
-                m._peaks = m.peaks;
-                m._buffer = res.buffer;
-                (activeInst || this.getActiveInst(ctx, m))?.setAudioBuffer?.(res.buffer, res.sampleRate);
-
-                this.propagateLinks(ctx);
-                redrawSvg();
-                ctx.reRenderModal?.();
-                cb();
-                ctx.showToast?.(`LOADED: ${res.duration.toFixed(1)}s`);
-
-                WaveCodec.encodeToOpusBase64(res.buffer, res.sampleRate, synth?.ctx).then(b64 => {
-                    m.data = b64;
-                    cb();
-                }).catch(() => {});
+                this.applyAudioBuffer(m, ctx, res.buffer, res.sampleRate, {
+                    name: file.name.replace(/\.[^/.]+$/, '').slice(0, 24),
+                    duration: res.duration,
+                    bpm: res.bpm,
+                    forcePeaks: true,
+                    activeInst,
+                    audioCtx: synth?.ctx,
+                    redrawSvg,
+                    reRender: true,
+                    cb,
+                    toast: `LOADED: ${res.duration.toFixed(1)}s`,
+                    encode: true
+                });
             } catch (err) {
                 ctx.showToast?.(`LOAD FAILED: ${(err?.message || String(err)).slice(0, 32)}`);
             } finally {
