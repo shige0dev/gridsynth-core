@@ -442,6 +442,13 @@ body.is-row-dragging .grid-cell * {
     min-height: 31px !important;
     padding-top: calc(env(safe-area-inset-top, 0px) + 2px) !important;
     padding-bottom: 2px !important;
+    touch-action: pan-x !important;
+    overscroll-behavior: none !important;
+}
+
+#page-nav-bar {
+    touch-action: pan-x !important;
+    overscroll-behavior: none !important;
 }
 
 #main-menu-bar button,
@@ -450,6 +457,10 @@ body.is-row-dragging .grid-cell * {
     min-height: 20px !important;
     max-height: 20px !important;
     border-radius: 6px !important;
+}
+
+#master-bpm-container {
+    touch-action: none !important;
 }
 
 #main-menu-bar #audio-power-btn,

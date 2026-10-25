@@ -38,6 +38,7 @@ export class InteractionManager {
 
         this._isScrollDragging = false;
         this._wasScrollDragging = false;
+        this._gridPointerActive = false;
         this._scrollStartY = 0;
         this._scrollStartTop = 0;
         this._lastScrollY = 0;
@@ -96,6 +97,7 @@ export class InteractionManager {
         this.rowLongPressed = false;
         this.isDragging = false;
         this._isScrollDragging = false;
+        this._gridPointerActive = false;
         this._scrollVelocity = 0;
         this.dropTargetIndex = null;
         this.dragGroupOffsets = [];
@@ -406,6 +408,7 @@ export class InteractionManager {
             this._lastKnownClientX = e.clientX;
             this._lastKnownClientY = e.clientY;
             this._isScrollDragging = false;
+            this._gridPointerActive = true;
             this._scrollVelocity = 0;
             this.moduleLongPressed = false;
             this.rowLongPressed = false;
@@ -558,8 +561,8 @@ export class InteractionManager {
             // On mouse, require primary button held (e.buttons & 1); on touch, pointermove only fires when touching.
             const isButtonHeld = e.pointerType === 'mouse' ? ((e.buttons & 1) !== 0) : (e.buttons > 0 || e.pressure > 0);
             const container = document.getElementById('canvas-container');
-            if (isButtonHeld && !this.ui.isPerformanceMode && !this.isDragging && !this.moduleLongPressed && !isCandidateSelected && !isRowBusy && container) {
-                if (e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal, .pad-grid-container, .pad-grid-canvas')) {
+            if (isButtonHeld && this._gridPointerActive && !this.ui.isPerformanceMode && !this.isDragging && !this.moduleLongPressed && !isCandidateSelected && !isRowBusy && container) {
+                if (e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal, .pad-grid-container, .pad-grid-canvas, #main-menu-bar, #page-nav-bar')) {
                     this._isScrollDragging = false;
                     return;
                 }
@@ -657,6 +660,7 @@ export class InteractionManager {
                 this._isScrollDragging = false;
                 setTimeout(() => { this._wasScrollDragging = false; }, 120);
             }
+            this._gridPointerActive = false;
             this._dragCandidate = null;
             this._stage2X = undefined;
             this._stage2Y = undefined;
@@ -786,7 +790,7 @@ export class InteractionManager {
         window.addEventListener('wheel', (e) => {
             const container = document.getElementById('canvas-container');
             if (!container) return;
-            if (e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal, #custom-alert-modal')) return;
+            if (e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal, #custom-alert-modal, #main-menu-bar, #page-nav-bar')) return;
             const activeModal = document.querySelector('#shared-modal:not(.hidden), #preset-manager-modal:not(.hidden), #custom-alert-modal:not(.hidden)');
             if (activeModal) return;
             if (e.target.closest('input, select, textarea, .overflow-y-auto:not(#canvas-container)')) return;

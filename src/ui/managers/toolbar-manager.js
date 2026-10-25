@@ -187,6 +187,11 @@ export class ToolbarManager {
         bpmBox?.addEventListener('pointerdown', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            this.ui.interactionManager?.cancelPendingPresses?.();
+            if (this.ui.interactionManager) {
+                this.ui.interactionManager._isScrollDragging = false;
+                this.ui.interactionManager._gridPointerActive = false;
+            }
             bpmDrag = true;
             startY = e.clientY;
             startBpm = this.ui.synth.masterBPM || 120;
@@ -195,6 +200,42 @@ export class ToolbarManager {
             window.addEventListener('pointerup', stopBpm);
             window.addEventListener('pointercancel', stopBpm);
         });
+
+        bpmBox?.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const curBpm = this.ui.synth.masterBPM || 120;
+            const delta = e.deltaY < 0 ? 1 : -1;
+            const n = Math.max(40, Math.min(260, curBpm + delta));
+            bpmDisp.textContent = n;
+            this.ui.synth.setBPM(n);
+            Object.values(this.ui.modules).forEach(m => {
+                if (m.type === 'CLK') this.ui.renderCell(m.row * this.ui.COLS + m.col);
+            });
+            if (this.ui.activePopupModuleId && this.ui.modules[this.ui.activePopupModuleId]?.type === 'CLK') {
+                this.ui.reRenderModal();
+            }
+        }, { passive: false });
+
+        // Prevent vertical swipe gestures on top menus from bubbling/scrolling the grid container
+        const blockMenuVerticalScroll = (el) => {
+            if (!el) return;
+            el.addEventListener('pointerdown', (e) => {
+                if (this.ui.interactionManager) {
+                    this.ui.interactionManager._isScrollDragging = false;
+                    this.ui.interactionManager._gridPointerActive = false;
+                }
+            }, { passive: true });
+            el.addEventListener('touchmove', (e) => {
+                // Allow horizontal swipe on menu bar if overflowing, but stop vertical propagation to grid
+                e.stopPropagation();
+            }, { passive: true });
+            el.addEventListener('wheel', (e) => {
+                e.stopPropagation();
+            }, { passive: true });
+        };
+        blockMenuVerticalScroll(document.getElementById('main-menu-bar'));
+        blockMenuVerticalScroll(document.getElementById('page-nav-bar'));
 
         document.getElementById('page-nav-back-btn')?.addEventListener('click', () => {
             if (!this.ui.pageStack) this.ui.pageStack = [];
