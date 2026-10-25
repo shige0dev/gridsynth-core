@@ -6,28 +6,29 @@ export const KEY = {
     color: 'sky',
     defaults: () => ({ type: 'KEY', octave: 2, lastNote: 'C2', currentMidi: 36, cv: 1.0 }),
     onNormalize: (m) => {
+        const savedOct = (typeof m.octave === 'number' && m.octave >= 1 && m.octave <= 7) ? m.octave : null;
         if (m.cv !== undefined) {
             m.cv = Number(m.cv);
             m.currentMidi = Math.round(m.cv * 12) + 24;
-            m.octave = Math.floor(m.currentMidi / 12) - 1;
-            m.lastNote = UIHelpers.cvToNoteName ? UIHelpers.cvToNoteName(m.cv) : `C${m.octave}`;
+            m.octave = savedOct ?? (Math.floor(m.currentMidi / 12) - 1);
+            m.lastNote = m.lastNote || (UIHelpers.cvToNoteName ? UIHelpers.cvToNoteName(m.cv) : `C${m.octave}`);
         } else if (m.initialCv !== undefined) {
             m.cv = Number(m.initialCv);
             m.currentMidi = Math.round(m.cv * 12) + 24;
-            m.octave = Math.floor(m.currentMidi / 12) - 1;
-            m.lastNote = UIHelpers.cvToNoteName ? UIHelpers.cvToNoteName(m.cv) : `C${m.octave}`;
+            m.octave = savedOct ?? (Math.floor(m.currentMidi / 12) - 1);
+            m.lastNote = m.lastNote || (UIHelpers.cvToNoteName ? UIHelpers.cvToNoteName(m.cv) : `C${m.octave}`);
         } else if (m.note !== undefined) {
             m.cv = parseKeyNoteToCv(m.note);
             m.currentMidi = Math.round(m.cv * 12) + 24;
-            m.octave = Math.floor(m.currentMidi / 12) - 1;
+            m.octave = savedOct ?? (Math.floor(m.currentMidi / 12) - 1);
             m.lastNote = m.note;
         } else if (m.lastNote !== undefined) {
             m.cv = parseKeyNoteToCv(m.lastNote);
             m.currentMidi = Math.round(m.cv * 12) + 24;
-            m.octave = Math.floor(m.currentMidi / 12) - 1;
+            m.octave = savedOct ?? (Math.floor(m.currentMidi / 12) - 1);
         } else if (m.currentMidi !== undefined) {
             m.cv = (m.currentMidi - 24) / 12.0;
-            m.octave = Math.floor(m.currentMidi / 12) - 1;
+            m.octave = savedOct ?? (Math.floor(m.currentMidi / 12) - 1);
             m.lastNote = UIHelpers.cvToNoteName ? UIHelpers.cvToNoteName(m.cv) : `C${m.octave}`;
         } else if (m.octave !== undefined) {
             m.currentMidi = (m.octave + 1) * 12;
@@ -87,22 +88,12 @@ export const KEY = {
             if ((m.octave ?? 2) > 1) {
                 m.octave = (m.octave ?? 2) - 1;
                 if (octD) octD.textContent = m.octave;
-                m.currentMidi = (m.octave + 1) * 12;
-                m.lastNote = `C${m.octave}`;
-                m.cv = (m.currentMidi - 24) / 12.0;
-                if (nD) nD.textContent = m.lastNote;
-                cb();
             }
         });
         document.getElementById('key-oct-up')?.addEventListener('click', () => {
             if ((m.octave ?? 2) < 7) {
                 m.octave = (m.octave ?? 2) + 1;
                 if (octD) octD.textContent = m.octave;
-                m.currentMidi = (m.octave + 1) * 12;
-                m.lastNote = `C${m.octave}`;
-                m.cv = (m.currentMidi - 24) / 12.0;
-                if (nD) nD.textContent = m.lastNote;
-                cb();
             }
         });
         const play = (s, isDown) => {
