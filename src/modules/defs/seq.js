@@ -422,9 +422,9 @@ export const SEQ16 = {
                 };
             }),
             {
-                heightCls: 'h-3.5',
+                heightCls: 'h-6',
                 gapCls: 'gap-px',
-                containerCls: 'w-[50px]',
+                containerCls: 'w-[52px]',
                 theme: 'cv'
             }
         );
