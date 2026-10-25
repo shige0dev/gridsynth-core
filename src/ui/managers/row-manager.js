@@ -64,11 +64,12 @@ export class RowManager {
     }
 
     updateRowHandleRail() {
-        const overlay = this.rowHandleOverlayEl || document.getElementById('row-handle-overlay');
+        const overlay = document.getElementById('row-handle-overlay');
         if (!overlay) {
             this.initRowHandleUI();
             return;
         }
+        this.rowHandleOverlayEl = overlay;
 
         if (this.ui.isPerformanceMode) {
             overlay.style.display = 'none';
@@ -173,6 +174,11 @@ export class RowManager {
 
     startRowDragFromModule(r, startClientY) {
         if (this.ui.isPerformanceMode) return;
+        if (this._activeRowDragCleanup) {
+            this._activeRowDragCleanup();
+            this._activeRowDragCleanup = null;
+        }
+
         const originalRow = r;
         let isRowDragging = true;
         this.draggingRow = originalRow;
@@ -182,16 +188,20 @@ export class RowManager {
         let lastPointerClientY = startClientY;
 
         // Cancel any pending module dragging or copy timers in interactionManager
+        // and transition from single-module selection to full-row selection
         if (this.interactionManager) {
             this.interactionManager.isDragging = false;
             this.interactionManager._dragCandidate = null;
-            this.interactionManager.clearHighlight();
+            this.interactionManager.selectedModuleIds = [];
+            this.interactionManager.updateSelectionClasses?.();
+            this.interactionManager.clearHighlight?.();
             if (this.interactionManager._copyTimer) {
                 clearTimeout(this.interactionManager._copyTimer);
                 this.interactionManager._copyTimer = null;
             }
         }
 
+        this.updateRowHandleRail();
         document.body.classList.add('is-row-dragging');
         const container = document.getElementById('canvas-container');
         if (container) container.style.overflowY = 'hidden';
@@ -274,6 +284,7 @@ export class RowManager {
         };
 
         const onPointerUp = (e) => {
+            this._activeRowDragCleanup = null;
             window.removeEventListener('pointermove', onPointerMove);
             window.removeEventListener('pointerup', onPointerUp);
             window.removeEventListener('pointercancel', onPointerUp);
@@ -291,10 +302,19 @@ export class RowManager {
                 const destRow = (boundary < originalRow) ? boundary : (boundary - 1);
                 if (this.interactionManager) {
                     this.interactionManager.selectedModuleIds = [];
-                    this.interactionManager.updateSelectionClasses();
+                    this.interactionManager.updateSelectionClasses?.();
                 }
                 this.moveRowTo(originalRow, destRow);
             }
+        };
+
+        this._activeRowDragCleanup = () => {
+            window.removeEventListener('pointermove', onPointerMove);
+            window.removeEventListener('pointerup', onPointerUp);
+            window.removeEventListener('pointercancel', onPointerUp);
+            isRowDragging = false;
+            this.draggingRow = null;
+            cleanupDragVisuals();
         };
 
         window.addEventListener('pointermove', onPointerMove, { passive: false });

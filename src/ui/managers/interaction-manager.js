@@ -1,7 +1,7 @@
 // src/ui/managers/interaction-manager.js
 import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=297';
 import { MODULE_REGISTRY } from '../../modules/registry.js?v=297';
-import { RowManager } from './row-manager.js?v=358';
+import { RowManager } from './row-manager.js?v=389';
 
 export class InteractionManager {
     constructor(ui) {
@@ -92,6 +92,12 @@ export class InteractionManager {
         this.ui.updatePortHighlight();
     }
 
+    clearHighlight() {
+        this.lastHighlightedCells.forEach(c => c.classList.remove('drop-highlight-valid', 'drop-highlight-invalid', 'drop-highlight-copy-valid'));
+        this.lastHighlightedCells = [];
+        this.dropTargetIndex = null;
+    }
+
     updateDropHighlight() {
         this.lastHighlightedCells.forEach(c => c.classList.remove('drop-highlight-valid', 'drop-highlight-invalid', 'drop-highlight-copy-valid'));
         this.lastHighlightedCells = [];
@@ -146,9 +152,16 @@ export class InteractionManager {
             }
             if (nIdx !== null) {
                 this._copyTimer = setTimeout(() => {
+                    this._copyTimer = null;
                     if (this.isDragging) {
                         this.dragMode = 'copy';
                         this.updateDropHighlight();
+                        if (this.dragGroupValid) {
+                            if (navigator.vibrate) {
+                                try { navigator.vibrate(25); } catch (_) {}
+                            }
+                            this.ui.showToast('複製（コピー）モード', 900);
+                        }
                     }
                 }, 1200);
             }
@@ -470,24 +483,28 @@ export class InteractionManager {
                         if (navigator.vibrate) {
                             try { navigator.vibrate(30); } catch (_) {}
                         }
-                        this.ui.showToast('モジュールを選択（長押し継続で行移動）', 1000);
 
                         // Stage 2 anchor: record current position so Stage 2 has its own jitter margin
                         this._stage2X = this._lastKnownClientX ?? e.clientX;
                         this._stage2Y = this._lastKnownClientY ?? e.clientY;
 
-                        // Stage 2: continuing to hold for another 350ms without releasing -> row reorder mode!
-                        if (targetRow !== undefined) {
-                            this._startRowLongPress(targetRow, clientY, 350);
+                        if (this.selectedModuleIds.length === 1) {
+                            this.ui.showToast('モジュールを選択（長押し継続で行移動）', 1000);
+                            // Stage 2: continuing to hold for another 350ms without releasing -> row reorder mode!
+                            if (targetRow !== undefined) {
+                                this._startRowLongPress(targetRow, this._stage2Y, 350);
+                            }
+                        } else {
+                            this.ui.showToast(`${this.selectedModuleIds.length}個選択中（ドラッグで一括移動・複製）`, 1000);
                         }
                     }, 300);
                 } else {
                     // Already selected module:
-                    // If finger continues holding 350ms without moving -> triggers row reorder mode!
-                    // If moved > 12px, pointermove immediately enters module dragging.
+                    // If single module selected & held 350ms without moving -> triggers row reorder mode!
+                    // If moved > 8px, pointermove immediately enters module/group dragging.
                     this._stage2X = e.clientX;
                     this._stage2Y = e.clientY;
-                    if (targetRow !== undefined) {
+                    if (this.selectedModuleIds.length === 1 && targetRow !== undefined) {
                         this._startRowLongPress(targetRow, clientY, 350);
                     }
                 }
@@ -531,7 +548,7 @@ export class InteractionManager {
                 const s2dx = this._stage2X !== undefined ? e.clientX - this._stage2X : dx;
                 const s2dy = this._stage2Y !== undefined ? e.clientY - this._stage2Y : dy;
                 const s2distSq = s2dx * s2dx + s2dy * s2dy;
-                if (s2distSq > 144) {
+                if (s2distSq > 100) {
                     clearTimeout(this._rowLpTimer);
                     this._rowLpTimer = null;
                 }
@@ -568,7 +585,11 @@ export class InteractionManager {
                 const s2dy = this._stage2Y !== undefined ? e.clientY - this._stage2Y : dy;
                 const moveDistSq = Math.max(distSq, s2dx * s2dx + s2dy * s2dy);
 
-                if (moveDistSq > 144 && this.selectedModuleIds.includes(this._dragCandidate)) {
+                if (moveDistSq > 64 && this.selectedModuleIds.includes(this._dragCandidate)) {
+                    if (this._rowLpTimer) {
+                        clearTimeout(this._rowLpTimer);
+                        this._rowLpTimer = null;
+                    }
                     if (this.ui.selectedTargetForConnection) {
                         this.ui.selectedTargetForConnection = null;
                     }
@@ -586,13 +607,6 @@ export class InteractionManager {
 
                     this.dropTargetIndex = null;
                     this._updateDropTargetAt(e.clientX, e.clientY);
-
-                    this._copyTimer = setTimeout(() => {
-                        if (this.isDragging) {
-                            this.dragMode = 'copy';
-                            this.updateDropHighlight();
-                        }
-                    }, 1200);
                 }
             }
             if (this.isDragging) {
@@ -749,6 +763,7 @@ export class InteractionManager {
                         this.ui.showToast(`${this.dragGroupOffsets.length}個移動しました`);
                     }
                     this.ui.syncGridMap();
+                    this.ui.persistCurrentPage();
                     this.selectedModuleIds = [];
                     this.ui.updateAllCells();
                     this.ui.renderCables();
