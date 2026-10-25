@@ -254,8 +254,8 @@ export const SEQ8 = {
     ports: () => ({
         in: [{ port: 'gate_in', pin: 4, color: 'bg-red-500' }],
         out: [
-            { port: 'gate_out', pin: 10, color: 'bg-red-500' },
-            { port: 'cv_out', pin: 11, color: 'bg-yellow-400' }
+            { port: 'gate_out', pin: 9, color: 'bg-red-500' },
+            { port: 'cv_out', pin: 10, color: 'bg-yellow-400' }
         ]
     }),
     renderGrid: (m) => `<div class="flex items-center justify-center w-full h-full pointer-events-none">
@@ -401,8 +401,8 @@ export const SEQ16 = {
     ports: () => ({
         in: [{ port: 'gate_in', pin: 4, color: 'bg-red-500' }],
         out: [
-            { port: 'gate_out', pin: 10, color: 'bg-red-500' },
-            { port: 'cv_out', pin: 11, color: 'bg-yellow-400' }
+            { port: 'gate_out', pin: 9, color: 'bg-red-500' },
+            { port: 'cv_out', pin: 10, color: 'bg-yellow-400' }
         ]
     }),
     renderGrid: (m) => {
