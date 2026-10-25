@@ -145,7 +145,7 @@ export const PAD = {
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
     renderGrid: (m) => `
-        <div class="absolute inset-x-0.5 bottom-0.5 top-3.5 bg-black rounded-sm border border-slate-800/90 overflow-hidden z-0 pointer-events-auto pad-grid-container" style="opacity: ${m?.opacity ?? 0.8};">
+        <div class="absolute inset-0.5 bg-black rounded-sm border border-slate-800/90 overflow-hidden z-0 pointer-events-auto pad-grid-container" style="opacity: ${m?.opacity ?? 0.8};">
             <canvas class="pad-grid-canvas w-full h-full block" width="100" height="100"></canvas>
         </div>`,
     renderModal: (m) => {
@@ -182,8 +182,8 @@ export const PAD = {
                 </div>
             </div>
 
-            <div class="relative w-full aspect-square pl-5 pb-5 mx-auto select-none">
-                <!-- Inner Touch Area (Canvas) -->
+            <div class="relative w-[calc(100%-48px)] max-w-[320px] aspect-square mx-auto mb-7 select-none">
+                <!-- Inner Touch Area (Canvas) - Centered in dialog -->
                 <div class="relative w-full h-full bg-black rounded-none border border-slate-700/80 overflow-hidden shadow-inner select-none touch-none overscroll-contain" id="pad-modal-touch-area" style="opacity: ${m.opacity ?? 0.8};">
                     <canvas id="pad-modal-canvas" class="w-full h-full block cursor-crosshair" width="400" height="400"></canvas>
                     <div class="absolute top-2 left-2 flex items-center gap-2.5 font-mono text-[9px] select-none pointer-events-none drop-shadow">
@@ -194,15 +194,15 @@ export const PAD = {
 
                 <!-- Y-Axis Polarity Option Buttons (Left of Canvas, pointing Right ▶) -->
                 <!-- Center (BI: 0V at Center Line) -->
-                <button class="pad-pol-toggle-y absolute left-0 top-[calc(50%-10px)] -translate-y-1/2 w-5 h-5 flex items-center justify-center text-[10px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polY === 'bi' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="bi" title="Y軸 0点: 中央 (BI -1~1V)">▶</button>
+                <button class="pad-pol-toggle-y absolute -left-6 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center text-[10px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polY === 'bi' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="bi" title="Y軸 0点: 中央 (BI -1~1V)">▶</button>
                 <!-- Bottom (UNI: 0V at Bottom Edge) -->
-                <button class="pad-pol-toggle-y absolute left-0 bottom-[20px] translate-y-1/2 w-5 h-5 flex items-center justify-center text-[10px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polY === 'uni' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="uni" title="Y軸 0点: 下端 (UNI 0~2V)">▶</button>
+                <button class="pad-pol-toggle-y absolute -left-6 bottom-0 translate-y-1/2 w-5 h-5 flex items-center justify-center text-[10px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polY === 'uni' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="uni" title="Y軸 0点: 下端 (UNI 0~2V)">▶</button>
 
                 <!-- X-Axis Polarity Option Buttons (Below Canvas, pointing Up ▲) -->
                 <!-- Left (UNI: 0V at Left Edge) -->
-                <button class="pad-pol-toggle-x absolute left-[20px] -translate-x-1/2 bottom-0 w-5 h-5 flex items-center justify-center text-[10px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polX === 'uni' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="uni" title="X軸 0点: 左端 (UNI 0~2V)">▲</button>
+                <button class="pad-pol-toggle-x absolute left-0 -translate-x-1/2 -bottom-6 w-5 h-5 flex items-center justify-center text-[10px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polX === 'uni' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="uni" title="X軸 0点: 左端 (UNI 0~2V)">▲</button>
                 <!-- Center (BI: 0V at Center Line) -->
-                <button class="pad-pol-toggle-x absolute left-[calc(50%+10px)] -translate-x-1/2 bottom-0 w-5 h-5 flex items-center justify-center text-[10px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polX === 'bi' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="bi" title="X軸 0点: 中央 (BI -1~1V)">▲</button>
+                <button class="pad-pol-toggle-x absolute left-1/2 -translate-x-1/2 -bottom-6 w-5 h-5 flex items-center justify-center text-[10px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polX === 'bi' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="bi" title="X軸 0点: 中央 (BI -1~1V)">▲</button>
             </div>
         </div>`;
     },

@@ -432,17 +432,17 @@ export class UIController {
                     ? (ctx?.pagesData ? ctx.pagesData[String(m.targetPage ?? 1)]?.name : null) || `SUBPATCH ${m.targetPage ?? 1}`
                     : (ctx?.pageName || `SUBPATCH ${this.currentPageId}`);
                 titleHTML = `
-                    <div class="module-header absolute top-0 left-0 right-0 h-4 px-1 flex justify-center items-center cursor-pointer pointer-events-auto z-20" data-module-id="${mId}">
+                    <div class="absolute top-[2px] left-0 right-0 px-1 flex justify-center items-center pointer-events-none z-20">
                         <span class="w-full text-center font-bold text-[7.5px] tracking-tight text-white truncate select-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">${displayName}</span>
                     </div>`;
             } else if (m.type === 'PAD' || m.type === 'SCOPE' || m.type === 'LISS' || m.type === 'XY') {
                 const displayName = m.name || m.type;
                 titleHTML = `
-                    <div class="module-header absolute top-0 left-0 right-0 h-4 px-1 flex justify-center items-center cursor-pointer pointer-events-auto z-20 group" data-module-id="${mId}">
-                        <span class="text-slate-400 group-hover:text-cyan-300 font-bold text-[8px] tracking-wider select-none truncate transition-colors">${displayName}</span>
+                    <div class="absolute top-[2px] left-[2px] right-[2px] flex justify-center items-center pointer-events-none z-20">
+                        <span class="text-slate-700 font-bold text-[8px] tracking-wider select-none truncate">${displayName}</span>
                     </div>`;
             } else {
-                let titleClass = 'text-slate-400 group-hover:text-cyan-300 font-bold';
+                let titleClass = 'text-slate-700 font-bold';
                 let extraTitleAttrs = '';
                 if (m.type === 'MARKOV') {
                     const weights = Array.isArray(m.weights) ? m.weights : [0, 0, 0, 0];
@@ -453,10 +453,9 @@ export class UIController {
                         extraTitleAttrs = 'title="未結線の出力端子にウエイトが設定されています"';
                     }
                 }
-                const displayName = m.name && m.name !== m.type ? m.name : m.type;
                 titleHTML = `
-                    <div class="module-header absolute top-0 left-0 right-0 h-4 px-1 flex justify-center items-center cursor-pointer pointer-events-auto z-20 group" data-module-id="${mId}">
-                        <span class="${titleClass} text-[8px] tracking-wider select-none truncate transition-colors" ${extraTitleAttrs}>${displayName}</span>
+                    <div class="absolute top-[2px] left-[2px] right-[2px] flex justify-center items-center pointer-events-none z-20">
+                        <span class="${titleClass} text-[8px] tracking-wider select-none truncate" ${extraTitleAttrs}>${m.type}</span>
                     </div>`;
             }
             cell.innerHTML = `
@@ -922,32 +921,6 @@ export class UIController {
             this.interactionManager?.cancelPendingPresses?.();
         }, { passive: true });
 
-        // Touch move handling in Performance Mode: strictly block scrolling when touching inside the grid
-        let touchStartedInsideGrid = false;
-        const mainScrollContainer = document.getElementById('canvas-container');
-
-        mainScrollContainer?.addEventListener('touchstart', (e) => {
-            if (this.isPerformanceMode) {
-                const touch = e.touches?.[0];
-                if (touch) {
-                    const gridRect = this.gridBoard?.getBoundingClientRect();
-                    if (gridRect) {
-                        touchStartedInsideGrid = (touch.clientX >= gridRect.left && touch.clientX <= gridRect.right);
-                    }
-                }
-            } else {
-                touchStartedInsideGrid = false;
-            }
-        }, { passive: true });
-
-        mainScrollContainer?.addEventListener('touchmove', (e) => {
-            if (this.isPerformanceMode && touchStartedInsideGrid) {
-                if (e.cancelable) {
-                    e.preventDefault();
-                }
-            }
-        }, { passive: false });
-
         // Desktop mouse wheel scroll enhancement (smoothly scroll 32-row workspace)
         window.addEventListener('wheel', (e) => {
             const container = document.getElementById('canvas-container');
@@ -957,22 +930,8 @@ export class UIController {
             if (activeModal) return;
             if (e.target.closest('input, select, textarea, .overflow-y-auto:not(#canvas-container)')) return;
 
-            // In performance mode, strictly restrict wheel scrolling to outside the grid (left & right gutters)
-            if (this.isPerformanceMode) {
-                const gridRect = this.gridBoard?.getBoundingClientRect();
-                if (gridRect) {
-                    const isOutsideGrid = (e.clientX < gridRect.left || e.clientX > gridRect.right) || Boolean(e.target.closest('.perf-scroll-rail'));
-                    if (!isOutsideGrid) {
-                        e.preventDefault();
-                        return;
-                    }
-                }
-            }
-
-            // Outside the grid in performance mode or in edit mode
-            e.preventDefault();
             container.scrollTop += e.deltaY;
-        }, { passive: false });
+        }, { passive: true });
 
         document.getElementById('preset-trigger-btn')?.addEventListener('click', () => {
             this.renderPresetList();
