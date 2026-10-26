@@ -142,7 +142,6 @@ export function openSeqExport(m, ctx, cb, maxSteps = 16) {
 
     const exportObj = {
         type: m.type || (maxSteps === 8 ? 'SEQ8' : 'SEQ16'),
-        loop: m.loop !== false,
         quantize: m.quantize !== false,
         steps
     };
@@ -154,7 +153,6 @@ export function openSeqExport(m, ctx, cb, maxSteps = 16) {
         jsonStr,
         infoBadges: [
             `STEPS: ${steps.length}`,
-            `LOOP: ${m.loop !== false ? 'ON' : 'OFF'}`,
             `QLZ: ${m.quantize !== false ? 'ON' : 'OFF'}`
         ],
         copyToast: 'シーケンスパターンのJSONをクリップボードにコピーしました',
@@ -212,10 +210,6 @@ export function openSeqImport(m, ctx, cb, maxSteps = 16) {
 
                     if (typeof payload.quantize === 'boolean') {
                         m.quantize = payload.quantize;
-                    }
-                    if (typeof payload.loop === 'boolean') {
-                        m.loop = payload.loop;
-                        m.mode = m.loop ? 'loop' : 'oneshot';
                     }
 
                     const normalizedSteps = normalizeImportSteps(payload.steps, maxSteps);
@@ -280,7 +274,6 @@ function createSeqModule(maxSteps) {
         color: 'blue',
         defaults: () => ({
             type: typeName,
-            loop: true,
             quantize: true,
             steps: Array.from({ length: maxSteps }, (_, i) => ({
                 cv: i === 0 ? 0 : 0.25,
@@ -290,8 +283,6 @@ function createSeqModule(maxSteps) {
             }))
         }),
         onNormalize: (m) => {
-            if (m.loop === undefined) m.loop = (m.mode !== 'oneshot');
-            m.mode = m.loop ? 'loop' : 'oneshot';
             if (Array.isArray(m.steps)) {
                 if (typeof m.steps[0] === 'number') {
                     m.steps = m.steps.map(cv => ({ cv, active: true, cvActive: true, gate: true }));
@@ -304,14 +295,10 @@ function createSeqModule(maxSteps) {
             }
         },
         ports: () => ({
-            in: [
-                { port: 'gate_in', pin: 3, alias: 'clk_in', color: 'bg-red-500' },
-                { port: 'trans_in', pin: 4, alias: 'transition_in,reset_in', color: 'bg-slate-400' }
-            ],
+            in: [{ port: 'gate_in', pin: 4, alias: 'clk_in', color: 'bg-red-500' }],
             out: [
-                { port: 'trans_out', pin: 9, alias: 'transition_out,eos_out', color: 'bg-slate-400' },
-                { port: 'gate_out', pin: 10, color: 'bg-red-500' },
-                { port: 'cv_out', pin: 11, color: 'bg-yellow-400' }
+                { port: 'gate_out', pin: 9, color: 'bg-red-500' },
+                { port: 'cv_out', pin: 10, color: 'bg-yellow-400' }
             ]
         }),
         renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
@@ -357,7 +344,6 @@ function createSeqModule(maxSteps) {
                                 <i data-lucide="download" class="w-2.5 h-2.5 pointer-events-none"></i>
                                 <span>IMP</span>
                             </button>
-                            <button id="${prefix}-loop-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors shrink-0 ${m.loop !== false ? 'bg-cyan-600 text-white border-cyan-500' : 'bg-slate-800 text-slate-400 border-slate-700'}">LOOP: ${m.loop !== false ? 'ON' : 'OFF'}</button>
                             <button id="${prefix}-qlz-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors shrink-0 ${m.quantize !== false ? 'bg-cyan-600 text-white border-cyan-500' : 'bg-slate-800 text-slate-400 border-slate-700'}">QLZ: ${m.quantize !== false ? 'ON' : 'OFF'}</button>
                         </div>
                     </div>
@@ -375,13 +361,6 @@ function createSeqModule(maxSteps) {
             root.querySelector(`#${btnPrefix}-json-export-btn`)?.addEventListener('click', () => openSeqExport(m, ctx, cb, maxSteps));
             root.querySelector(`#${btnPrefix}-json-import-btn`)?.addEventListener('click', () => openSeqImport(m, ctx, cb, maxSteps));
             root.addEventListener('click', (e) => {
-                if (e.target.closest(`#${prefix}-loop-btn`)) {
-                    m.loop = !(m.loop !== false);
-                    m.mode = m.loop ? 'loop' : 'oneshot';
-                    ctx.reRenderModal();
-                    cb();
-                    return;
-                }
                 if (e.target.closest(`#${prefix}-qlz-btn`)) {
                     m.quantize = !(m.quantize !== false);
                     ctx.reRenderModal();

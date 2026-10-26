@@ -13,7 +13,8 @@ import { ioAudioDefs } from './defs/io.js?v=351';
 import { scopeAudioDefs } from './defs/scope.js?v=353';
 import { subAudioDefs } from './defs/sub.js?v=351';
 import { controllerAudioDefs } from './defs/controllers.js?v=355';
-import { seqAudioDefs } from './defs/seq.js?v=417';
+import { seqAudioDefs } from './defs/seq.js?v=420';
+import { passAudioDefs } from './defs/pass.js?v=420';
 import { chordAudioDefs } from './defs/chord.js?v=351';
 import { arpAudioDefs } from './defs/arp.js?v=409';
 import { patAudioDefs } from './defs/pat.js?v=351';
@@ -37,6 +38,7 @@ export const AUDIO_REGISTRY = {
     ...subAudioDefs,
     ...controllerAudioDefs,
     ...seqAudioDefs,
+    ...passAudioDefs,
     ...chordAudioDefs,
     ...arpAudioDefs,
     ...patAudioDefs,

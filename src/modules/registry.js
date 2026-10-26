@@ -13,7 +13,8 @@ import { ioDefs } from './defs/io.js?v=351';
 import { scopeDefs } from './defs/scope.js?v=402';
 import { subDefs } from './defs/sub.js?v=351';
 import { controllerDefs } from './defs/controllers.js?v=355';
-import { seqDefs } from './defs/seq.js?v=419';
+import { seqDefs } from './defs/seq.js?v=420';
+import { passDefs } from './defs/pass.js?v=420';
 import { chordDefs } from './defs/chord.js?v=351';
 import { arpDefs } from './defs/arp.js?v=409';
 import { patDefs } from './defs/pat.js?v=351';
@@ -37,6 +38,7 @@ export const MODULE_REGISTRY = {
     ...subDefs,
     ...controllerDefs,
     ...seqDefs,
+    ...passDefs,
     ...chordDefs,
     ...arpDefs,
     ...patDefs,
