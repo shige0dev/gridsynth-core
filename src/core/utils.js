@@ -134,5 +134,5 @@ export const HIGHLIGHT_CLASSES = {
 };
 
 // Re-export subpatch utilities & signal definitions for seamless backward compatibility
-export * from './sub-utils.js?v=297';
-export * from './signals.js?v=297';
+export * from './sub-utils.js?v=423';
+export * from './signals.js?v=423';
