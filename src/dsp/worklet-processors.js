@@ -1,6 +1,6 @@
-import './processors/clock.js?v=421';
-import './processors/seq.js?v=421';
-import './processors/pass.js?v=421';
+import './processors/clock.js?v=422';
+import './processors/seq.js?v=422';
+import './processors/pass.js?v=422';
 import './processors/adsr.js';
 import './processors/lfo.js?v=297';
 import './processors/math.js?v=407';
