@@ -75,6 +75,12 @@ export class MathProcessor extends AudioWorkletProcessor {
                 case 'NAND':
                     v = !(a > 0.5 && b > 0.5) ? 1.0 : 0.0;
                     break;
+                case 'NOR':
+                    v = !(a > 0.5 || b > 0.5) ? 1.0 : 0.0;
+                    break;
+                case 'XOR':
+                    v = ((a > 0.5) !== (b > 0.5)) ? 1.0 : 0.0;
+                    break;
                 case 'MIN':
                     v = Math.min(a, b);
                     break;

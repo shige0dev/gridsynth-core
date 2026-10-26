@@ -405,7 +405,7 @@ export const MATH2 = {
     color: 'purple',
     ARITHMETIC_MODES: ['ADD', 'DIFF', 'MULTI', 'MOD', 'A^B', 'MIN', 'MAX'],
     COMPARISON_MODES: ['<', '<=', '==', '>=', '>'],
-    LOGIC_MODES: ['AND', 'OR', 'NAND'],
+    LOGIC_MODES: ['AND', 'OR', 'NAND', 'NOR', 'XOR'],
     defaults: () => ({ type: 'MATH2', mode: 'ADD', valA: 0.0, valB: 1.0 }),
     ports: () => ({
         in: [
@@ -419,7 +419,7 @@ export const MATH2 = {
     renderModal: (m, ctx) => renderMathModalUI(m, ctx, [
         { label: 'Arithmetic', cols: 4, modes: MATH2.ARITHMETIC_MODES },
         { label: 'Comparison (A vs B)', cols: 5, modes: MATH2.COMPARISON_MODES },
-        { label: 'Logic (A, B > 0.5)', cols: 3, modes: MATH2.LOGIC_MODES }
+        { label: 'Logic (A, B > 0.5)', cols: 5, modes: MATH2.LOGIC_MODES }
     ], ['A', 'B']),
     bindEvents: (m, ctx, cb) => bindMathEventsUI(m, ctx, cb, ['A', 'B'])
 };
