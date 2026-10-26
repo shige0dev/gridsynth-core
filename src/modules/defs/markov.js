@@ -28,14 +28,14 @@ export const MARKOV = {
         const patched = ctx?.patched;
         return {
             in: [
-                { port: 'clk_in', pin: 3, color: 'bg-rose-500' },
-                { port: 'transition_in', pin: 4, color: 'bg-slate-400' }
+                { port: 'gate_in', pin: 3, color: 'bg-rose-500' },
+                { port: 'trans_in', pin: 4, color: 'bg-slate-400' }
             ],
             out: [
-                { port: 'transition_out1', pin: 6, color: (weights[0] > 0) ? (patched?.has('transition_out1') ? 'bg-slate-400' : 'bg-slate-600') : 'bg-slate-700' },
-                { port: 'transition_out2', pin: 7, color: (weights[1] > 0) ? (patched?.has('transition_out2') ? 'bg-slate-400' : 'bg-slate-600') : 'bg-slate-700' },
-                { port: 'transition_out3', pin: 8, color: (weights[2] > 0) ? (patched?.has('transition_out3') ? 'bg-slate-400' : 'bg-slate-600') : 'bg-slate-700' },
-                { port: 'transition_out4', pin: 9, color: (weights[3] > 0) ? (patched?.has('transition_out4') ? 'bg-slate-400' : 'bg-slate-600') : 'bg-slate-700' },
+                { port: 'trans_out1', pin: 6, color: (weights[0] > 0) ? (patched?.has('trans_out1') ? 'bg-slate-400' : 'bg-slate-600') : 'bg-slate-700' },
+                { port: 'trans_out2', pin: 7, color: (weights[1] > 0) ? (patched?.has('trans_out2') ? 'bg-slate-400' : 'bg-slate-600') : 'bg-slate-700' },
+                { port: 'trans_out3', pin: 8, color: (weights[2] > 0) ? (patched?.has('trans_out3') ? 'bg-slate-400' : 'bg-slate-600') : 'bg-slate-700' },
+                { port: 'trans_out4', pin: 9, color: (weights[3] > 0) ? (patched?.has('trans_out4') ? 'bg-slate-400' : 'bg-slate-600') : 'bg-slate-700' },
                 { port: 'trig_out', pin: 10, color: 'bg-rose-500' },
                 { port: 'gate_out', pin: 11, color: 'bg-rose-500' },
                 { port: 'cv_out', pin: 12, color: 'bg-yellow-400' }

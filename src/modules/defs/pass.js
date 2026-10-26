@@ -8,12 +8,12 @@ export const PASS = {
     },
     ports: () => ({
         in: [
-            { port: 'gate_in', pin: 3, alias: 'in,clk_in', color: 'bg-red-500' },
-            { port: 'trans_in', pin: 4, alias: 'transition_in,trig_in', color: 'bg-slate-400' }
+            { port: 'gate_in', pin: 3, color: 'bg-red-500' },
+            { port: 'trans_in', pin: 4, color: 'bg-slate-400' }
         ],
         out: [
-            { port: 'trans_out', pin: 9, alias: 'transition_out,eos_out', color: 'bg-slate-400' },
-            { port: 'gate_out', pin: 10, alias: 'out', color: 'bg-red-500' }
+            { port: 'trans_out', pin: 9, color: 'bg-slate-400' },
+            { port: 'gate_out', pin: 10, color: 'bg-red-500' }
         ]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),

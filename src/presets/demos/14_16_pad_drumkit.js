@@ -82,18 +82,18 @@ export const preset14 = {
                 "PAD12:gate_out > SUB6:PIN4_in",
                 "PAD13:gate_out > SUB6:PIN4_in",
                 // Direct Audio Summing into Master Speaker (No Mixer needed)
-                "SUB1:PIN9_out > SPK1:wave_inL",
-                "SUB1:PIN9_out > SPK1:wave_inR",
-                "SUB2:PIN9_out > SPK1:wave_inL",
-                "SUB2:PIN9_out > SPK1:wave_inR",
-                "SUB3:PIN9_out > SPK1:wave_inL",
-                "SUB3:PIN9_out > SPK1:wave_inR",
-                "SUB4:PIN9_out > SPK1:wave_inL",
-                "SUB4:PIN9_out > SPK1:wave_inR",
-                "SUB5:PIN9_out > SPK1:wave_inL",
-                "SUB5:PIN9_out > SPK1:wave_inR",
-                "SUB6:PIN9_out > SPK1:wave_inL",
-                "SUB6:PIN9_out > SPK1:wave_inR"
+                "SUB1:PIN9_out > SPK1:wave_in_l",
+                "SUB1:PIN9_out > SPK1:wave_in_r",
+                "SUB2:PIN9_out > SPK1:wave_in_l",
+                "SUB2:PIN9_out > SPK1:wave_in_r",
+                "SUB3:PIN9_out > SPK1:wave_in_l",
+                "SUB3:PIN9_out > SPK1:wave_in_r",
+                "SUB4:PIN9_out > SPK1:wave_in_l",
+                "SUB4:PIN9_out > SPK1:wave_in_r",
+                "SUB5:PIN9_out > SPK1:wave_in_l",
+                "SUB5:PIN9_out > SPK1:wave_in_r",
+                "SUB6:PIN9_out > SPK1:wave_in_l",
+                "SUB6:PIN9_out > SPK1:wave_in_r"
             ]
         },
         // Page 1: BASS DRUM (Kick)
@@ -113,7 +113,7 @@ export const preset14 = {
             connections: [
                 "SUB_IO1:PIN4_out > ADSR1:gate_in",
                 "SUB_IO1:PIN4_out > ADSR2:gate_in",
-                "ADSR1:cv_out > MATH2_1:a",
+                "ADSR1:cv_out > MATH2_1:cv_in_a",
                 "MATH2_1:cv_out > VCO1:cv_in",
                 "VCO1:wave_out > VCA1:wave_in",
                 "ADSR2:cv_out > VCA1:cv_in",
@@ -241,8 +241,8 @@ export const preset14 = {
             connections: [
                 "SUB_IO1:PIN4_out > ADSR1:gate_in",
                 "SUB_IO1:PIN4_out > ADSR2:gate_in",
-                "ADSR1:cv_out > MATH2_1:a",
-                "MATH2_1:cv_out > MATH2_2:a",
+                "ADSR1:cv_out > MATH2_1:cv_in_a",
+                "MATH2_1:cv_out > MATH2_2:cv_in_a",
                 "MATH2_2:cv_out > VCO1:cv_in",
                 "VCO1:wave_out > VCA1:wave_in",
                 "ADSR2:cv_out > VCA1:cv_in",

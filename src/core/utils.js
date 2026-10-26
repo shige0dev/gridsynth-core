@@ -43,39 +43,39 @@ export const parseConn = (c) => {
 };
 
 export const PORT_ALIASES = {
-    // SPK: legacy wave_in_l / wave_in_r -> canonical wave_inL / wave_inR
-    'wave_in_l': 'wave_inL',
-    'wave_in_r': 'wave_inR',
+    // SPK: legacy uppercase -> canonical lowercase
+    'wave_inL': 'wave_in_l',
+    'wave_inR': 'wave_in_r',
 
-    // MATH: legacy a / b / cv_out -> canonical CV_inA / CV_inB / CV_OUT
-    'a': 'CV_inA',
-    'in_a': 'CV_inA',
-    'b': 'CV_inB',
-    'in_b': 'CV_inB',
-    'cv_out': 'CV_OUT',
+    // MATH: legacy uppercase & single letters -> canonical cv_in_a / cv_in_b / cv_out
+    'CV_inA': 'cv_in_a',
+    'cv_ina': 'cv_in_a',
+    'CV_inB': 'cv_in_b',
+    'cv_inb': 'cv_in_b',
+    'CV_OUT': 'cv_out',
+    'a': 'cv_in_a',
+    'in_a': 'cv_in_a',
+    'b': 'cv_in_b',
+    'in_b': 'cv_in_b',
 
-    // IO: legacy in1 / in2 / trig -> canonical wave_in / wave_in2 / trig_in
+    // TRANS / MARKOV: legacy long names -> canonical trans_in / trans_out
+    'transition_in': 'trans_in',
+    'transition_out': 'trans_out',
+    'transition_out1': 'trans_out1',
+    'transition_out2': 'trans_out2',
+    'transition_out3': 'trans_out3',
+    'transition_out4': 'trans_out4',
+    'clk_in': 'gate_in',
+
+    // IO / SCOPE
     'in1': 'wave_in',
     'wave_in1': 'wave_in',
     'in2': 'wave_in2',
     'trig': 'trig_in',
-    'reset': 'trig_in',
 
-    // Switched CV
-    'out': 'cv_out',
-
-    // FOLD: legacy fold_cv -> canonical gain_cv
+    // FOLD / EFFECTS / AR
     'fold_cv': 'gain_cv',
-
-    // SEQ / MARKOV / CLK port aliases
-    'trans_in': 'transition_in',
-    'reset_in': 'transition_in',
-    'trans_out': 'transition_out',
-    'eos_out': 'transition_out',
-    'eos': 'transition_out',
-    'clk_in': 'gate_in',
-
-    // AR: attack_in / release_in
+    'sig_in': 'cv_in',
     'a_cv': 'attack_in',
     'attack_cv': 'attack_in',
     'r_cv': 'release_in',

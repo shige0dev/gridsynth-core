@@ -68,7 +68,7 @@ export const preset07 = {
 
                 "CLK2:gate_out > ADSR2:gate_in",
                 "CLK2:gate_out > ADSR3:gate_in",
-                "ADSR2:cv_out > MATH2_1:a",
+                "ADSR2:cv_out > MATH2_1:cv_in_a",
                 "MATH2_1:cv_out > VCO2:cv_in",
                 "VCO2:wave_out > VCA2:wave_in",
                 "ADSR3:cv_out > VCA2:cv_in",
@@ -98,8 +98,8 @@ export const preset07 = {
                 "VCA6:wave_out > MIX1:wave_in4",
 
                 "MIX1:wave_out > MIX2:wave_in3",
-                "MIX2:wave_out > SPK1:wave_inL",
-                "MIX2:wave_out > SPK1:wave_inR"
+                "MIX2:wave_out > SPK1:wave_in_l",
+                "MIX2:wave_out > SPK1:wave_in_r"
             ]
         }
     }

@@ -69,7 +69,7 @@ export const SCOPE = {
     defaults: () => ({ type: 'SCOPE', timeSpan: 0.1, vRange: 2.0, trigMode: 'auto', opacity: 0.8 }),
     ports: () => ({
         in: [
-            { port: 'wave_in', pin: 4, alias: 'wave_in1', color: 'bg-yellow-400' },
+            { port: 'wave_in', pin: 4, color: 'bg-yellow-400' },
             { port: 'trig_in', pin: 5, color: 'bg-orange-500' }
         ],
         out: []
@@ -179,8 +179,8 @@ export const LISS = {
     defaults: () => ({ type: 'LISS', vRange: 2.0, opacity: 0.8 }),
     ports: () => ({
         in: [
-            { port: 'x_in', pin: 4, alias: 'wave_in1', color: 'bg-yellow-400' },
-            { port: 'y_in', pin: 5, alias: 'wave_in2', color: 'bg-yellow-400' }
+            { port: 'x_in', pin: 4, color: 'bg-yellow-400' },
+            { port: 'y_in', pin: 5, color: 'bg-yellow-400' }
         ],
         out: []
     }),

@@ -41,8 +41,8 @@ export const preset05 = {
                 "SUB5:PIN9_out > MIX1:wave_in3",
                 "CLK1:gate_out > SUB4:PIN4_in",
                 "SUB4:PIN9_out > MIX1:wave_in4",
-                "MIX1:wave_out > SPK1:wave_inL",
-                "MIX1:wave_out > SPK1:wave_inR"
+                "MIX1:wave_out > SPK1:wave_in_l",
+                "MIX1:wave_out > SPK1:wave_in_r"
             ]
         },
         "1": {
@@ -83,7 +83,7 @@ export const preset05 = {
             connections: [
                 "SUB_IO1:PIN4_out > ADSR1:gate_in",
                 "SUB_IO1:PIN4_out > ADSR2:gate_in",
-                "ADSR1:cv_out > MATH2_1:a",
+                "ADSR1:cv_out > MATH2_1:cv_in_a",
                 "MATH2_1:cv_out > VCO1:cv_in",
                 "VCO1:wave_out > VCA1:wave_in",
                 "ADSR2:cv_out > VCA1:cv_in",

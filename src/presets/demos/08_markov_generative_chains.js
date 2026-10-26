@@ -26,33 +26,33 @@ export const preset08 = {
             },
             connections: [
                 // Master Clock Star Distribution
-                "CLK1:gate_out > MARKOV1:clk_in",
-                "CLK1:gate_out > MARKOV2:clk_in",
-                "CLK1:gate_out > MARKOV3:clk_in",
-                "CLK1:gate_out > MARKOV4:clk_in",
-                "CLK1:gate_out > MARKOV5:clk_in",
+                "CLK1:gate_out > MARKOV1:gate_in",
+                "CLK1:gate_out > MARKOV2:gate_in",
+                "CLK1:gate_out > MARKOV3:gate_in",
+                "CLK1:gate_out > MARKOV4:gate_in",
+                "CLK1:gate_out > MARKOV5:gate_in",
                 "CLK1:gate_out > ADSR1:gate_in",
 
                 // Markov Transition Mesh (5 nodes)
-                "MARKOV1:transition_out1 > MARKOV2:transition_in",
-                "MARKOV1:transition_out2 > MARKOV3:transition_in",
-                "MARKOV1:transition_out3 > MARKOV4:transition_in",
+                "MARKOV1:trans_out1 > MARKOV2:trans_in",
+                "MARKOV1:trans_out2 > MARKOV3:trans_in",
+                "MARKOV1:trans_out3 > MARKOV4:trans_in",
 
-                "MARKOV2:transition_out1 > MARKOV3:transition_in",
-                "MARKOV2:transition_out2 > MARKOV4:transition_in",
-                "MARKOV2:transition_out3 > MARKOV1:transition_in",
+                "MARKOV2:trans_out1 > MARKOV3:trans_in",
+                "MARKOV2:trans_out2 > MARKOV4:trans_in",
+                "MARKOV2:trans_out3 > MARKOV1:trans_in",
 
-                "MARKOV3:transition_out1 > MARKOV4:transition_in",
-                "MARKOV3:transition_out2 > MARKOV5:transition_in",
-                "MARKOV3:transition_out3 > MARKOV1:transition_in",
+                "MARKOV3:trans_out1 > MARKOV4:trans_in",
+                "MARKOV3:trans_out2 > MARKOV5:trans_in",
+                "MARKOV3:trans_out3 > MARKOV1:trans_in",
 
-                "MARKOV4:transition_out1 > MARKOV5:transition_in",
-                "MARKOV4:transition_out2 > MARKOV1:transition_in",
-                "MARKOV4:transition_out3 > MARKOV2:transition_in",
+                "MARKOV4:trans_out1 > MARKOV5:trans_in",
+                "MARKOV4:trans_out2 > MARKOV1:trans_in",
+                "MARKOV4:trans_out3 > MARKOV2:trans_in",
 
-                "MARKOV5:transition_out1 > MARKOV1:transition_in",
-                "MARKOV5:transition_out2 > MARKOV4:transition_in",
-                "MARKOV5:transition_out3 > MARKOV3:transition_in",
+                "MARKOV5:trans_out1 > MARKOV1:trans_in",
+                "MARKOV5:trans_out2 > MARKOV4:trans_in",
+                "MARKOV5:trans_out3 > MARKOV3:trans_in",
 
                 // Pitch CV Summing to VCO1
                 "MARKOV1:cv_out > VCO1:cv_in",
@@ -71,8 +71,8 @@ export const preset08 = {
                 "VCF1:wave_out > VCA1:wave_in",
                 "VCA1:wave_out > DELAY1:wave_in",
                 "DELAY1:wave_out > REVERB1:wave_in",
-                "REVERB1:wave_out > SPK1:wave_inL",
-                "REVERB1:wave_out > SPK1:wave_inR"
+                "REVERB1:wave_out > SPK1:wave_in_l",
+                "REVERB1:wave_out > SPK1:wave_in_r"
             ]
         }
     }

@@ -6,8 +6,8 @@ const createMathAudio = (ctx, d, patch, eng, hasTwoInputs) => {
     an.fftSize = 256; out.connect(an);
     if (eng?.silentSink) out.connect(eng.silentSink);
     const w = new AudioWorkletNode(ctx, 'math-processor', { numberOfInputs: 2, numberOfOutputs: 1 });
-    const hasA = patch?.has('CV_inA') || patch?.has('cv_ina') || patch?.has('a') || patch?.has('in_a') || false;
-    const hasB = hasTwoInputs ? (patch?.has('CV_inB') || patch?.has('cv_inb') || patch?.has('b') || patch?.has('in_b') || false) : false;
+    const hasA = patch?.has('cv_in_a') || patch?.has('CV_inA') || patch?.has('cv_ina') || patch?.has('a') || patch?.has('in_a') || false;
+    const hasB = hasTwoInputs ? (patch?.has('cv_in_b') || patch?.has('CV_inB') || patch?.has('cv_inb') || patch?.has('b') || patch?.has('in_b') || false) : false;
     w.port.postMessage({
         type: 'SET_PARAMS',
         mode: d.mode || (hasTwoInputs ? 'ADD' : '-'),
@@ -23,15 +23,15 @@ const createMathAudio = (ctx, d, patch, eng, hasTwoInputs) => {
     const nodes = { gA, out, an, w };
     if (gB) nodes.gB = gB;
     const inputs = {
-        CV_inA: gA, cv_ina: gA, a: gA, in_a: gA
+        cv_in_a: gA, CV_inA: gA, cv_ina: gA, a: gA, in_a: gA
     };
     if (gB) {
-        inputs.CV_inB = gB; inputs.cv_inb = gB; inputs.b = gB; inputs.in_b = gB;
+        inputs.cv_in_b = gB; inputs.CV_inB = gB; inputs.cv_inb = gB; inputs.b = gB; inputs.in_b = gB;
     }
     return {
         nodes,
         inputs,
-        outputs: { CV_OUT: out, cv_out: out, out },
+        outputs: { cv_out: out, CV_OUT: out, out },
         read: () => {
             an.getFloatTimeDomainData(buf);
             return { values: [buf[0] || 0] };
@@ -40,8 +40,8 @@ const createMathAudio = (ctx, d, patch, eng, hasTwoInputs) => {
 };
 
 const updateMathAudio = (inst, d, patch, hasTwoInputs) => {
-    const hasA = patch?.has('CV_inA') || patch?.has('cv_ina') || patch?.has('a') || patch?.has('in_a') || false;
-    const hasB = hasTwoInputs ? (patch?.has('CV_inB') || patch?.has('cv_inb') || patch?.has('b') || patch?.has('in_b') || false) : false;
+    const hasA = patch?.has('cv_in_a') || patch?.has('CV_inA') || patch?.has('cv_ina') || patch?.has('a') || patch?.has('in_a') || false;
+    const hasB = hasTwoInputs ? (patch?.has('cv_in_b') || patch?.has('CV_inB') || patch?.has('cv_inb') || patch?.has('b') || patch?.has('in_b') || false) : false;
     inst.nodes.w.port.postMessage({
         type: 'SET_PARAMS',
         mode: d.mode || (hasTwoInputs ? 'ADD' : '-'),

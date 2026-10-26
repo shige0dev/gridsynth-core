@@ -48,11 +48,17 @@ export const MARKOV = {
         const inst = {
             nodes: { w, silent, gClk, gTrig, g1, g2, g3, g4, gCv, gGate, gStepGate },
             inputs: {
+                gate_in: gClk,
+                trans_in: gTrig,
                 clk_in: gClk,
                 transition_in: gTrig,
                 trig_in: gTrig
             },
             outputs: {
+                trans_out1: g1,
+                trans_out2: g2,
+                trans_out3: g3,
+                trans_out4: g4,
                 transition_out1: g1,
                 transition_out2: g2,
                 transition_out3: g3,
@@ -62,12 +68,8 @@ export const MARKOV = {
                 trig_out3: g3,
                 trig_out4: g4,
                 cv_out: gCv,
-                state_out: gCv, // alias for backward compatibility
                 gate_out: gGate,
-                gt_out: gGate,
-                trig_out: gStepGate,
-                step_gate: gStepGate,
-                step_gt: gStepGate
+                trig_out: gStepGate
             },
             _liveState: initialState,
             resetStep: () => {

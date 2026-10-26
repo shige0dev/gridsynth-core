@@ -17,8 +17,8 @@ export const preset02 = {
                 "VCO1:wave_out > VCF1:wave_in",
                 "VCF1:wave_out > VCA1:wave_in",
                 "ADSR1:cv_out > VCA1:cv_in",
-                "VCA1:wave_out > SPK1:wave_inL",
-                "VCA1:wave_out > SPK1:wave_inR"
+                "VCA1:wave_out > SPK1:wave_in_l",
+                "VCA1:wave_out > SPK1:wave_in_r"
             ]
         }
     }

@@ -35,7 +35,7 @@ export const FOLD = {
     ports: () => ({
         in: [
             { port: 'wave_in', pin: 4, color: 'bg-emerald-500' },
-            { port: 'gain_cv', pin: 5, alias: 'fold_cv', color: 'bg-yellow-400' }
+            { port: 'gain_cv', pin: 5, color: 'bg-yellow-400' }
         ],
         out: [
             { port: 'wave_out', pin: 9, color: 'bg-cyan-500' }

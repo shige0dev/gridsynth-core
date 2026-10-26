@@ -76,8 +76,8 @@ export const preset13 = {
         { "from": { "moduleId": "SEQ81", "port": "cv_out" }, "to": { "moduleId": "WAVE1", "port": "start_cv" } },
         { "from": { "moduleId": "WAVE1", "port": "wave_out" }, "to": { "moduleId": "VCF1", "port": "wave_in" } },
         { "from": { "moduleId": "VCF1", "port": "wave_out" }, "to": { "moduleId": "DELAY1", "port": "wave_in" } },
-        { "from": { "moduleId": "DELAY1", "port": "wave_out" }, "to": { "moduleId": "SPK1", "port": "wave_inL" } },
-        { "from": { "moduleId": "DELAY1", "port": "wave_out" }, "to": { "moduleId": "SPK1", "port": "wave_inR" } }
+        { "from": { "moduleId": "DELAY1", "port": "wave_out" }, "to": { "moduleId": "SPK1", "port": "wave_in_l" } },
+        { "from": { "moduleId": "DELAY1", "port": "wave_out" }, "to": { "moduleId": "SPK1", "port": "wave_in_r" } }
       ]
     }
   }

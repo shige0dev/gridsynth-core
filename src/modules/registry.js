@@ -4,21 +4,21 @@
  */
 
 import { vcoDefs } from './defs/vco.js?v=351';
-import { filterDefs } from './defs/filter.js?v=351';
+import { filterDefs } from './defs/filter.js?v=424';
 import { ampDefs } from './defs/amp.js?v=351';
-import { effectsDefs } from './defs/effects.js?v=351';
+import { effectsDefs } from './defs/effects.js?v=424';
 import { adsrDefs, ADSR_CURVES } from './defs/adsr.js?v=351';
-import { modDefs } from './defs/mod.js?v=417';
-import { ioDefs } from './defs/io.js?v=351';
-import { scopeDefs } from './defs/scope.js?v=402';
+import { modDefs } from './defs/mod.js?v=424';
+import { ioDefs } from './defs/io.js?v=424';
+import { scopeDefs } from './defs/scope.js?v=424';
 import { subDefs } from './defs/sub.js?v=351';
 import { controllerDefs } from './defs/controllers.js?v=355';
-import { seqDefs } from './defs/seq.js?v=422';
-import { passDefs } from './defs/pass.js?v=422';
+import { seqDefs } from './defs/seq.js?v=424';
+import { passDefs } from './defs/pass.js?v=424';
 import { chordDefs } from './defs/chord.js?v=351';
-import { arpDefs } from './defs/arp.js?v=409';
+import { arpDefs } from './defs/arp.js?v=424';
 import { patDefs } from './defs/pat.js?v=351';
-import { markovDefs } from './defs/markov.js?v=419';
+import { markovDefs } from './defs/markov.js?v=424';
 import { fmDefs } from './defs/fm.js?v=351';
 import { scaleDefs } from './defs/scale.js?v=351';
 import { rfDefs } from './defs/rf.js?v=396';

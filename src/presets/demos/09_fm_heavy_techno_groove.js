@@ -699,7 +699,7 @@ export const preset09 = {
           },
           "to": {
             "moduleId": "SPK1",
-            "port": "wave_inL"
+            "port": "wave_in_l"
           }
         },
         {
@@ -709,7 +709,7 @@ export const preset09 = {
           },
           "to": {
             "moduleId": "SPK1",
-            "port": "wave_inR"
+            "port": "wave_in_r"
           }
         }
       ]

@@ -211,8 +211,8 @@ export const preset03 = {
       },
       "connections": [
         { "from": { "moduleId": "VCF1", "port": "wave_out" }, "to": { "moduleId": "VCA1", "port": "wave_in" } },
-        { "from": { "moduleId": "DELAY1", "port": "wave_out" }, "to": { "moduleId": "SPK1", "port": "wave_inL" } },
-        { "from": { "moduleId": "DELAY1", "port": "wave_out" }, "to": { "moduleId": "SPK1", "port": "wave_inR" } },
+        { "from": { "moduleId": "DELAY1", "port": "wave_out" }, "to": { "moduleId": "SPK1", "port": "wave_in_l" } },
+        { "from": { "moduleId": "DELAY1", "port": "wave_out" }, "to": { "moduleId": "SPK1", "port": "wave_in_r" } },
         { "from": { "moduleId": "AR1", "port": "cv_out" }, "to": { "moduleId": "VCA1", "port": "cv_in" } },
         { "from": { "moduleId": "AR1", "port": "cv_out" }, "to": { "moduleId": "VCF1", "port": "cv_in" } },
         { "from": { "moduleId": "VCF2", "port": "wave_out" }, "to": { "moduleId": "VCA2", "port": "wave_in" } },

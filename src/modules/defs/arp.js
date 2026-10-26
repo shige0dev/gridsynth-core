@@ -89,14 +89,14 @@ export const ARP = {
     defaults: () => ({ type: 'ARP', mode: 'up' }),
     ports: (m, ctx) => ({
         in: [
-            { port: 'clk_in', pin: 0, alias: 'trig_in', color: 'bg-red-500' },
+            { port: 'gate_in', pin: 0, color: 'bg-red-500' },
             { port: 'cv_in4', pin: 1, color: 'bg-yellow-400', dimmed: !ctx?.patched?.has('cv_in4') && !ctx?.patched?.has('in_4') && !ctx?.patched?.has('in4') },
             { port: 'cv_in3', pin: 2, color: 'bg-yellow-400', dimmed: !ctx?.patched?.has('cv_in3') && !ctx?.patched?.has('in_3') && !ctx?.patched?.has('in3') },
             { port: 'cv_in2', pin: 3, color: 'bg-yellow-400', dimmed: !ctx?.patched?.has('cv_in2') && !ctx?.patched?.has('in_2') && !ctx?.patched?.has('in2') },
             { port: 'cv_in1', pin: 14, color: 'bg-yellow-400', dimmed: !ctx?.patched?.has('cv_in1') && !ctx?.patched?.has('in_1') && !ctx?.patched?.has('in1') }
         ],
         out: [
-            { port: 'cv_out', pin: 9, alias: 'out', color: 'bg-yellow-400' },
+            { port: 'cv_out', pin: 9, color: 'bg-yellow-400' },
             { port: 'gate_out', pin: 10, color: 'bg-red-500' }
         ]
     }),
@@ -178,10 +178,10 @@ export const FLIP = {
     color: 'orange',
     defaults: () => ({ type: 'FLIP' }),
     ports: () => ({
-        in: [{ port: 'gate_in', pin: 4, alias: 'trig_in', color: 'bg-rose-500' }],
+        in: [{ port: 'gate_in', pin: 4, color: 'bg-rose-500' }],
         out: [
-            { port: 'cv_out1', pin: 8, alias: 'gate_out1', color: 'bg-yellow-400' },
-            { port: 'cv_out2', pin: 9, alias: 'gate_out2', color: 'bg-yellow-400' }
+            { port: 'cv_out1', pin: 8, color: 'bg-yellow-400' },
+            { port: 'cv_out2', pin: 9, color: 'bg-yellow-400' }
         ]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),

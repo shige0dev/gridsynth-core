@@ -372,8 +372,8 @@ export const THROUGH = {
     color: 'amber',
     defaults: () => ({ type: 'THROUGH', state: true }),
     ports: () => ({
-        in: [{ port: 'cv_in', alias: 'wave_in', color: 'bg-yellow-400' }],
-        out: [{ port: 'cv_out', alias: 'wave_out', color: 'bg-yellow-400' }]
+        in: [{ port: 'cv_in', color: 'bg-yellow-400' }],
+        out: [{ port: 'cv_out', color: 'bg-yellow-400' }]
     }),
     UI_STATES: {
         true:  { btnCls: 'bg-amber-500 text-slate-950 border-amber-300', btnText: 'PASSING (THRU)' },
@@ -412,8 +412,8 @@ export const MATH1 = {
     MODES: ['-', 'ABS', 'FLOOR', 'CEIL', 'ROUND', 'INT', 'NOT'],
     defaults: () => ({ type: 'MATH1', mode: '-', valA: 0.0 }),
     ports: () => ({
-        in: [{ port: 'CV_inA', pin: 4, alias: 'a', color: 'bg-yellow-400' }],
-        out: [{ port: 'CV_OUT', pin: 9, alias: 'out', color: 'bg-yellow-400' }]
+        in: [{ port: 'cv_in_a', pin: 4, color: 'bg-yellow-400' }],
+        out: [{ port: 'cv_out', pin: 9, color: 'bg-yellow-400' }]
     }),
     renderGrid: renderMathGridUI,
     updateLive: updateMathLiveUI,
@@ -429,10 +429,10 @@ export const MATH2 = {
     defaults: () => ({ type: 'MATH2', mode: 'ADD', valA: 0.0, valB: 1.0 }),
     ports: () => ({
         in: [
-            { port: 'CV_inA', pin: 4, alias: 'a', color: 'bg-yellow-400' },
-            { port: 'CV_inB', pin: 5, alias: 'b', color: 'bg-yellow-400' }
+            { port: 'cv_in_a', pin: 4, color: 'bg-yellow-400' },
+            { port: 'cv_in_b', pin: 5, color: 'bg-yellow-400' }
         ],
-        out: [{ port: 'CV_OUT', pin: 9, alias: 'out', color: 'bg-yellow-400' }]
+        out: [{ port: 'cv_out', pin: 9, color: 'bg-yellow-400' }]
     }),
     renderGrid: renderMathGridUI,
     updateLive: updateMathLiveUI,

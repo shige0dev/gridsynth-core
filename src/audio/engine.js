@@ -1,6 +1,6 @@
-import { AUDIO_REGISTRY } from './registry.js?v=422';
+import { AUDIO_REGISTRY } from './registry.js?v=424';
 import { AudioHelpers } from './helpers.js';
-import { parseConn, normalizeSubPort } from '../core/utils.js?v=297';
+import { parseConn, normalizeSubPort, PORT_ALIASES } from '../core/utils.js?v=424';
 
 export const WORKLET_MODULE_TYPES = ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'ADSR', 'LFO', 'MATH1', 'MATH2', 'SH', 'FOLD', 'CVDELAY', 'SCOPE', 'LISS', 'XY', 'MARKOV', 'CHORD', 'FM', 'FM3OP', 'FMx3', 'FMCORE', 'GATE4', 'FLIP', 'FF', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD', 'PASS'];
 
@@ -129,9 +129,11 @@ export class SynthEngine {
         const d = this.modules[dId] || this.modules[`0/${dId}`];
         const sNorm = (s?.type === 'SUB' || s?.type === 'SUB_IO') ? normalizeSubPort(sPort, s?.type, s?.manifest) : sPort;
         const dNorm = (d?.type === 'SUB' || d?.type === 'SUB_IO') ? normalizeSubPort(dPort, d?.type, d?.manifest) : dPort;
+        const sAlias = PORT_ALIASES[sNorm] || PORT_ALIASES[sPort] || sNorm;
+        const dAlias = PORT_ALIASES[dNorm] || PORT_ALIASES[dPort] || dNorm;
         return {
-            sOut: s?.outputs[sNorm] || s?.outputs[sPort],
-            dIn: d?.inputs[dNorm] || d?.inputs[dPort]
+            sOut: s?.outputs[sNorm] || s?.outputs[sAlias] || s?.outputs[sPort],
+            dIn: d?.inputs[dNorm] || d?.inputs[dAlias] || d?.inputs[dPort]
         };
     }
 

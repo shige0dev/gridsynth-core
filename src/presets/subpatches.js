@@ -227,7 +227,7 @@ export const FACTORY_SUBPATCHES = {
             connections: [
                 { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
                 { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR2", port: "gate_in" } },
-                { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "MATH2_1", port: "a" } },
+                { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "MATH2_1", port: "cv_in_a" } },
                 { from: { moduleId: "MATH2_1", port: "cv_out" }, to: { moduleId: "VCO1", port: "cv_in" } },
                 { from: { moduleId: "VCO1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
                 { from: { moduleId: "ADSR2", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
@@ -344,8 +344,8 @@ export const FACTORY_SUBPATCHES = {
             connections: [
                 { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
                 { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR2", port: "gate_in" } },
-                { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "MATH2_1", port: "a" } },
-                { from: { moduleId: "MATH2_1", port: "cv_out" }, to: { moduleId: "MATH2_2", port: "a" } },
+                { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "MATH2_1", port: "cv_in_a" } },
+                { from: { moduleId: "MATH2_1", port: "cv_out" }, to: { moduleId: "MATH2_2", port: "cv_in_a" } },
                 { from: { moduleId: "MATH2_2", port: "cv_out" }, to: { moduleId: "VCO1", port: "cv_in" } },
                 { from: { moduleId: "VCO1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
                 { from: { moduleId: "ADSR2", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
@@ -505,8 +505,8 @@ export const FACTORY_SUBPATCHES = {
             connections: [
                 { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
                 { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR2", port: "gate_in" } },
-                { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "MATH2_1", port: "a" } },
-                { from: { moduleId: "MATH2_1", port: "cv_out" }, to: { moduleId: "MATH2_2", port: "a" } },
+                { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "MATH2_1", port: "cv_in_a" } },
+                { from: { moduleId: "MATH2_1", port: "cv_out" }, to: { moduleId: "MATH2_2", port: "cv_in_a" } },
                 { from: { moduleId: "MATH2_2", port: "cv_out" }, to: { moduleId: "VCO1", port: "cv_in" } },
                 { from: { moduleId: "VCO1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
                 { from: { moduleId: "ADSR2", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
