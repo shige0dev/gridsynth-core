@@ -200,6 +200,8 @@ export const FLIP = {
             nodes: { w, inGate, out1, out2 },
             inputs: { gate_in: inGate, clk_in: inGate, trig_in: inGate },
             outputs: {
+                cv_out1: out1,
+                cv_out2: out2,
                 gate_out1: out1,
                 gate_out2: out2,
                 out1,

@@ -152,7 +152,11 @@ export const CLK = {
 export const THROUGH = {
     create: (ctx, d) => {
         const g = ctx.createGain(); g.gain.value = d.state !== false ? 1.0 : 0.0;
-        return { nodes: { g }, inputs: { wave_in: g }, outputs: { wave_out: g } };
+        return {
+            nodes: { g },
+            inputs: { cv_in: g, wave_in: g, in: g },
+            outputs: { cv_out: g, wave_out: g, out: g }
+        };
     },
     update: (ctx, inst, d) => AudioHelpers.set(inst.nodes.g.gain, d.state !== false ? 1.0 : 0.0, ctx, 0.003)
 };

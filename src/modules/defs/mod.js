@@ -369,22 +369,39 @@ export const THROUGH = {
     color: 'amber',
     defaults: () => ({ type: 'THROUGH', state: true }),
     ports: () => ({
-        in: [{ port: 'wave_in', color: 'bg-blue-500' }],
-        out: [{ port: 'wave_out', color: 'bg-blue-500' }]
+        in: [{ port: 'cv_in', alias: 'wave_in', color: 'bg-yellow-400' }],
+        out: [{ port: 'cv_out', alias: 'wave_out', color: 'bg-yellow-400' }]
     }),
     UI_STATES: {
-        true:  { badgeCls: 'bg-amber-500/20 text-amber-300', badgeLabel: 'THRU', btnCls: 'bg-amber-500 text-slate-950 border-amber-300', btnText: 'PASSING (THRU)' },
-        false: { badgeCls: 'bg-slate-950 text-slate-600',       badgeLabel: 'MUTE', btnCls: 'bg-black text-slate-500 border-slate-800',       btnText: 'MUTED (OFF)' }
+        true:  { btnCls: 'bg-amber-500 text-slate-950 border-amber-300', btnText: 'PASSING (THRU)' },
+        false: { btnCls: 'bg-black text-slate-500 border-slate-800',       btnText: 'MUTED (OFF)' }
     },
     renderGrid: (m) => {
-        const st = THROUGH.UI_STATES[m.state !== false];
-        return `<div class="flex items-center justify-center w-full h-full pointer-events-none"><div class="w-7 h-5 rounded border border-slate-600 flex items-center justify-center ${st.badgeCls} font-bold text-[8px] tracking-tight">${st.badgeLabel}</div></div>`;
+        const isPass = m.state !== false;
+        return `<div class="flex items-center justify-center w-full h-full pointer-events-none">${UIHelpers.renderPanelBars([
+            { pct: isPass ? 100 : 0, width: 'w-4', innerCls: 'thru-bar', attrs: 'data-thru-bar="0"', color: 'bg-gradient-to-t from-amber-600 to-yellow-400' }
+        ], { noWrapper: true })}</div>`;
     },
     renderModal: (m, ctx) => {
-        const st = THROUGH.UI_STATES[m.state !== false];
-        return `<div class="flex flex-col items-center p-2"><button id="toggle-switch-btn" class="w-full py-2 rounded-lg font-bold text-xs border ${st.btnCls}">${st.btnText}</button></div>`;
+        const isPass = m.state !== false;
+        const st = THROUGH.UI_STATES[isPass];
+        return `
+            <div class="flex flex-col items-center gap-2 p-2">
+                <div class="flex items-center justify-center bg-slate-950/80 p-2 rounded-xl border border-slate-800 w-full">
+                    <div class="w-6 h-9 rounded-sm p-[1.5px] flex flex-col justify-end border border-slate-600 bg-slate-950/40">
+                        <div class="w-full ${isPass ? 'bg-gradient-to-t from-amber-600 to-yellow-400 shadow-md shadow-amber-500/40' : 'bg-transparent'} rounded-xs transition-all duration-150" style="height: ${isPass ? '100%' : '0%'};"></div>
+                    </div>
+                </div>
+                <button id="toggle-switch-btn" class="w-full py-2 rounded-lg font-bold text-xs border transition-colors ${st.btnCls}">${st.btnText}</button>
+            </div>`;
     },
-    bindEvents: (m, ctx, cb) => { document.getElementById('toggle-switch-btn')?.addEventListener('click', () => { m.state = !m.state; ctx.reRenderModal(); cb(); }); }
+    bindEvents: (m, ctx, cb) => {
+        document.getElementById('toggle-switch-btn')?.addEventListener('click', () => {
+            m.state = !m.state;
+            ctx.reRenderModal();
+            cb();
+        });
+    }
 };
 
 export const MATH1 = {

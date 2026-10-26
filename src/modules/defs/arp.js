@@ -180,8 +180,8 @@ export const FLIP = {
     ports: () => ({
         in: [{ port: 'gate_in', pin: 4, alias: 'trig_in', color: 'bg-rose-500' }],
         out: [
-            { port: 'gate_out1', pin: 8, alias: 'out1', color: 'bg-orange-500' },
-            { port: 'gate_out2', pin: 9, alias: 'out2', color: 'bg-orange-500' }
+            { port: 'cv_out1', pin: 8, alias: 'gate_out1', color: 'bg-yellow-400' },
+            { port: 'cv_out2', pin: 9, alias: 'gate_out2', color: 'bg-yellow-400' }
         ]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
@@ -189,46 +189,45 @@ export const FLIP = {
         const st = m.initState ? 1 : 0;
         const b0Act = st === 0;
         const b1Act = st === 1;
-        const ledOn = 'bg-orange-500 border-orange-300 shadow-md shadow-orange-500/50';
-        const ledOff = 'bg-slate-950/80 border-slate-800/80';
-        return `
-            <div class="flex items-center justify-center gap-2 w-full h-full pointer-events-none">
-                <div data-flip-led="0" class="w-3 h-5 rounded-xs border transition-colors ${b0Act ? ledOn : ledOff}"></div>
-                <div data-flip-led="1" class="w-3 h-5 rounded-xs border transition-colors ${b1Act ? ledOn : ledOff}"></div>
-            </div>`;
+        return `<div class="flex items-center justify-center w-full h-full pointer-events-none">${UIHelpers.renderPanelBars([
+            { pct: b0Act ? 100 : 0, width: 'w-3.5', innerCls: 'flip-bar-0', attrs: 'data-flip-bar="0"', color: 'bg-gradient-to-t from-amber-600 to-yellow-400' },
+            { pct: b1Act ? 100 : 0, width: 'w-3.5', innerCls: 'flip-bar-1', attrs: 'data-flip-bar="1"', color: 'bg-gradient-to-t from-amber-600 to-yellow-400' }
+        ], { gapCls: 'gap-2' })}</div>`;
     },
     renderModal: (m) => {
         const initSt = m.initState ? 1 : 0;
         const b0Act = initSt === 0;
         const b1Act = initSt === 1;
-        const ledOn = 'bg-orange-500 border-orange-300 shadow-md shadow-orange-500/50';
-        const ledOff = 'bg-slate-950/80 border-slate-800/80';
         return `
             <div class="space-y-2 p-1 text-slate-200">
                 <div class="grid grid-cols-2 gap-2 bg-slate-950/80 p-2 rounded-xl border border-slate-800">
-                    <div id="flip-modal-box-0" class="flex flex-col items-center gap-1.5 py-2 rounded-lg border transition-colors ${b0Act ? 'bg-orange-950/70 border-orange-500/80' : 'bg-slate-900/60 border-slate-800'}">
-                        <span class="text-[8px] font-mono font-bold ${b0Act ? 'text-orange-300' : 'text-slate-500'}">OUT 1 (PIN8)</span>
-                        <div id="flip-modal-led-0" class="w-4 h-6 rounded-xs border transition-colors ${b0Act ? ledOn : ledOff}"></div>
+                    <div id="flip-modal-box-0" class="flex flex-col items-center gap-1.5 py-2 rounded-lg border transition-colors ${b0Act ? 'bg-amber-950/70 border-amber-500/80' : 'bg-slate-900/60 border-slate-800'}">
+                        <span class="text-[8px] font-mono font-bold ${b0Act ? 'text-amber-300' : 'text-slate-500'}">OUT 1 (PIN8)</span>
+                        <div class="w-5 h-8 rounded-sm p-[1.5px] flex flex-col justify-end border border-slate-600 bg-slate-950/40">
+                            <div id="flip-modal-bar-0" class="w-full ${b0Act ? 'bg-gradient-to-t from-amber-600 to-yellow-400 shadow-md shadow-amber-500/40' : 'bg-transparent'} rounded-xs transition-all duration-150" style="height: ${b0Act ? '100%' : '0%'};"></div>
+                        </div>
                     </div>
-                    <div id="flip-modal-box-1" class="flex flex-col items-center gap-1.5 py-2 rounded-lg border transition-colors ${b1Act ? 'bg-orange-950/70 border-orange-500/80' : 'bg-slate-900/60 border-slate-800'}">
+                    <div id="flip-modal-box-1" class="flex flex-col items-center gap-1.5 py-2 rounded-lg border transition-colors ${b1Act ? 'bg-amber-950/70 border-amber-500/80' : 'bg-slate-900/60 border-slate-800'}">
                         <span class="text-[8px] font-mono font-bold ${b1Act ? 'text-orange-300' : 'text-slate-500'}">OUT 2 (PIN9)</span>
-                        <div id="flip-modal-led-1" class="w-4 h-6 rounded-xs border transition-colors ${b1Act ? ledOn : ledOff}"></div>
+                        <div class="w-5 h-8 rounded-sm p-[1.5px] flex flex-col justify-end border border-slate-600 bg-slate-950/40">
+                            <div id="flip-modal-bar-1" class="w-full ${b1Act ? 'bg-gradient-to-t from-amber-600 to-yellow-400 shadow-md shadow-amber-500/40' : 'bg-transparent'} rounded-xs transition-all duration-150" style="height: ${b1Act ? '100%' : '0%'};"></div>
+                        </div>
                     </div>
                 </div>
                 <div>
                     <label class="block text-[8px] text-slate-400 uppercase tracking-wider font-semibold mb-1">Initial State (Reset)</label>
                     <div class="grid grid-cols-2 gap-1">
-                        <button class="flip-init-btn py-1 rounded text-[8px] font-bold border transition-all ${initSt === 0 ? 'bg-orange-600 text-white border-orange-400 shadow-sm shadow-orange-500/40' : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'}" data-val="0">OUT 1 ON</button>
-                        <button class="flip-init-btn py-1 rounded text-[8px] font-bold border transition-all ${initSt === 1 ? 'bg-orange-600 text-white border-orange-400 shadow-sm shadow-orange-500/40' : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'}" data-val="1">OUT 2 ON</button>
+                        <button class="flip-init-btn py-1 rounded text-[8px] font-bold border transition-all ${initSt === 0 ? 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/40' : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'}" data-val="0">OUT 1 ON</button>
+                        <button class="flip-init-btn py-1 rounded text-[8px] font-bold border transition-all ${initSt === 1 ? 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/40' : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'}" data-val="1">OUT 2 ON</button>
                     </div>
                 </div>
-                <button id="flip-toggle-btn" class="w-full py-1.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold text-[9px] rounded-lg shadow-sm border border-orange-400/40 transition cursor-pointer">
+                <button id="flip-toggle-btn" class="w-full py-1.5 bg-gradient-to-r from-amber-600 to-yellow-500 hover:from-amber-500 hover:to-yellow-400 text-slate-950 font-bold text-[9px] rounded-lg shadow-sm border border-amber-400/40 transition cursor-pointer">
                     MANUAL TOGGLE (FLIP)
                 </button>
             </div>`;
     },
     bindEvents: (m, ctx, cb) => {
-        UIHelpers.bindButtonGroup('.flip-init-btn', 'bg-orange-600 text-white border-orange-400 shadow-sm shadow-orange-500/40', 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800', val => {
+        UIHelpers.bindButtonGroup('.flip-init-btn', 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/40', 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800', val => {
             m.initState = parseInt(val, 10) ? 1 : 0;
             ctx.reRenderModal();
             cb();
@@ -241,31 +240,32 @@ export const FLIP = {
         const st = data?.state !== undefined ? data.state : (m?.initState ? 1 : 0);
         const b0Act = st === 0;
         const b1Act = st === 1;
-        const ledOn = 'w-3 h-5 rounded-xs border transition-colors bg-orange-500 border-orange-300 shadow-md shadow-orange-500/50';
-        const ledOff = 'w-3 h-5 rounded-xs border transition-colors bg-slate-950/80 border-slate-800/80';
 
-        const led0 = cell?.querySelector('[data-flip-led="0"]');
-        const led1 = cell?.querySelector('[data-flip-led="1"]');
-        if (led0) led0.className = b0Act ? ledOn : ledOff;
-        if (led1) led1.className = b1Act ? ledOn : ledOff;
+        const bar0 = cell?.querySelector('[data-flip-bar="0"] div');
+        const bar1 = cell?.querySelector('[data-flip-bar="1"] div');
+        if (bar0) bar0.style.height = b0Act ? '100%' : '0%';
+        if (bar1) bar1.style.height = b1Act ? '100%' : '0%';
 
         if (modalEl) {
             const mBox0 = modalEl.querySelector('#flip-modal-box-0');
             const mBox1 = modalEl.querySelector('#flip-modal-box-1');
-            const mLed0 = modalEl.querySelector('#flip-modal-led-0');
-            const mLed1 = modalEl.querySelector('#flip-modal-led-1');
+            const mBar0 = modalEl.querySelector('#flip-modal-bar-0');
+            const mBar1 = modalEl.querySelector('#flip-modal-bar-1');
             const mTitle0 = mBox0?.querySelector('span');
             const mTitle1 = mBox1?.querySelector('span');
 
-            const mActiveOn = 'w-4 h-6 rounded-xs border transition-colors bg-orange-500 border-orange-300 shadow-md shadow-orange-500/50';
-            const mActiveOff = 'w-4 h-6 rounded-xs border transition-colors bg-slate-950/80 border-slate-800/80';
-
-            if (mLed0) mLed0.className = b0Act ? mActiveOn : mActiveOff;
-            if (mLed1) mLed1.className = b1Act ? mActiveOn : mActiveOff;
-            if (mBox0) mBox0.className = `flex flex-col items-center gap-1.5 py-2 rounded-lg border transition-colors ${b0Act ? 'bg-orange-950/70 border-orange-500/80' : 'bg-slate-900/60 border-slate-800'}`;
-            if (mBox1) mBox1.className = `flex flex-col items-center gap-1.5 py-2 rounded-lg border transition-colors ${b1Act ? 'bg-orange-950/70 border-orange-500/80' : 'bg-slate-900/60 border-slate-800'}`;
-            if (mTitle0) mTitle0.className = `text-[8px] font-mono font-bold ${b0Act ? 'text-orange-300' : 'text-slate-500'}`;
-            if (mTitle1) mTitle1.className = `text-[8px] font-mono font-bold ${b1Act ? 'text-orange-300' : 'text-slate-500'}`;
+            if (mBar0) {
+                mBar0.style.height = b0Act ? '100%' : '0%';
+                mBar0.className = `w-full ${b0Act ? 'bg-gradient-to-t from-amber-600 to-yellow-400 shadow-md shadow-amber-500/40' : 'bg-transparent'} rounded-xs transition-all duration-150`;
+            }
+            if (mBar1) {
+                mBar1.style.height = b1Act ? '100%' : '0%';
+                mBar1.className = `w-full ${b1Act ? 'bg-gradient-to-t from-amber-600 to-yellow-400 shadow-md shadow-amber-500/40' : 'bg-transparent'} rounded-xs transition-all duration-150`;
+            }
+            if (mBox0) mBox0.className = `flex flex-col items-center gap-1.5 py-2 rounded-lg border transition-colors ${b0Act ? 'bg-amber-950/70 border-amber-500/80' : 'bg-slate-900/60 border-slate-800'}`;
+            if (mBox1) mBox1.className = `flex flex-col items-center gap-1.5 py-2 rounded-lg border transition-colors ${b1Act ? 'bg-amber-950/70 border-amber-500/80' : 'bg-slate-900/60 border-slate-800'}`;
+            if (mTitle0) mTitle0.className = `text-[8px] font-mono font-bold ${b0Act ? 'text-amber-300' : 'text-slate-500'}`;
+            if (mTitle1) mTitle1.className = `text-[8px] font-mono font-bold ${b1Act ? 'text-amber-300' : 'text-slate-500'}`;
         }
     }
 };
