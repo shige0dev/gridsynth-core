@@ -12,8 +12,8 @@ export const MODAL_WIDTHS = {
 
     // Sequencing & Arpeggiation
     GATE4: 'w-[230px]',
-    FLIP: 'w-[215px]',
-    FF: 'w-[215px]',
+    FLIP: 'w-[185px]',
+    FF: 'w-[185px]',
     ARP: 'w-[230px]',
     CHORD: 'w-[240px]',
     MARKOV: 'w-[260px]',

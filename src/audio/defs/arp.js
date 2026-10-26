@@ -166,17 +166,10 @@ export const ARP = {
 
 export const FLIP = {
     create: (ctx, d, patch, eng) => {
-        const initState = d?.initState !== undefined ? (d.initState ? 1 : 0) : 1;
         const w = new AudioWorkletNode(ctx, 'ff-processor', {
             numberOfInputs: 1,
             numberOfOutputs: 2,
             outputChannelCount: [1, 1]
-        });
-
-        w.port.postMessage({
-            type: 'SET_PARAMS',
-            initState,
-            state: initState
         });
 
         const inGate = ctx.createGain();
@@ -189,7 +182,7 @@ export const FLIP = {
         w.connect(out2, 1, 0);
         if (eng?.silentSink) out1.connect(eng.silentSink);
 
-        let curState = initState;
+        let curState = 1;
         w.port.onmessage = (e) => {
             if (e.data.type === 'STATE') {
                 curState = e.data.state;
@@ -210,18 +203,13 @@ export const FLIP = {
                 nq_out: out2
             },
             resetStep: () => {
-                curState = d?.initState !== undefined ? (d.initState ? 1 : 0) : 1;
+                curState = 1;
                 w.port.postMessage({ type: 'RESET' });
             },
             read: () => ({ state: curState })
         };
     },
-    update: (ctx, inst, d) => {
-        inst.nodes.w.port.postMessage({
-            type: 'SET_PARAMS',
-            initState: d?.initState !== undefined ? (d.initState ? 1 : 0) : 1
-        });
-    }
+    update: () => {}
 };
 
 export const arpAudioDefs = {

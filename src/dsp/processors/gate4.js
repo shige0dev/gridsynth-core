@@ -103,23 +103,14 @@ export class FlipFlopProcessor extends AudioWorkletProcessor {
     constructor() {
         super();
         this.state = 1;
-        this.initState = 1;
         this.lastHi = false;
 
         this.port.onmessage = (e) => {
-            if (e.data.type === 'SET_PARAMS') {
-                if (e.data.initState !== undefined) {
-                    this.initState = e.data.initState ? 1 : 0;
-                }
-                if (e.data.state !== undefined) {
-                    this.state = e.data.state ? 1 : 0;
-                    this.port.postMessage({ type: 'STATE', state: this.state });
-                }
-            } else if (e.data.type === 'TRIG') {
+            if (e.data.type === 'TRIG') {
                 this.state = this.state ? 0 : 1;
                 this.port.postMessage({ type: 'STATE', state: this.state });
             } else if (e.data.type === 'RESET') {
-                this.state = this.initState;
+                this.state = 1;
                 this.lastHi = false;
                 this.port.postMessage({ type: 'STATE', state: this.state });
             }
