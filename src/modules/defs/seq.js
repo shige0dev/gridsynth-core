@@ -142,7 +142,7 @@ export function openSeqExport(m, ctx, cb, maxSteps = 16) {
 
     const exportObj = {
         type: m.type || (maxSteps === 8 ? 'SEQ8' : 'SEQ16'),
-        mode: m.mode || 'loop',
+        loop: m.loop !== false,
         quantize: m.quantize !== false,
         steps
     };
@@ -154,7 +154,7 @@ export function openSeqExport(m, ctx, cb, maxSteps = 16) {
         jsonStr,
         infoBadges: [
             `STEPS: ${steps.length}`,
-            `ACTIVE: ${steps.filter(s => s.active && s.gate).length} ON`,
+            `LOOP: ${m.loop !== false ? 'ON' : 'OFF'}`,
             `QLZ: ${m.quantize !== false ? 'ON' : 'OFF'}`
         ],
         copyToast: 'シーケンスパターンのJSONをクリップボードにコピーしました',
@@ -212,6 +212,10 @@ export function openSeqImport(m, ctx, cb, maxSteps = 16) {
 
                     if (typeof payload.quantize === 'boolean') {
                         m.quantize = payload.quantize;
+                    }
+                    if (typeof payload.loop === 'boolean') {
+                        m.loop = payload.loop;
+                        m.mode = m.loop ? 'loop' : 'oneshot';
                     }
 
                     const normalizedSteps = normalizeImportSteps(payload.steps, maxSteps);
@@ -276,7 +280,7 @@ function createSeqModule(maxSteps) {
         color: 'blue',
         defaults: () => ({
             type: typeName,
-            mode: 'loop',
+            loop: true,
             quantize: true,
             steps: Array.from({ length: maxSteps }, (_, i) => ({
                 cv: i === 0 ? 0 : 0.25,
@@ -286,7 +290,8 @@ function createSeqModule(maxSteps) {
             }))
         }),
         onNormalize: (m) => {
-            if (!m.mode) m.mode = 'loop';
+            if (m.loop === undefined) m.loop = (m.mode !== 'oneshot');
+            m.mode = m.loop ? 'loop' : 'oneshot';
             if (Array.isArray(m.steps)) {
                 if (typeof m.steps[0] === 'number') {
                     m.steps = m.steps.map(cv => ({ cv, active: true, cvActive: true, gate: true }));
@@ -352,9 +357,7 @@ function createSeqModule(maxSteps) {
                                 <i data-lucide="download" class="w-2.5 h-2.5 pointer-events-none"></i>
                                 <span>IMP</span>
                             </button>
-                            <button id="${prefix}-mode-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors shrink-0 ${m.mode === 'oneshot' ? 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/40' : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'}" title="再生モード切替 (LOOP / 1-SHOT)">
-                                ${m.mode === 'oneshot' ? '1-SHOT' : 'LOOP'}
-                            </button>
+                            <button id="${prefix}-loop-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors shrink-0 ${m.loop !== false ? 'bg-cyan-600 text-white border-cyan-500' : 'bg-slate-800 text-slate-400 border-slate-700'}">LOOP: ${m.loop !== false ? 'ON' : 'OFF'}</button>
                             <button id="${prefix}-qlz-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors shrink-0 ${m.quantize !== false ? 'bg-cyan-600 text-white border-cyan-500' : 'bg-slate-800 text-slate-400 border-slate-700'}">QLZ: ${m.quantize !== false ? 'ON' : 'OFF'}</button>
                         </div>
                     </div>
@@ -372,8 +375,9 @@ function createSeqModule(maxSteps) {
             root.querySelector(`#${btnPrefix}-json-export-btn`)?.addEventListener('click', () => openSeqExport(m, ctx, cb, maxSteps));
             root.querySelector(`#${btnPrefix}-json-import-btn`)?.addEventListener('click', () => openSeqImport(m, ctx, cb, maxSteps));
             root.addEventListener('click', (e) => {
-                if (e.target.closest(`#${prefix}-mode-btn`)) {
-                    m.mode = (m.mode === 'oneshot') ? 'loop' : 'oneshot';
+                if (e.target.closest(`#${prefix}-loop-btn`)) {
+                    m.loop = !(m.loop !== false);
+                    m.mode = m.loop ? 'loop' : 'oneshot';
                     ctx.reRenderModal();
                     cb();
                     return;

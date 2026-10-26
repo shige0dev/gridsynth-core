@@ -8,7 +8,8 @@ export const SEQ8 = {
             cvActive: true,
             gate: true
         }));
-        const mode = d?.mode || 'loop';
+        const isLoop = d?.loop !== undefined ? Boolean(d.loop) : (d?.mode !== 'oneshot');
+        const mode = isLoop ? 'loop' : 'oneshot';
         const w = new AudioWorkletNode(ctx, 'seq-processor', {
             numberOfInputs: 2,
             numberOfOutputs: 3,
@@ -43,8 +44,9 @@ export const SEQ8 = {
         if (d?.steps && inst?.nodes?.w) {
             inst.nodes.w.port.postMessage({ type: 'SET_STEPS', steps: d.steps });
         }
-        if (d?.mode && inst?.nodes?.w) {
-            inst.nodes.w.port.postMessage({ type: 'SET_MODE', mode: d.mode });
+        if ((d?.loop !== undefined || d?.mode !== undefined) && inst?.nodes?.w) {
+            const isLoop = d.loop !== undefined ? Boolean(d.loop) : (d.mode !== 'oneshot');
+            inst.nodes.w.port.postMessage({ type: 'SET_MODE', mode: isLoop ? 'loop' : 'oneshot' });
         }
     }
 };
@@ -57,7 +59,8 @@ export const SEQ16 = {
             cvActive: true,
             gate: true
         }));
-        const mode = d?.mode || 'loop';
+        const isLoop = d?.loop !== undefined ? Boolean(d.loop) : (d?.mode !== 'oneshot');
+        const mode = isLoop ? 'loop' : 'oneshot';
         const w = new AudioWorkletNode(ctx, 'seq-processor', {
             numberOfInputs: 2,
             numberOfOutputs: 3,
@@ -92,8 +95,9 @@ export const SEQ16 = {
         if (d?.steps && inst?.nodes?.w) {
             inst.nodes.w.port.postMessage({ type: 'SET_STEPS', steps: d.steps });
         }
-        if (d?.mode && inst?.nodes?.w) {
-            inst.nodes.w.port.postMessage({ type: 'SET_MODE', mode: d.mode });
+        if ((d?.loop !== undefined || d?.mode !== undefined) && inst?.nodes?.w) {
+            const isLoop = d.loop !== undefined ? Boolean(d.loop) : (d.mode !== 'oneshot');
+            inst.nodes.w.port.postMessage({ type: 'SET_MODE', mode: isLoop ? 'loop' : 'oneshot' });
         }
     }
 };
