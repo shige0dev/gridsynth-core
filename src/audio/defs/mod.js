@@ -130,7 +130,7 @@ export const CLK = {
         pIn.connect(w, 0, 0);
         rIn.connect(w, 1, 0);
         if (eng?.silentSink) w.connect(eng.silentSink);
-        return { nodes: { w, pIn, rIn }, inputs: { power_in: pIn, reset_in: rIn, sync_in: rIn }, outputs: { gate_out: w } };
+        return { nodes: { w, pIn, rIn }, inputs: { power_in: pIn, reset_in: rIn, sync_in: rIn, trans_in: rIn, transition_in: rIn }, outputs: { gate_out: w } };
     },
     update: (ctx, inst, d, patch, eng) => {
         AudioHelpers.set(inst.nodes.w.parameters.get('bpm'), eng.masterBPM || 120, ctx, 0.02);

@@ -30,8 +30,8 @@ export const SEQ8 = {
         w.port.onmessage = e => { if (e.data.type === 'STEP') st = e.data.step; };
         return {
             nodes: { w, cv, gt, eos, gIn, rIn },
-            inputs: { gate_in: gIn, clk_in: gIn, reset_in: rIn },
-            outputs: { cv_out: cv, gate_out: gt, eos_out: eos, eos: eos },
+            inputs: { gate_in: gIn, clk_in: gIn, trans_in: rIn, transition_in: rIn, reset_in: rIn },
+            outputs: { cv_out: cv, gate_out: gt, trans_out: eos, transition_out: eos, eos_out: eos, eos: eos },
             resetStep: () => {
                 st = -1;
                 w.port.postMessage({ type: 'RESET' });
@@ -79,8 +79,8 @@ export const SEQ16 = {
         w.port.onmessage = e => { if (e.data.type === 'STEP') st = e.data.step; };
         return {
             nodes: { w, cv, gt, eos, gIn, rIn },
-            inputs: { gate_in: gIn, clk_in: gIn, reset_in: rIn },
-            outputs: { cv_out: cv, gate_out: gt, eos_out: eos, eos: eos },
+            inputs: { gate_in: gIn, clk_in: gIn, trans_in: rIn, transition_in: rIn, reset_in: rIn },
+            outputs: { cv_out: cv, gate_out: gt, trans_out: eos, transition_out: eos, eos_out: eos, eos: eos },
             resetStep: () => {
                 st = -1;
                 w.port.postMessage({ type: 'RESET' });

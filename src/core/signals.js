@@ -86,7 +86,7 @@ export const getPortSignalType = (portName = '', modId = '') => {
     if ((p.includes('gate_in') && (m.startsWith('SEQ8') || m.startsWith('SEQ16') || m.startsWith('GATE4'))) || ((p.includes('gate') || p === 'trig_out') && m.startsWith('MARKOV'))) {
         return SIGNAL_TYPES.GATE_SEQ;
     }
-    if (p.includes('trig') || p.includes('transition') || p === 'reset') {
+    if (p.includes('trig') || p.includes('transition') || p.includes('trans') || p === 'reset') {
         return SIGNAL_TYPES.TRIGGER;
     }
     if (p.includes('gate')) {

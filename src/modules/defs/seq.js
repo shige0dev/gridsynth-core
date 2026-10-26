@@ -301,12 +301,12 @@ function createSeqModule(maxSteps) {
         ports: () => ({
             in: [
                 { port: 'gate_in', pin: 4, alias: 'clk_in', color: 'bg-red-500' },
-                { port: 'reset_in', pin: 5, color: 'bg-amber-400' }
+                { port: 'trans_in', pin: 5, alias: 'transition_in,reset_in', color: 'bg-amber-400' }
             ],
             out: [
                 { port: 'gate_out', pin: 8, color: 'bg-red-500' },
                 { port: 'cv_out', pin: 9, color: 'bg-yellow-400' },
-                { port: 'eos_out', pin: 10, color: 'bg-amber-400' }
+                { port: 'trans_out', pin: 10, alias: 'transition_out,eos_out', color: 'bg-amber-400' }
             ]
         }),
         renderGrid: (m) => {
