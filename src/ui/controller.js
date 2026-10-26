@@ -192,15 +192,18 @@ export class UIController {
                         <span class="text-slate-700 font-bold text-[8px] tracking-wider select-none truncate">${displayName}</span>
                     </div>`;
             } else {
-                let titleClass = 'text-slate-700 font-bold';
+                let titleClass = 'text-slate-400 font-bold';
                 let extraTitleAttrs = '';
                 if (m.type === 'MARKOV') {
                     const weights = Array.isArray(m.weights) ? m.weights : [0, 0, 0, 0];
                     const patched = ctx.patched;
+                    const isConnected = patched && patched.size > 0;
                     const hasUnconnected = weights.some((w, idx) => Number(w) > 0 && !patched.has(`transition_out${idx + 1}`) && !patched.has(`trig_out${idx + 1}`));
-                    if (hasUnconnected) {
-                        titleClass = 'text-rose-500 font-extrabold drop-shadow-[0_0_2px_rgba(244,63,94,0.9)] animate-pulse';
-                        extraTitleAttrs = 'title="未結線の出力端子にウエイトが設定されています"';
+                    if (!isConnected || hasUnconnected) {
+                        titleClass = 'text-slate-600 font-semibold';
+                        extraTitleAttrs = hasUnconnected ? 'title="未結線の出力端子にウエイトが設定されています"' : 'title="未結線モジュール"';
+                    } else {
+                        titleClass = 'text-slate-400 font-bold';
                     }
                 }
                 titleHTML = `

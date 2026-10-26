@@ -23,18 +23,19 @@ export const MARKOV = {
     onExport: (clean, orig) => {
         clean.state = orig.initOn ? 1 : 0;
     },
-    ports: (m) => {
+    ports: (m, ctx) => {
         const weights = m?.weights || [0, 0, 0, 0];
+        const patched = ctx?.patched;
         return {
             in: [
                 { port: 'clk_in', pin: 3, color: 'bg-rose-500' },
-                { port: 'transition_in', pin: 4, color: 'bg-amber-500' }
+                { port: 'transition_in', pin: 4, color: 'bg-slate-400' }
             ],
             out: [
-                { port: 'transition_out1', pin: 6, color: (weights[0] > 0) ? 'bg-amber-500' : 'bg-slate-500' },
-                { port: 'transition_out2', pin: 7, color: (weights[1] > 0) ? 'bg-amber-500' : 'bg-slate-500' },
-                { port: 'transition_out3', pin: 8, color: (weights[2] > 0) ? 'bg-amber-500' : 'bg-slate-500' },
-                { port: 'transition_out4', pin: 9, color: (weights[3] > 0) ? 'bg-amber-500' : 'bg-slate-500' },
+                { port: 'transition_out1', pin: 6, color: (weights[0] > 0) ? (patched?.has('transition_out1') ? 'bg-slate-400' : 'bg-slate-600') : 'bg-slate-700' },
+                { port: 'transition_out2', pin: 7, color: (weights[1] > 0) ? (patched?.has('transition_out2') ? 'bg-slate-400' : 'bg-slate-600') : 'bg-slate-700' },
+                { port: 'transition_out3', pin: 8, color: (weights[2] > 0) ? (patched?.has('transition_out3') ? 'bg-slate-400' : 'bg-slate-600') : 'bg-slate-700' },
+                { port: 'transition_out4', pin: 9, color: (weights[3] > 0) ? (patched?.has('transition_out4') ? 'bg-slate-400' : 'bg-slate-600') : 'bg-slate-700' },
                 { port: 'trig_out', pin: 10, color: 'bg-rose-500' },
                 { port: 'gate_out', pin: 11, color: 'bg-rose-500' },
                 { port: 'cv_out', pin: 12, color: 'bg-yellow-400' }
@@ -42,18 +43,21 @@ export const MARKOV = {
         };
     },
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
-    renderGrid: (m) => {
+    renderGrid: (m, ctx) => {
         const isQ = m.quantize !== false;
         const rootM = m.rootMidi ?? 60;
         const noteStr = isQ ? UIHelpers.midiToNoteName(rootM) : (m.stateVal ?? 1.0).toFixed(2) + 'V';
         const isOn = (m.state || 0) === 1;
         const holdC = m.holdClocks ?? 1;
+        const isPatched = ctx?.patched && ctx.patched.size > 0;
 
         const boxCls = isOn
             ? 'markov-active bg-gradient-to-t from-amber-500 via-amber-400 to-yellow-300 border-[#fde047] text-slate-950 scale-105 shadow-[0_0_10px_2px_rgba(251,191,36,0.95),0_0_20px_4px_rgba(245,158,11,0.7),inset_0_0_6px_rgba(253,224,71,0.6)] ring-1 ring-yellow-200/90'
-            : 'markov-idle bg-transparent border-amber-500/45 text-slate-300 shadow-none ring-0';
-        const pitchCls = isOn ? 'text-slate-950 font-black' : 'text-slate-200 font-bold';
-        const holdCls = isOn ? 'text-amber-950 font-black' : 'text-amber-400/80 font-bold';
+            : (isPatched
+                ? 'markov-idle bg-transparent border-slate-500/60 text-slate-300 shadow-none ring-0'
+                : 'markov-idle bg-transparent border-slate-700/60 text-slate-500 shadow-none ring-0');
+        const pitchCls = isOn ? 'text-slate-950 font-black' : (isPatched ? 'text-slate-200 font-bold' : 'text-slate-500 font-medium');
+        const holdCls = isOn ? 'text-amber-950 font-black' : (isPatched ? 'text-slate-400 font-bold' : 'text-slate-600 font-medium');
 
         return `
             <div class="relative flex items-center justify-center w-full h-full pointer-events-none">

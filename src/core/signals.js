@@ -18,9 +18,9 @@ export const SIGNAL_TYPES = {
     TRIGGER: {
         id: 'trigger',
         label: 'TRIGGER',
-        stroke: '#f59e0b',       // amber-500
-        brightStroke: '#fde68a', // amber-200
-        tailwind: 'bg-amber-500'
+        stroke: '#94a3b8',       // slate-400 (TRANS / TRIGGER)
+        brightStroke: '#cbd5e1', // slate-300
+        tailwind: 'bg-slate-400'
     },
     GATE: {
         id: 'gate',
