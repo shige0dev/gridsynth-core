@@ -23,21 +23,18 @@ const renderMathModalUI = (m, ctx, modeGroups, valKeys) => {
                     const val = m[`val${k}`] ?? (k === 'B' ? 1.0 : 0.0);
                     if (isPatched) {
                         return `
-                            <div class="flex flex-col gap-0.5 bg-slate-950/40 p-1 rounded-md border border-slate-800 opacity-50 cursor-not-allowed select-none">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-[7.5px] font-bold text-slate-500 font-mono">VAL ${k}</span>
-                                    <span class="text-[6.5px] font-mono px-1 rounded bg-slate-800/80 text-emerald-400 font-bold">CABLED</span>
-                                </div>
-                                <div class="text-[8px] font-mono text-slate-500 text-center py-0.5 font-bold">EXT CV</div>
+                            <div class="flex items-center justify-between bg-slate-950/40 px-2 py-1.5 rounded-lg border border-slate-800 opacity-60 cursor-not-allowed select-none">
+                                <span class="text-[8px] font-bold text-slate-500 font-mono">VAL ${k}</span>
+                                <span class="text-[7.5px] font-mono px-1.5 py-0.5 rounded bg-slate-800/90 text-emerald-400 font-bold tracking-tight">CABLED (0.00)</span>
                             </div>`;
                     }
                     return `
-                        <div class="flex flex-col gap-0.5 bg-slate-950/70 p-1 rounded-md border border-purple-500/40 shadow-sm">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[7.5px] font-bold text-purple-300 font-mono">VAL ${k}</span>
-                                <button id="math-val-${port}-btn" class="text-[7.5px] font-mono text-cyan-300 hover:text-cyan-100 font-bold bg-slate-800/80 px-1 rounded border border-slate-700/60 transition" title="タップで数値直接入力">${fmt(val)}</button>
+                        <div class="flex items-center justify-between bg-slate-950/70 px-2 py-1.5 rounded-lg border border-purple-500/40 shadow-sm select-none">
+                            <span class="text-[8px] font-bold text-purple-300 font-mono">VAL ${k}</span>
+                            <div id="math-val-${port}-box" class="flex items-center gap-1 cursor-ns-resize touch-none hover:bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700/60 transition group" title="上下スワイプで増減 / タップで数値入力">
+                                <span class="text-[7px] text-slate-500 group-hover:text-purple-300 transition-colors pointer-events-none">↕</span>
+                                <span id="math-val-${port}-disp" class="text-[9.5px] font-mono text-cyan-300 group-hover:text-cyan-100 font-bold leading-none pointer-events-none">${fmt(val)}</span>
                             </div>
-                            <input id="math-val-${port}-slider" type="range" min="-5.0" max="5.0" step="0.05" value="${val}" class="w-full h-1 bg-slate-800 rounded appearance-none cursor-pointer accent-purple-500">
                         </div>`;
                 }).join('')}
             </div>
@@ -54,31 +51,65 @@ const bindMathEventsUI = (m, ctx, cb, valKeys) => {
     });
     valKeys.forEach(k => {
         const port = k.toLowerCase();
-        const slider = document.getElementById(`math-val-${port}-slider`);
-        if (slider) {
-            slider.addEventListener('input', (e) => {
-                const val = parseFloat(e.target.value) || 0;
-                m[`val${k}`] = val;
-                const disp = document.getElementById(`math-val-${port}-btn`);
-                if (disp) disp.textContent = (val >= 0 ? '+' : '') + val.toFixed(2);
-                cb();
-            });
-        }
-        const btn = document.getElementById(`math-val-${port}-btn`);
-        if (btn) {
-            btn.addEventListener('click', async () => {
+        const box = document.getElementById(`math-val-${port}-box`);
+        const disp = document.getElementById(`math-val-${port}-disp`);
+        if (!box) return;
+
+        let isDragging = false;
+        let startY = 0;
+        let startVal = 0;
+        let moved = false;
+
+        const onPointerMove = (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const deltaY = startY - e.clientY;
+            if (Math.abs(deltaY) > 3) moved = true;
+            // 15pxスワイプで約0.1V増減（感度よく滑らかに加減）
+            const deltaVal = deltaY * 0.01;
+            const clamped = Math.max(-10.0, Math.min(10.0, Math.round((startVal + deltaVal) * 20) / 20));
+            m[`val${k}`] = clamped;
+            if (disp) disp.textContent = (clamped >= 0 ? '+' : '') + clamped.toFixed(2);
+            cb();
+        };
+
+        const onPointerUp = async (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            window.removeEventListener('pointermove', onPointerMove);
+            window.removeEventListener('pointerup', onPointerUp);
+            window.removeEventListener('pointercancel', onPointerUp);
+            box.classList.remove('ring-1', 'ring-purple-400', 'bg-purple-950/60');
+            try { box.releasePointerCapture(e.pointerId); } catch (_) {}
+
+            // スワイプ移動がなく単にタップされた場合は手入力プロンプトを開く
+            if (!moved) {
                 const cur = String(m[`val${k}`] ?? (k === 'B' ? 1.0 : 0.0));
                 const res = await ctx.prompt(`CONSTANT ${k}`, cur);
                 if (res !== null && res !== '') {
                     const num = parseFloat(res);
                     if (!isNaN(num)) {
-                        m[`val${k}`] = num;
+                        m[`val${k}`] = Math.max(-10.0, Math.min(10.0, num));
                         ctx.reRenderModal();
                         cb();
                     }
                 }
-            });
-        }
+            }
+        };
+
+        box.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            isDragging = true;
+            moved = false;
+            startY = e.clientY;
+            startVal = m[`val${k}`] ?? (k === 'B' ? 1.0 : 0.0);
+            box.classList.add('ring-1', 'ring-purple-400', 'bg-purple-950/60');
+            try { box.setPointerCapture(e.pointerId); } catch (_) {}
+            window.addEventListener('pointermove', onPointerMove, { passive: false });
+            window.addEventListener('pointerup', onPointerUp);
+            window.addEventListener('pointercancel', onPointerUp);
+        });
     });
 };
 

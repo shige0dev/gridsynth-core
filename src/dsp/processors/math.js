@@ -26,8 +26,8 @@ export class MathProcessor extends AudioWorkletProcessor {
         const hasA = this.hasA && inA, hasB = this.hasB && inB;
 
         for (let i = 0; i < out.length; i++) {
-            const a = hasA ? inA[i] : defA;
-            const b = hasB ? inB[i] : defB;
+            const a = hasA ? inA[i] : (this.hasA ? 0.0 : defA);
+            const b = hasB ? inB[i] : (this.hasB ? 0.0 : defB);
             let v = 0;
             switch (mode) {
                 case '-':
