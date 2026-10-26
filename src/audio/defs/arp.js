@@ -164,7 +164,66 @@ export const ARP = {
     }
 };
 
+export const FF = {
+    create: (ctx, d, patch, eng) => {
+        const initState = d?.initState ? 1 : 0;
+        const w = new AudioWorkletNode(ctx, 'ff-processor', {
+            numberOfInputs: 1,
+            numberOfOutputs: 2,
+            outputChannelCount: [1, 1]
+        });
+
+        w.port.postMessage({
+            type: 'SET_PARAMS',
+            initState,
+            state: initState
+        });
+
+        const inGate = ctx.createGain();
+        inGate.connect(w, 0, 0);
+
+        const out1 = ctx.createGain();
+        const out2 = ctx.createGain();
+
+        w.connect(out1, 0, 0);
+        w.connect(out2, 1, 0);
+        if (eng?.silentSink) out1.connect(eng.silentSink);
+
+        let curState = initState;
+        w.port.onmessage = (e) => {
+            if (e.data.type === 'STATE') {
+                curState = e.data.state;
+            }
+        };
+
+        return {
+            nodes: { w, inGate, out1, out2 },
+            inputs: { gate_in: inGate, clk_in: inGate, trig_in: inGate },
+            outputs: {
+                gate_out1: out1,
+                gate_out2: out2,
+                out1,
+                out2,
+                q_out: out1,
+                nq_out: out2
+            },
+            resetStep: () => {
+                curState = d?.initState ? 1 : 0;
+                w.port.postMessage({ type: 'RESET' });
+            },
+            read: () => ({ state: curState })
+        };
+    },
+    update: (ctx, inst, d) => {
+        inst.nodes.w.port.postMessage({
+            type: 'SET_PARAMS',
+            initState: d?.initState ? 1 : 0
+        });
+    }
+};
+
 export const arpAudioDefs = {
     GATE4,
-    ARP
+    ARP,
+    FF
 };

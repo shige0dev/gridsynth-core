@@ -99,3 +99,58 @@ export class Gate4Processor extends AudioWorkletProcessor {
 
 registerProcessor('gate4-processor', Gate4Processor);
 
+export class FlipFlopProcessor extends AudioWorkletProcessor {
+    constructor() {
+        super();
+        this.state = 0;
+        this.initState = 0;
+        this.lastHi = false;
+
+        this.port.onmessage = (e) => {
+            if (e.data.type === 'SET_PARAMS') {
+                if (e.data.initState !== undefined) {
+                    this.initState = e.data.initState ? 1 : 0;
+                }
+                if (e.data.state !== undefined) {
+                    this.state = e.data.state ? 1 : 0;
+                    this.port.postMessage({ type: 'STATE', state: this.state });
+                }
+            } else if (e.data.type === 'TRIG') {
+                this.state = this.state ? 0 : 1;
+                this.port.postMessage({ type: 'STATE', state: this.state });
+            } else if (e.data.type === 'RESET') {
+                this.state = this.initState;
+                this.lastHi = false;
+                this.port.postMessage({ type: 'STATE', state: this.state });
+            }
+        };
+    }
+
+    process(ins, outs) {
+        const gIn = ins[0]?.[0];
+        const out0 = outs[0]?.[0];
+        const out1 = outs[1]?.[0];
+        if (!out0 && !out1) return true;
+
+        const len = (out0 || out1 || gIn || []).length || 128;
+
+        for (let i = 0; i < len; i++) {
+            const val = gIn ? gIn[i] : 0.0;
+            const isHi = val > 0.3;
+
+            if (isHi && !this.lastHi) {
+                this.state = this.state ? 0 : 1;
+                this.port.postMessage({ type: 'STATE', state: this.state });
+            }
+            this.lastHi = isHi;
+
+            if (out0) out0[i] = this.state ? 1.0 : 0.0;
+            if (out1) out1[i] = this.state ? 0.0 : 1.0;
+        }
+
+        return true;
+    }
+}
+
+registerProcessor('ff-processor', FlipFlopProcessor);
+
