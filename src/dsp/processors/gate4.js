@@ -102,8 +102,8 @@ registerProcessor('gate4-processor', Gate4Processor);
 export class FlipFlopProcessor extends AudioWorkletProcessor {
     constructor() {
         super();
-        this.state = 0;
-        this.initState = 0;
+        this.state = 1;
+        this.initState = 1;
         this.lastHi = false;
 
         this.port.onmessage = (e) => {

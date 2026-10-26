@@ -166,7 +166,7 @@ export const ARP = {
 
 export const FLIP = {
     create: (ctx, d, patch, eng) => {
-        const initState = d?.initState ? 1 : 0;
+        const initState = d?.initState !== undefined ? (d.initState ? 1 : 0) : 1;
         const w = new AudioWorkletNode(ctx, 'ff-processor', {
             numberOfInputs: 1,
             numberOfOutputs: 2,
@@ -210,7 +210,7 @@ export const FLIP = {
                 nq_out: out2
             },
             resetStep: () => {
-                curState = d?.initState ? 1 : 0;
+                curState = d?.initState !== undefined ? (d.initState ? 1 : 0) : 1;
                 w.port.postMessage({ type: 'RESET' });
             },
             read: () => ({ state: curState })
@@ -219,7 +219,7 @@ export const FLIP = {
     update: (ctx, inst, d) => {
         inst.nodes.w.port.postMessage({
             type: 'SET_PARAMS',
-            initState: d?.initState ? 1 : 0
+            initState: d?.initState !== undefined ? (d.initState ? 1 : 0) : 1
         });
     }
 };

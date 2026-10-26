@@ -176,7 +176,7 @@ export const ARP = {
 
 export const FLIP = {
     color: 'orange',
-    defaults: () => ({ type: 'FLIP', initState: 0 }),
+    defaults: () => ({ type: 'FLIP', initState: 1 }),
     ports: () => ({
         in: [{ port: 'gate_in', pin: 4, alias: 'trig_in', color: 'bg-rose-500' }],
         out: [
@@ -186,18 +186,18 @@ export const FLIP = {
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
     renderGrid: (m) => {
-        const st = m.initState ? 1 : 0;
-        const b0Act = st === 0;
-        const b1Act = st === 1;
+        const st = m.initState !== undefined ? (m.initState ? 1 : 0) : 1;
+        const b0Act = st === 1;
+        const b1Act = st === 0;
         return `<div class="flex items-center justify-center w-full h-full pointer-events-none">${UIHelpers.renderPanelBars([
             { pct: b0Act ? 100 : 0, width: 'w-3.5', innerCls: 'flip-bar-0', attrs: 'data-flip-bar="0"', color: 'bg-gradient-to-t from-amber-600 to-yellow-400' },
             { pct: b1Act ? 100 : 0, width: 'w-3.5', innerCls: 'flip-bar-1', attrs: 'data-flip-bar="1"', color: 'bg-gradient-to-t from-amber-600 to-yellow-400' }
         ], { gapCls: 'gap-2' })}</div>`;
     },
     renderModal: (m) => {
-        const initSt = m.initState ? 1 : 0;
-        const b0Act = initSt === 0;
-        const b1Act = initSt === 1;
+        const initSt = m.initState !== undefined ? (m.initState ? 1 : 0) : 1;
+        const b0Act = initSt === 1;
+        const b1Act = initSt === 0;
         return `
             <div class="space-y-2 p-1 text-slate-200">
                 <div class="grid grid-cols-2 gap-2 bg-slate-950/80 p-2 rounded-xl border border-slate-800">
@@ -208,7 +208,7 @@ export const FLIP = {
                         </div>
                     </div>
                     <div id="flip-modal-box-1" class="flex flex-col items-center gap-1.5 py-2 rounded-lg border transition-colors ${b1Act ? 'bg-amber-950/70 border-amber-500/80' : 'bg-slate-900/60 border-slate-800'}">
-                        <span class="text-[8px] font-mono font-bold ${b1Act ? 'text-orange-300' : 'text-slate-500'}">OUT 2 (PIN9)</span>
+                        <span class="text-[8px] font-mono font-bold ${b1Act ? 'text-amber-300' : 'text-slate-500'}">OUT 2 (PIN9)</span>
                         <div class="w-5 h-8 rounded-sm p-[1.5px] flex flex-col justify-end border border-slate-600 bg-slate-950/40">
                             <div id="flip-modal-bar-1" class="w-full ${b1Act ? 'bg-gradient-to-t from-amber-600 to-yellow-400 shadow-md shadow-amber-500/40' : 'bg-transparent'} rounded-xs transition-all duration-150" style="height: ${b1Act ? '100%' : '0%'};"></div>
                         </div>
@@ -217,8 +217,8 @@ export const FLIP = {
                 <div>
                     <label class="block text-[8px] text-slate-400 uppercase tracking-wider font-semibold mb-1">Initial State (Reset)</label>
                     <div class="grid grid-cols-2 gap-1">
-                        <button class="flip-init-btn py-1 rounded text-[8px] font-bold border transition-all ${initSt === 0 ? 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/40' : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'}" data-val="0">OUT 1 ON</button>
-                        <button class="flip-init-btn py-1 rounded text-[8px] font-bold border transition-all ${initSt === 1 ? 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/40' : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'}" data-val="1">OUT 2 ON</button>
+                        <button class="flip-init-btn py-1 rounded text-[8px] font-bold border transition-all ${initSt === 1 ? 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/40' : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'}" data-val="1">OUT 1 ON</button>
+                        <button class="flip-init-btn py-1 rounded text-[8px] font-bold border transition-all ${initSt === 0 ? 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/40' : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'}" data-val="0">OUT 2 ON</button>
                     </div>
                 </div>
                 <button id="flip-toggle-btn" class="w-full py-1.5 bg-gradient-to-r from-amber-600 to-yellow-500 hover:from-amber-500 hover:to-yellow-400 text-slate-950 font-bold text-[9px] rounded-lg shadow-sm border border-amber-400/40 transition cursor-pointer">
@@ -237,9 +237,9 @@ export const FLIP = {
         });
     },
     updateLive: (cell, data, isPlaying, modalEl, m) => {
-        const st = data?.state !== undefined ? data.state : (m?.initState ? 1 : 0);
-        const b0Act = st === 0;
-        const b1Act = st === 1;
+        const st = data?.state !== undefined ? data.state : (m?.initState !== undefined ? (m.initState ? 1 : 0) : 1);
+        const b0Act = st === 1;
+        const b1Act = st === 0;
 
         const bar0 = cell?.querySelector('[data-flip-bar="0"] div');
         const bar1 = cell?.querySelector('[data-flip-bar="1"] div');
