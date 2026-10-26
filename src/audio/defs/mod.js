@@ -110,7 +110,7 @@ export const LFO = {
 export const CLK = {
     create: (ctx, d, patch, eng) => {
         const w = new AudioWorkletNode(ctx, 'clock-processor', {
-            numberOfInputs: 2,
+            numberOfInputs: 1,
             numberOfOutputs: 1,
             parameterData: {
                 bpm: eng.masterBPM || 120,
@@ -126,11 +126,10 @@ export const CLK = {
             limitPct: Math.min(90, d.limitPct ?? 90),
             hasPowerIn: hasPower
         });
-        const pIn = ctx.createGain(), rIn = ctx.createGain();
+        const pIn = ctx.createGain();
         pIn.connect(w, 0, 0);
-        rIn.connect(w, 1, 0);
         if (eng?.silentSink) w.connect(eng.silentSink);
-        return { nodes: { w, pIn, rIn }, inputs: { power_in: pIn, reset_in: rIn, sync_in: rIn, trans_in: rIn, transition_in: rIn }, outputs: { gate_out: w } };
+        return { nodes: { w, pIn }, inputs: { power_in: pIn }, outputs: { gate_out: w } };
     },
     update: (ctx, inst, d, patch, eng) => {
         AudioHelpers.set(inst.nodes.w.parameters.get('bpm'), eng.masterBPM || 120, ctx, 0.02);

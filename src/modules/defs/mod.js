@@ -281,11 +281,8 @@ export const CLK = {
     RATES: ['/16', '/8', '/7', '/6', '/5', '/4', '/3', '/2', 'x1', 'x2', 'x3', 'x4', 'x5', 'x6', 'x7', 'x8', 'x16'],
     defaults: () => ({ type: 'CLK', div: 'x2', pulseWidthMs: 15, limitPct: 90 }),
     ports: () => ({
-        in: [
-            { port: 'power_in', pin: 4, color: 'bg-red-500' },
-            { port: 'reset_in', pin: 5, alias: 'sync_in', color: 'bg-amber-400' }
-        ],
-        out: [{ port: 'gate_out', pin: 8, color: 'bg-red-500' }]
+        in: [{ port: 'power_in', pin: 4, color: 'bg-red-500' }],
+        out: [{ port: 'gate_out', pin: 9, color: 'bg-red-500' }]
     }),
     renderGrid: (m, ctx) => {
         const bpm = ctx?.bpm || 120, mult = parseClockRate(m.div || 'x2');

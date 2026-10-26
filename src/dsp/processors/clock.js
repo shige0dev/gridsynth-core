@@ -39,7 +39,6 @@ export class ClockProcessor extends AudioWorkletProcessor {
         this.running = false;
         this.hasPowerIn = false;
         this.lastPowerOn = true;
-        this.lastResetHi = false;
         this.port.onmessage = e => {
             if (e.data.type === 'SET_STATE') {
                 if (typeof e.data.running === 'boolean') {
@@ -59,7 +58,6 @@ export class ClockProcessor extends AudioWorkletProcessor {
         const out = outs[0]?.[0];
         if (!out) return true;
         const pIn = ins[0]?.[0];
-        const rIn = ins[1]?.[0];
         const mult = parseClockRate(this.div);
         const sr = getSR();
         const bpm = params.bpm[0] || 120.0;
@@ -75,13 +73,6 @@ export class ClockProcessor extends AudioWorkletProcessor {
                 out[i] = 0;
                 continue;
             }
-
-            const isResetHi = (rIn ? rIn[i] : 0.0) > 0.3;
-            if (isResetHi && !this.lastResetHi) {
-                this.cnt = 0;
-                this.left = pDur;
-            }
-            this.lastResetHi = isResetHi;
 
             const isPowerOn = this.hasPowerIn ? ((pIn ? pIn[i] : 0.0) > 0.3) : true;
             if (isPowerOn && !this.lastPowerOn) {
