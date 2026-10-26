@@ -125,8 +125,8 @@ export const FMx3 = FM;
 export const FM3OP = FM;
 
 export const fmAudioDefs = {
-    FM,
-    FMCORE,
     FMx3,
-    FM3OP
+    FMCORE,
+    FM: FMx3,
+    FM3OP: FMx3
 };

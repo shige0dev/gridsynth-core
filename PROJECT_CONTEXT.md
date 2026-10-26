@@ -974,6 +974,25 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
       - **`UIController`（`src/ui/controller.js`）のスリム化**:
         - 978行あった `UIController` を 322行にスリム化し、グリッドDOM初期化・セル描画・30fps Live更新ループ・各Managerの統括に専念する構成へ刷新。
       - バージョンを `v1.0.0399`、キャッシュバスターを `v=399` に更新。
+    - **全モジュール端子・シグナル色の統一、FMx3/FMCORE標準化、デモパッチ整合性、およびAI仕様書完全網羅（v1.0.0425）**:
+      - **端子名・シグナル色の完全標準化**:
+        - `FMx3`, `FMCORE`: ピッチ入力端子名を `cv_in`（`bg-yellow-400` / CV信号）に統一。
+        - `FOLD`: `wave_in` および `wave_out` のドット色を `bg-blue-500`（AUDIO）に統一。
+        - `SCOPE`: `wave_in` のドット色を `bg-blue-500`（AUDIO）に統一。
+        - `AR`: `attack_in`, `release_in` を `bg-yellow-400`（CV）に統一。
+        - `RF`: `time_cv`, `peak_cv` を `bg-yellow-400`（CV）、`trig_in`/`trig_out` を `bg-orange-500`（TRIGGER）に統一。
+        - `SH`: 入力ポート名を `cv_in`（`bg-yellow-400`）に統一。
+        - `signals.js`: `SIGNAL_TYPES.TRANS`（slate-400 / `#94a3b8`）を新設・分離し、`trans_in`/`trans_out` に専用割り当て。`TRIGGER`（orange-500 / `#f97316`）を通常トリガーに復帰。`PASS` の `gate_in`/`gate_out` および `ARP` のゲートを `GATE_SEQ`（rose-500 / `#f43f5e`）に統一。
+      - **デモパッチ・サブパッチ整合性修正**:
+        - `12_chord_arpeggio.js`: `ARP1:clk_in` → `ARP1:gate_in`、`SCOPE1:in1` → `SCOPE1:wave_in` に修正。
+        - `05_subpatch_multi_groove.js`, `14_16_pad_drumkit.js`, `subpatches.js`: `CVDELAY1/2:sig_in` → `cv_in`、サブパッチ定義の `pitch_in` → `cv_in` に修正。
+        - `09_fm_heavy_techno_groove.js`: `FM1/2/3` → `FMx3_1/2/3`、`pitch_in` → `cv_in` に修正。
+        - `11_fmcore_2op_demo.js`: `FMCORE1/2:pitch_in` → `cv_in` に修正。
+      - **`GRIDSYNTH_AI_PATCH_SPEC.md` の完全マニュアル化**:
+        - 第4章にシグナル種別・端子色・ケーブル発光色一覧表（第4.1節）を追加。
+        - 第5章（モジュールカタログ）を全面拡充し、従来記載が抜けていた `MATH1`（全7モード、定電圧出力/Cabled挙動）、`MATH2`（全17モード：算術7種・比較5種・論理5種）、`PASS`（カウントダウン制御）、`FMx3`, `FMCORE`, `AR`, `RF`, `FLIP`, `SCALE`, `SH`, `CVDELAY`, `LISS`, `PAD` を網羅。各モジュールの全端子名・パラメータ・範囲・デフォルト値・使用方法を正確に記載し、外部LLMが100%正確なJSONを生成可能に整備。
+        - UI上の `MD` ボタンからテキスト閲覧およびワンクリック `.md` ダウンロードに対応。
+      - バージョンを `v1.0.0425`、キャッシュバスターを `v=425` に更新。
 
 
 

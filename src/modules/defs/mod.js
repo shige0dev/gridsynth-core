@@ -19,7 +19,7 @@ const renderMathModalUI = (m, ctx, modeGroups, valKeys) => {
             <div class="grid grid-cols-${valKeys.length} gap-1 pt-0.5">
                 ${valKeys.map(k => {
                     const port = k.toLowerCase();
-                    const isPatched = ctx.patched?.has('CV_in' + k) || ctx.patched?.has('cv_in' + port) || ctx.patched?.has(port);
+                    const isPatched = ctx.patched?.has('cv_in_' + port) || ctx.patched?.has('CV_in' + k) || ctx.patched?.has('cv_in' + port) || ctx.patched?.has(port);
                     const val = m[`val${k}`] ?? (k === 'B' ? 1.0 : 0.0);
                     if (isPatched) {
                         return `
@@ -449,7 +449,7 @@ export const SH = {
     defaults: () => ({ type: 'SH', glide: 0.0, scale: 1.0, polarity: 'unipolar' }),
     ports: () => ({
         in: [
-            { port: 'sig_in', color: 'bg-yellow-400' },
+            { port: 'cv_in', color: 'bg-yellow-400' },
             { port: 'trig_in', color: 'bg-orange-500' }
         ],
         out: [{ port: 'cv_out', color: 'bg-yellow-400' }]
@@ -466,7 +466,7 @@ export const SH = {
     updateLive: (cell, data) => { const d = cell.querySelector('.sh-disp-val'); if (d && data?.values) d.textContent = (data.values[0]>=0?'+':'') + Number(data.values[0]||0).toFixed(2); },
     renderModal: (m, ctx) => `
         <div class="flex items-center justify-between pb-1 border-b border-slate-800 px-1">
-            <span class="text-[8px] font-mono text-fuchsia-300 font-bold">${ctx.patched?.has('sig_in')?'EXT SIGNAL':'INTERNAL NOISE'}</span>
+            <span class="text-[8px] font-mono text-fuchsia-300 font-bold">${(ctx.patched?.has('cv_in') || ctx.patched?.has('sig_in')) ? 'EXT SIGNAL' : 'INTERNAL NOISE'}</span>
             <button id="sh-trig-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center bg-fuchsia-600 text-white border-fuchsia-400">TRIG</button>
         </div>${UIHelpers.renderSchemaModal(m, ctx, SH.schema)}`,
     bindEvents: (m, ctx, cb) => {

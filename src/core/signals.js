@@ -18,7 +18,14 @@ export const SIGNAL_TYPES = {
     TRIGGER: {
         id: 'trigger',
         label: 'TRIGGER',
-        stroke: '#94a3b8',       // slate-400 (TRANS / TRIGGER)
+        stroke: '#f97316',       // orange-500
+        brightStroke: '#fdba74', // orange-300
+        tailwind: 'bg-orange-500'
+    },
+    TRANS: {
+        id: 'trans',
+        label: 'TRANS',
+        stroke: '#94a3b8',       // slate-400 (MARKOV / PASS transition)
         brightStroke: '#cbd5e1', // slate-300
         tailwind: 'bg-slate-400'
     },
@@ -66,13 +73,16 @@ export const getPortSignalType = (portName = '', modId = '') => {
     if (p.includes('link')) {
         return SIGNAL_TYPES.LINK;
     }
+    if (p.includes('trans')) {
+        return SIGNAL_TYPES.TRANS;
+    }
     if (m.startsWith('GATE4')) {
         if (p.includes('in')) return SIGNAL_TYPES.GATE_SEQ;
-        if (p.startsWith('gate_out')) return SIGNAL_TYPES.TRIGGER;
+        if (p.startsWith('gate_out')) return SIGNAL_TYPES.GATE_SEQ;
     }
     if (m.startsWith('ARP')) {
         if (p.includes('clk')) return SIGNAL_TYPES.CLOCK;
-        if (p.includes('gate')) return SIGNAL_TYPES.GATE;
+        if (p.includes('gate')) return SIGNAL_TYPES.GATE_SEQ;
         if (p === 'out' || p.includes('cv') || p.startsWith('in_')) return SIGNAL_TYPES.CV;
     }
 
@@ -89,16 +99,19 @@ export const getPortSignalType = (portName = '', modId = '') => {
     ) {
         return SIGNAL_TYPES.GATE_SEQ;
     }
-    if (p.includes('trig') || p.includes('transition') || p.includes('trans') || p === 'reset') {
+    if (p.includes('trig') || p.includes('transition') || p === 'reset') {
         return SIGNAL_TYPES.TRIGGER;
     }
     if (p.includes('gate')) {
         return SIGNAL_TYPES.GATE;
     }
+    if (m.startsWith('FMCORE') && (p === 'mod_in' || p === 'wave_in')) {
+        return SIGNAL_TYPES.AUDIO;
+    }
     if (p.includes('cv') || p.includes('pitch') || p === 'a' || p === 'b' || p.startsWith('time') || p.startsWith('fold') || p.includes('attack') || p.includes('release') || p.includes('peak') || (p.startsWith('in') && !p.startsWith('wave'))) {
         return SIGNAL_TYPES.CV;
     }
-    if (p.includes('wave') || p.startsWith('out') || p.startsWith('audio')) {
+    if (p.includes('wave') || p.startsWith('out') || p.startsWith('audio') || p.includes('mod_in')) {
         return SIGNAL_TYPES.AUDIO;
     }
     return SIGNAL_TYPES.DEFAULT;
@@ -115,6 +128,7 @@ export const resolveConnectionSignalType = (conn) => {
     const tType = getPortSignalType(tP, tM);
 
     if (fType.id === 'link' || tType.id === 'link') return SIGNAL_TYPES.LINK;
+    if (fType.id === 'trans' || tType.id === 'trans') return SIGNAL_TYPES.TRANS;
     if (fType.id === 'clock' || tType.id === 'clock') return SIGNAL_TYPES.CLOCK;
     if (fType.id === 'gate_seq' || tType.id === 'gate_seq') return SIGNAL_TYPES.GATE_SEQ;
     if (fType.id === 'trigger' || tType.id === 'trigger') return SIGNAL_TYPES.TRIGGER;

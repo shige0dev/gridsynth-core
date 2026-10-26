@@ -34,11 +34,11 @@ export const FOLD = {
     defaults: () => ({ type: 'FOLD', gain: 1.5, mix: 1.0, shape: 'fold' }),
     ports: () => ({
         in: [
-            { port: 'wave_in', pin: 4, color: 'bg-emerald-500' },
+            { port: 'wave_in', pin: 4, color: 'bg-blue-500' },
             { port: 'gain_cv', pin: 5, color: 'bg-yellow-400' }
         ],
         out: [
-            { port: 'wave_out', pin: 9, color: 'bg-cyan-500' }
+            { port: 'wave_out', pin: 9, color: 'bg-blue-500' }
         ]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),

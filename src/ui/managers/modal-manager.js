@@ -273,7 +273,7 @@ export class ModalManager {
                 const basicTypes = Object.keys(MODULE_REGISTRY).filter(t => {
                     if (t === 'SUB') return false; // Placed under User Subpatch area
                     if (t === 'SUB_IO') return !isMain;
-                    if (t === 'FM' || t === 'FM3OP' || t === 'XY') return false; // Aliases for FMx3, LISS
+                    if (t === 'FM' || t === 'FM3OP' || t === 'XY' || t === 'FF') return false; // Aliases for FMx3, LISS, FLIP
                     return true;
                 });
 

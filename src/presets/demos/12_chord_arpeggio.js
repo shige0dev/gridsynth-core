@@ -113,7 +113,7 @@ export const preset12 = {
         }
       },
       "connections": [
-        "CLK1:gate_out > ARP1:clk_in",
+        "CLK1:gate_out > ARP1:gate_in",
         "CLK1:gate_out > GATE4_1:gate_in",
         "CLK2:gate_out > SEQ8_1:gate_in",
         "SEQ8_1:cv_out > CHORD1:cv_in",
@@ -130,7 +130,7 @@ export const preset12 = {
         "ADSR1:cv_out > VCA1:cv_in",
         "VCA1:wave_out > DELAY1:wave_in",
         "DELAY1:wave_out > REVERB1:wave_in",
-        "REVERB1:wave_out > SCOPE1:in1",
+        "REVERB1:wave_out > SCOPE1:wave_in",
         "REVERB1:wave_out > SPK1:wave_in_l",
         "REVERB1:wave_out > SPK1:wave_in_r"
       ]

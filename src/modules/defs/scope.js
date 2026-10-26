@@ -69,7 +69,7 @@ export const SCOPE = {
     defaults: () => ({ type: 'SCOPE', timeSpan: 0.1, vRange: 2.0, trigMode: 'auto', opacity: 0.8 }),
     ports: () => ({
         in: [
-            { port: 'wave_in', pin: 4, color: 'bg-yellow-400' },
+            { port: 'wave_in', pin: 4, color: 'bg-blue-500' },
             { port: 'trig_in', pin: 5, color: 'bg-orange-500' }
         ],
         out: []

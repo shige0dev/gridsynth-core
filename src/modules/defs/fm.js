@@ -47,7 +47,7 @@ export const FMx3 = {
     ports: () => ({
         in: [
             { port: 'gate_in', color: 'bg-orange-500' },
-            { port: 'pitch_in', color: 'bg-yellow-400' }
+            { port: 'cv_in', color: 'bg-yellow-400' }
         ],
         out: [
             { port: 'wave_out', color: 'bg-blue-500' }
@@ -329,7 +329,7 @@ export const FMCORE = {
     },
     ports: () => ({
         in: [
-            { port: 'pitch_in', color: 'bg-yellow-400' },
+            { port: 'cv_in', color: 'bg-yellow-400' },
             { port: 'mod_in', color: 'bg-blue-500' },
             { port: 'index_cv', color: 'bg-yellow-400' }
         ],
@@ -436,8 +436,6 @@ export const FM3OP = FMx3;
 
 export const fmDefs = {
     FMx3,
-    FMCORE,
-    FM,
-    FM3OP
+    FMCORE
 };
 

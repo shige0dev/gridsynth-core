@@ -10,13 +10,13 @@ export const RF = {
     }),
     ports: () => ({
         in: [
-            { port: 'trig_in', color: 'bg-rose-500' },
-            { port: 'time_cv', color: 'bg-amber-400' },
-            { port: 'peak_cv', color: 'bg-purple-400' }
+            { port: 'trig_in', color: 'bg-orange-500' },
+            { port: 'time_cv', color: 'bg-yellow-400' },
+            { port: 'peak_cv', color: 'bg-yellow-400' }
         ],
         out: [
             { port: 'cv_out', color: 'bg-yellow-400' },
-            { port: 'trig_out', color: 'bg-red-500' }
+            { port: 'trig_out', color: 'bg-orange-500' }
         ]
     }),
     renderSvgCurve: (m) => {

@@ -11,7 +11,7 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: 'Standard Mono Synth Voice (VCO + VCF + ADSR + VCA)',
             ports: {
-                pitch_in: { pin: 'PIN4', signal: 'cv' },
+                cv_in: { pin: 'PIN4', signal: 'cv' },
                 gate_in: { pin: 'PIN3', signal: 'gate' },
                 wave_out: { pin: 'PIN9', signal: 'audio' }
             }
@@ -60,7 +60,7 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: '303スタイルのアシッドベースボイス（VCO + Resonant VCF + Snappy ADSR + VCA）',
             ports: {
-                pitch_in: { pin: 'PIN4', signal: 'cv' },
+                cv_in: { pin: 'PIN4', signal: 'cv' },
                 trig_in: { pin: 'PIN3', signal: 'gate' },
                 wave_out: { pin: 'PIN9', signal: 'audio' }
             }
@@ -109,7 +109,7 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: 'デュアル・オシレーター＆ローパスフィルターによるリードボイス',
             ports: {
-                pitch_in: { pin: 'PIN4', signal: 'cv' },
+                cv_in: { pin: 'PIN4', signal: 'cv' },
                 gate_in: { pin: 'PIN3', signal: 'gate' },
                 wave_out: { pin: 'PIN9', signal: 'audio' }
             }
@@ -449,9 +449,9 @@ export const FACTORY_SUBPATCHES = {
             },
             connections: [
                 { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
-                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "CVDELAY1", port: "sig_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "CVDELAY1", port: "cv_in" } },
                 { from: { moduleId: "CVDELAY1", port: "cv_out" }, to: { moduleId: "ADSR2", port: "gate_in" } },
-                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "CVDELAY2", port: "sig_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "CVDELAY2", port: "cv_in" } },
                 { from: { moduleId: "CVDELAY2", port: "cv_out" }, to: { moduleId: "ADSR3", port: "gate_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
                 { from: { moduleId: "ADSR2", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },

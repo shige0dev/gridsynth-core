@@ -240,6 +240,5 @@ export const FLIP = {
 export const arpDefs = {
     GATE4,
     ARP,
-    FLIP,
-    FF: FLIP
+    FLIP
 };

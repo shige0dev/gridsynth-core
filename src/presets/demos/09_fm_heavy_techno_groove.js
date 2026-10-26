@@ -11,13 +11,13 @@ export const preset09 = {
         "0": "CLK1",
         "8": "SEQ16_1",
         "9": "KEY1",
-        "10": "FM1",
+        "10": "FMx3_1",
         "11": "DELAY1",
         "15": "REVERB1",
         "16": "SEQ16_2",
-        "17": "FM2",
+        "17": "FMx3_2",
         "24": "SEQ16_3",
-        "25": "FM3",
+        "25": "FMx3_3",
         "32": "MIX1",
         "33": "SCOPE1",
         "34": "SPK1"
@@ -137,7 +137,7 @@ export const preset09 = {
             }
           ]
         },
-        "FM1": {
+        "FMx3_1": {
           "type": "FMx3",
           "algorithm": 2,
           "rootMidi": 53,
@@ -305,7 +305,7 @@ export const preset09 = {
             }
           ]
         },
-        "FM2": {
+        "FMx3_2": {
           "type": "FMx3",
           "algorithm": 1,
           "rootMidi": 41,
@@ -459,7 +459,7 @@ export const preset09 = {
             }
           ]
         },
-        "FM3": {
+        "FMx3_3": {
           "type": "FMx3",
           "algorithm": 1,
           "rootMidi": 41,
@@ -578,8 +578,8 @@ export const preset09 = {
             "port": "cv_out"
           },
           "to": {
-            "moduleId": "FM1",
-            "port": "pitch_in"
+            "moduleId": "FMx3_1",
+            "port": "cv_in"
           }
         },
         {
@@ -588,8 +588,8 @@ export const preset09 = {
             "port": "cv_out"
           },
           "to": {
-            "moduleId": "FM1",
-            "port": "pitch_in"
+            "moduleId": "FMx3_1",
+            "port": "cv_in"
           }
         },
         {
@@ -598,13 +598,13 @@ export const preset09 = {
             "port": "gate_out"
           },
           "to": {
-            "moduleId": "FM1",
+            "moduleId": "FMx3_1",
             "port": "gate_in"
           }
         },
         {
           "from": {
-            "moduleId": "FM1",
+            "moduleId": "FMx3_1",
             "port": "wave_out"
           },
           "to": {
@@ -638,13 +638,13 @@ export const preset09 = {
             "port": "gate_out"
           },
           "to": {
-            "moduleId": "FM2",
+            "moduleId": "FMx3_2",
             "port": "gate_in"
           }
         },
         {
           "from": {
-            "moduleId": "FM2",
+            "moduleId": "FMx3_2",
             "port": "wave_out"
           },
           "to": {
@@ -658,8 +658,8 @@ export const preset09 = {
             "port": "cv_out"
           },
           "to": {
-            "moduleId": "FM3",
-            "port": "pitch_in"
+            "moduleId": "FMx3_3",
+            "port": "cv_in"
           }
         },
         {
@@ -668,13 +668,13 @@ export const preset09 = {
             "port": "gate_out"
           },
           "to": {
-            "moduleId": "FM3",
+            "moduleId": "FMx3_3",
             "port": "gate_in"
           }
         },
         {
           "from": {
-            "moduleId": "FM3",
+            "moduleId": "FMx3_3",
             "port": "wave_out"
           },
           "to": {

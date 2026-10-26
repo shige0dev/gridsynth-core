@@ -11,8 +11,8 @@ export const AR = {
     ports: () => ({
         in: [
             { port: 'gate_in', color: 'bg-orange-500' },
-            { port: 'attack_in', color: 'bg-sky-400' },
-            { port: 'release_in', color: 'bg-indigo-400' }
+            { port: 'attack_in', color: 'bg-yellow-400' },
+            { port: 'release_in', color: 'bg-yellow-400' }
         ],
         out: [
             { port: 'cv_out', color: 'bg-yellow-400' }
