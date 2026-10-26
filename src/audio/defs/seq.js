@@ -8,30 +8,43 @@ export const SEQ8 = {
             cvActive: true,
             gate: true
         }));
+        const mode = d?.mode || 'loop';
         const w = new AudioWorkletNode(ctx, 'seq-processor', {
-            numberOfInputs: 1,
-            numberOfOutputs: 2,
-            processorOptions: { steps }
+            numberOfInputs: 2,
+            numberOfOutputs: 3,
+            processorOptions: { steps, mode }
         });
         w.port.postMessage({ type: 'SET_STEPS', steps });
-        const cv = ctx.createGain(), gt = ctx.createGain(), gIn = ctx.createGain();
+        w.port.postMessage({ type: 'SET_MODE', mode });
+        const cv = ctx.createGain(), gt = ctx.createGain(), eos = ctx.createGain(), gIn = ctx.createGain(), rIn = ctx.createGain();
         w.connect(cv, 0, 0);
         w.connect(gt, 1, 0);
+        w.connect(eos, 2, 0);
         gIn.connect(w, 0, 0);
-        if (eng?.silentSink) gt.connect(eng.silentSink);
+        rIn.connect(w, 1, 0);
+        if (eng?.silentSink) {
+            gt.connect(eng.silentSink);
+            eos.connect(eng.silentSink);
+        }
         let st = -1;
         w.port.onmessage = e => { if (e.data.type === 'STEP') st = e.data.step; };
         return {
-            nodes: { w, cv, gt, gIn },
-            inputs: { gate_in: gIn },
-            outputs: { cv_out: cv, gate_out: gt },
-            resetStep: () => { st = -1; },
+            nodes: { w, cv, gt, eos, gIn, rIn },
+            inputs: { gate_in: gIn, clk_in: gIn, reset_in: rIn },
+            outputs: { cv_out: cv, gate_out: gt, eos_out: eos, eos: eos },
+            resetStep: () => {
+                st = -1;
+                w.port.postMessage({ type: 'RESET' });
+            },
             read: () => ({ step: st })
         };
     },
     update: (ctx, inst, d) => {
         if (d?.steps && inst?.nodes?.w) {
             inst.nodes.w.port.postMessage({ type: 'SET_STEPS', steps: d.steps });
+        }
+        if (d?.mode && inst?.nodes?.w) {
+            inst.nodes.w.port.postMessage({ type: 'SET_MODE', mode: d.mode });
         }
     }
 };
@@ -44,30 +57,43 @@ export const SEQ16 = {
             cvActive: true,
             gate: true
         }));
+        const mode = d?.mode || 'loop';
         const w = new AudioWorkletNode(ctx, 'seq-processor', {
-            numberOfInputs: 1,
-            numberOfOutputs: 2,
-            processorOptions: { steps }
+            numberOfInputs: 2,
+            numberOfOutputs: 3,
+            processorOptions: { steps, mode }
         });
         w.port.postMessage({ type: 'SET_STEPS', steps });
-        const cv = ctx.createGain(), gt = ctx.createGain(), gIn = ctx.createGain();
+        w.port.postMessage({ type: 'SET_MODE', mode });
+        const cv = ctx.createGain(), gt = ctx.createGain(), eos = ctx.createGain(), gIn = ctx.createGain(), rIn = ctx.createGain();
         w.connect(cv, 0, 0);
         w.connect(gt, 1, 0);
+        w.connect(eos, 2, 0);
         gIn.connect(w, 0, 0);
-        if (eng?.silentSink) gt.connect(eng.silentSink);
+        rIn.connect(w, 1, 0);
+        if (eng?.silentSink) {
+            gt.connect(eng.silentSink);
+            eos.connect(eng.silentSink);
+        }
         let st = -1;
         w.port.onmessage = e => { if (e.data.type === 'STEP') st = e.data.step; };
         return {
-            nodes: { w, cv, gt, gIn },
-            inputs: { gate_in: gIn },
-            outputs: { cv_out: cv, gate_out: gt },
-            resetStep: () => { st = -1; },
+            nodes: { w, cv, gt, eos, gIn, rIn },
+            inputs: { gate_in: gIn, clk_in: gIn, reset_in: rIn },
+            outputs: { cv_out: cv, gate_out: gt, eos_out: eos, eos: eos },
+            resetStep: () => {
+                st = -1;
+                w.port.postMessage({ type: 'RESET' });
+            },
             read: () => ({ step: st })
         };
     },
     update: (ctx, inst, d) => {
         if (d?.steps && inst?.nodes?.w) {
             inst.nodes.w.port.postMessage({ type: 'SET_STEPS', steps: d.steps });
+        }
+        if (d?.mode && inst?.nodes?.w) {
+            inst.nodes.w.port.postMessage({ type: 'SET_MODE', mode: d.mode });
         }
     }
 };

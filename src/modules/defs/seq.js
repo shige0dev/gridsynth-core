@@ -142,6 +142,7 @@ export function openSeqExport(m, ctx, cb, maxSteps = 16) {
 
     const exportObj = {
         type: m.type || (maxSteps === 8 ? 'SEQ8' : 'SEQ16'),
+        mode: m.mode || 'loop',
         quantize: m.quantize !== false,
         steps
     };
@@ -275,6 +276,7 @@ function createSeqModule(maxSteps) {
         color: 'blue',
         defaults: () => ({
             type: typeName,
+            mode: 'loop',
             quantize: true,
             steps: Array.from({ length: maxSteps }, (_, i) => ({
                 cv: i === 0 ? 0 : 0.25,
@@ -284,6 +286,7 @@ function createSeqModule(maxSteps) {
             }))
         }),
         onNormalize: (m) => {
+            if (!m.mode) m.mode = 'loop';
             if (Array.isArray(m.steps)) {
                 if (typeof m.steps[0] === 'number') {
                     m.steps = m.steps.map(cv => ({ cv, active: true, cvActive: true, gate: true }));
@@ -296,10 +299,14 @@ function createSeqModule(maxSteps) {
             }
         },
         ports: () => ({
-            in: [{ port: 'gate_in', pin: 4, color: 'bg-red-500' }],
+            in: [
+                { port: 'gate_in', pin: 4, alias: 'clk_in', color: 'bg-red-500' },
+                { port: 'reset_in', pin: 5, color: 'bg-amber-400' }
+            ],
             out: [
-                { port: 'gate_out', pin: 9, color: 'bg-red-500' },
-                { port: 'cv_out', pin: 10, color: 'bg-yellow-400' }
+                { port: 'gate_out', pin: 8, color: 'bg-red-500' },
+                { port: 'cv_out', pin: 9, color: 'bg-yellow-400' },
+                { port: 'eos_out', pin: 10, color: 'bg-amber-400' }
             ]
         }),
         renderGrid: (m) => {
@@ -344,7 +351,10 @@ function createSeqModule(maxSteps) {
                                 <i data-lucide="download" class="w-2.5 h-2.5 pointer-events-none"></i>
                                 <span>IMP</span>
                             </button>
-                            <button id="${prefix}-qlz-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${m.quantize !== false ? 'bg-cyan-600 text-white border-cyan-500' : 'bg-slate-800 text-slate-400 border-slate-700'}">QLZ: ${m.quantize !== false ? 'ON' : 'OFF'}</button>
+                            <button id="${prefix}-mode-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors shrink-0 ${m.mode === 'oneshot' ? 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/40' : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'}" title="再生モード切替 (LOOP / 1-SHOT)">
+                                ${m.mode === 'oneshot' ? '1-SHOT' : 'LOOP'}
+                            </button>
+                            <button id="${prefix}-qlz-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors shrink-0 ${m.quantize !== false ? 'bg-cyan-600 text-white border-cyan-500' : 'bg-slate-800 text-slate-400 border-slate-700'}">QLZ: ${m.quantize !== false ? 'ON' : 'OFF'}</button>
                         </div>
                     </div>
                     ${is16
@@ -361,6 +371,12 @@ function createSeqModule(maxSteps) {
             root.querySelector(`#${btnPrefix}-json-export-btn`)?.addEventListener('click', () => openSeqExport(m, ctx, cb, maxSteps));
             root.querySelector(`#${btnPrefix}-json-import-btn`)?.addEventListener('click', () => openSeqImport(m, ctx, cb, maxSteps));
             root.addEventListener('click', (e) => {
+                if (e.target.closest(`#${prefix}-mode-btn`)) {
+                    m.mode = (m.mode === 'oneshot') ? 'loop' : 'oneshot';
+                    ctx.reRenderModal();
+                    cb();
+                    return;
+                }
                 if (e.target.closest(`#${prefix}-qlz-btn`)) {
                     m.quantize = !(m.quantize !== false);
                     ctx.reRenderModal();
