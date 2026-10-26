@@ -393,52 +393,53 @@ export class ModalManager {
                     ` : ''}
                 `;
 
-            body.onclick = (e) => {
-                const closeShared = () => document.getElementById('shared-modal')?.classList.add('hidden');
-                const btn = e.target.closest('button, .factory-sub-item, .select-user-sub');
-                if (!btn || !body.contains(btn)) return;
+                body.onclick = (e) => {
+                    const closeShared = () => document.getElementById('shared-modal')?.classList.add('hidden');
+                    const btn = e.target.closest('button, .factory-sub-item, .select-user-sub');
+                    if (!btn || !body.contains(btn)) return;
 
-                if (btn.dataset.type) {
-                    closeShared();
-                    this.ui.pageManager.addModuleAtSlot(btn.dataset.type, slotIdx);
-                    return;
-                }
-                if (btn.classList.contains('import-user-sub-btn')) {
-                    e.stopPropagation();
-                    this.ui.openSubpatchImportModal(() => renderContent());
-                    return;
-                }
-
-                const subId = btn.dataset.id;
-                if (!subId) return;
-
-                if (btn.classList.contains('export-factory-sub-btn') || btn.classList.contains('export-user-sub-btn')) {
-                    e.stopPropagation();
-                    const sub = FACTORY_SUBPATCHES[subId] || this.ui.getUserSubpatches()[subId];
-                    if (sub) this.ui.openSubpatchExportModal(sub);
-                } else if (btn.classList.contains('sub-info-btn')) {
-                    e.stopPropagation();
-                    const sub = FACTORY_SUBPATCHES[subId] || this.ui.userSubpatches?.[subId];
-                    if (sub) this.showToast(`【${sub.name}】${sub.description || '説明なし'}`, 3000);
-                } else if (btn.classList.contains('edit-user-sub-btn')) {
-                    e.stopPropagation();
-                    const res = this.ui.instantiateSubpatch(subId, slotIdx);
-                    if (res?.success) {
+                    if (btn.dataset.type) {
                         closeShared();
-                        this.ui.switchPage(res.page);
-                        this.showToast(`サブパッチ「${res.subpatch}」の編集画面を開きました（上部の STOCK ボタンで更新可能）`);
+                        this.ui.pageManager.addModuleAtSlot(btn.dataset.type, slotIdx);
+                        return;
                     }
-                } else if (btn.classList.contains('delete-user-sub-btn')) {
-                    e.stopPropagation();
-                    const sub = this.ui.userSubpatches?.[subId];
-                    if (sub && confirm(`サブパッチ「${sub.name}」をライブラリから削除しますか？\n（※配置済みのモジュールには影響しません）`)) {
-                        this.ui.deleteUserSubpatch(subId);
-                        renderContent();
+                    if (btn.classList.contains('import-user-sub-btn')) {
+                        e.stopPropagation();
+                        this.ui.openSubpatchImportModal(() => renderContent());
+                        return;
                     }
-                } else if (btn.classList.contains('factory-sub-item') || btn.classList.contains('select-user-sub')) {
-                    this.ui.instantiateSubpatch(subId, slotIdx);
-                    closeShared();
-                }
+
+                    const subId = btn.dataset.id;
+                    if (!subId) return;
+
+                    if (btn.classList.contains('export-factory-sub-btn') || btn.classList.contains('export-user-sub-btn')) {
+                        e.stopPropagation();
+                        const sub = FACTORY_SUBPATCHES[subId] || this.ui.getUserSubpatches()[subId];
+                        if (sub) this.ui.openSubpatchExportModal(sub);
+                    } else if (btn.classList.contains('sub-info-btn')) {
+                        e.stopPropagation();
+                        const sub = FACTORY_SUBPATCHES[subId] || this.ui.userSubpatches?.[subId];
+                        if (sub) this.showToast(`【${sub.name}】${sub.description || '説明なし'}`, 3000);
+                    } else if (btn.classList.contains('edit-user-sub-btn')) {
+                        e.stopPropagation();
+                        const res = this.ui.instantiateSubpatch(subId, slotIdx);
+                        if (res?.success) {
+                            closeShared();
+                            this.ui.switchPage(res.page);
+                            this.showToast(`サブパッチ「${res.subpatch}」の編集画面を開きました（上部の STOCK ボタンで更新可能）`);
+                        }
+                    } else if (btn.classList.contains('delete-user-sub-btn')) {
+                        e.stopPropagation();
+                        const sub = this.ui.userSubpatches?.[subId];
+                        if (sub && confirm(`サブパッチ「${sub.name}」をライブラリから削除しますか？\n（※配置済みのモジュールには影響しません）`)) {
+                            this.ui.deleteUserSubpatch(subId);
+                            renderContent();
+                        }
+                    } else if (btn.classList.contains('factory-sub-item') || btn.classList.contains('select-user-sub')) {
+                        this.ui.instantiateSubpatch(subId, slotIdx);
+                        closeShared();
+                    }
+                };
             };
 
             renderContent();
