@@ -264,7 +264,7 @@ export function validateConnectionDirection(c, fromMod, toMod, fromManifest = nu
             try {
                 const pList = typeof regFrom.ports === 'function' ? regFrom.ports(fromMod || {}) : regFrom.ports;
                 const outPorts = (pList?.out || []).map(p => (typeof p === 'string' ? p : p.port));
-                const outAliases = (pList?.out || []).flatMap(p => typeof p === 'object' && p.alias ? [p.alias] : []);
+                const outAliases = (pList?.out || []).flatMap(p => typeof p === 'object' && p.alias ? p.alias.split(',').map(s => s.trim()) : []);
                 const isMatch = outPorts.some(p => isPortMatching(p, fromPort)) || outAliases.includes(fromPort);
                 if (outPorts.length > 0 && !isMatch) {
                     logErr(`結線構文エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - ${c.from.moduleId}:${fromPort} は有効な出力端子ではありません。(利用可能な出力端子: [${outPorts.join(', ')}])`);
@@ -293,7 +293,7 @@ export function validateConnectionDirection(c, fromMod, toMod, fromManifest = nu
             try {
                 const pList = typeof regTo.ports === 'function' ? regTo.ports(toMod || {}) : regTo.ports;
                 const inPorts = (pList?.in || []).map(p => (typeof p === 'string' ? p : p.port));
-                const inAliases = (pList?.in || []).flatMap(p => typeof p === 'object' && p.alias ? [p.alias] : []);
+                const inAliases = (pList?.in || []).flatMap(p => typeof p === 'object' && p.alias ? p.alias.split(',').map(s => s.trim()) : []);
                 const isMatch = inPorts.some(p => isPortMatching(p, toPort)) || inAliases.includes(toPort);
                 if (inPorts.length > 0 && !isMatch) {
                     logErr(`結線構文エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - ${c.to.moduleId}:${toPort} は有効な入力端子ではありません。(利用可能な入力端子: [${inPorts.join(', ')}])`);

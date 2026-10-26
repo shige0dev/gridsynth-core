@@ -67,6 +67,14 @@ export const PORT_ALIASES = {
     // FOLD: legacy fold_cv -> canonical gain_cv
     'fold_cv': 'gain_cv',
 
+    // SEQ / MARKOV / CLK port aliases
+    'trans_in': 'transition_in',
+    'reset_in': 'transition_in',
+    'trans_out': 'transition_out',
+    'eos_out': 'transition_out',
+    'eos': 'transition_out',
+    'clk_in': 'gate_in',
+
     // AR: attack_in / release_in
     'a_cv': 'attack_in',
     'attack_cv': 'attack_in',

@@ -20,9 +20,11 @@ export const SEQ8 = {
         const cv = ctx.createGain(), gt = ctx.createGain(), eos = ctx.createGain(), gIn = ctx.createGain(), rIn = ctx.createGain();
         w.connect(cv, 0, 0);
         w.connect(gt, 1, 0);
-        w.connect(eos, 2, 0);
+        if (w.numberOfOutputs > 2) {
+            w.connect(eos, 2, 0);
+        }
         gIn.connect(w, 0, 0);
-        rIn.connect(w, 1, 0);
+        rIn.connect(w, 0, 1);
         if (eng?.silentSink) {
             gt.connect(eng.silentSink);
             eos.connect(eng.silentSink);
@@ -71,9 +73,11 @@ export const SEQ16 = {
         const cv = ctx.createGain(), gt = ctx.createGain(), eos = ctx.createGain(), gIn = ctx.createGain(), rIn = ctx.createGain();
         w.connect(cv, 0, 0);
         w.connect(gt, 1, 0);
-        w.connect(eos, 2, 0);
+        if (w.numberOfOutputs > 2) {
+            w.connect(eos, 2, 0);
+        }
         gIn.connect(w, 0, 0);
-        rIn.connect(w, 1, 0);
+        rIn.connect(w, 0, 1);
         if (eng?.silentSink) {
             gt.connect(eng.silentSink);
             eos.connect(eng.silentSink);

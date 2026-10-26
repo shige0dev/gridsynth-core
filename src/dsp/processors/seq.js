@@ -53,6 +53,16 @@ export class SeqProcessor extends AudioWorkletProcessor {
         const minGap = Math.max(1, Math.round(0.002 * getSR()));
         const numSteps = (this.steps && this.steps.length > 0) ? this.steps.length : 8;
 
+        // Find last active step index for EOS and ONE-SHOT stop
+        let lastActiveIdx = numSteps - 1;
+        for (let s = numSteps - 1; s >= 0; s--) {
+            const st = this.steps[s];
+            if (st && (typeof st === 'object' ? st.active !== false : true)) {
+                lastActiveIdx = s;
+                break;
+            }
+        }
+
         for (let i = 0; i < len; i++) {
             // 1. Process RESET input: "RESETINでは強制頭出しとストップ解除"
             const isResetHi = (rIn ? rIn[i] : 0) > 0.3;
@@ -64,16 +74,6 @@ export class SeqProcessor extends AudioWorkletProcessor {
                 this.port.postMessage({ type: 'STEP', step: -1 });
             }
             this.lastResetHi = isResetHi;
-
-            // Find last active step index for EOS and ONE-SHOT stop
-            let lastActiveIdx = numSteps - 1;
-            for (let s = numSteps - 1; s >= 0; s--) {
-                const st = this.steps[s];
-                if (st && (typeof st === 'object' ? st.active !== false : true)) {
-                    lastActiveIdx = s;
-                    break;
-                }
-            }
 
             // 2. Process CLOCK input
             const isHi = (gIn ? gIn[i] : 0) > 0.3;
