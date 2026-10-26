@@ -2,7 +2,7 @@ import { AUDIO_REGISTRY } from './registry.js?v=353';
 import { AudioHelpers } from './helpers.js';
 import { parseConn, normalizeSubPort } from '../core/utils.js?v=297';
 
-export const WORKLET_MODULE_TYPES = ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'ADSR', 'LFO', 'MATH1', 'MATH2', 'SH', 'FOLD', 'CVDELAY', 'SCOPE', 'LISS', 'XY', 'MARKOV', 'CHORD', 'FM', 'FM3OP', 'FMx3', 'FMCORE', 'GATE4', 'FF', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD'];
+export const WORKLET_MODULE_TYPES = ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'ADSR', 'LFO', 'MATH1', 'MATH2', 'SH', 'FOLD', 'CVDELAY', 'SCOPE', 'LISS', 'XY', 'MARKOV', 'CHORD', 'FM', 'FM3OP', 'FMx3', 'FMCORE', 'GATE4', 'FLIP', 'FF', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD'];
 
 
 export class SynthEngine {
@@ -69,7 +69,7 @@ export class SynthEngine {
 
     resetSequencers() {
         Object.values(this.modules).forEach(m => {
-            if (m.type === 'SEQ8' || m.type === 'SEQ16' || m.type === 'PAT' || m.type === 'MARKOV' || m.type === 'GATE4' || m.type === 'FF' || m.type === 'ARP') {
+            if (m.type === 'SEQ8' || m.type === 'SEQ16' || m.type === 'PAT' || m.type === 'MARKOV' || m.type === 'GATE4' || m.type === 'FLIP' || m.type === 'FF' || m.type === 'ARP') {
                 m.resetStep?.();
                 m.nodes.w?.port.postMessage({ type: 'RESET' });
             }

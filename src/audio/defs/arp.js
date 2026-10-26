@@ -164,7 +164,7 @@ export const ARP = {
     }
 };
 
-export const FF = {
+export const FLIP = {
     create: (ctx, d, patch, eng) => {
         const initState = d?.initState ? 1 : 0;
         const w = new AudioWorkletNode(ctx, 'ff-processor', {
@@ -225,5 +225,6 @@ export const FF = {
 export const arpAudioDefs = {
     GATE4,
     ARP,
-    FF
+    FLIP,
+    FF: FLIP
 };

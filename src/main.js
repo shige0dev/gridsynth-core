@@ -1,8 +1,8 @@
-export const APP_VERSION = 'v1.0.0407';
+export const APP_VERSION = 'v1.0.0408';
 
-import { SynthEngine } from './audio/engine.js?v=407';
-import { UIController } from './ui/controller.js?v=407';
-import { initExternalAPI } from './core/api.js?v=407';
+import { SynthEngine } from './audio/engine.js?v=408';
+import { UIController } from './ui/controller.js?v=408';
+import { initExternalAPI } from './core/api.js?v=408';
 
 function applyDeviceMode() {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 

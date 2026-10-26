@@ -174,9 +174,9 @@ export const ARP = {
     }
 };
 
-export const FF = {
+export const FLIP = {
     color: 'orange',
-    defaults: () => ({ type: 'FF', initState: 0 }),
+    defaults: () => ({ type: 'FLIP', initState: 0 }),
     ports: () => ({
         in: [{ port: 'gate_in', pin: 4, alias: 'trig_in', color: 'bg-rose-500' }],
         out: [
@@ -187,83 +187,85 @@ export const FF = {
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
     renderGrid: (m) => {
         const st = m.initState ? 1 : 0;
+        const b0Act = st === 0;
         const b1Act = st === 1;
-        const b2Act = st === 0;
+        const ledOn = 'bg-orange-500 border-orange-300 shadow-md shadow-orange-500/50';
+        const ledOff = 'bg-slate-950/80 border-slate-800/80';
         return `
-            <div class="flex items-center justify-center gap-1.5 w-full h-full pointer-events-none">
-                <div data-ff-out="0" class="w-4 h-6 rounded border flex flex-col items-center justify-center transition-colors ${b1Act ? 'bg-orange-500/30 border-orange-400 text-orange-200 shadow-sm shadow-orange-500/40' : 'bg-slate-950/70 border-slate-700 text-slate-500'}">
-                    <span class="text-[6px] font-mono leading-none opacity-80">Q</span>
-                    <span data-ff-val="0" class="text-[10px] font-mono font-bold leading-tight">${b1Act ? '1' : '0'}</span>
-                </div>
-                <div data-ff-out="1" class="w-4 h-6 rounded border flex flex-col items-center justify-center transition-colors ${b2Act ? 'bg-orange-500/30 border-orange-400 text-orange-200 shadow-sm shadow-orange-500/40' : 'bg-slate-950/70 border-slate-700 text-slate-500'}">
-                    <span class="text-[6px] font-mono leading-none opacity-80">Q̄</span>
-                    <span data-ff-val="1" class="text-[10px] font-mono font-bold leading-tight">${b2Act ? '1' : '0'}</span>
-                </div>
+            <div class="flex items-center justify-center gap-2 w-full h-full pointer-events-none">
+                <div data-flip-led="0" class="w-3 h-5 rounded-xs border transition-colors ${b0Act ? ledOn : ledOff}"></div>
+                <div data-flip-led="1" class="w-3 h-5 rounded-xs border transition-colors ${b1Act ? ledOn : ledOff}"></div>
             </div>`;
     },
     renderModal: (m) => {
         const initSt = m.initState ? 1 : 0;
+        const b0Act = initSt === 0;
+        const b1Act = initSt === 1;
+        const ledOn = 'bg-orange-500 border-orange-300 shadow-md shadow-orange-500/50';
+        const ledOff = 'bg-slate-950/80 border-slate-800/80';
         return `
             <div class="space-y-2 p-1 text-slate-200">
-                <div class="grid grid-cols-2 gap-1.5 bg-slate-950/80 p-1.5 rounded-xl border border-slate-800">
-                    <div id="ff-modal-box-0" class="flex flex-col items-center py-1.5 rounded-lg border transition-colors ${initSt === 1 ? 'bg-orange-950/80 border-orange-500 text-orange-300' : 'bg-slate-900/70 border-slate-800 text-slate-500'}">
-                        <span class="text-[7.5px] font-mono font-bold">OUT 1 (Q / PIN8)</span>
-                        <span id="ff-modal-val-0" class="text-[16px] font-mono font-bold leading-tight">${initSt === 1 ? '1' : '0'}</span>
+                <div class="grid grid-cols-2 gap-2 bg-slate-950/80 p-2 rounded-xl border border-slate-800">
+                    <div id="flip-modal-box-0" class="flex flex-col items-center gap-1.5 py-2 rounded-lg border transition-colors ${b0Act ? 'bg-orange-950/70 border-orange-500/80' : 'bg-slate-900/60 border-slate-800'}">
+                        <span class="text-[8px] font-mono font-bold ${b0Act ? 'text-orange-300' : 'text-slate-500'}">OUT 1 (PIN8)</span>
+                        <div id="flip-modal-led-0" class="w-4 h-6 rounded-xs border transition-colors ${b0Act ? ledOn : ledOff}"></div>
                     </div>
-                    <div id="ff-modal-box-1" class="flex flex-col items-center py-1.5 rounded-lg border transition-colors ${initSt === 0 ? 'bg-orange-950/80 border-orange-500 text-orange-300' : 'bg-slate-900/70 border-slate-800 text-slate-500'}">
-                        <span class="text-[7.5px] font-mono font-bold">OUT 2 (Q̄ / PIN9)</span>
-                        <span id="ff-modal-val-1" class="text-[16px] font-mono font-bold leading-tight">${initSt === 0 ? '1' : '0'}</span>
+                    <div id="flip-modal-box-1" class="flex flex-col items-center gap-1.5 py-2 rounded-lg border transition-colors ${b1Act ? 'bg-orange-950/70 border-orange-500/80' : 'bg-slate-900/60 border-slate-800'}">
+                        <span class="text-[8px] font-mono font-bold ${b1Act ? 'text-orange-300' : 'text-slate-500'}">OUT 2 (PIN9)</span>
+                        <div id="flip-modal-led-1" class="w-4 h-6 rounded-xs border transition-colors ${b1Act ? ledOn : ledOff}"></div>
                     </div>
                 </div>
                 <div>
                     <label class="block text-[8px] text-slate-400 uppercase tracking-wider font-semibold mb-1">Initial State (Reset)</label>
                     <div class="grid grid-cols-2 gap-1">
-                        <button class="ff-init-btn py-1 rounded text-[8px] font-bold border transition-all ${initSt === 0 ? 'bg-orange-600 text-white border-orange-400 shadow-sm shadow-orange-500/40' : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'}" data-val="0">OUT1=0 / OUT2=1</button>
-                        <button class="ff-init-btn py-1 rounded text-[8px] font-bold border transition-all ${initSt === 1 ? 'bg-orange-600 text-white border-orange-400 shadow-sm shadow-orange-500/40' : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'}" data-val="1">OUT1=1 / OUT2=0</button>
+                        <button class="flip-init-btn py-1 rounded text-[8px] font-bold border transition-all ${initSt === 0 ? 'bg-orange-600 text-white border-orange-400 shadow-sm shadow-orange-500/40' : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'}" data-val="0">OUT 1 ON</button>
+                        <button class="flip-init-btn py-1 rounded text-[8px] font-bold border transition-all ${initSt === 1 ? 'bg-orange-600 text-white border-orange-400 shadow-sm shadow-orange-500/40' : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'}" data-val="1">OUT 2 ON</button>
                     </div>
                 </div>
-                <button id="ff-toggle-btn" class="w-full py-1.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold text-[9px] rounded-lg shadow-sm border border-orange-400/40 transition cursor-pointer">
+                <button id="flip-toggle-btn" class="w-full py-1.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold text-[9px] rounded-lg shadow-sm border border-orange-400/40 transition cursor-pointer">
                     MANUAL TOGGLE (FLIP)
                 </button>
             </div>`;
     },
     bindEvents: (m, ctx, cb) => {
-        UIHelpers.bindButtonGroup('.ff-init-btn', 'bg-orange-600 text-white border-orange-400 shadow-sm shadow-orange-500/40', 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800', val => {
+        UIHelpers.bindButtonGroup('.flip-init-btn', 'bg-orange-600 text-white border-orange-400 shadow-sm shadow-orange-500/40', 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800', val => {
             m.initState = parseInt(val, 10) ? 1 : 0;
             ctx.reRenderModal();
             cb();
         });
-        document.getElementById('ff-toggle-btn')?.addEventListener('click', () => {
+        document.getElementById('flip-toggle-btn')?.addEventListener('click', () => {
             ctx.triggerManualSample?.();
         });
     },
     updateLive: (cell, data, isPlaying, modalEl, m) => {
         const st = data?.state !== undefined ? data.state : (m?.initState ? 1 : 0);
-        const v0 = st === 1 ? '1' : '0';
-        const v1 = st === 0 ? '1' : '0';
+        const b0Act = st === 0;
+        const b1Act = st === 1;
+        const ledOn = 'w-3 h-5 rounded-xs border transition-colors bg-orange-500 border-orange-300 shadow-md shadow-orange-500/50';
+        const ledOff = 'w-3 h-5 rounded-xs border transition-colors bg-slate-950/80 border-slate-800/80';
 
-        const box0 = cell?.querySelector('[data-ff-out="0"]');
-        const box1 = cell?.querySelector('[data-ff-out="1"]');
-        const txt0 = cell?.querySelector('[data-ff-val="0"]');
-        const txt1 = cell?.querySelector('[data-ff-val="1"]');
-        if (txt0 && txt0.textContent !== v0) txt0.textContent = v0;
-        if (txt1 && txt1.textContent !== v1) txt1.textContent = v1;
-        if (box0) {
-            box0.className = `w-4 h-6 rounded border flex flex-col items-center justify-center transition-colors ${st === 1 ? 'bg-orange-500/30 border-orange-400 text-orange-200 shadow-sm shadow-orange-500/40' : 'bg-slate-950/70 border-slate-700 text-slate-500'}`;
-        }
-        if (box1) {
-            box1.className = `w-4 h-6 rounded border flex flex-col items-center justify-center transition-colors ${st === 0 ? 'bg-orange-500/30 border-orange-400 text-orange-200 shadow-sm shadow-orange-500/40' : 'bg-slate-950/70 border-slate-700 text-slate-500'}`;
-        }
+        const led0 = cell?.querySelector('[data-flip-led="0"]');
+        const led1 = cell?.querySelector('[data-flip-led="1"]');
+        if (led0) led0.className = b0Act ? ledOn : ledOff;
+        if (led1) led1.className = b1Act ? ledOn : ledOff;
 
         if (modalEl) {
-            const mBox0 = modalEl.querySelector('#ff-modal-box-0');
-            const mBox1 = modalEl.querySelector('#ff-modal-box-1');
-            const mVal0 = modalEl.querySelector('#ff-modal-val-0');
-            const mVal1 = modalEl.querySelector('#ff-modal-val-1');
-            if (mVal0 && mVal0.textContent !== v0) mVal0.textContent = v0;
-            if (mVal1 && mVal1.textContent !== v1) mVal1.textContent = v1;
-            if (mBox0) mBox0.className = `flex flex-col items-center py-1.5 rounded-lg border transition-colors ${st === 1 ? 'bg-orange-950/80 border-orange-500 text-orange-300' : 'bg-slate-900/70 border-slate-800 text-slate-500'}`;
-            if (mBox1) mBox1.className = `flex flex-col items-center py-1.5 rounded-lg border transition-colors ${st === 0 ? 'bg-orange-950/80 border-orange-500 text-orange-300' : 'bg-slate-900/70 border-slate-800 text-slate-500'}`;
+            const mBox0 = modalEl.querySelector('#flip-modal-box-0');
+            const mBox1 = modalEl.querySelector('#flip-modal-box-1');
+            const mLed0 = modalEl.querySelector('#flip-modal-led-0');
+            const mLed1 = modalEl.querySelector('#flip-modal-led-1');
+            const mTitle0 = mBox0?.querySelector('span');
+            const mTitle1 = mBox1?.querySelector('span');
+
+            const mActiveOn = 'w-4 h-6 rounded-xs border transition-colors bg-orange-500 border-orange-300 shadow-md shadow-orange-500/50';
+            const mActiveOff = 'w-4 h-6 rounded-xs border transition-colors bg-slate-950/80 border-slate-800/80';
+
+            if (mLed0) mLed0.className = b0Act ? mActiveOn : mActiveOff;
+            if (mLed1) mLed1.className = b1Act ? mActiveOn : mActiveOff;
+            if (mBox0) mBox0.className = `flex flex-col items-center gap-1.5 py-2 rounded-lg border transition-colors ${b0Act ? 'bg-orange-950/70 border-orange-500/80' : 'bg-slate-900/60 border-slate-800'}`;
+            if (mBox1) mBox1.className = `flex flex-col items-center gap-1.5 py-2 rounded-lg border transition-colors ${b1Act ? 'bg-orange-950/70 border-orange-500/80' : 'bg-slate-900/60 border-slate-800'}`;
+            if (mTitle0) mTitle0.className = `text-[8px] font-mono font-bold ${b0Act ? 'text-orange-300' : 'text-slate-500'}`;
+            if (mTitle1) mTitle1.className = `text-[8px] font-mono font-bold ${b1Act ? 'text-orange-300' : 'text-slate-500'}`;
         }
     }
 };
@@ -271,5 +273,6 @@ export const FF = {
 export const arpDefs = {
     GATE4,
     ARP,
-    FF
+    FLIP,
+    FF: FLIP
 };
