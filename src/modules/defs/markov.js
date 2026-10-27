@@ -7,7 +7,7 @@ export const MARKOV = {
         state: 0,
         initOn: false,
         stateVal: 1.0,
-        rootMidi: 60,
+        rootMidi: 36,
         quantize: true,
         holdClocks: 1,
         stayWeight: 10,

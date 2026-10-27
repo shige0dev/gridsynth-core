@@ -4,7 +4,7 @@ export const MARKOV = {
             numberOfInputs: 2,
             numberOfOutputs: 7
         });
-        const rootM = d.rootMidi ?? 60;
+        const rootM = d.rootMidi ?? 36;
         const cvVal = d.quantize !== false ? ((rootM - 24) / 12.0) : (d.stateVal ?? 1.0);
 
         const isInitOn = !!d.initOn;
@@ -90,7 +90,7 @@ export const MARKOV = {
         return inst;
     },
     update: (ctx, inst, d, patch, eng) => {
-        const rootM = d.rootMidi ?? 60;
+        const rootM = d.rootMidi ?? 36;
         const cvVal = d.quantize !== false ? ((rootM - 24) / 12.0) : (d.stateVal ?? 1.0);
         const isInitOn = !!d.initOn;
         const curState = d.state ? 1 : 0;
