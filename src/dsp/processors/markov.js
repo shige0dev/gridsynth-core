@@ -43,7 +43,7 @@ export class MarkovProcessor extends AudioWorkletProcessor {
         const inTrig = ins[1]?.[0];
 
         const o1 = outs[0]?.[0], o2 = outs[1]?.[0], o3 = outs[2]?.[0];
-        const cvOut = outs[3]?.[0], gtOut = outs[4]?.[0], stepGtOut = outs[5]?.[0];
+        const cvOut = outs[3]?.[0], startGtOut = outs[4]?.[0], thruGtOut = outs[5]?.[0], longGtOut = outs[6]?.[0];
         const outArr = [o1, o2, o3];
         const len = 128;
 
@@ -138,15 +138,19 @@ export class MarkovProcessor extends AudioWorkletProcessor {
                 cvOut[i] = this.state === 1 ? this.stateVal : 0.0;
             }
 
-            // 6. 持続ゲート出力（gate_out）: 次に遷移するまでずっとON（1.0V）
-            if (gtOut) {
-                gtOut[i] = this.state === 1 ? 1.0 : 0.0;
+            // 6. 突入トリガー出力（startgate_out）: ノード突入時の最初の拍にクロックHighを出力（1発パルス）
+            if (startGtOut) {
+                startGtOut[i] = (this.state === 1 && this.shotActive && isClkHi) ? 1.0 : 0.0;
             }
 
-            // 7. ワンショットトリガ出力（step_gate）:
-            // ノードがアクティブ（発行）された最初の拍に、入力トリガー（クロックHigh）と同じ時間だけ1.0Vを出力
-            if (stepGtOut) {
-                stepGtOut[i] = (this.state === 1 && this.shotActive && isClkHi) ? 1.0 : 0.0;
+            // 7. 素通しゲート出力（gate_out）: ステートがONの間、入力ゲートをそのまま素通し出力
+            if (thruGtOut) {
+                thruGtOut[i] = (this.state === 1 && isClkHi) ? 1.0 : 0.0;
+            }
+
+            // 8. 持続ロングゲート出力（longgate_out）: ステートがONの間ずっとON（1.0V持続ゲート）
+            if (longGtOut) {
+                longGtOut[i] = this.state === 1 ? 1.0 : 0.0;
             }
         }
 

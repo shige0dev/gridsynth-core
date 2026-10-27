@@ -2,7 +2,7 @@ export const MARKOV = {
     create: (ctx, d, patch, eng) => {
         const w = new AudioWorkletNode(ctx, 'markov-processor', {
             numberOfInputs: 2,
-            numberOfOutputs: 6
+            numberOfOutputs: 7
         });
         const rootM = d.rootMidi ?? 36;
         const cvVal = d.quantize !== false ? ((rootM - 24) / 12.0) : (d.stateVal ?? 1.0);
@@ -34,21 +34,22 @@ export const MARKOV = {
         const gTrig = ctx.createGain();
         gTrig.connect(w, 0, 1);
 
-        // Outputs: 0..2: trans_out1..3, 3: cv_out, 4: gate_out, 5: step_gate (trig_out)
+        // Outputs: 0..2: trans_out1..3, 3: cv_out, 4: startgate_out, 5: gate_out, 6: longgate_out
         const g1 = ctx.createGain(), g2 = ctx.createGain(), g3 = ctx.createGain();
-        const gCv = ctx.createGain(), gGate = ctx.createGain(), gStepGate = ctx.createGain();
+        const gCv = ctx.createGain(), gStartGate = ctx.createGain(), gThruGate = ctx.createGain(), gLongGate = ctx.createGain();
         w.connect(g1, 0);
         w.connect(g2, 1);
         w.connect(g3, 2);
         w.connect(gCv, 3);
-        w.connect(gGate, 4);
-        w.connect(gStepGate, 5);
+        w.connect(gStartGate, 4);
+        w.connect(gThruGate, 5);
+        w.connect(gLongGate, 6);
 
         let liveRemaining = d.holdClocks ?? 1;
         let liveCount = 0;
 
         const inst = {
-            nodes: { w, silent, gClk, gTrig, g1, g2, g3, gCv, gGate, gStepGate },
+            nodes: { w, silent, gClk, gTrig, g1, g2, g3, gCv, gStartGate, gThruGate, gLongGate },
             inputs: {
                 gate_in: gClk,
                 trans_in: gTrig
@@ -57,8 +58,9 @@ export const MARKOV = {
                 trans_out1: g1,
                 trans_out2: g2,
                 trans_out3: g3,
-                trig_out: gStepGate,
-                gate_out: gGate,
+                startgate_out: gStartGate,
+                gate_out: gThruGate,
+                longgate_out: gLongGate,
                 cv_out: gCv
             },
             _liveState: initialState,

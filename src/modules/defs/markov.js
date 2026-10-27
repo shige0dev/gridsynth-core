@@ -26,18 +26,25 @@ export const MARKOV = {
     ports: (m, ctx) => {
         const weights = m?.weights || [0, 0, 0];
         const patched = ctx?.patched;
+        const getTransColor = (idx, port) => {
+            const w = weights[idx] || 0;
+            if (w <= 0) return 'bg-slate-700';
+            const isConnected = patched?.has(port);
+            return isConnected ? 'bg-slate-400' : 'bg-purple-500';
+        };
         return {
             in: [
                 { port: 'gate_in', pin: 4, color: 'bg-rose-500' },
                 { port: 'trans_in', pin: 5, color: 'bg-slate-400' }
             ],
             out: [
-                { port: 'trans_out1', pin: 6, color: (weights[0] > 0) ? (patched?.has('trans_out1') ? 'bg-slate-400' : 'bg-slate-600') : 'bg-slate-700' },
-                { port: 'trans_out2', pin: 7, color: (weights[1] > 0) ? (patched?.has('trans_out2') ? 'bg-slate-400' : 'bg-slate-600') : 'bg-slate-700' },
-                { port: 'trans_out3', pin: 8, color: (weights[2] > 0) ? (patched?.has('trans_out3') ? 'bg-slate-400' : 'bg-slate-600') : 'bg-slate-700' },
-                { port: 'trig_out', pin: 9, color: 'bg-rose-500' },
+                { port: 'trans_out1', pin: 6, color: getTransColor(0, 'trans_out1') },
+                { port: 'trans_out2', pin: 7, color: getTransColor(1, 'trans_out2') },
+                { port: 'trans_out3', pin: 8, color: getTransColor(2, 'trans_out3') },
+                { port: 'startgate_out', pin: 9, color: 'bg-rose-500' },
                 { port: 'gate_out', pin: 10, color: 'bg-rose-500' },
-                { port: 'cv_out', pin: 14, color: 'bg-yellow-400' }
+                { port: 'longgate_out', pin: 11, color: 'bg-rose-500' },
+                { port: 'cv_out', pin: 12, color: 'bg-yellow-400' }
             ]
         };
     },
@@ -51,16 +58,16 @@ export const MARKOV = {
         const isPatched = ctx?.patched && ctx.patched.size > 0;
 
         const boxCls = isOn
-            ? 'markov-active bg-gradient-to-t from-amber-500 via-amber-400 to-yellow-300 border-[#fde047] text-slate-950 scale-105 shadow-[0_0_10px_2px_rgba(251,191,36,0.95),0_0_20px_4px_rgba(245,158,11,0.7),inset_0_0_6px_rgba(253,224,71,0.6)] ring-1 ring-yellow-200/90'
+            ? 'markov-active bg-gradient-to-t from-amber-500 via-amber-400 to-yellow-300 border-[#fde047] text-slate-950 shadow-[0_0_10px_2px_rgba(251,191,36,0.95),0_0_20px_4px_rgba(245,158,11,0.7),inset_0_0_6px_rgba(253,224,71,0.6)]'
             : (isPatched
-                ? 'markov-idle bg-transparent border-slate-500/60 text-slate-300 shadow-none ring-0'
-                : 'markov-idle bg-transparent border-slate-700/60 text-slate-500 shadow-none ring-0');
-        const pitchCls = isOn ? 'text-slate-950 font-black' : (isPatched ? 'text-slate-200 font-bold' : 'text-slate-500 font-medium');
-        const holdCls = isOn ? 'text-amber-950 font-black' : (isPatched ? 'text-slate-400 font-bold' : 'text-slate-600 font-medium');
+                ? 'markov-idle bg-transparent border-slate-500/60 text-slate-300 shadow-none'
+                : 'markov-idle bg-transparent border-slate-700/60 text-slate-500 shadow-none');
+        const pitchCls = isOn ? 'text-slate-950 font-bold' : (isPatched ? 'text-slate-200 font-bold' : 'text-slate-500 font-bold');
+        const holdCls = isOn ? 'text-amber-950 font-bold' : (isPatched ? 'text-slate-400 font-bold' : 'text-slate-600 font-bold');
 
         return `
             <div class="relative flex items-center justify-center w-full h-full pointer-events-none">
-                <div class="markov-state-box w-9 h-9 rounded-md border flex flex-col items-center justify-center leading-none select-none transition-all duration-75 ${boxCls}">
+                <div class="markov-state-box w-9 h-9 rounded-md border flex flex-col items-center justify-center leading-none select-none transition-colors duration-75 ${boxCls}">
                     <span class="markov-pitch-val font-mono text-[10px] leading-tight ${pitchCls}">${noteStr}</span>
                     <span class="markov-hold-val font-mono text-[10px] leading-tight mt-0.5 ${holdCls}">${holdC}</span>
                 </div>
@@ -68,7 +75,7 @@ export const MARKOV = {
     },
     renderModal: (m, ctx) => {
         const isQ = m.quantize !== false;
-        const rootM = m.rootMidi ?? 60;
+        const rootM = m.rootMidi ?? 36;
         const noteStr = UIHelpers.midiToNoteName(rootM);
         const isInit = !!m.initOn;
         const holdC = m.holdClocks ?? 1;
@@ -252,14 +259,14 @@ export const MARKOV = {
             const pitchEl = box.querySelector('.markov-pitch-val');
             const holdEl = box.querySelector('.markov-hold-val');
             if (isOn && isPlaying) {
-                box.className = 'markov-state-box w-9 h-9 rounded-md border flex flex-col items-center justify-center leading-none select-none transition-all duration-75 markov-active bg-gradient-to-t from-amber-500 via-amber-400 to-yellow-300 border-[#fde047] text-slate-950 scale-105 shadow-[0_0_10px_2px_rgba(251,191,36,0.95),0_0_20px_4px_rgba(245,158,11,0.7),inset_0_0_6px_rgba(253,224,71,0.6)] ring-1 ring-yellow-200/90';
-                if (pitchEl) pitchEl.className = 'markov-pitch-val font-mono text-[10px] leading-tight text-slate-950 font-black';
+                box.className = 'markov-state-box w-9 h-9 rounded-md border flex flex-col items-center justify-center leading-none select-none transition-colors duration-75 markov-active bg-gradient-to-t from-amber-500 via-amber-400 to-yellow-300 border-[#fde047] text-slate-950 shadow-[0_0_10px_2px_rgba(251,191,36,0.95),0_0_20px_4px_rgba(245,158,11,0.7),inset_0_0_6px_rgba(253,224,71,0.6)]';
+                if (pitchEl) pitchEl.className = 'markov-pitch-val font-mono text-[10px] leading-tight text-slate-950 font-bold';
                 if (holdEl) {
-                    holdEl.className = 'markov-hold-val font-mono text-[10px] leading-tight mt-0.5 text-amber-950 font-black';
+                    holdEl.className = 'markov-hold-val font-mono text-[10px] leading-tight mt-0.5 text-amber-950 font-bold';
                     holdEl.textContent = readData?.remaining ?? (m.holdClocks ?? 1);
                 }
             } else {
-                box.className = 'markov-state-box w-9 h-9 rounded-md border flex flex-col items-center justify-center leading-none select-none transition-all duration-75 markov-idle bg-transparent border-amber-500/45 text-slate-300 shadow-none ring-0';
+                box.className = 'markov-state-box w-9 h-9 rounded-md border flex flex-col items-center justify-center leading-none select-none transition-colors duration-75 markov-idle bg-transparent border-amber-500/45 text-slate-300 shadow-none';
                 if (pitchEl) pitchEl.className = 'markov-pitch-val font-mono text-[10px] leading-tight text-slate-200 font-bold';
                 if (holdEl) {
                     holdEl.className = 'markov-hold-val font-mono text-[10px] leading-tight mt-0.5 text-amber-400/80 font-bold';
