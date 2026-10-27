@@ -1,8 +1,8 @@
-export const APP_VERSION = 'v1.0.0435';
+export const APP_VERSION = 'v1.0.0436';
 
-import { SynthEngine } from './audio/engine.js?v=435';
-import { UIController } from './ui/controller.js?v=435';
-import { initExternalAPI } from './core/api.js?v=435';
+import { SynthEngine } from './audio/engine.js?v=436';
+import { UIController } from './ui/controller.js?v=436';
+import { initExternalAPI } from './core/api.js?v=436';
 
 function applyDeviceMode() {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
@@ -16,6 +16,8 @@ window.addEventListener('resize', applyDeviceMode);
 function initApp() {
     const verDisp = document.getElementById('app-version-disp');
     if (verDisp) verDisp.textContent = APP_VERSION;
+    const aboutVerDisp = document.getElementById('about-app-version');
+    if (aboutVerDisp) aboutVerDisp.textContent = `GridSynth Mobile ${APP_VERSION}`;
     window.__APP_VERSION__ = APP_VERSION;
     const synth = new SynthEngine();
     const ui = new UIController(synth);

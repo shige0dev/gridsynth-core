@@ -263,7 +263,7 @@ function createSeqModule(maxSteps) {
                 <div data-step-col="${idx}" class="flex flex-col items-center ${is16 ? 'gap-0.5' : 'gap-1'} flex-1 min-w-[34px] p-1 rounded-lg border transition-all shrink-0 ${isAct ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-950/80 border-slate-800/40 opacity-40 grayscale'}">
                     <span id="${prefix}-slider-${idx}-disp" class="text-[${is16 ? '8px' : '8.5px'}] ${isAct ? 'text-cyan-300' : 'text-slate-500'} font-mono font-bold cursor-ns-resize touch-none select-none hover:bg-slate-800/80 ${is16 ? 'px-0.5' : 'px-1'} py-0.5 rounded transition-colors shrink-0" title="上下ドラッグで微調整">${m.quantize !== false ? UIHelpers.cvToNoteName(val) : val.toFixed(2)}</span>
                     <div class="h-12 min-h-[48px] flex items-center justify-center my-0.5 shrink-0">
-                        <input type="range" data-seq-slider="${idx}" id="${prefix}-slider-${idx}" min="0" max="2.0" step="${m.quantize !== false ? 0.083333 : 0.01}" value="${val}" class="native-vslider ${isAct ? 'accent-blue-500' : 'accent-slate-600'} shrink-0">
+                        <input type="range" data-seq-slider="${idx}" id="${prefix}-slider-${idx}" min="0" max="2.0" step="${m.quantize !== false ? 0.083333 : 0.01}" value="${val}" class="native-vslider-sm ${isAct ? 'accent-blue-500' : 'accent-slate-600'} shrink-0">
                     </div>
                     ${renderSeqStepButtons(idx, isAct, isCvAct, isGateAct, is16)}
                 </div>`;

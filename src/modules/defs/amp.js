@@ -19,7 +19,8 @@ export const VCA = {
     },
     renderGrid: (m, ctx) => {
         const isExt = Boolean(ctx?.patched?.has('cv_in'));
-        const dispText = isExt ? 'EXT' : `${Math.round((m.level ?? 1.0) * 100)}%`;
+        const depth = Number((m.cvDepth ?? 1.0).toFixed(2));
+        const dispText = isExt ? `x${depth}` : `${Math.round((m.level ?? 1.0) * 100)}%`;
         const textCls = isExt ? 'text-amber-300' : 'text-emerald-400';
         return `<div class="flex items-center justify-center w-full h-full pointer-events-none">
             <span class="vca-disp-val text-[14px] font-mono font-bold tracking-tight ${textCls}">${dispText}</span>
@@ -29,7 +30,8 @@ export const VCA = {
         const d = cell.querySelector('.vca-disp-val');
         if (d && m) {
             const isExt = Boolean(data?.hasCvIn);
-            const dispText = isExt ? 'EXT' : `${Math.round((m.level ?? 1.0) * 100)}%`;
+            const depth = Number((m.cvDepth ?? 1.0).toFixed(2));
+            const dispText = isExt ? `x${depth}` : `${Math.round((m.level ?? 1.0) * 100)}%`;
             if (d.textContent !== dispText) {
                 d.textContent = dispText;
                 d.className = `vca-disp-val text-[14px] font-mono font-bold tracking-tight ${isExt ? 'text-amber-300' : 'text-emerald-400'}`;

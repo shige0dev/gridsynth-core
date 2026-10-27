@@ -66,7 +66,10 @@ export const UIHelpers = {
             ctx2d.restore();
         }
     },
-    createVSliderHTML: (id, label, min, max, step, val, unitStr, accentColor = 'cyan', isPatched = false, customDisp = null, power = 1) => {
+    createVSliderHTML: (id, label, min, max, step, val, unitStr, accentColor = 'cyan', isPatched = false, customDisp = null, power = 1, options = {}) => {
+        const isSm = (typeof options === 'string' ? options === 'sm' : options?.size === 'sm');
+        const containerH = isSm ? 'h-12 min-h-[48px]' : 'h-24 min-h-[96px]';
+        const sliderCls = isSm ? 'native-vslider-sm' : 'native-vslider';
         const disp = customDisp ?? (Math.abs(val) < 10 && step < 1 ? Number(val).toFixed(2) : Math.round(val));
         let sMin = min, sMax = max, sStep = step, sVal = val;
         if (power && power !== 1) {
@@ -79,8 +82,8 @@ export const UIHelpers = {
             <div class="flex flex-col items-center gap-1 flex-1 min-w-0 ${isPatched ? 'opacity-30 pointer-events-none' : ''}">
                 <span class="text-[8px] font-bold text-slate-400 uppercase tracking-tight truncate w-full text-center leading-none">${label}</span>
                 <span id="${id}-disp" class="inline-flex items-center justify-center min-w-[28px] min-h-[18px] text-[9px] text-${accentColor}-300 font-mono font-bold cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-1 py-0.5 rounded transition-colors leading-none">${disp}</span>
-                <div class="h-12 min-h-[48px] flex items-center justify-center my-0.5 shrink-0 touch-none">
-                    <input type="range" id="${id}" min="${sMin}" max="${sMax}" step="${sStep}" value="${sVal}" class="native-vslider accent-${accentColor}-500 shrink-0" ${isPatched ? 'disabled' : ''}>
+                <div class="${containerH} flex items-center justify-center my-0.5 shrink-0 touch-none">
+                    <input type="range" id="${id}" min="${sMin}" max="${sMax}" step="${sStep}" value="${sVal}" class="${sliderCls} accent-${accentColor}-500 shrink-0" ${isPatched ? 'disabled' : ''}>
                 </div>
                 <span class="text-[8px] font-mono text-slate-400 truncate min-h-[12px] flex items-center justify-center leading-none">${unitHtml}</span>
             </div>`;

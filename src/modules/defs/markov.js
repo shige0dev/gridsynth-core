@@ -127,29 +127,13 @@ export const MARKOV = {
                             : UIHelpers.createVSliderHTML('markov-val', 'VOLTAGE', 0.0, 5.0, 0.05, m.stateVal ?? 1.0, 'V', 'amber', false, (m.stateVal ?? 1.0).toFixed(2) + 'V')
                         }
 
-                        <div class="w-[1px] h-14 bg-slate-800/80 self-center mx-0.5"></div>
+                        <div class="w-[1px] h-28 bg-slate-800/80 self-center mx-0.5"></div>
 
                         <!-- Stay Slider -->
-                        <div class="flex flex-col items-center gap-1 flex-1 min-w-0 shrink-0">
-                            <span class="text-[8px] font-bold text-slate-300 uppercase tracking-tight truncate w-full text-center shrink-0">STAY</span>
-                            <span id="markov-p-stay" class="text-[9px] text-amber-300 font-mono font-bold cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 py-0.5 rounded transition-colors leading-tight shrink-0" title="上下ドラッグで微調整">${pctStay}%</span>
-                            <div class="h-12 min-h-[48px] flex items-center justify-center my-0.5 shrink-0">
-                                <input type="range" id="markov-w-stay" min="0" max="100" step="1" value="${wStay}" class="native-vslider accent-amber-500 shrink-0">
-                            </div>
-                            <span class="text-[7.5px] font-mono text-slate-400 truncate shrink-0">自己</span>
-                        </div>
+                        ${UIHelpers.createVSliderHTML('markov-w-stay', 'STAY', 0, 100, 1, wStay, '自己', 'amber', false, `${pctStay}%`)}
 
                         <!-- Output 1..3 Sliders (OUT 1 to OUT 3 from left to right, matching bottom PIN6..PIN8) -->
-                        ${[0, 1, 2].map(idx => `
-                            <div class="flex flex-col items-center gap-1 flex-1 min-w-0 shrink-0">
-                                <span class="text-[8px] font-bold text-slate-300 uppercase tracking-tight truncate w-full text-center shrink-0">OUT ${idx + 1}</span>
-                                <span id="markov-p-${idx}" class="text-[9px] text-amber-300 font-bold font-mono cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 py-0.5 rounded transition-colors leading-tight shrink-0" title="上下ドラッグで微調整">${pcts[idx]}%</span>
-                                <div class="h-12 min-h-[48px] flex items-center justify-center my-0.5 shrink-0">
-                                    <input type="range" id="markov-w-${idx}" min="0" max="100" step="1" value="${weights[idx] ?? 0}" class="native-vslider accent-amber-500 markov-w-slider shrink-0" data-idx="${idx}">
-                                </div>
-                                <span class="text-[7.5px] font-mono text-slate-400 truncate shrink-0">CH ${idx + 1}</span>
-                            </div>`
-                        ).join('')}
+                        ${[0, 1, 2].map(idx => UIHelpers.createVSliderHTML(`markov-w-${idx}`, `OUT ${idx + 1}`, 0, 100, 1, weights[idx] ?? 0, `CH ${idx + 1}`, 'amber', false, `${pcts[idx]}%`)).join('')}
                     </div>
                 </div>
             </div>`;
@@ -212,39 +196,25 @@ export const MARKOV = {
             }
             if (totalW === 0) totalW = 1;
 
-            const pStayEl = document.getElementById('markov-p-stay');
+            const pStayEl = document.getElementById('markov-w-stay-disp');
             if (pStayEl) pStayEl.textContent = `${Math.round((wStay / totalW) * 100)}%`;
 
             for (let i = 0; i < 3; i++) {
-                const pEl = document.getElementById(`markov-p-${i}`);
+                const pEl = document.getElementById(`markov-w-${i}-disp`);
                 if (pEl) {
                     pEl.textContent = `${Math.round(((weights[i] || 0) / totalW) * 100)}%`;
                 }
             }
         };
 
-        document.getElementById('markov-w-stay')?.addEventListener('input', (e) => {
-            m.stayWeight = parseFloat(e.target.value) || 0;
-            updatePcts();
-            cb();
-        });
-        UIHelpers.bindScrubber('markov-p-stay', 'markov-w-stay', null, (val) => {
+        UIHelpers.bindSlider('markov-w-stay', () => { updatePcts(); return document.getElementById('markov-w-stay-disp')?.textContent || `${pctStay}%`; }, (val) => {
             m.stayWeight = Math.round(val);
             updatePcts();
             cb();
         }, 1, 0, 100);
 
-        document.querySelectorAll('.markov-w-slider').forEach(sl => {
-            sl.addEventListener('input', (e) => {
-                const idx = parseInt(e.target.dataset.idx, 10);
-                if (!m.weights) m.weights = [0, 0, 0];
-                m.weights[idx] = parseFloat(e.target.value) || 0;
-                updatePcts();
-                cb();
-            });
-        });
         [0, 1, 2].forEach(idx => {
-            UIHelpers.bindScrubber(`markov-p-${idx}`, `markov-w-${idx}`, null, (val) => {
+            UIHelpers.bindSlider(`markov-w-${idx}`, () => { updatePcts(); return document.getElementById(`markov-w-${idx}-disp`)?.textContent || `${pcts[idx]}%`; }, (val) => {
                 if (!m.weights) m.weights = [0, 0, 0];
                 m.weights[idx] = Math.round(val);
                 updatePcts();

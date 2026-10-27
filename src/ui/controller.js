@@ -1,7 +1,7 @@
 import { isSubModule } from '../core/utils.js?v=424';
 import { parsePatch } from '../core/patch.js?v=424';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=424';
-import { UIHelpers } from './helpers.js?v=396';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=436';
+import { UIHelpers } from './helpers.js?v=436';
 import { PresetManager } from './managers/preset-manager.js?v=402';
 import { ModalManager } from './managers/modal-manager.js?v=409';
 import { CableManager } from './managers/cable-manager.js?v=424';

@@ -196,7 +196,19 @@ body.is-row-dragging .grid-cell * {
     pointer-events: none !important;
 }
 
-.native-vslider,
+.native-vslider {
+    writing-mode: vertical-lr;
+    direction: rtl;
+    width: 18px;
+    height: 96px;
+    min-height: 96px;
+    flex-shrink: 0;
+    cursor: pointer;
+    padding: 0 2px;
+    touch-action: none;
+    background: transparent;
+}
+
 .native-vslider-sm {
     writing-mode: vertical-lr;
     direction: rtl;

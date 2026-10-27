@@ -6,7 +6,7 @@ export const preset08 = {
             slots: {
                 "0": "CLK1", "1": "LFO1", "2": "VCO1", "3": "VCF1", "4": "VCA1",
                 "6": "ADSR1", "7": "DELAY1", "8": "REVERB1", "9": "SPK1",
-                "15": "MARKOV1", "16": "MARKOV2", "17": "MARKOV3", "18": "MARKOV4", "19": "MARKOV5"
+                "16": "MARKOV1", "17": "MARKOV2", "18": "MARKOV3", "19": "MARKOV4"
             },
             modules: {
                 "CLK1": { type: "CLK", div: "x2", pulseWidthMs: 25, limitPct: 90 },
@@ -20,9 +20,8 @@ export const preset08 = {
                 "SPK1": { type: "SPK", masterVol: 0.32 },
                 "MARKOV1": { type: "MARKOV", state: 1, initOn: true, rootMidi: 48, quantize: true, holdClocks: 4, stayWeight: 6, weights: [14, 10, 12] },
                 "MARKOV2": { type: "MARKOV", state: 0, initOn: false, rootMidi: 51, quantize: true, holdClocks: 2, stayWeight: 4, weights: [12, 14, 8] },
-                "MARKOV3": { type: "MARKOV", state: 0, initOn: false, rootMidi: 53, quantize: true, holdClocks: 1, stayWeight: 2, weights: [16, 12, 8] },
-                "MARKOV4": { type: "MARKOV", state: 0, initOn: false, rootMidi: 55, quantize: true, holdClocks: 2, stayWeight: 6, weights: [14, 16, 8] },
-                "MARKOV5": { type: "MARKOV", state: 0, initOn: false, rootMidi: 58, quantize: true, holdClocks: 1, stayWeight: 2, weights: [16, 12, 8] }
+                "MARKOV3": { type: "MARKOV", state: 0, initOn: false, rootMidi: 55, quantize: true, holdClocks: 1, stayWeight: 2, weights: [16, 12, 8] },
+                "MARKOV4": { type: "MARKOV", state: 0, initOn: false, rootMidi: 58, quantize: true, holdClocks: 2, stayWeight: 6, weights: [14, 16, 8] }
             },
             connections: [
                 // Master Clock Star Distribution
@@ -30,36 +29,30 @@ export const preset08 = {
                 "CLK1:gate_out > MARKOV2:gate_in",
                 "CLK1:gate_out > MARKOV3:gate_in",
                 "CLK1:gate_out > MARKOV4:gate_in",
-                "CLK1:gate_out > MARKOV5:gate_in",
                 "CLK1:gate_out > ADSR1:gate_in",
 
-                // Markov Transition Mesh (5 nodes)
+                // Markov Transition Mesh (4 nodes - Complete Graph K4)
                 "MARKOV1:trans_out1 > MARKOV2:trans_in",
                 "MARKOV1:trans_out2 > MARKOV3:trans_in",
                 "MARKOV1:trans_out3 > MARKOV4:trans_in",
 
-                "MARKOV2:trans_out1 > MARKOV3:trans_in",
-                "MARKOV2:trans_out2 > MARKOV4:trans_in",
-                "MARKOV2:trans_out3 > MARKOV1:trans_in",
+                "MARKOV2:trans_out1 > MARKOV1:trans_in",
+                "MARKOV2:trans_out2 > MARKOV3:trans_in",
+                "MARKOV2:trans_out3 > MARKOV4:trans_in",
 
-                "MARKOV3:trans_out1 > MARKOV4:trans_in",
-                "MARKOV3:trans_out2 > MARKOV5:trans_in",
-                "MARKOV3:trans_out3 > MARKOV1:trans_in",
+                "MARKOV3:trans_out1 > MARKOV1:trans_in",
+                "MARKOV3:trans_out2 > MARKOV2:trans_in",
+                "MARKOV3:trans_out3 > MARKOV4:trans_in",
 
-                "MARKOV4:trans_out1 > MARKOV5:trans_in",
-                "MARKOV4:trans_out2 > MARKOV1:trans_in",
-                "MARKOV4:trans_out3 > MARKOV2:trans_in",
-
-                "MARKOV5:trans_out1 > MARKOV1:trans_in",
-                "MARKOV5:trans_out2 > MARKOV4:trans_in",
-                "MARKOV5:trans_out3 > MARKOV3:trans_in",
+                "MARKOV4:trans_out1 > MARKOV1:trans_in",
+                "MARKOV4:trans_out2 > MARKOV2:trans_in",
+                "MARKOV4:trans_out3 > MARKOV3:trans_in",
 
                 // Pitch CV Summing to VCO1
                 "MARKOV1:cv_out > VCO1:cv_in",
                 "MARKOV2:cv_out > VCO1:cv_in",
                 "MARKOV3:cv_out > VCO1:cv_in",
                 "MARKOV4:cv_out > VCO1:cv_in",
-                "MARKOV5:cv_out > VCO1:cv_in",
 
                 // Modulations
                 "ADSR1:cv_out > VCF1:cv_in",
