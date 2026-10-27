@@ -11,7 +11,6 @@ export const DOCK_TITLES = {
     SPEC: 'SPECTRUM ANALYZER',
     SCOPE: 'OSCILLOSCOPE',
     LISS: 'LISSAJOUS (X-Y)',
-    XY: 'LISSAJOUS (X-Y)',
     WAVE: 'WAVE RECORDER & SLICER'
 };
 
@@ -24,7 +23,6 @@ export const DOCK_ICONS = {
     SPEC: 'activity',
     SCOPE: 'activity',
     LISS: 'activity',
-    XY: 'activity',
     WAVE: 'audio-waveform'
 };
 

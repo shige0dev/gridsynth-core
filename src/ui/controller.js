@@ -9,7 +9,7 @@ import { PageManager } from './managers/page-manager.js?v=402';
 import { InteractionManager } from './managers/interaction-manager.js?v=402';
 import { ToolbarManager } from './managers/toolbar-manager.js?v=402';
 
-export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'LISS', 'XY', 'SPEC', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'STATE4', 'FLIP', 'FF', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD', 'COUNT', 'PASS'];
+export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'LISS', 'SPEC', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'STATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD', 'COUNT'];
 
 export class UIController {
     constructor(synth) {
@@ -185,7 +185,7 @@ export class UIController {
                     <div class="absolute top-[2px] left-0 right-0 px-1 flex justify-center items-center pointer-events-none z-20">
                         <span class="w-full text-center font-bold text-[7.5px] tracking-tight text-white truncate select-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">${displayName}</span>
                     </div>`;
-            } else if (m.type === 'PAD' || m.type === 'SCOPE' || m.type === 'LISS' || m.type === 'XY') {
+            } else if (m.type === 'PAD' || m.type === 'SCOPE' || m.type === 'LISS') {
                 const displayName = m.name || m.type;
                 titleHTML = `
                     <div class="absolute top-[2px] left-[2px] right-[2px] flex justify-center items-center pointer-events-none z-20">

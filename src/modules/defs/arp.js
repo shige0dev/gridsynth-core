@@ -258,11 +258,8 @@ export const STATE4 = {
     }
 };
 
-export const FLIP = STATE4;
-
 export const arpDefs = {
     GATE4,
     ARP,
-    STATE4,
-    FLIP
+    STATE4
 };

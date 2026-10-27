@@ -1,4 +1,4 @@
-export const FM = {
+export const FMx3 = {
     create: (ctx, d, patch, eng) => {
         const w = new AudioWorkletNode(ctx, 'fm-processor', {
             numberOfInputs: 2,
@@ -121,12 +121,7 @@ export const FMCORE = {
     }
 };
 
-export const FMx3 = FM;
-export const FM3OP = FM;
-
 export const fmAudioDefs = {
     FMx3,
-    FMCORE,
-    FM: FMx3,
-    FM3OP: FMx3
+    FMCORE
 };

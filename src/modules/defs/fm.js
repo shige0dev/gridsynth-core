@@ -430,10 +430,6 @@ export const FMCORE = {
     }
 };
 
-// Aliases for backward compatibility
-export const FM = FMx3;
-export const FM3OP = FMx3;
-
 export const fmDefs = {
     FMx3,
     FMCORE

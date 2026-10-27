@@ -66,9 +66,6 @@ export const COUNT = {
     }
 };
 
-export const PASS = COUNT;
-
 export const passAudioDefs = {
-    COUNT,
-    PASS
+    COUNT
 };

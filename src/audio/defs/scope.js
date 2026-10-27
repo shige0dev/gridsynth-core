@@ -114,6 +114,5 @@ export const SPEC = {
 export const scopeAudioDefs = {
     SCOPE,
     LISS,
-    XY: LISS,
     SPEC
 };

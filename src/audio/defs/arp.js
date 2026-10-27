@@ -214,10 +214,7 @@ export const STATE4 = {
                 out1,
                 out2,
                 out3,
-                out4,
-                // Backward compatibility for FLIP / FF
-                q_out: out1,
-                nq_out: out2
+                out4
             },
             resetStep: () => {
                 currentStep = 0;
@@ -235,13 +232,8 @@ export const STATE4 = {
     }
 };
 
-export const FLIP = STATE4;
-export const FF = STATE4;
-
 export const arpAudioDefs = {
     GATE4,
     ARP,
-    STATE4,
-    FLIP,
-    FF: STATE4
+    STATE4
 };

@@ -76,9 +76,6 @@ export const COUNT = {
     }
 };
 
-export const PASS = COUNT;
-
 export const passDefs = {
-    COUNT,
-    PASS
+    COUNT
 };

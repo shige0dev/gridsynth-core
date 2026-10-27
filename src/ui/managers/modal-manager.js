@@ -5,18 +5,13 @@ import { UIHelpers } from '../helpers.js?v=187';
 
 export const MODAL_WIDTHS = {
     // Complex Synthesizers
-    FM: 'w-[390px]',
-    FM3OP: 'w-[390px]',
     FMx3: 'w-[390px]',
     FMCORE: 'w-[250px]',
 
     // Sequencing & Arpeggiation
     COUNT: 'w-[220px]',
-    PASS: 'w-[220px]',
     GATE4: 'w-[230px]',
     STATE4: 'w-[230px]',
-    FLIP: 'w-[230px]',
-    FF: 'w-[230px]',
     ARP: 'w-[230px]',
     CHORD: 'w-[240px]',
     MARKOV: 'w-[260px]',
@@ -275,7 +270,6 @@ export class ModalManager {
                 const basicTypes = Object.keys(MODULE_REGISTRY).filter(t => {
                     if (t === 'SUB') return false; // Placed under User Subpatch area
                     if (t === 'SUB_IO') return !isMain;
-                    if (t === 'FM' || t === 'FM3OP' || t === 'XY' || t === 'FF' || t === 'PASS' || t === 'FLIP') return false; // Aliases for FMx3, LISS, STATE4, COUNT
                     return true;
                 });
 
