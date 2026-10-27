@@ -11,15 +11,15 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: 'Standard Mono Synth Voice (VCO + VCF + ADSR + VCA)',
             ports: {
-                cv_in: { pin: 'PIN4', signal: 'cv' },
-                gate_in: { pin: 'PIN3', signal: 'gate' },
-                wave_out: { pin: 'PIN9', signal: 'audio' }
+                cv_in: { pin: 'PIN5', signal: 'cv' },
+                gate_in: { pin: 'PIN4', signal: 'gate' },
+                wave_out: { pin: 'PIN10', signal: 'audio' }
             }
         },
         pins: {
-            PIN4: { label: 'Pitch (1V/Oct)', type: 'cv_in' },
-            PIN3: { label: 'Gate In', type: 'gate_in' },
-            PIN9: { label: 'Audio Out', type: 'audio_out' }
+            PIN5: { label: 'Pitch (1V/Oct)', type: 'cv_in' },
+            PIN4: { label: 'Gate In', type: 'gate_in' },
+            PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
             name: 'VOICE',
@@ -38,13 +38,13 @@ export const FACTORY_SUBPATCHES = {
                 "VCA1": { "type": "VCA", "level": 0.0, "col": 3, "row": 2 }
             },
             connections: [
-                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "VCO1", port: "cv_in" } },
-                { from: { moduleId: "SUB_IO1", port: "PIN3_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "VCO1", port: "cv_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
                 { from: { moduleId: "VCO1", port: "wave_out" }, to: { moduleId: "VCF1", port: "wave_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCF1", port: "cv_in" } },
                 { from: { moduleId: "VCF1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
-                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN9_in" } }
+                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }
             ]
         }
     },
@@ -60,15 +60,15 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: '303スタイルのアシッドベースボイス（VCO + Resonant VCF + Snappy ADSR + VCA）',
             ports: {
-                cv_in: { pin: 'PIN4', signal: 'cv' },
-                trig_in: { pin: 'PIN3', signal: 'gate' },
-                wave_out: { pin: 'PIN9', signal: 'audio' }
+                cv_in: { pin: 'PIN5', signal: 'cv' },
+                trig_in: { pin: 'PIN4', signal: 'gate' },
+                wave_out: { pin: 'PIN10', signal: 'audio' }
             }
         },
         pins: {
-            PIN4: { label: 'Pitch (1V/Oct)', type: 'cv_in' },
-            PIN3: { label: 'Gate In', type: 'gate_in' },
-            PIN9: { label: 'Audio Out', type: 'audio_out' }
+            PIN5: { label: 'Pitch (1V/Oct)', type: 'cv_in' },
+            PIN4: { label: 'Gate In', type: 'gate_in' },
+            PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
             name: 'ACID BASS',
@@ -87,13 +87,13 @@ export const FACTORY_SUBPATCHES = {
                 "VCA1": { "type": "VCA", "level": 0.0, "col": 3, "row": 2 }
             },
             connections: [
-                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "VCO1", port: "cv_in" } },
-                { from: { moduleId: "SUB_IO1", port: "PIN3_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "VCO1", port: "cv_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
                 { from: { moduleId: "VCO1", port: "wave_out" }, to: { moduleId: "VCF1", port: "wave_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCF1", port: "cv_in" } },
                 { from: { moduleId: "VCF1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
-                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN9_in" } }
+                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }
             ]
         }
     },
@@ -109,15 +109,15 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: 'デュアル・オシレーター＆ローパスフィルターによるリードボイス',
             ports: {
-                cv_in: { pin: 'PIN4', signal: 'cv' },
-                gate_in: { pin: 'PIN3', signal: 'gate' },
-                wave_out: { pin: 'PIN9', signal: 'audio' }
+                cv_in: { pin: 'PIN5', signal: 'cv' },
+                gate_in: { pin: 'PIN4', signal: 'gate' },
+                wave_out: { pin: 'PIN10', signal: 'audio' }
             }
         },
         pins: {
-            PIN4: { label: 'Pitch (1V/Oct)', type: 'cv_in' },
-            PIN3: { label: 'Gate In', type: 'gate_in' },
-            PIN9: { label: 'Audio Out', type: 'audio_out' }
+            PIN5: { label: 'Pitch (1V/Oct)', type: 'cv_in' },
+            PIN4: { label: 'Gate In', type: 'gate_in' },
+            PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
             name: 'DUAL LEAD',
@@ -136,14 +136,14 @@ export const FACTORY_SUBPATCHES = {
                 "VCA1": { "type": "VCA", "level": 0.0, "col": 3, "row": 2 }
             },
             connections: [
-                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "VCO1", port: "cv_in" } },
-                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "VCO1", port: "cv_in2" } },
-                { from: { moduleId: "SUB_IO1", port: "PIN3_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "VCO1", port: "cv_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "VCO1", port: "cv_in2" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
                 { from: { moduleId: "VCO1", port: "wave_out" }, to: { moduleId: "VCF1", port: "wave_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCF1", port: "cv_in" } },
                 { from: { moduleId: "VCF1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
-                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN9_in" } }
+                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }
             ]
         }
     },
@@ -159,13 +159,13 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: '空間系エフェクト（ディレイ＆ステレオリバーブ）ブロック',
             ports: {
-                wave_in: { pin: 'PIN4', signal: 'audio' },
-                wave_out: { pin: 'PIN9', signal: 'audio' }
+                wave_in: { pin: 'PIN5', signal: 'audio' },
+                wave_out: { pin: 'PIN10', signal: 'audio' }
             }
         },
         pins: {
-            PIN4: { label: 'Audio In', type: 'audio_in' },
-            PIN9: { label: 'Audio Out', type: 'audio_out' }
+            PIN5: { label: 'Audio In', type: 'audio_in' },
+            PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
             name: 'SPACE FX',
@@ -180,9 +180,9 @@ export const FACTORY_SUBPATCHES = {
                 "REVERB1": { "type": "REVERB", "time": 2.6, "damp": 4000, "mix": 0.35, "col": 3, "row": 1 }
             },
             connections: [
-                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "DELAY1", port: "wave_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "DELAY1", port: "wave_in" } },
                 { from: { moduleId: "DELAY1", port: "wave_out" }, to: { moduleId: "REVERB1", port: "wave_in" } },
-                { from: { moduleId: "REVERB1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN9_in" } }
+                { from: { moduleId: "REVERB1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }
             ]
         }
     },
@@ -198,13 +198,13 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: 'アナログスタイル・パンチーバスドラム（ピッチスウィープ＋減衰）',
             ports: {
-                trig_in: { pin: 'PIN4', signal: 'gate' },
-                wave_out: { pin: 'PIN9', signal: 'audio' }
+                trig_in: { pin: 'PIN5', signal: 'gate' },
+                wave_out: { pin: 'PIN10', signal: 'audio' }
             }
         },
         pins: {
-            PIN4: { label: 'Trig / Gate', type: 'gate_in' },
-            PIN9: { label: 'Audio Out', type: 'audio_out' }
+            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
             name: 'BASS DRUM',
@@ -225,13 +225,13 @@ export const FACTORY_SUBPATCHES = {
                 "VCA1": { "type": "VCA", "level": 0.0, "col": 0, "row": 2 }
             },
             connections: [
-                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
-                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR2", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "ADSR2", port: "gate_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "MATH2_1", port: "cv_in_a" } },
                 { from: { moduleId: "MATH2_1", port: "cv_out" }, to: { moduleId: "VCO1", port: "cv_in" } },
                 { from: { moduleId: "VCO1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
                 { from: { moduleId: "ADSR2", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
-                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN9_in" } }
+                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }
             ]
         }
     },
@@ -247,13 +247,13 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: 'アナログスタイル・スネアドラム（三角波ボディトーン＋ノイズワイヤー）',
             ports: {
-                trig_in: { pin: 'PIN4', signal: 'gate' },
-                wave_out: { pin: 'PIN9', signal: 'audio' }
+                trig_in: { pin: 'PIN5', signal: 'gate' },
+                wave_out: { pin: 'PIN10', signal: 'audio' }
             }
         },
         pins: {
-            PIN4: { label: 'Trig / Gate', type: 'gate_in' },
-            PIN9: { label: 'Audio Out', type: 'audio_out' }
+            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
             name: 'SNARE DRUM',
@@ -280,8 +280,8 @@ export const FACTORY_SUBPATCHES = {
                 "VCA2": { "type": "VCA", "level": 0.0, "col": 4, "row": 3 }
             },
             connections: [
-                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
-                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR2", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "ADSR2", port: "gate_in" } },
                 { from: { moduleId: "VCO1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
                 { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "MIX1", port: "wave_in1" } },
@@ -289,7 +289,7 @@ export const FACTORY_SUBPATCHES = {
                 { from: { moduleId: "VCF1", port: "wave_out" }, to: { moduleId: "VCA2", port: "wave_in" } },
                 { from: { moduleId: "ADSR2", port: "cv_out" }, to: { moduleId: "VCA2", port: "cv_in" } },
                 { from: { moduleId: "VCA2", port: "wave_out" }, to: { moduleId: "MIX1", port: "wave_in2" } },
-                { from: { moduleId: "MIX1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN9_in" } }
+                { from: { moduleId: "MIX1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }
             ]
         }
     },
@@ -305,13 +305,13 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: 'ハード＆リッチ・テクノキック（アタッククリック＋50Hzサブランブル）',
             ports: {
-                trig_in: { pin: 'PIN4', signal: 'gate' },
-                wave_out: { pin: 'PIN9', signal: 'audio' }
+                trig_in: { pin: 'PIN5', signal: 'gate' },
+                wave_out: { pin: 'PIN10', signal: 'audio' }
             }
         },
         pins: {
-            PIN4: { label: 'Trig / Gate', type: 'gate_in' },
-            PIN9: { label: 'Audio Out', type: 'audio_out' }
+            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
             name: 'BASS DRUM 2',
@@ -342,8 +342,8 @@ export const FACTORY_SUBPATCHES = {
                 "VCF1": { "type": "VCF", "filterType": "highpass", "cutoff": 4500, "q": 2.2, "modDepth": 0, "col": 4, "row": 2 }
             },
             connections: [
-                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
-                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR2", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "ADSR2", port: "gate_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "MATH2_1", port: "cv_in_a" } },
                 { from: { moduleId: "MATH2_1", port: "cv_out" }, to: { moduleId: "MATH2_2", port: "cv_in_a" } },
                 { from: { moduleId: "MATH2_2", port: "cv_out" }, to: { moduleId: "VCO1", port: "cv_in" } },
@@ -354,7 +354,7 @@ export const FACTORY_SUBPATCHES = {
                 { from: { moduleId: "VCF1", port: "wave_out" }, to: { moduleId: "VCA2", port: "wave_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCA2", port: "cv_in" } },
                 { from: { moduleId: "VCA2", port: "wave_out" }, to: { moduleId: "MIX1", port: "wave_in2" } },
-                { from: { moduleId: "MIX1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN9_in" } }
+                { from: { moduleId: "MIX1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }
             ]
         }
     },
@@ -370,13 +370,13 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: 'ハイパスフィルタード・メタリックノイズによるクリスプなハイハット',
             ports: {
-                trig_in: { pin: 'PIN4', signal: 'gate' },
-                wave_out: { pin: 'PIN9', signal: 'audio' }
+                trig_in: { pin: 'PIN5', signal: 'gate' },
+                wave_out: { pin: 'PIN10', signal: 'audio' }
             }
         },
         pins: {
-            PIN4: { label: 'Trig / Gate', type: 'gate_in' },
-            PIN9: { label: 'Audio Out', type: 'audio_out' }
+            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
             name: 'HI-HAT',
@@ -395,11 +395,11 @@ export const FACTORY_SUBPATCHES = {
                 "VCA1": { "type": "VCA", "level": 0.0, "col": 2, "row": 2 }
             },
             connections: [
-                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
                 { from: { moduleId: "NOISE1", port: "wave_out" }, to: { moduleId: "VCF1", port: "wave_in" } },
                 { from: { moduleId: "VCF1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
-                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN9_in" } }
+                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }
             ]
         }
     },
@@ -415,13 +415,13 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: '909スタイル・マルチバースト・ハンドクラップ（3連バーストエンベロープ）',
             ports: {
-                trig_in: { pin: 'PIN4', signal: 'gate' },
-                wave_out: { pin: 'PIN9', signal: 'audio' }
+                trig_in: { pin: 'PIN5', signal: 'gate' },
+                wave_out: { pin: 'PIN10', signal: 'audio' }
             }
         },
         pins: {
-            PIN4: { label: 'Trig / Gate', type: 'gate_in' },
-            PIN9: { label: 'Audio Out', type: 'audio_out' }
+            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
             name: 'HAND CLAP',
@@ -448,17 +448,17 @@ export const FACTORY_SUBPATCHES = {
                 "VCA1": { "type": "VCA", "level": 0.0, "col": 2, "row": 2 }
             },
             connections: [
-                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
-                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "CVDELAY1", port: "cv_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "CVDELAY1", port: "cv_in" } },
                 { from: { moduleId: "CVDELAY1", port: "cv_out" }, to: { moduleId: "ADSR2", port: "gate_in" } },
-                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "CVDELAY2", port: "cv_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "CVDELAY2", port: "cv_in" } },
                 { from: { moduleId: "CVDELAY2", port: "cv_out" }, to: { moduleId: "ADSR3", port: "gate_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
                 { from: { moduleId: "ADSR2", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
                 { from: { moduleId: "ADSR3", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
                 { from: { moduleId: "NOISE1", port: "wave_out" }, to: { moduleId: "VCF1", port: "wave_in" } },
                 { from: { moduleId: "VCF1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
-                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN9_in" } }
+                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }
             ]
         }
     },
@@ -474,13 +474,13 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: 'テクノタム（ピッチベンド三角波＋深みのあるレゾナンスボディ）',
             ports: {
-                trig_in: { pin: 'PIN4', signal: 'gate' },
-                wave_out: { pin: 'PIN9', signal: 'audio' }
+                trig_in: { pin: 'PIN5', signal: 'gate' },
+                wave_out: { pin: 'PIN10', signal: 'audio' }
             }
         },
         pins: {
-            PIN4: { label: 'Trig / Gate', type: 'gate_in' },
-            PIN9: { label: 'Audio Out', type: 'audio_out' }
+            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
             name: 'TECHNO TOM',
@@ -503,14 +503,14 @@ export const FACTORY_SUBPATCHES = {
                 "VCA1": { "type": "VCA", "level": 0.0, "col": 2, "row": 2 }
             },
             connections: [
-                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
-                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR2", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "ADSR2", port: "gate_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "MATH2_1", port: "cv_in_a" } },
                 { from: { moduleId: "MATH2_1", port: "cv_out" }, to: { moduleId: "MATH2_2", port: "cv_in_a" } },
                 { from: { moduleId: "MATH2_2", port: "cv_out" }, to: { moduleId: "VCO1", port: "cv_in" } },
                 { from: { moduleId: "VCO1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
                 { from: { moduleId: "ADSR2", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
-                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN9_in" } }
+                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }
             ]
         }
     },
@@ -526,13 +526,13 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: 'メタリックパーカッション / リムショット（金属的な倍音リングモジュレーション）',
             ports: {
-                trig_in: { pin: 'PIN4', signal: 'gate' },
-                wave_out: { pin: 'PIN9', signal: 'audio' }
+                trig_in: { pin: 'PIN5', signal: 'gate' },
+                wave_out: { pin: 'PIN10', signal: 'audio' }
             }
         },
         pins: {
-            PIN4: { label: 'Trig / Gate', type: 'gate_in' },
-            PIN9: { label: 'Audio Out', type: 'audio_out' }
+            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
             name: 'METALLIC PERC',
@@ -551,11 +551,11 @@ export const FACTORY_SUBPATCHES = {
                 "VCA1": { "type": "VCA", "level": 0.0, "col": 2, "row": 2 }
             },
             connections: [
-                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
                 { from: { moduleId: "VCO1", port: "wave_out" }, to: { moduleId: "VCF1", port: "wave_in" } },
                 { from: { moduleId: "VCF1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
-                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN9_in" } }
+                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }
             ]
         }
     }

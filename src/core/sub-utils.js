@@ -14,7 +14,7 @@ export const isSubIOModule = (modIdOrType) => {
 
 export const getOppositeSubPort = (port) => {
     if (!port || typeof port !== 'string') return port;
-    const m = port.match(/^PIN([1-9]|1[0-2])_(in|out)$/i);
+    const m = port.match(/^PIN([1-9]|1[0-4])_(in|out)$/i);
     if (!m) return port;
     const num = parseInt(m[1], 10);
     const dir = m[2].toLowerCase();
@@ -33,10 +33,10 @@ export const normalizeSubPort = (port, modIdOrType = null, manifest = null) => {
         for (const [aliasKey, def] of Object.entries(manifest.ports)) {
             if (aliasKey.toLowerCase() === pLower) {
                 const pinStr = (def.pin || '').toUpperCase();
-                const m = pinStr.match(/^PIN([1-9]|1[0-2])$/);
+                const m = pinStr.match(/^PIN([1-9]|1[0-4])$/);
                 if (m) {
                     const slot = parseInt(m[1], 10);
-                    if (slot <= 6) {
+                    if (slot <= 7) {
                         return isChild ? `PIN${slot}_out` : `PIN${slot}_in`;
                     } else {
                         return isChild ? `PIN${slot}_in` : `PIN${slot}_out`;
@@ -47,16 +47,16 @@ export const normalizeSubPort = (port, modIdOrType = null, manifest = null) => {
     }
 
     // 2. Already exact PINn_in or PINn_out (case-insensitive)
-    const pinMatch = p.match(/^PIN([1-9]|1[0-2])_(in|out)$/i);
+    const pinMatch = p.match(/^PIN([1-9]|1[0-4])_(in|out)$/i);
     if (pinMatch) {
         return `PIN${pinMatch[1]}_${pinMatch[2].toLowerCase()}`;
     }
 
     // 3. Bare PINn without _in/_out
-    const barePinMatch = p.match(/^PIN([1-9]|1[0-2])$/i);
+    const barePinMatch = p.match(/^PIN([1-9]|1[0-4])$/i);
     if (barePinMatch) {
         const slot = parseInt(barePinMatch[1], 10);
-        if (slot <= 6) {
+        if (slot <= 7) {
             return isChild ? `PIN${slot}_out` : `PIN${slot}_in`;
         } else {
             return isChild ? `PIN${slot}_in` : `PIN${slot}_out`;
@@ -65,35 +65,35 @@ export const normalizeSubPort = (port, modIdOrType = null, manifest = null) => {
 
     // 4. Common functional fallbacks
     const fallbacks = {
-        'cv_in': 4, 'cv': 4, 'pitch_in': 4, 'pitch': 4, '1v_oct': 4, '1v/oct': 4,
-        'gate_in': 3, 'gate': 3,
-        'trig_in': 4, 'trig': 4,
-        'wave_in': 4, 'audio_in': 4,
-        'cv_in2': 3, 'mod_in': 3, 'cv2': 3, 'clk_in': 3, 'sync_in': 3,
-        'gate_in2': 2, 'trig2': 2, 'reset_in': 2, 'reset': 2,
-        'wave_out': 9, 'out': 9, 'audio_out': 9, 'main_out': 9,
-        'wave_out2': 10, 'out2': 10, 'audio_out2': 10, 'aux_out': 10, 'wet_out': 10
+        'cv_in': 5, 'cv': 5, 'pitch_in': 5, 'pitch': 5, '1v_oct': 5, '1v/oct': 5,
+        'gate_in': 4, 'gate': 4,
+        'trig_in': 5, 'trig': 5,
+        'wave_in': 5, 'audio_in': 5,
+        'cv_in2': 4, 'mod_in': 4, 'cv2': 4, 'clk_in': 4, 'sync_in': 4,
+        'gate_in2': 3, 'trig2': 3, 'reset_in': 3, 'reset': 3,
+        'wave_out': 10, 'out': 10, 'audio_out': 10, 'main_out': 10,
+        'wave_out2': 11, 'out2': 11, 'audio_out2': 11, 'aux_out': 11, 'wet_out': 11
     };
     if (fallbacks[pLower]) {
         const slot = fallbacks[pLower];
-        if (slot <= 6) {
+        if (slot <= 7) {
             return isChild ? `PIN${slot}_out` : `PIN${slot}_in`;
         } else {
             return isChild ? `PIN${slot}_in` : `PIN${slot}_out`;
         }
     }
 
-    // 5. Legacy io_1 .. io_12 support
-    const ioMatch = pLower.match(/^io_?([1-9]|1[0-2])$/);
+    // 5. Legacy io_1 .. io_14 support
+    const ioMatch = pLower.match(/^io_?([1-9]|1[0-4])$/);
     if (ioMatch) {
         const num = parseInt(ioMatch[1], 10);
         let slot = num;
-        if (num === 9) slot = 7;
-        else if (num === 10) slot = 8;
-        else if (num === 11) slot = 9;
-        else if (num === 12) slot = 10;
+        if (num === 9) slot = 8;
+        else if (num === 10) slot = 9;
+        else if (num === 11) slot = 10;
+        else if (num === 12) slot = 11;
 
-        if (slot <= 6) {
+        if (slot <= 7) {
             return isChild ? `PIN${slot}_out` : `PIN${slot}_in`;
         } else {
             return isChild ? `PIN${slot}_in` : `PIN${slot}_out`;
@@ -106,7 +106,7 @@ export const normalizeSubPort = (port, modIdOrType = null, manifest = null) => {
 export const getSubPortAlias = (port, modIdOrType = null, manifest = null) => {
     if (!port || typeof port !== 'string') return null;
     const norm = normalizeSubPort(port, modIdOrType, manifest);
-    const pinMatch = norm.match(/^PIN([1-9]|1[0-2])_(in|out)$/i);
+    const pinMatch = norm.match(/^PIN([1-9]|1[0-4])_(in|out)$/i);
     const pinNumber = pinMatch ? parseInt(pinMatch[1], 10) : null;
     const pinBare = pinNumber ? `PIN${pinNumber}` : null;
 
@@ -134,13 +134,13 @@ export const getSubPortAlias = (port, modIdOrType = null, manifest = null) => {
 
 export const isSubPortOutput = (port, modIdOrType = null, manifest = null) => {
     const norm = normalizeSubPort(port, modIdOrType, manifest);
-    const m = norm.match(/^PIN([1-9]|1[0-2])_(in|out)$/i);
+    const m = norm.match(/^PIN([1-9]|1[0-4])_(in|out)$/i);
     return m ? m[2].toLowerCase() === 'out' : false;
 };
 
 export const isSubPortInput = (port, modIdOrType = null, manifest = null) => {
     const norm = normalizeSubPort(port, modIdOrType, manifest);
-    const m = norm.match(/^PIN([1-9]|1[0-2])_(in|out)$/i);
+    const m = norm.match(/^PIN([1-9]|1[0-4])_(in|out)$/i);
     return m ? m[2].toLowerCase() === 'in' : false;
 };
 

@@ -31,16 +31,16 @@ export const preset05 = {
             },
             connections: [
                 "CLK1:gate_out > SEQ8_1:gate_in",
-                "SEQ8_1:cv_out > SUB1:PIN4_in",
-                "SEQ8_1:gate_out > SUB1:PIN3_in",
-                "SUB1:PIN9_out > MIX1:wave_in1",
-                "CLK2:gate_out > SUB2:PIN4_in",
-                "SUB2:PIN9_out > MIX1:wave_in2",
+                "SEQ8_1:cv_out > SUB1:PIN5_in",
+                "SEQ8_1:gate_out > SUB1:PIN4_in",
+                "SUB1:PIN10_out > MIX1:wave_in1",
+                "CLK2:gate_out > SUB2:PIN5_in",
+                "SUB2:PIN10_out > MIX1:wave_in2",
                 "CLK3:gate_out > SEQ8_2:gate_in",
-                "SEQ8_2:gate_out > SUB5:PIN4_in",
-                "SUB5:PIN9_out > MIX1:wave_in3",
-                "CLK1:gate_out > SUB4:PIN4_in",
-                "SUB4:PIN9_out > MIX1:wave_in4",
+                "SEQ8_2:gate_out > SUB5:PIN5_in",
+                "SUB5:PIN10_out > MIX1:wave_in3",
+                "CLK1:gate_out > SUB4:PIN5_in",
+                "SUB4:PIN10_out > MIX1:wave_in4",
                 "MIX1:wave_out > SPK1:wave_in_l",
                 "MIX1:wave_out > SPK1:wave_in_r"
             ]
@@ -58,13 +58,13 @@ export const preset05 = {
                 "VCA1": { type: "VCA", level: 0.0 }
             },
             connections: [
-                "SUB_IO1:PIN4_out > VCO1:cv_in",
-                "SUB_IO1:PIN3_out > ADSR1:gate_in",
+                "SUB_IO1:PIN5_out > VCO1:cv_in",
+                "SUB_IO1:PIN4_out > ADSR1:gate_in",
                 "VCO1:wave_out > VCF1:wave_in",
                 "ADSR1:cv_out > VCF1:cv_in",
                 "VCF1:wave_out > VCA1:wave_in",
                 "ADSR1:cv_out > VCA1:cv_in",
-                "VCA1:wave_out > SUB_IO1:PIN9_in"
+                "VCA1:wave_out > SUB_IO1:PIN10_in"
             ]
         },
         "2": {
@@ -81,13 +81,13 @@ export const preset05 = {
                 "VCA1": { type: "VCA", level: 0.0 }
             },
             connections: [
-                "SUB_IO1:PIN4_out > ADSR1:gate_in",
-                "SUB_IO1:PIN4_out > ADSR2:gate_in",
+                "SUB_IO1:PIN5_out > ADSR1:gate_in",
+                "SUB_IO1:PIN5_out > ADSR2:gate_in",
                 "ADSR1:cv_out > MATH2_1:cv_in_a",
                 "MATH2_1:cv_out > VCO1:cv_in",
                 "VCO1:wave_out > VCA1:wave_in",
                 "ADSR2:cv_out > VCA1:cv_in",
-                "VCA1:wave_out > SUB_IO1:PIN9_in"
+                "VCA1:wave_out > SUB_IO1:PIN10_in"
             ]
         },
         "3": {
@@ -107,8 +107,8 @@ export const preset05 = {
                 "VCA2": { type: "VCA", level: 0.0 }
             },
             connections: [
-                "SUB_IO1:PIN4_out > ADSR1:gate_in",
-                "SUB_IO1:PIN4_out > ADSR2:gate_in",
+                "SUB_IO1:PIN5_out > ADSR1:gate_in",
+                "SUB_IO1:PIN5_out > ADSR2:gate_in",
                 "VCO1:wave_out > VCA1:wave_in",
                 "ADSR1:cv_out > VCA1:cv_in",
                 "VCA1:wave_out > MIX1:wave_in1",
@@ -116,7 +116,7 @@ export const preset05 = {
                 "VCF1:wave_out > VCA2:wave_in",
                 "ADSR2:cv_out > VCA2:cv_in",
                 "VCA2:wave_out > MIX1:wave_in2",
-                "MIX1:wave_out > SUB_IO1:PIN9_in"
+                "MIX1:wave_out > SUB_IO1:PIN10_in"
             ]
         },
         "4": {
@@ -132,11 +132,11 @@ export const preset05 = {
                 "VCA1": { type: "VCA", level: 0.0 }
             },
             connections: [
-                "SUB_IO1:PIN4_out > ADSR1:gate_in",
+                "SUB_IO1:PIN5_out > ADSR1:gate_in",
                 "NOISE1:wave_out > VCF1:wave_in",
                 "VCF1:wave_out > VCA1:wave_in",
                 "ADSR1:cv_out > VCA1:cv_in",
-                "VCA1:wave_out > SUB_IO1:PIN9_in"
+                "VCA1:wave_out > SUB_IO1:PIN10_in"
             ]
         },
         "5": {
@@ -156,17 +156,17 @@ export const preset05 = {
                 "VCA1": { type: "VCA", level: 0.0 }
             },
             connections: [
-                "SUB_IO1:PIN4_out > ADSR1:gate_in",
-                "SUB_IO1:PIN4_out > CVDELAY1:cv_in",
+                "SUB_IO1:PIN5_out > ADSR1:gate_in",
+                "SUB_IO1:PIN5_out > CVDELAY1:cv_in",
                 "CVDELAY1:cv_out > ADSR2:gate_in",
-                "SUB_IO1:PIN4_out > CVDELAY2:cv_in",
+                "SUB_IO1:PIN5_out > CVDELAY2:cv_in",
                 "CVDELAY2:cv_out > ADSR3:gate_in",
                 "ADSR1:cv_out > VCA1:cv_in",
                 "ADSR2:cv_out > VCA1:cv_in",
                 "ADSR3:cv_out > VCA1:cv_in",
                 "NOISE1:wave_out > VCF1:wave_in",
                 "VCF1:wave_out > VCA1:wave_in",
-                "VCA1:wave_out > SUB_IO1:PIN9_in"
+                "VCA1:wave_out > SUB_IO1:PIN10_in"
             ]
         }
     }

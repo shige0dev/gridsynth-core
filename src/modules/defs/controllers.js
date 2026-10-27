@@ -44,8 +44,8 @@ export const KEY = {
     ports: () => ({
         in: [],
         out: [
-            { port: 'gate_out', pin: 9, color: 'bg-orange-500' },
-            { port: 'cv_out', pin: 10, color: 'bg-yellow-400' }
+            { port: 'gate_out', pin: 10, color: 'bg-orange-500' },
+            { port: 'cv_out', pin: 11, color: 'bg-yellow-400' }
         ]
     }),
     WHITE_KEYS: [{n:'B',s:-1},{n:'C',s:0},{n:'D',s:2},{n:'E',s:4},{n:'F',s:5},{n:'G',s:7},{n:'A',s:9},{n:'B',s:11},{n:'C',s:12},{n:'D',s:14}],

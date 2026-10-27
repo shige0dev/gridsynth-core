@@ -207,9 +207,9 @@ export class SynthEngine {
                 const targetPage = String(subInst.data?.targetPage ?? subInst.targetPage ?? 1);
                 Object.entries(this.modules).forEach(([ioFullId, ioInst]) => {
                     if (ioInst?.type === 'SUB_IO' && ioFullId.startsWith(`${targetPage}/`)) {
-                        // Forward bridge: Parent -> Child (Slots 1..6)
+                        // Forward bridge: Parent -> Child (Slots 1..7)
                         // SUB (Parent) PINn_in -> SUB_IO (Child) PINn_out
-                        for (let i = 1; i <= 6; i++) {
+                        for (let i = 1; i <= 7; i++) {
                             const subIn = subInst.inputs[`PIN${i}_in`];
                             const ioOut = ioInst.outputs[`PIN${i}_out`];
                             if (subIn && ioOut) {
@@ -217,9 +217,9 @@ export class SynthEngine {
                                 try { subIn.connect(ioOut); } catch (err) {}
                             }
                         }
-                        // Return bridge: Child -> Parent (Slots 7..12)
+                        // Return bridge: Child -> Parent (Slots 8..14)
                         // SUB_IO (Child) PINn_in -> SUB (Parent) PINn_out
-                        for (let i = 7; i <= 12; i++) {
+                        for (let i = 8; i <= 14; i++) {
                             const ioIn = ioInst.inputs[`PIN${i}_in`];
                             const subOut = subInst.outputs[`PIN${i}_out`];
                             if (ioIn && subOut) {

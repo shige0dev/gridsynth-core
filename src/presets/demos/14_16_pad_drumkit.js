@@ -65,35 +65,35 @@ export const preset14 = {
             },
             connections: [
                 // Gate routings from 16 Pads to 6 Engines
-                "PAD1:gate_out > SUB1:PIN4_in",
-                "PAD2:gate_out > SUB1:PIN4_in",
-                "PAD15:gate_out > SUB1:PIN4_in",
-                "PAD3:gate_out > SUB2:PIN4_in",
-                "PAD4:gate_out > SUB2:PIN4_in",
-                "PAD14:gate_out > SUB2:PIN4_in",
-                "PAD5:gate_out > SUB3:PIN4_in",
-                "PAD6:gate_out > SUB3:PIN4_in",
-                "PAD7:gate_out > SUB4:PIN4_in",
-                "PAD16:gate_out > SUB4:PIN4_in",
-                "PAD8:gate_out > SUB5:PIN4_in",
-                "PAD9:gate_out > SUB6:PIN4_in",
-                "PAD10:gate_out > SUB6:PIN4_in",
-                "PAD11:gate_out > SUB6:PIN4_in",
-                "PAD12:gate_out > SUB6:PIN4_in",
-                "PAD13:gate_out > SUB6:PIN4_in",
+                "PAD1:gate_out > SUB1:PIN5_in",
+                "PAD2:gate_out > SUB1:PIN5_in",
+                "PAD15:gate_out > SUB1:PIN5_in",
+                "PAD3:gate_out > SUB2:PIN5_in",
+                "PAD4:gate_out > SUB2:PIN5_in",
+                "PAD14:gate_out > SUB2:PIN5_in",
+                "PAD5:gate_out > SUB3:PIN5_in",
+                "PAD6:gate_out > SUB3:PIN5_in",
+                "PAD7:gate_out > SUB4:PIN5_in",
+                "PAD16:gate_out > SUB4:PIN5_in",
+                "PAD8:gate_out > SUB5:PIN5_in",
+                "PAD9:gate_out > SUB6:PIN5_in",
+                "PAD10:gate_out > SUB6:PIN5_in",
+                "PAD11:gate_out > SUB6:PIN5_in",
+                "PAD12:gate_out > SUB6:PIN5_in",
+                "PAD13:gate_out > SUB6:PIN5_in",
                 // Direct Audio Summing into Master Speaker (No Mixer needed)
-                "SUB1:PIN9_out > SPK1:wave_in_l",
-                "SUB1:PIN9_out > SPK1:wave_in_r",
-                "SUB2:PIN9_out > SPK1:wave_in_l",
-                "SUB2:PIN9_out > SPK1:wave_in_r",
-                "SUB3:PIN9_out > SPK1:wave_in_l",
-                "SUB3:PIN9_out > SPK1:wave_in_r",
-                "SUB4:PIN9_out > SPK1:wave_in_l",
-                "SUB4:PIN9_out > SPK1:wave_in_r",
-                "SUB5:PIN9_out > SPK1:wave_in_l",
-                "SUB5:PIN9_out > SPK1:wave_in_r",
-                "SUB6:PIN9_out > SPK1:wave_in_l",
-                "SUB6:PIN9_out > SPK1:wave_in_r"
+                "SUB1:PIN10_out > SPK1:wave_in_l",
+                "SUB1:PIN10_out > SPK1:wave_in_r",
+                "SUB2:PIN10_out > SPK1:wave_in_l",
+                "SUB2:PIN10_out > SPK1:wave_in_r",
+                "SUB3:PIN10_out > SPK1:wave_in_l",
+                "SUB3:PIN10_out > SPK1:wave_in_r",
+                "SUB4:PIN10_out > SPK1:wave_in_l",
+                "SUB4:PIN10_out > SPK1:wave_in_r",
+                "SUB5:PIN10_out > SPK1:wave_in_l",
+                "SUB5:PIN10_out > SPK1:wave_in_r",
+                "SUB6:PIN10_out > SPK1:wave_in_l",
+                "SUB6:PIN10_out > SPK1:wave_in_r"
             ]
         },
         // Page 1: BASS DRUM (Kick)
@@ -111,13 +111,13 @@ export const preset14 = {
                 "VCA1": { type: "VCA", level: 0.0, col: 0, row: 2 }
             },
             connections: [
-                "SUB_IO1:PIN4_out > ADSR1:gate_in",
-                "SUB_IO1:PIN4_out > ADSR2:gate_in",
+                "SUB_IO1:PIN5_out > ADSR1:gate_in",
+                "SUB_IO1:PIN5_out > ADSR2:gate_in",
                 "ADSR1:cv_out > MATH2_1:cv_in_a",
                 "MATH2_1:cv_out > VCO1:cv_in",
                 "VCO1:wave_out > VCA1:wave_in",
                 "ADSR2:cv_out > VCA1:cv_in",
-                "VCA1:wave_out > SUB_IO1:PIN9_in"
+                "VCA1:wave_out > SUB_IO1:PIN10_in"
             ]
         },
         // Page 2: SNARE DRUM
@@ -138,8 +138,8 @@ export const preset14 = {
                 "VCA2": { type: "VCA", level: 0.0, col: 1, row: 3 }
             },
             connections: [
-                "SUB_IO1:PIN4_out > ADSR1:gate_in",
-                "SUB_IO1:PIN4_out > ADSR2:gate_in",
+                "SUB_IO1:PIN5_out > ADSR1:gate_in",
+                "SUB_IO1:PIN5_out > ADSR2:gate_in",
                 "VCO1:wave_out > VCA1:wave_in",
                 "ADSR1:cv_out > VCA1:cv_in",
                 "VCA1:wave_out > MIX1:wave_in1",
@@ -147,7 +147,7 @@ export const preset14 = {
                 "VCF1:wave_out > VCA2:wave_in",
                 "ADSR2:cv_out > VCA2:cv_in",
                 "VCA2:wave_out > MIX1:wave_in2",
-                "MIX1:wave_out > SUB_IO1:PIN9_in"
+                "MIX1:wave_out > SUB_IO1:PIN10_in"
             ]
         },
         // Page 3: CLOSED HI-HAT (Tight & Crisp)
@@ -164,11 +164,11 @@ export const preset14 = {
                 "VCA1": { type: "VCA", level: 0.0, col: 2, row: 2 }
             },
             connections: [
-                "SUB_IO1:PIN4_out > ADSR1:gate_in",
+                "SUB_IO1:PIN5_out > ADSR1:gate_in",
                 "NOISE1:wave_out > VCF1:wave_in",
                 "VCF1:wave_out > VCA1:wave_in",
                 "ADSR1:cv_out > VCA1:cv_in",
-                "VCA1:wave_out > SUB_IO1:PIN9_in"
+                "VCA1:wave_out > SUB_IO1:PIN10_in"
             ]
         },
         // Page 4: OPEN HI-HAT (Sizzling Long Tail)
@@ -185,11 +185,11 @@ export const preset14 = {
                 "VCA1": { type: "VCA", level: 0.0, col: 2, row: 2 }
             },
             connections: [
-                "SUB_IO1:PIN4_out > ADSR1:gate_in",
+                "SUB_IO1:PIN5_out > ADSR1:gate_in",
                 "NOISE1:wave_out > VCF1:wave_in",
                 "VCF1:wave_out > VCA1:wave_in",
                 "ADSR1:cv_out > VCA1:cv_in",
-                "VCA1:wave_out > SUB_IO1:PIN9_in"
+                "VCA1:wave_out > SUB_IO1:PIN10_in"
             ]
         },
         // Page 5: HAND CLAP (Multi-Burst 909 style)
@@ -210,17 +210,17 @@ export const preset14 = {
                 "VCA1": { type: "VCA", level: 0.0, col: 3, row: 2 }
             },
             connections: [
-                "SUB_IO1:PIN4_out > ADSR1:gate_in",
-                "SUB_IO1:PIN4_out > CVDELAY1:cv_in",
+                "SUB_IO1:PIN5_out > ADSR1:gate_in",
+                "SUB_IO1:PIN5_out > CVDELAY1:cv_in",
                 "CVDELAY1:cv_out > ADSR2:gate_in",
-                "SUB_IO1:PIN4_out > CVDELAY2:cv_in",
+                "SUB_IO1:PIN5_out > CVDELAY2:cv_in",
                 "CVDELAY2:cv_out > ADSR3:gate_in",
                 "ADSR1:cv_out > VCA1:cv_in",
                 "ADSR2:cv_out > VCA1:cv_in",
                 "ADSR3:cv_out > VCA1:cv_in",
                 "NOISE1:wave_out > VCF1:wave_in",
                 "VCF1:wave_out > VCA1:wave_in",
-                "VCA1:wave_out > SUB_IO1:PIN9_in"
+                "VCA1:wave_out > SUB_IO1:PIN10_in"
             ]
         },
         // Page 6: TECHNO TOM / PERC
@@ -239,14 +239,14 @@ export const preset14 = {
                 "VCA1": { type: "VCA", level: 0.0, col: 2, row: 2 }
             },
             connections: [
-                "SUB_IO1:PIN4_out > ADSR1:gate_in",
-                "SUB_IO1:PIN4_out > ADSR2:gate_in",
+                "SUB_IO1:PIN5_out > ADSR1:gate_in",
+                "SUB_IO1:PIN5_out > ADSR2:gate_in",
                 "ADSR1:cv_out > MATH2_1:cv_in_a",
                 "MATH2_1:cv_out > MATH2_2:cv_in_a",
                 "MATH2_2:cv_out > VCO1:cv_in",
                 "VCO1:wave_out > VCA1:wave_in",
                 "ADSR2:cv_out > VCA1:cv_in",
-                "VCA1:wave_out > SUB_IO1:PIN9_in"
+                "VCA1:wave_out > SUB_IO1:PIN10_in"
             ]
         }
     }

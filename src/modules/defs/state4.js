@@ -4,10 +4,10 @@ export const STATE4 = {
     color: 'orange',
     defaults: () => ({ type: 'STATE4', steps: 4, mode: 'up' }),
     ports: (m) => ({
-        in: [{ port: 'gate_in', pin: 4, color: 'bg-rose-500' }],
+        in: [{ port: 'gate_in', pin: 5, color: 'bg-rose-500' }],
         out: [1, 2, 3, 4].map(idx => ({
             port: `cv_out${idx}`,
-            pin: 5 + idx, // PIN 6, 7, 8, 9 along bottom edge
+            pin: 6 + idx, // PIN 7, 8, 9, 10 along bottom edge
             color: 'bg-yellow-400',
             dimmed: idx > (m.steps ?? 4)
         }))

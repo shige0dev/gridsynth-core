@@ -4,10 +4,10 @@ export const GATE4 = {
     color: 'orange',
     defaults: () => ({ type: 'GATE4', steps: 4, mode: 'up' }),
     ports: (m) => ({
-        in: [{ port: 'gate_in', pin: 4, color: 'bg-rose-500' }],
+        in: [{ port: 'gate_in', pin: 5, color: 'bg-rose-500' }],
         out: [1, 2, 3, 4].map(idx => ({
             port: `gate_out${idx}`,
-            pin: 5 + idx, // PIN 6, 7, 8, 9 along bottom edge
+            pin: 6 + idx, // PIN 7, 8, 9, 10 along bottom edge
             color: 'bg-orange-500',
             dimmed: idx > (m.steps ?? 4)
         }))
@@ -89,15 +89,15 @@ export const ARP = {
     defaults: () => ({ type: 'ARP', mode: 'up' }),
     ports: (m, ctx) => ({
         in: [
-            { port: 'gate_in', pin: 0, color: 'bg-red-500' },
-            { port: 'cv_in4', pin: 1, color: 'bg-yellow-400', dimmed: !ctx?.patched?.has('cv_in4') && !ctx?.patched?.has('in_4') && !ctx?.patched?.has('in4') },
-            { port: 'cv_in3', pin: 2, color: 'bg-yellow-400', dimmed: !ctx?.patched?.has('cv_in3') && !ctx?.patched?.has('in_3') && !ctx?.patched?.has('in3') },
-            { port: 'cv_in2', pin: 3, color: 'bg-yellow-400', dimmed: !ctx?.patched?.has('cv_in2') && !ctx?.patched?.has('in_2') && !ctx?.patched?.has('in2') },
-            { port: 'cv_in1', pin: 4, color: 'bg-yellow-400', dimmed: !ctx?.patched?.has('cv_in1') && !ctx?.patched?.has('in_1') && !ctx?.patched?.has('in1') }
+            { port: 'gate_in', pin: 1, color: 'bg-red-500' },
+            { port: 'cv_in4', pin: 2, color: 'bg-yellow-400', dimmed: !ctx?.patched?.has('cv_in4') && !ctx?.patched?.has('in_4') && !ctx?.patched?.has('in4') },
+            { port: 'cv_in3', pin: 3, color: 'bg-yellow-400', dimmed: !ctx?.patched?.has('cv_in3') && !ctx?.patched?.has('in_3') && !ctx?.patched?.has('in3') },
+            { port: 'cv_in2', pin: 4, color: 'bg-yellow-400', dimmed: !ctx?.patched?.has('cv_in2') && !ctx?.patched?.has('in_2') && !ctx?.patched?.has('in2') },
+            { port: 'cv_in1', pin: 5, color: 'bg-yellow-400', dimmed: !ctx?.patched?.has('cv_in1') && !ctx?.patched?.has('in_1') && !ctx?.patched?.has('in1') }
         ],
         out: [
-            { port: 'cv_out', pin: 9, color: 'bg-yellow-400' },
-            { port: 'gate_out', pin: 10, color: 'bg-red-500' }
+            { port: 'cv_out', pin: 10, color: 'bg-yellow-400' },
+            { port: 'gate_out', pin: 11, color: 'bg-red-500' }
         ]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),

@@ -253,7 +253,7 @@ export function validateConnectionDirection(c, fromMod, toMod, fromManifest = nu
     let fromPort = c.from.port;
     if (fromIsSub) {
         fromPort = normalizeSubPort(fromPort, fromType, fromManifest);
-        const m = fromPort.match(/^PIN([1-9]|1[0-2])_(in|out)$/i);
+        const m = fromPort.match(/^PIN([1-9]|1[0-4])_(in|out)$/i);
         if (m && m[2].toLowerCase() !== 'out') {
             logErr(`結線構文エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - ${c.from.moduleId}:${fromPort} は入力端子です。送信元には出力端子(_out)を指定してください。`);
             return false;
@@ -282,7 +282,7 @@ export function validateConnectionDirection(c, fromMod, toMod, fromManifest = nu
     let toPort = c.to.port;
     if (toIsSub) {
         toPort = normalizeSubPort(toPort, toType, toManifest);
-        const m = toPort.match(/^PIN([1-9]|1[0-2])_(in|out)$/i);
+        const m = toPort.match(/^PIN([1-9]|1[0-4])_(in|out)$/i);
         if (m && m[2].toLowerCase() !== 'in') {
             logErr(`結線構文エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - ${c.to.moduleId}:${toPort} は出力端子です。送信先には入力端子(_in)を指定してください。`);
             return false;

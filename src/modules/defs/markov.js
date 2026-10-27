@@ -34,17 +34,17 @@ export const MARKOV = {
         };
         return {
             in: [
-                { port: 'gate_in', pin: 4, color: 'bg-rose-500' },
-                { port: 'trans_in', pin: 5, color: 'bg-slate-400' }
+                { port: 'gate_in', pin: 5, color: 'bg-rose-500' },
+                { port: 'trans_in', pin: 6, color: 'bg-slate-400' }
             ],
             out: [
-                { port: 'trans_out1', pin: 6, color: getTransColor(0, 'trans_out1') },
-                { port: 'trans_out2', pin: 7, color: getTransColor(1, 'trans_out2') },
-                { port: 'trans_out3', pin: 8, color: getTransColor(2, 'trans_out3') },
-                { port: 'startgate_out', pin: 9, color: 'bg-rose-500' },
-                { port: 'gate_out', pin: 10, color: 'bg-rose-500' },
-                { port: 'longgate_out', pin: 11, color: 'bg-rose-500' },
-                { port: 'cv_out', pin: 12, color: 'bg-yellow-400' }
+                { port: 'trans_out1', pin: 7, color: getTransColor(0, 'trans_out1') },
+                { port: 'trans_out2', pin: 8, color: getTransColor(1, 'trans_out2') },
+                { port: 'trans_out3', pin: 9, color: getTransColor(2, 'trans_out3') },
+                { port: 'startgate_out', pin: 10, color: 'bg-rose-500' },
+                { port: 'gate_out', pin: 11, color: 'bg-rose-500' },
+                { port: 'longgate_out', pin: 12, color: 'bg-rose-500' },
+                { port: 'cv_out', pin: 13, color: 'bg-yellow-400' }
             ]
         };
     },
@@ -132,7 +132,7 @@ export const MARKOV = {
                         <!-- Stay Slider -->
                         ${UIHelpers.createVSliderHTML('markov-w-stay', 'STAY', 0, 100, 1, wStay, '自己', 'amber', false, `${pctStay}%`)}
 
-                        <!-- Output 1..3 Sliders (OUT 1 to OUT 3 from left to right, matching bottom PIN6..PIN8) -->
+                        <!-- Output 1..3 Sliders (OUT 1 to OUT 3 from left to right, matching bottom PIN7..PIN9) -->
                         ${[0, 1, 2].map(idx => UIHelpers.createVSliderHTML(`markov-w-${idx}`, `OUT ${idx + 1}`, 0, 100, 1, weights[idx] ?? 0, `CH ${idx + 1}`, 'amber', false, `${pcts[idx]}%`)).join('')}
                     </div>
                 </div>

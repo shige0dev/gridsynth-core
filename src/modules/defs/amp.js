@@ -44,8 +44,8 @@ export const MIX = {
     color: 'blue',
     defaults: () => ({ type: 'MIX', channels: 2, lvl1: 1.0, lvl2: 1.0, lvl3: 1.0, lvl4: 1.0 }),
     ports: (m) => ({
-        in: Array.from({ length: m.channels || 2 }, (_, i) => ({ port: `wave_in${i+1}`, pin: 4 + i, color: 'bg-blue-500' })),
-        out: [{ port: 'wave_out', pin: 9, color: 'bg-blue-500' }]
+        in: Array.from({ length: m.channels || 2 }, (_, i) => ({ port: `wave_in${i+1}`, pin: 5 + i, color: 'bg-blue-500' })),
+        out: [{ port: 'wave_out', pin: 10, color: 'bg-blue-500' }]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
     renderGrid: (m) => `<div class="flex items-center justify-center w-full h-full pointer-events-none"><div class="mix-bars-wrap flex items-center justify-center px-1.5 py-1 rounded border border-transparent transition-all duration-150">${UIHelpers.renderPanelBars(

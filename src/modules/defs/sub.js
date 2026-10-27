@@ -5,18 +5,18 @@ export const SUB = {
     defaults: () => ({ type: 'SUB', targetPage: 1 }),
     ports: (m, ctx) => {
         const allPins = [
-            { port: 'PIN1_in', slot: 1 }, { port: 'PIN2_in', slot: 2 }, { port: 'PIN3_in', slot: 3 },
-            { port: 'PIN4_in', slot: 4 }, { port: 'PIN5_in', slot: 5 }, { port: 'PIN6_in', slot: 6 },
-            { port: 'PIN7_out', slot: 7 }, { port: 'PIN8_out', slot: 8 }, { port: 'PIN9_out', slot: 9 },
-            { port: 'PIN10_out', slot: 10 }, { port: 'PIN11_out', slot: 11 }, { port: 'PIN12_out', slot: 12 }
+            { port: 'PIN1_in', slot: 1 }, { port: 'PIN2_in', slot: 2 }, { port: 'PIN3_in', slot: 3 }, { port: 'PIN4_in', slot: 4 },
+            { port: 'PIN5_in', slot: 5 }, { port: 'PIN6_in', slot: 6 }, { port: 'PIN7_in', slot: 7 },
+            { port: 'PIN8_out', slot: 8 }, { port: 'PIN9_out', slot: 9 }, { port: 'PIN10_out', slot: 10 },
+            { port: 'PIN11_out', slot: 11 }, { port: 'PIN12_out', slot: 12 }, { port: 'PIN13_out', slot: 13 }, { port: 'PIN14_out', slot: 14 }
         ];
         const active = ctx?.subActivePorts;
         const visiblePins = active ? allPins.filter(p => active.has(p.port) || active.has(`PIN${p.slot}`) || active.has(`PIN${p.slot}_in`) || active.has(`PIN${p.slot}_out`)) : allPins;
-        const inList = visiblePins.filter(p => p.slot <= 6).map(p => ({
+        const inList = visiblePins.filter(p => p.slot <= 7).map(p => ({
             port: p.port,
             color: ctx?.getPortColor ? ctx.getPortColor(p.port) : 'bg-slate-500'
         }));
-        const outList = visiblePins.filter(p => p.slot >= 7).map(p => ({
+        const outList = visiblePins.filter(p => p.slot >= 8).map(p => ({
             port: p.port,
             color: ctx?.getPortColor ? ctx.getPortColor(p.port) : 'bg-slate-500'
         }));
@@ -95,16 +95,16 @@ export const SUB_IO = {
     defaults: () => ({ type: 'SUB_IO' }),
     ports: (m, ctx) => {
         const allPins = [
-            { port: 'PIN1_out', slot: 1 }, { port: 'PIN2_out', slot: 2 }, { port: 'PIN3_out', slot: 3 },
-            { port: 'PIN4_out', slot: 4 }, { port: 'PIN5_out', slot: 5 }, { port: 'PIN6_out', slot: 6 },
-            { port: 'PIN7_in', slot: 7 }, { port: 'PIN8_in', slot: 8 }, { port: 'PIN9_in', slot: 9 },
-            { port: 'PIN10_in', slot: 10 }, { port: 'PIN11_in', slot: 11 }, { port: 'PIN12_in', slot: 12 }
+            { port: 'PIN1_out', slot: 1 }, { port: 'PIN2_out', slot: 2 }, { port: 'PIN3_out', slot: 3 }, { port: 'PIN4_out', slot: 4 },
+            { port: 'PIN5_out', slot: 5 }, { port: 'PIN6_out', slot: 6 }, { port: 'PIN7_out', slot: 7 },
+            { port: 'PIN8_in', slot: 8 }, { port: 'PIN9_in', slot: 9 }, { port: 'PIN10_in', slot: 10 },
+            { port: 'PIN11_in', slot: 11 }, { port: 'PIN12_in', slot: 12 }, { port: 'PIN13_in', slot: 13 }, { port: 'PIN14_in', slot: 14 }
         ];
-        const outList = allPins.filter(p => p.slot <= 6).map(p => ({
+        const outList = allPins.filter(p => p.slot <= 7).map(p => ({
             port: p.port,
             color: ctx?.getPortColor ? ctx.getPortColor(p.port) : 'bg-slate-500'
         }));
-        const inList = allPins.filter(p => p.slot >= 7).map(p => ({
+        const inList = allPins.filter(p => p.slot >= 8).map(p => ({
             port: p.port,
             color: ctx?.getPortColor ? ctx.getPortColor(p.port) : 'bg-slate-500'
         }));
@@ -136,9 +136,9 @@ export const SUB_IO = {
                     <span class="text-[10px] font-bold text-emerald-300 uppercase">SUBPATCH I/O ROOT</span>
                     <p class="text-[8.5px] text-slate-400 mt-1">メイングリッドの SUB モジュールと12本の対称端子で通信します。</p>
                     <div class="mt-1.5 p-1 bg-slate-950/80 rounded border border-slate-800 text-[7.5px] text-left text-slate-300 space-y-0.5">
-                        <div><span class="font-mono text-cyan-300 font-bold">PIN1〜6 [OUT]</span>: 親からの送り (CV / Gate / Clock)</div>
-                        <div><span class="font-mono text-emerald-300 font-bold">PIN7〜12 [IN]</span>: 親への戻り (Audio L/R / Mod還元)</div>
-                        <div class="text-[7px] text-slate-400 pt-0.5">左: PIN1〜3 (上➔下) / 下: PIN4〜9 (左➔右) / 右: PIN10〜12 (下➔上)</div>
+                        <div><span class="font-mono text-cyan-300 font-bold">PIN1〜7 [OUT]</span>: 親からの送り (CV / Gate / Clock)</div>
+                        <div><span class="font-mono text-emerald-300 font-bold">PIN8〜14 [IN]</span>: 親への戻り (Audio L/R / Mod還元)</div>
+                        <div class="text-[7px] text-slate-400 pt-0.5">左: PIN1〜4 (上➔下) / 下: PIN5〜10 (左➔右) / 右: PIN11〜14 (下➔上)</div>
                     </div>
                     <p class="text-[8px] text-amber-400/80 mt-1">※ このモジュールは削除できません（保護中）</p>
                 </div>

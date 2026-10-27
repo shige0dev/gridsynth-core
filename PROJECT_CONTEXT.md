@@ -1109,6 +1109,18 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
         - `index.html` の `#canvas-container` 上部パディングを `pt-[6px]`、`#grid-scroll-content` の上部マージンを `mt-0` に設定。
         - ページナビメニューバー下端から最上段グリッド（001）の上辺までの空きスペースを正確に **6px** に狭め、画面領域を最適化。
       - バージョンを `v1.0.0437`、キャッシュバスターを `v=437` に更新。
+    - **PIN端子番号体系の再構成（PIN 1〜PIN 14）および全モジュール端子定義のスライド（v1.0.0438）**:
+      - **新PIN端子番号仕様（1-indexed, PIN 1〜PIN 14）**:
+        - 左上を **PIN 1**（旧 PIN 0）とし、左辺を下へ下降して左下コーナーを **PIN 5**（旧 PIN 4）に設定（左辺スロット: PIN 1, PIN 2, PIN 3, PIN 4）。
+        - 底辺を右へ移動し、右下コーナーを **PIN 10**（旧 PIN 9）に設定（底辺6スロット: PIN 5, PIN 6, PIN 7, PIN 8, PIN 9, PIN 10）。
+        - 右辺を上へ上昇し、最上部を **PIN 14**（旧 PIN 13）に設定（右辺スロット: PIN 11, PIN 12, PIN 13, PIN 14）。
+      - **全モジュール既存端子位置の完全維持**:
+        - `helpers.js`（`renderChassisPorts`、パース・フォールバック順序）を PIN 1〜PIN 14 体系に完全更新。
+        - 全モジュール定義（`amp`, `arp`, `state4`, `controllers`, `filter`, `io`, `markov`, `mod`, `pad`, `scope`, `seq`, `wave`, `sub`）の全ポートの `pin` 指定を `+1` スライド。
+        - SUB / SUB_IO の 14 ピン拡張（`PIN1..7_in` / `PIN8..14_out` および対向 `PIN1..7_out` / `PIN8..14_in`）、`engine.js` オーディオブリッジ、`sub-utils.js`、`patch.js` を 1〜14 対応に更新。
+        - デモプリセット（`05_subpatch_multi_groove.js`, `14_16_pad_drumkit.js`）および全サブパッチ定義（`subpatches.js`）の接続ピンを正しくスライド。
+        - 開発方針に従いゼロエイリアスを徹底（旧 PIN 0 の残存なし）。
+      - バージョンを `v1.0.0438`、キャッシュバスターを `v=438` に更新。
 
 
 

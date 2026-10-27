@@ -404,12 +404,12 @@ export const UIHelpers = {
         });
     },
     /**
-     * Standard chassis terminal renderer (PIN0 - PIN14, 14px center-to-center pitch).
+     * Standard chassis terminal renderer (PIN1 - PIN14, 14px center-to-center pitch).
      *
      * Physical Chassis Grid:
-     * - Left Edge: PIN3 (bottom 16px), PIN2 (bottom 30px), PIN1 (bottom 44px), PIN0 (bottom 58px)
-     * - Bottom Edge: PIN4, PIN5, PIN6, PIN7, PIN8, PIN9 (6 slots, 14px pitch, margin 2px)
-     * - Right Edge: PIN10 (bottom 16px), PIN11 (bottom 30px), PIN12 (bottom 44px), PIN13 (bottom 58px), PIN14 (bottom 72px)
+     * - Left Edge: PIN1 (top, bottom 58px), PIN2 (bottom 44px), PIN3 (bottom 30px), PIN4 (bottom 16px)
+     * - Bottom Edge: PIN5 (left corner), PIN6, PIN7, PIN8, PIN9, PIN10 (right corner) (6 slots, 14px pitch, margin 2px)
+     * - Right Edge: PIN11 (bottom 16px), PIN12 (bottom 30px), PIN13 (bottom 44px), PIN14 (top, bottom 58px)
      */
     renderChassisPorts: (renderP, portsOrIn = {}, outPortsOrMap = null, customPinMap = null) => {
         let inPorts = [];
@@ -429,9 +429,9 @@ export const UIHelpers = {
 
         const parsePin = (val) => {
             if (val === undefined || val === null) return null;
-            if (typeof val === 'number' && val >= 0 && val <= 14) return val;
+            if (typeof val === 'number' && val >= 1 && val <= 14) return val;
             if (typeof val === 'string') {
-                const m = val.match(/^PIN?([0-9]|1[0-4])(?:_(?:in|out))?$/i);
+                const m = val.match(/^PIN?([1-9]|1[0-4])(?:_(?:in|out))?$/i);
                 if (m) return parseInt(m[1], 10);
             }
             return null;
@@ -454,8 +454,8 @@ export const UIHelpers = {
             }
         });
 
-        // 2. Default fallback mapping for inputs: PIN4, PIN3, PIN2, PIN1, PIN5, PIN6
-        const defaultInOrder = [4, 3, 2, 1, 5, 6];
+        // 2. Default fallback mapping for inputs: PIN5, PIN4, PIN3, PIN2, PIN6, PIN7
+        const defaultInOrder = [5, 4, 3, 2, 6, 7];
         let inIdx = 0;
         unassignedIn.forEach(p => {
             while (inIdx < defaultInOrder.length && pinSlots[defaultInOrder[inIdx]]) {
@@ -467,8 +467,8 @@ export const UIHelpers = {
             }
         });
 
-        // 3. Default fallback mapping for outputs: PIN9, PIN10, PIN11, PIN12, PIN8, PIN7
-        const defaultOutOrder = [9, 10, 11, 12, 8, 7];
+        // 3. Default fallback mapping for outputs: PIN10, PIN11, PIN12, PIN13, PIN9, PIN8
+        const defaultOutOrder = [10, 11, 12, 13, 9, 8];
         let outIdx = 0;
         unassignedOut.forEach(p => {
             while (outIdx < defaultOutOrder.length && pinSlots[defaultOutOrder[outIdx]]) {
@@ -488,26 +488,25 @@ export const UIHelpers = {
 
         let html = '';
 
-        // Left Edge: PIN3, PIN2, PIN1, PIN0 (bottom to top, 14px center-to-center / gap 6px)
-        if (pinSlots[0] || pinSlots[1] || pinSlots[2] || pinSlots[3]) {
-            const leftSlots = [3, 2, 1];
-            if (pinSlots[0]) leftSlots.push(0);
+        // Left Edge: PIN4, PIN3, PIN2, PIN1 (bottom to top, 14px center-to-center / gap 6px)
+        if (pinSlots[1] || pinSlots[2] || pinSlots[3] || pinSlots[4]) {
+            const leftSlots = [4, 3, 2];
+            if (pinSlots[1]) leftSlots.push(1);
             const leftPins = leftSlots.map(renderSlot).join('');
             html += `<div class="absolute left-[2px] bottom-[16px] flex flex-col-reverse gap-[6px] items-center pointer-events-none z-10">${leftPins}</div>`;
         }
 
-        // Right Edge: PIN10, PIN11, PIN12, PIN13, PIN14 (bottom to top, 14px center-to-center / gap 6px)
-        if (pinSlots[10] || pinSlots[11] || pinSlots[12] || pinSlots[13] || pinSlots[14]) {
-            const rightSlots = [10, 11, 12];
-            if (pinSlots[13]) rightSlots.push(13);
+        // Right Edge: PIN11, PIN12, PIN13, PIN14 (bottom to top, 14px center-to-center / gap 6px)
+        if (pinSlots[11] || pinSlots[12] || pinSlots[13] || pinSlots[14]) {
+            const rightSlots = [11, 12, 13];
             if (pinSlots[14]) rightSlots.push(14);
             const rightPins = rightSlots.map(renderSlot).join('');
             html += `<div class="absolute right-[2px] bottom-[16px] flex flex-col-reverse gap-[6px] items-center pointer-events-none z-10">${rightPins}</div>`;
         }
 
-        // Bottom Edge: PIN4, PIN5, PIN6, PIN7, PIN8, PIN9 (6 slots, 14px center-to-center / gap 6px)
-        if (pinSlots[4] || pinSlots[5] || pinSlots[6] || pinSlots[7] || pinSlots[8] || pinSlots[9]) {
-            const bottomPins = [4, 5, 6, 7, 8, 9].map(renderSlot).join('');
+        // Bottom Edge: PIN5, PIN6, PIN7, PIN8, PIN9, PIN10 (6 slots, 14px center-to-center / gap 6px)
+        if (pinSlots[5] || pinSlots[6] || pinSlots[7] || pinSlots[8] || pinSlots[9] || pinSlots[10]) {
+            const bottomPins = [5, 6, 7, 8, 9, 10].map(renderSlot).join('');
             html += `<div class="absolute bottom-[2px] left-[2px] right-[2px] flex justify-between items-center pointer-events-none z-10">${bottomPins}</div>`;
         }
 

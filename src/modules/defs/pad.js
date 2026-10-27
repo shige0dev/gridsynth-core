@@ -134,13 +134,13 @@ export const PAD = {
     defaults: () => ({ type: 'PAD', name: 'PAD', polX: 'bi', polY: 'bi', hue: 0.5, sat: 1.0, bright: 0.0, opacity: 0.8 }),
     ports: () => ({
         in: [
-            { port: 'hue_cv', pin: 4, color: 'bg-yellow-400', extraClass: 'pad-chassis-port' },
-            { port: 'bright_cv', pin: 5, color: 'bg-yellow-400', extraClass: 'pad-chassis-port' }
+            { port: 'hue_cv', pin: 5, color: 'bg-yellow-400', extraClass: 'pad-chassis-port' },
+            { port: 'bright_cv', pin: 6, color: 'bg-yellow-400', extraClass: 'pad-chassis-port' }
         ],
         out: [
-            { port: 'x_cv', pin: 7, color: 'bg-yellow-400', extraClass: 'pad-chassis-port' },
-            { port: 'y_cv', pin: 8, color: 'bg-yellow-400', extraClass: 'pad-chassis-port' },
-            { port: 'gate_out', pin: 9, color: 'bg-red-500', extraClass: 'pad-chassis-port' }
+            { port: 'x_cv', pin: 8, color: 'bg-yellow-400', extraClass: 'pad-chassis-port' },
+            { port: 'y_cv', pin: 9, color: 'bg-yellow-400', extraClass: 'pad-chassis-port' },
+            { port: 'gate_out', pin: 10, color: 'bg-red-500', extraClass: 'pad-chassis-port' }
         ]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
@@ -377,8 +377,8 @@ export const PAD = {
         const bright = state.bright;
 
         const patched = patchState || (typeof window !== 'undefined' && window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(m.id) : null);
-        const hasX = Boolean(patched && (patched.has('x_cv') || patched.has('cv_x') || patched.has('PIN7') || patched.has('PIN7_out')));
-        const hasY = Boolean(patched && (patched.has('y_cv') || patched.has('cv_y') || patched.has('PIN8') || patched.has('PIN8_out')));
+        const hasX = Boolean(patched && (patched.has('x_cv') || patched.has('cv_x') || patched.has('PIN8') || patched.has('PIN8_out')));
+        const hasY = Boolean(patched && (patched.has('y_cv') || patched.has('cv_y') || patched.has('PIN9') || patched.has('PIN9_out')));
 
         // 1. Render on Cell Canvas with Dirty caching (skips rendering when unchanged)
         const cvs = cell.querySelector('.pad-grid-canvas');

@@ -5,8 +5,8 @@ export const SPK = {
     defaults: () => ({ type: 'SPK', masterVol: 0.12 }),
     ports: () => ({
         in: [
-            { port: 'wave_in_l', pin: 4, color: 'bg-blue-500' },
-            { port: 'wave_in_r', pin: 5, color: 'bg-blue-500' }
+            { port: 'wave_in_l', pin: 5, color: 'bg-blue-500' },
+            { port: 'wave_in_r', pin: 6, color: 'bg-blue-500' }
         ],
         out: []
     }),

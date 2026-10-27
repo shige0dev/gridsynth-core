@@ -69,8 +69,8 @@ export const SCOPE = {
     defaults: () => ({ type: 'SCOPE', timeSpan: 0.1, vRange: 2.0, trigMode: 'auto', opacity: 0.8 }),
     ports: () => ({
         in: [
-            { port: 'wave_in', pin: 4, color: 'bg-blue-500' },
-            { port: 'trig_in', pin: 5, color: 'bg-orange-500' }
+            { port: 'wave_in', pin: 5, color: 'bg-blue-500' },
+            { port: 'trig_in', pin: 6, color: 'bg-orange-500' }
         ],
         out: []
     }),
@@ -116,9 +116,9 @@ export const SCOPE = {
                     <canvas id="scope-modal-canvas" class="w-full h-full block rounded bg-slate-950" width="360" height="106"></canvas>
                 </div>
                 <div class="flex items-center justify-between text-[8px] text-slate-400 select-none pt-0.5">
-                    <span class="text-[8px] text-slate-400 font-mono">INPUT: PIN4 (WAVE)</span>
+                    <span class="text-[8px] text-slate-400 font-mono">INPUT: PIN5 (WAVE)</span>
                     <button id="scope-trig-toggle" class="h-4 px-2 rounded text-[8px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${curTrig === 'auto' ? 'bg-amber-950 text-amber-300 border-amber-600/70 shadow-sm shadow-amber-500/30' : 'bg-slate-800 text-slate-400 border-slate-700'}">
-                        TRIG: ${curTrig.toUpperCase()} (PIN5)
+                        TRIG: ${curTrig.toUpperCase()} (PIN6)
                     </button>
                 </div>
             </div>`;
@@ -179,8 +179,8 @@ export const LISS = {
     defaults: () => ({ type: 'LISS', vRange: 2.0, opacity: 0.8 }),
     ports: () => ({
         in: [
-            { port: 'cv_in_x', pin: 4, color: 'bg-yellow-400' },
-            { port: 'cv_in_y', pin: 5, color: 'bg-yellow-400' }
+            { port: 'cv_in_x', pin: 5, color: 'bg-yellow-400' },
+            { port: 'cv_in_y', pin: 6, color: 'bg-yellow-400' }
         ],
         out: []
     }),
@@ -213,8 +213,8 @@ export const LISS = {
                     <canvas id="liss-modal-canvas" class="w-full h-full block rounded bg-slate-950" width="360" height="106"></canvas>
                 </div>
                 <div class="flex items-center justify-between text-[8px] text-slate-400 select-none pt-0.5">
-                    <span class="font-mono text-emerald-400">CV_IN_X: PIN4</span>
-                    <span class="font-mono text-emerald-400">CV_IN_Y: PIN5</span>
+                    <span class="font-mono text-emerald-400">CV_IN_X: PIN5</span>
+                    <span class="font-mono text-emerald-400">CV_IN_Y: PIN6</span>
                 </div>
             </div>`;
     },
@@ -392,7 +392,7 @@ export const SPEC = {
     color: 'teal',
     defaults: () => ({ type: 'SPEC', mode: 'bar', speed: 'med', smooth: 0.75 }),
     ports: () => ({
-        in: [{ port: 'wave_in', pin: 4, color: 'bg-blue-500' }],
+        in: [{ port: 'wave_in', pin: 5, color: 'bg-blue-500' }],
         out: []
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),

@@ -155,10 +155,10 @@ export const LFO = {
     },
     ports: () => ({
         in: [
-            { port: 'freq_cv_in', pin: 3, color: 'bg-yellow-400' },
-            { port: 'trig_in', pin: 4, color: 'bg-orange-500' }
+            { port: 'freq_cv_in', pin: 4, color: 'bg-yellow-400' },
+            { port: 'trig_in', pin: 5, color: 'bg-orange-500' }
         ],
-        out: [{ port: 'cv_out', pin: 9, color: 'bg-yellow-400' }]
+        out: [{ port: 'cv_out', pin: 10, color: 'bg-yellow-400' }]
     }),
     formatTime: (sec) => {
         const s = Math.max(0.001, Number(sec) || 0.001);
@@ -281,8 +281,8 @@ export const CLK = {
     RATES: ['/16', '/8', '/7', '/6', '/5', '/4', '/3', '/2', 'x1', 'x2', 'x3', 'x4', 'x5', 'x6', 'x7', 'x8', 'x16'],
     defaults: () => ({ type: 'CLK', div: 'x2', pulseWidthMs: 15, limitPct: 90 }),
     ports: () => ({
-        in: [{ port: 'power_in', pin: 4, color: 'bg-red-500' }],
-        out: [{ port: 'gate_out', pin: 9, color: 'bg-red-500' }]
+        in: [{ port: 'power_in', pin: 5, color: 'bg-red-500' }],
+        out: [{ port: 'gate_out', pin: 10, color: 'bg-red-500' }]
     }),
     renderGrid: (m, ctx) => {
         const bpm = ctx?.bpm || 120, mult = parseClockRate(m.div || 'x2');
@@ -372,8 +372,8 @@ export const THROUGH = {
     color: 'amber',
     defaults: () => ({ type: 'THROUGH', state: true }),
     ports: () => ({
-        in: [{ port: 'cv_in', pin: 4, color: 'bg-yellow-400' }],
-        out: [{ port: 'cv_out', pin: 9, color: 'bg-yellow-400' }]
+        in: [{ port: 'cv_in', pin: 5, color: 'bg-yellow-400' }],
+        out: [{ port: 'cv_out', pin: 10, color: 'bg-yellow-400' }]
     }),
     UI_STATES: {
         true:  { btnCls: 'bg-amber-500 text-slate-950 border-amber-300', btnText: 'PASSING (THRU)' },
@@ -412,8 +412,8 @@ export const MATH1 = {
     MODES: ['-', 'ABS', 'FLOOR', 'CEIL', 'ROUND', 'INT', 'NOT'],
     defaults: () => ({ type: 'MATH1', mode: '-', valA: 0.0 }),
     ports: () => ({
-        in: [{ port: 'cv_in_a', pin: 4, color: 'bg-yellow-400' }],
-        out: [{ port: 'cv_out', pin: 9, color: 'bg-yellow-400' }]
+        in: [{ port: 'cv_in_a', pin: 5, color: 'bg-yellow-400' }],
+        out: [{ port: 'cv_out', pin: 10, color: 'bg-yellow-400' }]
     }),
     renderGrid: renderMathGridUI,
     updateLive: updateMathLiveUI,
@@ -429,10 +429,10 @@ export const MATH2 = {
     defaults: () => ({ type: 'MATH2', mode: 'ADD', valA: 0.0, valB: 1.0 }),
     ports: () => ({
         in: [
-            { port: 'cv_in_a', pin: 4, color: 'bg-yellow-400' },
-            { port: 'cv_in_b', pin: 5, color: 'bg-yellow-400' }
+            { port: 'cv_in_a', pin: 5, color: 'bg-yellow-400' },
+            { port: 'cv_in_b', pin: 6, color: 'bg-yellow-400' }
         ],
-        out: [{ port: 'cv_out', pin: 9, color: 'bg-yellow-400' }]
+        out: [{ port: 'cv_out', pin: 10, color: 'bg-yellow-400' }]
     }),
     renderGrid: renderMathGridUI,
     updateLive: updateMathLiveUI,
