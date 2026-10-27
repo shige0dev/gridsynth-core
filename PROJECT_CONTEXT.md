@@ -1034,6 +1034,16 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
         - `LISS`（旧 XY）
       - DSPプロセッサ `ff-processor` を撤廃し `state4-processor` に統合。
       - バージョンを `v1.0.0429`、キャッシュバスターを `v=429` に更新。
+    - **モジュール改名に伴う関連ファイル名のリネーム & モジュール別完全独立化（v1.0.0430）**:
+      - **COUNT モジュールのファイルリネーム**:
+        - `src/modules/defs/pass.js` ➔ `src/modules/defs/count.js`
+        - `src/audio/defs/pass.js` ➔ `src/audio/defs/count.js`
+        - `src/dsp/processors/pass.js` ➔ `src/dsp/processors/count.js`
+        - ワークレットプロセッサ名も `pass-processor` ➔ `count-processor` にリネーム。
+      - **STATE4 モジュールのファイル独立化**:
+        - `arp.js` から `STATE4` を完全独立させ、`src/modules/defs/state4.js`、`src/audio/defs/state4.js`、`src/dsp/processors/state4.js` として新設。
+        - これによりモジュール名とファイル名（`count.js`, `state4.js`, `gate4.js`, `arp.js` 等）が1対1で整合。
+      - バージョンを `v1.0.0430`、キャッシュバスターを `v=430` に更新。
 
 
 

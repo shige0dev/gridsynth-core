@@ -14,9 +14,10 @@ import { scopeDefs } from './defs/scope.js?v=424';
 import { subDefs } from './defs/sub.js?v=351';
 import { controllerDefs } from './defs/controllers.js?v=355';
 import { seqDefs } from './defs/seq.js?v=424';
-import { passDefs } from './defs/pass.js?v=424';
+import { countDefs } from './defs/count.js?v=429';
 import { chordDefs } from './defs/chord.js?v=351';
 import { arpDefs } from './defs/arp.js?v=424';
+import { state4Defs } from './defs/state4.js?v=429';
 import { patDefs } from './defs/pat.js?v=351';
 import { markovDefs } from './defs/markov.js?v=424';
 import { fmDefs } from './defs/fm.js?v=351';
@@ -38,9 +39,10 @@ export const MODULE_REGISTRY = {
     ...subDefs,
     ...controllerDefs,
     ...seqDefs,
-    ...passDefs,
+    ...countDefs,
     ...chordDefs,
     ...arpDefs,
+    ...state4Defs,
     ...patDefs,
     ...markovDefs,
     ...fmDefs,

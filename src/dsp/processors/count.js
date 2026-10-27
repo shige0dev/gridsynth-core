@@ -1,6 +1,6 @@
 import { getSR } from './common.js';
 
-export class PassProcessor extends AudioWorkletProcessor {
+export class CountProcessor extends AudioWorkletProcessor {
     constructor(options) {
         super();
         this.count = options?.processorOptions?.count ?? 8;
@@ -89,4 +89,4 @@ export class PassProcessor extends AudioWorkletProcessor {
     }
 }
 
-registerProcessor('pass-processor', PassProcessor);
+registerProcessor('count-processor', CountProcessor);

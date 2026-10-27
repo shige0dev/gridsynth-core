@@ -1,6 +1,6 @@
 import './processors/clock.js?v=422';
 import './processors/seq.js?v=422';
-import './processors/pass.js?v=422';
+import './processors/count.js?v=429';
 import './processors/adsr.js';
 import './processors/lfo.js?v=297';
 import './processors/math.js?v=407';
@@ -13,7 +13,8 @@ import './processors/markov.js';
 import './processors/chord.js';
 import './processors/fm.js?v=351';
 import './processors/fm-core.js';
-import './processors/gate4.js?v=421';
+import './processors/gate4.js?v=429';
+import './processors/state4.js?v=429';
 import './processors/arp.js';
 import './processors/scale.js';
 import './processors/rf.js';
