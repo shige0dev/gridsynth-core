@@ -11,10 +11,12 @@ export const MODAL_WIDTHS = {
     FMCORE: 'w-[250px]',
 
     // Sequencing & Arpeggiation
+    COUNT: 'w-[220px]',
     PASS: 'w-[220px]',
     GATE4: 'w-[230px]',
-    FLIP: 'w-[185px]',
-    FF: 'w-[185px]',
+    STATE4: 'w-[230px]',
+    FLIP: 'w-[230px]',
+    FF: 'w-[230px]',
     ARP: 'w-[230px]',
     CHORD: 'w-[240px]',
     MARKOV: 'w-[260px]',
@@ -273,7 +275,7 @@ export class ModalManager {
                 const basicTypes = Object.keys(MODULE_REGISTRY).filter(t => {
                     if (t === 'SUB') return false; // Placed under User Subpatch area
                     if (t === 'SUB_IO') return !isMain;
-                    if (t === 'FM' || t === 'FM3OP' || t === 'XY' || t === 'FF') return false; // Aliases for FMx3, LISS, FLIP
+                    if (t === 'FM' || t === 'FM3OP' || t === 'XY' || t === 'FF' || t === 'PASS' || t === 'FLIP') return false; // Aliases for FMx3, LISS, STATE4, COUNT
                     return true;
                 });
 
@@ -291,7 +293,7 @@ export class ModalManager {
                         name: 'TRIGGER',
                         sub: 'トリガ (クロック・シーケンサー)',
                         color: 'rose',
-                        types: ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'PASS', 'MARKOV', 'GATE4', 'FLIP', 'ARP', 'KEY', 'PAD']
+                        types: ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'COUNT', 'MARKOV', 'GATE4', 'STATE4', 'ARP', 'KEY', 'PAD']
                     },
                     {
                         name: 'CV',

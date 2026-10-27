@@ -94,7 +94,7 @@ export const getPortSignalType = (portName = '', modId = '') => {
         return SIGNAL_TYPES.CLOCK;
     }
     if (
-        (p.includes('gate') && (m.startsWith('PASS') || m.startsWith('SEQ8') || m.startsWith('SEQ16') || m.startsWith('MARKOV') || m.startsWith('GATE4'))) ||
+        (p.includes('gate') && (m.startsWith('COUNT') || m.startsWith('PASS') || m.startsWith('SEQ8') || m.startsWith('SEQ16') || m.startsWith('MARKOV') || m.startsWith('GATE4') || m.startsWith('STATE4') || m.startsWith('FLIP'))) ||
         (p === 'trig_out' && m.startsWith('MARKOV'))
     ) {
         return SIGNAL_TYPES.GATE_SEQ;

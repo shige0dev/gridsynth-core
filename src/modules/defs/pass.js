@@ -1,8 +1,8 @@
 import { UIHelpers } from '../../ui/helpers.js?v=354';
 
-export const PASS = {
+export const COUNT = {
     color: 'slate',
-    defaults: () => ({ type: 'PASS', count: 8 }),
+    defaults: () => ({ type: 'COUNT', count: 8 }),
     onNormalize: (m) => {
         m.count = Math.max(1, Math.min(64, Math.round(m.count ?? 8)));
     },
@@ -52,7 +52,7 @@ export const PASS = {
         return `
             <div class="space-y-2">
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800">
-                    <span class="text-[8px] text-slate-400 uppercase font-semibold">PASS (COUNT THRU)</span>
+                    <span class="text-[8px] text-slate-400 uppercase font-semibold">COUNT (CLOCK THRU)</span>
                     <span id="pass-count-disp" class="text-[11px] font-mono font-bold text-amber-300">${curCount} CLKS</span>
                 </div>
 
@@ -76,6 +76,9 @@ export const PASS = {
     }
 };
 
+export const PASS = COUNT;
+
 export const passDefs = {
+    COUNT,
     PASS
 };

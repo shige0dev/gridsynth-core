@@ -1,6 +1,6 @@
 import { AudioHelpers } from '../helpers.js';
 
-export const PASS = {
+export const COUNT = {
     create: (ctx, d, patch, eng) => {
         const count = d?.count ?? 8;
         const w = new AudioWorkletNode(ctx, 'pass-processor', {
@@ -66,6 +66,9 @@ export const PASS = {
     }
 };
 
+export const PASS = COUNT;
+
 export const passAudioDefs = {
+    COUNT,
     PASS
 };

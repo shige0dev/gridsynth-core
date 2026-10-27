@@ -9,7 +9,7 @@ import { PageManager } from './managers/page-manager.js?v=402';
 import { InteractionManager } from './managers/interaction-manager.js?v=402';
 import { ToolbarManager } from './managers/toolbar-manager.js?v=402';
 
-export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'LISS', 'XY', 'SPEC', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'FLIP', 'FF', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD'];
+export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'LISS', 'XY', 'SPEC', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'STATE4', 'FLIP', 'FF', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD', 'COUNT', 'PASS'];
 
 export class UIController {
     constructor(synth) {
