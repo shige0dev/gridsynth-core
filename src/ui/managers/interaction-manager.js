@@ -240,7 +240,7 @@ export class InteractionManager {
                 hoverPortTimer = setTimeout(() => {
                     const info = this.ui.getPortDisplayInfo ? this.ui.getPortDisplayInfo(mId, p) : null;
                     const toastLabel = (info && info.hasAlias) ? info.label : p;
-                    this.ui.showToast(`[${mId}:${toastLabel}]`, 1500);
+                    this.ui.showToast(toastLabel, 1500);
                 }, 50);
             }
         });

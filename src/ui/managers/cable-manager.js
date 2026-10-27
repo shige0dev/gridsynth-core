@@ -409,7 +409,7 @@ export class CableManager {
             this.selectedTargetForConnection = cur;
             this.updatePortHighlight();
             const toastLabel = info.hasAlias ? info.label : pName;
-            this.ui.showToast(`[${mId}:${toastLabel}] 接続先をタップしてください`);
+            this.ui.showToast(`${toastLabel} ➔ 接続先タップ待機...`);
         } else {
             const first = this.selectedTargetForConnection;
             if (first.moduleId === cur.moduleId && first.port === cur.port) {
@@ -422,7 +422,7 @@ export class CableManager {
                 this.selectedTargetForConnection = cur;
                 this.updatePortHighlight();
                 const toastLabel = info.hasAlias ? info.label : pName;
-                this.ui.showToast(`[${mId}:${toastLabel}] 選択端子を変更しました`);
+                this.ui.showToast(`${toastLabel} 選択端子を変更しました`);
                 return;
             } else {
                 const m1 = this.ui.modules[first.moduleId], m2 = this.ui.modules[cur.moduleId];
