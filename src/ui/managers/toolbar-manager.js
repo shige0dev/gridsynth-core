@@ -3,7 +3,9 @@
 export class ToolbarManager {
     constructor(ui) {
         this.ui = ui;
-        this.isPerformanceMode = localStorage.getItem('gridsynth_perf_mode') === 'true';
+        // パフォームボタンは基本ディセーブル（起動時は常にOFF）
+        this.isPerformanceMode = false;
+        try { localStorage.setItem('gridsynth_perf_mode', 'false'); } catch (_) {}
         this._savedCableOpacity = undefined;
 
         const savedOp = parseFloat(localStorage.getItem('gridsynth_cable_opacity'));
@@ -33,11 +35,13 @@ export class ToolbarManager {
         }
     }
 
-    togglePerformanceMode(force = null) {
+    togglePerformanceMode(force = null, silent = false) {
         this.isPerformanceMode = (typeof force === 'boolean') ? force : !this.isPerformanceMode;
-        localStorage.setItem('gridsynth_perf_mode', String(this.isPerformanceMode));
+        try { localStorage.setItem('gridsynth_perf_mode', String(this.isPerformanceMode)); } catch (_) {}
         this.applyPerformanceMode();
-        this.ui.showToast(this.isPerformanceMode ? 'パフォーマンスモード: ON' : 'パフォーマンスモード: OFF');
+        if (!silent) {
+            this.ui.showToast(this.isPerformanceMode ? 'パフォーマンスモード: ON' : 'パフォーマンスモード: OFF');
+        }
     }
 
     applyPerformanceMode() {

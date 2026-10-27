@@ -281,7 +281,7 @@ export class UIController {
 
     // --- Manager Delegators ---
     setCableOpacity(op, persist = true) { return this.toolbarManager.setCableOpacity(op, persist); }
-    togglePerformanceMode(force = null) { return this.toolbarManager.togglePerformanceMode(force); }
+    togglePerformanceMode(force = null, silent = false) { return this.toolbarManager.togglePerformanceMode(force, silent); }
     applyPerformanceMode() { return this.toolbarManager.applyPerformanceMode(); }
 
     getSubManifest(moduleId, pageId = null) { return this.cableManager.getSubManifest(moduleId, pageId); }

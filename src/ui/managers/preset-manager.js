@@ -341,6 +341,10 @@ export class PresetManager {
 
         // パッチ切り替え時は開いているすべてのドックダイアログ（LOCK中含む）とポップアップを閉じる
         this.ui.closeDockModal();
+        // パッチ切り替え時・新規パッチ読み込み時はパフォームモードを基本ディセーブル（OFF）にリセット
+        if (this.ui.isPerformanceMode) {
+            this.ui.togglePerformanceMode(false, true);
+        }
         // layout mode discontinued
         document.getElementById('shared-modal')?.classList.add('hidden');
 

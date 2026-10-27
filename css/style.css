@@ -96,6 +96,8 @@ body {
 }
 
 #canvas-container {
+    padding-left: 7px !important;
+    padding-right: 7px !important;
     touch-action: pan-y pinch-zoom;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: auto !important;
@@ -125,8 +127,7 @@ body {
 }
 
 .bg-grid {
-    background-size: 20px 20px;
-    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+    background-image: none !important;
 }
 
 #cable-canvas {
