@@ -35,41 +35,32 @@ function drawPadCanvas(ctx2d, w, h, state, isModal = false, hasX = false, hasY =
         ctx2d.fillRect(0, 0, w, h);
     }
 
-    // 2. High-contrast grid crosshairs adaptive to background brightness (standardized graticule)
+    // 2. Center crosshair (2-division grid: 1 line per axis at center)
+    // Only rendered for Bipolar axis ('bi'), hidden in Unipolar ('uni') to eliminate edge color fringes
     const isBrightBg = lightPct > 45;
     const gridLineColor = isBrightBg ? 'rgba(0, 0, 0, 0.25)' : (isModal ? '#1e293b' : 'rgba(255, 255, 255, 0.15)');
-    const zeroLineColor = isBrightBg ? 'rgba(0, 0, 0, 0.65)' : (isModal ? '#64748b' : 'rgba(255, 255, 255, 0.45)');
-    const zeroLineWidth = isModal ? 1.5 : 1.0;
+    const gridLineWidth = isModal ? 1.0 : 0.8;
 
-    // Subgrid lines (4x4 divisions)
-    UIHelpers.drawGraticule(ctx2d, w, h, {
-        isModal,
-        cols: 4,
-        rows: 4,
-        gridColor: gridLineColor,
-        showSubgrid: true,
-        showAxisX: false,
-        showAxisY: false
-    });
+    if (polX === 'bi' || polY === 'bi') {
+        ctx2d.save();
+        ctx2d.strokeStyle = gridLineColor;
+        ctx2d.lineWidth = gridLineWidth;
+        ctx2d.beginPath();
 
-    // Zero reference lines (0V position: Center for BI, Left / Bottom edge for UNI)
-    ctx2d.save();
-    ctx2d.strokeStyle = zeroLineColor;
-    ctx2d.lineWidth = zeroLineWidth;
-    ctx2d.beginPath();
+        if (polX === 'bi') {
+            const midX = w / 2;
+            ctx2d.moveTo(midX, 0);
+            ctx2d.lineTo(midX, h);
+        }
+        if (polY === 'bi') {
+            const midY = h / 2;
+            ctx2d.moveTo(0, midY);
+            ctx2d.lineTo(w, midY);
+        }
 
-    // X Zero Line (vertical line at 0V)
-    const zeroX = polX === 'uni' ? (zeroLineWidth / 2) : (w / 2);
-    ctx2d.moveTo(zeroX, 0);
-    ctx2d.lineTo(zeroX, h);
-
-    // Y Zero Line (horizontal line at 0V)
-    const zeroY = polY === 'uni' ? (h - zeroLineWidth / 2) : (h / 2);
-    ctx2d.moveTo(0, zeroY);
-    ctx2d.lineTo(w, zeroY);
-
-    ctx2d.stroke();
-    ctx2d.restore();
+        ctx2d.stroke();
+        ctx2d.restore();
+    }
 
     // 3. Touch Value Indicator Lines (CVX: Vertical line, CVY: Horizontal line, Both: Crossline)
     // Only rendered when respective CV output port is connected. Dot and circle are removed per specification.
