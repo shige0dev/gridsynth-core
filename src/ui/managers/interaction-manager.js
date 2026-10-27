@@ -426,7 +426,7 @@ export class InteractionManager {
             }
 
             const container = document.getElementById('canvas-container');
-            if (!this.ui.isPerformanceMode && container) {
+            if (container) {
                 const isControl = e.target.closest('.port, input, button, select, textarea, .pad-grid-container, .pad-grid-canvas');
                 if (!isControl) {
                     this._scrollStartY = e.clientY;
@@ -559,9 +559,10 @@ export class InteractionManager {
 
             // Drag-to-scroll support (Touch & Mouse swipe before selection)
             // On mouse, require primary button held (e.buttons & 1); on touch, pointermove only fires when touching.
+            // Works smoothly in both Normal mode and Performance mode outside controls/pads.
             const isButtonHeld = e.pointerType === 'mouse' ? ((e.buttons & 1) !== 0) : (e.buttons > 0 || e.pressure > 0);
             const container = document.getElementById('canvas-container');
-            if (isButtonHeld && this._gridPointerActive && !this.ui.isPerformanceMode && !this.isDragging && !this.moduleLongPressed && !isCandidateSelected && !isRowBusy && container) {
+            if (isButtonHeld && this._gridPointerActive && !this.isDragging && !this.moduleLongPressed && !isCandidateSelected && !isRowBusy && container) {
                 if (e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal, .pad-grid-container, .pad-grid-canvas, #main-menu-bar, #page-nav-bar')) {
                     this._isScrollDragging = false;
                     return;
@@ -780,11 +781,19 @@ export class InteractionManager {
         }, { passive: true });
 
         // On mobile touch: cancel scrolling specifically when touching/swiping over a PAD module
-        document.getElementById('canvas-container')?.addEventListener('touchmove', (e) => {
-            if (e.target.closest('.pad-grid-container, .pad-grid-canvas')) {
-                if (e.cancelable) e.preventDefault();
-            }
-        }, { passive: false });
+        const canvasContainer = document.getElementById('canvas-container');
+        if (canvasContainer) {
+            canvasContainer.addEventListener('touchstart', (e) => {
+                if (e.target.closest('.pad-grid-container, .pad-grid-canvas, .pad-modal-touch-area')) {
+                    if (e.cancelable) e.preventDefault();
+                }
+            }, { passive: false });
+            canvasContainer.addEventListener('touchmove', (e) => {
+                if (e.target.closest('.pad-grid-container, .pad-grid-canvas, .pad-modal-touch-area')) {
+                    if (e.cancelable) e.preventDefault();
+                }
+            }, { passive: false });
+        }
 
         // Desktop mouse wheel scroll enhancement (smoothly scroll 32-row workspace)
         window.addEventListener('wheel', (e) => {

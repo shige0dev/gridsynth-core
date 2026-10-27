@@ -165,6 +165,15 @@ export class SynthEngine {
         if (!inst) return;
 
         switch (event.type) {
+            case 'PAD_DOWN':
+            case 'PAD_MOVE':
+            case 'PAD_UP': {
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+                inst.nodes?.w?.port?.postMessage(event);
+                break;
+            }
             case 'NOTE':
             case 'NOTE_ON':
             case 'NOTE_OFF': {

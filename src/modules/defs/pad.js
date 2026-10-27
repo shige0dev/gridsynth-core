@@ -255,48 +255,125 @@ export const PAD = {
         if (!touchArea) return;
 
         let activePointerId = null;
+        let activeTouchId = null;
+        let lastTouchEndTime = 0;
 
-        const sendPad = (type, e) => {
+        const calcModalNormCoords = (clientX, clientY) => {
             const rect = touchArea.getBoundingClientRect();
-            const clientX = e.clientX ?? (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
-            const clientY = e.clientY ?? (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
-            // Generous edge tolerance so right edge reaches 1.0 and bottom edge reaches 0.0 smoothly
             const edgePad = 8;
             const normX = Math.max(0, Math.min(1, (clientX - (rect.left + edgePad)) / Math.max(1, rect.width - edgePad * 2)));
-            // Y is 0.0 at bottom, 1.0 at top
             const normY = Math.max(0, Math.min(1, 1.0 - (clientY - (rect.top + edgePad)) / Math.max(1, rect.height - edgePad * 2)));
+            return { normX, normY };
+        };
 
+        const renderOptimisticModal = (normX, normY, isDown) => {
+            const modalCvs = document.getElementById('pad-modal-canvas');
+            if (!modalCvs) return;
+            const patched = window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(m.id) : null;
+            const hasX = Boolean(patched && (patched.has('x_cv') || patched.has('cv_x') || patched.has('PIN8') || patched.has('PIN8_out')));
+            const hasY = Boolean(patched && (patched.has('y_cv') || patched.has('cv_y') || patched.has('PIN9') || patched.has('PIN9_out')));
+            const polX = m.polX || 'bi';
+            const polY = m.polY || 'bi';
+            const state = {
+                x: normX,
+                y: normY,
+                isDown,
+                hue: m.hue ?? 0.5,
+                sat: m.sat ?? 1.0,
+                bright: m.bright ?? 0.0
+            };
+            const mCtx = modalCvs.getContext('2d');
+            drawPadCanvas(mCtx, modalCvs.width, modalCvs.height, state, true, hasX, hasY, polX, polY);
+            modalCvs._lastRenderState = { ...state, hasX, hasY, polX, polY };
+
+            // Update stats (X, Y)
+            const xEl = document.getElementById('pad-stat-x');
+            const yEl = document.getElementById('pad-stat-y');
+            const valX = polX === 'uni' ? (normX * 2.0) : ((normX * 2.0) - 1.0);
+            const valY = polY === 'uni' ? (normY * 2.0) : ((normY * 2.0) - 1.0);
+            if (xEl) xEl.textContent = (polX === 'bi' && valX >= 0 ? '+' : '') + valX.toFixed(2);
+            if (yEl) yEl.textContent = (polY === 'bi' && valY >= 0 ? '+' : '') + valY.toFixed(2);
+        };
+
+        const sendPad = (type, clientX, clientY) => {
+            const { normX, normY } = calcModalNormCoords(clientX, clientY);
             ctx?.sendControl?.({
                 type,
                 x: normX,
                 y: normY
             });
+            renderOptimisticModal(normX, normY, type !== 'PAD_UP');
         };
 
-        touchArea.onpointerdown = (e) => {
+        // Hardware Touch Events for Modal (0ms touch latency on mobile)
+        touchArea.addEventListener('touchstart', (e) => {
+            if (e.cancelable) e.preventDefault();
+            e.stopPropagation();
+            const touch = e.changedTouches[0];
+            if (!touch) return;
+            activeTouchId = touch.identifier;
+            sendPad('PAD_DOWN', touch.clientX, touch.clientY);
+        }, { passive: false });
+
+        touchArea.addEventListener('touchmove', (e) => {
+            if (e.cancelable) e.preventDefault();
+            e.stopPropagation();
+            if (activeTouchId === null) return;
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const t = e.changedTouches[i];
+                if (t.identifier === activeTouchId) {
+                    sendPad('PAD_MOVE', t.clientX, t.clientY);
+                    break;
+                }
+            }
+        }, { passive: false });
+
+        const handleModalTouchEnd = (e) => {
+            if (e.cancelable) e.preventDefault();
+            e.stopPropagation();
+            if (activeTouchId === null) return;
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const t = e.changedTouches[i];
+                if (t.identifier === activeTouchId) {
+                    sendPad('PAD_UP', t.clientX, t.clientY);
+                    activeTouchId = null;
+                    lastTouchEndTime = Date.now();
+                    break;
+                }
+            }
+        };
+
+        touchArea.addEventListener('touchend', handleModalTouchEnd, { passive: false });
+        touchArea.addEventListener('touchcancel', handleModalTouchEnd, { passive: false });
+
+        // Desktop Pointer Events for Modal
+        touchArea.addEventListener('pointerdown', (e) => {
+            if (e.pointerType === 'touch' || (Date.now() - lastTouchEndTime < 400)) return;
             activePointerId = e.pointerId;
             try { touchArea.setPointerCapture(e.pointerId); } catch (err) {}
-            sendPad('PAD_DOWN', e);
+            sendPad('PAD_DOWN', e.clientX, e.clientY);
             e.stopPropagation();
-        };
+        });
 
-        touchArea.onpointermove = (e) => {
+        touchArea.addEventListener('pointermove', (e) => {
+            if (e.pointerType === 'touch') return;
             if (activePointerId === null || e.pointerId !== activePointerId) return;
-            sendPad('PAD_MOVE', e);
+            sendPad('PAD_MOVE', e.clientX, e.clientY);
             e.stopPropagation();
-        };
+        });
 
-        const handlePointerEnd = (e) => {
+        const handleModalPointerEnd = (e) => {
+            if (e.pointerType === 'touch') return;
             if (activePointerId !== null && e.pointerId === activePointerId) {
-                sendPad('PAD_UP', e);
+                sendPad('PAD_UP', e.clientX, e.clientY);
                 activePointerId = null;
                 try { touchArea.releasePointerCapture(e.pointerId); } catch (err) {}
                 e.stopPropagation();
             }
         };
 
-        touchArea.onpointerup = handlePointerEnd;
-        touchArea.onpointercancel = handlePointerEnd;
+        touchArea.addEventListener('pointerup', handleModalPointerEnd);
+        touchArea.addEventListener('pointercancel', handleModalPointerEnd);
     },
     // Bind cell-level pad touch events directly on the grid
     bindGridEvents: (cell, m, ui) => {
@@ -304,45 +381,120 @@ export const PAD = {
         if (!padBox || padBox._padBound) return;
         padBox._padBound = true;
 
+        let activeTouchId = null;
         let activePointerId = null;
+        let lastTouchEndTime = 0;
 
-        const sendGridPad = (type, e) => {
+        const calcGridNormCoords = (clientX, clientY) => {
             const rect = padBox.getBoundingClientRect();
-            const clientX = e.clientX;
-            const clientY = e.clientY;
             // Pad tolerance: ensures 0.0 and 1.0 are fully reached on all edges
             const edgePadX = 6;
             const edgePadY = 6;
             const normX = Math.max(0, Math.min(1, (clientX - (rect.left + edgePadX)) / Math.max(1, rect.width - edgePadX * 2)));
             const normY = Math.max(0, Math.min(1, 1.0 - (clientY - (rect.top + edgePadY)) / Math.max(1, rect.height - edgePadY * 2)));
+            return { normX, normY };
+        };
 
+        const renderOptimisticGrid = (normX, normY, isDown) => {
+            const cvs = padBox.querySelector('.pad-grid-canvas');
+            if (!cvs) return;
+            const patched = window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(m.id) : null;
+            const hasX = Boolean(patched && (patched.has('x_cv') || patched.has('cv_x') || patched.has('PIN8') || patched.has('PIN8_out')));
+            const hasY = Boolean(patched && (patched.has('y_cv') || patched.has('cv_y') || patched.has('PIN9') || patched.has('PIN9_out')));
+            const polX = m.polX || 'bi';
+            const polY = m.polY || 'bi';
+            const state = {
+                x: normX,
+                y: normY,
+                isDown,
+                hue: m.hue ?? 0.5,
+                sat: m.sat ?? 1.0,
+                bright: m.bright ?? 0.0
+            };
+            const ctx = cvs.getContext('2d');
+            drawPadCanvas(ctx, cvs.width, cvs.height, state, false, hasX, hasY, polX, polY);
+            cvs._lastRenderState = { ...state, hasX, hasY, polX, polY };
+        };
+
+        const sendGridPad = (type, clientX, clientY) => {
+            const { normX, normY } = calcGridNormCoords(clientX, clientY);
             ui?.synth?.sendControlEvent(m.id, {
                 type,
                 x: normX,
                 y: normY
             });
+            renderOptimisticGrid(normX, normY, type !== 'PAD_UP');
         };
 
-        padBox.addEventListener('pointerdown', (e) => {
+        // 1. Direct hardware-level Touch Events with passive: false for 0ms mobile latency
+        padBox.addEventListener('touchstart', (e) => {
             // If user clicked a pin port, do not capture
             if (e.target.closest('.port')) return;
+            if (e.cancelable) e.preventDefault();
+            e.stopPropagation();
+
+            const touch = e.changedTouches[0];
+            if (!touch) return;
+            activeTouchId = touch.identifier;
+            sendGridPad('PAD_DOWN', touch.clientX, touch.clientY);
+        }, { passive: false });
+
+        padBox.addEventListener('touchmove', (e) => {
+            if (e.cancelable) e.preventDefault();
+            e.stopPropagation();
+
+            if (activeTouchId === null) return;
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const t = e.changedTouches[i];
+                if (t.identifier === activeTouchId) {
+                    sendGridPad('PAD_MOVE', t.clientX, t.clientY);
+                    break;
+                }
+            }
+        }, { passive: false });
+
+        const handleGridTouchEnd = (e) => {
+            if (e.cancelable) e.preventDefault();
+            e.stopPropagation();
+
+            if (activeTouchId === null) return;
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const t = e.changedTouches[i];
+                if (t.identifier === activeTouchId) {
+                    sendGridPad('PAD_UP', t.clientX, t.clientY);
+                    activeTouchId = null;
+                    lastTouchEndTime = Date.now();
+                    break;
+                }
+            }
+        };
+
+        padBox.addEventListener('touchend', handleGridTouchEnd, { passive: false });
+        padBox.addEventListener('touchcancel', handleGridTouchEnd, { passive: false });
+
+        // 2. Desktop Mouse / Pointer Events fallback (Touch pointers bypassed to prevent double triggers)
+        padBox.addEventListener('pointerdown', (e) => {
+            if (e.target.closest('.port')) return;
+            if (e.pointerType === 'touch' || (Date.now() - lastTouchEndTime < 400)) return;
             activePointerId = e.pointerId;
             try { padBox.setPointerCapture(e.pointerId); } catch (err) {}
-            sendGridPad('PAD_DOWN', e);
+            sendGridPad('PAD_DOWN', e.clientX, e.clientY);
             e.stopPropagation();
             if (e.cancelable) e.preventDefault();
         });
 
         padBox.addEventListener('pointermove', (e) => {
+            if (e.pointerType === 'touch') return;
             if (activePointerId === null || e.pointerId !== activePointerId) return;
-            sendGridPad('PAD_MOVE', e);
+            sendGridPad('PAD_MOVE', e.clientX, e.clientY);
             e.stopPropagation();
             if (e.cancelable) e.preventDefault();
         });
 
-        const handleEnd = (e) => {
+        const handleGridPointerEnd = (e) => {
+            if (e.pointerType === 'touch') return;
             if (activePointerId !== null && e.pointerId === activePointerId) {
-                sendGridPad('PAD_UP', e);
+                sendGridPad('PAD_UP', e.clientX, e.clientY);
                 activePointerId = null;
                 try { padBox.releasePointerCapture(e.pointerId); } catch (err) {}
                 e.stopPropagation();
@@ -350,13 +502,8 @@ export const PAD = {
             }
         };
 
-        padBox.addEventListener('pointerup', handleEnd);
-        padBox.addEventListener('pointercancel', handleEnd);
-
-        // Native touchmove cancellation on mobile WebKit/Blink to completely prevent screen scrolling over pad
-        padBox.addEventListener('touchmove', (e) => {
-            if (e.cancelable) e.preventDefault();
-        }, { passive: false });
+        padBox.addEventListener('pointerup', handleGridPointerEnd);
+        padBox.addEventListener('pointercancel', handleGridPointerEnd);
     },
     updateLive: (cell, data, isPlaying, targetModal, m, patchState = null) => {
         if (!m) return;

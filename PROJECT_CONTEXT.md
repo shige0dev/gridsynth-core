@@ -1132,6 +1132,24 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
       - **SUB**: `targetPage`（既存ページ最優先）と `subType`（空きページ番号自動採番・ファクトリーテンプレート展開）の併用時優先順位ルールを明確化。
       - **ポリフォニー全般（パラフォニック仕様）**: `VCO.channels > 1` はモジュール内部で複数オシレーターをゲイン正規化ミキシングし単一のモノラル波形として出力するパラフォニック仕様であり、後段の VCF/VCA/ADSR は合算された単一波形として処理すること、完全ポリフォニー構成には並列ボイス系統が必要であることを明文化。
       - **旧モジュール・旧端子の完全一掃**: 旧 `PASS`/`COUNT` の記述を廃止し `MARKOV` への吸収統合を明記、旧 `FLIP` を `STATE4` に更新、`MARKOV` の端子仕様を最新仕様（`gate_in`, `trans_in`, `trans_out1..3`, `startgate_out`, `gate_out`, `longgate_out`, `cv_out`、未結線紫警告発光、`weights` 長さ3）に完全改訂、サブパッチ端子仕様を新 14-PIN 体系（PIN1〜7 送り / PIN8〜14 戻り）へ全面更新。
+    - **PADモジュールのスマートフォン・タッチレイテンシ超高速化 & パフォーマンスモード・スライド共存対応（v1.0.0439）**:
+      - **スマートフォンにおけるタッチ遅延（50〜100ms）の根本原因解明**:
+        - PCのマウスクリックはジェスチャー判定待機がゼロ（<2ms）で即座に `pointerdown` がディスパッチされる。
+        - 一方、スマートフォンのスクロール可能なコンテナ内では、ブラウザのジェスチャー判定（パン/スクロール/ダブルタップズーム待ち）により、合成 `pointerdown` の発火までに 50〜100ms のディレイが発生していた。
+        - 従来の `pad.js` では `touchmove` のみ `preventDefault()` していたため、指を動かさずに叩くフィンガードラミングの瞬発タップにおいてこの 100ms 近い遅延をまともに受けていた。
+      - **ハードウェア直結の `touchstart`（`passive: false`）による 0ms 超高速応答**:
+        - グリッド内 `.pad-grid-container` および拡大モーダル `#pad-modal-touch-area` の両方に、`{ passive: false }` の `touchstart` / `touchmove` / `touchend` / `touchcancel` リスナーをダイレクト登録。
+        - `touchstart` 時に `e.preventDefault()` と `e.stopPropagation()` を即座にコールし、ブラウザのジェスチャー判定エンジンを即座にバイパスして 0ms で `PAD_DOWN` を AudioWorklet に直接送信。
+        - `pointerdown` 側の二重発火を防止するため、タッチイベント由来のポインター（`e.pointerType === 'touch'`）およびタッチ直後の合成ポインター（400ms以内）を確実にガード。
+        - `touch.identifier` に基づくマルチタッチ管理を実装し、複数本指での素早いドラミング演奏を安定処理。
+      - **楽観的レンダリング（Optimistic Visual Feedback）**:
+        - 従来の `PAD_DATA` メッセージ戻り（〜16msの通信往復）を待たずに、指が触れた同一フレーム（0ms）でパッドキャンバスのバックライト発光およびクロスヘア位置を即時再描画する `renderOptimisticGrid` / `renderOptimisticModal` を実装。知覚レイテンシを完全にゼロ化。
+      - **パフォーマンスモードにおけるパッド外スライド・スクロールの両立**:
+        - パフォーマンスモード中であってもラックの縦移動（スライドスクロール）ができるよう、`interaction-manager.js` のドラッグスクロール条件から `!this.ui.isPerformanceMode` の制限を解除。
+        - コントロール外（モジュール背景、空白セル、行ヘッダー、隙間等）のスワイプ操作では `container.scrollTop` を滑らかに追従させ、PAD表面（`.pad-grid-container`, `.pad-grid-canvas`, `.pad-modal-touch-area`）に触れた時のみ確実にスクロールをキャンセル（`preventDefault`）する二層防御を構築。
+      - **AudioContext 復帰の自動トリガー保証**:
+        - `engine.js` の `sendControlEvent` にて `PAD_DOWN` / `PAD_MOVE` / `PAD_UP` 受信時に `this.ctx.state === 'suspended'` であれば即座に `this.ctx.resume()` を呼び出す安全処理を追加。
+      - バージョンを `v1.0.0439`、キャッシュバスターを `v=439` に更新。
 
 
 
