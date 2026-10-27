@@ -59,10 +59,8 @@ export const LISS = {
         return {
             nodes: { w, gX, gY },
             inputs: {
-                x_in: gX,
-                y_in: gY,
-                wave_in1: gX,
-                wave_in2: gY
+                cv_in_x: gX,
+                cv_in_y: gY
             },
             outputs: {},
             read: () => ({
@@ -94,8 +92,7 @@ export const SPEC = {
         return {
             nodes: { inG, an },
             inputs: {
-                wave_in: inG,
-                in: inG
+                wave_in: inG
             },
             outputs: {},
             read: () => {

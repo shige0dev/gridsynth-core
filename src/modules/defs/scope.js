@@ -179,8 +179,8 @@ export const LISS = {
     defaults: () => ({ type: 'LISS', vRange: 2.0, opacity: 0.8 }),
     ports: () => ({
         in: [
-            { port: 'x_in', pin: 4, color: 'bg-yellow-400' },
-            { port: 'y_in', pin: 5, color: 'bg-yellow-400' }
+            { port: 'cv_in_x', pin: 4, color: 'bg-yellow-400' },
+            { port: 'cv_in_y', pin: 5, color: 'bg-yellow-400' }
         ],
         out: []
     }),
@@ -213,8 +213,8 @@ export const LISS = {
                     <canvas id="liss-modal-canvas" class="w-full h-full block rounded bg-slate-950" width="360" height="106"></canvas>
                 </div>
                 <div class="flex items-center justify-between text-[8px] text-slate-400 select-none pt-0.5">
-                    <span class="font-mono text-emerald-400">X-IN: PIN4</span>
-                    <span class="font-mono text-emerald-400">Y-IN: PIN5</span>
+                    <span class="font-mono text-emerald-400">CV_IN_X: PIN4</span>
+                    <span class="font-mono text-emerald-400">CV_IN_Y: PIN5</span>
                 </div>
             </div>`;
     },

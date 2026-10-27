@@ -155,10 +155,10 @@ export const LFO = {
     },
     ports: () => ({
         in: [
-            { port: 'trig_in', color: 'bg-orange-500' },
-            { port: 'cv_in', color: 'bg-yellow-400' }
+            { port: 'freq_cv_in', pin: 3, color: 'bg-yellow-400' },
+            { port: 'trig_in', pin: 4, color: 'bg-orange-500' }
         ],
-        out: [{ port: 'cv_out', color: 'bg-yellow-400' }]
+        out: [{ port: 'cv_out', pin: 9, color: 'bg-yellow-400' }]
     }),
     formatTime: (sec) => {
         const s = Math.max(0.001, Number(sec) || 0.001);
@@ -372,8 +372,8 @@ export const THROUGH = {
     color: 'amber',
     defaults: () => ({ type: 'THROUGH', state: true }),
     ports: () => ({
-        in: [{ port: 'cv_in', color: 'bg-yellow-400' }],
-        out: [{ port: 'cv_out', color: 'bg-yellow-400' }]
+        in: [{ port: 'cv_in', pin: 4, color: 'bg-yellow-400' }],
+        out: [{ port: 'cv_out', pin: 9, color: 'bg-yellow-400' }]
     }),
     UI_STATES: {
         true:  { btnCls: 'bg-amber-500 text-slate-950 border-amber-300', btnText: 'PASSING (THRU)' },

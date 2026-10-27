@@ -82,8 +82,12 @@ export const LFO = {
         cvIn.connect(w, 0, 1);
         return {
             nodes: { w, rIn, cvIn },
-            inputs: { reset: rIn, reset_in: rIn, trig_in: rIn, cv_in: cvIn },
-            outputs: { cv_out: w, out: w }
+            inputs: {
+                freq_cv_in: cvIn,
+                trig_in: rIn,
+                reset_in: rIn
+            },
+            outputs: { cv_out: w }
         };
     },
     update: (ctx, inst, d, patch, eng) => {
@@ -154,8 +158,8 @@ export const THROUGH = {
         const g = ctx.createGain(); g.gain.value = d.state !== false ? 1.0 : 0.0;
         return {
             nodes: { g },
-            inputs: { cv_in: g, wave_in: g, in: g },
-            outputs: { cv_out: g, wave_out: g, out: g }
+            inputs: { cv_in: g },
+            outputs: { cv_out: g }
         };
     },
     update: (ctx, inst, d) => AudioHelpers.set(inst.nodes.g.gain, d.state !== false ? 1.0 : 0.0, ctx, 0.003)

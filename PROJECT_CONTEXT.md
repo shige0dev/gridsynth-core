@@ -1044,6 +1044,12 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
         - `arp.js` から `STATE4` を完全独立させ、`src/modules/defs/state4.js`、`src/audio/defs/state4.js`、`src/dsp/processors/state4.js` として新設。
         - これによりモジュール名とファイル名（`count.js`, `state4.js`, `gate4.js`, `arp.js` 等）が1対1で整合。
       - バージョンを `v1.0.0430`、キャッシュバスターを `v=430` に更新。
+    - **特定モジュール（LISS, SPEC, THROUGH, LFO）の端子名・端子構成の再整理（v1.0.0431）**:
+      - **LISS**: 入力端子名を `x_in` / `y_in` ➔ **`cv_in_x`** (PIN4) / **`cv_in_y`** (PIN5) に正式改名。モーダル案内表示も統一。
+      - **SPEC**: 入力端子名を `audio_in` ではなくオシロスコープ系共通の **`wave_in`** (PIN4) に整理統一。
+      - **THROUGH**: 入力端子を **`cv_in`** (PIN4)、出力端子を **`cv_out`** (PIN9) の単一パス（1入力1出力）に明示指定・純化。
+      - **LFO**: 入力周波数変調端子名を **`freq_cv_in`** (PIN3)、出力を単一ピン **`cv_out`** (PIN9) に整理統一。
+      - バージョンを `v1.0.0431`、キャッシュバスターを `v=431` に更新。
 
 
 
