@@ -14,7 +14,6 @@ import { scopeDefs } from './defs/scope.js?v=424';
 import { subDefs } from './defs/sub.js?v=351';
 import { controllerDefs } from './defs/controllers.js?v=355';
 import { seqDefs } from './defs/seq.js?v=436';
-import { countDefs } from './defs/count.js?v=429';
 import { chordDefs } from './defs/chord.js?v=351';
 import { arpDefs } from './defs/arp.js?v=424';
 import { state4Defs } from './defs/state4.js?v=429';
@@ -39,7 +38,6 @@ export const MODULE_REGISTRY = {
     ...subDefs,
     ...controllerDefs,
     ...seqDefs,
-    ...countDefs,
     ...chordDefs,
     ...arpDefs,
     ...state4Defs,

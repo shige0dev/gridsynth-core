@@ -1100,6 +1100,15 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
         - `index.html` ヘッダー部 `#app-version-disp` および About モーダル `#about-app-version` の初期静的文字列・スクリプトバインディングを同期。
         - CSS/JS/Worklet/プリセットのクエリパラメータを `?v=436` に刷新しブラウザキャッシュの残存を根絶。
       - バージョンを `v1.0.0436`、キャッシュバスターを `v=436` に更新。
+    - **COUNTモジュールの完全削除（MARKOVへ吸収）& 001上辺〜メニュー間余白の6px化（v1.0.0437）**:
+      - **COUNTモジュールの完全削除**:
+        - COUNT（旧PASS）モジュールがMARKOVモジュール（カウントダウン滞在機能）に完全吸収されたため、コードベース全体から完全削除（ゼロエイリアス）。
+        - 定義ファイル（`src/modules/defs/count.js`, `src/audio/defs/count.js`, `src/dsp/processors/count.js`）を `git rm` で完全削除。
+        - レジストリ（`modules/registry.js`, `audio/registry.js`）、Workletプロセッサ読み込み（`worklet-processors.js`）、`engine.js`、`controller.js`、`modal-manager.js`（ADD MODULEダイアログ）、`signals.js` からCOUNTの参照を完全に一掃。
+      - **001上辺〜メニュー間余白の6px化**:
+        - `index.html` の `#canvas-container` 上部パディングを `pt-[6px]`、`#grid-scroll-content` の上部マージンを `mt-0` に設定。
+        - ページナビメニューバー下端から最上段グリッド（001）の上辺までの空きスペースを正確に **6px** に狭め、画面領域を最適化。
+      - バージョンを `v1.0.0437`、キャッシュバスターを `v=437` に更新。
 
 
 

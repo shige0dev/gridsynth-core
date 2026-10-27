@@ -14,7 +14,6 @@ import { scopeAudioDefs } from './defs/scope.js?v=353';
 import { subAudioDefs } from './defs/sub.js?v=351';
 import { controllerAudioDefs } from './defs/controllers.js?v=355';
 import { seqAudioDefs } from './defs/seq.js?v=424';
-import { countAudioDefs } from './defs/count.js?v=429';
 import { chordAudioDefs } from './defs/chord.js?v=351';
 import { arpAudioDefs } from './defs/arp.js?v=424';
 import { state4AudioDefs } from './defs/state4.js?v=429';
@@ -39,7 +38,6 @@ export const AUDIO_REGISTRY = {
     ...subAudioDefs,
     ...controllerAudioDefs,
     ...seqAudioDefs,
-    ...countAudioDefs,
     ...chordAudioDefs,
     ...arpAudioDefs,
     ...state4AudioDefs,

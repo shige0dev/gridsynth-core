@@ -9,7 +9,6 @@ export const MODAL_WIDTHS = {
     FMCORE: 'w-[250px]',
 
     // Sequencing & Arpeggiation
-    COUNT: 'w-[220px]',
     GATE4: 'w-[230px]',
     STATE4: 'w-[230px]',
     ARP: 'w-[230px]',
@@ -287,7 +286,7 @@ export class ModalManager {
                         name: 'TRIGGER',
                         sub: 'トリガ (クロック・シーケンサー)',
                         color: 'rose',
-                        types: ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'COUNT', 'MARKOV', 'GATE4', 'STATE4', 'ARP', 'KEY', 'PAD']
+                        types: ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'MARKOV', 'GATE4', 'STATE4', 'ARP', 'KEY', 'PAD']
                     },
                     {
                         name: 'CV',

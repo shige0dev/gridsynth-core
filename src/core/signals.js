@@ -25,7 +25,7 @@ export const SIGNAL_TYPES = {
     TRANS: {
         id: 'trans',
         label: 'TRANS',
-        stroke: '#94a3b8',       // slate-400 (MARKOV / COUNT transition)
+        stroke: '#94a3b8',       // slate-400 (MARKOV transition)
         brightStroke: '#cbd5e1', // slate-300
         tailwind: 'bg-slate-400'
     },
@@ -94,7 +94,7 @@ export const getPortSignalType = (portName = '', modId = '') => {
         return SIGNAL_TYPES.CLOCK;
     }
     if (
-        (p.includes('gate') && (m.startsWith('COUNT') || m.startsWith('SEQ8') || m.startsWith('SEQ16') || m.startsWith('MARKOV') || m.startsWith('GATE4') || m.startsWith('STATE4'))) ||
+        (p.includes('gate') && (m.startsWith('SEQ8') || m.startsWith('SEQ16') || m.startsWith('MARKOV') || m.startsWith('GATE4') || m.startsWith('STATE4'))) ||
         (p === 'trig_out' && m.startsWith('MARKOV'))
     ) {
         return SIGNAL_TYPES.GATE_SEQ;

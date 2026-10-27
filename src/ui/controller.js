@@ -1,7 +1,7 @@
 import { isSubModule } from '../core/utils.js?v=424';
 import { parsePatch } from '../core/patch.js?v=424';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=436';
-import { UIHelpers } from './helpers.js?v=436';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=437';
+import { UIHelpers } from './helpers.js?v=437';
 import { PresetManager } from './managers/preset-manager.js?v=402';
 import { ModalManager } from './managers/modal-manager.js?v=409';
 import { CableManager } from './managers/cable-manager.js?v=424';
@@ -9,7 +9,7 @@ import { PageManager } from './managers/page-manager.js?v=402';
 import { InteractionManager } from './managers/interaction-manager.js?v=402';
 import { ToolbarManager } from './managers/toolbar-manager.js?v=402';
 
-export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'LISS', 'SPEC', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'STATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD', 'COUNT'];
+export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'LISS', 'SPEC', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'CHORD', 'MIX', 'GATE4', 'STATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD'];
 
 export class UIController {
     constructor(synth) {
