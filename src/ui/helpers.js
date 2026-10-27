@@ -401,12 +401,12 @@ export const UIHelpers = {
         });
     },
     /**
-     * Standard 12-pin chassis terminal renderer (PIN1 - PIN12).
+     * Standard chassis terminal renderer (PIN0 - PIN14, 14px center-to-center pitch).
      *
      * Physical Chassis Grid:
-     * - Left Edge: PIN3 (bottom 16px), PIN2 (bottom 30px), PIN1 (bottom 44px)
-     * - Bottom Edge: PIN4 (left), PIN5, PIN6, PIN7, PIN8, PIN9 (right) [6 slots justify-between]
-     * - Right Edge: PIN10 (bottom 16px), PIN11 (bottom 30px), PIN12 (bottom 44px)
+     * - Left Edge: PIN3 (bottom 16px), PIN2 (bottom 30px), PIN1 (bottom 44px), PIN0 (bottom 58px)
+     * - Bottom Edge: PIN4, PIN5, PIN6, PIN7, PIN8, PIN9 (6 slots, 14px pitch, margin 2px)
+     * - Right Edge: PIN10 (bottom 16px), PIN11 (bottom 30px), PIN12 (bottom 44px), PIN13 (bottom 58px), PIN14 (bottom 72px)
      */
     renderChassisPorts: (renderP, portsOrIn = {}, outPortsOrMap = null, customPinMap = null) => {
         let inPorts = [];
@@ -485,30 +485,27 @@ export const UIHelpers = {
 
         let html = '';
 
-        // Left Edge: PIN14, PIN3, PIN2, PIN1, PIN0 (bottom to top)
-        if (pinSlots[0] || pinSlots[1] || pinSlots[2] || pinSlots[3] || pinSlots[14]) {
-            const leftSlots = [];
-            if (pinSlots[14]) leftSlots.push(14);
-            leftSlots.push(3, 2, 1);
+        // Left Edge: PIN3, PIN2, PIN1, PIN0 (bottom to top, 14px center-to-center / gap 6px)
+        if (pinSlots[0] || pinSlots[1] || pinSlots[2] || pinSlots[3]) {
+            const leftSlots = [3, 2, 1];
             if (pinSlots[0]) leftSlots.push(0);
             const leftPins = leftSlots.map(renderSlot).join('');
-            const isDense = Boolean(pinSlots[14]);
-            const posCls = isDense ? 'bottom-[4px] gap-1' : 'bottom-[16px] gap-1.5';
-            html += `<div class="absolute left-[3px] ${posCls} flex flex-col-reverse items-center pointer-events-none z-10">${leftPins}</div>`;
+            html += `<div class="absolute left-[2px] bottom-[16px] flex flex-col-reverse gap-[6px] items-center pointer-events-none z-10">${leftPins}</div>`;
         }
 
-        // Right Edge: PIN10, PIN11, PIN12, PIN13 (bottom to top)
-        if (pinSlots[10] || pinSlots[11] || pinSlots[12] || pinSlots[13]) {
+        // Right Edge: PIN10, PIN11, PIN12, PIN13, PIN14 (bottom to top, 14px center-to-center / gap 6px)
+        if (pinSlots[10] || pinSlots[11] || pinSlots[12] || pinSlots[13] || pinSlots[14]) {
             const rightSlots = [10, 11, 12];
             if (pinSlots[13]) rightSlots.push(13);
+            if (pinSlots[14]) rightSlots.push(14);
             const rightPins = rightSlots.map(renderSlot).join('');
-            html += `<div class="absolute right-[3px] bottom-[16px] flex flex-col-reverse gap-1.5 items-center pointer-events-none z-10">${rightPins}</div>`;
+            html += `<div class="absolute right-[2px] bottom-[16px] flex flex-col-reverse gap-[6px] items-center pointer-events-none z-10">${rightPins}</div>`;
         }
 
-        // Bottom Edge: PIN4, PIN5, PIN6, PIN7, PIN8, PIN9 (6 slots fixed)
+        // Bottom Edge: PIN4, PIN5, PIN6, PIN7, PIN8, PIN9 (6 slots, 14px center-to-center / gap 6px)
         if (pinSlots[4] || pinSlots[5] || pinSlots[6] || pinSlots[7] || pinSlots[8] || pinSlots[9]) {
             const bottomPins = [4, 5, 6, 7, 8, 9].map(renderSlot).join('');
-            html += `<div class="absolute bottom-[3px] left-[3px] right-[3px] flex justify-between items-center pointer-events-none z-10">${bottomPins}</div>`;
+            html += `<div class="absolute bottom-[2px] left-[2px] right-[2px] flex justify-between items-center pointer-events-none z-10">${bottomPins}</div>`;
         }
 
         return html;
