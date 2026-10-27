@@ -2,7 +2,7 @@ export const MARKOV = {
     create: (ctx, d, patch, eng) => {
         const w = new AudioWorkletNode(ctx, 'markov-processor', {
             numberOfInputs: 2,
-            numberOfOutputs: 7
+            numberOfOutputs: 6
         });
         const rootM = d.rootMidi ?? 36;
         const cvVal = d.quantize !== false ? ((rootM - 24) / 12.0) : (d.stateVal ?? 1.0);
@@ -17,14 +17,14 @@ export const MARKOV = {
             initOn: isInitOn,
             stateVal: cvVal,
             stayWeight: d.stayWeight ?? 10,
-            weights: d.weights || [0, 0, 0, 0],
+            weights: d.weights || [0, 0, 0],
             holdClocks: d.holdClocks ?? 1
         });
 
         // Keepalive silent sink to destination
         const silent = ctx.createGain();
         silent.gain.value = 0.0;
-        w.connect(silent, 4);
+        w.connect(silent, 3);
         silent.connect(ctx.destination);
 
         // Inputs: 0: clk_in, 1: trig_in
@@ -34,56 +34,59 @@ export const MARKOV = {
         const gTrig = ctx.createGain();
         gTrig.connect(w, 0, 1);
 
-        // Outputs: 0..3: trig_out1..4, 4: cv_out, 5: gate_out, 6: step_gate
-        const g1 = ctx.createGain(), g2 = ctx.createGain(), g3 = ctx.createGain(), g4 = ctx.createGain();
+        // Outputs: 0..2: trans_out1..3, 3: cv_out, 4: gate_out, 5: step_gate (trig_out)
+        const g1 = ctx.createGain(), g2 = ctx.createGain(), g3 = ctx.createGain();
         const gCv = ctx.createGain(), gGate = ctx.createGain(), gStepGate = ctx.createGain();
         w.connect(g1, 0);
         w.connect(g2, 1);
         w.connect(g3, 2);
-        w.connect(g4, 3);
-        w.connect(gCv, 4);
-        w.connect(gGate, 5);
-        w.connect(gStepGate, 6);
+        w.connect(gCv, 3);
+        w.connect(gGate, 4);
+        w.connect(gStepGate, 5);
+
+        let liveRemaining = d.holdClocks ?? 1;
+        let liveCount = 0;
 
         const inst = {
-            nodes: { w, silent, gClk, gTrig, g1, g2, g3, g4, gCv, gGate, gStepGate },
+            nodes: { w, silent, gClk, gTrig, g1, g2, g3, gCv, gGate, gStepGate },
             inputs: {
                 gate_in: gClk,
-                trans_in: gTrig,
-                clk_in: gClk,
-                transition_in: gTrig,
-                trig_in: gTrig
+                trans_in: gTrig
             },
             outputs: {
                 trans_out1: g1,
                 trans_out2: g2,
                 trans_out3: g3,
-                trans_out4: g4,
-                transition_out1: g1,
-                transition_out2: g2,
-                transition_out3: g3,
-                transition_out4: g4,
-                trig_out1: g1,
-                trig_out2: g2,
-                trig_out3: g3,
-                trig_out4: g4,
-                cv_out: gCv,
+                trig_out: gStepGate,
                 gate_out: gGate,
-                trig_out: gStepGate
+                cv_out: gCv
             },
             _liveState: initialState,
             resetStep: () => {
                 const st = d.initOn ? 1 : 0;
                 inst._liveState = st;
                 d.state = st;
+                liveRemaining = d.holdClocks ?? 1;
+                liveCount = 0;
             },
-            read: () => ({ state: inst._liveState })
+            read: () => ({
+                state: inst._liveState,
+                remaining: liveRemaining,
+                count: liveCount,
+                holdClocks: d.holdClocks ?? 1
+            })
         };
 
         w.port.onmessage = e => {
             if (e.data.type === 'STATE_CHANGED') {
                 inst._liveState = e.data.state;
                 d.state = e.data.state;
+                if (e.data.remaining !== undefined) {
+                    liveRemaining = e.data.remaining;
+                }
+                if (e.data.clockCount !== undefined) {
+                    liveCount = e.data.clockCount;
+                }
             }
         };
 
@@ -101,7 +104,7 @@ export const MARKOV = {
             initOn: isInitOn,
             stateVal: cvVal,
             stayWeight: d.stayWeight ?? 10,
-            weights: d.weights || [0, 0, 0, 0],
+            weights: d.weights || [0, 0, 0],
             holdClocks: d.holdClocks ?? 1
         });
     }

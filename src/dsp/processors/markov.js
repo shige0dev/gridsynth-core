@@ -26,14 +26,14 @@ export class MarkovProcessor extends AudioWorkletProcessor {
                 this.trigOutCh = -1;
                 this.clkActive = false;
                 this.shotActive = false;
-                this.port.postMessage({ type: 'STATE_CHANGED', state: this.state });
+                this.port.postMessage({ type: 'STATE_CHANGED', state: this.state, remaining: this.holdClocks, clockCount: 0 });
             } else if (e.data.type === 'RESET') {
                 this.state = this.initOn ? 1 : 0;
                 this.clockCount = 0;
                 this.trigOutCh = -1;
                 this.clkActive = false;
                 this.shotActive = false;
-                this.port.postMessage({ type: 'STATE_CHANGED', state: this.state });
+                this.port.postMessage({ type: 'STATE_CHANGED', state: this.state, remaining: this.holdClocks, clockCount: 0 });
             }
         };
     }
@@ -42,9 +42,9 @@ export class MarkovProcessor extends AudioWorkletProcessor {
         const inClk = ins[0]?.[0];
         const inTrig = ins[1]?.[0];
 
-        const o1 = outs[0]?.[0], o2 = outs[1]?.[0], o3 = outs[2]?.[0], o4 = outs[3]?.[0];
-        const cvOut = outs[4]?.[0], gtOut = outs[5]?.[0], stepGtOut = outs[6]?.[0];
-        const outArr = [o1, o2, o3, o4];
+        const o1 = outs[0]?.[0], o2 = outs[1]?.[0], o3 = outs[2]?.[0];
+        const cvOut = outs[3]?.[0], gtOut = outs[4]?.[0], stepGtOut = outs[5]?.[0];
+        const outArr = [o1, o2, o3];
         const len = 128;
 
         for (let i = 0; i < len; i++) {
@@ -59,7 +59,8 @@ export class MarkovProcessor extends AudioWorkletProcessor {
                     this.clockCount = 1;
                     this.clkActive = true; // 現在の立ち上がり拍でバトンを受け取ったので同拍での即時遷移を防止
                     this.shotActive = true; // ノード発行時のワンショットトリガーをこの拍で発火
-                    this.port.postMessage({ type: 'STATE_CHANGED', state: 1 });
+                    const rem = Math.max(1, this.holdClocks);
+                    this.port.postMessage({ type: 'STATE_CHANGED', state: 1, remaining: rem, clockCount: 1 });
                 }
             }
 
@@ -80,11 +81,13 @@ export class MarkovProcessor extends AudioWorkletProcessor {
                         // 初期起動ノードの第1拍目
                         this.clockCount = 1;
                         this.shotActive = true; // 初回発行時のワンショットトリガー発火
+                        const rem = Math.max(1, this.holdClocks);
+                        this.port.postMessage({ type: 'STATE_CHANGED', state: 1, remaining: rem, clockCount: 1 });
                     } else {
                         // 最低保持クロック数（holdClocks）に達している場合、確率遷移を判定
                         if (this.clockCount >= this.holdClocks) {
                             let totalW = Math.max(0, this.stayWeight);
-                            for (let k = 0; k < 4; k++) {
+                            for (let k = 0; k < 3; k++) {
                                 totalW += Math.max(0, this.weights[k] || 0);
                             }
 
@@ -93,7 +96,7 @@ export class MarkovProcessor extends AudioWorkletProcessor {
                                 let acc = Math.max(0, this.stayWeight);
                                 if (r >= acc) {
                                     let chosen = -1;
-                                    for (let k = 0; k < 4; k++) {
+                                    for (let k = 0; k < 3; k++) {
                                         acc += Math.max(0, this.weights[k] || 0);
                                         if (r < acc) {
                                             chosen = k;
@@ -106,7 +109,7 @@ export class MarkovProcessor extends AudioWorkletProcessor {
                                         this.clockCount = 0;
                                         this.trigOutCh = chosen;
                                         this.shotActive = false;
-                                        this.port.postMessage({ type: 'STATE_CHANGED', state: 0 });
+                                        this.port.postMessage({ type: 'STATE_CHANGED', state: 0, remaining: 0, clockCount: 0 });
                                     }
                                 }
                             }
@@ -115,13 +118,15 @@ export class MarkovProcessor extends AudioWorkletProcessor {
                         // 遷移せず留まる場合、滞在クロック数を加算
                         if (this.state === 1) {
                             this.clockCount++;
+                            const rem = Math.max(1, this.holdClocks - this.clockCount + 1);
+                            this.port.postMessage({ type: 'STATE_CHANGED', state: 1, remaining: rem, clockCount: this.clockCount });
                         }
                     }
                 }
             }
 
-            // 4. トリガ出力（trig_out1..4）: クロックHighの間、遷移先ポートへパルス出力
-            for (let k = 0; k < 4; k++) {
+            // 4. トリガ出力（trans_out1..3）: クロックHighの間、遷移先ポートへパルス出力
+            for (let k = 0; k < 3; k++) {
                 const outCh = outArr[k];
                 if (outCh) {
                     outCh[i] = (this.trigOutCh === k && isClkHi) ? 1.0 : 0.0;
