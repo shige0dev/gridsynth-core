@@ -142,7 +142,7 @@ $$\text{slotIndex} = \text{row} \times 5 + \text{col} \quad (0 \le \text{row} \l
 | **AUDIO (音声信号)** | 青 `bg-blue-500` | `#38bdf8` (Sky) | `wave_in`, `wave_out`, `mod_in`, `in1..4`, `wave_in_l/r` | 可聴帯域オーディオ信号 (±1.0V 基準) |
 | **TRIGGER (瞬間パルス)** | 橙 `bg-orange-500` | `#f97316` (Orange) | `trig_in`, `trig_out`, `reset` | 瞬間パルス・トリガー信号 (0.0V / 1.0V) |
 | **GATE_SEQ (ステップゲート)** | 赤 `bg-red-500` | `#f43f5e` (Rose) | `gate_in`, `gate_out`, `gate_out1..4` | シーケンサー/クロック/ステップゲート (0.0V / 1.0V) |
-| **TRANS (状態遷移)** | 灰 `bg-slate-400` | `#94a3b8` (Slate) | `trans_in`, `trans_out`, `trans_out1..4` | MARKOV / PASS 専用・状態遷移バトンパルス (0.0V / 1.0V) |
+| **TRANS (状態遷移)** | 灰 `bg-slate-400` | `#94a3b8` (Slate) | `trans_in`, `trans_out1..3` | MARKOV 専用・状態遷移バトンパルス (0.0V / 1.0V) |
 | **CLOCK (マスターテンポ)** | 赤 `bg-rose-500` | `#f43f5e` (Rose) | `gate_out` (CLK), `clk_in` | テンポ同期パルス |
 
 ---
@@ -156,20 +156,24 @@ Gridsynth で利用可能な全モジュールの正式型名（`type`）、端�
 ### 5.1 音源モジュール (Sound Sources)
 
 #### `VCO` (アナログオシレーター)
-クラシックなアナログシンセサイズ波形を生成する基本オシレーター。最大4ボイスのポリフォニック発音に対応。
+クラシックなアナログシンセサイズ波形を生成する基本オシレーター。最大4ボイスのパラフォニック（コード/ユニゾン）発音に対応。
 - **入力ポート**:
   - `cv_in` (1V/Oct ピッチCV入力 / ボイス1)
   - `cv_in2`, `cv_in3`, `cv_in4` (ボイス2〜4用ピッチCV / `channels > 1` 時)
   - `sync_in` (オシレーター同期ハードシンク入力)
-- **出力ポート**: `wave_out` (オーディオ出力)
+- **出力ポート**: `wave_out` (オーディオ出力: 単一モノラル合算)
 - **パラメータ**:
   | キー | 型 | 範囲 / 選択肢 | デフォルト | 説明 |
   | :--- | :--- | :--- | :--- | :--- |
-  | `channels` | `number` | `1`, `2`, `3`, `4` | `1` | ボイス数（和音時は `4`） |
+  | `channels` | `number` | `1`, `2`, `3`, `4` | `1` | 内部オシレーター数（和音・コード時は `4`） |
   | `wave` | `string` | `"sawtooth"`, `"square"`, `"triangle"`, `"sine"` | `"sawtooth"` | 基本波形 |
   | `freq1` | `number` | `20` 〜 `2000` | `220` | ボイス1基準周波数(Hz) |
   | `freq2` 〜 `freq4` | `number` | `20` 〜 `2000` | `220` | ボイス2〜4基準周波数(Hz) |
   | `quantize` | `boolean` | `true`, `false` | `false` | 半音クオンタイズ有効化 |
+- **ポリフォニー / パラフォニック仕様**:
+  - `channels > 1` 時、VCOは内部で指定された数の独立オシレーターを生成し、レベル飽和を防ぐゲイン補正（$0.75 / \sqrt{\text{channels}}$）を適用したうえで、**単一のモノラル `wave_out` として合算出力**します。
+  - 後段の `VCF` / `VCA` / `ADSR` はマルチチャンネル（4本の独立線）を追従するのではなく、合算された単一の波形（モノラル）としてそのまま通過・フィルタリングします（パラフォニック構成）。
+  - ノートごとに完全に独立したフィルターやエンベロープ（完全ポリフォニー）を実現する場合は、レシピ3のように複数の VCF / VCA / ADSR ボイス系統（または複数の `SUB` モジュール）を並列配置して結線してください。
 
 #### `NOISE` (ノイズジェネレーター)
 パーカッションのアタック音や環境音、ランダムソースとして使用するアナログノイズ源。
@@ -185,25 +189,35 @@ Gridsynth で利用可能な全モジュールの正式型名（`type`）、端�
 #### `FMx3` (3オペレーター FM音源・パーカッションジェネレーター)
 各オペレータに独立したADSRを内包した3オペレータ位相変調（PM）音源。キック、スネア、ハイハット、タム、金属音、ディープベースに最適。
 - **入力ポート**:
-  - `cv_in` (1V/Oct ピッチCV入力: 全オペレータがRatio比を保ったまま追従。旧名 `pitch_in` 互換)
+  - `cv_in` (1V/Oct ピッチCV入力: 全オペレータがRatio比を保ったまま追従)
   - `gate_in` (ゲート/トリガー入力: 3つの内包ADSRを同時にトリガー。位相リセットで打撃パンチを安定化)
 - **出力ポート**: `wave_out` (オーディオ出力)
 - **パラメータ**:
   | キー | 型 | 範囲 / 選択肢 | デフォルト | 説明 |
   | :--- | :--- | :--- | :--- | :--- |
-  | `algorithm` | `number` | `1`, `2`, `3`, `4` | `1` | FM接続アルゴリズム |
+  | `algorithm` | `number` | `1`, `2`, `3` | `1` | FM接続アルゴリズム（下記参照） |
   | `rootMidi` | `number` | `24` 〜 `72` | `48` | 基準MIDIノート (48=C3)。`cv_in` 結線時はCVが優先加算 |
-  | `op1` | `object` | `{ ratio, level, attack, decay, sustain, release, curve }` | - | 主キャリア（出力ボリューム） |
-  | `op2` | `object` | `{ ratio, level, attack, decay, sustain, release, curve }` | - | モジュレータ 1 / 副キャリア（変調指数） |
-  | `op3` | `object` | `{ ratio, level, feedback, wave, attack, decay, sustain, release, curve }` | - | モジュレータ 2（最上段変調指数） |
-- **4つのトポロジー (Algorithms)**:
-  - `1`: **直列スタック型 (Cascade)**: `Op3 ➔ Op2 ➔ Op1 ➔ OUT`（金属音、スネア、ディープFMベース）
-  - `2`: **並列変調・Y字型 (Dual Modulator)**: `(Op3 + Op2) ➔ Op1 ➔ OUT`（キック、タム、カウベル、コンガ）
-  - `3`: **2キャリア分岐型 (Split Carrier)**: `Op3 ➔ (Op2 + Op1) ➔ OUT`（ベル、エレピ、ブラス、和音リード）
-  - `4`: **独立FM + サブベース型 (Hybrid)**: `(Op3 ➔ Op2) + Op1 ➔ OUT`（ダンス系キック、808/909パンチベース）
-- **Op3波形モード (`op3.wave`)**:
-  - `"sine"`: サイン波（`feedback`: 0.0〜1.0 自己変調対応）
-  - `"noise"`: ホワイトノイズ（スネアのスナッピー、ハイハットの擦れ音、アタックノイズをFM合成だけで生成）
+  | `op1` | `object` | オペレータ1 サブパラメータ | 下記参照 | 主キャリア（出力ボリューム） |
+  | `op2` | `object` | オペレータ2 サブパラメータ | 下記参照 | モジュレータ 1 / 副キャリア（変調指数） |
+  | `op3` | `object` | オペレータ3 サブパラメータ | 下記参照 | モジュレータ 2（最上段変調指数） |
+
+- **3つのトポロジー (Algorithms)**:
+  - `1`: **直列スタック型 (CASCADE)**: `Op3 ➔ Op2 ➔ Op1 ➔ OUT`（直列FM。金属音、スネア、ディープFMベース、複雑な倍音）
+  - `2`: **並列変調型 (DUAL MOD)**: `(Op3 + Op2) ➔ Op1 ➔ OUT`（並列変調。王道パーカッション、キック、タム、カウベル）
+  - `3`: **FM＋レイヤー型 (FM+LAYER)**: `Op3 + (Op2 ➔ Op1) ➔ OUT`（Op3が直接出力に加算合流。スネアのアタックノイズ直足し、ハイブリッドシンセ）
+
+- **オペレータ内包サブパラメータ（型・範囲・デフォルト値）**:
+  | フィールド | 型 | 範囲 / 単位 | op1 デフォルト | op2 デフォルト | op3 デフォルト | 説明 |
+  | :--- | :--- | :--- | :---: | :---: | :---: | :--- |
+  | **`ratio`** | `number` | `0.01` 〜 `16.0` (UI刻み 0.25) | `1.0` | `2.0` | `3.5` | 基本周波数に対する周波数倍率比 |
+  | **`level`** | `number` | op1: `0.0`〜`1.0`<br>op2, op3: `0.0`〜`5.0` | `0.85` | `1.5` | `1.8` | キャリア出力振幅 / モジュレータ変調深度 |
+  | **`attack`** | `number` | `0.0005` 〜 `2.0` (秒) | `0.005` | `0.005` | `0.005` | エンベロープ・アタック時間 |
+  | **`decay`** | `number` | `0.005` 〜 `3.0` (秒) | `0.4` | `0.15` | `0.05` | エンベロープ・ディケイ時間 |
+  | **`sustain`** | `number` | `0.0` 〜 `1.0` | `0.0` | `0.0` | `0.0` | エンベロープ・サスティンレベル |
+  | **`release`** | `number` | `0.005` 〜 `5.0` (秒) | `0.1` | `0.05` | `0.02` | エンベロープ・リリース時間 |
+  | **`curve`** | `string` | `"lin"`, `"exp"`, `"log"` | `"lin"` | `"lin"` | `"lin"` | ADSRカーブ特性。`"lin"`=直線(0.0), `"exp"`=指数(-0.75), `"log"`=対数(+0.75)。個別に `aCurve`, `dCurve`, `rCurve` でも指定可 |
+  | **`feedback`** | `number` | `0.0` 〜 `1.0` (0%〜100%) | - | - | `0.0` | **`op3` 専用**自己位相変調フィードバック。`wave: "sine"` 時のみ有効 |
+  | **`wave`** | `string` | `"sine"`, `"noise"` | - | - | `"sine"` | **`op3` 専用**波形種別。`"noise"` 時は feedback は無効化され純粋なホワイトノイズを生成 |
 
 #### `FMCORE` (モジュラー2オペレータ FMコア / PMオシレーター)
 外部から任意のオーディオ信号を変調波（Modulator）として流し込み、自由度の高いモジュラーFM合成を実現する高精度位相変調オシレーターコア。
@@ -316,13 +330,13 @@ Sergeスタイルの三角波状ファンクションジェネレーター。サ
 #### `LFO` (低周波オシレーター)
 音程ビブラート、フィルターワウ、トレモロ、FM変調などの周期変化を与える変調源。
 - **入力ポート**:
-  - `reset` (位相リセットトリガー入力: クロックパルス等で0度に同期)
-  - `cv_in` (レート変調CV入力: 1Vあたり +2.0Hz)
-- **出力ポート**: `cv_out` (CV出力)
+  - `freq_cv_in` (レート外部変調CV入力: 1Vあたり +2.0Hz / PIN 4)
+  - `trig_in` (位相リセットトリガー入力: クロックパルス等を受信時に位相を即時0度へ同期 / PIN 5)
+- **出力ポート**: `cv_out` (CV出力 / PIN 10)
 - **パラメータ**:
   | キー | 型 | 範囲 / 選択肢 | デフォルト | 説明 |
   | :--- | :--- | :--- | :--- | :--- |
-  | `waveType` | `string` | `"sine"`, `"triangle"`, `"sawtooth"`, `"ramp"`, `"square"` | `"sine"` | LFO波形 |
+  | `waveType` | `string` | `"sine"`, `"triangle"`, `"sawtooth"`, `"ramp"`, `"square"` | `"sine"` | LFO波形（下記詳細参照） |
   | `polarity` | `string` | `"bipolar"` (±Depth), `"unipolar"` (0〜+Depth) | `"bipolar"` | 出力極性 |
   | `syncMode` | `string` | `"free"` (Hz指定), `"sync"` (BPM音符同期) | `"free"` | 動作モード |
   | `rate` | `number` | `0.05` 〜 `30.0` | `2.0` | フリー時周波数(Hz) |
@@ -330,6 +344,12 @@ Sergeスタイルの三角波状ファンクションジェネレーター。サ
   | `depth` | `number` | `0.0` 〜 `5.0` | `1.0` | 出力振幅ボルト |
   | `duty` | `number` | `0.01` 〜 `0.99` | `0.5` | デューティ比 |
   | `phase` | `number` | `0` 〜 `360` | `0` | 初期位相(度) |
+- **波形特性 (`waveType`) の厳密な定義**:
+  - `"sawtooth"`: **上昇ノコギリ波 (Rising Sawtooth)**。位相 $p \in [0, 1)$ に伴い $r = 2p - 1$ として **$-1.0\text{V} \to +1.0\text{V}$ へリニアに直線上昇**し、周期末尾で瞬時に $-1.0\text{V}$ へリセット。
+  - `"ramp"`: **下降ノコギリ波 / ランプ波 (Falling Ramp)**。位相 $p \in [0, 1)$ に伴い $r = 1 - 2p$ として **$+1.0\text{V} \to -1.0\text{V}$ へリニアに直線下降**し、周期末尾で瞬時に $+1.0\text{V}$ へリセット。パーカッションやフィルターのディケイ減衰型モジュレーションに最適。
+  - `"sine"`: 滑らかな正弦波 ($r = \sin(2\pi p)$)
+  - `"triangle"`: 三角波（`duty` により非対称ノコギリ波へのモーフィング対応）
+  - `"square"`: 矩形波（`p < duty ? +1 : -1`）
 
 #### `SH` (サンプル＆ホールド / ランダムCV)
 トリガーパルスを受けた瞬間の入力信号電圧をサンプリングし、次のトリガーまでその電圧を一定に保つモジュール。
@@ -415,16 +435,15 @@ Sergeスタイルの三角波状ファンクションジェネレーター。サ
   | `scale` | `string` | `"chromatic"`, `"major"`, `"minor"`, `"pentatonic"`, `"dorian"`, `"mixolydian"`, `"blues"` | `"major"` | スケール音階 |
   | `root` | `number` | `0` 〜 `11` (0=C, 1=C#, 2=D, ... 11=B) | `0` | ルート音キー |
 
-#### `FLIP` (T-Flip-Flop / 1/2分周器)
-トリガーパルスを受けるたびに出力状態が反転（High ➔ Low ➔ High）するトグルフリップフロップ。入力クロック周波数を正確に 1/2 に分周します。
-- **入力ポート**: `trig_in` (トリガー入力)
-- **出力ポート**:
-  - `gate_out` (トグル出力: 0.0V / 1.0V)
-  - `inv_out` (反転トグル出力: `gate_out` の逆相)
+#### `STATE4` (4ステップ・シーケンシャルステートラッチ / 直流スイッチ)
+クロックパルスを受信するたびに、現在のアクティブ状態を順次切り替えて常時 1.0V (DC) で保持・出力するステートラッチプロセッサー。パートの有効化、ミュート制御、フィルターやVCAのバイアス切り替えに威力を発揮します。
+- **入力ポート**: `gate_in` (クロック/トリガー入力 / PIN 5)
+- **出力ポート**: `cv_out1` 〜 `cv_out4` (ステート1〜4 ラッチ出力: 現在アクティブな端子のみ常時 1.0V DC、非アクティブ端子は 0.0V DC / PIN 7〜10)
 - **パラメータ**:
   | キー | 型 | 範囲 / 選択肢 | デフォルト | 説明 |
   | :--- | :--- | :--- | :--- | :--- |
-  | `initVal` | `number` | `0`, `1` | `0` | リセット時の初期出力状態 |
+  | `steps` | `number` | `2`, `3`, `4` | `4` | 有効ステップ数（2〜4） |
+  | `mode` | `string` | `"up"`, `"down"`, `"updown"`, `"random"` | `"up"` | シーケンス進行方向 |
 
 #### `CVDELAY` (CV専用ディレイ / イベントバッファ)
 CV信号やトリガーゲート信号をミリ秒単位で遅延させる専用バッファ。ドラムのフラムやディレイフィル、変調の時差生成に威力を発揮します。
@@ -453,27 +472,10 @@ BPMテンポに追従したタイミングパルスを全システムに供給�
   | `pulseWidthMs`| `number` | `1` 〜 `500` | `15` | トリガーパルス幅(ms) |
   | `limitPct` | `number` | `10` 〜 `90` | `50` | 最大パルス幅デューティ上限（%） |
 
-#### `PASS` (カウントダウン・ゲートスルーシーケンサー / パート制御)
-クロックパルスをカウントダウンし、指定した拍数の間だけゲートを通過させ、カウント終了時に次へバトンを渡す精密パート制御モジュール。
-- **入力ポート**:
-  - `gate_in` (通過対象ゲート/クロック入力: 赤 `bg-red-500` / `GATE_SEQ`)
-  - `trans_in` (カウントリセット / 外部イネーブルトリガー入力: 灰 `bg-slate-400` / `TRANS`)
-- **出力ポート**:
-  - `gate_out` (通過ゲート出力: カウント中の間だけ `gate_in` をそのままスルー出力)
-  - `trans_out` (カウント完了時 EOS パルス出力: 灰 `bg-slate-400` / `TRANS`。次の PASS や MARKOV へ遷移バトンを渡す)
-- **パラメータ**:
-  | キー | 型 | 範囲 | デフォルト | 説明 |
-  | :--- | :--- | :--- | :--- | :--- |
-  | `count` | `number` | `1` 〜 `64` | `8` | ゲートを開いておくクロック拍数（初期値: 8拍） |
-- **動作と構造**:
-  - 稼働中はパネル中央の数値がカウントダウンされ、アクティブ発光（ゴールド）します。
-  - カウントが 0 になるとゲートを閉じ、`trans_out` から瞬間パルスを送信。
-  - 複数の `PASS` を `trans_out > trans_in` でリング状・直列にカスケード接続することで、「8拍Aメロ ➔ 8拍Bメロ ➔ 16拍サビ」といった楽曲の構成管理が極めてシンプルに実現できます。
-
 #### `SEQ8` / `SEQ16` (ステップシーケンサー)
 最大 8 または 16 ステップのアナログスタイル・ステップシーケンサー。
-- **入力ポート**: `gate_in` (クロックパルス受信)
-- **出力ポート**: `cv_out` (ピッチCV), `gate_out` (ステップゲート)
+- **入力ポート**: `gate_in` (クロックパルス受信 / PIN 5)
+- **出力ポート**: `cv_out` (ピッチCV / PIN 11), `gate_out` (ステップゲート / PIN 10)
 - **パラメータ**:
   | キー | 型 | 範囲 / 選択肢 | デフォルト | 説明 |
   | :--- | :--- | :--- | :--- | :--- |
@@ -491,7 +493,7 @@ BPMテンポに追従したタイミングパルスを全システムに供給�
 #### `KEY` (オンスクリーン・キーボード)
 オンスクリーンピアノロール鍵盤による手動演奏およびトランスポーズCV供給器。
 - **入力ポート**: なし
-- **出力ポート**: `cv_out` (1V/Oct ピッチCV), `gate_out` (キー押下ゲート)
+- **出力ポート**: `gate_out` (キー押下ゲート / PIN 10), `cv_out` (1V/Oct ピッチCV / PIN 11)
 - **パラメータ**:
   | キー | 型 | 範囲 | デフォルト | 説明 |
   | :--- | :--- | :--- | :--- | :--- |
@@ -501,8 +503,8 @@ BPMテンポに追従したタイミングパルスを全システムに供給�
 
 #### `PAD` (2次元XYタッチパッドコントローラー)
 X軸/Y軸の2次元操作で2系統のCVとゲートを同時に出力するリアルタイム表現コントローラー。
-- **入力ポート**: `hue_cv`, `bright_cv` (外観変調CV)
-- **出力ポート**: `x_cv` (X軸CV), `y_cv` (Y軸CV), `gate_out` (タッチ中ゲート)
+- **入力ポート**: `hue_cv` (PIN 5), `bright_cv` (PIN 6)
+- **出力ポート**: `x_cv` (X軸CV / PIN 8), `y_cv` (Y軸CV / PIN 9), `gate_out` (タッチ中ゲート / PIN 10)
 - **パラメータ**:
   | キー | 型 | 範囲 / 選択肢 | デフォルト | 説明 |
   | :--- | :--- | :--- | :--- | :--- |
@@ -511,8 +513,8 @@ X軸/Y軸の2次元操作で2系統のCVとゲートを同時に出力するリ�
 
 #### `PAT` (アルゴリズム・パターンシーケンサー / Strudel風)
 テキストパターン文字列からメロディやリズムを生成するライブコーディング風シーケンサー。
-- **入力ポート**: `power_in` (動作イネーブルゲート: Highで再生、Lowで停止)
-- **出力ポート**: `cv_out` (ピッチCV), `gate_out` (ゲート)
+- **入力ポート**: `power_in` (動作イネーブルゲート: Highで再生、Lowで停止 / PIN 5)
+- **出力ポート**: `cv_out` (ピッチCV / PIN 11), `gate_out` (ゲート / PIN 10)
 - **パラメータ**:
   | キー | 型 | 範囲 / 選択肢 | デフォルト | 説明 |
   | :--- | :--- | :--- | :--- | :--- |
@@ -521,61 +523,88 @@ X軸/Y軸の2次元操作で2系統のCVとゲートを同時に出力するリ�
   | `gateLen` | `number` | `0.05` 〜 `0.95` | `0.80` | ゲート比率 |
 
 #### `MARKOV` (マルコフ連鎖プロバビリティシーケンサー)
-確率的・アルゴリズム的に状態遷移を繰り返し、終わりのない音楽的フレーズを生成する確率ノード。
+確率的・アルゴリズム的に状態遷移を繰り返し、終わりのない音楽的フレーズや楽曲パート展開を生成する確率ノード。
+> [!NOTE]
+> **旧 COUNT / PASS モジュールの吸収・統合**: 旧 PASS/COUNT モジュールのカウントダウン保持およびパート進行機能は、本 MARKOV モジュールの `holdClocks`（拍数カウントダウン保持）および `stayWeight`（滞在確率）に完全吸収・統合されました。
 - **入力ポート**:
-  - `clk_in`: クロックパルス入力
-  - `trans_in`: **マルコフ連鎖専用・遷移トリガー入力**（他ノードの `trans_out1..4` からバトンを受信。旧名 `transition_in`, `trig_in` 互換）
+  - `gate_in`: 外部クロック/進行ゲートパルス入力 (PIN 5)
+  - `trans_in`: **マルコフ連鎖専用・状態遷移バトン入力**（他ノードの `trans_out1..3` から遷移バトンを受信 / PIN 6）
 - **出力ポート**:
-  - `cv_out`: ピッチCV出力
-  - `gate_out`: **持続ゲート出力**（次に他の状態へ遷移するまでずっとONを維持）
-  - `trig_out`: **発音用ワンショットトリガー出力**（アクティブになった最初の1拍目のみパルスを出力）
-  - `trans_out1` 〜 `trans_out4`: **マルコフ連鎖専用・次状態遷移パルス**（旧名 `transition_out1..4`, `trig_out1..4` 互換）
+  - `trans_out1`, `trans_out2`, `trans_out3`: **次状態遷移パルス**（設定された確率ウェイトに基づき、他ノードへバトンを送信 / PIN 7〜9）
+  - `startgate_out`: **アクティブ開始時ワンショットパルス**（このノードへ遷移してきた最初の1拍目のみパルスを出力 / PIN 10）
+  - `gate_out`: **ステート通過パルス列**（このノードがアクティブな間中、入力 `gate_in` をそのまま素通し出力 / PIN 11）
+  - `longgate_out`: **ステート持続ロングゲート**（このノードがアクティブな間中、常時 1.0V DC を出力 / PIN 12）
+  - `cv_out`: **ピッチCV出力** (PIN 13)
 - **パラメータ**:
   | キー | 型 | 範囲 / 選択肢 | デフォルト | 説明 |
   | :--- | :--- | :--- | :--- | :--- |
-  | `rootMidi` | `number` | `24` 〜 `96` | `60` | 出力ピッチ (MIDIノート番号) |
+  | `rootMidi` | `number` | `24` 〜 `72` | `36` | 出力ピッチ (MIDIノート番号、36=C2) |
   | `quantize` | `boolean` | `true`, `false` | `true` | 半音クオンタイズ有効化 |
   | `stayWeight` | `number` | `1` 〜 `20` | `10` | 現在ノードに留まる確率の重み |
-  | `holdClocks` | `number` | `1` 〜 `16` | `1` | 1回の遷移で何拍保持するか |
-  | `initOn` | `boolean` | `true`, `false` | `false` | 初期アクティブ状態（ネットワーク内で通常1台のみ `true`） |
-  | `weights` | `array` | 長さ4の数値配列 (`0`〜`20`) | `[5, 5, 5, 5]` | 各ブランチへの遷移確率ウェイト |
+  | `holdClocks` | `number` | `1` 〜 `16` | `1` | 1回の遷移で何拍保持（カウントダウン）するか |
+  | `initOn` | `boolean` | `true`, `false` | `false` | 初期アクティブ状態（ネットワーク内で必ず1台のみ `true`） |
+  | `weights` | `array` | 長さ3の数値配列 (`0`〜`20`) | `[0, 0, 0]` | 各出力（`trans_out1..3`）への遷移確率ウェイト |
+- **未結線ウェイト警告表示（紫発光）**:
+  `weights` に正の値（> 0）が設定されているにもかかわらずケーブルが結線されていない `trans_out` 端子が存在する場合、端子が**紫色**に警告発光し、遷移が途切れてシーケンスが停止するリスクを視覚的に警告します。
 
 #### `CHORD` (4ボイス・コードジェネレーター)
 単音CVから4声のポリフォニックCV（`cv_out1`〜`cv_out4`）を生成。
 - **入力ポート**:
-  - `cv_in`: ルート音CV (1V/Oct)
-  - `type_cv`: コード指定CV (0V〜7V。3ビットバイナリ `"min"`, `"maj"`, `"m7"`, `"7th"`, `"dim7"`, `"5th"`, `"sus4"`, `"Maj7"`)
-  - `voice_cv`: ボイシング指定CV (0V〜3V。`"close"`, `"drop2"`, `"drop3"`, `"open"`)
-- **出力ポート**: `cv_out1`, `cv_out2`, `cv_out3`, `cv_out4`
+  - `cv_in`: ルート音CV (1V/Oct / PIN 5)
+  - `type_cv`: コード種別指定CV (0.0V〜7.0V / PIN 4)
+  - `voice_cv`: ボイシング指定CV (0.0V〜3.0V / PIN 3)
+- **出力ポート**: `cv_out1` (PIN 10), `cv_out2` (PIN 11), `cv_out3` (PIN 12), `cv_out4` (PIN 13)
 - **パラメータ**:
   | キー | 型 | 選択肢 | デフォルト | 説明 |
   | :--- | :--- | :--- | :--- | :--- |
   | `chord` | `string` | `"min"`, `"maj"`, `"m7"`, `"7th"`, `"dim7"`, `"5th"`, `"sus4"`, `"Maj7"` | `"min"` | 固定コード種別 |
   | `voicing`| `string` | `"close"`, `"drop2"`, `"drop3"`, `"open"` | `"close"` | 固定ボイシング |
   | `rootMidi`| `number` | `24` 〜 `72` | `48` | `cv_in`未接続時の基準ノート(48=C3) |
+- **`type_cv` 電圧→コード種別 厳密対応表 (CV計算式: $cIdx = \text{clamp}(0, 7, \lfloor v + 0.001 \rfloor)$)**:
+  | 入力電圧範囲 ($v$) | インデックス | コード名 (`chord`) | 構成音半音オフセット | 説明 |
+  | :--- | :---: | :--- | :--- | :--- |
+  | $v < 1.0\text{V}$ (基準 0.0V) | `0` | `"min"` | `[0, 3, 7, 12]` | マイナートライアド (+オクターブ) |
+  | $1.0\text{V} \le v < 2.0\text{V}$ (基準 1.0V) | `1` | `"maj"` | `[0, 4, 7, 12]` | メジャートライアド (+オクターブ) |
+  | $2.0\text{V} \le v < 3.0\text{V}$ (基準 2.0V) | `2` | `"m7"` | `[0, 3, 7, 10]` | マイナーセブンス |
+  | $3.0\text{V} \le v < 4.0\text{V}$ (基準 3.0V) | `3` | `"7th"` | `[0, 4, 7, 10]` | ドミナントセブンス |
+  | $4.0\text{V} \le v < 5.0\text{V}$ (基準 4.0V) | `4` | `"dim7"` | `[0, 3, 6, 9]` | ディミニッシュセブンス |
+  | $5.0\text{V} \le v < 6.0\text{V}$ (基準 5.0V) | `5` | `"5th"` | `[0, 7, 12, 19]` | パワーコード (根音+5度+オクターブ+12度) |
+  | $6.0\text{V} \le v < 7.0\text{V}$ (基準 6.0V) | `6` | `"sus4"` | `[0, 5, 7, 12]` | サスペンデッドフォース |
+  | $v \ge 7.0\text{V}$ (基準 7.0V) | `7` | `"Maj7"` | `[0, 4, 7, 11]` | メジャーセブンス |
+- **`voice_cv` 電圧→ボイシング 厳密対応表 (CV計算式: $vIdx = \text{clamp}(0, 3, \lfloor v + 0.001 \rfloor)$)**:
+  | 入力電圧範囲 ($v$) | インデックス | ボイシング名 (`voicing`) | 各声部オクターブオフセット | 説明 |
+  | :--- | :---: | :--- | :--- | :--- |
+  | $v < 1.0\text{V}$ (基準 0.0V) | `0` | `"close"` | `[0, 0, 0, 0]` | 基本形（密集配分） |
+  | $1.0\text{V} \le v < 2.0\text{V}$ (基準 1.0V) | `1` | `"drop2"` | `[0, -12, 0, 0]` | ドロップ2（上から2番目の音を1オクターブ下げる） |
+  | $2.0\text{V} \le v < 3.0\text{V}$ (基準 2.0V) | `2` | `"drop3"` | `[0, 0, -12, 0]` | ドロップ3（上から3番目の音を1オクターブ下げる） |
+  | $v \ge 3.0\text{V}$ (基準 3.0V) | `3` | `"open"` | `[0, 0, +12, +12]` | オープン（高音声部を1オクターブ上げて広がりを付加） |
 
 #### `GATE4` (4相ゲートディストリビューター)
 入力されたゲート信号を、ステップ数（2〜4）およびカウント方向（UP/DOWN/UPDOWN/RANDOM）に従って4系統の出力（`gate_out1`〜`gate_out4`）へ順次振り分ける分配器。
-- **入力ポート**: `gate_in`
-- **出力ポート**: `gate_out1` 〜 `gate_out4`
+- **入力ポート**: `gate_in` (クロック/ゲートパルス入力 / PIN 5)
+- **出力ポート**: `gate_out1` 〜 `gate_out4` (PIN 6〜9)
 - **パラメータ**:
   | キー | 型 | 範囲 / 選択肢 | デフォルト | 説明 |
   | :--- | :--- | :--- | :--- | :--- |
-  | `steps` | `number` | `2`, `3`, `4` | `4` | 有効ステップ数 |
+  | `steps` | `number` | `2`, `3`, `4` | `4` | 有効ステップ数（2〜4） |
   | `mode` | `string` | `"up"`, `"down"`, `"updown"`, `"random"` | `"up"` | カウント方向 |
+- **未使用端子の出力挙動**:
+  `steps: 2` または `steps: 3` に設定した場合、シーケンスから除外された未使用端子（例: `steps: 2` 時の `gate_out3` および `gate_out4`）は、**常時 0.0V DC (常時Low)** を安定して出力します。出力端子ノード自体は有効ですが、発火信号は送出されません。
 
 #### `ARP` (4ch シーケンシャルスイッチ / アルペジエーター)
-最大4系統のCV/オーディオ入力を、クロックトリガーに応じて順次切り替えて単一の `cv_out` から出力。
+最大4系統のCV入力を、クロックトリガーに応じて順次切り替えて単一の `cv_out` から出力。
 - **入力ポート**:
-  - `gate_in` (クロック/ゲートパルス入力: 旧名 `clk_in` 互換)
-  - `cv_in1` 〜 `cv_in4` (チャンネル1〜4 CV入力)
+  - `gate_in` (クロック/ゲートパルス入力 / PIN 1)
+  - `cv_in1` 〜 `cv_in4` (チャンネル1〜4 CV入力 / PIN 2〜5)
 - **出力ポート**:
-  - `cv_out` (選択中チャンネルの出力信号: 旧名 `out` 互換)
-  - `gate_out` (入力ゲートのスルー出力)
+  - `cv_out` (選択中チャンネルの出力信号 / PIN 10)
+  - `gate_out` (入力ゲートのスルー出力 / PIN 11)
 - **パラメータ**:
   | キー | 型 | 範囲 / 選択肢 | デフォルト | 説明 |
   | :--- | :--- | :--- | :--- | :--- |
   | `mode` | `string` | `"up"`, `"down"`, `"updown"`, `"random"` | `"up"` | 切り替え進行モード |
+- **結線ボイス自動検出 (Auto-Sense機能)**:
+  `ARP` は内部で結線状態（`patch.has`）を常時監視しています。実際にケーブルが接続されている `cv_in1`〜`cv_in4` 端子のみを抽出し、**結線されたチャンネル間だけで自動的に巡回ループを構築**します（例: `cv_in1` と `cv_in2` の2本のみ結線されている場合は、未接続の `cv_in3` や `cv_in4` を自動的にスキップして 2 ステップのアルペジオとして巡回）。手動でステップ数を設定する手間なく、結線本数に応じた最適なシーケンス長が即座に形成されます。
 
 ---
 
@@ -647,19 +676,26 @@ X軸/Y軸の2次元操作で2系統のCVとゲートを同時に出力するリ�
 
 #### `SUB` (サブパッチ・コンテナ / 親機ブリッジ)
 親ページに配置し、指定したサブページ（子ページ）と信号を中継。
-- **入力ポート**: `PIN1_in` 〜 `PIN6_in`（エイリアス対応: `cv_in`, `gate_in`, `trig_in` 等）
-- **出力ポート**: `PIN7_out` 〜 `PIN12_out`（エイリアス対応: `wave_out` 等）
+- **入力ポート**: `PIN1_in` 〜 `PIN7_in`（親から子への送り7系統。ファクトリー品では `cv_in`, `gate_in`, `trig_in` などのエイリアス名で直接結線可能）
+- **出力ポート**: `PIN8_out` 〜 `PIN14_out`（子から親への戻り7系統。ファクトリー品では `wave_out` などのエイリアス名で直接結線可能）
 - **パラメータ**:
   | キー | 型 | 範囲 | デフォルト | 説明 |
   | :--- | :--- | :--- | :--- | :--- |
-  | `subType` | `string` | 任意のサブパッチ型番 | - | ファクトリー品またはユーザー品型番（例: `"AcidVoice"`, `"MonoVoice"`） |
-  | `targetPage` | `number` | `1` 〜 | `1` | 中継先のサブページ番号 |
+  | `subType` | `string` | 任意のサブパッチ型番 | - | ファクトリー品またはユーザー品型番（例: `"AcidVoice"`, `"BassDrum"`） |
+  | `targetPage` | `number` | `1` 〜 | `1` | 中継先のサブページ番号（明示指定時） |
+- **`targetPage`（旧固定方式）と `subType`（新自動採番方式）併用時の優先順位**:
+  1. **既存ページへのバインド最優先**: `pages` 内に `targetPage` で指定されたページID（例: `"1"`）が既に存在する場合、システムはその `targetPage` への接続を最優先します。
+  2. **自動採番とテンプレート実体化（推奨新方式）**: `targetPage` が省略されている場合、または `subType` のみ指定された場合、システムは空いている最小のページ番号（`1`, `2`...）を自動採番し、`FACTORY_SUBPATCHES` からサブパッチを自動展開します。
 
 #### `SUB_IO` (サブパッチ入出力インターフェース / 子機ブリッジ)
 サブページ（Page 1〜）内に配置し、親ページの `SUB` モジュールと信号を授受。
-- **出力ポート**: `PIN1_out` 〜 `PIN6_out` (親から子へ)
-- **入力ポート**: `PIN7_in` 〜 `PIN12_in` (子から親へ)
-- **パラメータ**: なし（設定不要。スロット `"2"` または `"0"` に1台配置）
+- **出力ポート**: `PIN1_out` 〜 `PIN7_out` (親から子へ湧き出す)
+- **入力ポート**: `PIN8_in` 〜 `PIN14_in` (子から親へ流し込む)
+- **パラメータ**: なし
+- **スロット配置制約と挙動**:
+  - サブパッチページ内に**必ず1台のみ**配置します（標準推奨位置: スロット `"2"` または `"0"` の最上段中央）。
+  - 他のスロット（例: 5, 10 等）に置いた場合でも、システムは `type: 'SUB_IO'` を自動走査して解決するため、中継ブリッジ自体は正常に動作します。
+  - 未配置（0台）の場合は親子の信号ルーティングが不通となり、複数台（2台以上）配置した場合は最初に見つかった 1 台のみにバインドされるため、**1ページにつき必ず1台のみ配置**してください。
 
 ---
 
@@ -752,7 +788,7 @@ DELAY1:wave_out > SPK1:wave_in_r
   - `MIX1:wave_out > SPK1:wave_in_l`
   - `MIX1:wave_out > SPK1:wave_in_r`
 
-### 【レシピ 3】2パート本格アンサンブル（アシッドベース ＋ 4声コードパッド）
+### 【レシピ 3】2パート本格アンサンブル（アシッドベース ＋ 4声パラフォニックコードパッド）
 ```
 [パートA: ベース]
 CLK1:gate_out  > SEQ8_1:gate_in
@@ -764,14 +800,14 @@ VCF1:wave_out  > VCA1:wave_in
 ADSR1:cv_out   > VCA1:cv_in
 VCA1:wave_out  > MIX1:wave_in1
 
-[パートB: 4声ポリフォニックコード]
+[パートB: 4声パラフォニック・コード (VCO2内部合算 ➔ 単一VCF/VCA通過)]
 PAT1:cv_out    > CHORD1:cv_in      (ルート音シーケンス)
-CHORD1:cv_out1 > VCO2:cv_in       (VCO2 は channels: 4)
+CHORD1:cv_out1 > VCO2:cv_in       (VCO2 は channels: 4。内部で4声をゲイン正規化ミキシングしてmono出力)
 CHORD1:cv_out2 > VCO2:cv_in2
 CHORD1:cv_out3 > VCO2:cv_in3
 CHORD1:cv_out4 > VCO2:cv_in4
 PAT1:gate_out  > ADSR2:gate_in
-VCO2:wave_out  > VCF2:wave_in
+VCO2:wave_out  > VCF2:wave_in     (合算された4音コード波形を単一フィルターでシェーピング)
 ADSR2:cv_out   > VCF2:cv_in
 VCF2:wave_out  > VCA2:wave_in
 ADSR2:cv_out   > VCA2:cv_in
@@ -787,35 +823,35 @@ MIX1:wave_out  > SPK1:wave_in_r
 3台の MARKOV を相互接続し、途切れずに永久遷移し続ける基本骨格です。
 
 - **構成**:
-  - `MARKOV1` (ノードA / `initOn: true`, `rootMidi: 48` [C3], `weights: [5, 5, 0, 0]`)
-  - `MARKOV2` (ノードB / `initOn: false`, `rootMidi: 51` [Eb3], `weights: [5, 5, 0, 0]`)
-  - `MARKOV3` (ノードC / `initOn: false`, `rootMidi: 55` [G3], `weights: [5, 5, 0, 0]`)
+  - `MARKOV1` (ノードA / `initOn: true`, `rootMidi: 48` [C3], `weights: [5, 5, 0]`, `stayWeight: 10`, `holdClocks: 2`)
+  - `MARKOV2` (ノードB / `initOn: false`, `rootMidi: 51` [Eb3], `weights: [5, 5, 0]`, `stayWeight: 10`, `holdClocks: 2`)
+  - `MARKOV3` (ノードC / `initOn: false`, `rootMidi: 55` [G3], `weights: [5, 5, 0]`, `stayWeight: 10`, `holdClocks: 2`)
 - **結線**:
 ```
 // クロック分配 (全ノードへクロック供給)
-CLK1:gate_out > MARKOV1:clk_in
-CLK1:gate_out > MARKOV2:clk_in
-CLK1:gate_out > MARKOV3:clk_in
+CLK1:gate_out > MARKOV1:gate_in
+CLK1:gate_out > MARKOV2:gate_in
+CLK1:gate_out > MARKOV3:gate_in
 
-// 相互バトン渡し (transition_out1, transition_out2 のみ使用し、未結線の weights[2], [3] は 0)
-MARKOV1:transition_out1 > MARKOV2:transition_in
-MARKOV1:transition_out2 > MARKOV3:transition_in
+// 相互バトン渡し (trans_out1, trans_out2 のみ使用し、未結線の weights[2] は 0)
+MARKOV1:trans_out1 > MARKOV2:trans_in
+MARKOV1:trans_out2 > MARKOV3:trans_in
 
-MARKOV2:transition_out1 > MARKOV1:transition_in
-MARKOV2:transition_out2 > MARKOV3:transition_in
+MARKOV2:trans_out1 > MARKOV1:trans_in
+MARKOV2:trans_out2 > MARKOV3:trans_in
 
-MARKOV3:transition_out1 > MARKOV1:transition_in
-MARKOV3:transition_out2 > MARKOV2:transition_in
+MARKOV3:trans_out1 > MARKOV1:trans_in
+MARKOV3:trans_out2 > MARKOV2:trans_in
 
 // ピッチサミング (アクティブなノードのピッチを音源へ合流)
 MARKOV1:cv_out > VCO1:cv_in
 MARKOV2:cv_out > VCO1:cv_in
 MARKOV3:cv_out > VCO1:cv_in
 
-// 発音トリガーサミング (各ノードの発行時ワンショットトリガーをADSRへ合流)
-MARKOV1:trig_out > ADSR1:gate_in
-MARKOV2:trig_out > ADSR1:gate_in
-MARKOV3:trig_out > ADSR1:gate_in
+// 発音トリガーサミング (各ノードの開始時ワンショットパルスをADSRへ合流)
+MARKOV1:startgate_out > ADSR1:gate_in
+MARKOV2:startgate_out > ADSR1:gate_in
+MARKOV3:startgate_out > ADSR1:gate_in
 
 // 発音・フィルター・出力
 VCO1:wave_out > VCF1:wave_in
@@ -831,17 +867,17 @@ VCA1:wave_out > SPK1:wave_in_r
 
 ```
 // クロック供給
-CLK1:gate_out > ARP1:clk_in
+CLK1:gate_out > ARP1:gate_in
 CLK1:gate_out > GATE4_1:gate_in
 
-// CHORD の 4ボイスCV出力を ARP に入力 (Auto-Senseにより結線されたボイスのみを巡回)
+// CHORD の 4ボイスCV出力を ARP に入力 (Auto-Senseにより結線されたボイスのみを自動巡回)
 CHORD1:cv_out1 > ARP1:cv_in1
 CHORD1:cv_out2 > ARP1:cv_in2
 CHORD1:cv_out3 > ARP1:cv_in3
 CHORD1:cv_out4 > ARP1:cv_in4
 
 // ARP から単一の VCO / ADSR へルーティング (1ボイスで完全なアルペジオを実現)
-ARP1:out      > VCO1:cv_in
+ARP1:cv_out   > VCO1:cv_in
 ARP1:gate_out > ADSR1:gate_in
 VCO1:wave_out > VCF1:wave_in
 ADSR1:cv_out  > VCF1:cv_in
@@ -868,11 +904,11 @@ Gridsynth は、大規模なパッチや複雑なシンセボイスを整理・�
 1. **ページ番号非依存の管理（`subType` 動的バインド）**:
    - AIやユーザーは固定ページ番号（`targetPage`）を指定する必要はありません。型番（`subType: "AcidVoice"` 等）を指定するだけで、システムが空いている最小ページ番号（`1`, `2`...）を自動採番し、モジュール群・内部結線を動的に展開します。
    - 同一型番を複数配置した場合（例: `AcidVoice` を2台）でも、ID衝突することなく独立したサブページ（`ACID BASS`, `ACID BASS_1`）に自動展開され、完全並行動作します。
-2. **表裏対称端子ペア（PIN1〜6 送り / PIN7〜12 戻り）**:
+2. **表裏対称14端子ペア（PIN1〜7 送り / PIN8〜14 戻り）**:
    - 親モジュール（`SUB`）と子モジュール（`SUB_IO`）で入出力の役割が厳密に対称ペアとなっています。
    - すべての結線が Gridsynth の鉄則である **「送信元:_out > 送信先:_in」** に100%合致し、接続方向の反転や文法違反が発生しません。
 3. **端子エイリアス（機能別名）結線**:
-   - ファクトリー品やマニフェスト付きサブパッチでは、物理ピン名（`PIN4_in`, `PIN9_out`）に加え、`trig_in`, `cv_in`, `wave_out` などの直感的な**端子エイリアス名を結線に直接記述可能**です。
+   - ファクトリー品やマニフェスト付きサブパッチでは、物理ピン名（`PIN5_in`, `PIN10_out` 等）に加え、`trig_in`, `cv_in`, `wave_out` などの直感的な**端子エイリアス名を結線に直接記述可能**です。
 4. **境界切断・二分割（Boundary-Cut）生成アルゴリズム**:
    - AIが自作サブパッチを設計する際は、まず全体フラットな結線を考案し、親・子の境界を横断する線を抽出して二分割出力する標準手順が確立されています。
 
@@ -883,17 +919,17 @@ AIは以下のファクトリーサブパッチ型番（`subType`）を親ペー
 
 | `subType` (型番) | 名称 / カテゴリ | 入力エイリアス (親から見た役割) | 出力エイリアス (親から見た役割) | 親ページ結線例 |
 | :--- | :--- | :--- | :--- | :--- |
-| **`AcidVoice`** | 303 ACID BASS<br>(Synth Voice) | `cv_in` (PIN4 / CV)<br>`trig_in` (PIN3 / Gate) | `wave_out` (PIN9 / Audio) | `SEQ8_1:cv_out > SUB1:cv_in`<br>`SEQ8_1:gate_out > SUB1:trig_in`<br>`SUB1:wave_out > MIX1:wave_in1` |
-| **`MonoVoice`** | VOICE (Standard Lead)<br>(Synth Voice) | `cv_in` (PIN4 / CV)<br>`gate_in` (PIN3 / Gate) | `wave_out` (PIN9 / Audio) | `SEQ8_1:cv_out > SUB1:cv_in`<br>`SEQ8_1:gate_out > SUB1:gate_in`<br>`SUB1:wave_out > SPK1:wave_in_l` |
-| **`DualVCOVoice`**<br>(または `DualLead`) | DUAL VCO (Fat Bass/Lead)<br>(Synth Voice) | `cv_in` (PIN4 / CV)<br>`gate_in` (PIN3 / Gate) | `wave_out` (PIN9 / Audio) | `SEQ8_1:cv_out > SUB1:cv_in`<br>`CLK1:gate_out > SUB1:gate_in`<br>`SUB1:wave_out > MIX1:wave_in1` |
-| **`SpaceFxVoice`**<br>(または `SpaceFx`) | SPACE FX (Delay + Reverb)<br>(Effect Rack) | `wave_in` (PIN4 / Audio) | `wave_out` (PIN9 / Audio) | `VCO1:wave_out > SUB1:wave_in`<br>`SUB1:wave_out > SPK1:wave_in` |
-| **`BassDrum`** | BASS DRUM (Analog Kick 1)<br>(Percussion) | `trig_in` (PIN4 / Gate) | `wave_out` (PIN9 / Audio) | `CLK1:gate_out > SUB1:trig_in`<br>`SUB1:wave_out > MIX1:wave_in1` |
-| **`TechnoKick`** | BASS DRUM 2 (Hard Techno Kick)<br>(Percussion) | `trig_in` (PIN4 / Gate) | `wave_out` (PIN9 / Audio) | `CLK1:gate_out > SUB1:trig_in`<br>`SUB1:wave_out > MIX1:wave_in1` |
-| **`SnareDrum`** | SNARE DRUM (909 Snare)<br>(Percussion) | `trig_in` (PIN4 / Gate) | `wave_out` (PIN9 / Audio) | `SEQ8_1:gate_out > SUB1:trig_in`<br>`SUB1:wave_out > MIX1:wave_in2` |
-| **`HiHat`** | HI-HAT (Metallic Closed Hat)<br>(Percussion) | `trig_in` (PIN4 / Gate) | `wave_out` (PIN9 / Audio) | `CLK2:gate_out > SUB1:trig_in`<br>`SUB1:wave_out > MIX1:wave_in3` |
-| **`HandClap`** | HAND CLAP (Multi-Burst Clap)<br>(Percussion) | `trig_in` (PIN4 / Gate) | `wave_out` (PIN9 / Audio) | `SEQ8_2:gate_out > SUB1:trig_in`<br>`SUB1:wave_out > MIX1:wave_in4` |
-| **`TechnoTom`** | TECHNO TOM (Resonant Tom)<br>(Percussion) | `trig_in` (PIN4 / Gate) | `wave_out` (PIN9 / Audio) | `SEQ8_1:gate_out > SUB1:trig_in`<br>`SUB1:wave_out > MIX1:wave_in2` |
-| **`MetallicPerc`** | METALLIC PERC (Rim / Ring)<br>(Percussion) | `trig_in` (PIN4 / Gate) | `wave_out` (PIN9 / Audio) | `SEQ8_1:gate_out > SUB1:trig_in`<br>`SUB1:wave_out > MIX1:wave_in3` |
+| **`AcidVoice`** | 303 ACID BASS<br>(Synth Voice) | `cv_in` (PIN5 / CV)<br>`trig_in` (PIN4 / Gate) | `wave_out` (PIN10 / Audio) | `SEQ8_1:cv_out > SUB1:cv_in`<br>`SEQ8_1:gate_out > SUB1:trig_in`<br>`SUB1:wave_out > MIX1:wave_in1` |
+| **`MonoVoice`** | VOICE (Standard Lead)<br>(Synth Voice) | `cv_in` (PIN5 / CV)<br>`gate_in` (PIN4 / Gate) | `wave_out` (PIN10 / Audio) | `SEQ8_1:cv_out > SUB1:cv_in`<br>`SEQ8_1:gate_out > SUB1:gate_in`<br>`SUB1:wave_out > SPK1:wave_in_l` |
+| **`DualVCOVoice`**<br>(または `DualLead`) | DUAL VCO (Fat Bass/Lead)<br>(Synth Voice) | `cv_in` (PIN5 / CV)<br>`gate_in` (PIN4 / Gate) | `wave_out` (PIN10 / Audio) | `SEQ8_1:cv_out > SUB1:cv_in`<br>`CLK1:gate_out > SUB1:gate_in`<br>`SUB1:wave_out > MIX1:wave_in1` |
+| **`SpaceFxVoice`**<br>(または `SpaceFx`) | SPACE FX (Delay + Reverb)<br>(Effect Rack) | `wave_in` (PIN5 / Audio) | `wave_out` (PIN10 / Audio) | `VCO1:wave_out > SUB1:wave_in`<br>`SUB1:wave_out > SPK1:wave_in` |
+| **`BassDrum`** | BASS DRUM (Analog Kick 1)<br>(Percussion) | `trig_in` (PIN5 / Gate) | `wave_out` (PIN10 / Audio) | `CLK1:gate_out > SUB1:trig_in`<br>`SUB1:wave_out > MIX1:wave_in1` |
+| **`TechnoKick`** | BASS DRUM 2 (Hard Techno Kick)<br>(Percussion) | `trig_in` (PIN5 / Gate) | `wave_out` (PIN10 / Audio) | `CLK1:gate_out > SUB1:trig_in`<br>`SUB1:wave_out > MIX1:wave_in1` |
+| **`SnareDrum`** | SNARE DRUM (909 Snare)<br>(Percussion) | `trig_in` (PIN5 / Gate) | `wave_out` (PIN10 / Audio) | `SEQ8_1:gate_out > SUB1:trig_in`<br>`SUB1:wave_out > MIX1:wave_in2` |
+| **`HiHat`** | HI-HAT (Metallic Closed Hat)<br>(Percussion) | `trig_in` (PIN5 / Gate) | `wave_out` (PIN10 / Audio) | `CLK2:gate_out > SUB1:trig_in`<br>`SUB1:wave_out > MIX1:wave_in3` |
+| **`HandClap`** | HAND CLAP (Multi-Burst Clap)<br>(Percussion) | `trig_in` (PIN5 / Gate) | `wave_out` (PIN10 / Audio) | `SEQ8_2:gate_out > SUB1:trig_in`<br>`SUB1:wave_out > MIX1:wave_in4` |
+| **`TechnoTom`** | TECHNO TOM (Resonant Tom)<br>(Percussion) | `trig_in` (PIN5 / Gate) | `wave_out` (PIN10 / Audio) | `SEQ8_1:gate_out > SUB1:trig_in`<br>`SUB1:wave_out > MIX1:wave_in2` |
+| **`MetallicPerc`** | METALLIC PERC (Rim / Ring)<br>(Percussion) | `trig_in` (PIN5 / Gate) | `wave_out` (PIN10 / Audio) | `SEQ8_1:gate_out > SUB1:trig_in`<br>`SUB1:wave_out > MIX1:wave_in3` |
 
 > [!TIP]
 > **ファクトリー活用時のAI推奨パターン**:
@@ -902,27 +938,27 @@ AIは以下のファクトリーサブパッチ型番（`subType`）を親ペー
 
 ---
 
-### 8.3 物理端子仕様（表裏対称マッピング規則）
-ファクトリー品以外の**自作サブパッチ**や、カスタム配線を行う場合、物理端子スロット 1〜12 は親側（`SUB`）と子側（`SUB_IO`）で完全に対称ペアを形成します。
+### 8.3 物理端子仕様（表裏対称マッピング規則・全14ピン）
+ファクトリー品以外の**自作サブパッチ**や、カスタム配線を行う場合、物理端子スロット 1〜14 は親側（`SUB`）と子側（`SUB_IO`）で完全に対称ペアを形成します。
 
 | スロット | 信号の向き | 親モジュール（`SUB`） | サブモジュール（`SUB_IO`） | 主な伝達信号 |
 | :---: | :---: | :---: | :---: | :--- |
-| **1 〜 6** | **親 ➔ 子（送り）** | **`PIN1_in` 〜 `PIN6_in`**<br>（親から見てSUBへ流し込む） | **`PIN1_out` 〜 `PIN6_out`**<br>（子から見てSUB_IOから湧き出す） | クロック、ゲート、ピッチCV、変調CV、外部原音オーディオなど |
-| **7 〜 12** | **子 ➔ 親（戻り）** | **`PIN7_out` 〜 `PIN12_out`**<br>（親から見てSUBから湧き出す） | **`PIN7_in` 〜 `PIN12_in`**<br>（子から見てSUB_IOへ流し込む） | 生成オーディオ(L/R)、内部LFO/ENV還元、EOLトリガーなど |
+| **1 〜 7** | **親 ➔ 子（送り）** | **`PIN1_in` 〜 `PIN7_in`**<br>（親から見てSUBへ流し込む） | **`PIN1_out` 〜 `PIN7_out`**<br>（子から見てSUB_IOから湧き出す） | クロック、ゲート、ピッチCV、変調CV、外部原音オーディオなど |
+| **8 〜 14** | **子 ➔ 親（戻り）** | **`PIN8_out` 〜 `PIN14_out`**<br>（親から見てSUBから湧き出す） | **`PIN8_in` 〜 `PIN14_in`**<br>（子から見てSUB_IOへ流し込む） | 生成オーディオ(L/R)、内部LFO/ENV還元、EOLトリガーなど |
 
 #### 結線文法の整合性（`_out > _in` の完全保証）
 - **親 ➔ 子（例: ピッチCV）**:
-  - 親（Page 0）側: `"SEQ8_1:cv_out > SUB1:PIN4_in"` （out > in: 正常）
-  - 子（Page 1）側: `"SUB_IO1:PIN4_out > VCO1:cv_in"` （out > in: 正常）
+  - 親（Page 0）側: `"SEQ8_1:cv_out > SUB1:PIN5_in"` （out > in: 正常）
+  - 子（Page 1）側: `"SUB_IO1:PIN5_out > VCO1:cv_in"` （out > in: 正常）
 - **子 ➔ 親（例: オーディオ戻り）**:
-  - 子（Page 1）側: `"VCA1:wave_out > SUB_IO1:PIN9_in"` （out > in: 正常）
-  - 親（Page 0）側: `"SUB1:PIN9_out > MIX1:wave_in1"` （out > in: 正常）
+  - 子（Page 1）側: `"VCA1:wave_out > SUB_IO1:PIN10_in"` （out > in: 正常）
+  - 親（Page 0）側: `"SUB1:PIN10_out > MIX1:wave_in1"` （out > in: 正常）
 
-#### 端子のU字型物理配置
+#### 端子のU字型物理配置（PIN 1〜PIN 14）
 モジュールパネル上では、端子が左上から時計回りU字型に整然と配置されています：
-- **左辺（下方向）**: `PIN1`（スロット1）, `PIN2`（スロット2）, `PIN3`（スロット3）
-- **下辺（右方向）**: `PIN4`（スロット4）, `PIN5`（スロット5）, `PIN6`（スロット6）, `PIN7`（スロット7）, `PIN8`（スロット8）, `PIN9`（スロット9）
-- **右辺（上方向）**: `PIN10`（スロット10）, `PIN11`（スロット11）, `PIN12`（スロット12）
+- **左辺（上から下）**: `PIN1`（上端）, `PIN2`, `PIN3`, `PIN4`（下端）
+- **底辺（左から右）**: `PIN5`（左下コーナー）, `PIN6`, `PIN7`, `PIN8`, `PIN9`, `PIN10`（右下コーナー）
+- **右辺（下から上）**: `PIN11`（下端）, `PIN12`, `PIN13`, `PIN14`（上端）
 
 ---
 
@@ -937,15 +973,15 @@ AIがユーザーから「新しい音源をサブパッチとして作って」
             v
 [ Step 2: 境界切断 ＆ 境界通過ケーブルの抽出 ]
   ・親から子へ渡る線 (SEQ8_1:cv_out, SEQ8_1:gate_out)
-    ➔ 送りピン PIN4, PIN3 に順次割り当て (左下コーナー入力)
+    ➔ 送りピン PIN5 (左下コーナーCV), PIN4 (ゲート) に順次割り当て
   ・子から親へ戻る線 (VCA1:wave_out -> SPK1)
-    ➔ 戻りピン PIN9 に割り当て (右下コーナー出力)
+    ➔ 戻りピン PIN10 (右下コーナー出力) に割り当て
   ・1対N 分岐は同一ピン番号を共有
             |
             v
 [ Step 3: 結線の二分割出力 ]
-  ・親側 (Page 0): SUB1:PIN4_in, SUB1:PIN3_in, SUB1:PIN9_out
-  ・子側 (Page 1): SUB_IO1:PIN4_out, SUB_IO1:PIN3_out, SUB_IO1:PIN9_in
+  ・親側 (Page 0): SUB1:PIN5_in, SUB1:PIN4_in, SUB1:PIN10_out
+  ・子側 (Page 1): SUB_IO1:PIN5_out, SUB_IO1:PIN4_out, SUB_IO1:PIN10_in
             |
             v
 [ Step 4: 入出力厳格検証 ]
@@ -958,10 +994,10 @@ AIがユーザーから「新しい音源をサブパッチとして作って」
 2. **境界通過ケーブルの抽出**:
    カプセル化するモジュール群（子ページ候補）を決め、親と子の境界を横断するケーブルのみをリストアップします。
    - **親 ➔ 子（CV、クロック、ゲート）**:
-     `PIN1`〜`PIN6` の空きスロット（一次入力は推奨 `PIN4`、二次入力は推奨 `PIN3`）に順次割り当てます。
+     `PIN1`〜`PIN7` の空きスロット（一次CV入力は推奨 `PIN5`、ゲート/トリガー入力は推奨 `PIN4`）に順次割り当てます。
      ※もし親のクロックが子の複数モジュールに分配される場合（1対N分岐）、親側は1本（`CLK1:gate_out > SUB1:PIN4_in`）、子側は同一ピンから複数分岐（`SUB_IO1:PIN4_out > MODA:in`, `SUB_IO1:PIN4_out > MODB:in`）とします。
    - **子 ➔ 親（オーディオ、返還CV）**:
-     `PIN7`〜`PIN12` の空きスロット（メインオーディオ出力は推奨 `PIN9`）に順次割り当てます。
+     `PIN8`〜`PIN14` の空きスロット（メインオーディオ出力は推奨 `PIN10`）に順次割り当てます。
 3. **結線の二分割出力**:
    親ページ側の `connections` と、子ページ側の `connections` に物理ピン（またはエイリアス）を用いて振り分けます。
 4. **入出力厳格検証（`_out > _in`）**:
@@ -1062,9 +1098,9 @@ AIがユーザーから「新しい音源をサブパッチとして作って」
       },
       "connections": [
         "CLK1:gate_out > SEQ8_1:gate_in",
-        "SEQ8_1:cv_out   > SUB1:PIN4_in",
-        "SEQ8_1:gate_out > SUB1:PIN3_in",
-        "SUB1:PIN9_out > MIX1:wave_in1",
+        "SEQ8_1:cv_out   > SUB1:PIN5_in",
+        "SEQ8_1:gate_out > SUB1:PIN4_in",
+        "SUB1:PIN10_out > MIX1:wave_in1",
         "MIX1:wave_out > SPK1:wave_in_l",
         "MIX1:wave_out > SPK1:wave_in_r"
       ]
@@ -1086,13 +1122,13 @@ AIがユーザーから「新しい音源をサブパッチとして作って」
         "VCA1": { "type": "VCA", "level": 0.0 }
       },
       "connections": [
-        "SUB_IO1:PIN4_out > VCO1:cv_in",
-        "SUB_IO1:PIN3_out > ADSR1:gate_in",
+        "SUB_IO1:PIN5_out > VCO1:cv_in",
+        "SUB_IO1:PIN4_out > ADSR1:gate_in",
         "VCO1:wave_out    > VCF1:wave_in",
         "ADSR1:cv_out     > VCF1:cv_in",
         "VCF1:wave_out    > VCA1:wave_in",
         "ADSR1:cv_out     > VCA1:cv_in",
-        "VCA1:wave_out    > SUB_IO1:PIN9_in"
+        "VCA1:wave_out    > SUB_IO1:PIN10_in"
       ]
     }
   }
@@ -1115,9 +1151,9 @@ AIがユーザーから「新しい音源をサブパッチとして作って」
   "manifest": {
     "description": "303スタイルのアシッドベースボイス",
     "ports": {
-      "cv_in":    { "pin": "PIN4", "signal": "cv" },
-      "trig_in":  { "pin": "PIN3", "signal": "gate" },
-      "wave_out": { "pin": "PIN9", "signal": "audio" }
+      "cv_in":    { "pin": "PIN5", "signal": "cv" },
+      "trig_in":  { "pin": "PIN4", "signal": "gate" },
+      "wave_out": { "pin": "PIN10", "signal": "audio" }
     }
   },
   "slots": {
@@ -1145,7 +1181,7 @@ AIがユーザーから「新しい音源をサブパッチとして作って」
   ]
 }
 ```
-※マニフェストの `pin` は `PIN1`〜`PIN12` の番号ベースで定義し、親側・子側のどちらから参照されたかによってシステムが `_in` / `_out` を自動付与して解決します。
+※マニフェストの `pin` は `PIN1`〜`PIN14` の番号ベースで定義し、親側・子側のどちらから参照されたかによってシステムが `_in` / `_out` を自動付与して解決します。
 
 
 ---
@@ -1268,6 +1304,6 @@ AIがユーザーから「新しい音源をサブパッチとして作って」
 3. 最終出力は必ず SPK1 の wave_in_l および wave_in_r に結線してください。
 4. slots のキー ("0"〜"39") と modules のモジュールIDを重複なく1対1でマッピングしてください。
 5. 前置きや解説は一切省き、Gridsynth にそのままインポートできる単一の ```json コードブロックのみを出力してください。
-6. MARKOV モジュールを使用する場合は、複数ノード（2台以上）を相互に transition_out1..4 と transition_in で結線してください。未結線の transition_out に対応する weights 配列の値は必ず 0 に設定し、意図しないシーケンス停止を防いでください。ノードの出力ピッチは rootMidi（例: 48, 51, 55）で指定します。また、ネットワーク内で必ず1台のみ "initOn": true（初期起動）を設定してください。音源のトリガーには trig_out（ワンショット）または gate_out（持続）を使用します。
-7. FM モジュールを使用する場合は、3オペレータ（Op1: キャリア, Op2: モジュレータ1, Op3: モジュレータ2）のRatio比、アルゴリズム（1: 直列, 2: 並列変調, 3: 2キャリア分岐, 4: FM+サブ）、および各オペレータの内包ADSR（EXP/LIN/LOG）を活用して、キック、スネア、ハイハット、ディープベース、金属音リードを合成してください。スネアやハットのノイズ成分には Op3 の "wave": "noise" が極めて有効です。
+6. MARKOV モジュールを使用する場合は、複数ノード（2台以上）を相互に trans_out1..3 と trans_in で結線してください。未結線の trans_out に対応する weights 配列の値（長さ3）は必ず 0 に設定し、意図しないシーケンス停止を防いでください。ノードの出力ピッチは rootMidi（例: 36=C2, 48=C3, 51=Eb3）で指定します。また、ネットワーク内で必ず1台のみ "initOn": true（初期起動）を設定してください。音源のトリガーには startgate_out（開始時ワンショット）または gate_out（通過ゲート列）、longgate_out（持続High）を使用します。
+7. FMx3 モジュールを使用する場合は、3オペレータ（Op1: キャリア, Op2: モジュレータ1, Op3: モジュレータ2）のRatio比、アルゴリズム（1: 直列CASCADE, 2: 並列変調DUAL MOD, 3: FM+LAYER）、および各オペレータの内包ADSR（ratio, level, attack, decay, sustain, release, curve="lin"|"exp"|"log"）を活用して、キック、スネア、ハイハット、ディープベース、金属音リードを合成してください。スネアやハットのノイズ成分には Op3 の "wave": "noise" が極めて有効です。
 ```
