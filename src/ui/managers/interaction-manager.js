@@ -66,6 +66,11 @@ export class InteractionManager {
             clearTimeout(this._copyTimer);
             this._copyTimer = null;
         }
+        if (this._hoverPortTimer) {
+            clearTimeout(this._hoverPortTimer);
+            this._hoverPortTimer = null;
+        }
+        this._currentHoverPort = null;
         this._dragCandidate = null;
         this._stage2X = undefined;
         this._stage2Y = undefined;
@@ -218,26 +223,35 @@ export class InteractionManager {
     bindGridEvents() {
         if (!this.ui.gridBoard) return;
 
-        let currentHoverPort = null;
-        let hoverPortTimer = null;
+        this._currentHoverPort = null;
+        this._hoverPortTimer = null;
 
         this.ui.gridBoard.addEventListener('pointerover', (e) => {
+            if (this.ui.isPerformanceMode) {
+                if (this._hoverPortTimer) {
+                    clearTimeout(this._hoverPortTimer);
+                    this._hoverPortTimer = null;
+                }
+                this._currentHoverPort = null;
+                return;
+            }
             const port = e.target.closest('.port');
             if (!port) return;
             const mId = port.dataset.moduleId, p = port.dataset.port;
             if (!mId || !p) return;
             const portKey = `${mId}:${p}`;
-            if (currentHoverPort === portKey) return;
-            currentHoverPort = portKey;
+            if (this._currentHoverPort === portKey) return;
+            this._currentHoverPort = portKey;
 
-            if (hoverPortTimer) {
-                clearTimeout(hoverPortTimer);
-                hoverPortTimer = null;
+            if (this._hoverPortTimer) {
+                clearTimeout(this._hoverPortTimer);
+                this._hoverPortTimer = null;
             }
 
             const m = this.ui.modules[mId];
             if (m) {
-                hoverPortTimer = setTimeout(() => {
+                this._hoverPortTimer = setTimeout(() => {
+                    if (this.ui.isPerformanceMode) return;
                     const info = this.ui.getPortDisplayInfo ? this.ui.getPortDisplayInfo(mId, p) : null;
                     const toastLabel = (info && info.hasAlias) ? info.label : p;
                     this.ui.showToast(toastLabel, 1500);
@@ -246,15 +260,23 @@ export class InteractionManager {
         });
 
         this.ui.gridBoard.addEventListener('pointerout', (e) => {
+            if (this.ui.isPerformanceMode) {
+                if (this._hoverPortTimer) {
+                    clearTimeout(this._hoverPortTimer);
+                    this._hoverPortTimer = null;
+                }
+                this._currentHoverPort = null;
+                return;
+            }
             const port = e.target.closest('.port');
             if (port) {
                 if (e.relatedTarget && e.relatedTarget.closest('.port') === port) {
                     return;
                 }
-                currentHoverPort = null;
-                if (hoverPortTimer) {
-                    clearTimeout(hoverPortTimer);
-                    hoverPortTimer = null;
+                this._currentHoverPort = null;
+                if (this._hoverPortTimer) {
+                    clearTimeout(this._hoverPortTimer);
+                    this._hoverPortTimer = null;
                 }
             }
         });
@@ -427,7 +449,10 @@ export class InteractionManager {
 
             const container = document.getElementById('canvas-container');
             if (container) {
-                const isControl = e.target.closest('.port, input, button, select, textarea, .pad-grid-container, .pad-grid-canvas');
+                const controlSelector = this.ui.isPerformanceMode
+                    ? 'input, button, select, textarea, .pad-grid-container, .pad-grid-canvas'
+                    : '.port, input, button, select, textarea, .pad-grid-container, .pad-grid-canvas';
+                const isControl = e.target.closest(controlSelector);
                 if (!isControl) {
                     this._scrollStartY = e.clientY;
                     this._scrollStartTop = container.scrollTop;

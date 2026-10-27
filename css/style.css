@@ -254,9 +254,11 @@ body.is-row-dragging .grid-cell * {
 
 /* Performance Mode: Hide all ports and disable editing affordances */
 .is-performance-mode .port,
-.is-performance-mode .port-badge {
+.is-performance-mode .port-badge,
+.is-performance-mode .pad-chassis-port {
     pointer-events: none !important;
     opacity: 0 !important;
+    visibility: hidden !important;
 }
 
 .is-performance-mode .grid-cell {

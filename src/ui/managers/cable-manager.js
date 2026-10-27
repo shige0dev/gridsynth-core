@@ -403,6 +403,7 @@ export class CableManager {
     }
 
     handlePortTap(mId, pName) {
+        if (this.ui.isPerformanceMode) return;
         const cur = { moduleId: mId, port: pName };
         const info = this.getPortDisplayInfo(mId, pName);
         if (!this.selectedTargetForConnection) {

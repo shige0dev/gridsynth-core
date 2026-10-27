@@ -1159,6 +1159,16 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
       - **ドラムパッド・プリセットのバイポーラ（BI）デフォルト統一**:
         - デモプリセット `14_16_pad_drumkit.js` の16個のパッド（`PAD1`〜`PAD16`）をすべてデフォルト仕様に合わせて `polX: 'bi', polY: 'bi'` に統一。
       - バージョンを `v1.0.0440`、キャッシュバスターを `v=440` に更新。
+    - **パフォーマンスモード時の端子ホバー・タップ判定およびトースト完全ディゼーブル（v1.0.0441）**:
+      - **端子判定・トースト発火の根本遮断**:
+        - `interaction-manager.js` の `pointerover` / `pointerout` において、`this.ui.isPerformanceMode === true` のときは即座にホバータイマー `_hoverPortTimer` を破棄して早期リターンするガードを追加。端子通過による誤トースト（端子名ポップアップ）を完全遮断。
+        - `cancelPendingPresses` に `_hoverPortTimer` の破棄を追加し、モード切替時やインタラクションリセット時の残留タイマーを完全消去。
+        - `cable-manager.js` の `handlePortTap` 先頭にパフォーマンスモードガードを追加。
+      - **CSS レベルでのヒットテスト完全除外**:
+        - `style.css` の `.is-performance-mode .port, .port-badge, .pad-chassis-port` に `visibility: hidden !important;` を追加。ブラウザのレンダリングツリーおよびヒットテストから端子を完全除外。
+      - **パフォーマンスモード時のラックドラッグスライド操作性向上**:
+        - `interaction-manager.js` のドラッグスクロール開始判定において、パフォーマンスモード時は `.port` を `isControl` から除外。非表示になっている端子エリアをスワイプしてもスムーズにラックが縦スクロール追従するように改善。
+      - バージョンを `v1.0.0441`、キャッシュバスターを `v=441` に更新。
 
 
 
