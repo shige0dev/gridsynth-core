@@ -33,8 +33,17 @@ export const SPK = {
         merger.connect(limiter);
         limiter.connect(ctx.destination);
 
+        let recDest = null;
+        if (typeof ctx.createMediaStreamDestination === 'function') {
+            try {
+                recDest = ctx.createMediaStreamDestination();
+                limiter.connect(recDest);
+            } catch (_) {}
+        }
+
         return {
-            nodes: { inL, inR, outL, outR, anL, anR, merger, limiter },
+            nodes: { inL, inR, outL, outR, anL, anR, merger, limiter, recDest },
+            getMediaStream: () => recDest?.stream,
             inputs: {
                 wave_inL: inL,
                 wave_inR: inR,
