@@ -8,7 +8,6 @@ let spkRecState = {
     recorder: null,
     audioChunks: [],
     lastBlob: null,
-    lastBase64: null,
     lastFileName: null
 };
 
@@ -82,13 +81,6 @@ function startSpkRecording(m, ui, updateUI) {
             // 自動保存（スマホのDownloadフォルダ直下に格納）
             downloadRecording(blob, spkRecState.lastFileName);
 
-            // Base64 生成
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                spkRecState.lastBase64 = reader.result;
-            };
-            reader.readAsDataURL(blob);
-
             const sizeKb = Math.round(blob.size / 1024);
             ui?.showToast(`REC保存完了 (${sizeKb}KB / Opus 24k)`);
             updateUI();
@@ -121,34 +113,6 @@ function stopSpkRecording() {
     clearInterval(spkRecState.timerId);
     spkRecState.timerId = null;
     spkRecState.isRecording = false;
-}
-
-function copyBase64(ui) {
-    if (!spkRecState.lastBase64) {
-        ui?.showToast('録音データがありません');
-        return;
-    }
-    if (navigator?.clipboard?.writeText) {
-        navigator.clipboard.writeText(spkRecState.lastBase64).then(() => {
-            ui?.showToast('Base64をコピーしました（AI貼付用）');
-        }).catch(() => fallbackCopy(ui));
-    } else {
-        fallbackCopy(ui);
-    }
-}
-
-function fallbackCopy(ui) {
-    const ta = document.createElement('textarea');
-    ta.value = spkRecState.lastBase64;
-    document.body.appendChild(ta);
-    ta.select();
-    try {
-        document.execCommand('copy');
-        ui?.showToast('Base64をコピーしました（AI貼付用）');
-    } catch (_) {
-        ui?.showToast('コピーできませんでした');
-    }
-    document.body.removeChild(ta);
 }
 
 export const SPK = {
@@ -187,26 +151,14 @@ export const SPK = {
         return `
         <div class="space-y-2 p-1 select-none">
             <!-- 1. Top Minimal REC Bar (Header-level) -->
-            <div class="flex items-center justify-between bg-slate-950/80 px-2 py-1.5 rounded-xl border border-slate-800/90 gap-2">
-                <div class="flex items-center gap-2">
-                    <button id="spk-rec-btn" class="h-6 px-3 rounded-lg font-mono font-bold text-[10px] flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer ${isRec ? 'bg-red-600 hover:bg-red-700 text-white animate-pulse' : 'bg-slate-800 hover:bg-slate-700 text-red-400 border border-red-500/40'}">
-                        <span class="w-1.5 h-1.5 rounded-full ${isRec ? 'bg-white' : 'bg-red-500'}"></span>
-                        <span id="spk-rec-btn-lbl">${isRec ? remainInt : 'REC'}</span>
-                    </button>
-                    <span id="spk-rec-status-txt" class="text-[9px] font-mono ${isRec ? 'text-red-400 font-bold animate-pulse' : 'text-slate-500'}">
-                        ${isRec ? 'RECORDING...' : (hasRec ? 'SAVED (24k)' : '16s / 24k')}
-                    </span>
-                </div>
-
-                <!-- Post-recording Actions (SAVE & BASE64 only) -->
-                <div id="spk-rec-actions-box" class="${hasRec ? 'flex' : 'hidden'} items-center gap-1.5">
-                    <button id="spk-rec-dl-btn" class="h-6 px-2.5 bg-amber-950/80 hover:bg-amber-900 text-amber-300 rounded-md text-[9px] font-bold flex items-center justify-center gap-1 border border-amber-500/50 cursor-pointer shadow-sm" title="スマホのDownloadフォルダに再保存">
-                        💾 SAVE
-                    </button>
-                    <button id="spk-rec-copy-btn" class="h-6 px-2.5 bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 rounded-md text-[9px] font-bold flex items-center justify-center gap-1 border border-cyan-500/50 cursor-pointer shadow-sm" title="AIチャット貼付用のBase64文字列をコピー">
-                        📋 BASE64
-                    </button>
-                </div>
+            <div class="flex items-center gap-2.5 bg-slate-950/80 px-2 py-1.5 rounded-xl border border-slate-800/90">
+                <button id="spk-rec-btn" class="h-6 px-3 rounded-lg font-mono font-bold text-[10px] flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer ${isRec ? 'bg-red-600 hover:bg-red-700 text-white animate-pulse' : 'bg-slate-800 hover:bg-slate-700 text-red-400 border border-red-500/40'}">
+                    <span class="w-1.5 h-1.5 rounded-full ${isRec ? 'bg-white' : 'bg-red-500'}"></span>
+                    <span id="spk-rec-btn-lbl">${isRec ? remainInt : 'REC'}</span>
+                </button>
+                <span id="spk-rec-status-txt" class="text-[9px] font-mono ${isRec ? 'text-red-400 font-bold animate-pulse' : 'text-slate-500'}">
+                    ${isRec ? 'RECORDING...' : (hasRec ? 'SAVED (24k)' : '16s / 24k')}
+                </span>
             </div>
 
             <!-- 2. Master Volume Slider from Schema -->
@@ -236,11 +188,6 @@ export const SPK = {
                 statusTxt.textContent = isRec ? 'RECORDING...' : (hasRec ? 'SAVED (24k)' : '16s / 24k');
                 statusTxt.className = `text-[9px] font-mono ${isRec ? 'text-red-400 font-bold animate-pulse' : 'text-slate-500'}`;
             }
-
-            const actBox = document.getElementById('spk-rec-actions-box');
-            if (actBox) {
-                actBox.className = `${hasRec ? 'flex' : 'hidden'} items-center gap-1.5`;
-            }
         };
 
         const recBtn = document.getElementById('spk-rec-btn');
@@ -252,23 +199,6 @@ export const SPK = {
                     const ui = window.__GS_APP__;
                     startSpkRecording(m, ui, updateUI);
                 }
-            };
-        }
-
-        const dlBtn = document.getElementById('spk-rec-dl-btn');
-        if (dlBtn) {
-            dlBtn.onclick = () => {
-                if (spkRecState.lastBlob && spkRecState.lastFileName) {
-                    downloadRecording(spkRecState.lastBlob, spkRecState.lastFileName);
-                }
-            };
-        }
-
-        const copyBtn = document.getElementById('spk-rec-copy-btn');
-        if (copyBtn) {
-            copyBtn.onclick = () => {
-                const ui = window.__GS_APP__;
-                copyBase64(ui);
             };
         }
     },
