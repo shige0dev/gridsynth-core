@@ -121,7 +121,7 @@ export const preset11 = {
         "SEQ16_1:cv_out > FMCORE1:cv_in",
         "SEQ16_1:cv_out > FMCORE2:cv_in",
         "ADSR1:cv_out > FMCORE2:index_cv",
-        "LFO1:wave_out > FMCORE1:index_cv",
+        "LFO1:cv_out > FMCORE1:index_cv",
         "FMCORE1:wave_out > FMCORE2:mod_in",
         "FMCORE2:wave_out > VCA1:wave_in",
         "ADSR2:cv_out > VCA1:cv_in",
