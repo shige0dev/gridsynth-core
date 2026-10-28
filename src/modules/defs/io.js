@@ -76,7 +76,7 @@ function startSpkRecording(m, ui, updateUI) {
             const d = new Date();
             const pad = (n) => String(n).padStart(2, '0');
             const dateStr = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
-            spkRecState.lastFileName = `GridSynth_REC_${dateStr}_24k.${ext}`;
+            spkRecState.lastFileName = `REC_${dateStr}_24k.${ext}`;
 
             // 自動保存（スマホのDownloadフォルダ直下に格納）
             downloadRecording(blob, spkRecState.lastFileName);
