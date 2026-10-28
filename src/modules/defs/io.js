@@ -8,9 +8,7 @@ let spkRecState = {
     recorder: null,
     audioChunks: [],
     lastBlob: null,
-    lastUrl: null,
     lastBase64: null,
-    previewAudio: null,
     lastFileName: null
 };
 
@@ -71,8 +69,6 @@ function startSpkRecording(m, ui, updateUI) {
             const actualType = recorder.mimeType || mimeType || 'audio/webm';
             const blob = new Blob(spkRecState.audioChunks, { type: actualType });
             spkRecState.lastBlob = blob;
-            if (spkRecState.lastUrl) URL.revokeObjectURL(spkRecState.lastUrl);
-            spkRecState.lastUrl = URL.createObjectURL(blob);
             spkRecState.isRecording = false;
             clearInterval(spkRecState.timerId);
             spkRecState.timerId = null;
@@ -107,7 +103,7 @@ function startSpkRecording(m, ui, updateUI) {
             } else {
                 updateUI();
             }
-        }, 100);
+        }, 200);
 
         updateUI();
     } catch (err) {
@@ -155,25 +151,6 @@ function fallbackCopy(ui) {
     document.body.removeChild(ta);
 }
 
-function togglePreviewPlay(btn) {
-    if (!spkRecState.lastUrl) return;
-    if (spkRecState.previewAudio && !spkRecState.previewAudio.paused) {
-        spkRecState.previewAudio.pause();
-        spkRecState.previewAudio.currentTime = 0;
-        if (btn) btn.innerHTML = '▶ PLAY';
-    } else {
-        if (!spkRecState.previewAudio) {
-            spkRecState.previewAudio = new Audio();
-            spkRecState.previewAudio.onended = () => {
-                if (btn) btn.innerHTML = '▶ PLAY';
-            };
-        }
-        spkRecState.previewAudio.src = spkRecState.lastUrl;
-        spkRecState.previewAudio.play().catch(() => {});
-        if (btn) btn.innerHTML = '⏹ STOP';
-    }
-}
-
 export const SPK = {
     color: 'amber',
     defaults: () => ({ type: 'SPK', masterVol: 0.12 }),
@@ -204,52 +181,36 @@ export const SPK = {
     renderModal: (m, ctx) => {
         const isRec = spkRecState.isRecording;
         const elapsed = isRec ? (Date.now() - spkRecState.startTime) / 1000 : 0;
-        const remain = Math.max(0, 16.0 - elapsed).toFixed(1);
-        const pct = isRec ? Math.min(100, (elapsed / 16.0) * 100).toFixed(1) : (spkRecState.lastBlob ? 100 : 0);
+        const remainInt = Math.ceil(Math.max(0, 16.0 - elapsed));
         const hasRec = Boolean(spkRecState.lastBlob);
-        const sizeKb = hasRec ? Math.round(spkRecState.lastBlob.size / 1024) : 0;
 
         return `
-        <div class="space-y-3 p-1">
-            <!-- 1. Master Volume Slider from Schema -->
-            ${UIHelpers.renderSchemaModal(m, ctx, SPK.schema)}
-
-            <!-- 2. AI Feedback Opus Recorder Section -->
-            <div class="p-2.5 bg-slate-950/80 rounded-xl border border-slate-800/90 space-y-2 select-none">
-                <div class="flex items-center justify-between pb-1 border-b border-slate-800/80">
-                    <span class="text-[9px] font-bold text-amber-400 font-mono tracking-wider flex items-center gap-1.5">
-                        <span class="w-2 h-2 rounded-full ${isRec ? 'bg-red-500 animate-ping' : 'bg-red-500/70'}"></span>
-                        AI RECORDER (Opus 24k / 16s)
-                    </span>
-                    <span id="spk-rec-timer-txt" class="text-[10px] font-mono font-bold ${isRec ? 'text-red-400 font-extrabold animate-pulse' : 'text-slate-400'}">
-                        ${isRec ? `${remain}s` : (hasRec ? `DONE (${sizeKb}KB)` : '16.0s')}
-                    </span>
-                </div>
-
-                <!-- Progress Bar -->
-                <div class="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
-                    <div id="spk-rec-bar" class="h-full bg-red-500 transition-all duration-100" style="width: ${pct}%;"></div>
-                </div>
-
-                <!-- Start / Stop Button -->
-                <button id="spk-rec-btn" class="w-full py-1.5 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer ${isRec ? 'bg-red-600 hover:bg-red-700 text-white animate-pulse' : 'bg-slate-800 hover:bg-slate-700 text-red-400 border border-red-500/40'}">
-                    <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                    <span>${isRec ? `STOP REC (${remain}s)` : '● START REC (16s)'}</span>
-                </button>
-
-                <!-- Action Toolbar after Recording -->
-                <div id="spk-rec-actions-box" class="${hasRec ? 'flex' : 'hidden'} items-center gap-1.5 pt-1 border-t border-slate-800/60">
-                    <button id="spk-rec-play-btn" class="flex-1 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-[9px] font-bold flex items-center justify-center gap-1 border border-slate-700 cursor-pointer">
-                        ▶ PLAY
+        <div class="space-y-2 p-1 select-none">
+            <!-- 1. Top Minimal REC Bar (Header-level) -->
+            <div class="flex items-center justify-between bg-slate-950/80 px-2 py-1.5 rounded-xl border border-slate-800/90 gap-2">
+                <div class="flex items-center gap-2">
+                    <button id="spk-rec-btn" class="h-6 px-3 rounded-lg font-mono font-bold text-[10px] flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer ${isRec ? 'bg-red-600 hover:bg-red-700 text-white animate-pulse' : 'bg-slate-800 hover:bg-slate-700 text-red-400 border border-red-500/40'}">
+                        <span class="w-1.5 h-1.5 rounded-full ${isRec ? 'bg-white' : 'bg-red-500'}"></span>
+                        <span id="spk-rec-btn-lbl">${isRec ? remainInt : 'REC'}</span>
                     </button>
-                    <button id="spk-rec-dl-btn" class="flex-1 py-1 bg-amber-950/80 hover:bg-amber-900 text-amber-300 rounded text-[9px] font-bold flex items-center justify-center gap-1 border border-amber-500/50 cursor-pointer" title="スマホのDownloadフォルダに再保存">
+                    <span id="spk-rec-status-txt" class="text-[9px] font-mono ${isRec ? 'text-red-400 font-bold animate-pulse' : 'text-slate-500'}">
+                        ${isRec ? 'RECORDING...' : (hasRec ? 'SAVED (24k)' : '16s / 24k')}
+                    </span>
+                </div>
+
+                <!-- Post-recording Actions (SAVE & BASE64 only) -->
+                <div id="spk-rec-actions-box" class="${hasRec ? 'flex' : 'hidden'} items-center gap-1.5">
+                    <button id="spk-rec-dl-btn" class="h-6 px-2.5 bg-amber-950/80 hover:bg-amber-900 text-amber-300 rounded-md text-[9px] font-bold flex items-center justify-center gap-1 border border-amber-500/50 cursor-pointer shadow-sm" title="スマホのDownloadフォルダに再保存">
                         💾 SAVE
                     </button>
-                    <button id="spk-rec-copy-btn" class="flex-1 py-1 bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 rounded text-[9px] font-bold flex items-center justify-center gap-1 border border-cyan-500/50 cursor-pointer" title="AIチャット貼付用のBase64文字列をコピー">
+                    <button id="spk-rec-copy-btn" class="h-6 px-2.5 bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 rounded-md text-[9px] font-bold flex items-center justify-center gap-1 border border-cyan-500/50 cursor-pointer shadow-sm" title="AIチャット貼付用のBase64文字列をコピー">
                         📋 BASE64
                     </button>
                 </div>
             </div>
+
+            <!-- 2. Master Volume Slider from Schema -->
+            ${UIHelpers.renderSchemaModal(m, ctx, SPK.schema)}
         </div>`;
     },
     bindEvents: (m, ctx, onChange) => {
@@ -260,29 +221,25 @@ export const SPK = {
         const updateUI = () => {
             const isRec = spkRecState.isRecording;
             const elapsed = isRec ? (Date.now() - spkRecState.startTime) / 1000 : 0;
-            const remain = Math.max(0, 16.0 - elapsed).toFixed(1);
-            const pct = isRec ? Math.min(100, (elapsed / 16.0) * 100).toFixed(1) : (spkRecState.lastBlob ? 100 : 0);
+            const remainInt = Math.ceil(Math.max(0, 16.0 - elapsed));
             const hasRec = Boolean(spkRecState.lastBlob);
-            const sizeKb = hasRec ? Math.round(spkRecState.lastBlob.size / 1024) : 0;
-
-            const timerTxt = document.getElementById('spk-rec-timer-txt');
-            if (timerTxt) {
-                timerTxt.textContent = isRec ? `${remain}s` : (hasRec ? `DONE (${sizeKb}KB)` : '16.0s');
-                timerTxt.className = `text-[10px] font-mono font-bold ${isRec ? 'text-red-400 font-extrabold animate-pulse' : 'text-slate-400'}`;
-            }
-
-            const bar = document.getElementById('spk-rec-bar');
-            if (bar) bar.style.width = `${pct}%`;
 
             const btn = document.getElementById('spk-rec-btn');
-            if (btn) {
-                btn.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500"></span><span>${isRec ? `STOP REC (${remain}s)` : '● START REC (16s)'}</span>`;
-                btn.className = `w-full py-1.5 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer ${isRec ? 'bg-red-600 hover:bg-red-700 text-white animate-pulse' : 'bg-slate-800 hover:bg-slate-700 text-red-400 border border-red-500/40'}`;
+            const lbl = document.getElementById('spk-rec-btn-lbl');
+            if (btn && lbl) {
+                lbl.textContent = isRec ? remainInt : 'REC';
+                btn.className = `h-6 px-3 rounded-lg font-mono font-bold text-[10px] flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer ${isRec ? 'bg-red-600 hover:bg-red-700 text-white animate-pulse' : 'bg-slate-800 hover:bg-slate-700 text-red-400 border border-red-500/40'}`;
+            }
+
+            const statusTxt = document.getElementById('spk-rec-status-txt');
+            if (statusTxt) {
+                statusTxt.textContent = isRec ? 'RECORDING...' : (hasRec ? 'SAVED (24k)' : '16s / 24k');
+                statusTxt.className = `text-[9px] font-mono ${isRec ? 'text-red-400 font-bold animate-pulse' : 'text-slate-500'}`;
             }
 
             const actBox = document.getElementById('spk-rec-actions-box');
             if (actBox) {
-                actBox.className = `${hasRec ? 'flex' : 'hidden'} items-center gap-1.5 pt-1 border-t border-slate-800/60`;
+                actBox.className = `${hasRec ? 'flex' : 'hidden'} items-center gap-1.5`;
             }
         };
 
@@ -312,13 +269,6 @@ export const SPK = {
             copyBtn.onclick = () => {
                 const ui = window.__GS_APP__;
                 copyBase64(ui);
-            };
-        }
-
-        const playBtn = document.getElementById('spk-rec-play-btn');
-        if (playBtn) {
-            playBtn.onclick = () => {
-                togglePreviewPlay(playBtn);
             };
         }
     },
