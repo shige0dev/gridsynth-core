@@ -5,8 +5,11 @@ let spkRecState = {
     startTime: 0,
     maxDuration: 16.0,
     timerId: null,
-    recorder: null,
-    audioChunks: [],
+    scriptNode: null,
+    silentGain: null,
+    sourceNode: null,
+    leftChunks: [],
+    rightChunks: [],
     lastBlob: null,
     lastFileName: null
 };
@@ -24,6 +27,47 @@ function downloadRecording(blob, fileName) {
     }, 1000);
 }
 
+function encodePcmToMp3(leftChunks, rightChunks, sampleRate, kbps = 64) {
+    if (!window.lamejs || !window.lamejs.Mp3Encoder) {
+        throw new Error('MP3エンコーダが読み込まれていません');
+    }
+    const totalLength = leftChunks.reduce((acc, c) => acc + c.length, 0);
+    const leftPcm = new Float32Array(totalLength);
+    const rightPcm = new Float32Array(totalLength);
+    let offset = 0;
+    for (let i = 0; i < leftChunks.length; i++) {
+        leftPcm.set(leftChunks[i], offset);
+        rightPcm.set(rightChunks[i], offset);
+        offset += leftChunks[i].length;
+    }
+
+    const leftInt16 = new Int16Array(totalLength);
+    const rightInt16 = new Int16Array(totalLength);
+    for (let i = 0; i < totalLength; i++) {
+        const sl = Math.max(-1, Math.min(1, leftPcm[i]));
+        leftInt16[i] = sl < 0 ? sl * 0x8000 : sl * 0x7FFF;
+        const sr = Math.max(-1, Math.min(1, rightPcm[i]));
+        rightInt16[i] = sr < 0 ? sr * 0x8000 : sr * 0x7FFF;
+    }
+
+    const mp3encoder = new window.lamejs.Mp3Encoder(2, sampleRate, kbps);
+    const mp3Data = [];
+    const sampleBlockSize = 1152;
+    for (let i = 0; i < totalLength; i += sampleBlockSize) {
+        const leftSub = leftInt16.subarray(i, i + sampleBlockSize);
+        const rightSub = rightInt16.subarray(i, i + sampleBlockSize);
+        const mp3buf = mp3encoder.encodeBuffer(leftSub, rightSub);
+        if (mp3buf.length > 0) {
+            mp3Data.push(mp3buf);
+        }
+    }
+    const endBuf = mp3encoder.flush();
+    if (endBuf.length > 0) {
+        mp3Data.push(endBuf);
+    }
+    return new Blob(mp3Data, { type: 'audio/mp3' });
+}
+
 function startSpkRecording(m, ui, updateUI) {
     if (spkRecState.isRecording) return;
     const synth = ui?.synth || window.__GS_SYNTH__;
@@ -33,65 +77,48 @@ function startSpkRecording(m, ui, updateUI) {
     }
     const fullId = synth.modules[m.id] ? m.id : `0/${m.id}`;
     const inst = synth.modules[fullId] || synth.modules[m.id];
-    const stream = inst?.getMediaStream?.();
-    if (!stream) {
-        ui?.showToast('録音ストリームを取得できません');
+    const sourceNode = inst?.getOutputNode?.() || inst?.nodes?.limiter;
+    if (!sourceNode) {
+        ui?.showToast('録音ノードを取得できません');
         return;
     }
 
-    let mimeType = 'audio/webm;codecs=opus';
-    if (typeof MediaRecorder !== 'undefined' && typeof MediaRecorder.isTypeSupported === 'function') {
-        if (!MediaRecorder.isTypeSupported(mimeType)) {
-            mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' :
-                       (MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : '');
-        }
-    } else {
-        mimeType = '';
-    }
-
     try {
-        const options = { audioBitsPerSecond: 24000 };
-        if (mimeType) options.mimeType = mimeType;
-        const recorder = new MediaRecorder(stream, options);
-        spkRecState.recorder = recorder;
-        spkRecState.audioChunks = [];
+        const audioCtx = synth.ctx;
+        const bufferSize = 4096;
+        const scriptNode = audioCtx.createScriptProcessor ? audioCtx.createScriptProcessor(bufferSize, 2, 2) : null;
+        if (!scriptNode) {
+            ui?.showToast('録音プロセッサを作成できません');
+            return;
+        }
+
+        const silentGain = audioCtx.createGain();
+        silentGain.gain.value = 0;
+
+        spkRecState.leftChunks = [];
+        spkRecState.rightChunks = [];
         spkRecState.isRecording = true;
         spkRecState.startTime = Date.now();
+        spkRecState.scriptNode = scriptNode;
+        spkRecState.silentGain = silentGain;
+        spkRecState.sourceNode = sourceNode;
 
-        recorder.ondataavailable = (e) => {
-            if (e.data && e.data.size > 0) {
-                spkRecState.audioChunks.push(e.data);
-            }
+        scriptNode.onaudioprocess = (e) => {
+            if (!spkRecState.isRecording) return;
+            const l = e.inputBuffer.getChannelData(0);
+            const r = e.inputBuffer.getChannelData(1);
+            spkRecState.leftChunks.push(new Float32Array(l));
+            spkRecState.rightChunks.push(new Float32Array(r));
         };
 
-        recorder.onstop = () => {
-            const actualType = recorder.mimeType || mimeType || 'audio/webm';
-            const blob = new Blob(spkRecState.audioChunks, { type: actualType });
-            spkRecState.lastBlob = blob;
-            spkRecState.isRecording = false;
-            clearInterval(spkRecState.timerId);
-            spkRecState.timerId = null;
-
-            const ext = actualType.includes('mp4') ? 'mp4' : 'webm';
-            const d = new Date();
-            const pad = (n) => String(n).padStart(2, '0');
-            const dateStr = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
-            spkRecState.lastFileName = `REC_${dateStr}_24k.${ext}`;
-
-            // 自動保存（スマホのDownloadフォルダ直下に格納）
-            downloadRecording(blob, spkRecState.lastFileName);
-
-            const sizeKb = Math.round(blob.size / 1024);
-            ui?.showToast(`REC保存完了 (${sizeKb}KB / Opus 24k)`);
-            updateUI();
-        };
-
-        recorder.start(100);
+        sourceNode.connect(scriptNode);
+        scriptNode.connect(silentGain);
+        silentGain.connect(audioCtx.destination);
 
         spkRecState.timerId = setInterval(() => {
             const elapsed = (Date.now() - spkRecState.startTime) / 1000;
             if (elapsed >= spkRecState.maxDuration) {
-                stopSpkRecording();
+                stopSpkRecording(ui, updateUI);
             } else {
                 updateUI();
             }
@@ -105,14 +132,47 @@ function startSpkRecording(m, ui, updateUI) {
     }
 }
 
-function stopSpkRecording() {
-    if (!spkRecState.isRecording || !spkRecState.recorder) return;
-    if (spkRecState.recorder.state !== 'inactive') {
-        spkRecState.recorder.stop();
-    }
+function stopSpkRecording(ui, updateUI) {
+    if (!spkRecState.isRecording) return;
+    spkRecState.isRecording = false;
     clearInterval(spkRecState.timerId);
     spkRecState.timerId = null;
-    spkRecState.isRecording = false;
+
+    try {
+        if (spkRecState.sourceNode && spkRecState.scriptNode) {
+            spkRecState.sourceNode.disconnect(spkRecState.scriptNode);
+        }
+        if (spkRecState.scriptNode) {
+            spkRecState.scriptNode.disconnect();
+            spkRecState.scriptNode.onaudioprocess = null;
+        }
+        if (spkRecState.silentGain) {
+            spkRecState.silentGain.disconnect();
+        }
+    } catch (_) {}
+
+    const synth = ui?.synth || window.__GS_SYNTH__;
+    const sampleRate = synth?.ctx?.sampleRate || 44100;
+
+    try {
+        const mp3Blob = encodePcmToMp3(spkRecState.leftChunks, spkRecState.rightChunks, sampleRate, 64);
+        spkRecState.lastBlob = mp3Blob;
+
+        const d = new Date();
+        const pad = (n) => String(n).padStart(2, '0');
+        const dateStr = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+        spkRecState.lastFileName = `REC_${dateStr}.mp3`;
+
+        downloadRecording(mp3Blob, spkRecState.lastFileName);
+
+        const sizeKb = Math.round(mp3Blob.size / 1024);
+        ui?.showToast(`REC保存完了 (${sizeKb}KB / MP3)`);
+    } catch (err) {
+        console.error('MP3 encode error:', err);
+        ui?.showToast('MP3変換エラー: ' + err.message);
+    }
+
+    if (updateUI) updateUI();
 }
 
 export const SPK = {
@@ -157,7 +217,7 @@ export const SPK = {
                     <span id="spk-rec-btn-lbl">${isRec ? remainInt : 'REC'}</span>
                 </button>
                 <span id="spk-rec-status-txt" class="text-[9px] font-mono ${isRec ? 'text-red-400 font-bold animate-pulse' : 'text-slate-500'}">
-                    ${isRec ? 'RECORDING...' : (hasRec ? 'SAVED (24k)' : '16s / 24k')}
+                    ${isRec ? 'RECORDING...' : (hasRec ? 'SAVED (MP3)' : '16s / MP3')}
                 </span>
             </div>
 
@@ -185,7 +245,7 @@ export const SPK = {
 
             const statusTxt = document.getElementById('spk-rec-status-txt');
             if (statusTxt) {
-                statusTxt.textContent = isRec ? 'RECORDING...' : (hasRec ? 'SAVED (24k)' : '16s / 24k');
+                statusTxt.textContent = isRec ? 'RECORDING...' : (hasRec ? 'SAVED (MP3)' : '16s / MP3');
                 statusTxt.className = `text-[9px] font-mono ${isRec ? 'text-red-400 font-bold animate-pulse' : 'text-slate-500'}`;
             }
         };
@@ -193,10 +253,10 @@ export const SPK = {
         const recBtn = document.getElementById('spk-rec-btn');
         if (recBtn) {
             recBtn.onclick = () => {
+                const ui = window.__GS_APP__;
                 if (spkRecState.isRecording) {
-                    stopSpkRecording();
+                    stopSpkRecording(ui, updateUI);
                 } else {
-                    const ui = window.__GS_APP__;
                     startSpkRecording(m, ui, updateUI);
                 }
             };

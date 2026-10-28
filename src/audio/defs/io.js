@@ -44,6 +44,7 @@ export const SPK = {
         return {
             nodes: { inL, inR, outL, outR, anL, anR, merger, limiter, recDest },
             getMediaStream: () => recDest?.stream,
+            getOutputNode: () => limiter,
             inputs: {
                 wave_inL: inL,
                 wave_inR: inR,
