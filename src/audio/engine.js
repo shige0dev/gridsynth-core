@@ -18,14 +18,18 @@ export class SynthEngine {
     async init() {
         if (!this.ctx) {
             const AC = window.AudioContext || window.webkitAudioContext;
-            this.ctx = new AC();
+            try {
+                this.ctx = new AC({ latencyHint: 'interactive' });
+            } catch (_) {
+                this.ctx = new AC();
+            }
             this.silentSink = this.ctx.createGain();
             this.silentSink.gain.value = 0.0;
             this.silentSink.connect(this.ctx.destination);
 
             if (this.ctx.audioWorklet) {
                 try {
-                    const workletUrl = new URL('../dsp/worklet-processors.js?v=436', import.meta.url).href;
+                    const workletUrl = new URL('../dsp/worklet-processors.js?v=442', import.meta.url).href;
                     await this.ctx.audioWorklet.addModule(workletUrl);
                     this.audioWorkletReady = true;
                 } catch (e) {
