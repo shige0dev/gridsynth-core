@@ -10,8 +10,8 @@ export const MARKOV = {
         rootMidi: 36,
         quantize: true,
         holdClocks: 1,
-        stayWeight: 10,
-        weights: [0, 0, 0]
+        // weights: [self (TRANS_OUT 0), out1 (trans_out1), out2 (trans_out2), out3 (trans_out3)]
+        weights: [10, 0, 0, 0]
     }),
     onClone: (copy) => {
         copy.initOn = false;
@@ -19,15 +19,19 @@ export const MARKOV = {
     },
     onNormalize: (m) => {
         m.state = m.initOn ? 1 : 0;
+        if (!m.weights || !Array.isArray(m.weights) || m.weights.length !== 4) {
+            m.weights = [10, 0, 0, 0];
+        }
     },
     onExport: (clean, orig) => {
         clean.state = orig.initOn ? 1 : 0;
     },
     ports: (m, ctx) => {
-        const weights = m?.weights || [0, 0, 0];
+        const weights = m?.weights || [10, 0, 0, 0];
+        // weights[1..3] correspond to trans_out1..3 (PIN 7..9)
         const patched = ctx?.patched;
-        const getTransColor = (idx, port) => {
-            const w = weights[idx] || 0;
+        const getTransColor = (extIdx, port) => {
+            const w = weights[extIdx + 1] || 0;
             if (w <= 0) return 'bg-slate-700';
             const isConnected = patched?.has(port);
             return isConnected ? 'bg-slate-400' : 'bg-purple-500';
@@ -80,18 +84,19 @@ export const MARKOV = {
         const isInit = !!m.initOn;
         const holdC = m.holdClocks ?? 1;
 
-        const wStay = m.stayWeight ?? 10;
-        const weights = m.weights || [0, 0, 0];
+        if (!m.weights || !Array.isArray(m.weights) || m.weights.length !== 4) {
+            m.weights = [10, 0, 0, 0];
+        }
 
-        let totalW = Math.max(0, wStay);
-        for (let i = 0; i < 3; i++) {
+        const weights = m.weights;
+        let totalW = 0;
+        for (let i = 0; i < 4; i++) {
             totalW += Math.max(0, weights[i] || 0);
         }
         if (totalW === 0) totalW = 1;
 
-        const pctStay = Math.round((wStay / totalW) * 100);
         const pcts = [];
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 4; i++) {
             pcts.push(Math.round(((weights[i] || 0) / totalW) * 100));
         }
 
@@ -129,11 +134,11 @@ export const MARKOV = {
 
                         <div class="w-[1px] h-28 bg-slate-800/80 self-center mx-0.5"></div>
 
-                        <!-- Stay Slider -->
-                        ${UIHelpers.createVSliderHTML('markov-w-stay', 'STAY', 0, 100, 1, wStay, '自己', 'amber', false, `${pctStay}%`)}
+                        <!-- Self Transition Slider (weights[0]: TRANS_OUT 0 内部自己結線) -->
+                        ${UIHelpers.createVSliderHTML('markov-w-0', 'SELF', 0, 100, 1, weights[0] ?? 10, 'OUT 0', 'amber', false, `${pcts[0]}%`)}
 
-                        <!-- Output 1..3 Sliders (OUT 1 to OUT 3 from left to right, matching bottom PIN7..PIN9) -->
-                        ${[0, 1, 2].map(idx => UIHelpers.createVSliderHTML(`markov-w-${idx}`, `OUT ${idx + 1}`, 0, 100, 1, weights[idx] ?? 0, `CH ${idx + 1}`, 'amber', false, `${pcts[idx]}%`)).join('')}
+                        <!-- Output 1..3 Sliders (weights[1..3]: OUT 1 to OUT 3 matching PIN 7..PIN 9) -->
+                        ${[1, 2, 3].map(idx => UIHelpers.createVSliderHTML(`markov-w-${idx}`, `OUT ${idx}`, 0, 100, 1, weights[idx] ?? 0, `CH ${idx}`, 'amber', false, `${pcts[idx]}%`)).join('')}
                     </div>
                 </div>
             </div>`;
@@ -188,40 +193,56 @@ export const MARKOV = {
         }
 
         const updatePcts = () => {
-            const wStay = m.stayWeight ?? 10;
-            const weights = m.weights || [0, 0, 0];
-            let totalW = Math.max(0, wStay);
-            for (let i = 0; i < 3; i++) {
-                totalW += Math.max(0, weights[i] || 0);
+            if (!m.weights || !Array.isArray(m.weights)) {
+                m.weights = [10, 0, 0, 0];
+            }
+            let totalW = 0;
+            for (let i = 0; i < 4; i++) {
+                totalW += Math.max(0, m.weights[i] || 0);
             }
             if (totalW === 0) totalW = 1;
 
-            const pStayEl = document.getElementById('markov-w-stay-disp');
-            if (pStayEl) pStayEl.textContent = `${Math.round((wStay / totalW) * 100)}%`;
-
-            for (let i = 0; i < 3; i++) {
+            for (let i = 0; i < 4; i++) {
                 const pEl = document.getElementById(`markov-w-${i}-disp`);
                 if (pEl) {
-                    pEl.textContent = `${Math.round(((weights[i] || 0) / totalW) * 100)}%`;
+                    pEl.textContent = `${Math.round(((m.weights[i] || 0) / totalW) * 100)}%`;
                 }
             }
         };
 
-        UIHelpers.bindSlider('markov-w-stay', () => { updatePcts(); return document.getElementById('markov-w-stay-disp')?.textContent || `${pctStay}%`; }, (val) => {
-            m.stayWeight = Math.round(val);
-            updatePcts();
-            cb();
-        }, 1, 0, 100);
-
-        [0, 1, 2].forEach(idx => {
-            UIHelpers.bindSlider(`markov-w-${idx}`, () => { updatePcts(); return document.getElementById(`markov-w-${idx}-disp`)?.textContent || `${pcts[idx]}%`; }, (val) => {
-                if (!m.weights) m.weights = [0, 0, 0];
+        [0, 1, 2, 3].forEach(idx => {
+            UIHelpers.bindSlider(`markov-w-${idx}`, () => { updatePcts(); return document.getElementById(`markov-w-${idx}-disp`)?.textContent || '0%'; }, (val) => {
+                if (!m.weights || !Array.isArray(m.weights)) m.weights = [10, 0, 0, 0];
                 m.weights[idx] = Math.round(val);
                 updatePcts();
                 cb();
             }, 1, 0, 100);
         });
     },
+    updateLive: (cell, readData, isPlaying, modalEl, m) => {
+        const isOn = (readData?.state || 0) === 1;
+        const box = cell?.querySelector('.markov-state-box');
+        if (box) {
+            const pitchEl = box.querySelector('.markov-pitch-val');
+            const holdEl = box.querySelector('.markov-hold-val');
+            if (isOn && isPlaying) {
+                box.className = 'markov-state-box w-9 h-9 rounded-md border flex flex-col items-center justify-center leading-none select-none transition-colors duration-75 markov-active bg-gradient-to-t from-amber-500 via-amber-400 to-yellow-300 border-[#fde047] text-slate-950 shadow-[0_0_10px_2px_rgba(251,191,36,0.95),0_0_20px_4px_rgba(245,158,11,0.7),inset_0_0_6px_rgba(253,224,71,0.6)]';
+                if (pitchEl) pitchEl.className = 'markov-pitch-val font-mono text-[10px] leading-tight text-slate-950 font-bold';
+                if (holdEl) {
+                    holdEl.className = 'markov-hold-val font-mono text-[10px] leading-tight mt-0.5 text-amber-950 font-bold';
+                    holdEl.textContent = readData?.remaining ?? (m.holdClocks ?? 1);
+                }
+            } else {
+                box.className = 'markov-state-box w-9 h-9 rounded-md border flex flex-col items-center justify-center leading-none select-none transition-colors duration-75 markov-idle bg-transparent border-amber-500/45 text-slate-300 shadow-none';
+                if (pitchEl) pitchEl.className = 'markov-pitch-val font-mono text-[10px] leading-tight text-slate-200 font-bold';
+                if (holdEl) {
+                    holdEl.className = 'markov-hold-val font-mono text-[10px] leading-tight mt-0.5 text-amber-400/80 font-bold';
+                    holdEl.textContent = m?.holdClocks ?? 1;
+                }
+            }
+        }
+    }
+};
     updateLive: (cell, readData, isPlaying, modalEl, m) => {
         const isOn = (readData?.state || 0) === 1;
         const box = cell?.querySelector('.markov-state-box');

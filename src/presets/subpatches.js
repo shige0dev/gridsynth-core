@@ -551,8 +551,437 @@ export const FACTORY_SUBPATCHES = {
                 "VCA1": { "type": "VCA", "level": 0.0, "col": 2, "row": 2 }
             },
             connections: [
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "ADSR1", gate: true, port: "gate_in" } },
+                { from: { moduleId: "VCO1", port: "wave_out" }, to: { moduleId: "VCF1", port: "wave_in" } },
+                { from: { moduleId: "VCF1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
+                { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
+                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }
+            ]
+        }
+    },
+    'FACTORY_SUB_KICK': {
+        id: 'FACTORY_SUB_KICK',
+        subType: 'SubKick',
+        format: 'gridsynth-submodule',
+        version: '2.1',
+        name: 'SUB KICK',
+        category: 'Percussion',
+        isSystem: true,
+        description: 'Ultra-deep sine sub bass drum (38Hz sub-bass boom with long smooth decay)',
+        manifest: {
+            description: '38Hzの重低音サブベースキック。ディープなローエンド振動',
+            ports: {
+                trig_in: { pin: 'PIN5', signal: 'gate' },
+                wave_out: { pin: 'PIN10', signal: 'audio' }
+            }
+        },
+        pins: {
+            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN10: { label: 'Audio Out', type: 'audio_out' }
+        },
+        pageData: {
+            name: 'SUB KICK',
+            slots: {
+                "2": "SUB_IO1",
+                "5": "MATH2_1",
+                "6": "ADSR1",
+                "7": "ADSR2",
+                "10": "VCO1",
+                "11": "VCA1"
+            },
+            modules: {
+                "SUB_IO1": { "type": "SUB_IO", "col": 2, "row": 0 },
+                "MATH2_1": { "type": "MATH2", "mode": "MULTI", "valA": 0.0, "valB": 1.2, "col": 1, "row": 1 },
+                "ADSR1": { "type": "ADSR", "attack": 0.001, "attackCurve": -0.5, "decay": 0.06, "decayCurve": -0.8, "sustain": 0.0, "release": 0.04, "releaseCurve": -0.7, "col": 2, "row": 1 },
+                "ADSR2": { "type": "ADSR", "attack": 0.002, "attackCurve": -0.5, "decay": 0.85, "decayCurve": -0.35, "sustain": 0.0, "release": 0.15, "releaseCurve": -0.3, "col": 3, "row": 1 },
+                "VCO1": { "type": "VCO", "channels": 1, "freq1": 38, "wave": "sine", "quantize": false, "col": 2, "row": 2 },
+                "VCA1": { "type": "VCA", "level": 0.0, "col": 3, "row": 2 }
+            },
+            connections: [
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "ADSR2", port: "gate_in" } },
+                { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "MATH2_1", port: "cv_in_a" } },
+                { from: { moduleId: "MATH2_1", port: "cv_out" }, to: { moduleId: "VCO1", port: "cv_in" } },
+                { from: { moduleId: "VCO1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
+                { from: { moduleId: "ADSR2", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
+                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }
+            ]
+        }
+    },
+    'FACTORY_RIM': {
+        id: 'FACTORY_RIM',
+        subType: 'RimShot',
+        format: 'gridsynth-submodule',
+        version: '2.1',
+        name: 'RIM SHOT',
+        category: 'Percussion',
+        isSystem: true,
+        description: 'Crisp acoustic/electronic rimshot (Narrow Bandpass resonance click)',
+        manifest: {
+            description: 'ソリッドなリムショット。高域レゾナンスの鋭いクリック音',
+            ports: {
+                trig_in: { pin: 'PIN5', signal: 'gate' },
+                wave_out: { pin: 'PIN10', signal: 'audio' }
+            }
+        },
+        pins: {
+            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN10: { label: 'Audio Out', type: 'audio_out' }
+        },
+        pageData: {
+            name: 'RIM SHOT',
+            slots: {
+                "2": "SUB_IO1",
+                "6": "VCO1",
+                "7": "VCF1",
+                "8": "ADSR1",
+                "12": "VCA1"
+            },
+            modules: {
+                "SUB_IO1": { "type": "SUB_IO", "col": 2, "row": 0 },
+                "VCO1": { "type": "VCO", "channels": 1, "freq1": 480, "wave": "square", "quantize": false, "col": 1, "row": 1 },
+                "VCF1": { "type": "VCF", "filterType": "bandpass", "cutoff": 1750, "q": 8.0, "modDepth": 0, "col": 2, "row": 1 },
+                "ADSR1": { "type": "ADSR", "attack": 0.0005, "attackCurve": -0.5, "decay": 0.032, "decayCurve": -0.85, "sustain": 0.0, "release": 0.015, "releaseCurve": -0.8, "col": 3, "row": 1 },
+                "VCA1": { "type": "VCA", "level": 0.0, "col": 2, "row": 2 }
+            },
+            connections: [
                 { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
                 { from: { moduleId: "VCO1", port: "wave_out" }, to: { moduleId: "VCF1", port: "wave_in" } },
+                { from: { moduleId: "VCF1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
+                { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
+                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }
+            ]
+        }
+    },
+    'FACTORY_GHOST_SNARE': {
+        id: 'FACTORY_GHOST_SNARE',
+        subType: 'GhostSnare',
+        format: 'gridsynth-submodule',
+        version: '2.1',
+        name: 'GHOST SNARE',
+        category: 'Percussion',
+        isSystem: true,
+        description: 'Delicate low-velocity ghost snare (Soft filtered noise wire + gentle tone)',
+        manifest: {
+            description: '繊細なゴーストスネア。控えめなアタックとソフトなホワイトノイズ',
+            ports: {
+                trig_in: { pin: 'PIN5', signal: 'gate' },
+                wave_out: { pin: 'PIN10', signal: 'audio' }
+            }
+        },
+        pins: {
+            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN10: { label: 'Audio Out', type: 'audio_out' }
+        },
+        pageData: {
+            name: 'GHOST SNARE',
+            slots: {
+                "2": "SUB_IO1",
+                "6": "NOISE1",
+                "7": "VCF1",
+                "8": "ADSR1",
+                "12": "VCA1"
+            },
+            modules: {
+                "SUB_IO1": { "type": "SUB_IO", "col": 2, "row": 0 },
+                "NOISE1": { "type": "NOISE", "noiseType": "white", "tone": 6000, "level": 0.8, "col": 1, "row": 1 },
+                "VCF1": { "type": "VCF", "filterType": "bandpass", "cutoff": 2200, "q": 2.5, "modDepth": 0, "col": 2, "row": 1 },
+                "ADSR1": { "type": "ADSR", "attack": 0.003, "attackCurve": -0.3, "decay": 0.09, "decayCurve": -0.7, "sustain": 0.0, "release": 0.04, "releaseCurve": -0.6, "col": 3, "row": 1 },
+                "VCA1": { "type": "VCA", "level": 0.0, "cvDepth": 0.65, "col": 2, "row": 2 }
+            },
+            connections: [
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
+                { from: { moduleId: "NOISE1", port: "wave_out" }, to: { moduleId: "VCF1", port: "wave_in" } },
+                { from: { moduleId: "VCF1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
+                { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
+                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }
+            ]
+        }
+    },
+    'FACTORY_CH_SOFT': {
+        id: 'FACTORY_CH_SOFT',
+        subType: 'HiHatSoft',
+        format: 'gridsynth-submodule',
+        version: '2.1',
+        name: 'SOFT HAT',
+        category: 'Percussion',
+        isSystem: true,
+        description: 'Smooth and warm closed hi-hat (Lower cutoff, softer envelope)',
+        manifest: {
+            description: '柔らかく耳馴染みの良いソフトクローズドハイハット',
+            ports: {
+                trig_in: { pin: 'PIN5', signal: 'gate' },
+                wave_out: { pin: 'PIN10', signal: 'audio' }
+            }
+        },
+        pins: {
+            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN10: { label: 'Audio Out', type: 'audio_out' }
+        },
+        pageData: {
+            name: 'SOFT HAT',
+            slots: {
+                "2": "SUB_IO1",
+                "6": "NOISE1",
+                "7": "VCF1",
+                "8": "ADSR1",
+                "12": "VCA1"
+            },
+            modules: {
+                "SUB_IO1": { "type": "SUB_IO", "col": 2, "row": 0 },
+                "NOISE1": { "type": "NOISE", "noiseType": "white", "tone": 8000, "level": 0.9, "col": 1, "row": 1 },
+                "VCF1": { "type": "VCF", "filterType": "bandpass", "cutoff": 5800, "q": 2.2, "modDepth": 0, "col": 2, "row": 1 },
+                "ADSR1": { "type": "ADSR", "attack": 0.002, "attackCurve": -0.3, "decay": 0.065, "decayCurve": -0.75, "sustain": 0.0, "release": 0.03, "releaseCurve": -0.7, "col": 3, "row": 1 },
+                "VCA1": { "type": "VCA", "level": 0.0, "cvDepth": 0.85, "col": 2, "row": 2 }
+            },
+            connections: [
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
+                { from: { moduleId: "NOISE1", port: "wave_out" }, to: { moduleId: "VCF1", port: "wave_in" } },
+                { from: { moduleId: "VCF1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
+                { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
+                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }
+            ]
+        }
+    },
+    'FACTORY_OPEN_HAT': {
+        id: 'FACTORY_OPEN_HAT',
+        subType: 'OpenHiHat',
+        format: 'gridsynth-submodule',
+        version: '2.1',
+        name: 'OPEN HAT',
+        category: 'Percussion',
+        isSystem: true,
+        description: 'Sizzling Open Hi-Hat (Extended release highpass metallic noise)',
+        manifest: {
+            description: 'ロングテイルのオープンハイハット。シズル感のある減衰',
+            ports: {
+                trig_in: { pin: 'PIN5', signal: 'gate' },
+                wave_out: { pin: 'PIN10', signal: 'audio' }
+            }
+        },
+        pins: {
+            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN10: { label: 'Audio Out', type: 'audio_out' }
+        },
+        pageData: {
+            name: 'OPEN HAT',
+            slots: {
+                "2": "SUB_IO1",
+                "6": "NOISE1",
+                "7": "VCF1",
+                "8": "ADSR1",
+                "12": "VCA1"
+            },
+            modules: {
+                "SUB_IO1": { "type": "SUB_IO", "col": 2, "row": 0 },
+                "NOISE1": { "type": "NOISE", "noiseType": "white", "tone": 9200, "level": 1.0, "col": 1, "row": 1 },
+                "VCF1": { "type": "VCF", "filterType": "highpass", "cutoff": 6500, "q": 2.8, "modDepth": 0, "col": 2, "row": 1 },
+                "ADSR1": { "type": "ADSR", "attack": 0.0005, "attackCurve": -0.5, "decay": 0.32, "decayCurve": -0.5, "sustain": 0.0, "release": 0.08, "releaseCurve": -0.5, "col": 3, "row": 1 },
+                "VCA1": { "type": "VCA", "level": 0.0, "col": 2, "row": 2 }
+            },
+            connections: [
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
+                { from: { moduleId: "NOISE1", port: "wave_out" }, to: { moduleId: "VCF1", port: "wave_in" } },
+                { from: { moduleId: "VCF1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
+                { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
+                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }
+            ]
+        }
+    },
+    'FACTORY_MID_TOM': {
+        id: 'FACTORY_MID_TOM',
+        subType: 'MidTom',
+        format: 'gridsynth-submodule',
+        version: '2.1',
+        name: 'MID TOM',
+        category: 'Percussion',
+        isSystem: true,
+        description: 'Medium pitch techno tom with snappy pitch-bend and resonant decay',
+        manifest: {
+            description: '中音域のミドルタム。軽快なアタックと豊かな胴鳴り',
+            ports: {
+                trig_in: { pin: 'PIN5', signal: 'gate' },
+                wave_out: { pin: 'PIN10', signal: 'audio' }
+            }
+        },
+        pins: {
+            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN10: { label: 'Audio Out', type: 'audio_out' }
+        },
+        pageData: {
+            name: 'MID TOM',
+            slots: {
+                "2": "SUB_IO1",
+                "5": "MATH2_1",
+                "6": "MATH2_2",
+                "7": "ADSR1",
+                "8": "ADSR2",
+                "11": "VCO1",
+                "12": "VCA1"
+            },
+            modules: {
+                "SUB_IO1": { "type": "SUB_IO", "col": 2, "row": 0 },
+                "MATH2_1": { "type": "MATH2", "mode": "MULTI", "valA": 0.0, "valB": 1.7, "col": 0, "row": 1 },
+                "MATH2_2": { "type": "MATH2", "mode": "ADD", "valA": 0.0, "valB": 2.1, "col": 1, "row": 1 },
+                "ADSR1": { "type": "ADSR", "attack": 0.0005, "attackCurve": -0.5, "decay": 0.04, "decayCurve": -0.8, "sustain": 0.0, "release": 0.02, "releaseCurve": -0.8, "col": 2, "row": 1 },
+                "ADSR2": { "type": "ADSR", "attack": 0.0005, "attackCurve": -0.5, "decay": 0.28, "decayCurve": -0.5, "sustain": 0.0, "release": 0.05, "releaseCurve": -0.5, "col": 3, "row": 1 },
+                "VCO1": { "type": "VCO", "channels": 1, "freq1": 140, "wave": "triangle", "quantize": false, "col": 1, "row": 2 },
+                "VCA1": { "type": "VCA", "level": 0.0, "col": 2, "row": 2 }
+            },
+            connections: [
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "ADSR2", port: "gate_in" } },
+                { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "MATH2_1", port: "cv_in_a" } },
+                { from: { moduleId: "MATH2_1", port: "cv_out" }, to: { moduleId: "MATH2_2", port: "cv_in_a" } },
+                { from: { moduleId: "MATH2_2", port: "cv_out" }, to: { moduleId: "VCO1", port: "cv_in" } },
+                { from: { moduleId: "VCO1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
+                { from: { moduleId: "ADSR2", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
+                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }
+            ]
+        }
+    },
+    'FACTORY_HIGH_TOM': {
+        id: 'FACTORY_HIGH_TOM',
+        subType: 'HighTom',
+        format: 'gridsynth-submodule',
+        version: '2.1',
+        name: 'HIGH TOM',
+        category: 'Percussion',
+        isSystem: true,
+        description: 'High pitched tribal/techno tom with tight attack and resonant punch',
+        manifest: {
+            description: '高音域のハイタム。タイトな音程ベンドと鋭いインパクト',
+            ports: {
+                trig_in: { pin: 'PIN5', signal: 'gate' },
+                wave_out: { pin: 'PIN10', signal: 'audio' }
+            }
+        },
+        pins: {
+            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN10: { label: 'Audio Out', type: 'audio_out' }
+        },
+        pageData: {
+            name: 'HIGH TOM',
+            slots: {
+                "2": "SUB_IO1",
+                "5": "MATH2_1",
+                "6": "MATH2_2",
+                "7": "ADSR1",
+                "8": "ADSR2",
+                "11": "VCO1",
+                "12": "VCA1"
+            },
+            modules: {
+                "SUB_IO1": { "type": "SUB_IO", "col": 2, "row": 0 },
+                "MATH2_1": { "type": "MATH2", "mode": "MULTI", "valA": 0.0, "valB": 1.5, "col": 0, "row": 1 },
+                "MATH2_2": { "type": "MATH2", "mode": "ADD", "valA": 0.0, "valB": 2.6, "col": 1, "row": 1 },
+                "ADSR1": { "type": "ADSR", "attack": 0.0005, "attackCurve": -0.5, "decay": 0.035, "decayCurve": -0.85, "sustain": 0.0, "release": 0.02, "releaseCurve": -0.8, "col": 2, "row": 1 },
+                "ADSR2": { "type": "ADSR", "attack": 0.0005, "attackCurve": -0.5, "decay": 0.22, "decayCurve": -0.55, "sustain": 0.0, "release": 0.04, "releaseCurve": -0.5, "col": 3, "row": 1 },
+                "VCO1": { "type": "VCO", "channels": 1, "freq1": 195, "wave": "triangle", "quantize": false, "col": 1, "row": 2 },
+                "VCA1": { "type": "VCA", "level": 0.0, "col": 2, "row": 2 }
+            },
+            connections: [
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "ADSR2", port: "gate_in" } },
+                { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "MATH2_1", port: "cv_in_a" } },
+                { from: { moduleId: "MATH2_1", port: "cv_out" }, to: { moduleId: "MATH2_2", port: "cv_in_a" } },
+                { from: { moduleId: "MATH2_2", port: "cv_out" }, to: { moduleId: "VCO1", port: "cv_in" } },
+                { from: { moduleId: "VCO1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
+                { from: { moduleId: "ADSR2", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
+                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }
+            ]
+        }
+    },
+    'FACTORY_PERC2': {
+        id: 'FACTORY_PERC2',
+        subType: 'HighPerc',
+        format: 'gridsynth-submodule',
+        version: '2.1',
+        name: 'HIGH PERC',
+        category: 'Percussion',
+        isSystem: true,
+        description: 'Ultra-high resonant bongo/bell percussion (Bright dual square tones)',
+        manifest: {
+            description: '超高域のレゾナントパーカッション。クリスタル・ボンゴ的な響き',
+            ports: {
+                trig_in: { pin: 'PIN5', signal: 'gate' },
+                wave_out: { pin: 'PIN10', signal: 'audio' }
+            }
+        },
+        pins: {
+            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN10: { label: 'Audio Out', type: 'audio_out' }
+        },
+        pageData: {
+            name: 'HIGH PERC',
+            slots: {
+                "2": "SUB_IO1",
+                "6": "VCO1",
+                "7": "VCF1",
+                "8": "ADSR1",
+                "12": "VCA1"
+            },
+            modules: {
+                "SUB_IO1": { "type": "SUB_IO", "col": 2, "row": 0 },
+                "VCO1": { "type": "VCO", "channels": 2, "freq1": 2680, "freq2": 3790, "wave": "square", "quantize": false, "col": 1, "row": 1 },
+                "VCF1": { "type": "VCF", "filterType": "bandpass", "cutoff": 3200, "q": 6.5, "modDepth": 0, "col": 2, "row": 1 },
+                "ADSR1": { "type": "ADSR", "attack": 0.0005, "attackCurve": -0.5, "decay": 0.042, "decayCurve": -0.85, "sustain": 0.0, "release": 0.02, "releaseCurve": -0.8, "col": 3, "row": 1 },
+                "VCA1": { "type": "VCA", "level": 0.0, "col": 2, "row": 2 }
+            },
+            connections: [
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
+                { from: { moduleId: "VCO1", port: "wave_out" }, to: { moduleId: "VCF1", port: "wave_in" } },
+                { from: { moduleId: "VCF1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
+                { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
+                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }
+            ]
+        }
+    },
+    'FACTORY_CRASH': {
+        id: 'FACTORY_CRASH',
+        subType: 'CrashCymbal',
+        format: 'gridsynth-submodule',
+        version: '2.1',
+        name: 'CRASH CYMBAL',
+        category: 'Percussion',
+        isSystem: true,
+        description: 'Explosive metallic crash cymbal with long decaying shimmer',
+        manifest: {
+            description: 'エクスプローシブなクラッシュシンバル。金属倍音とロングシマー減衰',
+            ports: {
+                trig_in: { pin: 'PIN5', signal: 'gate' },
+                wave_out: { pin: 'PIN10', signal: 'audio' }
+            }
+        },
+        pins: {
+            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN10: { label: 'Audio Out', type: 'audio_out' }
+        },
+        pageData: {
+            name: 'CRASH CYMBAL',
+            slots: {
+                "2": "SUB_IO1",
+                "5": "VCO1",
+                "6": "NOISE1",
+                "7": "MIX1",
+                "8": "VCF1",
+                "9": "ADSR1",
+                "12": "VCA1"
+            },
+            modules: {
+                "SUB_IO1": { "type": "SUB_IO", "col": 2, "row": 0 },
+                "VCO1": { "type": "VCO", "channels": 3, "freq1": 3120, "freq2": 4480, "wave": "square", "quantize": false, "col": 0, "row": 1 },
+                "NOISE1": { "type": "NOISE", "noiseType": "white", "tone": 11000, "level": 1.0, "col": 1, "row": 1 },
+                "MIX1": { "type": "MIX", "channels": 2, "lvl1": 0.45, "lvl2": 0.85, "col": 2, "row": 1 },
+                "VCF1": { "type": "VCF", "filterType": "highpass", "cutoff": 5200, "q": 2.2, "modDepth": 0, "col": 3, "row": 1 },
+                "ADSR1": { "type": "ADSR", "attack": 0.0005, "attackCurve": -0.5, "decay": 1.1, "decayCurve": -0.4, "sustain": 0.0, "release": 0.4, "releaseCurve": -0.4, "col": 0, "row": 2 },
+                "VCA1": { "type": "VCA", "level": 0.0, "cvDepth": 1.0, "col": 2, "row": 2 }
+            },
+            connections: [
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
+                { from: { moduleId: "VCO1", port: "wave_out" }, to: { moduleId: "MIX1", port: "wave_in1" } },
+                { from: { moduleId: "NOISE1", port: "wave_out" }, to: { moduleId: "MIX1", port: "wave_in2" } },
+                { from: { moduleId: "MIX1", port: "wave_out" }, to: { moduleId: "VCF1", port: "wave_in" } },
                 { from: { moduleId: "VCF1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
                 { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
                 { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }

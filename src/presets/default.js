@@ -5,12 +5,12 @@ import { preset04 } from './demos/04_random_sh_delay.js?v=351';
 import { preset05 } from './demos/05_subpatch_multi_groove.js?v=351';
 import { preset06 } from './demos/06_strudel_house_bassline.js?v=351';
 import { preset07 } from './demos/07_dub_techno_deep_space.js?v=351';
-import { preset08 } from './demos/08_markov_generative_chains.js?v=436';
+import { preset08 } from './demos/08_markov_generative_chains.js?v=455';
 import { preset09 } from './demos/09_fm_heavy_techno_groove.js?v=354';
 import { preset11 } from './demos/11_fmcore_2op_demo.js?v=449';
 import { preset12 } from './demos/12_chord_arpeggio.js?v=351';
 import { preset13 } from './demos/13_wave_chop.js?v=351';
-import { preset14 } from './demos/14_16_pad_drumkit.js?v=378';
+import { preset14 } from './demos/14_16_pad_drumkit.js?v=456';
 
 export const getDefaultPresets = () => ({
     '01_DELAY_TECHNO': preset01,

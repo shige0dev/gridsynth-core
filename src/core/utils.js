@@ -43,28 +43,17 @@ export const parseConn = (c) => {
 };
 
 export const PORT_ALIASES = {
-    // SPK: legacy uppercase -> canonical lowercase
+    // SPK
     'wave_inL': 'wave_in_l',
     'wave_inR': 'wave_in_r',
 
-    // MATH: legacy uppercase & single letters -> canonical cv_in_a / cv_in_b / cv_out
-    'CV_inA': 'cv_in_a',
-    'cv_ina': 'cv_in_a',
-    'CV_inB': 'cv_in_b',
-    'cv_inb': 'cv_in_b',
-    'CV_OUT': 'cv_out',
+    // MATH
     'a': 'cv_in_a',
     'in_a': 'cv_in_a',
     'b': 'cv_in_b',
     'in_b': 'cv_in_b',
 
-    // TRANS / MARKOV: legacy long names -> canonical trans_in / trans_out
-    'transition_in': 'trans_in',
-    'transition_out': 'trans_out',
-    'transition_out1': 'trans_out1',
-    'transition_out2': 'trans_out2',
-    'transition_out3': 'trans_out3',
-    'transition_out4': 'trans_out4',
+    // CLK / GATE
     'clk_in': 'gate_in',
 
     // IO / SCOPE

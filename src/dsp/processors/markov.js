@@ -4,8 +4,8 @@ export class MarkovProcessor extends AudioWorkletProcessor {
         this.state = 0;
         this.initOn = false;
         this.stateVal = 0.0;
-        this.stayWeight = 10;
-        this.weights = [0, 0, 0, 0];
+        // weights: [self (TRANS_OUT 0), next1 (trans_out1), next2 (trans_out2), next3 (trans_out3)]
+        this.weights = [10, 0, 0, 0];
         this.holdClocks = 1;
         this.clockCount = 0;
         this.clkActive = false;
@@ -17,8 +17,14 @@ export class MarkovProcessor extends AudioWorkletProcessor {
                 if (e.data.initOn !== undefined) this.initOn = !!e.data.initOn;
                 if (e.data.state !== undefined) this.state = e.data.state ? 1 : 0;
                 if (e.data.stateVal !== undefined) this.stateVal = e.data.stateVal;
-                if (e.data.stayWeight !== undefined) this.stayWeight = e.data.stayWeight;
-                if (e.data.weights) this.weights = e.data.weights;
+                if (e.data.weights) {
+                    this.weights = [
+                        e.data.weights[0] || 0,
+                        e.data.weights[1] || 0,
+                        e.data.weights[2] || 0,
+                        e.data.weights[3] || 0
+                    ];
+                }
                 if (e.data.holdClocks !== undefined) this.holdClocks = Math.max(1, Math.round(e.data.holdClocks));
             } else if (e.data.type === 'TRIGGER_TOGGLE') {
                 this.state = this.state ? 0 : 1;
@@ -84,27 +90,39 @@ export class MarkovProcessor extends AudioWorkletProcessor {
                         const rem = Math.max(1, this.holdClocks);
                         this.port.postMessage({ type: 'STATE_CHANGED', state: 1, remaining: rem, clockCount: 1 });
                     } else {
-                        // 最低保持クロック数（holdClocks）に達している場合、確率遷移を判定
+                        // 最低保持クロック数（holdClocks）に達している場合、4要素の確率遷移を判定
                         if (this.clockCount >= this.holdClocks) {
-                            let totalW = Math.max(0, this.stayWeight);
-                            for (let k = 0; k < 3; k++) {
-                                totalW += Math.max(0, this.weights[k] || 0);
-                            }
+                            const w0 = Math.max(0, this.weights[0] || 0);
+                            const w1 = Math.max(0, this.weights[1] || 0);
+                            const w2 = Math.max(0, this.weights[2] || 0);
+                            const w3 = Math.max(0, this.weights[3] || 0);
+                            const totalW = w0 + w1 + w2 + w3;
 
                             if (totalW > 0) {
                                 const r = Math.random() * totalW;
-                                let acc = Math.max(0, this.stayWeight);
-                                if (r >= acc) {
+                                let acc = 0;
+
+                                // 1. TRANS_OUT 0 (内部自己結線ノーマライズ: 自己留まり)
+                                acc += w0;
+                                if (r < acc) {
+                                    // 外部ポートへは出力せず、内部で自身が継続（次拍もアクティブ保持）
+                                    this.clockCount++;
+                                    this.trigOutCh = -1;
+                                    const rem = Math.max(1, this.holdClocks - this.clockCount + 1);
+                                    this.port.postMessage({ type: 'STATE_CHANGED', state: 1, remaining: rem, clockCount: this.clockCount });
+                                } else {
+                                    // 2. 外部端子 trans_out1 〜 trans_out3 への射出
                                     let chosen = -1;
+                                    const extWeights = [w1, w2, w3];
                                     for (let k = 0; k < 3; k++) {
-                                        acc += Math.max(0, this.weights[k] || 0);
+                                        acc += extWeights[k];
                                         if (r < acc) {
                                             chosen = k;
                                             break;
                                         }
                                     }
                                     if (chosen !== -1) {
-                                        // 即座に次ノードへ遷移！
+                                        // 外部ノードへ遷移！
                                         this.state = 0;
                                         this.clockCount = 0;
                                         this.trigOutCh = chosen;
@@ -112,11 +130,14 @@ export class MarkovProcessor extends AudioWorkletProcessor {
                                         this.port.postMessage({ type: 'STATE_CHANGED', state: 0, remaining: 0, clockCount: 0 });
                                     }
                                 }
+                            } else {
+                                // フェイルセーフ: すべて0なら100%自己保持
+                                this.clockCount++;
+                                const rem = Math.max(1, this.holdClocks - this.clockCount + 1);
+                                this.port.postMessage({ type: 'STATE_CHANGED', state: 1, remaining: rem, clockCount: this.clockCount });
                             }
-                        }
-
-                        // 遷移せず留まる場合、滞在クロック数を加算
-                        if (this.state === 1) {
+                        } else {
+                            // holdClocks 満了前は滞在クロック数を加算
                             this.clockCount++;
                             const rem = Math.max(1, this.holdClocks - this.clockCount + 1);
                             this.port.postMessage({ type: 'STATE_CHANGED', state: 1, remaining: rem, clockCount: this.clockCount });
@@ -125,7 +146,7 @@ export class MarkovProcessor extends AudioWorkletProcessor {
                 }
             }
 
-            // 4. トリガ出力（trans_out1..3）: クロックHighの間、遷移先ポートへパルス出力
+            // 4. 外部トリガ出力（trans_out1..3）: クロックHighの間、遷移先ポートへパルス出力
             for (let k = 0; k < 3; k++) {
                 const outCh = outArr[k];
                 if (outCh) {

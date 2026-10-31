@@ -18,10 +18,10 @@ export const preset08 = {
                 "DELAY1": { type: "DELAY", delayTime: 0.363, feedback: 0.54, mix: 0.38 },
                 "REVERB1": { type: "REVERB", time: 3.2, damp: 3600, mix: 0.40 },
                 "SPK1": { type: "SPK", masterVol: 0.32 },
-                "MARKOV1": { type: "MARKOV", state: 1, initOn: true, rootMidi: 48, quantize: true, holdClocks: 4, stayWeight: 6, weights: [14, 10, 12] },
-                "MARKOV2": { type: "MARKOV", state: 0, initOn: false, rootMidi: 51, quantize: true, holdClocks: 2, stayWeight: 4, weights: [12, 14, 8] },
-                "MARKOV3": { type: "MARKOV", state: 0, initOn: false, rootMidi: 55, quantize: true, holdClocks: 1, stayWeight: 2, weights: [16, 12, 8] },
-                "MARKOV4": { type: "MARKOV", state: 0, initOn: false, rootMidi: 58, quantize: true, holdClocks: 2, stayWeight: 6, weights: [14, 16, 8] }
+                "MARKOV1": { type: "MARKOV", state: 1, initOn: true, rootMidi: 48, quantize: true, holdClocks: 4, weights: [6, 14, 10, 12] },
+                "MARKOV2": { type: "MARKOV", state: 0, initOn: false, rootMidi: 51, quantize: true, holdClocks: 2, weights: [4, 12, 14, 8] },
+                "MARKOV3": { type: "MARKOV", state: 0, initOn: false, rootMidi: 55, quantize: true, holdClocks: 1, weights: [2, 16, 12, 8] },
+                "MARKOV4": { type: "MARKOV", state: 0, initOn: false, rootMidi: 58, quantize: true, holdClocks: 2, weights: [6, 14, 16, 8] }
             },
             connections: [
                 // Master Clock Star Distribution

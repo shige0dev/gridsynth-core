@@ -11,13 +11,15 @@ export const MARKOV = {
         const initialState = isInitOn ? 1 : (d.state ? 1 : 0);
         d.state = initialState;
 
+        const weights4 = Array.isArray(d.weights) && d.weights.length === 4 ? d.weights : [10, 0, 0, 0];
+        d.weights = weights4;
+
         w.port.postMessage({
             type: 'SET_STATE',
             state: initialState,
             initOn: isInitOn,
             stateVal: cvVal,
-            stayWeight: d.stayWeight ?? 10,
-            weights: d.weights || [0, 0, 0],
+            weights: weights4,
             holdClocks: d.holdClocks ?? 1
         });
 
@@ -100,13 +102,14 @@ export const MARKOV = {
         const isInitOn = !!d.initOn;
         const curState = d.state ? 1 : 0;
         inst._liveState = curState;
+        const weights4 = Array.isArray(d.weights) && d.weights.length === 4 ? d.weights : [10, 0, 0, 0];
+        d.weights = weights4;
         inst.nodes.w?.port.postMessage({
             type: 'SET_STATE',
             state: curState,
             initOn: isInitOn,
             stateVal: cvVal,
-            stayWeight: d.stayWeight ?? 10,
-            weights: d.weights || [0, 0, 0],
+            weights: weights4,
             holdClocks: d.holdClocks ?? 1
         });
     }

@@ -83,23 +83,6 @@ export const normalizeSubPort = (port, modIdOrType = null, manifest = null) => {
         }
     }
 
-    // 5. Legacy io_1 .. io_14 support
-    const ioMatch = pLower.match(/^io_?([1-9]|1[0-4])$/);
-    if (ioMatch) {
-        const num = parseInt(ioMatch[1], 10);
-        let slot = num;
-        if (num === 9) slot = 8;
-        else if (num === 10) slot = 9;
-        else if (num === 11) slot = 10;
-        else if (num === 12) slot = 11;
-
-        if (slot <= 7) {
-            return isChild ? `PIN${slot}_out` : `PIN${slot}_in`;
-        } else {
-            return isChild ? `PIN${slot}_in` : `PIN${slot}_out`;
-        }
-    }
-
     return port;
 };
 

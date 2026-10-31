@@ -452,22 +452,27 @@ body.is-row-dragging .grid-cell * {
 }
 
 
-/* Top Playback Menu Bar: Standardized to 70% scale (20px buttons / 10px icons / 31px bar) */
+/* Top Playback Menu Bar & Page Nav Bar: Standardized to 20px buttons / 10px icons / 24px bars */
 #main-menu-bar {
-    min-height: 31px !important;
-    padding-top: calc(env(safe-area-inset-top, 0px) + 2px) !important;
-    padding-bottom: 2px !important;
+    height: 24px !important;
+    min-height: 24px !important;
+    padding-top: env(safe-area-inset-top, 0px) !important;
+    padding-bottom: 0 !important;
     touch-action: pan-x !important;
     overscroll-behavior: none !important;
 }
 
 #page-nav-bar {
+    height: 24px !important;
+    min-height: 24px !important;
     touch-action: pan-x !important;
     overscroll-behavior: none !important;
 }
 
 #main-menu-bar button,
-#main-menu-bar #master-bpm-container {
+#main-menu-bar #master-bpm-container,
+#page-nav-bar #fullscreen-btn,
+#page-nav-bar #cable-opacity-btn {
     height: 20px !important;
     min-height: 20px !important;
     max-height: 20px !important;
@@ -482,7 +487,9 @@ body.is-row-dragging .grid-cell * {
 #main-menu-bar #seq-play-btn,
 #main-menu-bar #seq-stop-btn,
 #main-menu-bar #seq-reset-btn,
-#main-menu-bar #undo-btn {
+#main-menu-bar #undo-btn,
+#page-nav-bar #fullscreen-btn,
+#page-nav-bar #cable-opacity-btn {
     width: 20px !important;
     min-width: 20px !important;
     max-width: 20px !important;
@@ -490,7 +497,11 @@ body.is-row-dragging .grid-cell * {
 }
 
 #main-menu-bar button svg,
-#main-menu-bar button i {
+#main-menu-bar button i,
+#page-nav-bar #fullscreen-btn svg,
+#page-nav-bar #fullscreen-btn i,
+#page-nav-bar #cable-opacity-btn svg,
+#page-nav-bar #cable-opacity-btn i {
     width: 10px !important;
     height: 10px !important;
 }

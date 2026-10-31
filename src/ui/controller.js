@@ -195,10 +195,11 @@ export class UIController {
                 let titleClass = 'text-slate-400 font-bold';
                 let extraTitleAttrs = '';
                 if (m.type === 'MARKOV') {
-                    const weights = Array.isArray(m.weights) ? m.weights : [0, 0, 0, 0];
+                    const weights = Array.isArray(m.weights) ? m.weights : [10, 0, 0, 0];
                     const patched = ctx.patched;
                     const isConnected = patched && patched.size > 0;
-                    const hasUnconnected = weights.some((w, idx) => Number(w) > 0 && !patched.has(`transition_out${idx + 1}`) && !patched.has(`trig_out${idx + 1}`));
+                    // weights[0] is SELF (internal normalized), weights[1..3] map to trans_out1..3
+                    const hasUnconnected = [1, 2, 3].some(idx => Number(weights[idx] || 0) > 0 && !patched.has(`trans_out${idx}`));
                     if (!isConnected || hasUnconnected) {
                         titleClass = 'text-slate-600 font-semibold';
                         extraTitleAttrs = hasUnconnected ? 'title="未結線の出力端子にウエイトが設定されています"' : 'title="未結線モジュール"';

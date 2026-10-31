@@ -1,7 +1,7 @@
-import { safeClone, parseConn, isSubModule, normalizeSubPort, isPortMatching } from './utils.js?v=297';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=397';
-import { FACTORY_SUBPATCHES } from '../presets/subpatches.js';
-import { WaveCodec } from '../audio/wave-codec.js?v=297';
+import { safeClone, parseConn, isSubModule, normalizeSubPort, isPortMatching } from './utils.js?v=456';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=456';
+import { FACTORY_SUBPATCHES } from '../presets/subpatches.js?v=456';
+import { WaveCodec } from '../audio/wave-codec.js?v=456';
 
 /**
  * Resolves a subpatch template by id, subType, or name.
@@ -21,9 +21,31 @@ export function resolveSubpatchTemplate(idOrSubType, userSubpatches = null) {
         'spacefxvoice': 'FACTORY_SPACE_FX',
         'spacefx': 'FACTORY_SPACE_FX',
         'acidbass': 'FACTORY_ACID',
-        'kick': 'FACTORY_BD',
+        'kick': 'FACTORY_KICK',
+        'bassdrum': 'FACTORY_KICK',
+        'kick2': 'FACTORY_KICK2',
+        'technokick': 'FACTORY_KICK2',
+        'subkick': 'FACTORY_SUB_KICK',
         'snare': 'FACTORY_SNARE',
-        'clap': 'FACTORY_CLAP'
+        'snaredrum': 'FACTORY_SNARE',
+        'rim': 'FACTORY_RIM',
+        'rimshot': 'FACTORY_RIM',
+        'ghost': 'FACTORY_GHOST_SNARE',
+        'ghostsnare': 'FACTORY_GHOST_SNARE',
+        'hihat': 'FACTORY_HIHAT',
+        'ch': 'FACTORY_HIHAT',
+        'chtight': 'FACTORY_HIHAT',
+        'chsoft': 'FACTORY_CH_SOFT',
+        'hihatsoft': 'FACTORY_CH_SOFT',
+        'openhat': 'FACTORY_OPEN_HAT',
+        'clap': 'FACTORY_CLAP',
+        'handclap': 'FACTORY_CLAP',
+        'tom': 'FACTORY_TOM',
+        'technotom': 'FACTORY_TOM',
+        'perc': 'FACTORY_PERC',
+        'metallicperc': 'FACTORY_PERC',
+        'crash': 'FACTORY_CRASH',
+        'crashcymbal': 'FACTORY_CRASH'
     };
     if (ALIAS_MAP[keyLower] && FACTORY_SUBPATCHES[ALIAS_MAP[keyLower]]) {
         return FACTORY_SUBPATCHES[ALIAS_MAP[keyLower]];
@@ -384,23 +406,11 @@ export function parsePatch(patchData, cols = 4, userSubpatches = null, errorSink
         });
 
         // Pass 2: Modules specified via slots (index-based)
-        const srcCols = patchData?.grid?.cols || patchData?.cols || 5;
         Object.entries(slots).forEach(([slotStr, id]) => {
             if (Object.values(finalSlots).includes(id)) return;
             const oldIdx = parseInt(slotStr, 10);
-            let r, c;
-            // Legacy patches were 5 cols (only remap if source was 5 cols and target is different)
-            if (cols !== 5 && srcCols === 5) {
-                r = Math.floor(oldIdx / 5);
-                c = oldIdx % 5;
-                if (c >= cols) {
-                    c = c % cols;
-                    r = r + 1;
-                }
-            } else {
-                r = Math.floor(oldIdx / cols);
-                c = oldIdx % cols;
-            }
+            let r = Math.floor(oldIdx / cols);
+            let c = oldIdx % cols;
             while (placedPositions.has(`${r},${c}`)) {
                 c++;
                 if (c >= cols) {

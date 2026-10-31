@@ -7,11 +7,13 @@
 ## 1. プロジェクト概要 & 設計思想 (Philosophy & Overview)
 
 ### 1.1 基本コンセプト
-GridSynth は、Web ブラウザ上で動作する **5×8 グリッド型のモジュラーシンセサイザー** です。
-- **視覚的パッチング**: 5列×8行（計40スロット）のグリッド上にモジュールを配置し、端子間をバーチャルケーブルで接続して音作りを行います。
-- **モジュラーの自由度 × 階層化カプセル化**: 単一画面のパッチングだけでなく、「サブパッチ（`SUB` / `SUB_IO`）」により、複雑な音源（キック、スネア、アシッドベース等）を1つのスロットにまとめて階層管理できます。
+GridSynth は、Web ブラウザ上で動作する **4列スクロール・グリッド型のモバイル・モジュラーシンセサイザー** です。
+- **視覚的パッチング & 縦スクロール 128 スロット**: 横4列×縦32行（計128スロット）のグリッド上にモジュールを配置し、端子間をバーチャルケーブルで接続して直感的な音作りを行います。
+- **モバイル・ファースト UX (Galaxy S25 等)**: スマートフォンの縦画面・親指操作に特化。タップ・トゥ・ワイヤ（2ステップ結線）、全幅ドックモーダル、画面外タップによるオートクローズ、演奏専用パフォーマンスモード（`PERFOM`）を搭載。
+- **モジュラーの自由度 × 階層化カプセル化 (14-PIN SUB / SUB_IO)**: 「サブパッチ（`SUB` / `SUB_IO`）」により、キック・スネア・ベース等の複雑なパッチを1スロットにカプセル化。全14ピン（PIN1〜7送り、PIN8〜14戻り）の表裏対称ブリッジで階層管理できます。
 - **Strudel / Tidal mini-notation の融合 (`PAT` モジュール)**: ライブコーディング言語（Strudel / TidalCycles）のパターン記法を取り入れ、`[c2 c2] c3*2 ~` といった柔軟なリズム・旋律を直感的に生成可能です。
-- **Web Audio API ネイティブ & ゼロビルド (Vanilla JS)**: 外部の重厚なフレームワークやビルドステップ（Webpack/Vite等）を排し、純粋な HTML5/CSS3/ES Modules のみで動作。高い可搬性と軽量なフットプリントを実現しています。
+- **外部 AI パッチ自律生成 & 自己修復ループ**: 外部 LLM（ChatGPT, Claude, Gemini 等）向けプロンプト仕様書（`MD` エクスポート）と、インポート時の構文エラー・結線違反を自動検知して修正プロンプトを提示する自己修復対話サイクルを完備。
+- **Web Audio API ネイティブ & ゼロビルド (Vanilla JS)**: 外部の重厚なフレームワークやビルドステップ（Webpack/Vite等）を排し、純粋な HTML5/CSS3/ES Modules のみで動作。高い可搬性と軽量なフットプリントを実現。クライアントサイドでの直接 MP3 録音（`lamejs`）にも対応しています。
 
 ---
 
@@ -26,7 +28,7 @@ GridSynth は、Web ブラウザ上で動作する **5×8 グリッド型のモ�
 |                               UI Layer                                  |
 |   - UIController (src/ui/controller.js)                                 |
 |   - UIHelpers (src/ui/helpers.js)                                       |
-|   - 5x8 Grid DOM, SVG Cable Overlay, Parameter Dock/Popup, Modal UI     |
+|   - 4-Col Grid DOM (128 Slots), SVG Cable Overlay, Parameter Dock/Popup, Modal UI |
 +-------------------------------------------------------------------------+
 |                           Module Registry                               |
 |   - MODULE_REGISTRY (src/modules/registry.js)                           |
@@ -42,7 +44,7 @@ GridSynth は、Web ブラウザ上で動作する **5×8 グリッド型のモ�
 |     (Web Audio API グラフ, CV/Audio信号, keepalive機構, カスタムノード)   |
 +-------------------------------------------------------------------------+
 |                        Data & Preset Layer                              |
-|   - Default Presets (src/presets/default.js) : 01_ 〜 06_               |
+|   - Default Presets (src/presets/default.js) : 01_ 〜 14_               |
 |   - Subpatch Presets (src/presets/subpatches.js)                        |
 |   - LocalStorage Database & JSON Export/Import                          |
 +-------------------------------------------------------------------------+
@@ -58,11 +60,11 @@ GridSynth は、Web ブラウザ上で動作する **5×8 グリッド型のモ�
 #### ② モジュール定義システム (`src/modules/registry.js`, `src/modules/defs/*.js`)
 - 各モジュール（`VCO`, `VCF`, `VCA`, `ADSR`, `CLK`, `SEQ8`, `SEQ16`, `PAT`, `SH`, `DELAY`, `REVERB`, `FOLD`, `MIX`, `SUB`, `SUB_IO`, `SPK`, `KEY`, `FMx3`, `FMCORE`, `GATE4`, `ARP`, `MARKOV`, `SCOPE`, `SPEC` 等）の入出力端子（オーディオ / CV / ゲート）、UIコントロールのパラメータ範囲・デフォルト値を定義。
 - **機能別サブモジュール分割 (`src/modules/defs/`)**: 大規模化・コード生成遅延を防ぐため、カテゴリ別（`vco.js`, `filter.js`, `amp.js`, `effects.js`, `adsr.js`, `mod.js`, `io.js`, `seq.js`, `pat.js`, `markov.js`, `fm.js`）に11ファイルへ分割管理し、`src/modules/registry.js` を集約バレルエクスポート（`MODULE_REGISTRY`）として統一。外部参照への破壊的変更なしに保守性・高速なAI生成を実現。
-- サブパッチ（`SUB` / `SUB_IO`）は表裏対称の12端子（スロット1〜6 送り: `PIN1_in`〜`PIN6_in` / `PIN1_out`〜`PIN6_out`、スロット7〜12 戻り: `PIN7_out`〜`PIN12_out` / `PIN7_in`〜`PIN12_in`）で厳格な `_out > _in` ルーティングによりブリッジされます。左上から下へPIN1〜3、下辺を左から右へPIN4〜9、右辺を下から上へPIN10〜12のU字型に配線端子が並びます。
+- サブパッチ（`SUB` / `SUB_IO`）は表裏対称の全14端子（スロット1〜7 送り: `PIN1_in`〜`PIN7_in` / `PIN1_out`〜`PIN7_out`、スロット8〜14 戻り: `PIN8_out`〜`PIN14_out` / `PIN8_in`〜`PIN14_in`）で厳格な `_out > _in` ルーティングによりブリッジされます。左辺上から下PIN1〜4、底辺左から右PIN5〜10、右辺下から上PIN11〜14のU字型に配線端子が並びます。
 - **サブパッチ・マニフェスト＆動的バインダー (`subType`)**: ファクトリー品全11種および配布用サブパッチは自己完結型フォーマット（`format: 'gridsynth-submodule'`, `subType`, `manifest.ports`）を搭載。固定ページ番号（`targetPage`）に依存せず、型番（`subType`）をもとに空きページを自動採番してモジュール群・内部結線を動的展開。親側（`SUB`）・子側（`SUB_IO`）双方で物理ピンに対する機能別名（`pitch_in`, `trig_in`, `wave_out` 等）を共通記述でき、システムが親側/子側の役割に応じて自動的に `_in` / `_out` へ方向解決します。
 
 #### ③ UI コントローラー (`src/ui/controller.js`)
-- **40スロット管理**: `slots`（位置マップ）、`modules`（インスタンス状態）、`connections`（結線リスト）の状態管理。
+- **128スロット管理**: `slots`（位置マップ：横4列×縦32行）、`modules`（インスタンス状態）、`connections`（結線リスト）の状態管理。
 - **階層ナビゲーション**: ページ0（メイン）とページ1〜（サブパッチ）のスタック遷移、親ページからのI/Oポートフォワーディング。
 - **マルチ選択 & ドック/ポップアップ**: モジュールをクリックして画面下部ドックで詳細調整、または複数選択による一括移動/削除。
 - **端子トースト表示 & 厳格検証**: マニフェストを持つサブパッチ端子のホバーおよびタップ時、`[${mId}:${aliasUpper} (${pin}_in/_out)]` をシンプルかつ明瞭にトースト表示（冗長な説明文は完全排除）。パネル上には編集UIを露出させず直感的な操作感を維持。結線時は送信元 `_out`、送信先 `_in` を厳格検証。
@@ -71,9 +73,10 @@ GridSynth は、Web ブラウザ上で動作する **5×8 グリッド型のモ�
 - モジュールや外部AIプロンプト、旧プリセットで用いられる多様な端子命名（`ARP:out` ⇔ `cv_out`、`in_1..4` ⇔ `cv_in1..4`、`GATE4:gate_out1` ⇔ `out1`、`MARKOV:transition_out` ⇔ `trig_out`、`MIX:wave_in` ⇔ `in`、`LFO:reset` ⇔ `reset_in` 等）を透過的に相互解決するシステム（`PORT_ALIASES`, `isPortMatching`, `getPortAliases`）を搭載。
 - 接続検証（`validateConnectionDirection`）、ケーブル描画（`CableManager.findPortElement`）、重複検出（`isSameConn`）の各層で一貫してエイリアスを解釈し、構文エラーや描画欠損を防止。
 
-#### ⑤ 物理シャーシ端子ピン配置（15ピンアーキテクチャ, `src/ui/helpers.js`）
-- モジュール枠の端子レイアウトは左辺（入力系：縦列 PIN14, 3, 2, 1, 0）、底辺（水平列 PIN4〜9）、右辺（出力系：縦列 PIN10〜13）の物理メタファに準拠。
-- 5端子入力を持つ `ARP`（アルペジエーター）等では左エッジ最下段 `PIN14` を有効化し、`cv_in1`（下）〜 `cv_in4`（上）および `clk_in`（最上段）の縦一列配置を実現。
+#### ⑤ 物理シャーシ端子ピン配置（14ピンアーキテクチャ, `src/ui/helpers.js`）
+- モジュール枠の端子レイアウトは左辺（入力系：縦列 PIN1〜4、上から下へ）、底辺（水平列 PIN5〜10、左から右へ）、右辺（出力系：縦列 PIN11〜14、下から上へ）のU字型14ピン物理メタファに準拠。
+- 左下コーナーは `PIN5`（一次ピッチCV / CV入力推奨）、右下コーナーは `PIN10`（メイン出力推奨）の統一レイアウト。
+- サブパッチ（`SUB` / `SUB_IO`）の14ピン表裏対称通信と完全に一貫した物理スロット配置を実現。
 
 #### ⑥ Strudel / Tidal 記法パーサー (`src/core/strudel-parser.js`)
 - mini-notation の文字列（例: `[c2 c2 c2 c2] [c2 c2 c2 c3] [c2 c2 c2 c2] [c2 c2 c2 c4]`）をトークン分解・AST化。
@@ -93,10 +96,10 @@ GridSynth のパッチデータは、**完全宣言型（Declarative）かつポ
     "0": {
       "name": "MAIN",
       "slots": {
-        "1": "PAT1",
-        "2": "VCO1",
-        "3": "VCF1",
-        "4": "SPK1"
+        "0": "PAT1",
+        "1": "VCO1",
+        "2": "VCF1",
+        "3": "SPK1"
       },
       "modules": {
         "PAT1": {
@@ -122,22 +125,14 @@ GridSynth のパッチデータは、**完全宣言型（Declarative）かつポ
         },
         "SPK1": {
           "type": "SPK",
-          "masterVol": 0.12
+          "masterVol": 0.16
         }
       },
       "connections": [
-        {
-          "from": { "moduleId": "PAT1", "port": "cv_out" },
-          "to": { "moduleId": "VCO1", "port": "cv_in" }
-        },
-        {
-          "from": { "moduleId": "VCO1", "port": "wave_out" },
-          "to": { "moduleId": "VCF1", port: "wave_in" }
-        },
-        {
-          "from": { "moduleId": "VCF1", "port": "wave_out" },
-          "to": { "moduleId": "SPK1", "port": "wave_in" }
-        }
+        "PAT1:cv_out > VCO1:cv_in",
+        "VCO1:wave_out > VCF1:wave_in",
+        "VCF1:wave_out > SPK1:wave_in_l",
+        "VCF1:wave_out > SPK1:wave_in_r"
       ]
     },
     "1": {
@@ -162,7 +157,7 @@ GridSynth のパッチデータは、**完全宣言型（Declarative）かつポ
 Samsung Galaxy S25 等の最新ハイエンドスマートフォン（超高解像度 Dynamic AMOLED 2X, アスペクト比約 19.5:9 / 20:9, 120Hz ディスプレイ）での快適な演奏・パッチング体験を想定した要件と最適化設計です。
 
 ### 4.1 画面レイアウト & レスポンシブ設計
-- **ビューポート制御**: `user-scalable=no` およびピンチズーム誤動作防止。縦持ち（Portrait）時は 5 列を画面幅に最適フィットさせ、縦スクロールで 8 行を閲覧。横持ち（Landscape）時は 5×8 全体を1画面に俯瞰表示。
+- **ビューポート制御**: `user-scalable=no` およびピンチズーム誤動作防止。縦持ち（Portrait）時は 4 列を画面幅に最適フィットさせ、縦スクロールで 32 行（計128スロット）を柔軟に閲覧・配置。
 - **Dynamic Safe Area**: Galaxy S25 のパンチホールカメラ部やシステムナビゲーションバーを考慮した `env(safe-area-inset-*)` の適用。
 - **高リフレッシュレート (120Hz) 最適化**: ケーブル描画（SVG / Canvas）やステップ点滅の requestAnimationFrame 最適化により、120Hz スクリーンでの滑らかな描画を維持。
 
@@ -264,7 +259,7 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
 5. **`gridsynth_diagnose_patch`**: 「音が鳴らない」「結線がループしている」などのトラブルシューティングを AI が接続グラフを走査して自己診断・修正提案。
 
 ### 5.2 AI プロンプト仕様書 & パッチ生成連携 (AI Spec & Prompt Export)
-- **`GRIDSYNTH_AI_PATCH_SPEC.md`**: 外部LLM（ChatGPT, Claude, Gemini, Cursor等）がGridsynth用JSONパッチを完全自律生成するための包括的プロンプト仕様書。
+- **`GRIDSYNTH_AI_PATCH_SPEC.md`**: 外部LLM（ChatGPT, Claude, Gemini, Cursor等）に1枚コピペするだけで完全自律生成・作曲させるための完全自己完結型オールインワン仕様書（v2.0 Standalone）。4列×32行（128スロット）、電圧規格・結線仕様、全モジュールカタログ、ピッチ計算式、完全動作実戦レシピ、補遺（未結線デフォルト・処理順序・tanhクリップ・MARKOV遷移式）、外部AI用指示プロンプトテンプレートを単一ファイルに集約。
 - **UI統合 (`src/presets/ai-spec-content.js`, `src/ui/managers/preset-manager.js`)**:
   - プリセット管理ダイアログ（`#preset-ai-spec-top-btn` `[MD]` ボタン）から1クリックでモーダル起動。
   - **COPY TO CLIPBOARD**: 即座に仕様書全文をクリップボードにコピー（外部AIチャットへの直接ペーストに最適化）。
@@ -290,7 +285,7 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
 | :--- | :--- |
 | **`01_DELAY_TECHNO`** | 8ステップシーケンサー、矩形波VCO、VCF、ディレイによるミニマルテクノ |
 | **`02_KEYBOARD_LEAD`** | KEYモジュールによるリアルタイム演奏用リードシンセ |
-| **`03_WAVEFOLD_VERB`** | ウェーブフォルダー (FOLD) とリバーブによるリッチなハーモニクス倍音パッチ |
+| **`03_WAVEFOLD_AR_FR`** | ウェーブフォルダー (FOLD)、アタック/リリース (AR) とフリークエンシー (RF) による倍音・変調パッチ |
 | **`04_RANDOM_SH_DELAY`** | S&H（サンプル＆ホールド）ランダムCV + KEY手動ピッチ加算 + ディレイパッチ |
 | **`05_SUBPATCH_MULTI_GROOVE`** | 4トラック構成（Acid Bass, Kick, Snare, Hi-Hat, Clap）をサブパッチで内包したグルーヴボックス |
 | **`06_STRUDEL_HOUSE_BASSLINE`** | PATモジュール（Strudel mini-notation）を活用した16ステップオクターブベースライン |
@@ -306,7 +301,7 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
 
 ## 7. 開発・保守における留意点 (Important Guidelines for Developers)
 
-1. **LocalStorage クリーンアップの維持**: プリセット名やキー名を変更・削除した際は、`src/ui/controller.js` の `oldLegacyKeys` 配列に旧キーを登録し、ユーザーのブラウザストレージと整合性を保つこと。
+1. **LocalStorage クリーンアップの維持**: プリセット名やキー名を変更・削除した際は、ユーザーのブラウザストレージと整合性を保つようマイグレーションまたはキーの整合性を確認すること。
 2. **Keepalive の徹底**: 音声信号が常時スピーカーに直結しないトリガー/CV生成モジュール（`PAT`, `CLK`, `SEQ8`, `SEQ16` 等）を追加・改修する際は、必ず `silentSink`（`GainNode(0) -> destination`）への接続を維持すること。
 3. **Vanilla JS の原則**: 特別な外部バンドラーを必要としない ES Modules（`import/export`）形式を厳守し、ブラウザで `index.html` を開くだけで即座に動作するシンプルさを保つこと。
 4. **端子命名とエイリアスの運用方針**: 内部実装および新プリセットは規格統一名称（CV出力は `cv_out`、オーディオは `wave_out`、ゲートは `gate_out`）を用いつつ、`src/core/utils.js` の `PORT_ALIASES` 定義を維持して既存パッチおよび外部AI出力との後方互換性を保証すること。
@@ -1219,6 +1214,45 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
     - **デモ11の結線修正（LFO端子名：cv_out）（v1.0.0449）**:
       - `LFO1:wave_out` となっていた記述を正規の出力端子名 `LFO1:cv_out` へ修正（パッチ読み込み警告を解消）。
       - バージョンを `v1.0.0449`、キャッシュバスターを `v=449` に更新。
+    - **ヘッダー・メニューバー高さ統一 & ナビボタン統一（v1.0.0450）**:
+      - 1段目再生メニューバー（`#main-menu-bar`）の高さを従来の `min-h-[31px]` から 2段目ページナビバー（`#page-nav-bar`）と同じ `24px`（`h-6` / `min-h-[24px]`）へ削減・統一。
+      - 2段目の全画面ボタン（`#fullscreen-btn`）およびケーブルハイライト切替ボタン（`#cable-opacity-btn`）を 1段目ボタンと同じ 20px×20px（`w-5 h-5`、`rounded-md`、10pxアイコン、padding:0）に統一。
+      - バージョンを `v1.0.0450`、キャッシュバスターを `v=450` に更新。
+    - **AI仕様書の一本化＆不要ファイル完全消去（v1.0.0451）**:
+      - 外部AI（ChatGPT, Claude, Gemini等）に1枚コピペするだけで完全動作パッチを出力させるため、分割されていた仕様書群（`ADVANCED.md`, `PROMPT.md`, `OPTIMIZED.md`, `QA_CHECKLIST.md`, `examples/`）を全消去し、`GRIDSYNTH_AI_PATCH_SPEC.md`（完全自己完結型オールインワン仕様書）に一本化。
+      - 4列×32行（128スロット）、14ピン表裏対称サブパッチ体系、補遺、完全実動レシピ3選、システムプロンプトテンプレートを統合。
+      - バージョンを `v1.0.0451`、キャッシュバスターを `v=451` に更新。
+    - **14_16_PAD_DRUMKIT 全16パッド個別音源化 & ファクトリーサブパッチ拡充（v1.0.0452）**:
+      - プリセット14「16_PAD_DRUMKIT」において、従来複数パッドで共有されていた音源構成を刷新し、16個の全パッド（PAD1〜PAD16）それぞれに専用の個別サブパッチ（SUB1〜SUB16）を1対1で割り当て。
+      - 足りないパーカッション音源を `src/presets/subpatches.js` に新規追加しファクトリーサブパッチとして完備：
+        - `FACTORY_SUB_KICK`（SubKick: 38Hzディープサイン波サブベース）
+        - `FACTORY_RIM`（RimShot: 480Hz方形波＋Q=8.0バンドパス鋭角クリック）
+        - `FACTORY_GHOST_SNARE`（GhostSnare: 繊細なアタックとソフトなホワイトノイズ）
+        - `FACTORY_CH_SOFT`（HiHatSoft: 5.8kHzバンドパスによるウォームなソフトクローズドハット）
+        - `FACTORY_OPEN_HAT`（OpenHiHat: 6.5kHzハイパスロングディケイ・オープンハット）
+        - `FACTORY_MID_TOM`（MidTom: 140Hzチューンドタム）
+        - `FACTORY_HIGH_TOM`（HighTom: 195Hzチューンドタム）
+        - `FACTORY_PERC2`（HighPerc: 2680Hz+3790Hz デュアルスクエア・ハイレゾナントパーカッション）
+        - `FACTORY_CRASH`（CrashCymbal: 3120Hz/4480Hz方形波＋ホワイトノイズ＋1.1sロングディケイ）
+      - `src/core/patch.js` のサブパッチエイリアスマッピングを拡張（新サブパッチ型番への自動解決に対応）。
+      - Page 0 のスロット 0〜15（PAD1〜PAD16）、スロット 16〜31（SUB1〜SUB16）、スロット 32（SPK1）の明快な4列グリッドレイアウトへ整備し、Page 1〜16 に各独立ドラムエンジンを実装。
+      - バージョンを `v1.0.0452`、キャッシュバスターを `v=452` に更新。
+    - **S&H（SH）モジュールのサンプリングタイミング改善（v1.0.0453）**:
+      - サンプル＆ホールド（`SH`）において、クロック立ち上がりと同時・直後の最新値ではなく、**トリガー立ち上がり直前値（1サンプル前の値 `lastSig`）をホールド**する仕様へ変更。
+      - 同一クロックや同一トリガーで動作するシーケンサー、パターン、あるいは他の S&H モジュールと連鎖（カスケード）した際に、同じサイクル内で値が突き抜けてしまう（レースコンディション / 直通現象）問題を確実に回避。
+      - バージョンを `v1.0.0453`、キャッシュバスターを `v=453` に更新。
+    - **全体的な不要・冗長ロジックの一括整理＆クリーンアップ（v1.0.0456）**:
+      - `src/core/patch.js`: 旧5列グリッド折り返し計算ロジック（`srcCols === 5` 分岐）を完全削除し、純粋な4列計算（`Math.floor(oldIdx / cols)`, `oldIdx % cols`）へ一本化。
+      - `src/core/sub-utils.js`: プロトタイプ時代の旧 `io_1`〜`io_14` ポート名読み替えブロックを完全削除。
+      - `src/core/utils.js`: 不要となった旧端子名エイリアス（`transition_in/out`, `CV_inA/B` 等の大文字小文字ブレ）を整理・スリム化。
+      - `src/presets/demos/14_16_pad_drumkit.js`: `subpatches.js` と完全に重複していた Page 1〜16 のベタ書きを動的展開（`bindSubtypesAndExpandPages`）に委ねる形へリファクタリング（ファイルサイズを 31KB → 約 4.8KB へ 84% 削減）。
+      - `PROJECT_CONTEXT.md`: 既に存在しない `oldLegacyKeys` への古い言及をクリーンアップ。
+      - バージョンを `v1.0.0456`、キャッシュバスターを `v=456` に更新。
+    - **S&H（SH）モジュールの直列カスケード完全遮断（v1.0.0457）**:
+      - サンプル＆ホールド（`SH`）の内部サンプル処理において、トリガー立ち上がり時に即座に `out[i]` を更新していたため、同一AudioWorkletブロック内の後段ノードへ同拍で新値が伝播（貫通）していた現象を修正。
+      - サンプルループ内で「**先に前回の held 値を出力（out[i]）として確定**」させ、その後にトリガー判定と次回用の `held` 更新を行うパイプライン順序へ変更。
+      - これにより同一クロック・同一ブロック内で何段直列に SH を連結（アナログシフトレジスタ / アナログバケツリレー回路）しても、1拍ごとに厳密に1段ずつ値がシフトする完全なカスケード遅延動作を保証。
+      - バージョンを `v1.0.0457`、キャッシュバスターを `v=457` に更新。
 
 
 
