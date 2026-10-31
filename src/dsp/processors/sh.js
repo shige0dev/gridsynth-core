@@ -38,15 +38,12 @@ export class SampleHoldProcessor extends AudioWorkletProcessor {
         if (!out) return true;
         const sr = getSR(), sc = params.scale[0] || 1, gl = params.glide[0] || 0;
         for (let i = 0; i < out.length; i++) {
-            const isHi = (trg ? trg[i] : 0) > 0.3;
-            // 先に現在の出力（前回の held 値）を確定して out[i] に書き込む
-            const target = this.held * sc;
-            this.cur = gl <= 0.001 ? target : (target + (this.cur - target) * Math.exp(-1.0 / (gl * sr)));
-            out[i] = this.cur;
+            // トリガーが 0 を離脱した瞬間（> 0.001）を検出
+            const trgVal = trg ? trg[i] : 0;
+            const isHi = trgVal > 0.001;
 
-            // 出力確定後にトリガー立ち上がりを検知して次回の held を更新
-            // これにより同サンプルの直列 SH カスケードでも新しい値が同拍で後段へ貫通しない
             if ((isHi && !this.lastTrig) || this.manualTrig) {
+                // トリガーが0を離脱した直前の1サンプル値（this.lastSig）をその場でホールド
                 if (this.hasExt && sig) {
                     this.held = this.lastSig;
                 } else {
@@ -54,6 +51,12 @@ export class SampleHoldProcessor extends AudioWorkletProcessor {
                 }
                 this.manualTrig = false;
             }
+
+            // トリガー立ち上がりと同一サンプルから直ちに新しいホールド値を出力（元トリガーと即座に同期）
+            const target = this.held * sc;
+            this.cur = gl <= 0.001 ? target : (target + (this.cur - target) * Math.exp(-1.0 / (gl * sr)));
+            out[i] = this.cur;
+
             if (sig) {
                 this.lastSig = sig[i];
             }

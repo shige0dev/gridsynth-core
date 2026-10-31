@@ -3,7 +3,7 @@ import './processors/seq.js?v=459';
 import './processors/adsr.js';
 import './processors/lfo.js?v=459';
 import './processors/math.js?v=459';
-import './processors/sh.js?v=461';
+import './processors/sh.js?v=462';
 import './processors/fold.js';
 import './processors/cv-delay.js';
 import './processors/scope.js';
