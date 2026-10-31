@@ -586,16 +586,16 @@ export const SPEC = {
             m._lastSliceTime = performance.now();
         }
 
-        // 1. High-frequency peak capture (~33ms per frame) to prevent missing sharp transients
+        // 1. High-frequency peak capture (~15ms per frame) to prevent missing sharp transients
         for (let i = 0; i < bands.length; i++) {
             if (bands[i] > m._accumBands[i]) {
                 m._accumBands[i] = bands[i];
             }
         }
 
-        // 2. Shift snapshot into 5-slice history buffer every 200ms
+        // 2. Shift snapshot into 5-slice history buffer every 120ms
         const now = performance.now();
-        if (now - m._lastSliceTime >= 200) {
+        if (now - m._lastSliceTime >= 120) {
             m._lastSliceTime = now;
             m._historyBands.pop();
             m._historyBands.unshift(new Float32Array(m._accumBands));

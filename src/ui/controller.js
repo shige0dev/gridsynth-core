@@ -269,7 +269,7 @@ export class UIController {
     uiUpdateLoop(timestamp = 0) {
         requestAnimationFrame((t) => this.uiUpdateLoop(t));
 
-        if (timestamp - this._lastUiUpdate < 32) return;
+        if (timestamp - this._lastUiUpdate < 15) return;
         this._lastUiUpdate = timestamp;
 
         const liveStates = this.collectLiveStates();
