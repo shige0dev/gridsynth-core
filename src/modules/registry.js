@@ -25,6 +25,7 @@ import { rfDefs } from './defs/rf.js?v=396';
 import { arDefs } from './defs/ar.js?v=396';
 import { waveDefs } from './defs/wave.js?v=402';
 import { padDefs } from './defs/pad.js?v=351';
+import { JOG } from './defs/jog.js?v=494';
 
 export const MODULE_REGISTRY = {
     ...vcoDefs,
@@ -48,7 +49,8 @@ export const MODULE_REGISTRY = {
     ...rfDefs,
     ...arDefs,
     ...waveDefs,
-    ...padDefs
+    ...padDefs,
+    JOG
 };
 
 export { ADSR_CURVES };
