@@ -385,12 +385,12 @@ const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal) => {
 
     // Center of Panel (0, 0, 0) in screen coordinates
     const cx = 60;
-    const cy = 68;
+    const cy = 84;
 
-    // Axis Vector lengths (precisely calibrated to fit 120x120 panel bounds)
-    const Lx = 52; // X axis (frequency): right-down 30°
-    const Ly = 52; // Y axis (time-series): right-up 30°
-    const Lz = 42; // Z axis (amplitude): vertical up
+    // Axis Vector lengths (precisely calibrated to place front-left at X~5px and front-right touching bottom edge)
+    const Lx = 42; // X axis (frequency): right-down 30°
+    const Ly = 22; // Y axis (time-series): right-up 30°
+    const Lz = 46; // Z axis (amplitude): vertical up
 
     // 3D Axis Vectors in screen space
     const Vx = { x:  Lx * cos30, y:  Lx * sin30 };
@@ -403,13 +403,13 @@ const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal) => {
         y: cy + nx * Vx.y + ny * Vy.y + nz * Vz.y
     });
 
-    // Spectrum Mapping onto calibrated normalized space:
-    // Frequency u [0, 1] -> nx in [-0.9, 0.9]
-    // Time-series v [0, 1] (0=front, 1=back) -> ny in [-0.9, 0.9]
+    // Spectrum Mapping onto normalized [-1, 1] space:
+    // Frequency u [0, 1] -> nx in [-1, 1] (0 sits at front-left X~5px)
+    // Time-series v [0, 1] (0=front, 1=back) -> ny in [-1, 1]
     // Amplitude val [0, 1] -> nz in [0, 1] (0 sits on floor, 1 rises up vertically)
     const projectSpec = (u, v, val = 0) => {
-        const nx = (2 * u - 1) * 0.9;
-        const ny = (2 * v - 1) * 0.9;
+        const nx = 2 * u - 1;
+        const ny = 2 * v - 1;
         const nz = val;
         return project3D(nx, ny, nz);
     };
