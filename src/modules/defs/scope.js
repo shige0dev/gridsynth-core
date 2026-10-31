@@ -389,8 +389,8 @@ const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal) => {
 
     // True Isometric Cube (2x2x2) in [-1, 1]^3 space: Lx = Ly = Lz = L
     // Max Y displacement is 2L (at corners (+1, -1, -1) and (-1, +1, +1))
-    // With L = 27px, Y in [6, 114], leaving 6px padding top/bottom on a 120x120 canvas
-    const L = 27;
+    // With L = 30px, corners touch/slightly reach canvas boundaries Y in [0, 120]
+    const L = 30;
     const Lx = L; // X axis (frequency): right-down 30°
     const Ly = L; // Y axis (time-series): right-up 30°
     const Lz = L; // Z axis (amplitude): vertical up
