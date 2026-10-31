@@ -14,7 +14,7 @@ export const JOG = {
     }),
     ports: () => ({
         in: [],
-        out: [{ port: 'cv_out', pin: 11, color: 'bg-yellow-400' }]
+        out: [{ port: 'cv_out', pin: 10, color: 'bg-yellow-400' }]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
 
@@ -31,25 +31,17 @@ export const JOG = {
         };
 
         return `
-            <div class="jog-box relative w-full h-full flex flex-col items-center justify-between p-1 select-none overflow-hidden touch-none" data-module-id="${m.id}">
-                <!-- Top MAX value -->
-                <div class="w-full flex items-center justify-between px-1 pointer-events-none z-10">
-                    <span class="text-[6.5px] font-mono text-slate-500 font-semibold tracking-tighter">MAX</span>
-                    <span class="text-[7.5px] font-mono font-bold text-amber-500/80 leading-none">${formatVal(maxVal)}</span>
-                </div>
+            <div class="jog-box relative w-full h-full flex flex-col items-center justify-center p-1 select-none overflow-hidden touch-none" data-module-id="${m.id}">
+                <!-- Compact Centered Wheel Container (Height reduced, square-like) -->
+                <div class="relative w-[78px] h-[58px] flex items-center justify-center overflow-hidden rounded bg-slate-950 border border-slate-800/90 shadow-inner">
+                    <canvas class="jog-canvas block w-full h-full" width="78" height="58"></canvas>
 
-                <!-- Center Wheel Canvas & Value Display -->
-                <div class="relative w-full flex-1 my-0.5 flex items-center justify-center overflow-hidden">
-                    <canvas class="jog-canvas block w-full h-full rounded bg-slate-950 border border-slate-800/80" width="100" height="70"></canvas>
-                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
-                        <span class="jog-val-disp font-mono text-[13px] font-extrabold text-amber-300 tracking-tight leading-none">${formatVal(curVal)}</span>
+                    <!-- Center Overlay: MAX at top-center, VAL at absolute center, MIN at bottom-center -->
+                    <div class="absolute inset-0 flex flex-col items-center justify-between py-1 pointer-events-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
+                        <span class="text-[6.5px] font-mono text-slate-400 font-semibold tracking-tighter leading-none">${formatVal(maxVal)}</span>
+                        <span class="jog-val-disp font-mono text-[14px] font-extrabold text-amber-300 tracking-tight leading-none">${formatVal(curVal)}</span>
+                        <span class="text-[6.5px] font-mono text-slate-400 font-semibold tracking-tighter leading-none">${formatVal(minVal)}</span>
                     </div>
-                </div>
-
-                <!-- Bottom MIN value -->
-                <div class="w-full flex items-center justify-between px-1 pointer-events-none z-10">
-                    <span class="text-[6.5px] font-mono text-slate-500 font-semibold tracking-tighter">MIN</span>
-                    <span class="text-[7.5px] font-mono font-bold text-amber-500/80 leading-none">${formatVal(minVal)}</span>
                 </div>
             </div>`;
     },
@@ -89,57 +81,55 @@ export const JOG = {
         const range = Math.max(0.0001, maxVal - minVal);
         const norm = Math.max(0, Math.min(1, (curVal - minVal) / range)); // 0.0 (bottom) to 1.0 (top)
 
-        // 1. Draw 3D Cylinder Background (Wheel cavity)
+        // 1. Draw 3D Cylinder Background (Solid metal/carbon body)
         const gradBg = ctx.createLinearGradient(0, 0, 0, h);
         gradBg.addColorStop(0, '#020617');
-        gradBg.addColorStop(0.25, '#0f172a');
+        gradBg.addColorStop(0.2, '#0f172a');
         gradBg.addColorStop(0.5, '#1e293b');
-        gradBg.addColorStop(0.75, '#0f172a');
+        gradBg.addColorStop(0.8, '#0f172a');
         gradBg.addColorStop(1, '#020617');
         ctx.fillStyle = gradBg;
         ctx.fillRect(0, 0, w, h);
 
-        // 2. Side bevel borders
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
-        ctx.fillRect(0, 0, 3, h);
-        ctx.fillRect(w - 3, 0, 3, h);
+        // 2. Beveled side edges
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+        ctx.fillRect(0, 0, 2, h);
+        ctx.fillRect(w - 2, 0, 2, h);
 
-        // 3. Cylinder Grooves / Knurling Lines
+        // 3. Cylinder Grooves / Knurling Lines in SOLID BLACK
         // Grooves rotate based on norm value (phase shift)
-        const numVisibleGrooves = 9;
+        const numVisibleGrooves = 8;
         const spacing = h / (numVisibleGrooves - 1);
         const phaseOffset = (norm * h * 2.5) % spacing;
 
-        ctx.lineWidth = isModal ? 1.5 : 1.0;
+        ctx.lineWidth = isModal ? 2.0 : 1.4;
         for (let y = -spacing + phaseOffset; y <= h + spacing; y += spacing) {
-            // Distance from vertical center (-1 to 1) for spherical cylinder shading
             const distFromMid = (y - h / 2) / (h / 2);
             if (Math.abs(distFromMid) > 1.0) continue;
 
-            // Curved 3D perspective line
             const alpha = Math.cos(distFromMid * (Math.PI / 2.2));
             if (alpha <= 0.05) continue;
 
-            // Highlight side
-            ctx.strokeStyle = `rgba(245, 158, 11, ${(alpha * 0.45).toFixed(2)})`;
+            // Deep black engraved groove
+            ctx.strokeStyle = `rgba(0, 0, 0, ${(alpha * 0.95).toFixed(2)})`;
             ctx.beginPath();
-            ctx.moveTo(4, y);
-            ctx.lineTo(w - 4, y);
+            ctx.moveTo(3, y);
+            ctx.lineTo(w - 3, y);
             ctx.stroke();
 
-            // Shadow ridge right below highlight
-            ctx.strokeStyle = `rgba(0, 0, 0, ${(alpha * 0.75).toFixed(2)})`;
+            // Subtle lower highlight to give deep 3D cut impression
+            ctx.strokeStyle = `rgba(255, 255, 255, ${(alpha * 0.12).toFixed(2)})`;
             ctx.beginPath();
-            ctx.moveTo(4, y + 1);
-            ctx.lineTo(w - 4, y + 1);
+            ctx.moveTo(3, y + 1);
+            ctx.lineTo(w - 3, y + 1);
             ctx.stroke();
         }
 
-        // 4. Center Reference / Zero Marker Line
+        // 4. Center Reference / Default Marker Line
         const defVal = m.def ?? 0.0;
         const defNorm = Math.max(0, Math.min(1, (defVal - minVal) / range));
         const defY = (1.0 - defNorm) * h;
-        ctx.strokeStyle = 'rgba(234, 179, 8, 0.4)';
+        ctx.strokeStyle = 'rgba(234, 179, 8, 0.5)';
         ctx.lineWidth = 1.0;
         ctx.setLineDash([2, 2]);
         ctx.beginPath();
@@ -314,3 +304,4 @@ export const JOG = {
         });
     }
 };
+
