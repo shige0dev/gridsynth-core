@@ -375,22 +375,22 @@ export class ModalManager {
                     : factorySubs.filter(s => s.category === factoryCategory);
 
                 const factorySubContentHtml = `
-                    <div class="flex flex-col gap-1.5">
+                    <div class="flex flex-col gap-1">
                         <div class="flex items-center gap-1 px-0.5 overflow-x-auto pb-0.5">
                             ${factoryCats.map(fc => `
-                                <button class="factory-cat-btn h-5 px-2 rounded-full text-[8px] font-bold transition flex items-center gap-1 shrink-0 ${factoryCategory === fc.id ? 'bg-purple-600 text-white shadow-sm' : 'bg-slate-800/90 text-slate-400 hover:text-slate-200 border border-slate-700/80'}" data-cat="${fc.id}">
+                                <button class="factory-cat-btn h-4.5 px-2 rounded-full text-[8px] font-bold transition flex items-center gap-1 shrink-0 ${factoryCategory === fc.id ? 'bg-purple-600 text-white shadow-sm' : 'bg-slate-800/90 text-slate-400 hover:text-slate-200 border border-slate-700/80'}" data-cat="${fc.id}">
                                     <span>${fc.label}</span>
                                     <span class="text-[7px] opacity-75 font-mono">(${fc.count})</span>
                                 </button>
                             `).join('')}
                         </div>
-                        <div class="grid grid-cols-3 gap-1.5 pt-0.5">
+                        <div class="grid grid-cols-3 gap-1">
                             ${filteredFactorySubs.map(sub => `
-                                <div class="h-7 bg-slate-800/90 hover:bg-purple-950/60 border border-slate-700/80 hover:border-purple-500/80 rounded-md flex items-center justify-between px-1.5 transition cursor-pointer factory-sub-item shadow-sm" data-id="${sub.id}">
-                                    <span class="text-[10px] font-bold text-purple-200 truncate pointer-events-none pr-1" title="${sub.name}">${sub.name}</span>
+                                <div class="h-5 bg-slate-800/90 hover:bg-purple-950/60 border border-slate-700/80 hover:border-purple-500/80 rounded flex items-center justify-between px-1.5 transition cursor-pointer factory-sub-item shadow-sm" data-id="${sub.id}">
+                                    <span class="text-[9.5px] font-bold text-purple-200 truncate pointer-events-none pr-1 leading-none" title="${sub.name}">${sub.name}</span>
                                     <div class="flex items-center gap-0.5 shrink-0">
-                                        <button class="export-factory-sub-btn w-4 h-4 flex items-center justify-center bg-slate-900 hover:bg-slate-700 text-cyan-300 rounded border border-slate-700 text-[7px]" data-id="${sub.id}" title="JSONエクスポート(コピー)">📋</button>
-                                        <button class="sub-info-btn w-4 h-4 flex items-center justify-center text-slate-400 hover:text-purple-300 rounded text-[7.5px] hover:bg-slate-700/80" data-id="${sub.id}" title="説明">ℹ️</button>
+                                        <button class="export-factory-sub-btn w-3.5 h-3.5 flex items-center justify-center bg-slate-900 hover:bg-slate-700 text-cyan-300 rounded border border-slate-700 text-[6.5px]" data-id="${sub.id}" title="JSONエクスポート(コピー)">📋</button>
+                                        <button class="sub-info-btn w-3.5 h-3.5 flex items-center justify-center text-slate-400 hover:text-purple-300 rounded text-[7px] hover:bg-slate-700/80" data-id="${sub.id}" title="説明">ℹ️</button>
                                     </div>
                                 </div>
                             `).join('')}
@@ -400,27 +400,27 @@ export class ModalManager {
 
                 // 3. USER SUBPATCHES TAB CONTENT
                 const userSubContentHtml = `
-                    <div class="flex flex-col gap-2">
-                        <div class="flex items-center justify-between px-0.5 bg-slate-950/60 border border-slate-800/80 rounded-md p-1.5">
+                    <div class="flex flex-col gap-1.5">
+                        <div class="flex items-center justify-between px-0.5 bg-slate-950/60 border border-slate-800/80 rounded-md p-1">
                             <span class="text-[8px] text-slate-400 font-medium">ストック登録済み: <span class="text-emerald-400 font-bold font-mono">${userSubs.length}</span> 件</span>
                             <div class="flex items-center gap-1.5">
-                                <button class="import-user-sub-btn h-5 px-2 bg-purple-950/80 hover:bg-purple-900 border border-purple-500/70 hover:border-purple-400 text-purple-300 rounded text-[8px] font-bold transition flex items-center gap-1 shadow-sm cursor-pointer" title="サブパッチJSONをインポートしてストックに登録">
+                                <button class="import-user-sub-btn h-4.5 px-2 bg-purple-950/80 hover:bg-purple-900 border border-purple-500/70 hover:border-purple-400 text-purple-300 rounded text-[7.5px] font-bold transition flex items-center gap-1 shadow-sm cursor-pointer" title="サブパッチJSONをインポートしてストックに登録">
                                     <span>📥 IMPORT</span>
                                 </button>
-                                <button data-type="SUB" class="h-5 px-2 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/70 hover:border-emerald-400 text-emerald-300 rounded text-[8px] font-bold transition flex items-center gap-1 shadow-sm">
+                                <button data-type="SUB" class="h-4.5 px-2 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/70 hover:border-emerald-400 text-emerald-300 rounded text-[7.5px] font-bold transition flex items-center gap-1 shadow-sm">
                                     <span>➕ 新規作成</span>
                                 </button>
                             </div>
                         </div>
                         ${userSubs.length > 0 ? `
-                        <div class="grid grid-cols-3 gap-1.5">
+                        <div class="grid grid-cols-3 gap-1">
                             ${userSubs.map(sub => `
-                                <div class="h-7 bg-slate-800/90 hover:bg-emerald-950/60 border border-slate-700/80 hover:border-emerald-500/80 rounded-md flex items-center justify-between px-1.5 transition cursor-pointer user-sub-item select-user-sub shadow-sm" data-id="${sub.id}">
-                                    <span class="text-[10px] font-bold text-emerald-200 truncate pointer-events-none pr-1" title="${sub.name}">${sub.name}</span>
+                                <div class="h-5 bg-slate-800/90 hover:bg-emerald-950/60 border border-slate-700/80 hover:border-emerald-500/80 rounded flex items-center justify-between px-1.5 transition cursor-pointer user-sub-item select-user-sub shadow-sm" data-id="${sub.id}">
+                                    <span class="text-[9.5px] font-bold text-emerald-200 truncate pointer-events-none pr-1 leading-none" title="${sub.name}">${sub.name}</span>
                                     <div class="flex items-center gap-0.5 shrink-0">
-                                        <button class="export-user-sub-btn w-4 h-4 flex items-center justify-center bg-slate-900 hover:bg-slate-700 text-cyan-300 rounded border border-slate-700 text-[7px]" data-id="${sub.id}" title="JSONエクスポート(コピー)">📋</button>
-                                        <button class="edit-user-sub-btn w-4 h-4 flex items-center justify-center bg-slate-900 hover:bg-slate-700 text-emerald-300 rounded border border-slate-700 text-[7px]" data-id="${sub.id}" title="中身を編集">✏️</button>
-                                        <button class="delete-user-sub-btn w-4 h-4 flex items-center justify-center bg-red-950/70 hover:bg-red-900 text-red-300 rounded border border-red-700/60 text-[7px]" data-id="${sub.id}" title="削除">🗑️</button>
+                                        <button class="export-user-sub-btn w-3.5 h-3.5 flex items-center justify-center bg-slate-900 hover:bg-slate-700 text-cyan-300 rounded border border-slate-700 text-[6.5px]" data-id="${sub.id}" title="JSONエクスポート(コピー)">📋</button>
+                                        <button class="edit-user-sub-btn w-3.5 h-3.5 flex items-center justify-center bg-slate-900 hover:bg-slate-700 text-emerald-300 rounded border border-slate-700 text-[6.5px]" data-id="${sub.id}" title="中身を編集">✏️</button>
+                                        <button class="delete-user-sub-btn w-3.5 h-3.5 flex items-center justify-center bg-red-950/70 hover:bg-red-900 text-red-300 rounded border border-red-700/60 text-[6.5px]" data-id="${sub.id}" title="削除">🗑️</button>
                                     </div>
                                 </div>
                             `).join('')}
