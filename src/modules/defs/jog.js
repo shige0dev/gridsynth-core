@@ -37,9 +37,9 @@ export const JOG = {
 
         return `
             <div class="jog-box relative w-full h-full flex flex-col items-center justify-center p-1 select-none overflow-hidden touch-none" data-module-id="${m.id}">
-                <!-- Compact Centered Wheel Container (Height reduced, square-like) -->
-                <div class="relative w-[78px] h-[58px] flex items-center justify-center overflow-hidden rounded bg-slate-950 border border-slate-800/90 shadow-inner">
-                    <canvas class="jog-canvas block w-full h-full" width="78" height="58"></canvas>
+                <!-- Square Centered Wheel Container (56px x 56px, height reduced by 1px on both sides) -->
+                <div class="relative w-[56px] h-[56px] flex items-center justify-center overflow-hidden rounded bg-slate-950 border border-slate-800/90 shadow-inner">
+                    <canvas class="jog-canvas block w-full h-full" width="56" height="56"></canvas>
 
                     <!-- Center Overlay: MAX at top-center, VAL at absolute center, MIN at bottom-center -->
                     <div class="absolute inset-0 flex flex-col items-center justify-between py-1 pointer-events-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
@@ -133,23 +133,26 @@ export const JOG = {
             ctx.stroke();
         }
 
-        // 4. Center Reference / Default Marker Line
-        const defVal = m.def ?? 0.0;
-        const defNorm = Math.max(0, Math.min(1, (defVal - minVal) / range));
-        const defY = (1.0 - defNorm) * h;
-        ctx.strokeStyle = 'rgba(234, 179, 8, 0.5)';
-        ctx.lineWidth = 1.0;
-        ctx.setLineDash([2, 2]);
+        // 4. Current Value Marker Line (Solid Yellow Line)
+        const curY = (1.0 - norm) * h;
+        ctx.strokeStyle = '#facc15'; // Vibrant solid yellow
+        ctx.lineWidth = 1.6;
+        ctx.setLineDash([]); // Ensure solid line (no dash)
         ctx.beginPath();
-        ctx.moveTo(0, defY);
-        ctx.lineTo(w, defY);
+        ctx.moveTo(0, curY);
+        ctx.lineTo(w, curY);
         ctx.stroke();
-        ctx.setLineDash([]);
     },
 
     bindGridEvents: (cell, m, ui) => {
         const jogBox = cell.querySelector('.jog-box');
         if (!jogBox) return;
+
+        // Render initial wheel visual immediately (even before audio starts / PLAY)
+        const initCvs = cell.querySelector('.jog-canvas');
+        if (initCvs) {
+            JOG.drawWheel(initCvs.getContext('2d'), initCvs.width, initCvs.height, m);
+        }
 
         let isInteracting = false;
         let startY = 0;
