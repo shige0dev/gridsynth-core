@@ -23,6 +23,12 @@ export class SampleHoldProcessor extends AudioWorkletProcessor {
                 this.pol = e.data.polarity;
             } else if (e.data.type === 'TRIG') {
                 this.manualTrig = true;
+            } else if (e.data.type === 'RESET' || e.data.type === 'CLEAR') {
+                this.held = 0;
+                this.cur = 0;
+                this.lastTrig = false;
+                this.lastSig = 0;
+                this.manualTrig = false;
             }
         };
     }
