@@ -160,7 +160,6 @@ export const JOG = {
         let isInteracting = false;
         let startY = 0;
         let startVal = 0;
-        let lastTapTime = 0;
 
         const getStepValue = () => {
             if (m.stepType === '1semi') return 1.0 / 12.0; // 1 semitone
@@ -198,15 +197,6 @@ export const JOG = {
         };
 
         const handleDown = (clientY) => {
-            const now = Date.now();
-            if (now - lastTapTime < 280) {
-                // Double tap: instant reset to DEFAULT
-                updateVal(m.def ?? 0.0);
-                lastTapTime = 0;
-                return;
-            }
-            lastTapTime = now;
-
             isInteracting = true;
             startY = clientY;
             startVal = m.val ?? (m.def ?? 0.0);
