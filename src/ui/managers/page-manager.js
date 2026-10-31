@@ -1,8 +1,8 @@
-// src/ui/managers/page-manager.js
-import { safeClone, generateModuleId, parseConn } from '../../core/utils.js?v=297';
-import { parsePatch, resolveSubpatchTemplate } from '../../core/patch.js?v=396';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=397';
-import { WaveCodec } from '../../audio/wave-codec.js?v=351';
+﻿// src/ui/managers/page-manager.js
+import { safeClone, generateModuleId, parseConn } from '../../core/utils.js?v=459';
+import { parsePatch, resolveSubpatchTemplate } from '../../core/patch.js?v=459';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=459';
+import { WaveCodec } from '../../audio/wave-codec.js?v=459';
 
 export class PageManager {
     constructor(ui) {

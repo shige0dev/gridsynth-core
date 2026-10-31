@@ -1,4 +1,4 @@
-// src/ui/managers/row-manager.js
+﻿// src/ui/managers/row-manager.js
 
 export class RowManager {
     constructor(ui, interactionManager = null) {

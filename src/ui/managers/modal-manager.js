@@ -1,7 +1,7 @@
-// src/ui/managers/modal-manager.js
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=409';
+﻿// src/ui/managers/modal-manager.js
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=459';
 import { FACTORY_SUBPATCHES } from '../../presets/subpatches.js';
-import { UIHelpers } from '../helpers.js?v=187';
+import { UIHelpers } from '../helpers.js?v=459';
 
 export const MODAL_WIDTHS = {
     // Complex Synthesizers
@@ -52,7 +52,7 @@ export const MODAL_WIDTHS = {
     SUB: 'w-[240px]'
 };
 
-import { DockManager } from './dock-manager.js?v=402';
+import { DockManager } from './dock-manager.js?v=459';
 
 export class ModalManager {
     constructor(ui) {

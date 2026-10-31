@@ -1,4 +1,4 @@
-// src/ui/managers/toolbar-manager.js
+﻿// src/ui/managers/toolbar-manager.js
 
 export class ToolbarManager {
     constructor(ui) {
