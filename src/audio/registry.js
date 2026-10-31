@@ -1,4 +1,4 @@
-﻿/**
+/**
  * GridSynth Audio Registry
  * Aggregates all audio module definitions from ./defs/*.js.
  */
@@ -10,14 +10,14 @@ import { effectsAudioDefs } from './defs/effects.js?v=459';
 import { adsrAudioDefs } from './defs/adsr.js?v=459';
 import { modAudioDefs } from './defs/mod.js?v=459';
 import { ioAudioDefs } from './defs/io.js?v=459';
-import { scopeAudioDefs } from './defs/scope.js?v=459';
+import { scopeAudioDefs } from './defs/scope.js?v=467';
 import { subAudioDefs } from './defs/sub.js?v=459';
 import { controllerAudioDefs } from './defs/controllers.js?v=459';
 import { seqAudioDefs } from './defs/seq.js?v=459';
 import { chordAudioDefs } from './defs/chord.js?v=459';
 import { arpAudioDefs } from './defs/arp.js?v=459';
 import { state4AudioDefs } from './defs/state4.js?v=459';
-import { patAudioDefs } from './defs/pat.js?v=459';
+import { patAudioDefs } from './defs/pat.js?v=467';
 import { markovAudioDefs } from './defs/markov.js?v=459';
 import { fmAudioDefs } from './defs/fm.js?v=459';
 import { scaleAudioDefs } from './defs/scale.js?v=459';

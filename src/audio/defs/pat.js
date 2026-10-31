@@ -4,13 +4,13 @@ import { parseStrudelPatternCycles } from '../../core/strudel-parser.js';
 export const PAT = {
     create: (ctx, d, patch, eng) => {
         const w = new AudioWorkletNode(ctx, 'pat-processor', {
-            numberOfInputs: 1,
+            numberOfInputs: 2,
             numberOfOutputs: 2,
             parameterData: {
                 bpm: eng?.masterBPM || 120
             }
         });
-        const hasPower = patch ? (patch.has('power_in') || patch.has('power')) : false;
+        const hasRun = patch ? (patch.has('run_in') || patch.has('power_in') || patch.has('power')) : false;
         const cycles = parseStrudelPatternCycles(d.pattern || 'c2 c2 c2 c2', d.cycleBeats || 4, 16);
         w.port.postMessage({
             type: 'SET_EVENTS',
@@ -21,11 +21,13 @@ export const PAT = {
         w.port.postMessage({
             type: 'SET_STATE',
             running: eng?.isPlaying || false,
-            hasPowerIn: hasPower
+            hasRunIn: hasRun
         });
 
-        const pIn = ctx.createGain();
-        pIn.connect(w, 0, 0);
+        const rIn = ctx.createGain();
+        rIn.connect(w, 0, 0); // input 0: run_in
+        const rstIn = ctx.createGain();
+        rstIn.connect(w, 0, 1); // input 1: reset_in
 
         const cv = ctx.createGain(), gt = ctx.createGain();
         w.connect(cv, 0, 0);
@@ -50,8 +52,12 @@ export const PAT = {
         };
 
         return {
-            nodes: { w, cv, gt, pIn },
-            inputs: { power_in: pIn },
+            nodes: { w, cv, gt, rIn, rstIn },
+            inputs: {
+                run_in: rIn,
+                power_in: rIn, // alias compatibility
+                reset_in: rstIn
+            },
             outputs: { cv_out: cv, gate_out: gt },
             resetStep: () => {
                 latestPhase = 0;
@@ -82,10 +88,10 @@ export const PAT = {
             cycleBeats: d.cycleBeats || 4,
             gateLen: d.gateLen ?? 0.80
         });
-        const hasPower = patch ? (patch.has('power_in') || patch.has('power')) : false;
+        const hasRun = patch ? (patch.has('run_in') || patch.has('power_in') || patch.has('power')) : false;
         inst.nodes.w.port.postMessage({
             type: 'SET_STATE',
-            hasPowerIn: hasPower
+            hasRunIn: hasRun
         });
     }
 };

@@ -17,6 +17,7 @@ export const SCOPE = {
         return {
             nodes: { w, gWave, gTrig },
             inputs: {
+                cv_in: gWave,
                 wave_in: gWave,
                 wave_in1: gWave,
                 in: gWave,

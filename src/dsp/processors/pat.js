@@ -22,8 +22,9 @@ export class PatProcessor extends AudioWorkletProcessor {
         this.activeLabel = '\u2014';
         this.activeIsRest = true;
         this.postCounter = 0;
-        this.hasPowerIn = false;
-        this.lastPowerOn = true;
+        this.hasRunIn = false;
+        this.lastRunState = true;
+        this.lastResetTrig = false;
 
         this.port.onmessage = e => {
             if (e.data.type === 'SET_EVENTS') {
@@ -46,8 +47,10 @@ export class PatProcessor extends AudioWorkletProcessor {
                     }
                     this.running = e.data.running;
                 }
-                if (typeof e.data.hasPowerIn === 'boolean') {
-                    this.hasPowerIn = e.data.hasPowerIn;
+                if (typeof e.data.hasRunIn === 'boolean') {
+                    this.hasRunIn = e.data.hasRunIn;
+                } else if (typeof e.data.hasPowerIn === 'boolean') {
+                    this.hasRunIn = e.data.hasPowerIn;
                 }
             } else if (e.data.type === 'RESET') {
                 this.phase = 0.0;
@@ -56,13 +59,16 @@ export class PatProcessor extends AudioWorkletProcessor {
                 this.activeIdx = -1;
                 this.activeLabel = '\u2014';
                 this.activeIsRest = true;
+                this.lastRunState = true;
+                this.lastResetTrig = false;
             }
         };
     }
 
     process(ins, outs, params) {
         const cvOut = outs[0]?.[0], gOut = outs[1]?.[0];
-        const pIn = ins[0]?.[0];
+        const runIn = ins[0]?.[0];
+        const rstIn = ins[1]?.[0];
         const len = (cvOut || gOut || []).length || 128;
         const sr = getSR();
         const bpm = params.bpm[0] || 120.0;
@@ -77,19 +83,33 @@ export class PatProcessor extends AudioWorkletProcessor {
                 continue;
             }
 
-            const isPowerOn = this.hasPowerIn ? ((pIn ? pIn[i] : 0.0) > 0.3) : true;
-            if (isPowerOn && !this.lastPowerOn) {
+            // 1. 外部リセット端子 (reset_in) の立ち上がり検知 (> 0.001)
+            const rstVal = rstIn ? rstIn[i] : 0.0;
+            const isRstHi = rstVal > 0.001;
+            if (isRstHi && !this.lastResetTrig) {
+                this.phase = 0.0;
+                this.cycleCount = 0;
+                this.gap = 0;
+                this.activeIdx = -1;
+            }
+            this.lastResetTrig = isRstHi;
+
+            // 2. RUN 端子 (run_in) の判定 (未接続なら常時 ON)
+            const isRunning = this.hasRunIn ? ((runIn ? runIn[i] : 0.0) > 0.3) : true;
+            if (isRunning && !this.lastRunState) {
                 this.phase = 0.0;
                 this.gap = 0;
                 this.activeIdx = -1;
             }
-            this.lastPowerOn = isPowerOn;
+            this.lastRunState = isRunning;
 
-            this.phase += phaseInc;
-            if (this.phase >= 1.0) {
-                this.phase -= 1.0;
-                this.cycleCount++;
-                this.activeIdx = -1;
+            if (isRunning) {
+                this.phase += phaseInc;
+                if (this.phase >= 1.0) {
+                    this.phase -= 1.0;
+                    this.cycleCount++;
+                    this.activeIdx = -1;
+                }
             }
 
             const curEvents = this.cycles[this.cycleCount % this.cycles.length] || [];

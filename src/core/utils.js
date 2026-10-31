@@ -59,6 +59,7 @@ export const PORT_ALIASES = {
     'power': 'run_in',
 
     // IO / SCOPE
+    'cv_in': 'wave_in',
     'in1': 'wave_in',
     'wave_in1': 'wave_in',
     'in2': 'wave_in2',

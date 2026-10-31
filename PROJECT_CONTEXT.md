@@ -1257,6 +1257,10 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
       - `src/modules/defs/mod.js`: `CLK` の `reset_in`（PIN 6）ポートカラーを `bg-amber-400` から標準ゲート/クロック赤（`bg-red-500`）へ変更。
       - `src/modules/registry.js` の `modDefs` インポートクエリを `?v=466` へ更新。
       - バージョンを `v1.0.0466`、キャッシュバスターを `v=466` に更新。
+    - **SCOPE の入力端子CV黄色化 & PAT モジュールへの reset_in 端子追加（v1.0.0467）**:
+      - `SCOPE`: 入力ピン（PIN 5）をオーディオ青（`wave_in`）から CV 黄色（`cv_in`: `bg-yellow-400`）に変更。後方互換性のため `PORT_ALIASES`（`'cv_in': 'wave_in'`）および `src/audio/defs/scope.js`（`inputs: { wave_in, cv_in }`）の両方で受信可能に設定。
+      - `PAT`: `CLK` と同様のリセットピン（`reset_in`: `bg-red-500`）を追加し、RUN 端子（`run_in`: `bg-emerald-500`）との2系統入力仕様へ拡張。AudioWorklet `pat-processor` にて立ち上がり検知（`> 0.001`）による即時リセット処理（`phase=0`, `activeIdx=-1`）を実装。
+      - バージョンを `v1.0.0467`、キャッシュバスターを `v=467` に更新。
 
 
 

@@ -7,7 +7,7 @@ import './processors/sh.js?v=462';
 import './processors/fold.js';
 import './processors/cv-delay.js';
 import './processors/scope.js';
-import './processors/pat.js?v=459';
+import './processors/pat.js?v=467';
 import './processors/markov.js?v=459';
 import './processors/chord.js';
 import './processors/fm.js?v=459';

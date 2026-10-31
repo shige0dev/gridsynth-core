@@ -37,7 +37,10 @@ export const PAT = {
         presetName: '4-on-floor'
     }),
     ports: () => ({
-        in: [{ port: 'power_in', color: 'bg-red-500' }],
+        in: [
+            { port: 'run_in', color: 'bg-emerald-500' },
+            { port: 'reset_in', color: 'bg-red-500' }
+        ],
         out: [
             { port: 'cv_out', color: 'bg-yellow-400' },
             { port: 'gate_out', color: 'bg-red-500' }
