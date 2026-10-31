@@ -71,10 +71,12 @@ export const JOG = {
 
         // Live update for scrubbable badges in Modal
         if (modal && m) {
+            const valEl = modal.querySelector('#jog-scrub-val');
             const maxEl = modal.querySelector('#jog-scrub-max');
             const defEl = modal.querySelector('#jog-scrub-def');
             const minEl = modal.querySelector('#jog-scrub-min');
             const fmt = (val) => m.stepType === '1semi' ? `${cvToNoteName(val)} (${Number(val).toFixed(2)})` : Number(val).toFixed(2);
+            if (valEl && !valEl._isDragging) valEl.textContent = fmt(m.val ?? (m.def ?? 0.0));
             if (maxEl && !maxEl._isDragging) maxEl.textContent = fmt(m.max ?? 1.0);
             if (defEl && !defEl._isDragging) defEl.textContent = fmt(m.def ?? 0.0);
             if (minEl && !minEl._isDragging) minEl.textContent = fmt(m.min ?? -1.0);
@@ -252,6 +254,7 @@ export const JOG = {
     },
 
     renderModal: (m) => {
+        const curVal = m.val ?? (m.def ?? 0.0);
         const curMax = m.max ?? 1.0;
         const curDef = m.def ?? 0.0;
         const curMin = m.min ?? -1.0;
@@ -282,6 +285,15 @@ export const JOG = {
                             </button>
                         `).join('')}
                     </div>
+                </div>
+
+                <!-- VALUE Row (Current Value) -->
+                <div class="flex items-center justify-between bg-amber-950/20 border border-amber-500/40 rounded px-2.5 py-1.5 shadow-sm">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                        <span class="font-bold text-amber-300 tracking-wider">VALUE (現在値)</span>
+                    </div>
+                    <div id="jog-scrub-val" class="cursor-ns-resize touch-none select-none px-2 py-0.5 rounded bg-slate-900 border border-amber-500/70 hover:border-amber-400 font-mono font-extrabold text-amber-300 min-w-[70px] text-right transition-colors" title="上下スワイプで増減 / タップで手入力">${fmt(curVal)}</div>
                 </div>
 
                 <!-- MAX Row -->
@@ -395,6 +407,7 @@ export const JOG = {
             });
         };
 
+        setupScrub('jog-scrub-val', 'val', 'VALUE (現在値)');
         setupScrub('jog-scrub-max', 'max', 'MAX (最大値)');
         setupScrub('jog-scrub-def', 'def', 'DEFAULT (初期値)');
         setupScrub('jog-scrub-min', 'min', 'MIN (下限値)');
