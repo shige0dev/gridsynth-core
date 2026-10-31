@@ -316,29 +316,29 @@ export class ModalManager {
                     const items = cat.types.filter(t => basicTypes.includes(t));
                     if (items.length === 0) return '';
                     return `
-                        <div class="${catIdx > 0 ? 'border-t border-slate-800/80 pt-1.5 mt-0.5' : ''}">
-                            <div class="text-[8.5px] font-bold text-${cat.color}-400 uppercase tracking-wider mb-1 px-0.5 flex items-center justify-between">
-                                <span class="flex items-center gap-1.5">
+                        <div class="${catIdx > 0 ? 'border-t border-slate-800/80 pt-1 mt-0.5' : ''}">
+                            <div class="text-[8px] font-bold text-${cat.color}-400 uppercase tracking-wider mb-0.5 px-0.5 flex items-center justify-between">
+                                <span class="flex items-center gap-1">
                                     <span class="w-1.5 h-1.5 rounded-full bg-${cat.color}-400"></span>
                                     <span>${cat.name}</span>
-                                    <span class="text-[7.5px] text-slate-400 font-normal">/ ${cat.sub}</span>
+                                    <span class="text-[7px] text-slate-400 font-normal">/ ${cat.sub}</span>
                                 </span>
                                 <div class="flex items-center gap-1">
-                                    ${!isMain && cat.name === 'CV' ? '<span class="text-[7px] text-emerald-400 font-mono">SUBPAGE</span>' : ''}
-                                    <span class="text-[7px] text-slate-500 font-mono">${items.length}</span>
+                                    ${!isMain && cat.name === 'CV' ? '<span class="text-[6.5px] text-emerald-400 font-mono">SUBPAGE</span>' : ''}
+                                    <span class="text-[6.5px] text-slate-500 font-mono">${items.length}</span>
                                 </div>
                             </div>
-                            <div class="grid grid-cols-8 gap-1">
+                            <div class="grid grid-cols-6 gap-1">
                                 ${items.map(type => {
                                     const col = MODULE_REGISTRY[type]?.color || 'cyan';
-                                    return `<button data-type="${type}" class="h-6 p-0 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-${col}-500/60 rounded text-center text-${col}-300 text-[9px] font-bold tracking-tight transition truncate flex items-center justify-center leading-none">${type}</button>`;
+                                    return `<button data-type="${type}" class="h-5 p-0 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-${col}-500/60 rounded text-center text-${col}-300 text-[11px] font-bold tracking-tight transition truncate flex items-center justify-center leading-none">${type}</button>`;
                                 }).join('')}
                             </div>
                         </div>
                     `;
                 }).join('');
 
-                body.className = "flex flex-col gap-2 mt-0.5 max-h-[78vh] overflow-y-auto pr-0.5";
+                body.className = "flex flex-col gap-1.5 mt-0.5 max-h-[78vh] overflow-y-auto pr-0.5";
                 body.innerHTML = `
                     <!-- 1. CATEGORIZED BASIC MODULES (SOUND, TRIGGER, CV) -->
                     ${categorySectionsHtml}
