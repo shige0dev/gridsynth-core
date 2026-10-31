@@ -32,7 +32,7 @@ export class ClockProcessor extends AudioWorkletProcessor {
 
     constructor() {
         super();
-        this.samplePhase = 0.0;
+        this.T = 0;
         this.left = 0;
         this.div = 'x2';
         this.limitPct = 90.0;
@@ -44,7 +44,8 @@ export class ClockProcessor extends AudioWorkletProcessor {
             if (e.data.type === 'SET_STATE') {
                 if (typeof e.data.running === 'boolean') {
                     if (e.data.running && !this.running) {
-                        this.samplePhase = 0.0;
+                        this.T = 0;
+                        this.left = 0;
                     }
                     this.running = e.data.running;
                 }
@@ -54,7 +55,7 @@ export class ClockProcessor extends AudioWorkletProcessor {
                     this.hasRunIn = e.data.hasRunIn;
                 }
             } else if (e.data.type === 'RESET') {
-                this.samplePhase = 0.0;
+                this.T = 0;
                 this.left = 0;
                 this.lastRunState = true;
                 this.lastResetTrig = false;
@@ -70,9 +71,9 @@ export class ClockProcessor extends AudioWorkletProcessor {
         const mult = parseClockRate(this.div);
         const sr = getSR();
         const bpm = params.bpm[0] || 120.0;
-        const sPerIntExact = (60.0 / bpm / mult) * sr;
+        const periodSamples = Math.max(1, Math.round(((60.0 / bpm) / mult) * sr));
         const lim = Math.min(90.0, (params.limitPct ? params.limitPct[0] : this.limitPct) ?? 90.0);
-        const maxPDur = Math.max(1, Math.min(Math.floor(sPerIntExact - 1), Math.round(sPerIntExact * (lim / 100.0))));
+        const maxPDur = Math.max(1, Math.min(periodSamples - 1, Math.round(periodSamples * (lim / 100.0))));
         const reqPDur = Math.max(1, Math.round(((params.pulseWidthMs[0] || 15) / 1000) * sr));
         const pDur = Math.min(reqPDur, maxPDur);
 
@@ -86,30 +87,24 @@ export class ClockProcessor extends AudioWorkletProcessor {
             const rstVal = rstIn ? rstIn[i] : 0.0;
             const isRstHi = rstVal > 0.001;
             if (isRstHi && !this.lastResetTrig) {
-                this.samplePhase = 0.0;
-                this.left = pDur; // リセットと同時に頭打ちパルスを出力
+                this.T = 0;
+                this.left = pDur; // リセットと同時に拍頭パルスを出力
             }
             this.lastResetTrig = isRstHi;
 
             // 2. RUN 端子 (run_in) の判定: 接続がなければ常時オン (true)
-            // 接続時は 0と1を検知 (0.3V以上で 1/RUN状態)
             const isRunning = this.hasRunIn ? ((runIn ? runIn[i] : 0.0) > 0.3) : true;
 
-            // RUN が 0 -> 1 へ立ち上がった瞬間に拍の頭（0.0）から開始
+            // RUN が 0 -> 1 へ立ち上がった瞬間に T = 0 から即座に発振開始
             if (isRunning && !this.lastRunState) {
-                this.samplePhase = 0.0;
+                this.T = 0;
                 this.left = pDur;
-            } else if (isRunning && (this.samplePhase <= 0.0 || this.samplePhase >= sPerIntExact)) {
-                // 周期到達時、整数切り捨てず余剰（端数）を引き継ぎ、公倍数で完全一致
-                if (this.samplePhase >= sPerIntExact) {
-                    this.samplePhase -= sPerIntExact;
+            } else if (isRunning) {
+                // 3. 整数マスターカウンタ割り算方式: 周期で割った余りが 0 の瞬間にパルス発火！
+                if (this.T % periodSamples === 0) {
+                    this.left = pDur;
                 }
-                this.left = pDur;
-            }
-
-            // RUN が ON の間のみ位相を進める
-            if (isRunning) {
-                this.samplePhase += 1.0;
+                this.T++;
             }
             this.lastRunState = isRunning;
 
