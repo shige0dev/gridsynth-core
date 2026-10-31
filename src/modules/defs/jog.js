@@ -110,8 +110,10 @@ export const JOG = {
         // 3. Cylinder Grooves / Knurling Lines in SOLID BLACK
         const numVisibleGrooves = 8;
         const spacing = h / (numVisibleGrooves - 1);
-        // Grooves follow finger motion: as norm increases (finger dragged up), wheel surfaces rotate upward
-        const phaseOffset = spacing - ((norm * h * 2.5) % spacing);
+        const stepVal = (m.stepType === '1semi') ? (1.0 / 12.0) : (parseFloat(m.stepType) || m.step || 0.01);
+        // Grooves follow steps rotated: each 1 step rotates the wheel by 1 groove spacing
+        const stepsRotated = (curVal - minVal) / (stepVal > 0 ? stepVal : 0.01);
+        const phaseOffset = ((stepsRotated * spacing) % spacing + spacing) % spacing;
 
         ctx.lineWidth = isModal ? 2.0 : 1.4;
         for (let y = -spacing + phaseOffset; y <= h + spacing; y += spacing) {
@@ -205,12 +207,10 @@ export const JOG = {
         const handleMove = (clientY) => {
             if (!isInteracting) return;
             const deltaY = startY - clientY; // upward drag increases value
-            const min = m.min ?? -1.0;
-            const max = m.max ?? 1.0;
-            const range = max - min;
-            // Drag sensitivity: 120px drag traverses the full range
-            const sensitivity = range / 120.0;
-            const targetVal = startVal + deltaY * sensitivity;
+            const step = getStepValue();
+            // Gear-linked sensitivity: 8px drag = exactly 1 STEP change
+            const stepsCount = Math.round(deltaY / 8.0);
+            const targetVal = startVal + stepsCount * step;
             updateVal(targetVal);
         };
 
