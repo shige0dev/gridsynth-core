@@ -253,27 +253,15 @@ const extractBands = (freqs, numBands = 96, sampleRate = 48000) => {
     return { bands, peakVal, peakFreq };
 };
 
-const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal, is3D = true) => {
+const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal) => {
     ctx.clearRect(0, 0, w, h);
 
     if (!historyBands || historyBands.length === 0) return;
     const n = historyBands[0].length;
     const bandsPerOct = 12;
 
-    const octFreqs = [
-        { f: 55, l: '55' },
-        { f: 110, l: '110' },
-        { f: 220, l: '220' },
-        { f: 440, l: '440', isA4: true },
-        { f: 880, l: '880' },
-        { f: 1760, l: '1.7k' },
-        { f: 3520, l: '3.5k' },
-        { f: 7040, l: '7k' },
-        { f: 14080, l: '14k' }
-    ];
-
-    if (!is3D) {
-        // --- 2D FLAT MODE ---
+    // --- 1. MODAL (ALWAYS 2D FLAT CLEAR VIEW) ---
+    if (isModal) {
         const bands = historyBands[0];
         ctx.strokeStyle = '#1e293b';
         ctx.lineWidth = 0.6;
@@ -285,8 +273,20 @@ const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal, is3D = true)
             ctx.stroke();
         });
 
-        const gap = isModal ? 1.0 : 0.3;
+        const gap = 1.0;
         const barW = (w - gap * (n - 1)) / n;
+
+        const octFreqs = [
+            { f: 55, l: '55' },
+            { f: 110, l: '110' },
+            { f: 220, l: '220' },
+            { f: 440, l: '440', isA4: true },
+            { f: 880, l: '880' },
+            { f: 1760, l: '1.7k' },
+            { f: 3520, l: '3.5k' },
+            { f: 7040, l: '7k' },
+            { f: 14080, l: '14k' }
+        ];
 
         octFreqs.forEach(item => {
             const b = bandsPerOct * Math.log2(item.f / 55);
@@ -301,13 +301,11 @@ const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal, is3D = true)
                 ctx.lineTo(x, h);
                 ctx.stroke();
 
-                if (isModal) {
-                    ctx.font = 'bold 8.5px ui-monospace, monospace';
-                    ctx.fillStyle = item.isA4 ? '#2dd4bf' : '#cbd5e1';
-                    ctx.textAlign = 'center';
-                    const clampedX = Math.max(10, Math.min(w - 10, x));
-                    ctx.fillText(item.l, clampedX, 10);
-                }
+                ctx.font = 'bold 8.5px ui-monospace, monospace';
+                ctx.fillStyle = item.isA4 ? '#2dd4bf' : '#cbd5e1';
+                ctx.textAlign = 'center';
+                const clampedX = Math.max(10, Math.min(w - 10, x));
+                ctx.fillText(item.l, clampedX, 10);
                 ctx.restore();
             }
         });
@@ -370,145 +368,154 @@ const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal, is3D = true)
             }
             ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
             ctx.strokeStyle = '#2dd4bf';
-            ctx.lineWidth = isModal ? 2 : 1.5;
+            ctx.lineWidth = 2;
             ctx.stroke();
         }
         return;
     }
 
-    // --- 3D AXONOMETRIC MODE (5-Time-Series Waterfall) ---
-    const totalSlices = historyBands.length; // e.g. 5
-    // Isometric slant parameters
-    // Front slice (k=0) is positioned at bottom-left, back slice (k=4) is at top-right
-    const dxSlice = isModal ? (w * 0.045) : (w * 0.04);
-    const dySlice = isModal ? (h * 0.09) : (h * 0.08);
+    // --- 2. PANEL (3D AXONOMETRIC 30°/60° 5-TIME-SERIES MODE) ---
+    // True axonometric 30° projection:
+    // Slices 0 (newest, front-left) to 4 (oldest, back-right).
+    // Zero baseline is always drawn, revealing 5 tilted parallel zero lines when silent.
+    const totalSlices = historyBands.length; // 5
+    const dxSlice = w * 0.082; // 30° / 60° axonometric shift vector
+    const dySlice = h * 0.118; // tan(30°) to tan(60°) perspective inclination
 
-    const baseW = w - (totalSlices - 1) * dxSlice;
-    const baseH = h - (totalSlices - 1) * dySlice - 4;
+    const baseW = w - (totalSlices - 1) * dxSlice - 6;
+    const baseH = h - (totalSlices - 1) * dySlice - 8;
+    const originY = h - 5; // lowest frontline Y
+    const originX = 3;
 
-    // Draw grid backplane planes/lines for depth
+    // A. Draw axonometric floor side rails (bounding grid)
     ctx.save();
-    for (let k = totalSlices - 1; k >= 0; k--) {
-        const ox = (totalSlices - 1 - k) * dxSlice;
-        const oy = k * dySlice;
-        ctx.strokeStyle = k === 0 ? 'rgba(30, 41, 59, 0.7)' : 'rgba(30, 41, 59, 0.35)';
-        ctx.lineWidth = 0.5;
-        ctx.beginPath();
-        ctx.moveTo(ox, h - oy);
-        ctx.lineTo(ox + baseW, h - oy);
-        ctx.stroke();
-    }
+    ctx.strokeStyle = 'rgba(30, 41, 59, 0.45)';
+    ctx.lineWidth = 0.5;
+    // Left boundary rail
+    ctx.beginPath();
+    ctx.moveTo(originX, originY);
+    ctx.lineTo(originX + (totalSlices - 1) * dxSlice, originY - (totalSlices - 1) * dySlice);
+    ctx.stroke();
+    // Right boundary rail
+    ctx.beginPath();
+    ctx.moveTo(originX + baseW, originY);
+    ctx.lineTo(originX + baseW + (totalSlices - 1) * dxSlice, originY - (totalSlices - 1) * dySlice);
+    ctx.stroke();
     ctx.restore();
 
-    // Render from farthest (k = totalSlices - 1) to closest (k = 0)
+    // B. Render from back (k = 4) to front (k = 0)
     for (let k = totalSlices - 1; k >= 0; k--) {
         const bands = historyBands[k];
+        const ox = originX + (totalSlices - 1 - k) * dxSlice;
+        const oy = k * dySlice;
+        const baselineY = originY - oy;
+        const depthRatio = 1 - (k / (totalSlices - 1)); // 0: oldest/far, 1: newest/near
+
+        // Always draw the 0-point baseline (5 oblique parallel lines in 30°/60° space)
+        ctx.save();
+        ctx.strokeStyle = k === 0 
+            ? 'rgba(45, 212, 191, 0.85)' 
+            : `rgba(45, 212, 191, ${(0.18 + depthRatio * 0.35).toFixed(2)})`;
+        ctx.lineWidth = k === 0 ? 1.0 : 0.6;
+        ctx.beginPath();
+        ctx.moveTo(ox, baselineY);
+        ctx.lineTo(ox + baseW, baselineY);
+        ctx.stroke();
+        ctx.restore();
+
         if (!bands) continue;
 
-        // Coordinates offset:
-        // k=4 (oldest) -> top-right
-        // k=0 (newest) -> bottom-left
-        const ox = (totalSlices - 1 - k) * dxSlice;
-        const oy = k * dySlice;
-        const sliceYBase = h - oy;
-        const depthRatio = 1 - (k / (totalSlices - 1)); // 0 (oldest/far) to 1 (newest/near)
-
-        // Palette and styling according to depth
-        const alpha = 0.25 + depthRatio * 0.75;
-        const strokeColor = k === 0 ? '#2dd4bf' : `rgba(45, 212, 191, ${(alpha * 0.7).toFixed(2)})`;
-        const fillColor = k === 0 
-            ? 'rgba(15, 23, 42, 0.88)' 
-            : `rgba(15, 23, 42, ${(0.6 + depthRatio * 0.3).toFixed(2)})`;
+        // Stroke & gradient configurations
+        const strokeColor = k === 0 
+            ? '#2dd4bf' 
+            : `rgba(45, 212, 191, ${(0.3 + depthRatio * 0.55).toFixed(2)})`;
 
         if (mode === 'bar') {
-            const gap = isModal ? 1.0 : 0.3;
+            const gap = 0.3;
             const barW = (baseW - gap * (n - 1)) / n;
 
             for (let i = 0; i < n; i++) {
                 const v = Math.max(0, Math.min(1, bands[i]));
-                if (v < 0.01 && k > 0) continue;
-                const barH = Math.max(0.5, v * (baseH - 4));
+                if (v < 0.005) continue; // let baseline remain visible
+                const barH = v * (baseH - 2);
                 const bx = ox + i * (barW + gap);
-                const by = sliceYBase - barH;
+                const by = baselineY - barH;
 
-                // Occlusion back-fill
+                // Occlusion: clear area behind bar
                 ctx.fillStyle = '#020617';
                 ctx.fillRect(bx, by, barW, barH);
 
-                // Axonometric Bar coloring
-                const grad = ctx.createLinearGradient(0, sliceYBase, 0, by);
+                // Axonometric bar
+                const grad = ctx.createLinearGradient(0, baselineY, 0, by);
                 if (k === 0) {
                     grad.addColorStop(0, '#0d9488');
                     grad.addColorStop(0.7, '#2dd4bf');
                     grad.addColorStop(1, '#facc15');
                 } else {
-                    grad.addColorStop(0, `rgba(13, 148, 136, ${(alpha * 0.6).toFixed(2)})`);
-                    grad.addColorStop(1, `rgba(45, 212, 191, ${(alpha * 0.8).toFixed(2)})`);
+                    grad.addColorStop(0, `rgba(13, 148, 136, ${(0.3 + depthRatio * 0.5).toFixed(2)})`);
+                    grad.addColorStop(1, `rgba(45, 212, 191, ${(0.4 + depthRatio * 0.5).toFixed(2)})`);
                 }
                 ctx.fillStyle = grad;
                 ctx.fillRect(bx, by, barW, barH);
-
-                if (k === 0 && barW >= 2) {
-                    ctx.strokeStyle = 'rgba(250, 204, 21, 0.4)';
-                    ctx.lineWidth = 0.5;
-                    ctx.strokeRect(bx, by, barW, barH);
-                }
             }
         } else {
-            // Curve mode 3D ribbon
+            // CURVE mode
+            let hasSignal = false;
             const pts = [];
             for (let i = 0; i < n; i++) {
                 const bx = ox + (i / (n - 1)) * baseW;
                 const v = Math.max(0, Math.min(1, bands[i]));
-                const by = sliceYBase - (v * (baseH - 4)) - 1;
+                if (v > 0.008) hasSignal = true;
+                const by = baselineY - (v * (baseH - 2));
                 pts.push({ x: bx, y: by });
             }
 
-            // Solid Occlusion Fill (hides older slices behind this one)
-            ctx.beginPath();
-            ctx.moveTo(ox, sliceYBase);
-            ctx.lineTo(pts[0].x, pts[0].y);
-            for (let i = 1; i < pts.length; i++) {
-                const midX = (pts[i - 1].x + pts[i].x) / 2;
-                const midY = (pts[i - 1].y + pts[i].y) / 2;
-                ctx.quadraticCurveTo(pts[i - 1].x, pts[i - 1].y, midX, midY);
-            }
-            ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
-            ctx.lineTo(ox + baseW, sliceYBase);
-            ctx.closePath();
+            if (hasSignal) {
+                // Occlusion & Area fill
+                ctx.beginPath();
+                ctx.moveTo(ox, baselineY);
+                ctx.lineTo(pts[0].x, pts[0].y);
+                for (let i = 1; i < pts.length; i++) {
+                    const midX = (pts[i - 1].x + pts[i].x) / 2;
+                    const midY = (pts[i - 1].y + pts[i].y) / 2;
+                    ctx.quadraticCurveTo(pts[i - 1].x, pts[i - 1].y, midX, midY);
+                }
+                ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+                ctx.lineTo(ox + baseW, baselineY);
+                ctx.closePath();
 
-            // Gradient fill
-            const grad = ctx.createLinearGradient(0, sliceYBase - baseH, 0, sliceYBase);
-            if (k === 0) {
-                grad.addColorStop(0, 'rgba(45, 212, 191, 0.45)');
-                grad.addColorStop(0.6, 'rgba(13, 148, 136, 0.25)');
-                grad.addColorStop(1, '#020617');
-            } else {
-                grad.addColorStop(0, `rgba(45, 212, 191, ${(0.15 + depthRatio * 0.15).toFixed(2)})`);
-                grad.addColorStop(1, '#020617');
-            }
-            ctx.fillStyle = grad;
-            ctx.fill();
+                const grad = ctx.createLinearGradient(0, baselineY - baseH, 0, baselineY);
+                if (k === 0) {
+                    grad.addColorStop(0, 'rgba(45, 212, 191, 0.45)');
+                    grad.addColorStop(0.6, 'rgba(13, 148, 136, 0.25)');
+                    grad.addColorStop(1, '#020617');
+                } else {
+                    grad.addColorStop(0, `rgba(45, 212, 191, ${(0.12 + depthRatio * 0.15).toFixed(2)})`);
+                    grad.addColorStop(1, '#020617');
+                }
+                ctx.fillStyle = grad;
+                ctx.fill();
 
-            // Outline
-            ctx.beginPath();
-            ctx.moveTo(pts[0].x, pts[0].y);
-            for (let i = 1; i < pts.length; i++) {
-                const midX = (pts[i - 1].x + pts[i].x) / 2;
-                const midY = (pts[i - 1].y + pts[i].y) / 2;
-                ctx.quadraticCurveTo(pts[i - 1].x, pts[i - 1].y, midX, midY);
+                // Ridge line stroke
+                ctx.beginPath();
+                ctx.moveTo(pts[0].x, pts[0].y);
+                for (let i = 1; i < pts.length; i++) {
+                    const midX = (pts[i - 1].x + pts[i].x) / 2;
+                    const midY = (pts[i - 1].y + pts[i].y) / 2;
+                    ctx.quadraticCurveTo(pts[i - 1].x, pts[i - 1].y, midX, midY);
+                }
+                ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = k === 0 ? 1.4 : 0.8;
+                ctx.stroke();
             }
-            ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
-            ctx.strokeStyle = strokeColor;
-            ctx.lineWidth = k === 0 ? (isModal ? 2.0 : 1.4) : (isModal ? 1.0 : 0.7);
-            ctx.stroke();
         }
     }
 };
 
 export const SPEC = {
     color: 'teal',
-    defaults: () => ({ type: 'SPEC', mode: 'bar', is3D: true, smooth: 0.75 }),
+    defaults: () => ({ type: 'SPEC', mode: 'bar', smooth: 0.75 }),
     ports: () => ({
         in: [{ port: 'wave_in', pin: 5, color: 'bg-blue-500' }],
         out: []
@@ -522,7 +529,6 @@ export const SPEC = {
         if (!data?.freqs) return;
         const { bands } = extractBands(data.freqs, 96, data.sampleRate || 48000);
         const mode = m.mode || 'bar';
-        const is3D = m.is3D !== false; // default true
 
         // Maintain 5-slice history buffer on the module instance
         if (!m._historyBands) {
@@ -542,11 +548,10 @@ export const SPEC = {
             m._historyBands[0].set(bands);
         }
 
-        renderDualCanvases(cell, modal, '.spec-canvas', '#spec-modal-canvas', (c, w, h, isM) => drawSpectrumCanvas(c, w, h, m._historyBands, mode, isM, is3D));
+        renderDualCanvases(cell, modal, '.spec-canvas', '#spec-modal-canvas', (c, w, h, isM) => drawSpectrumCanvas(c, w, h, m._historyBands, mode, isM));
     },
     renderModal: (m) => {
         const curMode = m.mode || 'bar';
-        const is3D = m.is3D !== false;
         return `
             <div class="space-y-1.5">
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800 select-none">
@@ -554,10 +559,6 @@ export const SPEC = {
                         <span class="text-[8px] text-slate-400 font-bold uppercase tracking-tight">STYLE:</span>
                         <button id="spec-mode-bar" class="h-4 px-1.5 rounded text-[8px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${curMode === 'bar' ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">BAR</button>
                         <button id="spec-mode-curve" class="h-4 px-1.5 rounded text-[8px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${curMode === 'curve' ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">CURVE</button>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <span class="text-[8px] text-slate-400 font-bold uppercase tracking-tight">VIEW:</span>
-                        <button id="spec-3d-btn" class="h-4 px-2 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${is3D ? 'bg-cyan-600 text-white border-cyan-400 shadow-sm shadow-cyan-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">${is3D ? '3D AXON' : '2D FLAT'}</button>
                     </div>
                 </div>
 
@@ -574,11 +575,6 @@ export const SPEC = {
         });
         document.getElementById('spec-mode-curve')?.addEventListener('click', () => {
             m.mode = 'curve';
-            ctx.reRenderModal();
-            cb();
-        });
-        document.getElementById('spec-3d-btn')?.addEventListener('click', () => {
-            m.is3D = !(m.is3D !== false);
             ctx.reRenderModal();
             cb();
         });
