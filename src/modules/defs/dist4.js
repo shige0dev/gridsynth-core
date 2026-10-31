@@ -1,10 +1,13 @@
 import { UIHelpers } from '../../ui/helpers.js';
 
-export const STATE4 = {
+export const DIST4 = {
     color: 'orange',
-    defaults: () => ({ type: 'STATE4', steps: 4, mode: 'up' }),
+    defaults: () => ({ type: 'DIST4', steps: 4, mode: 'up' }),
     ports: (m) => ({
-        in: [{ port: 'gate_in', pin: 5, color: 'bg-rose-500' }],
+        in: [
+            { port: 'cv_in', pin: 4, color: 'bg-yellow-400' },
+            { port: 'gate_in', pin: 5, color: 'bg-rose-500' }
+        ],
         out: [1, 2, 3, 4].map(idx => ({
             port: `cv_out${idx}`,
             pin: 6 + idx, // PIN 7, 8, 9, 10 along bottom edge
@@ -20,9 +23,9 @@ export const STATE4 = {
                 const isDis = idx > curSteps;
                 return {
                     pct: isDis ? 0 : 100,
-                    innerCls: `state4-bar-${idx - 1} ${isDis ? 'opacity-20' : ''}`,
+                    innerCls: `dist4-bar-${idx - 1} ${isDis ? 'opacity-20' : ''}`,
                     outerCls: isDis ? 'opacity-25' : '',
-                    attrs: `data-state4-bar="${idx - 1}"`,
+                    attrs: `data-dist4-bar="${idx - 1}"`,
                     width: 'w-2',
                     color: 'bg-gradient-to-t from-amber-600 to-yellow-400'
                 };
@@ -46,7 +49,7 @@ export const STATE4 = {
                     <label class="block text-[8px] text-slate-400 uppercase tracking-wider font-semibold mb-1">Active Steps (2-4)</label>
                     <div class="grid grid-cols-3 gap-1">
                         ${[2, 3, 4].map(st => `
-                            <button class="state4-steps-btn py-1 rounded text-[8.5px] font-bold border transition-all ${curSteps === st ? 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/50' : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'}" data-val="${st}">${st} STEPS</button>
+                            <button class="dist4-steps-btn py-1 rounded text-[8.5px] font-bold border transition-all ${curSteps === st ? 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/50' : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'}" data-val="${st}">${st} STEPS</button>
                         `).join('')}
                     </div>
                 </div>
@@ -54,19 +57,19 @@ export const STATE4 = {
                     <label class="block text-[8px] text-slate-400 uppercase tracking-wider font-semibold mb-1">Direction Mode</label>
                     <div class="grid grid-cols-4 gap-1">
                         ${modes.map(md => `
-                            <button class="state4-mode-btn py-1 rounded text-[8px] font-bold border transition-all ${curMode === md.val ? 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/50' : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'}" data-val="${md.val}">${md.label}</button>
+                            <button class="dist4-mode-btn py-1 rounded text-[8px] font-bold border transition-all ${curMode === md.val ? 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/50' : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'}" data-val="${md.val}">${md.label}</button>
                         `).join('')}
                     </div>
                 </div>
             </div>`;
     },
     bindEvents: (m, ctx, cb) => {
-        UIHelpers.bindButtonGroup('.state4-steps-btn', 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/50', 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800', val => {
+        UIHelpers.bindButtonGroup('.dist4-steps-btn', 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/50', 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800', val => {
             m.steps = parseInt(val, 10);
             ctx.reRenderModal();
             cb();
         });
-        UIHelpers.bindButtonGroup('.state4-mode-btn', 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/50', 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800', val => {
+        UIHelpers.bindButtonGroup('.dist4-mode-btn', 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/50', 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800', val => {
             m.mode = val;
             ctx.reRenderModal();
             cb();
@@ -76,7 +79,7 @@ export const STATE4 = {
         if (!data || data.step === undefined) return;
         const cur = data.step;
         const curSteps = m.steps ?? 4;
-        cell?.querySelectorAll('[data-state4-bar]').forEach((bar, idx) => {
+        cell?.querySelectorAll('[data-dist4-bar]').forEach((bar, idx) => {
             const isDis = (idx + 1) > curSteps;
             const isAct = (idx === cur) && !isDis && isPlaying;
             bar.classList.toggle('bar-active', isAct);
@@ -84,7 +87,6 @@ export const STATE4 = {
     }
 };
 
-export const state4Defs = {
-    STATE4
+export const dist4Defs = {
+    DIST4
 };
-

@@ -2,7 +2,7 @@ import { AUDIO_REGISTRY } from './registry.js?v=459';
 import { AudioHelpers } from './helpers.js';
 import { parseConn, normalizeSubPort, PORT_ALIASES } from '../core/utils.js?v=459';
 
-export const WORKLET_MODULE_TYPES = ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'ADSR', 'LFO', 'MATH1', 'MATH2', 'SH', 'FOLD', 'CVDELAY', 'SCOPE', 'LISS', 'MARKOV', 'CHORD', 'FMx3', 'FMCORE', 'GATE4', 'STATE4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD'];
+export const WORKLET_MODULE_TYPES = ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'ADSR', 'LFO', 'MATH1', 'MATH2', 'SH', 'FOLD', 'CVDELAY', 'SCOPE', 'LISS', 'MARKOV', 'CHORD', 'FMx3', 'FMCORE', 'DIST4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD'];
 
 
 export class SynthEngine {
@@ -29,7 +29,7 @@ export class SynthEngine {
 
             if (this.ctx.audioWorklet) {
                 try {
-                    const workletUrl = new URL('../dsp/worklet-processors.js?v=467', import.meta.url).href;
+                    const workletUrl = new URL('../dsp/worklet-processors.js?v=470', import.meta.url).href;
                     await this.ctx.audioWorklet.addModule(workletUrl);
                     this.audioWorkletReady = true;
                 } catch (e) {
@@ -73,7 +73,7 @@ export class SynthEngine {
 
     resetSequencers() {
         Object.values(this.modules).forEach(m => {
-            if (m.type === 'SEQ8' || m.type === 'SEQ16' || m.type === 'PAT' || m.type === 'MARKOV' || m.type === 'GATE4' || m.type === 'STATE4' || m.type === 'ARP') {
+            if (m.type === 'SEQ8' || m.type === 'SEQ16' || m.type === 'PAT' || m.type === 'MARKOV' || m.type === 'DIST4' || m.type === 'ARP') {
                 m.resetStep?.();
                 m.nodes.w?.port.postMessage({ type: 'RESET' });
             }

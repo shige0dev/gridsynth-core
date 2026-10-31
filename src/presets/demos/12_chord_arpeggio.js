@@ -14,7 +14,7 @@ export const preset12 = {
         "7": "VCO1",
         "8": "VCF1",
         "9": "VCA1",
-        "10": "GATE4_1",
+        "10": "DIST4_1",
         "12": "ADSR1",
         "13": "DELAY1",
         "14": "REVERB1"
@@ -56,8 +56,8 @@ export const preset12 = {
           "type": "ARP",
           "mode": "updown"
         },
-        "GATE4_1": {
-          "type": "GATE4",
+        "DIST4_1": {
+          "type": "DIST4",
           "steps": 4,
           "mode": "up"
         },
@@ -114,7 +114,7 @@ export const preset12 = {
       },
       "connections": [
         "CLK1:gate_out > ARP1:gate_in",
-        "CLK1:gate_out > GATE4_1:gate_in",
+        "CLK1:gate_out > DIST4_1:gate_in",
         "CLK2:gate_out > SEQ8_1:gate_in",
         "SEQ8_1:cv_out > CHORD1:cv_in",
         "CHORD1:cv_out1 > ARP1:cv_in1",
@@ -123,7 +123,7 @@ export const preset12 = {
         "CHORD1:cv_out4 > ARP1:cv_in4",
         "ARP1:cv_out > VCO1:cv_in",
         "ARP1:gate_out > ADSR1:gate_in",
-        "GATE4_1:gate_out1 > VCF1:cv_in",
+        "DIST4_1:cv_out1 > VCF1:cv_in",
         "VCO1:wave_out > VCF1:wave_in",
         "ADSR1:cv_out > VCF1:cv_in",
         "VCF1:wave_out > VCA1:wave_in",

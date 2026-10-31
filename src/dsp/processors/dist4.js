@@ -1,4 +1,4 @@
-export class State4Processor extends AudioWorkletProcessor {
+export class Dist4Processor extends AudioWorkletProcessor {
     constructor() {
         super();
         this.steps = 4;
@@ -29,6 +29,7 @@ export class State4Processor extends AudioWorkletProcessor {
 
     process(ins, outs) {
         const gIn = ins[0]?.[0];
+        const cvIn = ins[1]?.[0];
         const out0 = outs[0]?.[0];
         const out1 = outs[1]?.[0];
         const out2 = outs[2]?.[0];
@@ -37,12 +38,12 @@ export class State4Processor extends AudioWorkletProcessor {
         if (!out0 && !out1 && !out2 && !out3) return true;
 
         const outChannels = [out0, out1, out2, out3];
-        const len = (out0 || gIn || []).length || 128;
+        const len = (out0 || gIn || cvIn || []).length || 128;
         const steps = this.steps;
 
         for (let i = 0; i < len; i++) {
-            const val = gIn ? gIn[i] : 0.0;
-            const isHi = val > 0.3;
+            const trigVal = gIn ? gIn[i] : 0.0;
+            const isHi = trigVal > 0.3;
 
             if (isHi && !this.lastHi) {
                 switch (this.mode) {
@@ -76,11 +77,13 @@ export class State4Processor extends AudioWorkletProcessor {
             }
             this.lastHi = isHi;
 
-            // Output latched DC (1.0V) on the active step, 0.0V on others
+            // Signal value: cvIn sample if connected, otherwise 1.0 (DC)
+            const sig = cvIn ? cvIn[i] : 1.0;
+
             for (let ch = 0; ch < 4; ch++) {
                 const chBuf = outChannels[ch];
                 if (!chBuf) continue;
-                chBuf[i] = (ch === this.step && ch < steps) ? 1.0 : 0.0;
+                chBuf[i] = (ch === this.step && ch < steps) ? sig : 0.0;
             }
         }
 
@@ -88,5 +91,4 @@ export class State4Processor extends AudioWorkletProcessor {
     }
 }
 
-registerProcessor('state4-processor', State4Processor);
-
+registerProcessor('dist4-processor', Dist4Processor);

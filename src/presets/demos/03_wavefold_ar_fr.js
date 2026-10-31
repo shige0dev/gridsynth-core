@@ -9,12 +9,12 @@ export const preset03 = {
         "5": "SEQ16_1",
         "6": "VCO1",
         "7": "FOLD1",
-        "10": "GATE4_1",
+        "10": "DIST4_1",
         "12": "AR1",
-        "15": "GATE4_2",
+        "15": "DIST4_2",
         "17": "RF1",
         "19": "LFO1",
-        "20": "GATE4_3",
+        "20": "DIST4_3",
         "22": "VCF1",
         "23": "VCA1",
         "25": "NOISE1",
@@ -96,8 +96,8 @@ export const preset03 = {
           "phase": 0,
           "duty": 0.5
         },
-        "GATE4_1": {
-          "type": "GATE4",
+        "DIST4_1": {
+          "type": "DIST4",
           "steps": 4,
           "mode": "up"
         },
@@ -107,13 +107,13 @@ export const preset03 = {
           "lastNote": "C4",
           "currentMidi": 60
         },
-        "GATE4_2": {
-          "type": "GATE4",
+        "DIST4_2": {
+          "type": "DIST4",
           "steps": 3,
           "mode": "up"
         },
-        "GATE4_3": {
-          "type": "GATE4",
+        "DIST4_3": {
+          "type": "DIST4",
           "steps": 2,
           "mode": "up"
         },
@@ -217,10 +217,10 @@ export const preset03 = {
         { "from": { "moduleId": "AR1", "port": "cv_out" }, "to": { "moduleId": "VCF1", "port": "cv_in" } },
         { "from": { "moduleId": "VCF2", "port": "wave_out" }, "to": { "moduleId": "VCA2", "port": "wave_in" } },
         { "from": { "moduleId": "LFO1", "port": "cv_out" }, "to": { "moduleId": "AR1", "port": "attack_in" } },
-        { "from": { "moduleId": "GATE4_1", "port": "gate_out4" }, "to": { "moduleId": "RF1", "port": "trig_in" } },
-        { "from": { "moduleId": "CLK1", "port": "gate_out" }, "to": { "moduleId": "GATE4_2", "port": "gate_in" } },
-        { "from": { "moduleId": "CLK1", "port": "gate_out" }, "to": { "moduleId": "GATE4_3", "port": "gate_in" } },
-        { "from": { "moduleId": "CLK1", "port": "gate_out" }, "to": { "moduleId": "GATE4_1", "port": "gate_in" } },
+        { "from": { "moduleId": "DIST4_1", "port": "cv_out4" }, "to": { "moduleId": "RF1", "port": "trig_in" } },
+        { "from": { "moduleId": "CLK1", "port": "gate_out" }, "to": { "moduleId": "DIST4_2", "port": "gate_in" } },
+        { "from": { "moduleId": "CLK1", "port": "gate_out" }, "to": { "moduleId": "DIST4_3", "port": "gate_in" } },
+        { "from": { "moduleId": "CLK1", "port": "gate_out" }, "to": { "moduleId": "DIST4_1", "port": "gate_in" } },
         { "from": { "moduleId": "CLK1", "port": "gate_out" }, "to": { "moduleId": "SEQ16_1", "port": "gate_in" } },
         { "from": { "moduleId": "SEQ16_1", "port": "gate_out" }, "to": { "moduleId": "AR1", "port": "gate_in" } },
         { "from": { "moduleId": "VCA1", "port": "wave_out" }, "to": { "moduleId": "REVERB1", "port": "wave_in" } },

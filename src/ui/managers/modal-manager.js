@@ -1,4 +1,4 @@
-﻿// src/ui/managers/modal-manager.js
+// src/ui/managers/modal-manager.js
 import { MODULE_REGISTRY } from '../../modules/registry.js?v=459';
 import { FACTORY_SUBPATCHES } from '../../presets/subpatches.js';
 import { UIHelpers } from '../helpers.js?v=459';
@@ -9,8 +9,7 @@ export const MODAL_WIDTHS = {
     FMCORE: 'w-[250px]',
 
     // Sequencing & Arpeggiation
-    GATE4: 'w-[230px]',
-    STATE4: 'w-[230px]',
+    DIST4: 'w-[230px]',
     ARP: 'w-[230px]',
     CHORD: 'w-[240px]',
     MARKOV: 'w-[260px]',
@@ -286,7 +285,7 @@ export class ModalManager {
                         name: 'TRIGGER',
                         sub: 'トリガ (クロック・シーケンサー)',
                         color: 'rose',
-                        types: ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'MARKOV', 'GATE4', 'STATE4', 'ARP', 'KEY', 'PAD']
+                        types: ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'MARKOV', 'DIST4', 'ARP', 'KEY', 'PAD']
                     },
                     {
                         name: 'CV',
