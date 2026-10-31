@@ -385,17 +385,19 @@ const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal) => {
 
     // Center of Panel (0, 0, 0)
     const cx = w * 0.5;
-    const cy = h * 0.52;
+    const cy = h * 0.50;
 
-    // Axis Vector lengths (tuned so front-right touches the bottom edge, filling the panel)
-    const Lx = w * 0.46; // X axis (frequency): right-down 30°
-    const Ly = w * 0.40; // Y axis (time-series): right-up 30°
-    const Lz = h * 0.28; // Z axis (amplitude): vertical up
+    // Axis Vector lengths (scaled up by 120% to fill the entire panel)
+    const scale120 = 1.20;
+    const Lx = (w * 0.46) * scale120; // X axis (frequency): right-down 30°
+    const Ly = (w * 0.40) * scale120; // Y axis (time-series): right-up 30°
+    const Lz = (h * 0.30) * scale120; // Z axis (amplitude): vertical
 
     // 3D Axis Vectors in screen space
     const Vx = { x:  Lx * cos30, y:  Lx * sin30 };
     const Vy = { x:  Ly * cos30, y: -Ly * sin30 };
-    const Vz = { x:  0,          y: -Lz };
+    // Z axis inverted with -1
+    const Vz = { x:  0,          y:  Lz };
 
     // Direct 3D Projector from normalized space [-1, 1]^3 to screen (px, py)
     const project3D = (nx, ny, nz) => ({
@@ -406,11 +408,11 @@ const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal) => {
     // Spectrum Mapping onto normalized [-1, 1] space:
     // Frequency u [0, 1] -> nx in [-1, 1] (left to right)
     // Time-series v [0, 1] (0=front, 1=back) -> ny in [-1, 1] (front to back)
-    // Amplitude val [0, 1] -> nz in [-1, 1] (floor=-1, peak=+1)
+    // Amplitude val [0, 1] -> nz inverted with -1 factor
     const projectSpec = (u, v, val = 0) => {
         const nx = 2 * u - 1;
         const ny = 2 * v - 1;
-        const nz = -1 + 2 * val;
+        const nz = (-1 + 2 * val) * -1;
         return project3D(nx, ny, nz);
     };
 
