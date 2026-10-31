@@ -1,4 +1,4 @@
-﻿import { safeClone, parseConn, isSubModule, normalizeSubPort, isPortMatching } from './utils.js?v=459';
+import { safeClone, parseConn, isSubModule, normalizeSubPort, isPortMatching } from './utils.js?v=459';
 import { MODULE_REGISTRY } from '../modules/registry.js?v=459';
 import { FACTORY_SUBPATCHES } from '../presets/subpatches.js?v=459';
 import { WaveCodec } from '../audio/wave-codec.js?v=459';
@@ -437,14 +437,16 @@ export function parsePatch(patchData, cols = 4, userSubpatches = null, errorSink
             finalSlots[String(r * cols + c)] = id;
         });
 
+        const validSlots = {};
         Object.entries(finalSlots).forEach(([slotStr, id]) => {
             const slotIdx = parseInt(slotStr, 10);
             const raw = rawMods[id] || {};
             const type = raw.type || id.replace(/[0-9]/g, '').toUpperCase();
             if (!MODULE_REGISTRY[type] && !isSubModule(type)) {
-                const msg = `モジュール設定エラー: 未知のモジュールタイプ "${type}" (モジュールID: "${id}") です。`;
-                console.error(`[Gridsynth Parse Error] ${msg}`);
+                const msg = `モジュール設定エラー: 未知のモジュールタイプ "${type}" (モジュールID: "${id}") を検出したため除去しました。`;
+                console.warn(`[Gridsynth Parse] ${msg}`);
                 errors.push(msg);
+                return;
             }
             const def = MODULE_REGISTRY[type]?.defaults ? MODULE_REGISTRY[type].defaults() : { type };
             const mod = Object.assign({}, def, raw, {
@@ -455,9 +457,16 @@ export function parsePatch(patchData, cols = 4, userSubpatches = null, errorSink
             });
             MODULE_REGISTRY[type]?.onNormalize?.(mod);
             resolvedMods[id] = mod;
+            validSlots[slotStr] = id;
         });
 
-        const connections = (pData.connections || []).map(parseConn).filter(Boolean).flatMap(c => {
+        const connections = (pData.connections || []).map(parseConn).filter(Boolean).filter(c => {
+            // Remove connections referencing non-existent or filtered unknown modules
+            if (!resolvedMods[c.from?.moduleId] || !resolvedMods[c.to?.moduleId]) {
+                return false;
+            }
+            return true;
+        }).flatMap(c => {
             if (c.to?.port === 'wave_in' && (resolvedMods[c.to.moduleId]?.type === 'SPK' || c.to.moduleId?.startsWith('SPK'))) {
                 return [
                     { from: { ...c.from }, to: { moduleId: c.to.moduleId, port: 'wave_in_l' } },
@@ -497,7 +506,7 @@ export function parsePatch(patchData, cols = 4, userSubpatches = null, errorSink
             ...(pData.subType ? { subType: pData.subType } : {}),
             ...(pData.sourceTemplateId ? { sourceTemplateId: pData.sourceTemplateId } : {}),
             ...(pData.manifest ? { manifest: safeClone(pData.manifest) } : {}),
-            slots: { ...slots },
+            slots: validSlots,
             modules: resolvedMods,
             connections
         };
@@ -545,6 +554,12 @@ export function exportPatch(pagesData, bpm = 120, cols = 4, rows = 32) {
         const cleanMods = {};
 
         Object.entries(pData.modules || {}).forEach(([id, m]) => {
+            if (!m) return;
+            const type = m.type || id.replace(/[0-9]/g, '').toUpperCase();
+            if (!MODULE_REGISTRY[type] && !isSubModule(type)) {
+                console.warn(`[Gridsynth Export] 未知のモジュールタイプ "${type}" (ID: "${id}") を検出したためエクスポートから除外しました。`);
+                return;
+            }
             const slotIdx = m.row * cols + m.col;
             slots[String(slotIdx)] = id;
             cleanMods[id] = exportModuleData(m);
@@ -557,9 +572,12 @@ export function exportPatch(pagesData, bpm = 120, cols = 4, rows = 32) {
             ...(pData.manifest ? { manifest: safeClone(pData.manifest) } : {}),
             slots,
             modules: cleanMods,
-            connections: (pData.connections || []).map(parseConn).filter(Boolean).map(c => {
-                const fromMod = cleanMods[c.from?.moduleId] || pData.modules?.[c.from?.moduleId];
-                const toMod = cleanMods[c.to?.moduleId] || pData.modules?.[c.to?.moduleId];
+            connections: (pData.connections || []).map(parseConn).filter(Boolean).filter(c => {
+                // Do not export connections to/from removed or unknown modules
+                return Boolean(cleanMods[c.from?.moduleId] && cleanMods[c.to?.moduleId]);
+            }).map(c => {
+                const fromMod = cleanMods[c.from?.moduleId];
+                const toMod = cleanMods[c.to?.moduleId];
                 let fromPort = c.from?.port;
                 let toPort = c.to?.port;
                 const fromManifest = resolveModManifest(fromMod, pagesData, pId);
