@@ -374,51 +374,61 @@ const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal) => {
         return;
     }
 
-    // --- 2. PANEL (3D AXONOMETRIC PARALLEL PROJECTION MODE) ---
-    // Strict axonometric projection:
-    // Left origin, X-axis vector = (cos(-30°), sin(-30°)) = (cos 30°, -sin 30° in math, down-right in Canvas)
-    // Y-axis vector = (cos 30°, sin 30° in math, up-right in Canvas)
-    // Z-axis = vertical amplitude upwards
+    // --- 2. PANEL (3D AXONOMETRIC CENTER-ORIGIN PARALLEL PROJECTION) ---
+    // Universal 3D Axis-Vector Model centered at (cx, cy):
+    // Coordinates are normalized [-1, 1] relative to center (0, 0, 0)
+    // Suitable for both Spectrum Analyzer and future 3D Lissajous
     const totalSlices = historyBands.length; // 5 lines
-    const rad30 = Math.PI / 6; // 30 degrees (0.5236 rad)
+    const rad30 = Math.PI / 6; // 30 degrees
     const cos30 = Math.cos(rad30); // ~0.866
     const sin30 = Math.sin(rad30); // 0.500
 
-    // Geometry layout in panel
-    // Origin O is placed at middle-left of panel
-    const originX = 14;
-    const originY = h * 0.46;
+    // Center of Panel (0, 0, 0)
+    const cx = w * 0.5;
+    const cy = h * 0.52;
 
-    // Sizing lengths
-    const lenX = w * 0.55; // length along frequency X axis
-    const lenY = w * 0.44; // total length along time-series Y axis
-    const maxZ = h * 0.38; // max vertical height for amplitude
+    // Axis Vector lengths (tuned so front-right touches the bottom edge, filling the panel)
+    const Lx = w * 0.46; // X axis (frequency): right-down 30°
+    const Ly = w * 0.40; // Y axis (time-series): right-up 30°
+    const Lz = h * 0.28; // Z axis (amplitude): vertical up
 
-    // Vector functions
-    // normalized u: 0..1 along X (frequency)
-    // normalized v: 0..1 along Y (time-series, 0=newest front-left, 1=oldest back-right)
-    // z: 0..1 (amplitude)
-    const project = (u, v, z = 0) => {
-        const px = originX + (u * lenX * cos30) + (v * lenY * cos30);
-        const py = originY + (u * lenX * sin30) - (v * lenY * sin30) - (z * maxZ);
-        return { x: px, y: py };
+    // 3D Axis Vectors in screen space
+    const Vx = { x:  Lx * cos30, y:  Lx * sin30 };
+    const Vy = { x:  Ly * cos30, y: -Ly * sin30 };
+    const Vz = { x:  0,          y: -Lz };
+
+    // Direct 3D Projector from normalized space [-1, 1]^3 to screen (px, py)
+    const project3D = (nx, ny, nz) => ({
+        x: cx + nx * Vx.x + ny * Vy.x + nz * Vz.x,
+        y: cy + nx * Vx.y + ny * Vy.y + nz * Vz.y
+    });
+
+    // Spectrum Mapping onto normalized [-1, 1] space:
+    // Frequency u [0, 1] -> nx in [-1, 1] (left to right)
+    // Time-series v [0, 1] (0=front, 1=back) -> ny in [-1, 1] (front to back)
+    // Amplitude val [0, 1] -> nz in [-1, 1] (floor=-1, peak=+1)
+    const projectSpec = (u, v, val = 0) => {
+        const nx = 2 * u - 1;
+        const ny = 2 * v - 1;
+        const nz = -1 + 2 * val;
+        return project3D(nx, ny, nz);
     };
 
-    // A. Draw floor boundaries (Y=0 to Y=1 on left, and Y=0 to Y=1 on right)
+    // A. Draw floor bounding side rails (Left: u=0, Right: u=1, for v from 0 to 1)
     ctx.save();
-    ctx.strokeStyle = 'rgba(30, 41, 59, 0.55)';
+    ctx.strokeStyle = 'rgba(30, 41, 59, 0.6)';
     ctx.lineWidth = 0.6;
-    // Left boundary rail (u = 0, v = 0 to 1)
-    const p00 = project(0, 0, 0);
-    const p01 = project(0, 1, 0);
+    // Left boundary rail
+    const p00 = projectSpec(0, 0, 0);
+    const p01 = projectSpec(0, 1, 0);
     ctx.beginPath();
     ctx.moveTo(p00.x, p00.y);
     ctx.lineTo(p01.x, p01.y);
     ctx.stroke();
 
-    // Right boundary rail (u = 1, v = 0 to 1)
-    const p10 = project(1, 0, 0);
-    const p11 = project(1, 1, 0);
+    // Right boundary rail
+    const p10 = projectSpec(1, 0, 0);
+    const p11 = projectSpec(1, 1, 0);
     ctx.beginPath();
     ctx.moveTo(p10.x, p10.y);
     ctx.lineTo(p11.x, p11.y);
@@ -432,8 +442,8 @@ const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal) => {
         const depthRatio = 1 - vRatio;        // 1 (front) to 0 (back)
 
         // Always draw the 0-point baseline (oblique 30° line from left to right)
-        const pStart = project(0, vRatio, 0);
-        const pEnd = project(1, vRatio, 0);
+        const pStart = projectSpec(0, vRatio, 0);
+        const pEnd = projectSpec(1, vRatio, 0);
 
         ctx.save();
         ctx.strokeStyle = k === 0 
@@ -459,10 +469,10 @@ const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal) => {
 
                 const u = i / (n - 1);
                 const uNext = Math.min(1, (i + 0.8) / (n - 1));
-                const pBase = project(u, vRatio, 0);
-                const pTop = project(u, vRatio, val);
-                const pBaseNext = project(uNext, vRatio, 0);
-                const pTopNext = project(uNext, vRatio, val);
+                const pBase = projectSpec(u, vRatio, 0);
+                const pTop = projectSpec(u, vRatio, val);
+                const pBaseNext = projectSpec(uNext, vRatio, 0);
+                const pTopNext = projectSpec(uNext, vRatio, val);
 
                 // Occlusion polygon
                 ctx.fillStyle = '#020617';
@@ -495,7 +505,7 @@ const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal) => {
                 const val = Math.max(0, Math.min(1, bands[i]));
                 if (val > 0.008) hasSignal = true;
                 const u = i / (n - 1);
-                pts.push(project(u, vRatio, val));
+                pts.push(projectSpec(u, vRatio, val));
             }
 
             if (hasSignal) {
@@ -512,12 +522,34 @@ const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal) => {
                 ctx.lineTo(pEnd.x, pEnd.y);
                 ctx.closePath();
 
-                const pMaxTop = project(0.5, vRatio, 1.0);
+                const pMaxTop = projectSpec(0.5, vRatio, 1.0);
                 const grad = ctx.createLinearGradient(pStart.x, pStart.y, pMaxTop.x, pMaxTop.y);
                 if (k === 0) {
                     grad.addColorStop(0, '#020617');
                     grad.addColorStop(0.4, 'rgba(13, 148, 136, 0.25)');
                     grad.addColorStop(1, 'rgba(45, 212, 191, 0.55)');
+                } else {
+                    grad.addColorStop(0, '#020617');
+                    grad.addColorStop(1, `rgba(45, 212, 191, ${(0.12 + depthRatio * 0.15).toFixed(2)})`);
+                }
+                ctx.fillStyle = grad;
+                ctx.fill();
+
+                // Ridge line stroke
+                ctx.beginPath();
+                ctx.moveTo(pts[0].x, pts[0].y);
+                for (let i = 1; i < pts.length; i++) {
+                    const midX = (pts[i - 1].x + pts[i].x) / 2;
+                    const midY = (pts[i - 1].y + pts[i].y) / 2;
+                    ctx.quadraticCurveTo(pts[i - 1].x, pts[i - 1].y, midX, midY);
+                }
+                ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = k === 0 ? 1.4 : 0.8;
+                ctx.stroke();
+            }
+        }
+    }
                 } else {
                     grad.addColorStop(0, '#020617');
                     grad.addColorStop(1, `rgba(45, 212, 191, ${(0.12 + depthRatio * 0.15).toFixed(2)})`);
