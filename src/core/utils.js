@@ -1,4 +1,4 @@
-﻿// src/core/utils.js
+// src/core/utils.js
 
 import { isSubModule, normalizeSubPort } from './sub-utils.js?v=459';
 
@@ -55,6 +55,8 @@ export const PORT_ALIASES = {
 
     // CLK / GATE
     'clk_in': 'gate_in',
+    'power_in': 'run_in',
+    'power': 'run_in',
 
     // IO / SCOPE
     'in1': 'wave_in',

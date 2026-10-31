@@ -86,7 +86,7 @@ export const getPortSignalType = (portName = '', modId = '') => {
         if (p === 'out' || p.includes('cv') || p.startsWith('in_')) return SIGNAL_TYPES.CV;
     }
 
-    if (p.includes('power')) {
+    if (p.includes('power') || p.includes('run')) {
         return SIGNAL_TYPES.GATE;
     }
 
