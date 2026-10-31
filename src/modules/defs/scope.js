@@ -571,25 +571,37 @@ export const SPEC = {
         </div>`,
     updateLive: (cell, data, isP, modal, m) => {
         if (!data?.freqs) return;
-        const { bands } = extractBands(data.freqs, 96, data.sampleRate || 48000);
+        // Lightweight 48-band spectrum (0.9 KB buffer for 5 slices)
+        const { bands } = extractBands(data.freqs, 48, data.sampleRate || 48000);
         const mode = m.mode || 'bar';
         const view = m.view || '3d';
 
         // Maintain 5-slice history buffer on the module instance
-        if (!m._historyBands) {
+        if (!m._historyBands || m._historyBands[0]?.length !== bands.length) {
             m._historyBands = [];
             for (let i = 0; i < 5; i++) {
                 m._historyBands.push(new Float32Array(bands.length));
             }
+            m._accumBands = new Float32Array(bands.length);
+            m._lastSliceTime = performance.now();
         }
 
-        // Subsample history frames to make waterfall progression visible and smooth
-        m._frameCounter = (m._frameCounter || 0) + 1;
-        if (m._frameCounter % 2 === 0) {
+        // 1. High-frequency peak capture (~33ms per frame) to prevent missing sharp transients
+        for (let i = 0; i < bands.length; i++) {
+            if (bands[i] > m._accumBands[i]) {
+                m._accumBands[i] = bands[i];
+            }
+        }
+
+        // 2. Shift snapshot into 5-slice history buffer every 200ms
+        const now = performance.now();
+        if (now - m._lastSliceTime >= 200) {
+            m._lastSliceTime = now;
             m._historyBands.pop();
-            m._historyBands.unshift(new Float32Array(bands));
-        } else {
-            // Update latest frame directly
+            m._historyBands.unshift(new Float32Array(m._accumBands));
+            m._accumBands.set(bands);
+        } else if (view === '2d') {
+            // For 2D real-time viewing, update slice 0 directly
             m._historyBands[0].set(bands);
         }
 
