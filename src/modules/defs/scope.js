@@ -391,13 +391,12 @@ const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal) => {
     const scale120 = 1.20;
     const Lx = (w * 0.46) * scale120; // X axis (frequency): right-down 30°
     const Ly = (w * 0.40) * scale120; // Y axis (time-series): right-up 30°
-    const Lz = (h * 0.30) * scale120; // Z axis (amplitude): vertical
+    const Lz = (h * 0.32) * scale120; // Z axis (amplitude): vertical height
 
-    // 3D Axis Vectors in screen space
+    // 3D Axis Vectors in screen space (Z axis points vertically upwards)
     const Vx = { x:  Lx * cos30, y:  Lx * sin30 };
     const Vy = { x:  Ly * cos30, y: -Ly * sin30 };
-    // Z axis inverted with -1
-    const Vz = { x:  0,          y:  Lz };
+    const Vz = { x:  0,          y: -Lz };
 
     // Direct 3D Projector from normalized space [-1, 1]^3 to screen (px, py)
     const project3D = (nx, ny, nz) => ({
@@ -405,14 +404,14 @@ const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal) => {
         y: cy + nx * Vx.y + ny * Vy.y + nz * Vz.y
     });
 
-    // Spectrum Mapping onto normalized [-1, 1] space:
-    // Frequency u [0, 1] -> nx in [-1, 1] (left to right)
-    // Time-series v [0, 1] (0=front, 1=back) -> ny in [-1, 1] (front to back)
-    // Amplitude val [0, 1] -> nz inverted with -1 factor
+    // Spectrum Mapping:
+    // Shift display position in Z-axis by -1 (translating base down by -1 in normalized space)
+    // Floor baseline sits at nz = -1 - 1 = -2
+    // Amplitude val [0, 1] rises upwards along +Z from baseline
     const projectSpec = (u, v, val = 0) => {
         const nx = 2 * u - 1;
         const ny = 2 * v - 1;
-        const nz = (-1 + 2 * val) * -1;
+        const nz = -1 + 2 * val - 1; // shifted by -1 in Z axis
         return project3D(nx, ny, nz);
     };
 
@@ -530,28 +529,6 @@ const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal) => {
                     grad.addColorStop(0, '#020617');
                     grad.addColorStop(0.4, 'rgba(13, 148, 136, 0.25)');
                     grad.addColorStop(1, 'rgba(45, 212, 191, 0.55)');
-                } else {
-                    grad.addColorStop(0, '#020617');
-                    grad.addColorStop(1, `rgba(45, 212, 191, ${(0.12 + depthRatio * 0.15).toFixed(2)})`);
-                }
-                ctx.fillStyle = grad;
-                ctx.fill();
-
-                // Ridge line stroke
-                ctx.beginPath();
-                ctx.moveTo(pts[0].x, pts[0].y);
-                for (let i = 1; i < pts.length; i++) {
-                    const midX = (pts[i - 1].x + pts[i].x) / 2;
-                    const midY = (pts[i - 1].y + pts[i].y) / 2;
-                    ctx.quadraticCurveTo(pts[i - 1].x, pts[i - 1].y, midX, midY);
-                }
-                ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
-                ctx.strokeStyle = strokeColor;
-                ctx.lineWidth = k === 0 ? 1.4 : 0.8;
-                ctx.stroke();
-            }
-        }
-    }
                 } else {
                     grad.addColorStop(0, '#020617');
                     grad.addColorStop(1, `rgba(45, 212, 191, ${(0.12 + depthRatio * 0.15).toFixed(2)})`);
