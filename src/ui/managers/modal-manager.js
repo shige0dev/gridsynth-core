@@ -264,6 +264,9 @@ export class ModalManager {
             const depth = this.ui.getNestingDepth(this.ui.currentPageId);
             const allowSub = depth < 3;
 
+            let currentTab = 'basic'; // 'basic' | 'factory' | 'user'
+            let factoryCategory = 'ALL'; // 'ALL' | 'Synth Voice' | 'Percussion' | 'Effect'
+
             const renderContent = () => {
                 const basicTypes = Object.keys(MODULE_REGISTRY).filter(t => {
                     if (t === 'SUB') return false; // Placed under User Subpatch area
@@ -312,6 +315,27 @@ export class ModalManager {
                     });
                 }
 
+                // Top Tab Bar HTML
+                const tabsHtml = `
+                    <div class="flex items-center gap-1 border-b border-slate-800 pb-1.5 mb-1 shrink-0">
+                        <button class="modal-tab-btn flex-1 h-6 rounded flex items-center justify-center gap-1 font-bold text-[9px] transition ${currentTab === 'basic' ? 'bg-cyan-950/80 border border-cyan-500/70 text-cyan-200 shadow-sm' : 'bg-slate-900/90 border border-slate-800 text-slate-400 hover:text-slate-200'}" data-tab="basic">
+                            <span>MODULES</span>
+                            <span class="text-[7.5px] px-1 py-0.2 rounded ${currentTab === 'basic' ? 'bg-cyan-500/20 text-cyan-300' : 'bg-slate-800 text-slate-500'} font-mono">${basicTypes.length}</span>
+                        </button>
+                        ${allowSub ? `
+                        <button class="modal-tab-btn flex-1 h-6 rounded flex items-center justify-center gap-1 font-bold text-[9px] transition ${currentTab === 'factory' ? 'bg-purple-950/80 border border-purple-500/70 text-purple-200 shadow-sm' : 'bg-slate-900/90 border border-slate-800 text-slate-400 hover:text-slate-200'}" data-tab="factory">
+                            <span>FACTORY SUB</span>
+                            <span class="text-[7.5px] px-1 py-0.2 rounded ${currentTab === 'factory' ? 'bg-purple-500/20 text-purple-300' : 'bg-slate-800 text-slate-500'} font-mono">${factorySubs.length}</span>
+                        </button>
+                        <button class="modal-tab-btn flex-1 h-6 rounded flex items-center justify-center gap-1 font-bold text-[9px] transition ${currentTab === 'user' ? 'bg-emerald-950/80 border border-emerald-500/70 text-emerald-200 shadow-sm' : 'bg-slate-900/90 border border-slate-800 text-slate-400 hover:text-slate-200'}" data-tab="user">
+                            <span>USER STOCK</span>
+                            <span class="text-[7.5px] px-1 py-0.2 rounded ${currentTab === 'user' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-800 text-slate-500'} font-mono">${userSubs.length}</span>
+                        </button>
+                        ` : ''}
+                    </div>
+                `;
+
+                // 1. BASIC MODULES TAB CONTENT
                 const categorySectionsHtml = CATEGORIES.map((cat, catIdx) => {
                     const items = cat.types.filter(t => basicTypes.includes(t));
                     if (items.length === 0) return '';
@@ -338,37 +362,48 @@ export class ModalManager {
                     `;
                 }).join('');
 
-                body.className = "flex flex-col gap-1.5 mt-0.5 max-h-[78vh] overflow-y-auto pr-0.5";
-                body.innerHTML = `
-                    <!-- 1. CATEGORIZED BASIC MODULES (SOUND, TRIGGER, CV) -->
-                    ${categorySectionsHtml}
+                // 2. FACTORY SUBPATCHES TAB CONTENT (3-columns, readable font, category filters)
+                const factoryCats = [
+                    { id: 'ALL', label: 'ALL', count: factorySubs.length },
+                    { id: 'Synth Voice', label: 'SYNTH', count: factorySubs.filter(s => s.category === 'Synth Voice').length },
+                    { id: 'Percussion', label: 'PERC', count: factorySubs.filter(s => s.category === 'Percussion').length },
+                    { id: 'Effect', label: 'FX', count: factorySubs.filter(s => s.category === 'Effect').length }
+                ];
 
-                    <!-- 2. FACTORY SUBPATCHES (4-column Grid, 2x width of basic modules) -->
-                    ${allowSub ? `
-                    <div class="border-t border-slate-800 pt-1.5 mt-0.5">
-                        <div class="text-[8.5px] font-bold text-purple-300 uppercase tracking-wider mb-1 px-0.5 flex items-center">
-                            <span>FACTORY SUBPATCH</span>
+                const filteredFactorySubs = factoryCategory === 'ALL'
+                    ? factorySubs
+                    : factorySubs.filter(s => s.category === factoryCategory);
+
+                const factorySubContentHtml = `
+                    <div class="flex flex-col gap-1.5">
+                        <div class="flex items-center gap-1 px-0.5 overflow-x-auto pb-0.5">
+                            ${factoryCats.map(fc => `
+                                <button class="factory-cat-btn h-5 px-2 rounded-full text-[8px] font-bold transition flex items-center gap-1 shrink-0 ${factoryCategory === fc.id ? 'bg-purple-600 text-white shadow-sm' : 'bg-slate-800/90 text-slate-400 hover:text-slate-200 border border-slate-700/80'}" data-cat="${fc.id}">
+                                    <span>${fc.label}</span>
+                                    <span class="text-[7px] opacity-75 font-mono">(${fc.count})</span>
+                                </button>
+                            `).join('')}
                         </div>
-                        <div class="grid grid-cols-4 gap-1">
-                            ${factorySubs.map(sub => `
-                                <div class="h-6 bg-slate-800/90 hover:bg-purple-950/60 border border-slate-700/80 hover:border-purple-500/80 rounded flex items-center justify-between px-1 transition cursor-pointer factory-sub-item" data-id="${sub.id}">
-                                    <span class="text-[7.5px] font-bold text-purple-300 truncate pointer-events-none">${sub.name}</span>
-                                    <div class="flex items-center gap-0.5 shrink-0 ml-0.5">
-                                        <button class="export-factory-sub-btn w-3.5 h-3.5 flex items-center justify-center bg-slate-900 hover:bg-slate-700 text-cyan-300 rounded border border-slate-700 text-[6.5px]" data-id="${sub.id}" title="JSONエクスポート(コピー)">📋</button>
-                                        <button class="sub-info-btn w-3.5 h-3.5 flex items-center justify-center text-slate-400 hover:text-purple-300 rounded text-[7px] hover:bg-slate-700/80" data-id="${sub.id}" title="説明">ℹ️</button>
+                        <div class="grid grid-cols-3 gap-1.5 pt-0.5">
+                            ${filteredFactorySubs.map(sub => `
+                                <div class="h-7 bg-slate-800/90 hover:bg-purple-950/60 border border-slate-700/80 hover:border-purple-500/80 rounded-md flex items-center justify-between px-1.5 transition cursor-pointer factory-sub-item shadow-sm" data-id="${sub.id}">
+                                    <span class="text-[10px] font-bold text-purple-200 truncate pointer-events-none pr-1" title="${sub.name}">${sub.name}</span>
+                                    <div class="flex items-center gap-0.5 shrink-0">
+                                        <button class="export-factory-sub-btn w-4 h-4 flex items-center justify-center bg-slate-900 hover:bg-slate-700 text-cyan-300 rounded border border-slate-700 text-[7px]" data-id="${sub.id}" title="JSONエクスポート(コピー)">📋</button>
+                                        <button class="sub-info-btn w-4 h-4 flex items-center justify-center text-slate-400 hover:text-purple-300 rounded text-[7.5px] hover:bg-slate-700/80" data-id="${sub.id}" title="説明">ℹ️</button>
                                     </div>
                                 </div>
                             `).join('')}
                         </div>
                     </div>
-                    ` : ''}
+                `;
 
-                    <!-- 3. USER SUBPATCHES & HEADER NEW SUBPATCH BUTTON -->
-                    ${allowSub ? `
-                    <div class="border-t border-slate-800 pt-1.5 mt-0.5">
-                        <div class="text-[8.5px] font-bold text-emerald-300 uppercase tracking-wider mb-1 px-0.5 flex items-center justify-between">
-                            <span>USER STOCK (SUBPATCH)</span>
-                            <div class="flex items-center gap-1">
+                // 3. USER SUBPATCHES TAB CONTENT
+                const userSubContentHtml = `
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center justify-between px-0.5 bg-slate-950/60 border border-slate-800/80 rounded-md p-1.5">
+                            <span class="text-[8px] text-slate-400 font-medium">ストック登録済み: <span class="text-emerald-400 font-bold font-mono">${userSubs.length}</span> 件</span>
+                            <div class="flex items-center gap-1.5">
                                 <button class="import-user-sub-btn h-5 px-2 bg-purple-950/80 hover:bg-purple-900 border border-purple-500/70 hover:border-purple-400 text-purple-300 rounded text-[8px] font-bold transition flex items-center gap-1 shadow-sm cursor-pointer" title="サブパッチJSONをインポートしてストックに登録">
                                     <span>📥 IMPORT</span>
                                 </button>
@@ -378,25 +413,53 @@ export class ModalManager {
                             </div>
                         </div>
                         ${userSubs.length > 0 ? `
-                        <div class="grid grid-cols-4 gap-1 mt-1">
+                        <div class="grid grid-cols-3 gap-1.5">
                             ${userSubs.map(sub => `
-                                <div class="h-6 bg-slate-800/90 hover:bg-emerald-950/60 border border-slate-700/80 hover:border-emerald-500/80 rounded flex items-center justify-between px-1 transition cursor-pointer user-sub-item select-user-sub" data-id="${sub.id}">
-                                    <span class="text-[7.5px] font-bold text-emerald-300 truncate pointer-events-none">${sub.name}</span>
-                                    <div class="flex items-center gap-0.5 shrink-0 ml-0.5">
-                                        <button class="export-user-sub-btn w-3.5 h-3.5 flex items-center justify-center bg-slate-900 hover:bg-slate-700 text-cyan-300 rounded border border-slate-700 text-[6.5px]" data-id="${sub.id}" title="JSONエクスポート(コピー)">📋</button>
-                                        <button class="edit-user-sub-btn w-3.5 h-3.5 flex items-center justify-center bg-slate-900 hover:bg-slate-700 text-emerald-300 rounded border border-slate-700 text-[6.5px]" data-id="${sub.id}" title="中身を編集">✏️</button>
-                                        <button class="delete-user-sub-btn w-3.5 h-3.5 flex items-center justify-center bg-red-950/70 hover:bg-red-900 text-red-300 rounded border border-red-700/60 text-[6.5px]" data-id="${sub.id}" title="削除">🗑️</button>
+                                <div class="h-7 bg-slate-800/90 hover:bg-emerald-950/60 border border-slate-700/80 hover:border-emerald-500/80 rounded-md flex items-center justify-between px-1.5 transition cursor-pointer user-sub-item select-user-sub shadow-sm" data-id="${sub.id}">
+                                    <span class="text-[10px] font-bold text-emerald-200 truncate pointer-events-none pr-1" title="${sub.name}">${sub.name}</span>
+                                    <div class="flex items-center gap-0.5 shrink-0">
+                                        <button class="export-user-sub-btn w-4 h-4 flex items-center justify-center bg-slate-900 hover:bg-slate-700 text-cyan-300 rounded border border-slate-700 text-[7px]" data-id="${sub.id}" title="JSONエクスポート(コピー)">📋</button>
+                                        <button class="edit-user-sub-btn w-4 h-4 flex items-center justify-center bg-slate-900 hover:bg-slate-700 text-emerald-300 rounded border border-slate-700 text-[7px]" data-id="${sub.id}" title="中身を編集">✏️</button>
+                                        <button class="delete-user-sub-btn w-4 h-4 flex items-center justify-center bg-red-950/70 hover:bg-red-900 text-red-300 rounded border border-red-700/60 text-[7px]" data-id="${sub.id}" title="削除">🗑️</button>
                                     </div>
                                 </div>
                             `).join('')}
                         </div>
-                        ` : ''}
+                        ` : `
+                        <div class="py-8 text-center text-slate-500 text-[10px] flex flex-col items-center justify-center gap-1">
+                            <span>ストックされたサブパッチはありません</span>
+                            <span class="text-[8px] text-slate-600">「➕ 新規作成」または「📥 IMPORT」から登録できます</span>
+                        </div>
+                        `}
                     </div>
-                    ` : ''}
+                `;
+
+                body.className = "flex flex-col mt-0.5 max-h-[78vh] overflow-y-auto pr-0.5";
+                body.innerHTML = `
+                    ${tabsHtml}
+                    <div class="flex-1 overflow-y-auto">
+                        ${currentTab === 'basic' ? categorySectionsHtml : ''}
+                        ${currentTab === 'factory' ? factorySubContentHtml : ''}
+                        ${currentTab === 'user' ? userSubContentHtml : ''}
+                    </div>
                 `;
 
                 body.onclick = (e) => {
                     const closeShared = () => document.getElementById('shared-modal')?.classList.add('hidden');
+                    const tabBtn = e.target.closest('.modal-tab-btn');
+                    if (tabBtn && tabBtn.dataset.tab) {
+                        currentTab = tabBtn.dataset.tab;
+                        renderContent();
+                        return;
+                    }
+
+                    const catBtn = e.target.closest('.factory-cat-btn');
+                    if (catBtn && catBtn.dataset.cat) {
+                        factoryCategory = catBtn.dataset.cat;
+                        renderContent();
+                        return;
+                    }
+
                     const btn = e.target.closest('button, .factory-sub-item, .select-user-sub');
                     if (!btn || !body.contains(btn)) return;
 
