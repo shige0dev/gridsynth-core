@@ -25,14 +25,23 @@ export const JOG = {
         const maxVal = m.max ?? 1.0;
         const curVal = m.val ?? (m.def ?? 0.0);
 
-        const formatVal = (v) => {
+        const formatValHtml = (v) => {
             if (m.stepType === '1semi') {
-                return cvToNoteName(v);
+                return `<span>${cvToNoteName(v)}</span>`;
             }
             const num = Number(v);
-            if (Math.abs(num) >= 100) return num.toFixed(0);
-            if (Math.abs(num) >= 10) return num.toFixed(1);
-            return num.toFixed(2);
+            const str = (Math.abs(num) >= 100) ? num.toFixed(0) : (Math.abs(num) >= 10 ? num.toFixed(1) : num.toFixed(2));
+            const parts = str.split('.');
+            if (parts.length === 1) {
+                return `<span>${parts[0]}</span>`;
+            }
+            return `<span class="inline-block w-[22px] text-right">${parts[0]}</span><span class="inline-block w-[3px] text-center">.</span><span class="inline-block w-[18px] text-left">${parts[1]}</span>`;
+        };
+
+        const formatEdgeVal = (v) => {
+            if (m.stepType === '1semi') return cvToNoteName(v);
+            const n = Number(v);
+            return (Math.abs(n) >= 10) ? n.toFixed(0) : n.toFixed(1);
         };
 
         return `
@@ -43,12 +52,25 @@ export const JOG = {
 
                     <!-- Center Overlay: MAX at top-center, VAL at absolute center, MIN at bottom-center -->
                     <div class="absolute inset-0 flex flex-col items-center justify-between py-1 pointer-events-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
-                        <span class="text-[6.5px] font-mono text-slate-400 font-semibold tracking-tighter leading-none">${m.stepType === '1semi' ? cvToNoteName(maxVal) : Number(maxVal).toFixed(1)}</span>
-                        <span class="jog-val-disp font-mono text-[13.5px] font-extrabold text-amber-300 tracking-tight leading-none">${formatVal(curVal)}</span>
-                        <span class="text-[6.5px] font-mono text-slate-400 font-semibold tracking-tighter leading-none">${m.stepType === '1semi' ? cvToNoteName(minVal) : Number(minVal).toFixed(1)}</span>
+                        <span class="text-[6.5px] font-mono text-slate-400 font-semibold tracking-tighter leading-none">${formatEdgeVal(maxVal)}</span>
+                        <div class="jog-val-disp font-mono text-[13px] font-extrabold text-amber-300 tracking-tight leading-none flex items-baseline justify-center w-full">${formatValHtml(curVal)}</div>
+                        <span class="text-[6.5px] font-mono text-slate-400 font-semibold tracking-tighter leading-none">${formatEdgeVal(minVal)}</span>
                     </div>
                 </div>
             </div>`;
+    },
+
+    formatValHtml: (v, stepType) => {
+        if (stepType === '1semi') {
+            return `<span>${cvToNoteName(v)}</span>`;
+        }
+        const num = Number(v);
+        const str = (Math.abs(num) >= 100) ? num.toFixed(0) : (Math.abs(num) >= 10 ? num.toFixed(1) : num.toFixed(2));
+        const parts = str.split('.');
+        if (parts.length === 1) {
+            return `<span>${parts[0]}</span>`;
+        }
+        return `<span class="inline-block w-[22px] text-right">${parts[0]}</span><span class="inline-block w-[3px] text-center">.</span><span class="inline-block w-[18px] text-left">${parts[1]}</span>`;
     },
 
     updateLive: (cell, data, isP, modal, m) => {
@@ -59,14 +81,11 @@ export const JOG = {
         const valDisp = cell?.querySelector('.jog-val-disp');
         if (valDisp && m) {
             const v = m.val ?? (m.def ?? 0.0);
-            let str = '';
-            if (m.stepType === '1semi') {
-                str = cvToNoteName(v);
-            } else {
-                const num = Number(v);
-                str = Math.abs(num) >= 100 ? num.toFixed(0) : (Math.abs(num) >= 10 ? num.toFixed(1) : num.toFixed(2));
+            const html = JOG.formatValHtml(v, m.stepType);
+            if (valDisp._lastHtml !== html) {
+                valDisp.innerHTML = html;
+                valDisp._lastHtml = html;
             }
-            if (valDisp.textContent !== str) valDisp.textContent = str;
         }
 
         // Live update for scrubbable badges in Modal
@@ -185,14 +204,11 @@ export const JOG = {
 
             const valDisp = cell.querySelector('.jog-val-disp');
             if (valDisp) {
-                let str = '';
-                if (m.stepType === '1semi') {
-                    str = cvToNoteName(clamped);
-                } else {
-                    const num = Number(clamped);
-                    str = Math.abs(num) >= 100 ? num.toFixed(0) : (Math.abs(num) >= 10 ? num.toFixed(1) : num.toFixed(2));
+                const html = JOG.formatValHtml(clamped, m.stepType);
+                if (valDisp._lastHtml !== html) {
+                    valDisp.innerHTML = html;
+                    valDisp._lastHtml = html;
                 }
-                valDisp.textContent = str;
             }
             const cvs = cell.querySelector('.jog-canvas');
             if (cvs) JOG.drawWheel(cvs.getContext('2d'), cvs.width, cvs.height, m);
