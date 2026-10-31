@@ -385,12 +385,12 @@ const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal) => {
 
     // Center of Panel (0, 0, 0) in screen coordinates
     const cx = 60;
-    const cy = 84;
+    const cy = 60;
 
-    // Axis Vector lengths (precisely calibrated to place front-left at X~5px and front-right touching bottom edge)
-    const Lx = 42; // X axis (frequency): right-down 30°
-    const Ly = 22; // Y axis (time-series): right-up 30°
-    const Lz = 46; // Z axis (amplitude): vertical up
+    // Axis Vector lengths (calibrated to fit unit-2 cube with ~5px padding: X in [10, 110], Y in [5, 115])
+    const Lx = 38; // X axis (frequency): right-down 30°
+    const Ly = 20; // Y axis (time-series): right-up 30°
+    const Lz = 26; // Z axis (amplitude): vertical up
 
     // 3D Axis Vectors in screen space
     const Vx = { x:  Lx * cos30, y:  Lx * sin30 };
@@ -403,14 +403,49 @@ const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal) => {
         y: cy + nx * Vx.y + ny * Vy.y + nz * Vz.y
     });
 
+    // Draw origin-centered Unit-2 Cube Guideline ([-1, 1]^3)
+    ctx.save();
+    ctx.strokeStyle = 'rgba(100, 116, 139, 0.45)';
+    ctx.lineWidth = 0.8;
+    ctx.setLineDash([2, 2]);
+
+    const cubeEdges = [
+        // Bottom square (nz = -1)
+        [[-1, -1, -1], [ 1, -1, -1]],
+        [[ 1, -1, -1], [ 1,  1, -1]],
+        [[ 1,  1, -1], [-1,  1, -1]],
+        [[-1,  1, -1], [-1, -1, -1]],
+        // Top square (nz = 1)
+        [[-1, -1,  1], [ 1, -1,  1]],
+        [[ 1, -1,  1], [ 1,  1,  1]],
+        [[ 1,  1,  1], [-1,  1,  1]],
+        [[-1,  1,  1], [-1, -1,  1]],
+        // Vertical pillars
+        [[-1, -1, -1], [-1, -1,  1]],
+        [[ 1, -1, -1], [ 1, -1,  1]],
+        [[ 1,  1, -1], [ 1,  1,  1]],
+        [[-1,  1, -1], [-1,  1,  1]]
+    ];
+
+    ctx.beginPath();
+    for (let e = 0; e < cubeEdges.length; e++) {
+        const [pA, pB] = cubeEdges[e];
+        const sA = project3D(pA[0], pA[1], pA[2]);
+        const sB = project3D(pB[0], pB[1], pB[2]);
+        ctx.moveTo(sA.x, sA.y);
+        ctx.lineTo(sB.x, sB.y);
+    }
+    ctx.stroke();
+    ctx.restore();
+
     // Spectrum Mapping onto normalized [-1, 1] space:
-    // Frequency u [0, 1] -> nx in [-1, 1] (0 sits at front-left X~5px)
+    // Frequency u [0, 1] -> nx in [-1, 1]
     // Time-series v [0, 1] (0=front, 1=back) -> ny in [-1, 1]
-    // Amplitude val [0, 1] -> nz in [0, 1] (0 sits on floor, 1 rises up vertically)
+    // Amplitude val [0, 1] -> nz in [-1, 1] (0 sits on bottom floor nz=-1, 1 rises to top ceiling nz=1)
     const projectSpec = (u, v, val = 0) => {
         const nx = 2 * u - 1;
         const ny = 2 * v - 1;
-        const nz = val;
+        const nz = 2 * val - 1;
         return project3D(nx, ny, nz);
     };
 
