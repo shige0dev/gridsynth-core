@@ -1,4 +1,5 @@
 import { UIHelpers } from '../../ui/helpers.js?v=351';
+import { cvToNoteName } from '../../core/musical.js?v=367';
 
 export const JOG = {
     color: 'amber',
@@ -9,7 +10,8 @@ export const JOG = {
         max: 1.0,
         def: 0.0,
         step: 0.01,
-        mode: 'latch', // 'latch' | 'spring'
+        stepType: '0.01', // '0.01' | '0.1' | '1semi' | '1' | '10'
+        mode: 'latch',
         name: 'JOG'
     }),
     ports: () => ({
@@ -24,6 +26,9 @@ export const JOG = {
         const curVal = m.val ?? (m.def ?? 0.0);
 
         const formatVal = (v) => {
+            if (m.stepType === '1semi') {
+                return cvToNoteName(v);
+            }
             const num = Number(v);
             if (Math.abs(num) >= 100) return num.toFixed(0);
             if (Math.abs(num) >= 10) return num.toFixed(1);
@@ -38,9 +43,9 @@ export const JOG = {
 
                     <!-- Center Overlay: MAX at top-center, VAL at absolute center, MIN at bottom-center -->
                     <div class="absolute inset-0 flex flex-col items-center justify-between py-1 pointer-events-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
-                        <span class="text-[6.5px] font-mono text-slate-400 font-semibold tracking-tighter leading-none">${formatVal(maxVal)}</span>
+                        <span class="text-[6.5px] font-mono text-slate-400 font-semibold tracking-tighter leading-none">${m.stepType === '1semi' ? cvToNoteName(maxVal) : Number(maxVal).toFixed(1)}</span>
                         <span class="jog-val-disp font-mono text-[14px] font-extrabold text-amber-300 tracking-tight leading-none">${formatVal(curVal)}</span>
-                        <span class="text-[6.5px] font-mono text-slate-400 font-semibold tracking-tighter leading-none">${formatVal(minVal)}</span>
+                        <span class="text-[6.5px] font-mono text-slate-400 font-semibold tracking-tighter leading-none">${m.stepType === '1semi' ? cvToNoteName(minVal) : Number(minVal).toFixed(1)}</span>
                     </div>
                 </div>
             </div>`;
@@ -54,21 +59,25 @@ export const JOG = {
         const valDisp = cell?.querySelector('.jog-val-disp');
         if (valDisp && m) {
             const v = m.val ?? (m.def ?? 0.0);
-            const num = Number(v);
-            const str = Math.abs(num) >= 100 ? num.toFixed(0) : (Math.abs(num) >= 10 ? num.toFixed(1) : num.toFixed(2));
+            let str = '';
+            if (m.stepType === '1semi') {
+                str = cvToNoteName(v);
+            } else {
+                const num = Number(v);
+                str = Math.abs(num) >= 100 ? num.toFixed(0) : (Math.abs(num) >= 10 ? num.toFixed(1) : num.toFixed(2));
+            }
             if (valDisp.textContent !== str) valDisp.textContent = str;
         }
 
-        const modalCvs = modal?.querySelector('#jog-modal-canvas');
-        if (modalCvs) {
-            JOG.drawWheel(modalCvs.getContext('2d'), modalCvs.width, modalCvs.height, m, true);
-        }
-        const modalValDisp = modal?.querySelector('#jog-modal-val');
-        if (modalValDisp && m) {
-            const v = m.val ?? (m.def ?? 0.0);
-            const num = Number(v);
-            const str = Math.abs(num) >= 100 ? num.toFixed(0) : (Math.abs(num) >= 10 ? num.toFixed(1) : num.toFixed(2));
-            if (modalValDisp.textContent !== str) modalValDisp.textContent = str;
+        // Live update for scrubbable badges in Modal
+        if (modal && m) {
+            const maxEl = modal.querySelector('#jog-scrub-max');
+            const defEl = modal.querySelector('#jog-scrub-def');
+            const minEl = modal.querySelector('#jog-scrub-min');
+            const fmt = (val) => m.stepType === '1semi' ? `${cvToNoteName(val)} (${Number(val).toFixed(2)})` : Number(val).toFixed(2);
+            if (maxEl && !maxEl._isDragging) maxEl.textContent = fmt(m.max ?? 1.0);
+            if (defEl && !defEl._isDragging) defEl.textContent = fmt(m.def ?? 0.0);
+            if (minEl && !minEl._isDragging) minEl.textContent = fmt(m.min ?? -1.0);
         }
     },
 
@@ -97,7 +106,6 @@ export const JOG = {
         ctx.fillRect(w - 2, 0, 2, h);
 
         // 3. Cylinder Grooves / Knurling Lines in SOLID BLACK
-        // Grooves rotate based on norm value (phase shift)
         const numVisibleGrooves = 8;
         const spacing = h / (numVisibleGrooves - 1);
         const phaseOffset = (norm * h * 2.5) % spacing;
@@ -148,10 +156,18 @@ export const JOG = {
         let startVal = 0;
         let lastTapTime = 0;
 
+        const getStepValue = () => {
+            if (m.stepType === '1semi') return 1.0 / 12.0; // 1 semitone
+            if (m.stepType === '0.1') return 0.1;
+            if (m.stepType === '1') return 1.0;
+            if (m.stepType === '10') return 10.0;
+            return m.step || 0.01;
+        };
+
         const updateVal = (newVal) => {
             const min = m.min ?? -1.0;
             const max = m.max ?? 1.0;
-            const step = m.step ?? 0.01;
+            const step = getStepValue();
             let clamped = Math.max(min, Math.min(max, newVal));
             if (step > 0) {
                 clamped = Math.round((clamped - min) / step) * step + min;
@@ -162,7 +178,13 @@ export const JOG = {
 
             const valDisp = cell.querySelector('.jog-val-disp');
             if (valDisp) {
-                const str = Math.abs(clamped) >= 100 ? clamped.toFixed(0) : (Math.abs(clamped) >= 10 ? clamped.toFixed(1) : clamped.toFixed(2));
+                let str = '';
+                if (m.stepType === '1semi') {
+                    str = cvToNoteName(clamped);
+                } else {
+                    const num = Number(clamped);
+                    str = Math.abs(num) >= 100 ? num.toFixed(0) : (Math.abs(num) >= 10 ? num.toFixed(1) : num.toFixed(2));
+                }
                 valDisp.textContent = str;
             }
             const cvs = cell.querySelector('.jog-canvas');
@@ -190,7 +212,7 @@ export const JOG = {
             const min = m.min ?? -1.0;
             const max = m.max ?? 1.0;
             const range = max - min;
-            // Drag sensitivity: 100px drag traverses the full range
+            // Drag sensitivity: 120px drag traverses the full range
             const sensitivity = range / 120.0;
             const targetVal = startVal + deltaY * sensitivity;
             updateVal(targetVal);
@@ -199,9 +221,6 @@ export const JOG = {
         const handleUp = () => {
             if (!isInteracting) return;
             isInteracting = false;
-            if (m.mode === 'spring') {
-                updateVal(m.def ?? 0.0);
-            }
         };
 
         jogBox.addEventListener('pointerdown', (e) => {
@@ -232,57 +251,149 @@ export const JOG = {
         const curMax = m.max ?? 1.0;
         const curDef = m.def ?? 0.0;
         const curMin = m.min ?? -1.0;
-        const curStep = m.step ?? 0.01;
+        const curStepType = m.stepType || '0.01';
+
+        const fmt = (val) => curStepType === '1semi' ? `${cvToNoteName(val)} (${Number(val).toFixed(2)})` : Number(val).toFixed(2);
+
+        const stepBtns = [
+            { id: '0.01', label: '0.01' },
+            { id: '0.1', label: '0.1' },
+            { id: '1semi', label: '1semi' },
+            { id: '1', label: '1' },
+            { id: '10', label: '10' }
+        ];
 
         return `
-            <div class="space-y-1.5 select-none text-[9px]">
+            <div class="space-y-2 select-none text-[9px]">
                 <!-- MAX Row (Top) -->
-                <div class="flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded px-2 py-1">
-                    <span class="font-bold text-slate-300 tracking-wider">MAX (最大値)</span>
-                    <input id="jog-max-input" type="number" step="any" value="${curMax}" class="w-24 bg-slate-900 border border-slate-700 focus:border-amber-500 rounded px-1.5 py-0.5 text-right font-mono font-bold text-amber-300 focus:outline-none">
+                <div class="flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded px-2.5 py-1.5">
+                    <span class="font-bold text-slate-400 tracking-wider">MAX (最大値)</span>
+                    <div id="jog-scrub-max" class="cursor-ns-resize touch-none select-none px-2 py-0.5 rounded bg-slate-900 border border-slate-700 hover:border-amber-500 font-mono font-bold text-amber-300 min-w-[70px] text-right transition-colors" title="上下スワイプで増減 / タップで手入力">${fmt(curMax)}</div>
                 </div>
 
                 <!-- DEFAULT Row (Middle) -->
-                <div class="flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded px-2 py-1">
-                    <span class="font-bold text-slate-300 tracking-wider">DEFAULT (初期値)</span>
-                    <input id="jog-def-input" type="number" step="any" value="${curDef}" class="w-24 bg-slate-900 border border-slate-700 focus:border-amber-500 rounded px-1.5 py-0.5 text-right font-mono font-bold text-amber-300 focus:outline-none">
+                <div class="flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded px-2.5 py-1.5">
+                    <span class="font-bold text-slate-400 tracking-wider">DEFAULT (初期値)</span>
+                    <div id="jog-scrub-def" class="cursor-ns-resize touch-none select-none px-2 py-0.5 rounded bg-slate-900 border border-slate-700 hover:border-amber-500 font-mono font-bold text-amber-300 min-w-[70px] text-right transition-colors" title="上下スワイプで増減 / タップで手入力">${fmt(curDef)}</div>
                 </div>
 
                 <!-- MIN Row (Bottom) -->
-                <div class="flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded px-2 py-1">
-                    <span class="font-bold text-slate-300 tracking-wider">MIN (下限値)</span>
-                    <input id="jog-min-input" type="number" step="any" value="${curMin}" class="w-24 bg-slate-900 border border-slate-700 focus:border-amber-500 rounded px-1.5 py-0.5 text-right font-mono font-bold text-amber-300 focus:outline-none">
+                <div class="flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded px-2.5 py-1.5">
+                    <span class="font-bold text-slate-400 tracking-wider">MIN (下限値)</span>
+                    <div id="jog-scrub-min" class="cursor-ns-resize touch-none select-none px-2 py-0.5 rounded bg-slate-950 border border-slate-700 hover:border-amber-500 font-mono font-bold text-amber-300 min-w-[70px] text-right transition-colors" title="上下スワイプで増減 / タップで手入力">${fmt(curMin)}</div>
                 </div>
 
-                <!-- STEP Row (Bottom-most) -->
-                <div class="flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded px-2 py-1">
-                    <span class="font-bold text-slate-300 tracking-wider">STEP (1目盛差分)</span>
-                    <input id="jog-step-input" type="number" step="any" value="${curStep}" class="w-24 bg-slate-900 border border-slate-700 focus:border-amber-500 rounded px-1.5 py-0.5 text-right font-mono font-bold text-amber-300 focus:outline-none">
+                <!-- STEP Button Group (Bottom-most) -->
+                <div class="flex flex-col gap-1 bg-slate-950/80 border border-slate-800 rounded px-2.5 py-1.5">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-slate-400 tracking-wider">STEP (差分刻み)</span>
+                        <span class="font-mono text-[8px] text-amber-400/80 font-bold">${curStepType === '1semi' ? '1半音 (1/12V)' : curStepType}</span>
+                    </div>
+                    <div class="grid grid-cols-5 gap-1 pt-0.5">
+                        ${stepBtns.map(btn => `
+                            <button class="jog-step-btn h-5 rounded font-mono font-bold text-[8.5px] border leading-none transition-colors ${curStepType === btn.id ? 'bg-amber-600 text-white border-amber-400 shadow-sm' : 'bg-slate-900 text-slate-400 border-slate-700/80 hover:text-slate-200'}" data-step="${btn.id}">
+                                ${btn.label}
+                            </button>
+                        `).join('')}
+                    </div>
                 </div>
             </div>`;
     },
 
     bindEvents: (m, ctx, onChange) => {
-        const updateParams = () => {
-            const maxEl = document.getElementById('jog-max-input');
-            const defEl = document.getElementById('jog-def-input');
-            const minEl = document.getElementById('jog-min-input');
-            const stepEl = document.getElementById('jog-step-input');
+        // 1. STEP Button Group events
+        document.querySelectorAll('.jog-step-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const stepKey = btn.dataset.step;
+                if (!stepKey) return;
+                m.stepType = stepKey;
+                if (stepKey === '1semi') m.step = 1.0 / 12.0;
+                else m.step = parseFloat(stepKey) || 0.01;
 
-            if (maxEl) m.max = parseFloat(maxEl.value) || 1.0;
-            if (defEl) m.def = parseFloat(defEl.value) || 0.0;
-            if (minEl) m.min = parseFloat(minEl.value) || -1.0;
-            if (stepEl) m.step = Math.max(0, parseFloat(stepEl.value) || 0.01);
+                ctx.reRenderModal();
+                onChange();
+            });
+        });
 
-            if (m.min > m.max) [m.min, m.max] = [m.max, m.min];
-            m.val = Math.max(m.min, Math.min(m.max, m.val ?? m.def));
+        // 2. Scrubbable Badges for MAX, DEFAULT, MIN
+        const setupScrub = (id, propKey, label) => {
+            const el = document.getElementById(id);
+            if (!el) return;
 
-            onChange();
+            let isDragging = false;
+            let startY = 0;
+            let startVal = 0;
+            let moved = false;
+
+            const onPointerMove = (e) => {
+                if (!isDragging) return;
+                e.preventDefault();
+                const deltaY = startY - e.clientY;
+                if (Math.abs(deltaY) > 3) moved = true;
+
+                const stepAmount = (m.stepType === '1semi') ? (1.0 / 12.0) : (parseFloat(m.stepType) || 0.1);
+                // 15px drag step
+                const stepsCount = Math.round(deltaY / 15);
+                let targetVal = startVal + stepsCount * stepAmount;
+
+                m[propKey] = targetVal;
+                if (m.min !== undefined && m.max !== undefined && m.min > m.max) {
+                    if (propKey === 'min') m.max = m.min;
+                    else if (propKey === 'max') m.min = m.max;
+                }
+                m.val = Math.max(m.min ?? -1.0, Math.min(m.max ?? 1.0, m.val ?? (m.def ?? 0.0)));
+
+                const fmt = (v) => m.stepType === '1semi' ? `${cvToNoteName(v)} (${Number(v).toFixed(2)})` : Number(v).toFixed(2);
+                el.textContent = fmt(m[propKey]);
+                onChange();
+            };
+
+            const onPointerUp = async (e) => {
+                if (!isDragging) return;
+                isDragging = false;
+                el._isDragging = false;
+                window.removeEventListener('pointermove', onPointerMove);
+                window.removeEventListener('pointerup', onPointerUp);
+                window.removeEventListener('pointercancel', onPointerUp);
+                el.classList.remove('ring-1', 'ring-amber-400', 'bg-amber-950/60');
+                try { el.releasePointerCapture(e.pointerId); } catch (_) {}
+
+                // Tap opens custom prompt for manual numeric input
+                if (!moved) {
+                    const cur = String(m[propKey] ?? 0);
+                    const res = await ctx.prompt(`${label} 入力`, cur);
+                    if (res !== null && res !== '') {
+                        const num = parseFloat(res);
+                        if (!isNaN(num)) {
+                            m[propKey] = num;
+                            if (m.min > m.max) [m.min, m.max] = [m.max, m.min];
+                            m.val = Math.max(m.min, Math.min(m.max, m.val ?? (m.def ?? 0.0)));
+                            ctx.reRenderModal();
+                            onChange();
+                        }
+                    }
+                }
+            };
+
+            el.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                isDragging = true;
+                el._isDragging = true;
+                moved = false;
+                startY = e.clientY;
+                startVal = m[propKey] ?? 0.0;
+                el.classList.add('ring-1', 'ring-amber-400', 'bg-amber-950/60');
+                try { el.setPointerCapture(e.pointerId); } catch (_) {}
+                window.addEventListener('pointermove', onPointerMove, { passive: false });
+                window.addEventListener('pointerup', onPointerUp);
+                window.addEventListener('pointercancel', onPointerUp);
+            });
         };
 
-        ['jog-max-input', 'jog-def-input', 'jog-min-input', 'jog-step-input'].forEach(id => {
-            document.getElementById(id)?.addEventListener('change', updateParams);
-        });
+        setupScrub('jog-scrub-max', 'max', 'MAX (最大値)');
+        setupScrub('jog-scrub-def', 'def', 'DEFAULT (初期値)');
+        setupScrub('jog-scrub-min', 'min', 'MIN (下限値)');
     }
 };
 
