@@ -110,10 +110,9 @@ export const JOG = {
         // 3. Cylinder Grooves / Knurling Lines in SOLID BLACK
         const numVisibleGrooves = 8;
         const spacing = h / (numVisibleGrooves - 1);
-        const stepVal = (m.stepType === '1semi') ? (1.0 / 12.0) : (parseFloat(m.stepType) || m.step || 0.01);
-        // Grooves follow steps rotated: each 1 step rotates the wheel by 1 groove spacing
-        const stepsRotated = (curVal - minVal) / (stepVal > 0 ? stepVal : 0.01);
-        const phaseOffset = ((stepsRotated * spacing) % spacing + spacing) % spacing;
+        // Grooves follow drag or continuous value smoothly
+        const phaseVal = (m._dragOffset !== undefined) ? m._dragOffset : (norm * h * 3.5);
+        const phaseOffset = spacing - ((phaseVal % spacing + spacing) % spacing);
 
         ctx.lineWidth = isModal ? 2.0 : 1.4;
         for (let y = -spacing + phaseOffset; y <= h + spacing; y += spacing) {
@@ -162,6 +161,7 @@ export const JOG = {
         let isInteracting = false;
         let startY = 0;
         let startVal = 0;
+        let startDragOffset = 0;
 
         const getStepValue = () => {
             if (m.stepType === '1semi') return 1.0 / 12.0; // 1 semitone
@@ -202,11 +202,13 @@ export const JOG = {
             isInteracting = true;
             startY = clientY;
             startVal = m.val ?? (m.def ?? 0.0);
+            startDragOffset = m._dragOffset || 0;
         };
 
         const handleMove = (clientY) => {
             if (!isInteracting) return;
             const deltaY = startY - clientY; // upward drag increases value
+            m._dragOffset = startDragOffset + deltaY;
             const step = getStepValue();
             // Gear-linked sensitivity: 8px drag = exactly 1 STEP change
             const stepsCount = Math.round(deltaY / 8.0);
