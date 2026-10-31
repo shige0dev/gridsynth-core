@@ -42,8 +42,8 @@ export const PAT = {
             { port: 'reset_in', color: 'bg-red-500' }
         ],
         out: [
-            { port: 'cv_out', color: 'bg-yellow-400' },
-            { port: 'gate_out', color: 'bg-red-500' }
+            { port: 'gate_out', pin: 10, color: 'bg-red-500' },
+            { port: 'cv_out', pin: 11, color: 'bg-yellow-400' }
         ]
     }),
     renderGrid: (m) => {

@@ -1261,6 +1261,9 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
       - `SCOPE`: 入力ピン（PIN 5）をオーディオ青（`wave_in`）から CV 黄色（`cv_in`: `bg-yellow-400`）に変更。後方互換性のため `PORT_ALIASES`（`'cv_in': 'wave_in'`）および `src/audio/defs/scope.js`（`inputs: { wave_in, cv_in }`）の両方で受信可能に設定。
       - `PAT`: `CLK` と同様のリセットピン（`reset_in`: `bg-red-500`）を追加し、RUN 端子（`run_in`: `bg-emerald-500`）との2系統入力仕様へ拡張。AudioWorklet `pat-processor` にて立ち上がり検知（`> 0.001`）による即時リセット処理（`phase=0`, `activeIdx=-1`）を実装。
       - バージョンを `v1.0.0467`、キャッシュバスターを `v=467` に更新。
+    - **PAT モジュールの出力端子配置調整（v1.0.0468）**:
+      - `PAT`: 出力端子のピンアサインを SEQ モジュール等と統一し、`gate_out`（赤 `bg-red-500`）を最下段の PIN 10（下）、`cv_out`（黄 `bg-yellow-400`）を右辺 PIN 11（上）へ変更。
+      - バージョンを `v1.0.0468`、キャッシュバスターを `v=468` に更新。
 
 
 
