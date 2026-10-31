@@ -1298,6 +1298,14 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
         - サブパッチのジャンル絞り込み（`ALL` / `SYNTH` / `PERC` / `FX`）ボタンを上部に配置。
         - 基本モジュールとサブパッチが完全独立し、縦スクロールなしで快適にモジュール選定が可能に。
       - バージョンを `v1.0.0474`、キャッシュバスターを `v=474` に更新。
+    - **16パッドドラムキットのタム自然化＆カウベル追加（v1.0.0475）**:
+      - `src/presets/subpatches.js`:
+        - `FACTORY_TOM`（`TechnoTom`）/ `FACTORY_HIGH_TOM`（`HighTom`）: 電子シンセ風の過剰なピッチベンドダイブを抑制し、自然なアタックトランジェントと深みのあるドラムヘッド胴鳴り（サイン波＋急速微小ベンド）に再設計。
+        - 不要な中音タム `FACTORY_MID_TOM` を廃止。
+        - 新規サブパッチ `FACTORY_COWBELL`（`Cowbell`）を新設（Roland TR-808 スタイルのデュアル短形波 540Hz/800Hz ＋ バンドパスフィルター 1200Hz ＋ ディケイVCA）。
+      - `src/presets/demos/14_16_pad_drumkit.js`:
+        - Row 2 のパッド並びを `LOW TOM` → `HIGH TOM` → `COWBELL`（Slot 10 / PAD11 / SUB11）→ `PERC 1` に再編成。
+      - バージョンを `v1.0.0475`、キャッシュバスターを `v=475` に更新。
 
 
 

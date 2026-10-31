@@ -467,12 +467,12 @@ export const FACTORY_SUBPATCHES = {
         subType: 'TechnoTom',
         format: 'gridsynth-submodule',
         version: '2.1',
-        name: 'TECHNO TOM',
+        name: 'LOW TOM',
         category: 'Percussion',
         isSystem: true,
-        description: 'Polyrhythmic Acid/Tribal Tom (Tuned Triangle Pitch-bend + Deep Resonant Body)',
+        description: 'Deep resonant low tom with natural punch and organic acoustic decay',
         manifest: {
-            description: 'テクノタム（ピッチベンド三角波＋深みのあるレゾナンスボディ）',
+            description: 'ロータム（自然な打撃アタックと深く豊かなアコースティック胴鳴り）',
             ports: {
                 trig_in: { pin: 'PIN5', signal: 'gate' },
                 wave_out: { pin: 'PIN10', signal: 'audio' }
@@ -483,7 +483,7 @@ export const FACTORY_SUBPATCHES = {
             PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
-            name: 'TECHNO TOM',
+            name: 'LOW TOM',
             slots: {
                 "2": "SUB_IO1",
                 "5": "MATH2_1",
@@ -495,11 +495,11 @@ export const FACTORY_SUBPATCHES = {
             },
             modules: {
                 "SUB_IO1": { "type": "SUB_IO", "col": 2, "row": 0 },
-                "MATH2_1": { "type": "MATH2", "mode": "MULTI", "valA": 0.0, "valB": 1.8, "col": 0, "row": 1 },
-                "MATH2_2": { "type": "MATH2", "mode": "ADD", "valA": 0.0, "valB": 1.6, "col": 1, "row": 1 },
-                "ADSR1": { "type": "ADSR", "attack": 0.0005, "attackCurve": -0.5, "decay": 0.045, "decayCurve": -0.8, "sustain": 0.0, "release": 0.02, "releaseCurve": -0.8, "col": 2, "row": 1 },
-                "ADSR2": { "type": "ADSR", "attack": 0.0005, "attackCurve": -0.5, "decay": 0.35, "decayCurve": -0.45, "sustain": 0.0, "release": 0.06, "releaseCurve": -0.4, "col": 3, "row": 1 },
-                "VCO1": { "type": "VCO", "channels": 1, "freq1": 100, "wave": "triangle", "quantize": false, "col": 1, "row": 2 },
+                "MATH2_1": { "type": "MATH2", "mode": "MULTI", "valA": 0.0, "valB": 0.45, "col": 0, "row": 1 },
+                "MATH2_2": { "type": "MATH2", "mode": "ADD", "valA": 0.0, "valB": 1.2, "col": 1, "row": 1 },
+                "ADSR1": { "type": "ADSR", "attack": 0.0005, "attackCurve": -0.8, "decay": 0.015, "decayCurve": -0.9, "sustain": 0.0, "release": 0.01, "releaseCurve": -0.9, "col": 2, "row": 1 },
+                "ADSR2": { "type": "ADSR", "attack": 0.001, "attackCurve": -0.4, "decay": 0.28, "decayCurve": -0.6, "sustain": 0.0, "release": 0.05, "releaseCurve": -0.6, "col": 3, "row": 1 },
+                "VCO1": { "type": "VCO", "channels": 1, "freq1": 85, "wave": "sine", "quantize": false, "col": 1, "row": 2 },
                 "VCA1": { "type": "VCA", "level": 0.0, "col": 2, "row": 2 }
             },
             connections: [
@@ -788,17 +788,17 @@ export const FACTORY_SUBPATCHES = {
             ]
         }
     },
-    'FACTORY_MID_TOM': {
-        id: 'FACTORY_MID_TOM',
-        subType: 'MidTom',
+    'FACTORY_COWBELL': {
+        id: 'FACTORY_COWBELL',
+        subType: 'Cowbell',
         format: 'gridsynth-submodule',
         version: '2.1',
-        name: 'MID TOM',
+        name: 'COWBELL',
         category: 'Percussion',
         isSystem: true,
-        description: 'Medium pitch techno tom with snappy pitch-bend and resonant decay',
+        description: 'Classic 808-style dual-pulse cowbell with resonant bandpass body',
         manifest: {
-            description: '中音域のミドルタム。軽快なアタックと豊かな胴鳴り',
+            description: 'カウベル（808スタイルのデュアル矩形波＋バンドパスフィルターによる金属打音）',
             ports: {
                 trig_in: { pin: 'PIN5', signal: 'gate' },
                 wave_out: { pin: 'PIN10', signal: 'audio' }
@@ -809,33 +809,26 @@ export const FACTORY_SUBPATCHES = {
             PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
-            name: 'MID TOM',
+            name: 'COWBELL',
             slots: {
                 "2": "SUB_IO1",
-                "5": "MATH2_1",
-                "6": "MATH2_2",
+                "6": "VCO1",
                 "7": "ADSR1",
-                "8": "ADSR2",
-                "11": "VCO1",
-                "12": "VCA1"
+                "10": "VCF1",
+                "11": "VCA1"
             },
             modules: {
                 "SUB_IO1": { "type": "SUB_IO", "col": 2, "row": 0 },
-                "MATH2_1": { "type": "MATH2", "mode": "MULTI", "valA": 0.0, "valB": 1.7, "col": 0, "row": 1 },
-                "MATH2_2": { "type": "MATH2", "mode": "ADD", "valA": 0.0, "valB": 2.1, "col": 1, "row": 1 },
-                "ADSR1": { "type": "ADSR", "attack": 0.0005, "attackCurve": -0.5, "decay": 0.04, "decayCurve": -0.8, "sustain": 0.0, "release": 0.02, "releaseCurve": -0.8, "col": 2, "row": 1 },
-                "ADSR2": { "type": "ADSR", "attack": 0.0005, "attackCurve": -0.5, "decay": 0.28, "decayCurve": -0.5, "sustain": 0.0, "release": 0.05, "releaseCurve": -0.5, "col": 3, "row": 1 },
-                "VCO1": { "type": "VCO", "channels": 1, "freq1": 140, "wave": "triangle", "quantize": false, "col": 1, "row": 2 },
-                "VCA1": { "type": "VCA", "level": 0.0, "col": 2, "row": 2 }
+                "VCO1": { "type": "VCO", "channels": 2, "freq1": 540, "freq2": 800, "wave": "square", "quantize": false, "col": 2, "row": 1 },
+                "ADSR1": { "type": "ADSR", "attack": 0.0005, "attackCurve": -0.8, "decay": 0.22, "decayCurve": -0.7, "sustain": 0.0, "release": 0.04, "releaseCurve": -0.7, "col": 3, "row": 1 },
+                "VCF1": { "type": "VCF", "filterType": "bandpass", "cutoff": 1200, "q": 4.5, "modDepth": 0, "col": 2, "row": 2 },
+                "VCA1": { "type": "VCA", "level": 0.0, "col": 3, "row": 2 }
             },
             connections: [
                 { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "ADSR1", port: "gate_in" } },
-                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "ADSR2", port: "gate_in" } },
-                { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "MATH2_1", port: "cv_in_a" } },
-                { from: { moduleId: "MATH2_1", port: "cv_out" }, to: { moduleId: "MATH2_2", port: "cv_in_a" } },
-                { from: { moduleId: "MATH2_2", port: "cv_out" }, to: { moduleId: "VCO1", port: "cv_in" } },
-                { from: { moduleId: "VCO1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
-                { from: { moduleId: "ADSR2", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
+                { from: { moduleId: "VCO1", port: "wave_out" }, to: { moduleId: "VCF1", port: "wave_in" } },
+                { from: { moduleId: "VCF1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
+                { from: { moduleId: "ADSR1", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
                 { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }
             ]
         }
@@ -848,9 +841,9 @@ export const FACTORY_SUBPATCHES = {
         name: 'HIGH TOM',
         category: 'Percussion',
         isSystem: true,
-        description: 'High pitched tribal/techno tom with tight attack and resonant punch',
+        description: 'High pitched punchy tom with tight attack and resonant acoustic body',
         manifest: {
-            description: '高音域のハイタム。タイトな音程ベンドと鋭いインパクト',
+            description: 'ハイタム（タイトな打撃アタックとパンチの効いたアコースティック胴鳴り）',
             ports: {
                 trig_in: { pin: 'PIN5', signal: 'gate' },
                 wave_out: { pin: 'PIN10', signal: 'audio' }
@@ -873,11 +866,11 @@ export const FACTORY_SUBPATCHES = {
             },
             modules: {
                 "SUB_IO1": { "type": "SUB_IO", "col": 2, "row": 0 },
-                "MATH2_1": { "type": "MATH2", "mode": "MULTI", "valA": 0.0, "valB": 1.5, "col": 0, "row": 1 },
-                "MATH2_2": { "type": "MATH2", "mode": "ADD", "valA": 0.0, "valB": 2.6, "col": 1, "row": 1 },
-                "ADSR1": { "type": "ADSR", "attack": 0.0005, "attackCurve": -0.5, "decay": 0.035, "decayCurve": -0.85, "sustain": 0.0, "release": 0.02, "releaseCurve": -0.8, "col": 2, "row": 1 },
-                "ADSR2": { "type": "ADSR", "attack": 0.0005, "attackCurve": -0.5, "decay": 0.22, "decayCurve": -0.55, "sustain": 0.0, "release": 0.04, "releaseCurve": -0.5, "col": 3, "row": 1 },
-                "VCO1": { "type": "VCO", "channels": 1, "freq1": 195, "wave": "triangle", "quantize": false, "col": 1, "row": 2 },
+                "MATH2_1": { "type": "MATH2", "mode": "MULTI", "valA": 0.0, "valB": 0.45, "col": 0, "row": 1 },
+                "MATH2_2": { "type": "MATH2", "mode": "ADD", "valA": 0.0, "valB": 2.0, "col": 1, "row": 1 },
+                "ADSR1": { "type": "ADSR", "attack": 0.0005, "attackCurve": -0.8, "decay": 0.015, "decayCurve": -0.9, "sustain": 0.0, "release": 0.01, "releaseCurve": -0.9, "col": 2, "row": 1 },
+                "ADSR2": { "type": "ADSR", "attack": 0.001, "attackCurve": -0.4, "decay": 0.20, "decayCurve": -0.65, "sustain": 0.0, "release": 0.03, "releaseCurve": -0.65, "col": 3, "row": 1 },
+                "VCO1": { "type": "VCO", "channels": 1, "freq1": 150, "wave": "sine", "quantize": false, "col": 1, "row": 2 },
                 "VCA1": { "type": "VCA", "level": 0.0, "col": 2, "row": 2 }
             },
             connections: [
