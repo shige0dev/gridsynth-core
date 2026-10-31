@@ -253,15 +253,15 @@ const extractBands = (freqs, numBands = 96, sampleRate = 48000) => {
     return { bands, peakVal, peakFreq };
 };
 
-const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal) => {
+const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, view, isModal) => {
     ctx.clearRect(0, 0, w, h);
 
     if (!historyBands || historyBands.length === 0) return;
     const n = historyBands[0].length;
     const bandsPerOct = 12;
 
-    // --- 1. MODAL (ALWAYS 2D FLAT CLEAR VIEW) ---
-    if (isModal) {
+    // --- 1. 2D FLAT VIEW (MODAL or PANEL when view === '2d') ---
+    if (isModal || view === '2d') {
         const bands = historyBands[0];
         ctx.strokeStyle = '#1e293b';
         ctx.lineWidth = 0.6;
@@ -276,39 +276,41 @@ const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal) => {
         const gap = 1.0;
         const barW = (w - gap * (n - 1)) / n;
 
-        const octFreqs = [
-            { f: 55, l: '55' },
-            { f: 110, l: '110' },
-            { f: 220, l: '220' },
-            { f: 440, l: '440', isA4: true },
-            { f: 880, l: '880' },
-            { f: 1760, l: '1.7k' },
-            { f: 3520, l: '3.5k' },
-            { f: 7040, l: '7k' },
-            { f: 14080, l: '14k' }
-        ];
+        if (isModal) {
+            const octFreqs = [
+                { f: 55, l: '55' },
+                { f: 110, l: '110' },
+                { f: 220, l: '220' },
+                { f: 440, l: '440', isA4: true },
+                { f: 880, l: '880' },
+                { f: 1760, l: '1.7k' },
+                { f: 3520, l: '3.5k' },
+                { f: 7040, l: '7k' },
+                { f: 14080, l: '14k' }
+            ];
 
-        octFreqs.forEach(item => {
-            const b = bandsPerOct * Math.log2(item.f / 55);
-            if (b >= 0 && b <= n) {
-                const x = mode === 'bar' ? (b < n ? b * (barW + gap) + barW / 2 : w - 1) : ((b / (n - 1)) * w);
-                ctx.save();
-                ctx.strokeStyle = item.isA4 ? 'rgba(45, 212, 191, 0.85)' : 'rgba(148, 163, 184, 0.45)';
-                ctx.lineWidth = item.isA4 ? 1.2 : 0.8;
-                ctx.setLineDash(item.isA4 ? [3, 2] : [2, 2]);
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, h);
-                ctx.stroke();
+            octFreqs.forEach(item => {
+                const b = bandsPerOct * Math.log2(item.f / 55);
+                if (b >= 0 && b <= n) {
+                    const x = mode === 'bar' ? (b < n ? b * (barW + gap) + barW / 2 : w - 1) : ((b / (n - 1)) * w);
+                    ctx.save();
+                    ctx.strokeStyle = item.isA4 ? 'rgba(45, 212, 191, 0.85)' : 'rgba(148, 163, 184, 0.45)';
+                    ctx.lineWidth = item.isA4 ? 1.2 : 0.8;
+                    ctx.setLineDash(item.isA4 ? [3, 2] : [2, 2]);
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, h);
+                    ctx.stroke();
 
-                ctx.font = 'bold 8.5px ui-monospace, monospace';
-                ctx.fillStyle = item.isA4 ? '#2dd4bf' : '#cbd5e1';
-                ctx.textAlign = 'center';
-                const clampedX = Math.max(10, Math.min(w - 10, x));
-                ctx.fillText(item.l, clampedX, 10);
-                ctx.restore();
-            }
-        });
+                    ctx.font = 'bold 8.5px ui-monospace, monospace';
+                    ctx.fillStyle = item.isA4 ? '#2dd4bf' : '#cbd5e1';
+                    ctx.textAlign = 'center';
+                    const clampedX = Math.max(10, Math.min(w - 10, x));
+                    ctx.fillText(item.l, clampedX, 10);
+                    ctx.restore();
+                }
+            });
+        }
 
         if (mode === 'bar') {
             for (let i = 0; i < n; i++) {
@@ -405,41 +407,6 @@ const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal) => {
         x: cx + nx * Vx.x + ny * Vy.x + nz * Vz.x,
         y: cy + nx * Vx.y + ny * Vy.y + nz * Vz.y
     });
-
-    // Draw origin-centered Unit-2 Cube Guideline ([-1, 1]^3)
-    ctx.save();
-    ctx.strokeStyle = 'rgba(100, 116, 139, 0.45)';
-    ctx.lineWidth = 0.8;
-    ctx.setLineDash([2, 2]);
-
-    const cubeEdges = [
-        // Bottom square (nz = -1)
-        [[-1, -1, -1], [ 1, -1, -1]],
-        [[ 1, -1, -1], [ 1,  1, -1]],
-        [[ 1,  1, -1], [-1,  1, -1]],
-        [[-1,  1, -1], [-1, -1, -1]],
-        // Top square (nz = 1)
-        [[-1, -1,  1], [ 1, -1,  1]],
-        [[ 1, -1,  1], [ 1,  1,  1]],
-        [[ 1,  1,  1], [-1,  1,  1]],
-        [[-1,  1,  1], [-1, -1,  1]],
-        // Vertical pillars
-        [[-1, -1, -1], [-1, -1,  1]],
-        [[ 1, -1, -1], [ 1, -1,  1]],
-        [[ 1,  1, -1], [ 1,  1,  1]],
-        [[-1,  1, -1], [-1,  1,  1]]
-    ];
-
-    ctx.beginPath();
-    for (let e = 0; e < cubeEdges.length; e++) {
-        const [pA, pB] = cubeEdges[e];
-        const sA = project3D(pA[0], pA[1], pA[2]);
-        const sB = project3D(pB[0], pB[1], pB[2]);
-        ctx.moveTo(sA.x, sA.y);
-        ctx.lineTo(sB.x, sB.y);
-    }
-    ctx.stroke();
-    ctx.restore();
 
     // Spectrum Mapping onto normalized [-1, 1] space:
     // Frequency u [0, 1] -> nx in [-1, 1]
@@ -592,7 +559,7 @@ const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal) => {
 
 export const SPEC = {
     color: 'teal',
-    defaults: () => ({ type: 'SPEC', mode: 'bar', smooth: 0.75 }),
+    defaults: () => ({ type: 'SPEC', mode: 'bar', view: '3d', smooth: 0.75 }),
     ports: () => ({
         in: [{ port: 'wave_in', pin: 5, color: 'bg-blue-500' }],
         out: []
@@ -606,6 +573,7 @@ export const SPEC = {
         if (!data?.freqs) return;
         const { bands } = extractBands(data.freqs, 96, data.sampleRate || 48000);
         const mode = m.mode || 'bar';
+        const view = m.view || '3d';
 
         // Maintain 5-slice history buffer on the module instance
         if (!m._historyBands) {
@@ -625,10 +593,11 @@ export const SPEC = {
             m._historyBands[0].set(bands);
         }
 
-        renderDualCanvases(cell, modal, '.spec-canvas', '#spec-modal-canvas', (c, w, h, isM) => drawSpectrumCanvas(c, w, h, m._historyBands, mode, isM));
+        renderDualCanvases(cell, modal, '.spec-canvas', '#spec-modal-canvas', (c, w, h, isM) => drawSpectrumCanvas(c, w, h, m._historyBands, mode, view, isM));
     },
     renderModal: (m) => {
         const curMode = m.mode || 'bar';
+        const curView = m.view || '3d';
         return `
             <div class="space-y-1.5">
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800 select-none">
@@ -636,6 +605,11 @@ export const SPEC = {
                         <span class="text-[8px] text-slate-400 font-bold uppercase tracking-tight">STYLE:</span>
                         <button id="spec-mode-bar" class="h-4 px-1.5 rounded text-[8px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${curMode === 'bar' ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">BAR</button>
                         <button id="spec-mode-curve" class="h-4 px-1.5 rounded text-[8px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${curMode === 'curve' ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">CURVE</button>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="text-[8px] text-slate-400 font-bold uppercase tracking-tight">VIEW:</span>
+                        <button id="spec-view-2d" class="h-4 px-1.5 rounded text-[8px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${curView === '2d' ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">2D</button>
+                        <button id="spec-view-3d" class="h-4 px-1.5 rounded text-[8px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${curView === '3d' ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">3D</button>
                     </div>
                 </div>
 
@@ -652,6 +626,16 @@ export const SPEC = {
         });
         document.getElementById('spec-mode-curve')?.addEventListener('click', () => {
             m.mode = 'curve';
+            ctx.reRenderModal();
+            cb();
+        });
+        document.getElementById('spec-view-2d')?.addEventListener('click', () => {
+            m.view = '2d';
+            ctx.reRenderModal();
+            cb();
+        });
+        document.getElementById('spec-view-3d')?.addEventListener('click', () => {
+            m.view = '3d';
             ctx.reRenderModal();
             cb();
         });
