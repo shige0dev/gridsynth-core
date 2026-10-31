@@ -413,7 +413,7 @@ export const FACTORY_SUBPATCHES = {
         isSystem: true,
         description: 'Authentic 909 Multi-Burst Hand Clap (Dual CVDELAY + Triple Burst ADSR + Bandpass Resonant Noise)',
         manifest: {
-            description: '909スタイル・マルチバースト・ハンドクラップ（3連バーストエンベロープ）',
+            description: '909スタイル・マルチバースト・ハンドクラップ（3連バーストエンベロープ＋ワイドテール）',
             ports: {
                 trig_in: { pin: 'PIN5', signal: 'gate' },
                 wave_out: { pin: 'PIN10', signal: 'audio' }
@@ -438,13 +438,13 @@ export const FACTORY_SUBPATCHES = {
             },
             modules: {
                 "SUB_IO1": { "type": "SUB_IO", "col": 2, "row": 0 },
-                "CVDELAY1": { "type": "CVDELAY", "timeMs": 11, "col": 0, "row": 1 },
-                "CVDELAY2": { "type": "CVDELAY", "timeMs": 22, "col": 1, "row": 1 },
-                "ADSR1": { "type": "ADSR", "attack": 0.0005, "attackCurve": -0.5, "decay": 0.010, "decayCurve": -0.85, "sustain": 0.0, "release": 0.005, "releaseCurve": -0.8, "col": 2, "row": 1 },
-                "ADSR2": { "type": "ADSR", "attack": 0.0005, "attackCurve": -0.5, "decay": 0.010, "decayCurve": -0.85, "sustain": 0.0, "release": 0.005, "releaseCurve": -0.8, "col": 3, "row": 1 },
-                "ADSR3": { "type": "ADSR", "attack": 0.0005, "attackCurve": -0.5, "decay": 0.18, "decayCurve": -0.55, "sustain": 0.0, "release": 0.04, "releaseCurve": -0.6, "col": 4, "row": 1 },
-                "NOISE1": { "type": "NOISE", "noiseType": "white", "tone": 6000, "level": 1.0, "col": 0, "row": 2 },
-                "VCF1": { "type": "VCF", "filterType": "bandpass", "cutoff": 1300, "q": 2.2, "modDepth": 0, "col": 1, "row": 2 },
+                "CVDELAY1": { "type": "CVDELAY", "timeMs": 18, "col": 0, "row": 1 },
+                "CVDELAY2": { "type": "CVDELAY", "timeMs": 36, "col": 1, "row": 1 },
+                "ADSR1": { "type": "ADSR", "attack": 0.0005, "attackCurve": -0.5, "decay": 0.012, "decayCurve": -0.85, "sustain": 0.0, "release": 0.005, "releaseCurve": -0.8, "col": 2, "row": 1 },
+                "ADSR2": { "type": "ADSR", "attack": 0.0005, "attackCurve": -0.5, "decay": 0.014, "decayCurve": -0.85, "sustain": 0.0, "release": 0.005, "releaseCurve": -0.8, "col": 3, "row": 1 },
+                "ADSR3": { "type": "ADSR", "attack": 0.001, "attackCurve": -0.4, "decay": 0.25, "decayCurve": -0.5, "sustain": 0.0, "release": 0.05, "releaseCurve": -0.5, "col": 4, "row": 1 },
+                "NOISE1": { "type": "NOISE", "noiseType": "white", "tone": 6500, "level": 1.0, "col": 0, "row": 2 },
+                "VCF1": { "type": "VCF", "filterType": "bandpass", "cutoff": 1250, "q": 1.8, "modDepth": 0, "col": 1, "row": 2 },
                 "VCA1": { "type": "VCA", "level": 0.0, "col": 2, "row": 2 }
             },
             connections: [

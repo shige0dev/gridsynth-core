@@ -1306,6 +1306,18 @@ GridSynth を AI（LLM）や外部エージェント、外部DAW/ハードウェ
       - `src/presets/demos/14_16_pad_drumkit.js`:
         - Row 2 のパッド並びを `LOW TOM` → `HIGH TOM` → `COWBELL`（Slot 10 / PAD11 / SUB11）→ `PERC 1` に再編成。
       - バージョンを `v1.0.0475`、キャッシュバスターを `v=475` に更新。
+    - **CLAP 3連アタック拡散・広がり強化 & 16パッドドラムのマスターVCA＋ビジュアライザ集約（v1.0.0476）**:
+      - `src/presets/subpatches.js` (`FACTORY_CLAP` / `HandClap`):
+        - 3連バーストの時間差（`CVDELAY1` / `CVDELAY2`）を `11ms, 22ms` から **`18ms, 36ms`** へ拡大し、手のひらの重なり感・時間差をリアルに分離。
+        - 3打目のテールエンベロープ（`ADSR3`）の Decay を `0.25s` に延長し、バンドパスフィルター（`VCF1`）の Q 値を `1.8` に緩和して空気感・空間の広がりを付加。
+      - `src/presets/demos/14_16_pad_drumkit.js`:
+        - Row 8 をマスターセクションとして再構成:
+          - `Slot 32: VCA1`（全16音源の出力をまとめて受けるマスターVCA）
+          - `Slot 33: SCOPE1`（オシロスコープ）
+          - `Slot 34: SPEC1`（スペクトラムアナライザ）
+          - `Slot 35: SPK1`（スピーカー）
+        - 結線: 全16音源 → `VCA1`、`VCA1:wave_out` から `SPK1:wave_in_l/r`、`SCOPE1:cv_in`、`SPEC1:wave_in` へ接続。
+      - バージョンを `v1.0.0476`、キャッシュバスターを `v=476` に更新。
 
 
 

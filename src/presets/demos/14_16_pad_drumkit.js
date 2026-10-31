@@ -45,8 +45,11 @@ export const preset14 = {
                 "29": "SUB14",
                 "30": "SUB15",
                 "31": "SUB16",
-                // Row 8: Slot 32 (Master Speaker output)
-                "32": "SPK1"
+                // Row 8: Slots 32..35 (Master Summing VCA, Scope, Spectrum, and Speaker output)
+                "32": "VCA1",
+                "33": "SCOPE1",
+                "34": "SPEC1",
+                "35": "SPK1"
             },
             modules: {
                 // 16 Touch Pads (HSL color coded for instant visual recognition)
@@ -83,7 +86,10 @@ export const preset14 = {
                 "SUB14": { type: "SUB", subType: "GhostSnare" },
                 "SUB15": { type: "SUB", subType: "SubKick" },
                 "SUB16": { type: "SUB", subType: "CrashCymbal" },
-                // Output Stage
+                // Master Section
+                "VCA1": { type: "VCA", level: 0.8 },
+                "SCOPE1": { type: "SCOPE" },
+                "SPEC1": { type: "SPEC" },
                 "SPK1": { type: "SPK", masterVol: 0.6 }
             },
             connections: [
@@ -104,39 +110,28 @@ export const preset14 = {
                 "PAD14:gate_out > SUB14:PIN5_in",
                 "PAD15:gate_out > SUB15:PIN5_in",
                 "PAD16:gate_out > SUB16:PIN5_in",
-                // Direct Audio Summing from all 16 Engines into Master Speaker
-                "SUB1:PIN10_out > SPK1:wave_in_l",
-                "SUB1:PIN10_out > SPK1:wave_in_r",
-                "SUB2:PIN10_out > SPK1:wave_in_l",
-                "SUB2:PIN10_out > SPK1:wave_in_r",
-                "SUB3:PIN10_out > SPK1:wave_in_l",
-                "SUB3:PIN10_out > SPK1:wave_in_r",
-                "SUB4:PIN10_out > SPK1:wave_in_l",
-                "SUB4:PIN10_out > SPK1:wave_in_r",
-                "SUB5:PIN10_out > SPK1:wave_in_l",
-                "SUB5:PIN10_out > SPK1:wave_in_r",
-                "SUB6:PIN10_out > SPK1:wave_in_l",
-                "SUB6:PIN10_out > SPK1:wave_in_r",
-                "SUB7:PIN10_out > SPK1:wave_in_l",
-                "SUB7:PIN10_out > SPK1:wave_in_r",
-                "SUB8:PIN10_out > SPK1:wave_in_l",
-                "SUB8:PIN10_out > SPK1:wave_in_r",
-                "SUB9:PIN10_out > SPK1:wave_in_l",
-                "SUB9:PIN10_out > SPK1:wave_in_r",
-                "SUB10:PIN10_out > SPK1:wave_in_l",
-                "SUB10:PIN10_out > SPK1:wave_in_r",
-                "SUB11:PIN10_out > SPK1:wave_in_l",
-                "SUB11:PIN10_out > SPK1:wave_in_r",
-                "SUB12:PIN10_out > SPK1:wave_in_l",
-                "SUB12:PIN10_out > SPK1:wave_in_r",
-                "SUB13:PIN10_out > SPK1:wave_in_l",
-                "SUB13:PIN10_out > SPK1:wave_in_r",
-                "SUB14:PIN10_out > SPK1:wave_in_l",
-                "SUB14:PIN10_out > SPK1:wave_in_r",
-                "SUB15:PIN10_out > SPK1:wave_in_l",
-                "SUB15:PIN10_out > SPK1:wave_in_r",
-                "SUB16:PIN10_out > SPK1:wave_in_l",
-                "SUB16:PIN10_out > SPK1:wave_in_r"
+                // Direct Audio Summing from all 16 Engines into Master VCA
+                "SUB1:PIN10_out > VCA1:wave_in",
+                "SUB2:PIN10_out > VCA1:wave_in",
+                "SUB3:PIN10_out > VCA1:wave_in",
+                "SUB4:PIN10_out > VCA1:wave_in",
+                "SUB5:PIN10_out > VCA1:wave_in",
+                "SUB6:PIN10_out > VCA1:wave_in",
+                "SUB7:PIN10_out > VCA1:wave_in",
+                "SUB8:PIN10_out > VCA1:wave_in",
+                "SUB9:PIN10_out > VCA1:wave_in",
+                "SUB10:PIN10_out > VCA1:wave_in",
+                "SUB11:PIN10_out > VCA1:wave_in",
+                "SUB12:PIN10_out > VCA1:wave_in",
+                "SUB13:PIN10_out > VCA1:wave_in",
+                "SUB14:PIN10_out > VCA1:wave_in",
+                "SUB15:PIN10_out > VCA1:wave_in",
+                "SUB16:PIN10_out > VCA1:wave_in",
+                // Master VCA to Visualizers and Master Speaker
+                "VCA1:wave_out > SCOPE1:cv_in",
+                "VCA1:wave_out > SPEC1:wave_in",
+                "VCA1:wave_out > SPK1:wave_in_l",
+                "VCA1:wave_out > SPK1:wave_in_r"
             ]
         }
     }
