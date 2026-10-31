@@ -229,78 +229,59 @@ export const JOG = {
     },
 
     renderModal: (m) => {
-        const curMin = m.min ?? -1.0;
         const curMax = m.max ?? 1.0;
         const curDef = m.def ?? 0.0;
-        const curVal = m.val ?? curDef;
-        const curMode = m.mode || 'latch';
+        const curMin = m.min ?? -1.0;
+        const curStep = m.step ?? 0.01;
 
         return `
-            <div class="space-y-2 select-none">
-                <!-- Wheel Display in Modal -->
-                <div class="h-24 bg-slate-950 p-1.5 rounded-lg border border-slate-800 relative flex items-center justify-center overflow-hidden">
-                    <canvas id="jog-modal-canvas" class="w-full h-full block rounded bg-slate-950" width="300" height="90"></canvas>
-                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
-                        <span id="jog-modal-val" class="font-mono text-xl font-extrabold text-amber-300">${curVal.toFixed(2)}</span>
-                    </div>
+            <div class="space-y-1.5 select-none text-[9px]">
+                <!-- MAX Row (Top) -->
+                <div class="flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded px-2 py-1">
+                    <span class="font-bold text-slate-300 tracking-wider">MAX (最大値)</span>
+                    <input id="jog-max-input" type="number" step="any" value="${curMax}" class="w-24 bg-slate-900 border border-slate-700 focus:border-amber-500 rounded px-1.5 py-0.5 text-right font-mono font-bold text-amber-300 focus:outline-none">
                 </div>
 
-                <!-- Parameters: MIN, MAX, DEF -->
-                <div class="grid grid-cols-3 gap-1.5 pt-1 border-t border-slate-800">
-                    <div class="bg-slate-950/70 border border-slate-800 rounded p-1.5 flex flex-col items-center">
-                        <span class="text-[7.5px] font-bold text-slate-400">MIN</span>
-                        <input id="jog-min-input" type="number" step="0.1" value="${curMin}" class="w-full bg-slate-900 border border-slate-700 rounded text-center text-[10px] font-mono text-amber-300 py-0.5 mt-0.5 focus:outline-none focus:border-amber-500">
-                    </div>
-                    <div class="bg-slate-950/70 border border-slate-800 rounded p-1.5 flex flex-col items-center">
-                        <span class="text-[7.5px] font-bold text-slate-400">DEFAULT</span>
-                        <input id="jog-def-input" type="number" step="0.1" value="${curDef}" class="w-full bg-slate-900 border border-slate-700 rounded text-center text-[10px] font-mono text-amber-300 py-0.5 mt-0.5 focus:outline-none focus:border-amber-500">
-                    </div>
-                    <div class="bg-slate-950/70 border border-slate-800 rounded p-1.5 flex flex-col items-center">
-                        <span class="text-[7.5px] font-bold text-slate-400">MAX</span>
-                        <input id="jog-max-input" type="number" step="0.1" value="${curMax}" class="w-full bg-slate-900 border border-slate-700 rounded text-center text-[10px] font-mono text-amber-300 py-0.5 mt-0.5 focus:outline-none focus:border-amber-500">
-                    </div>
+                <!-- DEFAULT Row (Middle) -->
+                <div class="flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded px-2 py-1">
+                    <span class="font-bold text-slate-300 tracking-wider">DEFAULT (初期値)</span>
+                    <input id="jog-def-input" type="number" step="any" value="${curDef}" class="w-24 bg-slate-900 border border-slate-700 focus:border-amber-500 rounded px-1.5 py-0.5 text-right font-mono font-bold text-amber-300 focus:outline-none">
                 </div>
 
-                <!-- MODE Toggle: LATCH vs SPRING -->
-                <div class="flex items-center justify-between px-1 pt-1 border-t border-slate-800">
-                    <span class="text-[8.5px] font-bold text-slate-400 uppercase">RETURN MODE:</span>
-                    <div class="flex items-center gap-1">
-                        <button id="jog-mode-latch" class="h-5 px-2 rounded text-[8.5px] font-bold border transition ${curMode === 'latch' ? 'bg-amber-600 text-white border-amber-400 shadow-sm' : 'bg-slate-800 text-slate-400 border-slate-700'}">LATCH (保持)</button>
-                        <button id="jog-mode-spring" class="h-5 px-2 rounded text-[8.5px] font-bold border transition ${curMode === 'spring' ? 'bg-amber-600 text-white border-amber-400 shadow-sm' : 'bg-slate-800 text-slate-400 border-slate-700'}">SPRING (自動復帰)</button>
-                    </div>
+                <!-- MIN Row (Bottom) -->
+                <div class="flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded px-2 py-1">
+                    <span class="font-bold text-slate-300 tracking-wider">MIN (下限値)</span>
+                    <input id="jog-min-input" type="number" step="any" value="${curMin}" class="w-24 bg-slate-900 border border-slate-700 focus:border-amber-500 rounded px-1.5 py-0.5 text-right font-mono font-bold text-amber-300 focus:outline-none">
+                </div>
+
+                <!-- STEP Row (Bottom-most) -->
+                <div class="flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded px-2 py-1">
+                    <span class="font-bold text-slate-300 tracking-wider">STEP (1目盛差分)</span>
+                    <input id="jog-step-input" type="number" step="any" value="${curStep}" class="w-24 bg-slate-900 border border-slate-700 focus:border-amber-500 rounded px-1.5 py-0.5 text-right font-mono font-bold text-amber-300 focus:outline-none">
                 </div>
             </div>`;
     },
 
     bindEvents: (m, ctx, onChange) => {
         const updateParams = () => {
-            const minEl = document.getElementById('jog-min-input');
             const maxEl = document.getElementById('jog-max-input');
             const defEl = document.getElementById('jog-def-input');
+            const minEl = document.getElementById('jog-min-input');
+            const stepEl = document.getElementById('jog-step-input');
 
-            if (minEl) m.min = parseFloat(minEl.value) || 0.0;
             if (maxEl) m.max = parseFloat(maxEl.value) || 1.0;
             if (defEl) m.def = parseFloat(defEl.value) || 0.0;
+            if (minEl) m.min = parseFloat(minEl.value) || -1.0;
+            if (stepEl) m.step = Math.max(0, parseFloat(stepEl.value) || 0.01);
+
             if (m.min > m.max) [m.min, m.max] = [m.max, m.min];
             m.val = Math.max(m.min, Math.min(m.max, m.val ?? m.def));
 
             onChange();
         };
 
-        ['jog-min-input', 'jog-max-input', 'jog-def-input'].forEach(id => {
+        ['jog-max-input', 'jog-def-input', 'jog-min-input', 'jog-step-input'].forEach(id => {
             document.getElementById(id)?.addEventListener('change', updateParams);
-        });
-
-        document.getElementById('jog-mode-latch')?.addEventListener('click', () => {
-            m.mode = 'latch';
-            ctx.reRenderModal();
-            onChange();
-        });
-
-        document.getElementById('jog-mode-spring')?.addEventListener('click', () => {
-            m.mode = 'spring';
-            ctx.reRenderModal();
-            onChange();
         });
     }
 };
