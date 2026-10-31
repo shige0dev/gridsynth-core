@@ -100,8 +100,8 @@ export const PAT = {
 
         return `
             <div id="pat-modal-root-${uid}" class="space-y-1 p-0.5">
-                <!-- Top Row: Left (PRESET & HINT), Middle (CYCLE & GATE), Right Small Actions (↺ & ↵) -->
-                <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-1">
+                <!-- Top Row: Left (PRESET & HINT), Middle (GATE Slider to Right), Right Small Actions (↺ & ↵) -->
+                <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-1.5">
                     <!-- Left: PRESET & HINT Toggles -->
                     <div class="flex items-center gap-1 shrink-0">
                         <button id="pat-toggle-presets-${uid}" class="flex items-center gap-0.5 text-[7px] font-bold text-slate-400 hover:text-cyan-300 uppercase tracking-wider transition bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800/80">
@@ -114,26 +114,11 @@ export const PAT = {
                         </button>
                     </div>
 
-                    <!-- Middle: CYCLE & GATE -->
-                    <div class="flex items-center gap-1 min-w-0">
-                        <div class="flex items-center gap-0.5 bg-slate-950 px-1 py-0.5 rounded border border-slate-800">
-                            <span class="text-[7px] text-slate-400 uppercase font-mono">CYC:</span>
-                            <select id="pat-beats-select-${uid}" class="bg-slate-900 text-cyan-300 font-mono text-[7.5px] font-bold rounded px-0.5 py-0.5 border border-slate-700">
-                                <option value="0.25" ${beats === 0.25 ? 'selected' : ''}>1/16</option>
-                                <option value="0.5" ${beats === 0.5 ? 'selected' : ''}>1/8</option>
-                                <option value="1" ${beats === 1 ? 'selected' : ''}>1/4</option>
-                                <option value="2" ${beats === 2 ? 'selected' : ''}>1/2</option>
-                                <option value="4" ${beats === 4 ? 'selected' : ''}>1 BAR</option>
-                                <option value="8" ${beats === 8 ? 'selected' : ''}>2 BARS</option>
-                                <option value="16" ${beats === 16 ? 'selected' : ''}>4 BARS</option>
-                                <option value="32" ${beats === 32 ? 'selected' : ''}>8 BARS</option>
-                            </select>
-                        </div>
-                        <div class="flex items-center gap-0.5 bg-slate-950 px-1 py-0.5 rounded border border-slate-800">
-                            <span class="text-[7px] text-slate-400 uppercase font-mono">GATE:</span>
-                            <input type="range" id="pat-gate-slider-${uid}" min="10" max="95" step="5" value="${gatePct}" class="w-8 h-1 accent-cyan-400 cursor-pointer touch-none">
-                            <span id="pat-gate-disp-${uid}" class="text-[7.5px] font-mono font-bold text-cyan-300 min-w-[18px] text-right">${gatePct}%</span>
-                        </div>
+                    <!-- Middle: GATE (Stretched to right) -->
+                    <div class="flex-1 flex items-center min-w-0 bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800 gap-1.5">
+                        <span class="text-[7px] text-slate-400 uppercase font-mono shrink-0">GATE:</span>
+                        <input type="range" id="pat-gate-slider-${uid}" min="10" max="95" step="5" value="${gatePct}" class="flex-1 w-full h-1 accent-cyan-400 cursor-pointer touch-none">
+                        <span id="pat-gate-disp-${uid}" class="text-[7.5px] font-mono font-bold text-cyan-300 min-w-[20px] text-right shrink-0">${gatePct}%</span>
                     </div>
 
                     <!-- Right: Small Action Buttons [ ↺ ] and [ ↵ ] -->
@@ -220,6 +205,8 @@ export const PAT = {
         const togglePresets = document.getElementById(`pat-toggle-presets-${uid}`);
         const toggleHints = document.getElementById(`pat-toggle-hints-${uid}`);
 
+        let isEditingMode = false;
+
         const syncScroll = () => {
             if (overlay && input) {
                 overlay.scrollLeft = input.scrollLeft;
@@ -261,6 +248,24 @@ export const PAT = {
 
         setupScrollBtn(scrollLeftBtn, -60);
         setupScrollBtn(scrollRightBtn, 60);
+
+        const setEditing = (editing) => {
+            isEditingMode = editing;
+            if (overlay) {
+                if (editing) {
+                    overlay.classList.add('hidden');
+                    if (input) input.style.color = '#67e8f9';
+                } else {
+                    syncScroll();
+                    overlay.classList.remove('hidden');
+                    if (overlayContent) {
+                        overlayContent.innerHTML = renderPatternHighlightedHTML(m.pattern || '');
+                        setupPitchDrag();
+                    }
+                    if (input) input.style.color = 'transparent';
+                }
+            }
+        };
 
         const setupPitchDrag = () => {
             if (!overlayContent) return;
@@ -332,22 +337,13 @@ export const PAT = {
             });
         };
 
-        const setEditing = (editing) => {
-            if (overlay) {
-                if (editing) {
-                    overlay.classList.add('hidden');
-                    if (input) input.style.color = '#67e8f9';
-                } else {
-                    syncScroll();
-                    overlay.classList.remove('hidden');
-                    if (overlayContent) {
-                        overlayContent.innerHTML = renderPatternHighlightedHTML(m.pattern || '');
-                        setupPitchDrag();
-                    }
-                    if (input) input.style.color = 'transparent';
-                }
+        // Click directly on the overlay backdrop to edit the whole pattern
+        overlay?.addEventListener('click', (e) => {
+            if (!isEditingMode) {
+                setEditing(true);
+                input?.focus();
             }
-        };
+        });
 
         setEditing(false);
         setupPitchDrag();
