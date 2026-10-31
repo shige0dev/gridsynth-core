@@ -383,35 +383,34 @@ const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal) => {
     const cos30 = Math.cos(rad30); // ~0.866
     const sin30 = Math.sin(rad30); // 0.500
 
-    // Center of Panel (0, 0, 0)
-    const cx = w * 0.5;
-    const cy = h * 0.50;
+    // Center of Panel (0, 0, 0) in screen coordinates
+    const cx = 60;
+    const cy = 68;
 
-    // Axis Vector lengths (scaled up by 120% to fill the entire panel)
-    const scale120 = 1.20;
-    const Lx = (w * 0.46) * scale120; // X axis (frequency): right-down 30°
-    const Ly = (w * 0.40) * scale120; // Y axis (time-series): right-up 30°
-    const Lz = (h * 0.32) * scale120; // Z axis (amplitude): vertical height
+    // Axis Vector lengths (precisely calibrated to fit 120x120 panel bounds)
+    const Lx = 52; // X axis (frequency): right-down 30°
+    const Ly = 52; // Y axis (time-series): right-up 30°
+    const Lz = 42; // Z axis (amplitude): vertical up
 
-    // 3D Axis Vectors in screen space (Z axis points vertically upwards)
+    // 3D Axis Vectors in screen space
     const Vx = { x:  Lx * cos30, y:  Lx * sin30 };
     const Vy = { x:  Ly * cos30, y: -Ly * sin30 };
     const Vz = { x:  0,          y: -Lz };
 
-    // Direct 3D Projector from normalized space [-1, 1]^3 to screen (px, py)
+    // Direct 3D Projector from normalized space to screen (px, py)
     const project3D = (nx, ny, nz) => ({
         x: cx + nx * Vx.x + ny * Vy.x + nz * Vz.x,
         y: cy + nx * Vx.y + ny * Vy.y + nz * Vz.y
     });
 
-    // Spectrum Mapping:
-    // Shift display position in Z-axis by -1 (translating base down by -1 in normalized space)
-    // Floor baseline sits at nz = -1 - 1 = -2
-    // Amplitude val [0, 1] rises upwards along +Z from baseline
+    // Spectrum Mapping onto calibrated normalized space:
+    // Frequency u [0, 1] -> nx in [-0.9, 0.9]
+    // Time-series v [0, 1] (0=front, 1=back) -> ny in [-0.9, 0.9]
+    // Amplitude val [0, 1] -> nz in [0, 1] (0 sits on floor, 1 rises up vertically)
     const projectSpec = (u, v, val = 0) => {
-        const nx = 2 * u - 1;
-        const ny = 2 * v - 1;
-        const nz = -1 + 2 * val - 1; // shifted by -1 in Z axis
+        const nx = (2 * u - 1) * 0.9;
+        const ny = (2 * v - 1) * 0.9;
+        const nz = val;
         return project3D(nx, ny, nz);
     };
 
