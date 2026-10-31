@@ -83,22 +83,8 @@ export const MIX = {
     }
 };
 
-export const SLIDER = {
-    color: 'emerald',
-    defaults: () => ({ type: 'SLIDER', vol: 0.70 }),
-    ports: () => ({ in: [], out: [{ port: 'cv_out', color: 'bg-yellow-400' }] }),
-    schema: { color: 'emerald', sliders: [{ key: 'vol', label: 'VAL', min: 0, max: 1.0, step: 0.01, default: 0.70, unit: 'out', format: v => v.toFixed(2) }] },
-    renderGrid: (m) => `<div class="flex items-center justify-center w-full h-full pointer-events-none">${UIHelpers.renderPanelBars([
-        {
-            pct: Math.round((m.vol ?? 0.7) * 100),
-            width: 'w-3.5'
-        }
-    ], { theme: 'cv' })}</div>`
-};
-
 export const ampDefs = {
     VCA,
-    MIX,
-    SLIDER
+    MIX
 };
 

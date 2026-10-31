@@ -184,12 +184,18 @@ export const preset03 = {
           "valB": 1
         },
         "SLIDER1": {
-          "type": "SLIDER",
-          "vol": 0.7
+          "type": "JOG",
+          "val": 0.7,
+          "min": 0,
+          "max": 1,
+          "def": 0.7
         },
         "SLIDER2": {
-          "type": "SLIDER",
-          "vol": 0.7
+          "type": "JOG",
+          "val": 0.7,
+          "min": 0,
+          "max": 1,
+          "def": 0.7
         },
         "VCO1": {
           "type": "VCO",

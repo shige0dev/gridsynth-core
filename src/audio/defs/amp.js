@@ -114,18 +114,7 @@ export const MIX = {
     }
 };
 
-export const SLIDER = {
-    create: (ctx, d) => {
-        const s = ctx.createConstantSource();
-        s.offset.value = d.vol ?? 0.7;
-        s.start();
-        return { nodes: { s }, inputs: {}, outputs: { cv_out: s } };
-    },
-    update: (ctx, inst, d) => AudioHelpers.set(inst.nodes.s.offset, d.vol ?? 0.7, ctx)
-};
-
 export const ampAudioDefs = {
     VCA,
-    MIX,
-    SLIDER
+    MIX
 };

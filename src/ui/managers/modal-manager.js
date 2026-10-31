@@ -30,7 +30,6 @@ export const MODAL_WIDTHS = {
     FOLD: 'w-[220px]',
     VCA: 'w-[185px]',
     MIX: 'w-[230px]',
-    SLIDER: 'w-[165px]',
     JOG: 'w-[200px]',
 
     // Effects
@@ -295,7 +294,7 @@ export class ModalManager {
                         name: 'CV',
                         sub: 'CV (変調・演算・エンベロープ)',
                         color: 'purple',
-                        types: ['LFO', 'ADSR', 'RF', 'AR', 'CHORD', 'SCALE', 'MATH1', 'MATH2', 'SH', 'CVDELAY', 'SLIDER', 'JOG', 'THROUGH', 'SUB_IO']
+                        types: ['LFO', 'ADSR', 'RF', 'AR', 'CHORD', 'SCALE', 'MATH1', 'MATH2', 'SH', 'CVDELAY', 'JOG', 'THROUGH', 'SUB_IO']
                     },
                     {
                         name: 'VISUALIZER',
