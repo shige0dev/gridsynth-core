@@ -243,30 +243,6 @@ export const MARKOV = {
         }
     }
 };
-    updateLive: (cell, readData, isPlaying, modalEl, m) => {
-        const isOn = (readData?.state || 0) === 1;
-        const box = cell?.querySelector('.markov-state-box');
-        if (box) {
-            const pitchEl = box.querySelector('.markov-pitch-val');
-            const holdEl = box.querySelector('.markov-hold-val');
-            if (isOn && isPlaying) {
-                box.className = 'markov-state-box w-9 h-9 rounded-md border flex flex-col items-center justify-center leading-none select-none transition-colors duration-75 markov-active bg-gradient-to-t from-amber-500 via-amber-400 to-yellow-300 border-[#fde047] text-slate-950 shadow-[0_0_10px_2px_rgba(251,191,36,0.95),0_0_20px_4px_rgba(245,158,11,0.7),inset_0_0_6px_rgba(253,224,71,0.6)]';
-                if (pitchEl) pitchEl.className = 'markov-pitch-val font-mono text-[10px] leading-tight text-slate-950 font-bold';
-                if (holdEl) {
-                    holdEl.className = 'markov-hold-val font-mono text-[10px] leading-tight mt-0.5 text-amber-950 font-bold';
-                    holdEl.textContent = readData?.remaining ?? (m.holdClocks ?? 1);
-                }
-            } else {
-                box.className = 'markov-state-box w-9 h-9 rounded-md border flex flex-col items-center justify-center leading-none select-none transition-colors duration-75 markov-idle bg-transparent border-amber-500/45 text-slate-300 shadow-none';
-                if (pitchEl) pitchEl.className = 'markov-pitch-val font-mono text-[10px] leading-tight text-slate-200 font-bold';
-                if (holdEl) {
-                    holdEl.className = 'markov-hold-val font-mono text-[10px] leading-tight mt-0.5 text-amber-400/80 font-bold';
-                    holdEl.textContent = m?.holdClocks ?? 1;
-                }
-            }
-        }
-    }
-};
 
 export const markovDefs = {
     MARKOV
