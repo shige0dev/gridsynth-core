@@ -374,79 +374,108 @@ const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal) => {
         return;
     }
 
-    // --- 2. PANEL (3D AXONOMETRIC 30°/60° 5-TIME-SERIES MODE) ---
-    // True axonometric 30° projection:
-    // Slices 0 (newest, front-left) to 4 (oldest, back-right).
-    // Zero baseline is always drawn, revealing 5 tilted parallel zero lines when silent.
-    const totalSlices = historyBands.length; // 5
-    const dxSlice = w * 0.082; // 30° / 60° axonometric shift vector
-    const dySlice = h * 0.118; // tan(30°) to tan(60°) perspective inclination
+    // --- 2. PANEL (3D AXONOMETRIC PARALLEL PROJECTION MODE) ---
+    // Strict axonometric projection:
+    // Left origin, X-axis vector = (cos(-30°), sin(-30°)) = (cos 30°, -sin 30° in math, down-right in Canvas)
+    // Y-axis vector = (cos 30°, sin 30° in math, up-right in Canvas)
+    // Z-axis = vertical amplitude upwards
+    const totalSlices = historyBands.length; // 5 lines
+    const rad30 = Math.PI / 6; // 30 degrees (0.5236 rad)
+    const cos30 = Math.cos(rad30); // ~0.866
+    const sin30 = Math.sin(rad30); // 0.500
 
-    const baseW = w - (totalSlices - 1) * dxSlice - 6;
-    const baseH = h - (totalSlices - 1) * dySlice - 8;
-    const originY = h - 5; // lowest frontline Y
-    const originX = 3;
+    // Geometry layout in panel
+    // Origin O is placed at middle-left of panel
+    const originX = 14;
+    const originY = h * 0.46;
 
-    // A. Draw axonometric floor side rails (bounding grid)
+    // Sizing lengths
+    const lenX = w * 0.55; // length along frequency X axis
+    const lenY = w * 0.44; // total length along time-series Y axis
+    const maxZ = h * 0.38; // max vertical height for amplitude
+
+    // Vector functions
+    // normalized u: 0..1 along X (frequency)
+    // normalized v: 0..1 along Y (time-series, 0=newest front-left, 1=oldest back-right)
+    // z: 0..1 (amplitude)
+    const project = (u, v, z = 0) => {
+        const px = originX + (u * lenX * cos30) + (v * lenY * cos30);
+        const py = originY + (u * lenX * sin30) - (v * lenY * sin30) - (z * maxZ);
+        return { x: px, y: py };
+    };
+
+    // A. Draw floor boundaries (Y=0 to Y=1 on left, and Y=0 to Y=1 on right)
     ctx.save();
-    ctx.strokeStyle = 'rgba(30, 41, 59, 0.45)';
-    ctx.lineWidth = 0.5;
-    // Left boundary rail
+    ctx.strokeStyle = 'rgba(30, 41, 59, 0.55)';
+    ctx.lineWidth = 0.6;
+    // Left boundary rail (u = 0, v = 0 to 1)
+    const p00 = project(0, 0, 0);
+    const p01 = project(0, 1, 0);
     ctx.beginPath();
-    ctx.moveTo(originX, originY);
-    ctx.lineTo(originX + (totalSlices - 1) * dxSlice, originY - (totalSlices - 1) * dySlice);
+    ctx.moveTo(p00.x, p00.y);
+    ctx.lineTo(p01.x, p01.y);
     ctx.stroke();
-    // Right boundary rail
+
+    // Right boundary rail (u = 1, v = 0 to 1)
+    const p10 = project(1, 0, 0);
+    const p11 = project(1, 1, 0);
     ctx.beginPath();
-    ctx.moveTo(originX + baseW, originY);
-    ctx.lineTo(originX + baseW + (totalSlices - 1) * dxSlice, originY - (totalSlices - 1) * dySlice);
+    ctx.moveTo(p10.x, p10.y);
+    ctx.lineTo(p11.x, p11.y);
     ctx.stroke();
     ctx.restore();
 
-    // B. Render from back (k = 4) to front (k = 0)
+    // B. Render 5 time-series slices from back (k = 4, v = 1) to front (k = 0, v = 0)
     for (let k = totalSlices - 1; k >= 0; k--) {
         const bands = historyBands[k];
-        const ox = originX + (totalSlices - 1 - k) * dxSlice;
-        const oy = k * dySlice;
-        const baselineY = originY - oy;
-        const depthRatio = 1 - (k / (totalSlices - 1)); // 0: oldest/far, 1: newest/near
+        const vRatio = k / (totalSlices - 1); // 0 (front) to 1 (back)
+        const depthRatio = 1 - vRatio;        // 1 (front) to 0 (back)
 
-        // Always draw the 0-point baseline (5 oblique parallel lines in 30°/60° space)
+        // Always draw the 0-point baseline (oblique 30° line from left to right)
+        const pStart = project(0, vRatio, 0);
+        const pEnd = project(1, vRatio, 0);
+
         ctx.save();
         ctx.strokeStyle = k === 0 
-            ? 'rgba(45, 212, 191, 0.85)' 
+            ? 'rgba(45, 212, 191, 0.95)' 
             : `rgba(45, 212, 191, ${(0.18 + depthRatio * 0.35).toFixed(2)})`;
         ctx.lineWidth = k === 0 ? 1.0 : 0.6;
         ctx.beginPath();
-        ctx.moveTo(ox, baselineY);
-        ctx.lineTo(ox + baseW, baselineY);
+        ctx.moveTo(pStart.x, pStart.y);
+        ctx.lineTo(pEnd.x, pEnd.y);
         ctx.stroke();
         ctx.restore();
 
         if (!bands) continue;
 
-        // Stroke & gradient configurations
         const strokeColor = k === 0 
             ? '#2dd4bf' 
             : `rgba(45, 212, 191, ${(0.3 + depthRatio * 0.55).toFixed(2)})`;
 
         if (mode === 'bar') {
-            const gap = 0.3;
-            const barW = (baseW - gap * (n - 1)) / n;
-
             for (let i = 0; i < n; i++) {
-                const v = Math.max(0, Math.min(1, bands[i]));
-                if (v < 0.005) continue; // let baseline remain visible
-                const barH = v * (baseH - 2);
-                const bx = ox + i * (barW + gap);
-                const by = baselineY - barH;
+                const val = Math.max(0, Math.min(1, bands[i]));
+                if (val < 0.005) continue; // keep 0 baseline line visible
 
-                // Occlusion: clear area behind bar
+                const u = i / (n - 1);
+                const uNext = Math.min(1, (i + 0.8) / (n - 1));
+                const pBase = project(u, vRatio, 0);
+                const pTop = project(u, vRatio, val);
+                const pBaseNext = project(uNext, vRatio, 0);
+                const pTopNext = project(uNext, vRatio, val);
+
+                // Occlusion polygon
                 ctx.fillStyle = '#020617';
-                ctx.fillRect(bx, by, barW, barH);
+                ctx.beginPath();
+                ctx.moveTo(pBase.x, pBase.y);
+                ctx.lineTo(pTop.x, pTop.y);
+                ctx.lineTo(pTopNext.x, pTopNext.y);
+                ctx.lineTo(pBaseNext.x, pBaseNext.y);
+                ctx.closePath();
+                ctx.fill();
 
-                // Axonometric bar
-                const grad = ctx.createLinearGradient(0, baselineY, 0, by);
+                // Axonometric bar gradient
+                const grad = ctx.createLinearGradient(pBase.x, pBase.y, pTop.x, pTop.y);
                 if (k === 0) {
                     grad.addColorStop(0, '#0d9488');
                     grad.addColorStop(0.7, '#2dd4bf');
@@ -456,24 +485,23 @@ const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal) => {
                     grad.addColorStop(1, `rgba(45, 212, 191, ${(0.4 + depthRatio * 0.5).toFixed(2)})`);
                 }
                 ctx.fillStyle = grad;
-                ctx.fillRect(bx, by, barW, barH);
+                ctx.fill();
             }
         } else {
             // CURVE mode
             let hasSignal = false;
             const pts = [];
             for (let i = 0; i < n; i++) {
-                const bx = ox + (i / (n - 1)) * baseW;
-                const v = Math.max(0, Math.min(1, bands[i]));
-                if (v > 0.008) hasSignal = true;
-                const by = baselineY - (v * (baseH - 2));
-                pts.push({ x: bx, y: by });
+                const val = Math.max(0, Math.min(1, bands[i]));
+                if (val > 0.008) hasSignal = true;
+                const u = i / (n - 1);
+                pts.push(project(u, vRatio, val));
             }
 
             if (hasSignal) {
                 // Occlusion & Area fill
                 ctx.beginPath();
-                ctx.moveTo(ox, baselineY);
+                ctx.moveTo(pStart.x, pStart.y);
                 ctx.lineTo(pts[0].x, pts[0].y);
                 for (let i = 1; i < pts.length; i++) {
                     const midX = (pts[i - 1].x + pts[i].x) / 2;
@@ -481,17 +509,18 @@ const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal) => {
                     ctx.quadraticCurveTo(pts[i - 1].x, pts[i - 1].y, midX, midY);
                 }
                 ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
-                ctx.lineTo(ox + baseW, baselineY);
+                ctx.lineTo(pEnd.x, pEnd.y);
                 ctx.closePath();
 
-                const grad = ctx.createLinearGradient(0, baselineY - baseH, 0, baselineY);
+                const pMaxTop = project(0.5, vRatio, 1.0);
+                const grad = ctx.createLinearGradient(pStart.x, pStart.y, pMaxTop.x, pMaxTop.y);
                 if (k === 0) {
-                    grad.addColorStop(0, 'rgba(45, 212, 191, 0.45)');
-                    grad.addColorStop(0.6, 'rgba(13, 148, 136, 0.25)');
-                    grad.addColorStop(1, '#020617');
+                    grad.addColorStop(0, '#020617');
+                    grad.addColorStop(0.4, 'rgba(13, 148, 136, 0.25)');
+                    grad.addColorStop(1, 'rgba(45, 212, 191, 0.55)');
                 } else {
-                    grad.addColorStop(0, `rgba(45, 212, 191, ${(0.12 + depthRatio * 0.15).toFixed(2)})`);
-                    grad.addColorStop(1, '#020617');
+                    grad.addColorStop(0, '#020617');
+                    grad.addColorStop(1, `rgba(45, 212, 191, ${(0.12 + depthRatio * 0.15).toFixed(2)})`);
                 }
                 ctx.fillStyle = grad;
                 ctx.fill();
