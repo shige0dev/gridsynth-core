@@ -279,7 +279,7 @@ export class ModalManager {
                         name: 'SOUND',
                         sub: 'サウンド (音源・音響・出力)',
                         color: 'cyan',
-                        types: ['VCO', 'WAVE', 'NOISE', 'FMx3', 'FMCORE', 'FOLD', 'VCF', 'VCA', 'MIX', 'DELAY', 'REVERB', 'SPK', 'SCOPE', 'LISS', 'SPEC']
+                        types: ['VCO', 'WAVE', 'NOISE', 'FMx3', 'FMCORE', 'FOLD', 'VCF', 'VCA', 'MIX', 'DELAY', 'REVERB', 'SPK']
                     },
                     {
                         name: 'TRIGGER',
@@ -292,6 +292,12 @@ export class ModalManager {
                         sub: 'CV (変調・演算・エンベロープ)',
                         color: 'purple',
                         types: ['LFO', 'ADSR', 'RF', 'AR', 'CHORD', 'SCALE', 'MATH1', 'MATH2', 'SH', 'CVDELAY', 'SLIDER', 'THROUGH', 'SUB_IO']
+                    },
+                    {
+                        name: 'VISUALIZER',
+                        sub: 'ビジュアライザ (波形・スペクトラム)',
+                        color: 'teal',
+                        types: ['SCOPE', 'LISS', 'SPEC']
                     }
                 ];
 
@@ -325,7 +331,7 @@ export class ModalManager {
                             <div class="grid grid-cols-8 gap-1">
                                 ${items.map(type => {
                                     const col = MODULE_REGISTRY[type]?.color || 'cyan';
-                                    return `<button data-type="${type}" class="h-6 py-0.5 px-0.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-${col}-500/60 rounded text-center text-${col}-300 text-[7.5px] font-bold tracking-tight transition truncate flex items-center justify-center">${type}</button>`;
+                                    return `<button data-type="${type}" class="h-6 p-0 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-${col}-500/60 rounded text-center text-${col}-300 text-[9px] font-bold tracking-tight transition truncate flex items-center justify-center leading-none">${type}</button>`;
                                 }).join('')}
                             </div>
                         </div>

@@ -92,3 +92,4 @@ export class Dist4Processor extends AudioWorkletProcessor {
 }
 
 registerProcessor('dist4-processor', Dist4Processor);
+
