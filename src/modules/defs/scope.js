@@ -387,10 +387,13 @@ const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, isModal) => {
     const cx = 60;
     const cy = 60;
 
-    // Axis Vector lengths (calibrated to fit unit-2 cube with ~5px padding: X in [10, 110], Y in [5, 115])
-    const Lx = 38; // X axis (frequency): right-down 30°
-    const Ly = 20; // Y axis (time-series): right-up 30°
-    const Lz = 26; // Z axis (amplitude): vertical up
+    // True Isometric Cube (2x2x2) in [-1, 1]^3 space: Lx = Ly = Lz = L
+    // Max Y displacement is 2L (at corners (+1, -1, -1) and (-1, +1, +1))
+    // With L = 27px, Y in [6, 114], leaving 6px padding top/bottom on a 120x120 canvas
+    const L = 27;
+    const Lx = L; // X axis (frequency): right-down 30°
+    const Ly = L; // Y axis (time-series): right-up 30°
+    const Lz = L; // Z axis (amplitude): vertical up
 
     // 3D Axis Vectors in screen space
     const Vx = { x:  Lx * cos30, y:  Lx * sin30 };
