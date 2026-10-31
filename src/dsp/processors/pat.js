@@ -147,7 +147,7 @@ export class PatProcessor extends AudioWorkletProcessor {
             if (this.gap > 0) {
                 this.gap--;
                 this.gate = 0.0;
-            } else if (curEv && !curEv.isRest && isPowerOn) {
+            } else if (curEv && !curEv.isRest && isRunning) {
                 const evDur = curEv.end - curEv.start;
                 const evProg = (this.phase - curEv.start) / Math.max(0.0001, evDur);
                 const gRatio = this.gateLen ?? 0.80;
@@ -171,7 +171,7 @@ export class PatProcessor extends AudioWorkletProcessor {
                 activeLabel: this.activeLabel,
                 isRest: this.activeIsRest,
                 gate: this.gate > 0,
-                powerOn: this.hasPowerIn ? this.lastPowerOn : true
+                powerOn: this.hasRunIn ? this.lastRunState : true
             });
         }
 
