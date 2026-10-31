@@ -37,14 +37,14 @@ export const JOG = {
 
         return `
             <div class="jog-box relative w-full h-full flex flex-col items-center justify-center p-1 select-none overflow-hidden touch-none" data-module-id="${m.id}">
-                <!-- Square Centered Wheel Container (56px x 56px, height reduced by 1px on both sides) -->
-                <div class="relative w-[56px] h-[56px] flex items-center justify-center overflow-hidden rounded bg-slate-950 border border-slate-800/90 shadow-inner">
-                    <canvas class="jog-canvas block w-full h-full" width="56" height="56"></canvas>
+                <!-- Square Centered Wheel Container (54px x 54px) -->
+                <div class="relative w-[54px] h-[54px] flex items-center justify-center overflow-hidden rounded bg-slate-950 border border-slate-800/90 shadow-inner">
+                    <canvas class="jog-canvas block w-full h-full" width="54" height="54"></canvas>
 
                     <!-- Center Overlay: MAX at top-center, VAL at absolute center, MIN at bottom-center -->
                     <div class="absolute inset-0 flex flex-col items-center justify-between py-1 pointer-events-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
                         <span class="text-[6.5px] font-mono text-slate-400 font-semibold tracking-tighter leading-none">${m.stepType === '1semi' ? cvToNoteName(maxVal) : Number(maxVal).toFixed(1)}</span>
-                        <span class="jog-val-disp font-mono text-[14px] font-extrabold text-amber-300 tracking-tight leading-none">${formatVal(curVal)}</span>
+                        <span class="jog-val-disp font-mono text-[13.5px] font-extrabold text-amber-300 tracking-tight leading-none">${formatVal(curVal)}</span>
                         <span class="text-[6.5px] font-mono text-slate-400 font-semibold tracking-tighter leading-none">${m.stepType === '1semi' ? cvToNoteName(minVal) : Number(minVal).toFixed(1)}</span>
                     </div>
                 </div>
@@ -108,7 +108,8 @@ export const JOG = {
         // 3. Cylinder Grooves / Knurling Lines in SOLID BLACK
         const numVisibleGrooves = 8;
         const spacing = h / (numVisibleGrooves - 1);
-        const phaseOffset = (norm * h * 2.5) % spacing;
+        // Grooves follow finger motion: as norm increases (finger dragged up), wheel surfaces rotate upward
+        const phaseOffset = spacing - ((norm * h * 2.5) % spacing);
 
         ctx.lineWidth = isModal ? 2.0 : 1.4;
         for (let y = -spacing + phaseOffset; y <= h + spacing; y += spacing) {
@@ -268,7 +269,22 @@ export const JOG = {
 
         return `
             <div class="space-y-2 select-none text-[9px]">
-                <!-- MAX Row (Top) -->
+                <!-- STEP Button Group (Top-most) -->
+                <div class="flex flex-col gap-1 bg-slate-950/80 border border-slate-800 rounded px-2.5 py-1.5">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-slate-400 tracking-wider">STEP (差分刻み)</span>
+                        <span class="font-mono text-[8px] text-amber-400/80 font-bold">${curStepType === '1semi' ? '1半音 (1/12V)' : curStepType}</span>
+                    </div>
+                    <div class="grid grid-cols-5 gap-1 pt-0.5">
+                        ${stepBtns.map(btn => `
+                            <button class="jog-step-btn h-5 rounded font-mono font-bold text-[8.5px] border leading-none transition-colors ${curStepType === btn.id ? 'bg-amber-600 text-white border-amber-400 shadow-sm' : 'bg-slate-900 text-slate-400 border-slate-700/80 hover:text-slate-200'}" data-step="${btn.id}">
+                                ${btn.label}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- MAX Row -->
                 <div class="flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded px-2.5 py-1.5">
                     <span class="font-bold text-slate-400 tracking-wider">MAX (最大値)</span>
                     <div id="jog-scrub-max" class="cursor-ns-resize touch-none select-none px-2 py-0.5 rounded bg-slate-900 border border-slate-700 hover:border-amber-500 font-mono font-bold text-amber-300 min-w-[70px] text-right transition-colors" title="上下スワイプで増減 / タップで手入力">${fmt(curMax)}</div>
@@ -284,21 +300,6 @@ export const JOG = {
                 <div class="flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded px-2.5 py-1.5">
                     <span class="font-bold text-slate-400 tracking-wider">MIN (下限値)</span>
                     <div id="jog-scrub-min" class="cursor-ns-resize touch-none select-none px-2 py-0.5 rounded bg-slate-950 border border-slate-700 hover:border-amber-500 font-mono font-bold text-amber-300 min-w-[70px] text-right transition-colors" title="上下スワイプで増減 / タップで手入力">${fmt(curMin)}</div>
-                </div>
-
-                <!-- STEP Button Group (Bottom-most) -->
-                <div class="flex flex-col gap-1 bg-slate-950/80 border border-slate-800 rounded px-2.5 py-1.5">
-                    <div class="flex items-center justify-between">
-                        <span class="font-bold text-slate-400 tracking-wider">STEP (差分刻み)</span>
-                        <span class="font-mono text-[8px] text-amber-400/80 font-bold">${curStepType === '1semi' ? '1半音 (1/12V)' : curStepType}</span>
-                    </div>
-                    <div class="grid grid-cols-5 gap-1 pt-0.5">
-                        ${stepBtns.map(btn => `
-                            <button class="jog-step-btn h-5 rounded font-mono font-bold text-[8.5px] border leading-none transition-colors ${curStepType === btn.id ? 'bg-amber-600 text-white border-amber-400 shadow-sm' : 'bg-slate-900 text-slate-400 border-slate-700/80 hover:text-slate-200'}" data-step="${btn.id}">
-                                ${btn.label}
-                            </button>
-                        `).join('')}
-                    </div>
                 </div>
             </div>`;
     },
