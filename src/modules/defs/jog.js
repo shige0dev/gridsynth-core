@@ -20,27 +20,41 @@ export const JOG = {
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
 
+    formatValHtml: (v, stepType) => {
+        if (stepType === '1semi') {
+            return `<span>${cvToNoteName(v)}</span>`;
+        }
+        const num = Number(v);
+        // If step is 1 or 10: no decimal point (integer display)
+        if (stepType === '1' || stepType === '10') {
+            return `<span>${Math.round(num)}</span>`;
+        }
+        // Otherwise (0.01, 0.1, or default): fixed 2 decimal places with fixed-slot alignment
+        const str = num.toFixed(2);
+        const parts = str.split('.');
+        return `<span class="inline-block w-[22px] text-right">${parts[0]}</span><span class="inline-block w-[3px] text-center">.</span><span class="inline-block w-[18px] text-left">${parts[1]}</span>`;
+    },
+
+    formatModalVal: (v, stepType) => {
+        if (stepType === '1semi') {
+            return `${cvToNoteName(v)} (${Number(v).toFixed(2)})`;
+        }
+        const num = Number(v);
+        if (stepType === '1' || stepType === '10') {
+            return `${Math.round(num)}`;
+        }
+        return num.toFixed(2);
+    },
+
     renderGrid: (m) => {
         const minVal = m.min ?? -1.0;
         const maxVal = m.max ?? 1.0;
         const curVal = m.val ?? (m.def ?? 0.0);
 
-        const formatValHtml = (v) => {
-            if (m.stepType === '1semi') {
-                return `<span>${cvToNoteName(v)}</span>`;
-            }
-            const num = Number(v);
-            const str = (Math.abs(num) >= 100) ? num.toFixed(0) : (Math.abs(num) >= 10 ? num.toFixed(1) : num.toFixed(2));
-            const parts = str.split('.');
-            if (parts.length === 1) {
-                return `<span>${parts[0]}</span>`;
-            }
-            return `<span class="inline-block w-[22px] text-right">${parts[0]}</span><span class="inline-block w-[3px] text-center">.</span><span class="inline-block w-[18px] text-left">${parts[1]}</span>`;
-        };
-
         const formatEdgeVal = (v) => {
             if (m.stepType === '1semi') return cvToNoteName(v);
             const n = Number(v);
+            if (m.stepType === '1' || m.stepType === '10') return `${Math.round(n)}`;
             return (Math.abs(n) >= 10) ? n.toFixed(0) : n.toFixed(1);
         };
 
@@ -53,24 +67,11 @@ export const JOG = {
                     <!-- Center Overlay: MAX at top-center, VAL at absolute center, MIN at bottom-center -->
                     <div class="absolute inset-0 flex flex-col items-center justify-between py-1 pointer-events-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
                         <span class="text-[6.5px] font-mono text-slate-400 font-semibold tracking-tighter leading-none">${formatEdgeVal(maxVal)}</span>
-                        <div class="jog-val-disp font-mono text-[13px] font-extrabold text-amber-300 tracking-tight leading-none flex items-baseline justify-center w-full">${formatValHtml(curVal)}</div>
+                        <div class="jog-val-disp font-mono text-[13px] font-extrabold text-amber-300 tracking-tight leading-none flex items-baseline justify-center w-full">${JOG.formatValHtml(curVal, m.stepType)}</div>
                         <span class="text-[6.5px] font-mono text-slate-400 font-semibold tracking-tighter leading-none">${formatEdgeVal(minVal)}</span>
                     </div>
                 </div>
             </div>`;
-    },
-
-    formatValHtml: (v, stepType) => {
-        if (stepType === '1semi') {
-            return `<span>${cvToNoteName(v)}</span>`;
-        }
-        const num = Number(v);
-        const str = (Math.abs(num) >= 100) ? num.toFixed(0) : (Math.abs(num) >= 10 ? num.toFixed(1) : num.toFixed(2));
-        const parts = str.split('.');
-        if (parts.length === 1) {
-            return `<span>${parts[0]}</span>`;
-        }
-        return `<span class="inline-block w-[22px] text-right">${parts[0]}</span><span class="inline-block w-[3px] text-center">.</span><span class="inline-block w-[18px] text-left">${parts[1]}</span>`;
     },
 
     updateLive: (cell, data, isP, modal, m) => {
@@ -94,7 +95,7 @@ export const JOG = {
             const maxEl = modal.querySelector('#jog-scrub-max');
             const defEl = modal.querySelector('#jog-scrub-def');
             const minEl = modal.querySelector('#jog-scrub-min');
-            const fmt = (val) => m.stepType === '1semi' ? `${cvToNoteName(val)} (${Number(val).toFixed(2)})` : Number(val).toFixed(2);
+            const fmt = (val) => JOG.formatModalVal(val, m.stepType);
             if (valEl && !valEl._isDragging) valEl.textContent = fmt(m.val ?? (m.def ?? 0.0));
             if (maxEl && !maxEl._isDragging) maxEl.textContent = fmt(m.max ?? 1.0);
             if (defEl && !defEl._isDragging) defEl.textContent = fmt(m.def ?? 0.0);
@@ -268,7 +269,7 @@ export const JOG = {
         const curMin = m.min ?? -1.0;
         const curStepType = m.stepType || '0.01';
 
-        const fmt = (val) => curStepType === '1semi' ? `${cvToNoteName(val)} (${Number(val).toFixed(2)})` : Number(val).toFixed(2);
+        const fmt = (val) => JOG.formatModalVal(val, curStepType);
 
         const stepBtns = [
             { id: '0.01', label: '0.01' },
@@ -367,7 +368,7 @@ export const JOG = {
                 }
                 m.val = Math.max(m.min ?? -1.0, Math.min(m.max ?? 1.0, m.val ?? (m.def ?? 0.0)));
 
-                const fmt = (v) => m.stepType === '1semi' ? `${cvToNoteName(v)} (${Number(v).toFixed(2)})` : Number(v).toFixed(2);
+                const fmt = (v) => JOG.formatModalVal(v, m.stepType);
                 el.textContent = fmt(m[propKey]);
                 onChange();
             };
