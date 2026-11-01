@@ -120,19 +120,23 @@ export const PAT = {
                 <!-- Row 3: Token Strip -->
                 <div class="relative w-full min-w-0">
                     <div id="pat-container-${uid}" class="relative w-full bg-slate-950 border border-slate-800 rounded p-[1px] overflow-hidden shadow-inner">
-                        <button id="pat-scroll-left-${uid}" class="absolute left-0 top-0 bottom-0 w-2.5 z-10 bg-slate-950/70 text-slate-400 hover:text-cyan-300 text-[6px] font-bold flex items-center justify-center backdrop-blur-[1px]">◀</button>
-                        <div id="pat-strip-${uid}" class="flex items-center gap-[1px] overflow-x-auto min-h-[22px] h-5 py-0 px-3 no-scrollbar"></div>
-                        <button id="pat-scroll-right-${uid}" class="absolute right-0 top-0 bottom-0 w-2.5 z-10 bg-slate-950/70 text-slate-400 hover:text-cyan-300 text-[6px] font-bold flex items-center justify-center backdrop-blur-[1px]">▶</button>
+                        <button id="pat-scroll-left-${uid}" class="absolute left-0 top-0 bottom-0 w-2 z-10 bg-slate-950/80 text-slate-400 hover:text-cyan-300 text-[6px] font-bold flex items-center justify-center backdrop-blur-[1px]">◀</button>
+                        <div id="pat-strip-${uid}" class="flex items-center gap-[1px] overflow-x-auto min-h-[22px] h-5 py-0 px-2 no-scrollbar"></div>
+                        <button id="pat-scroll-right-${uid}" class="absolute right-0 top-0 bottom-0 w-2 z-10 bg-slate-950/80 text-slate-400 hover:text-cyan-300 text-[6px] font-bold flex items-center justify-center backdrop-blur-[1px]">▶</button>
                     </div>
                 </div>
 
                 ${m._showManual ? `
                 <div class="bg-slate-950 rounded border border-cyan-800/80 p-1.5 text-[8px] font-mono text-slate-300">
-                    <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 leading-snug">
-                        <div><strong class="text-purple-300">[A B]</strong>:等分</div><div><strong class="text-purple-300">&lt;A B&gt;</strong>:周回交代</div>
-                        <div><strong class="text-emerald-300">[A|B]</strong>:二者択一</div><div><strong class="text-amber-300">*N</strong>:細分化</div>
-                        <div><strong class="text-amber-300">/N</strong>:伸長</div><div><strong class="text-amber-300">!N</strong>:複製</div>
-                        <div><strong class="text-emerald-300">?</strong>:確率</div><div><strong class="text-slate-400">~</strong>:休符</div>
+                    <div class="grid grid-cols-3 gap-x-1.5 gap-y-0.5 leading-snug text-[7.5px]">
+                        <div><strong class="text-purple-300">[A B]</strong>:等分</div>
+                        <div><strong class="text-purple-300">&lt;A B&gt;</strong>:周回交代</div>
+                        <div><strong class="text-emerald-300">[A|B]</strong>:二者択一</div>
+                        <div><strong class="text-sky-300">*N</strong>:細分化</div>
+                        <div><strong class="text-sky-300">/N</strong>:伸長</div>
+                        <div><strong class="text-sky-300">!N</strong>:複製</div>
+                        <div><strong class="text-emerald-300">?</strong>:確率</div>
+                        <div><strong class="text-slate-400">~</strong>:休符</div>
                     </div>
                 </div>` : ''}
 
@@ -166,10 +170,10 @@ export const PAT = {
 
             const renderMods = (n) => {
                 const chips = [];
-                if (n.subdiv > 1) chips.push(`<span data-mod="subdiv" data-pid="${n.id}" data-val="${n.subdiv}" class="pat-mod bg-amber-500/90 text-slate-950 text-[7px] font-mono font-black px-1 rounded cursor-ns-resize">*${n.subdiv}</span>`);
-                if (n.slowdown > 1) chips.push(`<span data-mod="slowdown" data-pid="${n.id}" data-val="${n.slowdown}" class="pat-mod bg-cyan-500/90 text-slate-950 text-[7px] font-mono font-black px-1 rounded cursor-ns-resize">/${n.slowdown}</span>`);
-                if (n.repeat > 1) chips.push(`<span data-mod="repeat" data-pid="${n.id}" data-val="${n.repeat}" class="pat-mod bg-emerald-500/90 text-slate-950 text-[7px] font-mono font-black px-1 rounded cursor-ns-resize">!${n.repeat}</span>`);
-                if (n.prob !== undefined && n.prob < 1.0) chips.push(`<span data-mod="prob" data-pid="${n.id}" class="pat-mod bg-purple-500/90 text-slate-950 text-[7px] font-mono font-black px-1 rounded cursor-pointer">${n.prob === 0.5 ? '?' : `?${n.prob}`}</span>`);
+                if (n.subdiv > 1) chips.push(`<span data-mod="subdiv" data-pid="${n.id}" data-val="${n.subdiv}" class="pat-mod text-cyan-300 hover:text-white bg-slate-800/80 border border-slate-700/80 text-[7px] font-mono font-bold px-[2px] rounded cursor-ns-resize">*${n.subdiv}</span>`);
+                if (n.slowdown > 1) chips.push(`<span data-mod="slowdown" data-pid="${n.id}" data-val="${n.slowdown}" class="pat-mod text-cyan-300 hover:text-white bg-slate-800/80 border border-slate-700/80 text-[7px] font-mono font-bold px-[2px] rounded cursor-ns-resize">/${n.slowdown}</span>`);
+                if (n.repeat > 1) chips.push(`<span data-mod="repeat" data-pid="${n.id}" data-val="${n.repeat}" class="pat-mod text-cyan-300 hover:text-white bg-slate-800/80 border border-slate-700/80 text-[7px] font-mono font-bold px-[2px] rounded cursor-ns-resize">!${n.repeat}</span>`);
+                if (n.prob !== undefined && n.prob < 1.0) chips.push(`<span data-mod="prob" data-pid="${n.id}" class="pat-mod text-cyan-300 hover:text-white bg-slate-800/80 border border-slate-700/80 text-[7px] font-mono font-bold px-[2px] rounded cursor-pointer">${n.prob === 0.5 ? '?' : `?${n.prob}`}</span>`);
                 return chips.length ? `<div class="flex items-center gap-[1px] ml-0.5">${chips.join('')}</div>` : '';
             };
 
