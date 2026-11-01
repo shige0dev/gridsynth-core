@@ -169,21 +169,21 @@ export const PAT = {
                     </button>
                 </div>
 
-                <!-- 3rd Row: Token Strip Container with Scroll Left [ ◀ ] and Scroll Right [ ▶ ] Buttons -->
-                <div class="flex items-center gap-0.5 w-full min-w-0">
-                    <!-- Scroll Left Button (compact 12px width) -->
-                    <button id="pat-scroll-left-${uid}" class="w-3 h-5 shrink-0 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 rounded text-[6.5px] font-bold border border-slate-800 flex items-center justify-center transition cursor-pointer select-none active:bg-cyan-950/80 active:text-cyan-200 touch-none px-0" title="左へスクロール">
-                        ◀
-                    </button>
-                    <div id="pat-token-container-${uid}" class="relative flex-1 bg-slate-950 border border-slate-800 rounded p-[1px] overflow-hidden shadow-inner cursor-default min-w-0">
-                        <div id="pat-token-strip-${uid}" class="flex items-center gap-[1px] overflow-x-auto min-h-[24px] h-5 py-0 px-[1px] no-scrollbar select-none">
+                <!-- 3rd Row: Token Strip Container with overlaid minimal Scroll Buttons -->
+                <div class="relative w-full min-w-0">
+                    <div id="pat-token-container-${uid}" class="relative w-full bg-slate-950 border border-slate-800 rounded p-[1px] overflow-hidden shadow-inner cursor-default">
+                        <!-- Scroll Left Button (overlayed on left edge) -->
+                        <button id="pat-scroll-left-${uid}" class="absolute left-0 top-0 bottom-0 w-2.5 z-10 bg-slate-950/70 hover:bg-slate-900 text-slate-400 hover:text-cyan-300 text-[6px] font-bold flex items-center justify-center transition cursor-pointer select-none active:text-cyan-200 touch-none backdrop-blur-[1px]" title="左へスクロール">
+                            ◀
+                        </button>
+                        <div id="pat-token-strip-${uid}" class="flex items-center gap-[1px] overflow-x-auto min-h-[22px] h-5 py-0 px-3 no-scrollbar select-none">
                             <!-- Populated dynamically via renderTokens -->
                         </div>
+                        <!-- Scroll Right Button (overlayed on right edge) -->
+                        <button id="pat-scroll-right-${uid}" class="absolute right-0 top-0 bottom-0 w-2.5 z-10 bg-slate-950/70 hover:bg-slate-900 text-slate-400 hover:text-cyan-300 text-[6px] font-bold flex items-center justify-center transition cursor-pointer select-none active:text-cyan-200 touch-none backdrop-blur-[1px]" title="右へスクロール">
+                            ▶
+                        </button>
                     </div>
-                    <!-- Scroll Right Button (compact 12px width) -->
-                    <button id="pat-scroll-right-${uid}" class="w-3 h-5 shrink-0 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 rounded text-[6.5px] font-bold border border-slate-800 flex items-center justify-center transition cursor-pointer select-none active:bg-cyan-950/80 active:text-cyan-200 touch-none px-0" title="右へスクロール">
-                        ▶
-                    </button>
                 </div>
 
                 <!-- Collapsible Manual (80% text size, placed at the bottom when toggled) -->
@@ -334,8 +334,8 @@ export const PAT = {
                     : (isDirty ? 'text-amber-300 group-hover:text-white' : 'text-cyan-300 group-hover:text-white');
 
                 return `
-                    <div data-node-id="${node.id}" class="pat-node-token relative flex items-center justify-center min-w-[13px] h-5 px-[3px] rounded border ${borderCls} cursor-ns-resize transition select-none group touch-none shrink-0 gap-[1px]">
-                        <span class="pat-node-val text-[8px] font-mono font-bold ${noteTextColor} leading-none pointer-events-none">${isRest ? '~' : noteVal}</span>
+                    <div data-node-id="${node.id}" class="pat-node-token relative flex items-center justify-center min-w-[12px] h-[19px] px-[2px] rounded border ${borderCls} cursor-ns-resize transition select-none group touch-none shrink-0 gap-[1px]">
+                        <span class="pat-node-val text-[7.5px] font-mono font-bold ${noteTextColor} leading-none pointer-events-none">${isRest ? '~' : noteVal}</span>
                         ${renderModifiersInline(node)}
                     </div>`;
             }
