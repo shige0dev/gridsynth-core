@@ -13,13 +13,12 @@ const NOTE_SEMITONES_MAP = {
 const SEMITONE_NOTES = ['c', 'c#', 'd', 'eb', 'e', 'f', 'f#', 'g', 'ab', 'a', 'bb', 'b'];
 
 export function noteToMidiNum(noteStr) {
-    if (!noteStr) return null;
-    const match = String(noteStr).trim().toLowerCase().match(/^([a-g][#b]?)(-?\d+)?$/);
-    if (!match) return null;
-    const semi = NOTE_SEMITONES_MAP[match[1]];
-    if (semi === undefined) return null;
-    const oct = match[2] !== undefined ? parseInt(match[2], 10) : 2;
-    return (oct + 1) * 12 + semi;
+    if (!noteStr) return 48;
+    const s = String(noteStr).trim().toLowerCase();
+    const semi = NOTE_SEMITONES_MAP[s.slice(0, s.length > 2 && (s[1] === '#' || s[1] === 'b') ? 2 : 1)];
+    if (semi === undefined) return 48;
+    const oct = parseInt(s.slice(s.length > 2 && (s[1] === '#' || s[1] === 'b') ? 2 : 1), 10);
+    return ((isNaN(oct) ? 2 : oct) + 1) * 12 + semi;
 }
 
 export function midiNumToNote(midi) {
@@ -307,8 +306,92 @@ export function moveTokenNode(tokens, sourceId, targetId, insertPos = 'after', i
         }
         return false;
     }
-    insertNear(nextTokens);
-    return nextTokens;
+import { noteToCv } from './musical.js?v=367';
+
+export function tokensToEvents(tokens, start = 0.0, end = 1.0, cycleIndex = 0) {
+    if (!tokens || !tokens.length) return [];
+    const dur = end - start;
+
+    // 1. Calculate weights (for slowdown /N)
+    const weights = tokens.map(n => (n.slowdown && n.slowdown > 1) ? n.slowdown : 1);
+    const totalWeight = weights.reduce((sum, w) => sum + w, 0) || tokens.length;
+
+    let events = [];
+    let curTime = start;
+
+    tokens.forEach((node, idx) => {
+        const stepDur = dur * (weights[idx] / totalWeight);
+        const tStart = curTime;
+        const tEnd = tStart + stepDur;
+        curTime = tEnd;
+
+        // Group Handling
+        if (node.type === 'group') {
+            const children = node.children || [];
+            if (!children.length) return;
+
+            if (node.groupType === 'angle') {
+                // Cycle Alternation <A B C>
+                const selIdx = Math.abs(cycleIndex) % children.length;
+                events = events.concat(tokensToEvents([children[selIdx]], tStart, tEnd, cycleIndex));
+            } else if (node.groupType === 'choice') {
+                // Random Choice [A | B]
+                const picked = children[Math.floor(Math.random() * children.length)];
+                events = events.concat(tokensToEvents([picked], tStart, tEnd, cycleIndex));
+            } else {
+                // Regular Division [A B]
+                let innerEvents = tokensToEvents(children, tStart, tEnd, cycleIndex);
+                events = events.concat(innerEvents);
+            }
+            return;
+        }
+
+        // Subdivisions (*N)
+        if (node.subdiv && node.subdiv > 1) {
+            const count = node.subdiv;
+            const subDur = (tEnd - tStart) / count;
+            for (let s = 0; s < count; s++) {
+                const sStart = tStart + s * subDur;
+                const sEnd = sStart + subDur;
+                const isRest = node.type === 'rest';
+                events.push({
+                    start: sStart,
+                    end: sEnd,
+                    cv: isRest ? 0.0 : noteToCv(node.val || 'c2'),
+                    gate: !isRest,
+                    isRest,
+                    prob: node.prob !== undefined ? node.prob : 1.0,
+                    label: isRest ? '~' : (node.val || 'c2').toUpperCase()
+                });
+            }
+            return;
+        }
+
+        // Repeats (!N): !N on single atomic token in mini-notation repeats over successive slots
+        // In token form, repeat is handled directly as a single step or multiple
+        const isRest = node.type === 'rest';
+        events.push({
+            start: tStart,
+            end: tEnd,
+            cv: isRest ? 0.0 : noteToCv(node.val || 'c2'),
+            gate: !isRest,
+            isRest,
+            prob: node.prob !== undefined ? node.prob : 1.0,
+            label: isRest ? '~' : (node.val || 'c2').toUpperCase()
+        });
+    });
+
+    return events;
 }
+
+export function tokensToCycles(tokens, maxCycles = 16) {
+    const cycles = [];
+    for (let c = 0; c < maxCycles; c++) {
+        const evs = tokensToEvents(tokens, 0.0, 1.0, c);
+        cycles.push(evs.length ? evs : [{ start: 0, end: 1, cv: 1.0, gate: true, isRest: false, prob: 1.0, label: 'C2' }]);
+    }
+    return cycles;
+}
+
 
 

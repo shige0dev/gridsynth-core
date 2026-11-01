@@ -1,5 +1,13 @@
 import { AudioHelpers } from '../helpers.js';
 import { parseStrudelPatternCycles } from '../../core/strudel-parser.js';
+import { tokensToCycles } from '../../core/pat-tokens.js';
+
+function getCycles(d) {
+    if (d._tokens && d._tokens.length > 0) {
+        return tokensToCycles(d._tokens, 16);
+    }
+    return parseStrudelPatternCycles(d.pattern || 'c2 c2 c2 c2', d.cycleBeats || 4, 16);
+}
 
 export const PAT = {
     create: (ctx, d, patch, eng) => {
@@ -10,7 +18,7 @@ export const PAT = {
                 bpm: eng?.masterBPM || 120
             }
         });
-        const cycles = parseStrudelPatternCycles(d.pattern || 'c2 c2 c2 c2', d.cycleBeats || 4, 16);
+        const cycles = getCycles(d);
         w.port.postMessage({
             type: 'SET_EVENTS',
             cycles,
@@ -75,7 +83,7 @@ export const PAT = {
     },
     update: (ctx, inst, d, patch, eng) => {
         AudioHelpers.set(inst.nodes.w.parameters.get('bpm'), eng?.masterBPM || 120, ctx, 0.02);
-        const cycles = parseStrudelPatternCycles(d.pattern || 'c2 c2 c2 c2', d.cycleBeats || 4, 16);
+        const cycles = getCycles(d);
         inst.nodes.w.port.postMessage({
             type: 'SET_EVENTS',
             cycles,
