@@ -213,12 +213,16 @@ export const PAT = {
         const renderTokens = () => {
             if (!strip) return;
 
+            const isEditing = m._isEditing === true;
+            const fontColorCls = isEditing ? 'text-amber-300' : 'text-cyan-300';
+            const modColorCls = isEditing ? 'text-amber-300' : 'text-cyan-300';
+
             const renderMods = (n) => {
                 const chips = [];
-                if (n.subdiv > 1) chips.push(`<span data-mod="subdiv" data-pid="${n.id}" data-val="${n.subdiv}" class="pat-mod text-cyan-300 hover:text-white bg-slate-800/80 border border-slate-700/80 text-[7px] font-mono font-bold px-[2px] rounded cursor-ns-resize">*${n.subdiv}</span>`);
-                if (n.slowdown > 1) chips.push(`<span data-mod="slowdown" data-pid="${n.id}" data-val="${n.slowdown}" class="pat-mod text-cyan-300 hover:text-white bg-slate-800/80 border border-slate-700/80 text-[7px] font-mono font-bold px-[2px] rounded cursor-ns-resize">/${n.slowdown}</span>`);
-                if (n.repeat > 1) chips.push(`<span data-mod="repeat" data-pid="${n.id}" data-val="${n.repeat}" class="pat-mod text-cyan-300 hover:text-white bg-slate-800/80 border border-slate-700/80 text-[7px] font-mono font-bold px-[2px] rounded cursor-ns-resize">!${n.repeat}</span>`);
-                if (n.prob !== undefined && n.prob < 1.0) chips.push(`<span data-mod="prob" data-pid="${n.id}" class="pat-mod text-cyan-300 hover:text-white bg-slate-800/80 border border-slate-700/80 text-[7px] font-mono font-bold px-[2px] rounded cursor-pointer">${n.prob === 0.5 ? '?' : `?${n.prob}`}</span>`);
+                if (n.subdiv > 1) chips.push(`<span data-mod="subdiv" data-pid="${n.id}" data-val="${n.subdiv}" class="pat-mod ${modColorCls} hover:text-white bg-slate-800/80 border border-slate-700/80 text-[7px] font-mono font-bold px-[2px] rounded cursor-ns-resize">*${n.subdiv}</span>`);
+                if (n.slowdown > 1) chips.push(`<span data-mod="slowdown" data-pid="${n.id}" data-val="${n.slowdown}" class="pat-mod ${modColorCls} hover:text-white bg-slate-800/80 border border-slate-700/80 text-[7px] font-mono font-bold px-[2px] rounded cursor-ns-resize">/${n.slowdown}</span>`);
+                if (n.repeat > 1) chips.push(`<span data-mod="repeat" data-pid="${n.id}" data-val="${n.repeat}" class="pat-mod ${modColorCls} hover:text-white bg-slate-800/80 border border-slate-700/80 text-[7px] font-mono font-bold px-[2px] rounded cursor-ns-resize">!${n.repeat}</span>`);
+                if (n.prob !== undefined && n.prob < 1.0) chips.push(`<span data-mod="prob" data-pid="${n.id}" class="pat-mod ${modColorCls} hover:text-white bg-slate-800/80 border border-slate-700/80 text-[7px] font-mono font-bold px-[2px] rounded cursor-pointer">${n.prob === 0.5 ? '?' : `?${n.prob}`}</span>`);
                 return chips.length ? `<div class="flex items-center gap-[1px] ml-0.5">${chips.join('')}</div>` : '';
             };
 
@@ -240,7 +244,7 @@ export const PAT = {
                 const isR = node.type === 'rest';
                 return `
                     <div data-id="${node.id}" class="pat-tok relative flex items-center justify-center min-w-[12px] h-[19px] px-[2px] rounded border ${border} cursor-ns-resize select-none shrink-0 gap-[1px]">
-                        <span class="text-[7.5px] font-mono font-bold ${isR ? 'text-slate-600' : 'text-cyan-300'} pointer-events-none">${isR ? '~' : (node.val || 'c2').toUpperCase()}</span>
+                        <span class="text-[7.5px] font-mono font-bold ${isR ? 'text-slate-600' : fontColorCls} pointer-events-none">${isR ? '~' : (node.val || 'c2').toUpperCase()}</span>
                         ${renderMods(node)}
                     </div>`;
             };
@@ -262,8 +266,14 @@ export const PAT = {
         // Scroll handlers
         root.querySelector(`#pat-scroll-left-${uid}`)?.addEventListener('click', (e) => { e.stopPropagation(); strip?.scrollBy({ left: -60, behavior: 'smooth' }); });
         root.querySelector(`#pat-scroll-right-${uid}`)?.addEventListener('click', (e) => { e.stopPropagation(); strip?.scrollBy({ left: 60, behavior: 'smooth' }); });
-        root.querySelector(`#pat-container-${uid}`)?.addEventListener('pointerdown', (e) => {
-            if (!e.target.closest('.pat-tok') && selectedIds.size > 0) { selectedIds.clear(); renderTokens(); }
+        // Cancel selection when tapping outside tokens
+        root.addEventListener('pointerdown', (e) => {
+            if (!e.target.closest('.pat-tok') && !e.target.closest('#pat-add-note-' + uid) && !e.target.closest('#pat-add-rest-' + uid) && !e.target.closest('.pat-mod') && !e.target.closest('[id^="pat-bracket"]') && !e.target.closest('[id^="pat-angle"]') && !e.target.closest('[id^="pat-choice"]') && !e.target.closest('[id^="pat-subdiv"]') && !e.target.closest('[id^="pat-slowdown"]') && !e.target.closest('[id^="pat-repeat"]') && !e.target.closest('[id^="pat-prob"]') && !e.target.closest('[id^="pat-del"]')) {
+                if (selectedIds.size > 0) {
+                    selectedIds.clear();
+                    renderTokens();
+                }
+            }
         });
 
         // Unified Event Delegation on Strip (for both Token Drag/Swipe and Modifier Chips)
@@ -303,11 +313,15 @@ export const PAT = {
             const id = tokEl.dataset.id;
             const startX = e.clientX, startY = e.clientY;
             let isDrag = false, isSwipe = false, lastStep = 0, targetEl = null, dropPos = 'after';
+            let longPressed = false;
 
             const timer = setTimeout(() => {
-                if (selectedIds.has(id)) selectedIds.delete(id); else selectedIds.add(id);
+                longPressed = true;
+                if (!selectedIds.has(id)) {
+                    selectedIds.add(id);
+                }
                 renderTokens();
-            }, 300);
+            }, 350);
 
             const clearLine = () => strip.querySelectorAll('.pat-tok').forEach(el => el.classList.remove('border-l-2', 'border-r-2', 'border-white', 'ring-2', 'ring-white', 'bg-white/10'));
 
@@ -355,8 +369,21 @@ export const PAT = {
                     sync(false); return;
                 }
                 if (!isDrag && !isSwipe) {
-                    if (selectedIds.has(id) && selectedIds.size === 1) selectedIds.clear();
-                    else { selectedIds.clear(); selectedIds.add(id); }
+                    if (longPressed) {
+                        // Handled by timer
+                        return;
+                    }
+                    if (selectedIds.size > 0) {
+                        // In selection mode: tapping toggles/adds token to selection
+                        if (selectedIds.has(id)) {
+                            selectedIds.delete(id);
+                        } else {
+                            selectedIds.add(id);
+                        }
+                    } else {
+                        // Single tap when not in selection mode: select this single token
+                        selectedIds.add(id);
+                    }
                     renderTokens();
                 }
             };
