@@ -282,8 +282,8 @@ export const CLK = {
     defaults: () => ({ type: 'CLK', div: 'x2', pulseWidthMs: 15, limitPct: 90 }),
     ports: () => ({
         in: [
-            { port: 'run_in', pin: 4, color: 'bg-emerald-500' },
-            { port: 'reset_in', pin: 3, color: 'bg-red-500' }
+            { port: 'run_in', pin: 5, color: 'bg-emerald-500' },
+            { port: 'reset_in', pin: 4, color: 'bg-red-500' }
         ],
         out: [{ port: 'gate_out', pin: 10, color: 'bg-red-500' }]
     }),

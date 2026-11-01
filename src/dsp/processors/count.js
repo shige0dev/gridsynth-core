@@ -109,3 +109,4 @@ class CountProcessor extends AudioWorkletProcessor {
 }
 
 registerProcessor('count-processor', CountProcessor);
+
