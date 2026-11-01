@@ -10,10 +10,17 @@ export const LUT = {
         const initialDivs = [16, 32, 64, 256].includes(d.divisions) ? d.divisions : 16;
         const initialQuantize = d.quantize === true;
 
-        // Default table ramp 0..1 if not provided
+        // Default stepped table for divisions if not provided
         let table = d.table;
         if (!Array.isArray(table) || table.length !== 256) {
-            table = Array.from({ length: 256 }, (_, i) => i / 255);
+            table = new Array(256);
+            const slotW = 256 / initialDivs;
+            for (let s = 0; s < initialDivs; s++) {
+                const v = s / (initialDivs - 1);
+                for (let i = s * slotW; i < (s + 1) * slotW; i++) {
+                    table[i] = v;
+                }
+            }
             d.table = table;
         }
 

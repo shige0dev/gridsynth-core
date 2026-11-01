@@ -9,10 +9,15 @@ class LutProcessor extends AudioWorkletProcessor {
 
     this.divisions = 16;
     this.quantize = false; // Pitch quantize (1V/Oct semitones: 1/12V)
-    // Default table: 0..1
+    // Default stepped table: 16 steps
     this.table = new Float32Array(256);
-    for (let i = 0; i < 256; i++) {
-      this.table[i] = i / 255.0;
+    const initialDivs = 16;
+    const initialSlotW = 256 / initialDivs;
+    for (let s = 0; s < initialDivs; s++) {
+      const v = s / (initialDivs - 1);
+      for (let i = s * initialSlotW; i < (s + 1) * initialSlotW; i++) {
+        this.table[i] = v;
+      }
     }
 
     this.latestIn = 0;

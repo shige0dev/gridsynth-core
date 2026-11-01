@@ -2,13 +2,25 @@ import { UIHelpers } from '../../ui/helpers.js?v=351';
 
 export const LUT = {
     color: 'teal',
-    defaults: () => ({
-        type: 'LUT',
-        divisions: 16,     // 16, 32, 64, 256
-        quantize: false,   // Pitch quantize to 1V/Oct semitones (1/12V)
-        table: Array.from({ length: 256 }, (_, i) => i / 255),
-        name: 'LUT'
-    }),
+    defaults: () => {
+        // Default stepped table for 16 divisions (each slot filled with s / 15)
+        const divs = 16;
+        const slotW = 256 / divs;
+        const table = new Array(256);
+        for (let s = 0; s < divs; s++) {
+            const v = s / (divs - 1);
+            for (let i = s * slotW; i < (s + 1) * slotW; i++) {
+                table[i] = v;
+            }
+        }
+        return {
+            type: 'LUT',
+            divisions: 16,     // 16, 32, 64, 256
+            quantize: false,   // Pitch quantize to 1V/Oct semitones (1/12V)
+            table,
+            name: 'LUT'
+        };
+    },
     ports: () => ({
         in: [{ port: 'cv_in', pin: 5, color: 'bg-yellow-400' }],
         out: [{ port: 'cv_out', pin: 10, color: 'bg-yellow-400' }]
@@ -46,9 +58,18 @@ export const LUT = {
 
         const divs = m.divisions || 16;
         const isQ = m.quantize === true;
-        const table = Array.isArray(m.table) && m.table.length === 256
-            ? m.table
-            : Array.from({ length: 256 }, (_, i) => i / 255);
+        const slotW256 = 256 / divs;
+        let table = m.table;
+        if (!Array.isArray(table) || table.length !== 256) {
+            table = new Array(256);
+            for (let s = 0; s < divs; s++) {
+                const v = s / (divs - 1);
+                for (let i = s * slotW256; i < (s + 1) * slotW256; i++) {
+                    table[i] = v;
+                }
+            }
+            m.table = table;
+        }
 
         // 1. Grid Guidelines
         ctx2d.strokeStyle = isModal ? '#1e293b' : 'rgba(30, 41, 59, 0.6)';
@@ -235,7 +256,14 @@ export const LUT = {
                 const slot = Math.max(0, Math.min(divs - 1, Math.floor(normX * divs)));
 
                 if (!Array.isArray(m.table) || m.table.length !== 256) {
-                    m.table = Array.from({ length: 256 }, (_, i) => i / 255);
+                    m.table = new Array(256);
+                    const slotW = 256 / divs;
+                    for (let s = 0; s < divs; s++) {
+                        const v = s / (divs - 1);
+                        for (let i = s * slotW; i < (s + 1) * slotW; i++) {
+                            m.table[i] = v;
+                        }
+                    }
                 }
 
                 // If dragged across multiple slots, assign normY to all slots
