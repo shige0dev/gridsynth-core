@@ -1,12 +1,16 @@
 import { AudioHelpers } from '../helpers.js';
-import { parseStrudelPatternCycles } from '../../core/strudel-parser.js';
-import { tokensToCycles } from '../../core/pat-tokens.js';
+import { parsePatternToTokens, tokensToCycles } from '../../core/pat-tokens.js';
 
 function getCycles(d) {
+    if (!d._tokens && d.pattern) {
+        d._tokens = parsePatternToTokens(d.pattern);
+    }
     if (d._tokens && d._tokens.length > 0) {
         return tokensToCycles(d._tokens, 16);
     }
-    return parseStrudelPatternCycles(d.pattern || 'c2 c2 c2 c2', d.cycleBeats || 4, 16);
+    const defTokens = parsePatternToTokens('c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2');
+    d._tokens = defTokens;
+    return tokensToCycles(defTokens, 16);
 }
 
 export const PAT = {

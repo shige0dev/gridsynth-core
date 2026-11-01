@@ -15,14 +15,18 @@ import {
 
 export const PAT = {
     color: 'sky',
-    defaults: () => ({
-        type: 'PAT',
-        pattern: 'c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2',
-        cycleBeats: 4,
-        gateLen: 0.8,
-        presetName: '16-step',
-        _addPitch: 'c2'
-    }),
+    defaults: () => {
+        const pattern = 'c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2';
+        return {
+            type: 'PAT',
+            pattern,
+            _tokens: parsePatternToTokens(pattern),
+            cycleBeats: 4,
+            gateLen: 0.8,
+            presetName: '16-step',
+            _addPitch: 'c2'
+        };
+    },
     ports: () => ({
         in: [{ port: 'reset_in', pin: 5, color: 'bg-red-500' }],
         out: [
@@ -34,7 +38,7 @@ export const PAT = {
         <div class="flex items-center justify-center w-full h-full pointer-events-none select-none">
             <span class="pat-state-disp text-[17px] font-mono font-bold text-slate-500 tracking-wider">&mdash;</span>
         </div>`,
-    updateLive: (cell, data, isP, modal) => {
+    updateLive: (cell, data, isP, modal, m) => {
         const stateEl = cell?.querySelector('.pat-state-disp');
         if (stateEl) {
             if (!isP || !data || data.powerOn === false) {
@@ -54,7 +58,7 @@ export const PAT = {
 
         // Highlight active playing token in modal (only when playing and not editing)
         if (modal) {
-            const isEditing = m._isEditing === true;
+            const isEditing = m?._isEditing === true;
             const activeTokenId = (isP && !isEditing && data?.activeTokenId) ? data.activeTokenId : null;
             const isGate = isP && !isEditing && !!data?.gate;
             modal.querySelectorAll('.pat-tok').forEach(tok => {
@@ -145,12 +149,12 @@ export const PAT = {
                         <button id="pat-del-${uid}" class="h-5 px-1.5 bg-red-950/80 hover:bg-red-900 text-red-300 rounded border border-red-500/60 flex items-center justify-center shrink-0" title="選択削除 / 修飾子削除 / グループ解除">
                             <svg class="w-2.5 h-2.5 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
                         </button>
-                        <button id="pat-revert-${uid}" class="h-5 px-1.5 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 rounded border border-slate-700 flex items-center justify-center shrink-0" title="編集破棄 / 前に戻す (確定状態に復帰)">
-                            <svg class="w-2.5 h-2.5 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"/></svg>
-                        </button>
                     </div>
                     <div class="flex-1 min-w-[4px]"></div>
-                    <button id="pat-send-${uid}" class="w-5 h-5 bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 border border-cyan-500/70 rounded flex items-center justify-center font-mono text-[11px] font-bold shrink-0" title="SEND">↵</button>
+                    <button id="pat-revert-${uid}" class="h-5 px-1.5 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 rounded border border-slate-700 flex items-center justify-center shrink-0" title="編集破棄 / 前に戻す (確定状態に復帰)">
+                        <svg class="w-2.5 h-2.5 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"/></svg>
+                    </button>
+                    <button id="pat-send-${uid}" class="h-5 px-2 bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 border border-cyan-500/70 rounded flex items-center justify-center font-mono text-[9px] font-bold shadow-sm transition active:scale-95 shrink-0" title="パターンを反映">SEND</button>
                 </div>
 
                 <!-- Row 3: Token Strip -->
