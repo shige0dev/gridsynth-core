@@ -29,8 +29,32 @@ function midiNumToNote(midi) {
 }
 
 let nextTokenId = 1;
-function genId() {
-    return 't_' + (nextTokenId++);
+const genId = () => 't_' + (nextTokenId++);
+function walkTokens(list, fn) {
+    const res = [];
+    for (const node of list) {
+        const out = fn(node);
+        if (out === null) continue; // remove
+        if (Array.isArray(out)) res.push(...out); // splice in multiple nodes
+        else {
+            if (node.children) node.children = walkTokens(node.children, fn);
+            res.push(out || node);
+        }
+    }
+    return res;
+}
+
+// Helper: Flatten/find all nodes satisfying predicate
+function findTokens(list, predicate) {
+    const res = [];
+    function traverse(nodes) {
+        for (const n of nodes) {
+            if (predicate(n)) res.push(n);
+            if (n.children) traverse(n.children);
+        }
+    }
+    traverse(list);
+    return res;
 }
 
 /**
@@ -490,17 +514,7 @@ export const PAT2 = {
 
         sendBtn?.addEventListener('click', doSend);
 
-        const getSelectedNodes = () => {
-            const list = [];
-            function traverse(nodes) {
-                nodes.forEach(n => {
-                    if (selectedIds.has(n.id)) list.push(n);
-                    if (n.children) traverse(n.children);
-                });
-            }
-            traverse(m._tokens);
-            return list;
-        };
+        const getSelectedNodes = () => findTokens(m._tokens, n => selectedIds.has(n.id));
 
         // Check if selected tokens form a contiguous slice within the same parent list
         const getAdjacentSelectedGroup = () => {
@@ -537,38 +551,27 @@ export const PAT2 = {
 
         const updateInspector = () => {
             const adjGroup = getAdjacentSelectedGroup();
-
-            // Enable/disable [] and <> group buttons:
-            // Always displayed; when no multiple contiguous selection exists, disabled in dark gray.
-            // When multiple adjacent tokens are selected, active in blue theme.
-            if (bracketBtn) {
-                bracketBtn.disabled = !adjGroup;
-                if (adjGroup) {
-                    bracketBtn.className = 'h-5 w-[18px] flex items-center justify-center bg-sky-900 hover:bg-sky-800 text-sky-100 border border-sky-400 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 cursor-pointer';
-                } else {
-                    bracketBtn.className = 'h-5 w-[18px] flex items-center justify-center bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 opacity-50 cursor-not-allowed';
-                }
-            }
-            if (angleBtn) {
-                angleBtn.disabled = !adjGroup;
-                if (adjGroup) {
-                    angleBtn.className = 'h-5 w-[18px] flex items-center justify-center bg-sky-900 hover:bg-sky-800 text-sky-100 border border-sky-400 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 cursor-pointer tracking-tighter';
-                } else {
-                    angleBtn.className = 'h-5 w-[18px] flex items-center justify-center bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 opacity-50 cursor-not-allowed tracking-tighter';
-                }
-            }
+            const setGrpBtn = (btn, isAngle = false) => {
+                if (!btn) return;
+                btn.disabled = !adjGroup;
+                const stateCls = adjGroup
+                    ? 'bg-sky-900 hover:bg-sky-800 text-sky-100 border-sky-400 cursor-pointer'
+                    : 'bg-slate-900 text-slate-500 border-slate-800 opacity-50 cursor-not-allowed';
+                btn.className = `h-5 w-[18px] flex items-center justify-center ${stateCls} border rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 ${isAngle ? 'tracking-tighter' : ''}`;
+            };
+            setGrpBtn(bracketBtn, false);
+            setGrpBtn(angleBtn, true);
         };
 
         const shiftSelectedPitch = (delta) => {
-            const selected = getSelectedNodes();
             let changed = false;
-            selected.forEach(n => {
-                if (n.type === 'note') {
+            walkTokens(m._tokens, n => {
+                if (selectedIds.has(n.id) && n.type === 'note') {
                     const curMidi = noteToMidiNum(n.val) ?? 48;
-                    const newMidi = Math.max(12, Math.min(108, curMidi + delta));
-                    n.val = midiNumToNote(newMidi);
+                    n.val = midiNumToNote(Math.max(12, Math.min(108, curMidi + delta)));
                     changed = true;
                 }
+                return n;
             });
             if (changed) {
                 renderTokens();
@@ -576,46 +579,33 @@ export const PAT2 = {
             }
         };
 
-        // Automatic Drag-and-drop: Move / Reorder (drop between/near tokens or groups)
+        // Move / Reorder (drop between/near tokens or groups)
         const moveTokens = (sourceId, targetId, insertPos = 'after', isInsideGroup = false) => {
             if (!sourceId || !targetId || sourceId === targetId) return;
 
             let sourceNode = null;
-            function extractSource(list) {
-                for (let i = 0; i < list.length; i++) {
-                    if (list[i].id === sourceId) {
-                        sourceNode = list.splice(i, 1)[0];
-                        return true;
-                    }
-                    if (list[i].children && extractSource(list[i].children)) return true;
-                }
-                return false;
-            }
-            extractSource(m._tokens);
+            m._tokens = walkTokens(m._tokens, n => {
+                if (n.id === sourceId) { sourceNode = n; return null; }
+                return n;
+            });
             if (!sourceNode) return;
 
-            // Move / Reorder: supports dropping inside a group or before/after any target
-            function insertNearTarget(list) {
+            function insertNear(list) {
                 for (let i = 0; i < list.length; i++) {
                     if (list[i].id === targetId) {
                         if (isInsideGroup && list[i].type === 'group') {
                             list[i].children = list[i].children || [];
-                            if (insertPos === 'before') {
-                                list[i].children.unshift(sourceNode);
-                            } else {
-                                list[i].children.push(sourceNode);
-                            }
-                            return true;
+                            insertPos === 'before' ? list[i].children.unshift(sourceNode) : list[i].children.push(sourceNode);
+                        } else {
+                            list.splice(insertPos === 'before' ? i : i + 1, 0, sourceNode);
                         }
-                        const insertIdx = insertPos === 'before' ? i : i + 1;
-                        list.splice(insertIdx, 0, sourceNode);
                         return true;
                     }
-                    if (list[i].children && insertNearTarget(list[i].children)) return true;
+                    if (list[i].children && insertNear(list[i].children)) return true;
                 }
                 return false;
             }
-            insertNearTarget(m._tokens);
+            insertNear(m._tokens);
 
             selectedIds.clear();
             renderTokens();
@@ -908,67 +898,40 @@ export const PAT2 = {
             }
         });
 
-        // Group into [ ] (subdivision group)
-        bracketBtn?.addEventListener('click', () => {
+        // Helper: Create group ([ ] or < >) from adjacent selection
+        const groupAdjacent = (groupType) => {
             const adj = getAdjacentSelectedGroup();
             if (!adj) return;
             const { list, start, end } = adj;
-            const count = end - start + 1;
-            const children = list.slice(start, end + 1);
             const newGroup = {
                 id: genId(),
                 type: 'group',
-                groupType: 'bracket',
-                children
+                groupType,
+                children: list.slice(start, end + 1)
             };
-            list.splice(start, count, newGroup);
+            list.splice(start, end - start + 1, newGroup);
             selectedIds.clear();
             selectedIds.add(newGroup.id);
             renderTokens();
             syncPattern();
-        });
+        };
+
+        // Group into [ ] (subdivision group)
+        bracketBtn?.addEventListener('click', () => groupAdjacent('bracket'));
 
         // Group into < > (cycle group)
-        angleBtn?.addEventListener('click', () => {
-            const adj = getAdjacentSelectedGroup();
-            if (!adj) return;
-            const { list, start, end } = adj;
-            const count = end - start + 1;
-            const children = list.slice(start, end + 1);
-            const newGroup = {
-                id: genId(),
-                type: 'group',
-                groupType: 'angle',
-                children
-            };
-            list.splice(start, count, newGroup);
-            selectedIds.clear();
-            selectedIds.add(newGroup.id);
-            renderTokens();
-            syncPattern();
-        });
+        angleBtn?.addEventListener('click', () => groupAdjacent('angle'));
 
         // Ungroup: in-place unwrap
         ungroupBtn?.addEventListener('click', () => {
             let changed = false;
-
-            function unwrapList(list) {
-                const res = [];
-                list.forEach(node => {
-                    if (selectedIds.has(node.id) && node.type === 'group' && node.children) {
-                        res.push(...node.children);
-                        changed = true;
-                    } else {
-                        if (node.children) {
-                            node.children = unwrapList(node.children);
-                        }
-                        res.push(node);
-                    }
-                });
-                return res;
-            }
-
-            m._tokens = unwrapList(m._tokens);
+            m._tokens = walkTokens(m._tokens, node => {
+                if (selectedIds.has(node.id) && node.type === 'group' && node.children) {
+                    changed = true;
+                    return node.children;
+                }
+                return node;
+            });
             if (changed) {
                 selectedIds.clear();
                 renderTokens();
@@ -978,10 +941,9 @@ export const PAT2 = {
 
         // Modifier: cycle subdiv *1 -> *2 -> *3 -> *4 -> *1
         subdivBtn?.addEventListener('click', () => {
-            const selected = getSelectedNodes();
-            selected.forEach(n => {
-                const cur = n.subdiv || 1;
-                n.subdiv = cur >= 4 ? 1 : cur + 1;
+            walkTokens(m._tokens, n => {
+                if (selectedIds.has(n.id)) n.subdiv = ((n.subdiv || 1) >= 4) ? 1 : (n.subdiv || 1) + 1;
+                return n;
             });
             renderTokens();
             syncPattern();
@@ -989,10 +951,9 @@ export const PAT2 = {
 
         // Modifier: cycle repeat !1 -> !2 -> !3 -> !4 -> !1
         repeatBtn?.addEventListener('click', () => {
-            const selected = getSelectedNodes();
-            selected.forEach(n => {
-                const cur = n.repeat || 1;
-                n.repeat = cur >= 4 ? 1 : cur + 1;
+            walkTokens(m._tokens, n => {
+                if (selectedIds.has(n.id)) n.repeat = ((n.repeat || 1) >= 4) ? 1 : (n.repeat || 1) + 1;
+                return n;
             });
             renderTokens();
             syncPattern();
@@ -1001,14 +962,7 @@ export const PAT2 = {
         // Delete selected tokens (Trash)
         delBtn?.addEventListener('click', () => {
             if (selectedIds.size === 0) return;
-            function filterOut(list) {
-                return list.filter(n => {
-                    if (selectedIds.has(n.id)) return false;
-                    if (n.children) n.children = filterOut(n.children);
-                    return true;
-                });
-            }
-            m._tokens = filterOut(m._tokens);
+            m._tokens = walkTokens(m._tokens, n => selectedIds.has(n.id) ? null : n);
             if (m._tokens.length === 0) {
                 m._tokens = [{ id: genId(), type: 'rest', val: '~' }];
             }
