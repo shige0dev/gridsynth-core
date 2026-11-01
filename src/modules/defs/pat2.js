@@ -67,6 +67,7 @@ export const PAT2 = {
         const curBar = curCycle / 4;
         const gatePct = Math.round((m.gateLen ?? 0.8) * 100);
         const showPresets = m._showPresets === true;
+        const showManual = m._showManual === true;
         const curAddPitch = (m._addPitch || 'c2').toUpperCase();
 
         if (m._committedPattern === undefined) {
@@ -84,38 +85,44 @@ export const PAT2 = {
 
         return `
             <div id="pat2-modal-root-${uid}" class="space-y-1 p-0.5 select-none touch-none w-full">
-                <!-- 1st Row: BAR selector, GATE slider, and SEND button -->
+                <!-- 1st Row: BAR selector, GATE slider, and on the right: MANUAL button + PRESET button -->
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-1 overflow-x-auto no-scrollbar">
-                    <div class="flex items-center gap-2 shrink-0">
-                        <!-- BAR selector (multiplication and division) -->
-                        <div class="flex items-center bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800 gap-1 shrink-0" title="繰り返し単位（小節数 BAR）: 1/4, 1/2, 1, 2, 4, 8">
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <!-- BAR selector (multiplication and division without brackets) -->
+                        <div class="flex items-center bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800 gap-1 shrink-0" title="繰り返し単位（小節数 BAR）: /4, /2, x1, x2, x4, x8">
                             <span class="text-[7px] text-slate-400 uppercase font-mono font-bold shrink-0">BAR</span>
                             <select id="pat2-bars-select-${uid}" class="bg-slate-900 text-cyan-300 font-mono text-[8px] font-bold border border-slate-700 rounded px-1 py-0.5 focus:outline-none cursor-pointer">
-                                <option value="0.25" ${isBarSelected(0.25) ? 'selected' : ''}>/4 (1/4)</option>
-                                <option value="0.5" ${isBarSelected(0.5) ? 'selected' : ''}>/2 (1/2)</option>
-                                <option value="1" ${isBarSelected(1) ? 'selected' : ''}>x1 (1)</option>
-                                <option value="2" ${isBarSelected(2) ? 'selected' : ''}>x2 (2)</option>
-                                <option value="4" ${isBarSelected(4) ? 'selected' : ''}>x4 (4)</option>
-                                <option value="8" ${isBarSelected(8) ? 'selected' : ''}>x8 (8)</option>
+                                <option value="0.25" ${isBarSelected(0.25) ? 'selected' : ''}>/4</option>
+                                <option value="0.5" ${isBarSelected(0.5) ? 'selected' : ''}>/2</option>
+                                <option value="1" ${isBarSelected(1) ? 'selected' : ''}>x1</option>
+                                <option value="2" ${isBarSelected(2) ? 'selected' : ''}>x2</option>
+                                <option value="4" ${isBarSelected(4) ? 'selected' : ''}>x4</option>
+                                <option value="8" ${isBarSelected(8) ? 'selected' : ''}>x8</option>
                             </select>
                         </div>
                         <!-- GATE slider -->
                         <div class="flex items-center bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800 gap-1 shrink-0">
                             <span class="text-[7px] text-slate-400 uppercase font-mono font-bold shrink-0">GATE</span>
-                            <input type="range" id="pat2-gate-slider-${uid}" min="10" max="95" step="5" value="${gatePct}" class="w-12 h-1 accent-cyan-400 cursor-pointer touch-none">
+                            <input type="range" id="pat2-gate-slider-${uid}" min="10" max="95" step="5" value="${gatePct}" class="w-10 h-1 accent-cyan-400 cursor-pointer touch-none">
                             <span id="pat2-gate-disp-${uid}" class="text-[7.5px] font-mono font-bold text-cyan-300 min-w-[18px] text-right shrink-0">${gatePct}%</span>
                         </div>
                     </div>
 
-                    <!-- Right: Minimalist SEND (↵) Button -->
-                    <button id="pat2-send-btn-${uid}" class="h-5 px-2 bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 hover:text-white border border-cyan-500/70 rounded flex items-center justify-center gap-0.5 shadow-sm transition active:scale-95 shrink-0 cursor-pointer font-mono text-[9px] font-bold" title="パターンをシンセへ反映 (SEND / Enter)">
-                        <span class="text-[11px] leading-none">↵</span>
-                        <span>SEND</span>
-                    </button>
+                    <!-- Right of Row 1: MANUAL toggle button and PRESET toggle button -->
+                    <div class="flex items-center gap-1 shrink-0">
+                        <button id="pat2-toggle-manual-${uid}" class="h-5 px-1.5 flex items-center gap-0.5 text-[7px] font-bold ${showManual ? 'bg-cyan-950 text-cyan-300 border-cyan-500' : 'bg-slate-900 text-slate-400 hover:text-cyan-300 border-slate-700'} rounded border shadow-sm transition uppercase tracking-wider shrink-0 cursor-pointer" title="マニュアル解説を開閉">
+                            <span class="text-[6px] font-mono">${showManual ? '▼' : '▶'}</span>
+                            <span>MANUAL</span>
+                        </button>
+                        <button id="pat2-toggle-presets-${uid}" class="h-5 px-1.5 flex items-center gap-0.5 text-[7px] font-bold ${showPresets ? 'bg-cyan-950 text-cyan-300 border-cyan-500' : 'bg-slate-900 text-slate-400 hover:text-cyan-300 border-slate-700'} rounded border shadow-sm transition uppercase tracking-wider shrink-0 cursor-pointer" title="プリセット一覧を開閉">
+                            <span class="text-[6px] font-mono">${showPresets ? '▼' : '▶'}</span>
+                            <span>PRESET</span>
+                        </button>
+                    </div>
                 </div>
 
-                <!-- 2nd Row: Pitch changer / Rest, Grouping ([] / <>), Ungroup, Modifiers (*n, !n), Trash Delete -->
-                <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-1 overflow-x-auto no-scrollbar">
+                <!-- 2nd Row: Left-aligned editing tools, flex-1 spacer, Trash Delete, spacer, and right-aligned SEND (↵) button -->
+                <div class="flex items-center pb-1 border-b border-slate-800 gap-1 overflow-x-auto no-scrollbar w-full">
                     <!-- Left: Fast Note / Rest Appender (Clean Blue theme) -->
                     <div class="flex items-center gap-1 shrink-0">
                         <div id="pat2-add-note-box-${uid}" class="h-5 px-1.5 bg-sky-950/90 hover:bg-sky-900 text-sky-200 rounded border border-sky-600/80 shadow-sm transition cursor-ns-resize flex items-center gap-0.5 touch-none" title="上下スワイプで音程変更 / タップで末尾に追加">
@@ -127,7 +134,7 @@ export const PAT2 = {
                         </button>
                     </div>
 
-                    <!-- Right / Middle: Grouping Buttons ([] / <> / [|]), Ungroup, Modifiers (*n, /n, !n, ?), Trash Delete -->
+                    <!-- Middle: Grouping Buttons ([] / <> / [|]), Ungroup, Modifiers (*n, /n, !n, ?), all left-aligned -->
                     <div class="flex items-center gap-0.5 shrink-0">
                         <button id="pat2-bracket-btn-${uid}" disabled class="h-5 w-[18px] flex items-center justify-center bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 opacity-50 cursor-not-allowed" title="横並び選択した項目を [] 分割グループにまとめる">
                             []
@@ -157,6 +164,14 @@ export const PAT2 = {
                             <i data-lucide="trash-2" class="w-2.5 h-2.5 pointer-events-none"></i>
                         </button>
                     </div>
+
+                    <!-- Flexible Space between Trash and SEND -->
+                    <div class="flex-1 min-w-[4px]"></div>
+
+                    <!-- Right End: SEND Button (↵ return mark only) -->
+                    <button id="pat2-send-btn-${uid}" class="w-5 h-5 bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 hover:text-white border border-cyan-500/70 rounded flex items-center justify-center shadow-sm transition active:scale-95 shrink-0 cursor-pointer font-mono text-[11px] font-bold" title="パターンをシンセへ反映 (SEND / Enter)">
+                        <span>↵</span>
+                    </button>
                 </div>
 
                 <!-- 3rd Row: Token Strip Container with Scroll Left [ ◀ ] and Scroll Right [ ▶ ] Buttons -->
@@ -176,23 +191,28 @@ export const PAT2 = {
                     </button>
                 </div>
 
-                <!-- Manual / Symbol Reference Bar with PRESET button placed at the left end -->
-                <div class="bg-slate-950/90 rounded border border-slate-800/80 px-1 py-0.5 text-[6.5px] font-mono text-slate-400 flex flex-wrap items-center gap-x-2 gap-y-0.5 leading-tight">
-                    <button id="pat2-toggle-presets-${uid}" class="flex items-center gap-0.5 text-[7px] font-bold text-slate-300 hover:text-cyan-300 uppercase tracking-wider transition bg-slate-900 hover:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 shrink-0">
-                        <span class="text-[6px] font-mono text-cyan-400">${showPresets ? '▼' : '▶'}</span>
-                        <span>PRESET</span>
-                    </button>
-                    <span class="text-cyan-400 font-bold">MANUAL:</span>
-                    <span><strong class="text-purple-300 font-bold">[A B]</strong> 等分</span>
-                    <span><strong class="text-purple-300 font-bold">&lt;A B&gt;</strong> 交代</span>
-                    <span><strong class="text-emerald-300 font-bold">[A|B]</strong> ランダム選択</span>
-                    <span><strong class="text-amber-300 font-bold">*N</strong> 細分</span>
-                    <span><strong class="text-amber-300 font-bold">/N</strong> 伸長</span>
-                    <span><strong class="text-amber-300 font-bold">!N</strong> 連続</span>
-                    <span><strong class="text-emerald-300 font-bold">?</strong> 確率</span>
-                    <span><strong class="text-slate-300 font-bold">~</strong> 休符</span>
-                    <span class="text-slate-500">(↕音程 / ↔移動)</span>
+                <!-- Collapsible Manual (150% text size, placed at the bottom when toggled) -->
+                ${showManual ? `
+                <div class="bg-slate-950 rounded border border-cyan-800/80 p-1.5 text-[10px] font-mono text-slate-300 space-y-1 shadow-inner">
+                    <div class="text-[10.5px] font-bold text-cyan-300 flex items-center gap-1 border-b border-slate-800 pb-0.5">
+                        <span class="text-cyan-400">📖</span>
+                        <span>PAT2 MINI-NOTATION GUIDE</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 leading-snug">
+                        <div><strong class="text-purple-300 font-bold">[A B]</strong> : 1拍・1枠の等分</div>
+                        <div><strong class="text-purple-300 font-bold">&lt;A B&gt;</strong> : サイクル毎の交代</div>
+                        <div><strong class="text-emerald-300 font-bold">[A|B]</strong> : 確率による二者択一</div>
+                        <div><strong class="text-amber-300 font-bold">*N</strong> : N倍に細分化 (連打)</div>
+                        <div><strong class="text-amber-300 font-bold">/N</strong> : N倍に伸長 (ゲート延長)</div>
+                        <div><strong class="text-amber-300 font-bold">!N</strong> : N回連続リピート</div>
+                        <div><strong class="text-emerald-300 font-bold">?</strong> : 発音確率 (?, ?0.8, ?0.2)</div>
+                        <div><strong class="text-slate-400 font-bold">~</strong> : 休符</div>
+                    </div>
+                    <div class="text-[9px] text-slate-400 pt-0.5 border-t border-slate-800/80">
+                        ※トークン選択中に上部の <span class="text-sky-300 font-bold">↕上下スワイプ</span> で音程変更、<span class="text-sky-300 font-bold">↔ドラッグ</span> で位置入替が可能です。
+                    </div>
                 </div>
+                ` : ''}
 
                 <!-- Presets Grid (Collapsible at the bottom) -->
                 ${showPresets ? `
@@ -228,6 +248,7 @@ export const PAT2 = {
         const barsSelect = document.getElementById(`pat2-bars-select-${uid}`);
         const gateSlider = document.getElementById(`pat2-gate-slider-${uid}`);
         const gateDisp = document.getElementById(`pat2-gate-disp-${uid}`);
+        const toggleManual = document.getElementById(`pat2-toggle-manual-${uid}`);
         const togglePresets = document.getElementById(`pat2-toggle-presets-${uid}`);
         const sendBtn = document.getElementById(`pat2-send-btn-${uid}`);
         const scrollLeftBtn = document.getElementById(`pat2-scroll-left-${uid}`);
@@ -873,6 +894,12 @@ export const PAT2 = {
             selectedIds.clear();
             renderTokens();
             syncPattern();
+        });
+
+        // Toggle Manual Explanation (150% size collapsible at bottom)
+        toggleManual?.addEventListener('click', () => {
+            m._showManual = !m._showManual;
+            ctx.reRenderModal();
         });
 
         // Presets
