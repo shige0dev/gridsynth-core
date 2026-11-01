@@ -112,8 +112,8 @@ export const SCOPE = {
                         </div>
                     </div>
                 </div>
-                <div class="h-[108px] bg-slate-950 p-1 rounded-lg border border-slate-800 select-none shadow-sm overflow-hidden" style="opacity: ${m?.opacity ?? 0.8};">
-                    <canvas id="scope-modal-canvas" class="w-full h-full block rounded bg-slate-950" width="360" height="106"></canvas>
+                <div class="w-full bg-slate-950 p-1 rounded-lg border border-slate-800 select-none shadow-sm overflow-hidden" style="opacity: ${m?.opacity ?? 0.8};">
+                    <canvas id="scope-modal-canvas" class="w-full aspect-[4/1] block rounded bg-slate-950" width="560" height="140"></canvas>
                 </div>
             </div>`;
     },
@@ -203,8 +203,8 @@ export const LISS = {
                         <button id="liss-v-up" class="h-4 w-4 rounded bg-slate-800 border border-slate-700 text-slate-200 text-[10px] font-bold flex items-center justify-center leading-none active:bg-slate-700">＋</button>
                     </div>
                 </div>
-                <div class="h-[108px] bg-slate-950 p-1 rounded-lg border border-slate-800 select-none shadow-sm overflow-hidden" style="opacity: ${m?.opacity ?? 0.8};">
-                    <canvas id="liss-modal-canvas" class="w-full h-full block rounded bg-slate-950" width="360" height="106"></canvas>
+                <div class="w-full bg-slate-950 p-1 rounded-lg border border-slate-800 select-none shadow-sm overflow-hidden" style="opacity: ${m?.opacity ?? 0.8};">
+                    <canvas id="liss-modal-canvas" class="w-full aspect-[4/1] block rounded bg-slate-950" width="560" height="140"></canvas>
                 </div>
             </div>`;
     },
@@ -615,8 +615,8 @@ export const SPEC = {
                     </div>
                 </div>
 
-                <div class="h-[108px] bg-slate-950 p-1 rounded-lg border border-slate-800 select-none shadow-sm overflow-hidden">
-                    <canvas id="spec-modal-canvas" class="w-full h-full block rounded bg-slate-950" width="360" height="106"></canvas>
+                <div class="w-full bg-slate-950 p-1 rounded-lg border border-slate-800 select-none shadow-sm overflow-hidden">
+                    <canvas id="spec-modal-canvas" class="w-full aspect-[4/1] block rounded bg-slate-950" width="560" height="140"></canvas>
                 </div>
             </div>`;
     },

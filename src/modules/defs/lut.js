@@ -188,13 +188,13 @@ export const LUT = {
                     </div>
                 </div>
 
-                <!-- Main Canvas (Step Mode with Touch Draw) -->
+                <!-- Main Canvas (Step Mode with Touch Draw) - Aspect 4:1 matching MATRIX -->
                 <div class="relative bg-slate-950 p-1 rounded-lg border border-teal-500/40 shadow-inner w-full">
                     <div class="flex items-center justify-between text-[7.5px] font-mono text-slate-400 px-1 pb-0.5">
                         <span class="text-teal-400 font-bold">${divs}-DIV STEP (TOUCH & DRAG TO SHAPE)</span>
                         <div>IN: <span id="lut-modal-in-disp" class="text-amber-400 font-bold">0.000V</span> | OUT: <span id="lut-modal-out-disp" class="text-teal-300 font-bold">0.000V</span></div>
                     </div>
-                    <canvas id="lut-modal-canvas" class="w-full h-[106px] block rounded bg-slate-950 touch-none cursor-crosshair border border-slate-800" width="560" height="212"></canvas>
+                    <canvas id="lut-modal-canvas" class="w-full aspect-[4/1] block rounded bg-slate-950 touch-none cursor-crosshair border border-slate-800" width="560" height="140"></canvas>
                 </div>
             </div>
         `;

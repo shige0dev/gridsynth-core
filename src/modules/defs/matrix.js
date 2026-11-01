@@ -25,12 +25,12 @@ export const MATRIX = {
         };
     },
     ports: () => ({
-        in: [{ port: 'cv_in', pin: 5, color: 'bg-yellow-400' }],
+        in: [{ port: 'cv_in', pin: 4, color: 'bg-yellow-400' }],
         out: [
-            { port: 'out_1', pin: 10, color: 'bg-red-500' },
-            { port: 'out_2', pin: 11, color: 'bg-red-500' },
-            { port: 'out_3', pin: 12, color: 'bg-red-500' },
-            { port: 'out_4', pin: 13, color: 'bg-red-500' }
+            { port: 'out_1', pin: 7, color: 'bg-red-500' },
+            { port: 'out_2', pin: 8, color: 'bg-red-500' },
+            { port: 'out_3', pin: 9, color: 'bg-red-500' },
+            { port: 'out_4', pin: 10, color: 'bg-red-500' }
         ]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
@@ -174,11 +174,10 @@ export const MATRIX = {
     renderModal: (m) => {
         const divs = m.divisions || 16;
         const divOptions = [16, 32, 64];
-        const modes = m.modes || ['gate', 'gate', 'gate', 'gate'];
 
         return `
             <div class="space-y-1.5 p-1 select-none w-full">
-                <!-- Top Header: Division Selector & Track Modes -->
+                <!-- 1行目: Steps切り替え + 現在ステップ + CLEAR ALL -->
                 <div class="flex items-center justify-between gap-1 pb-1 border-b border-slate-800">
                     <div class="flex items-center gap-1 shrink-0">
                         <span class="text-[8.5px] font-mono text-slate-400 font-bold uppercase">STEPS:</span>
@@ -190,35 +189,20 @@ export const MATRIX = {
                             `).join('')}
                         </div>
                     </div>
-                    <div class="flex items-center gap-1.5">
-                        <span class="text-[8px] font-mono text-slate-400 font-bold uppercase">STEP:</span>
-                        <span id="matrix-step-disp" class="text-[9px] font-mono font-bold text-amber-400">1 / ${divs}</span>
+                    <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-1">
+                            <span class="text-[8px] font-mono text-slate-400 font-bold uppercase">STEP:</span>
+                            <span id="matrix-step-disp" class="text-[9px] font-mono font-bold text-amber-400">1 / ${divs}</span>
+                        </div>
+                        <button id="matrix-clear-btn" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-rose-950/80 hover:text-rose-300 border border-slate-700 text-[8px] font-mono font-bold transition-colors">
+                            CLEAR ALL
+                        </button>
                     </div>
                 </div>
 
-                <!-- 4 Track Labels & Mode Toggles -->
-                <div class="grid grid-cols-4 gap-1 py-0.5">
-                    ${[0, 1, 2, 3].map(t => `
-                        <div class="flex items-center justify-between px-1.5 py-0.5 bg-slate-900/90 rounded border border-slate-800 text-[8px] font-mono">
-                            <span class="font-bold" style="color: ${TRACK_COLORS[t]};">${TRACK_NAMES[t]}</span>
-                            <button class="matrix-mode-btn px-1 rounded text-[7.5px] font-bold border transition-colors ${modes[t] === 'trig' ? 'bg-amber-600 text-white border-amber-400' : 'bg-slate-800 text-slate-300 border-slate-700'}" data-track="${t}">
-                                ${modes[t] === 'trig' ? 'TRIG' : 'GATE'}
-                            </button>
-                        </div>
-                    `).join('')}
-                </div>
-
-                <!-- Main Matrix Canvas: Exactly identical height to SCOPE (106px) -->
+                <!-- Main Matrix Canvas: 正方形セル比率 (aspect-[4/1] -> 各行1:1の正方形) -->
                 <div class="relative bg-slate-950 p-1 rounded-lg border border-indigo-500/40 shadow-inner w-full">
-                    <canvas id="matrix-modal-canvas" class="w-full h-[106px] block rounded bg-slate-950 touch-none cursor-pointer border border-slate-800" width="560" height="212"></canvas>
-                </div>
-
-                <!-- Quick actions -->
-                <div class="flex items-center justify-between text-[8px] font-mono text-slate-400 pt-0.5">
-                    <span>TOUCH / DRAG TO TOGGLE CELLS</span>
-                    <button id="matrix-clear-btn" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-rose-950/80 hover:text-rose-300 border border-slate-700 text-[8px] font-mono font-bold transition-colors">
-                        CLEAR ALL
-                    </button>
+                    <canvas id="matrix-modal-canvas" class="w-full aspect-[4/1] block rounded bg-slate-950 touch-none cursor-pointer border border-slate-800" width="560" height="140"></canvas>
                 </div>
             </div>
         `;
