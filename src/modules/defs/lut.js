@@ -28,20 +28,10 @@ export const LUT = {
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
 
     renderGrid: (m) => {
-        const curDiv = m.divisions || 16;
-        const isQ = m.quantize === true;
         return `
-            <div class="h-full flex flex-col justify-between py-1 select-none pointer-events-none">
-                <div class="flex items-center justify-between px-1.5 pt-0.5">
-                    <span class="text-[7px] font-mono text-teal-400 font-bold tracking-tight">${curDiv}DIV</span>
-                    <span class="text-[6.5px] font-mono ${isQ ? 'text-amber-400 font-black' : 'text-slate-400 font-bold'}">${isQ ? 'QNT' : 'RAW'}</span>
-                </div>
-                <div class="relative w-full px-2 flex items-center justify-center my-auto">
-                    <canvas id="lut-grid-canvas-${m.id}" class="w-[38px] h-[22px] bg-slate-950 rounded border border-teal-500/40" width="76" height="44"></canvas>
-                </div>
-                <div class="flex items-center justify-between px-1.5 pb-0.5 text-[6.5px] font-mono text-slate-500">
-                    <span>IN</span>
-                    <span>OUT</span>
+            <div class="flex items-center justify-center w-full h-full pointer-events-none">
+                <div class="w-14 h-7 rounded border border-slate-600 bg-slate-950 p-[1px] relative flex items-center justify-center shadow-inner panel-bar-slot">
+                    <canvas id="lut-grid-canvas-${m.id}" class="w-full h-full block rounded-[3px] bg-slate-950" width="112" height="56"></canvas>
                 </div>
             </div>
         `;
