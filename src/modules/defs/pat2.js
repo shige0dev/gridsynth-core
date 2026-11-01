@@ -134,7 +134,7 @@ export const PAT2 = {
                         </button>
                     </div>
 
-                    <!-- Middle: Grouping Buttons ([] / <> / [|]), Ungroup, Modifiers (*n, /n, !n, ?), all left-aligned -->
+                    <!-- Middle: Grouping Buttons ([] / <> / [|]), Modifiers (*n, /n, !n, ?), all left-aligned -->
                     <div class="flex items-center gap-0.5 shrink-0">
                         <button id="pat2-bracket-btn-${uid}" disabled class="h-5 w-[18px] flex items-center justify-center bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 opacity-50 cursor-not-allowed" title="横並び選択した項目を [] 分割グループにまとめる">
                             []
@@ -144,9 +144,6 @@ export const PAT2 = {
                         </button>
                         <button id="pat2-choice-btn-${uid}" disabled class="h-5 w-[18px] flex items-center justify-center bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 opacity-50 cursor-not-allowed tracking-tighter" title="横並び選択した項目を [ | ] ランダム選択グループにまとめる">
                             [|]
-                        </button>
-                        <button id="pat2-ungroup-btn-${uid}" class="h-5 px-1 bg-sky-950/80 hover:bg-sky-900 text-sky-300 rounded text-[7px] font-bold border border-sky-700/60 shadow-sm transition active:scale-95" title="グループ解除">
-                            UNGRP
                         </button>
                         <button id="pat2-subdiv-btn-${uid}" class="h-5 px-1 bg-sky-950/80 hover:bg-sky-900 text-sky-300 rounded text-[7px] font-bold border border-sky-700/60 transition" title="細分化 (*2, *3, *4)">
                             *n
@@ -160,7 +157,7 @@ export const PAT2 = {
                         <button id="pat2-prob-btn-${uid}" class="h-5 px-1 bg-sky-950/80 hover:bg-sky-900 text-sky-300 rounded text-[7px] font-bold border border-sky-700/60 transition" title="発音確率 (?, ?0.8, ?0.2)">
                             ?
                         </button>
-                        <button id="pat2-del-btn-${uid}" class="h-5 px-1 bg-red-950/80 hover:bg-red-900 text-red-300 rounded border border-red-500/60 transition flex items-center justify-center active:scale-95" title="選択削除">
+                        <button id="pat2-del-btn-${uid}" class="h-5 px-1.5 bg-red-950/80 hover:bg-red-900 text-red-300 rounded border border-red-500/60 transition flex items-center justify-center active:scale-95" title="選択削除 / 修飾子削除 / グループ解除">
                             <i data-lucide="trash-2" class="w-2.5 h-2.5 pointer-events-none"></i>
                         </button>
                     </div>
@@ -209,7 +206,8 @@ export const PAT2 = {
                         <div><strong class="text-slate-400 font-bold">~</strong> : 休符</div>
                     </div>
                     <div class="text-[9px] text-slate-400 pt-0.5 border-t border-slate-800/80">
-                        ※トークン選択中に上部の <span class="text-sky-300 font-bold">↕上下スワイプ</span> で音程変更、<span class="text-sky-300 font-bold">↔ドラッグ</span> で位置入替が可能です。
+                        ※トークン選択中に上部の <span class="text-sky-300 font-bold">↕上下スワイプ</span> で音程変更、<span class="text-sky-300 font-bold">↔ドラッグ</span> で位置入替。<br>
+                        ※グループや修飾子を選択して <span class="text-red-400 font-bold">🗑（ゴミ箱）</span> を押すと、グループ解除や修飾子削除ができます。
                     </div>
                 </div>
                 ` : ''}
@@ -236,7 +234,6 @@ export const PAT2 = {
         const bracketBtn = document.getElementById(`pat2-bracket-btn-${uid}`);
         const angleBtn = document.getElementById(`pat2-angle-btn-${uid}`);
         const choiceBtn = document.getElementById(`pat2-choice-btn-${uid}`);
-        const ungroupBtn = document.getElementById(`pat2-ungroup-btn-${uid}`);
         const subdivBtn = document.getElementById(`pat2-subdiv-btn-${uid}`);
         const slowdownBtn = document.getElementById(`pat2-slowdown-btn-${uid}`);
         const repeatBtn = document.getElementById(`pat2-repeat-btn-${uid}`);
@@ -323,7 +320,7 @@ export const PAT2 = {
                     const closeSym = isAngle ? '>' : ']';
                     const symColor = isChoice ? 'text-emerald-400' : (isDirty ? 'text-amber-400' : 'text-sky-400');
                     return `
-                        <div data-node-id="${node.id}" class="pat2-node-token pat2-group-box relative flex items-center gap-[1px] px-[2px] py-[1px] rounded border border-dashed ${borderCls} cursor-pointer transition shrink-0">
+                        <div data-node-id="${node.id}" class="pat2-node-token pat2-group-box relative flex items-center gap-[2px] px-[2px] py-[1px] rounded border border-dashed ${borderCls} cursor-pointer transition shrink-0">
                             <span class="text-[9px] font-mono font-bold ${symColor} select-none pointer-events-none px-[1px] leading-none">${openSym}</span>
                             <div class="flex items-center gap-[1px]">
                                 ${(node.children || []).map((c, i) => {
@@ -332,7 +329,7 @@ export const PAT2 = {
                                 }).join('')}
                             </div>
                             <span class="text-[9px] font-mono font-bold ${symColor} select-none pointer-events-none px-[1px] leading-none">${closeSym}</span>
-                            ${renderBadge(node)}
+                            ${renderModifiersInline(node)}
                         </div>`;
                 }
 
@@ -343,22 +340,29 @@ export const PAT2 = {
                     : (isDirty ? 'text-amber-300 group-hover:text-white' : 'text-cyan-300 group-hover:text-white');
 
                 return `
-                    <div data-node-id="${node.id}" class="pat2-node-token relative flex items-center justify-center min-w-[15px] h-5 px-[2px] rounded border ${borderCls} cursor-ns-resize transition select-none group touch-none shrink-0">
+                    <div data-node-id="${node.id}" class="pat2-node-token relative flex items-center justify-center min-w-[15px] h-5 px-1 rounded border ${borderCls} cursor-ns-resize transition select-none group touch-none shrink-0 gap-0.5">
                         <span class="pat2-node-val text-[8px] font-mono font-bold ${noteTextColor} leading-none pointer-events-none">${isRest ? '~' : noteVal}</span>
-                        ${renderBadge(node)}
+                        ${renderModifiersInline(node)}
                     </div>`;
             }
 
-            function renderBadge(node) {
-                const badges = [];
-                if (node.subdiv && node.subdiv > 1) badges.push(`*${node.subdiv}`);
-                if (node.slowdown && node.slowdown > 1) badges.push(`/${node.slowdown}`);
-                if (node.repeat && node.repeat > 1) badges.push(`!${node.repeat}`);
-                if (node.prob !== undefined && node.prob < 1.0) {
-                    badges.push(node.prob === 0.5 ? '?' : `?${node.prob}`);
+            function renderModifiersInline(node) {
+                const items = [];
+                if (node.subdiv && node.subdiv > 1) {
+                    items.push(`<span data-mod="subdiv" data-parent-id="${node.id}" class="pat2-mod-tag bg-amber-500/90 hover:bg-red-500 text-slate-950 hover:text-white text-[7px] font-mono font-black px-1 rounded cursor-pointer leading-tight" title="クリックで細分化(*${node.subdiv})を解除">*${node.subdiv}</span>`);
                 }
-                if (!badges.length) return '';
-                return `<div class="absolute -top-1 -right-0.5 bg-amber-500 text-slate-950 text-[5px] font-mono font-black px-0.5 rounded-full shadow pointer-events-none leading-tight whitespace-nowrap">${badges.join(' ')}</div>`;
+                if (node.slowdown && node.slowdown > 1) {
+                    items.push(`<span data-mod="slowdown" data-parent-id="${node.id}" class="pat2-mod-tag bg-cyan-500/90 hover:bg-red-500 text-slate-950 hover:text-white text-[7px] font-mono font-black px-1 rounded cursor-pointer leading-tight" title="クリックで伸長(/${node.slowdown})を解除">/${node.slowdown}</span>`);
+                }
+                if (node.repeat && node.repeat > 1) {
+                    items.push(`<span data-mod="repeat" data-parent-id="${node.id}" class="pat2-mod-tag bg-emerald-500/90 hover:bg-red-500 text-slate-950 hover:text-white text-[7px] font-mono font-black px-1 rounded cursor-pointer leading-tight" title="クリックで連続リピート(!${node.repeat})を解除">!${node.repeat}</span>`);
+                }
+                if (node.prob !== undefined && node.prob < 1.0) {
+                    const txt = node.prob === 0.5 ? '?' : `?${node.prob}`;
+                    items.push(`<span data-mod="prob" data-parent-id="${node.id}" class="pat2-mod-tag bg-purple-500/90 hover:bg-red-500 text-slate-950 hover:text-white text-[7px] font-mono font-black px-1 rounded cursor-pointer leading-tight" title="クリックで確率(${txt})を解除">${txt}</span>`);
+                }
+                if (!items.length) return '';
+                return `<div class="flex items-center gap-[1px] ml-0.5 pointer-events-auto">${items.join('')}</div>`;
             }
 
             tokenStrip.innerHTML = m._tokens.map(t => renderNode(t)).join('');
@@ -705,6 +709,30 @@ export const PAT2 = {
 
                 el.addEventListener('pointerdown', onPointerDown);
             });
+
+            // Modifier inline tags click to delete specific modifier
+            tokenStrip.querySelectorAll('.pat2-mod-tag').forEach(tag => {
+                tag.addEventListener('pointerdown', (e) => {
+                    e.stopPropagation();
+                });
+                tag.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const pId = tag.dataset.parentId;
+                    const modType = tag.dataset.mod;
+                    if (!pId || !modType) return;
+                    walkTokens(m._tokens, n => {
+                        if (n.id === pId) {
+                            if (modType === 'subdiv') delete n.subdiv;
+                            else if (modType === 'slowdown') delete n.slowdown;
+                            else if (modType === 'repeat') delete n.repeat;
+                            else if (modType === 'prob') delete n.prob;
+                        }
+                        return n;
+                    });
+                    renderTokens();
+                    syncPattern();
+                });
+            });
         };
 
         // +NOTE button: Swipe up/down on the button to change pitch, tap to add
@@ -815,23 +843,6 @@ export const PAT2 = {
         // Group into [ | ] (choice group)
         choiceBtn?.addEventListener('click', () => groupAdjacent('choice'));
 
-        // Ungroup: in-place unwrap
-        ungroupBtn?.addEventListener('click', () => {
-            let changed = false;
-            m._tokens = walkTokens(m._tokens, node => {
-                if (selectedIds.has(node.id) && node.type === 'group' && node.children) {
-                    changed = true;
-                    return node.children;
-                }
-                return node;
-            });
-            if (changed) {
-                selectedIds.clear();
-                renderTokens();
-                syncPattern();
-            }
-        });
-
         // Modifier: cycle subdiv *1 -> *2 -> *3 -> *4 -> *1
         subdivBtn?.addEventListener('click', () => {
             walkTokens(m._tokens, n => {
@@ -884,9 +895,47 @@ export const PAT2 = {
             syncPattern();
         });
 
-        // Delete selected tokens (Trash)
+        // Delete selected tokens, strip modifiers, or ungroup if a group is selected
         delBtn?.addEventListener('click', () => {
             if (selectedIds.size === 0) return;
+
+            // 1. Check if any selected node is a group -> Ungroup it
+            let ungrouped = false;
+            m._tokens = walkTokens(m._tokens, n => {
+                if (selectedIds.has(n.id) && n.type === 'group' && n.children) {
+                    ungrouped = true;
+                    return n.children;
+                }
+                return n;
+            });
+            if (ungrouped) {
+                selectedIds.clear();
+                renderTokens();
+                syncPattern();
+                return;
+            }
+
+            // 2. Check if any selected node has modifiers (*n, /n, !n, ?) -> Clear modifiers first
+            let modCleared = false;
+            walkTokens(m._tokens, n => {
+                if (selectedIds.has(n.id)) {
+                    if (n.subdiv || n.slowdown || n.repeat || n.prob !== undefined) {
+                        delete n.subdiv;
+                        delete n.slowdown;
+                        delete n.repeat;
+                        delete n.prob;
+                        modCleared = true;
+                    }
+                }
+                return n;
+            });
+            if (modCleared) {
+                renderTokens();
+                syncPattern();
+                return;
+            }
+
+            // 3. Otherwise, delete the token entirely
             m._tokens = walkTokens(m._tokens, n => selectedIds.has(n.id) ? null : n);
             if (m._tokens.length === 0) {
                 m._tokens = [{ id: genId(), type: 'rest', val: '~' }];
