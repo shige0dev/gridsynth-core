@@ -222,17 +222,6 @@ export const PAT2 = {
                 }
             }
         }
-
-        const activeIdx = isP ? (data?.activeIdx ?? -1) : -1;
-        if (modal) {
-            modal.querySelectorAll('[data-pat2-step]').forEach(el => {
-                const idx = parseInt(el.dataset.pat2Step, 10);
-                const isActive = idx === activeIdx;
-                el.classList.toggle('ring-1', isActive);
-                el.classList.toggle('ring-yellow-400', isActive);
-                el.classList.toggle('bg-yellow-400/30', isActive);
-            });
-        }
     },
     renderModal: (m, ctx) => {
         const uid = ctx?.id || m?.id || 'pat2';
@@ -355,7 +344,6 @@ export const PAT2 = {
 
         const tokenStrip = document.getElementById(`pat2-token-strip-${uid}`);
         const tokenContainer = document.getElementById(`pat2-token-container-${uid}`);
-        const pitchDisp = document.getElementById(`pat2-pitch-disp-${uid}`);
         const bracketBtn = document.getElementById(`pat2-bracket-btn-${uid}`);
         const angleBtn = document.getElementById(`pat2-angle-btn-${uid}`);
         const ungroupBtn = document.getElementById(`pat2-ungroup-btn-${uid}`);
@@ -392,7 +380,6 @@ export const PAT2 = {
         };
 
         let selectedIds = new Set();
-        let stepCounter = 0;
 
         // Render Lucide icons for Trash
         const refreshIcons = () => {
@@ -414,35 +401,41 @@ export const PAT2 = {
         // Render HTML for tokens with tight 2px spacing
         const renderTokens = () => {
             if (!tokenStrip) return;
-            stepCounter = 0;
+            const isDirty = (tokensToPattern(m._tokens)) !== (m._committedPattern || '');
 
             function renderNode(node, depth = 0) {
                 const isSelected = selectedIds.has(node.id);
                 const borderCls = isSelected
                     ? 'border-yellow-400 bg-yellow-400/25 shadow-sm ring-1 ring-yellow-400'
-                    : 'border-slate-800 bg-slate-900/90 hover:border-cyan-500/70';
+                    : isDirty
+                        ? 'border-amber-800/80 bg-amber-950/40 hover:border-amber-400/80'
+                        : 'border-slate-800 bg-slate-900/90 hover:border-cyan-500/70';
 
                 if (node.type === 'group') {
                     const isAngle = node.groupType === 'angle';
                     const openSym = isAngle ? '<' : '[';
                     const closeSym = isAngle ? '>' : ']';
+                    const symColor = isDirty ? 'text-amber-400' : 'text-sky-400';
                     return `
                         <div data-node-id="${node.id}" class="pat2-node-token pat2-group-box relative flex items-center gap-[1px] px-[2px] py-[1px] rounded border border-dashed ${borderCls} cursor-pointer transition shrink-0">
-                            <span class="text-[9px] font-mono font-bold text-sky-400 select-none pointer-events-none px-[1px] leading-none">${openSym}</span>
+                            <span class="text-[9px] font-mono font-bold ${symColor} select-none pointer-events-none px-[1px] leading-none">${openSym}</span>
                             <div class="flex items-center gap-[1px]">
                                 ${(node.children || []).map(c => renderNode(c, depth + 1)).join('')}
                             </div>
-                            <span class="text-[9px] font-mono font-bold text-sky-400 select-none pointer-events-none px-[1px] leading-none">${closeSym}</span>
+                            <span class="text-[9px] font-mono font-bold ${symColor} select-none pointer-events-none px-[1px] leading-none">${closeSym}</span>
                             ${renderBadge(node)}
                         </div>`;
                 }
 
                 const isRest = node.type === 'rest';
                 const noteVal = (node.val || 'c2').toUpperCase();
-                const stepIdx = stepCounter++;
+                const noteTextColor = isRest
+                    ? (isDirty ? 'text-amber-700/60' : 'text-slate-600')
+                    : (isDirty ? 'text-amber-300 group-hover:text-white' : 'text-cyan-300 group-hover:text-white');
+
                 return `
-                    <div data-node-id="${node.id}" data-pat2-step="${stepIdx}" class="pat2-node-token relative flex items-center justify-center min-w-[15px] h-5 px-[2px] rounded border ${borderCls} cursor-ns-resize transition select-none group touch-none shrink-0">
-                        <span class="pat2-node-val text-[8px] font-mono font-bold ${isRest ? 'text-slate-600' : 'text-cyan-300 group-hover:text-white'} leading-none pointer-events-none">${isRest ? '~' : noteVal}</span>
+                    <div data-node-id="${node.id}" class="pat2-node-token relative flex items-center justify-center min-w-[15px] h-5 px-[2px] rounded border ${borderCls} cursor-ns-resize transition select-none group touch-none shrink-0">
+                        <span class="pat2-node-val text-[8px] font-mono font-bold ${noteTextColor} leading-none pointer-events-none">${isRest ? '~' : noteVal}</span>
                         ${renderBadge(node)}
                     </div>`;
             }
@@ -480,6 +473,7 @@ export const PAT2 = {
             m._draftPattern = newPat;
             m._lastPatStr = newPat;
             updateSendBtnState();
+            renderTokens();
         };
 
         const doSend = () => {
@@ -489,6 +483,7 @@ export const PAT2 = {
             m._draftPattern = null;
             m._lastPatStr = finalPat;
             updateSendBtnState();
+            renderTokens();
             cb();
             if (ctx?.showToast) ctx.showToast('SEND: パターンを反映しました');
         };
