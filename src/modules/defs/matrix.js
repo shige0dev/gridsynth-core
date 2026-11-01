@@ -25,7 +25,7 @@ export const MATRIX = {
         };
     },
     ports: () => ({
-        in: [{ port: 'cv_in', pin: 5, color: 'bg-yellow-400' }],
+        in: [{ port: 'cv_in', pin: 4, color: 'bg-yellow-400' }],
         out: [
             { port: 'out_1', pin: 7, color: 'bg-yellow-400' },
             { port: 'out_2', pin: 8, color: 'bg-yellow-400' },
