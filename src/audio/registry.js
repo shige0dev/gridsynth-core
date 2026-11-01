@@ -25,6 +25,7 @@ import { rfAudioDefs } from './defs/rf.js?v=459';
 import { arAudioDefs } from './defs/ar.js?v=459';
 import { waveAudioDefs } from './defs/wave.js?v=459';
 import { padAudioDefs } from './defs/pad.js?v=459';
+import { countAudioDefs } from './defs/count.js?v=508';
 import { JOG } from './defs/jog.js?v=494';
 
 export const AUDIO_REGISTRY = {
@@ -50,6 +51,7 @@ export const AUDIO_REGISTRY = {
     ...arAudioDefs,
     ...waveAudioDefs,
     ...padAudioDefs,
+    ...countAudioDefs,
     JOG
 };
 

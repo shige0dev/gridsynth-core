@@ -20,6 +20,7 @@ export const MODAL_WIDTHS = {
     MATH2: 'w-[230px]',
     SH: 'w-[200px]',
     CLK: 'w-[200px]',
+    COUNT: 'w-[200px]',
     THROUGH: 'w-[170px]',
 
     // Sound Generation & Processing
@@ -294,7 +295,7 @@ export class ModalManager {
                         name: 'CV',
                         sub: 'CV (変調・演算・エンベロープ)',
                         color: 'purple',
-                        types: ['LFO', 'ADSR', 'RF', 'AR', 'CHORD', 'SCALE', 'MATH1', 'MATH2', 'SH', 'CVDELAY', 'JOG', 'THROUGH', 'SUB_IO']
+                        types: ['LFO', 'ADSR', 'RF', 'AR', 'CHORD', 'SCALE', 'MATH1', 'MATH2', 'SH', 'COUNT', 'CVDELAY', 'JOG', 'THROUGH', 'SUB_IO']
                     },
                     {
                         name: 'VISUALIZER',
