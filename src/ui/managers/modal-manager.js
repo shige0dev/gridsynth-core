@@ -1,5 +1,5 @@
 // src/ui/managers/modal-manager.js
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=510';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=512';
 import { FACTORY_SUBPATCHES } from '../../presets/subpatches.js';
 import { UIHelpers } from '../helpers.js?v=459';
 
@@ -13,6 +13,8 @@ export const MODAL_WIDTHS = {
     ARP: 'w-[230px]',
     CHORD: 'w-[240px]',
     MARKOV: 'w-[260px]',
+    PAT: 'w-[320px]',
+    PAT2: 'w-[320px]',
 
     // Logic & Math
     SCALE: 'w-[260px]',
@@ -171,7 +173,7 @@ export class ModalManager {
     openSettingsModal(mId) {
         const m = this.ui.modules[mId];
         if (!m || m.type === 'SUB_IO') return;
-        if (['KEY', 'SEQ8', 'SEQ16', 'PAT', 'SPEC', 'SCOPE', 'LISS', 'WAVE', 'PAD'].includes(m.type)) {
+        if (['KEY', 'SEQ8', 'SEQ16', 'PAT', 'PAT2', 'SPEC', 'SCOPE', 'LISS', 'WAVE', 'PAD'].includes(m.type)) {
             this.openDockModal(mId);
             return;
         }
@@ -290,7 +292,7 @@ export class ModalManager {
                         name: 'TRIGGER',
                         sub: 'トリガ (クロック・シーケンサー)',
                         color: 'rose',
-                        types: ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'MARKOV', 'DIST4', 'ARP', 'KEY', 'PAD']
+                        types: ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'PAT2', 'MARKOV', 'DIST4', 'ARP', 'KEY', 'PAD']
                     },
                     {
                         name: 'CV',

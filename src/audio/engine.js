@@ -1,8 +1,8 @@
-import { AUDIO_REGISTRY } from './registry.js?v=511';
+import { AUDIO_REGISTRY } from './registry.js?v=512';
 import { AudioHelpers } from './helpers.js';
 import { parseConn, normalizeSubPort, PORT_ALIASES } from '../core/utils.js?v=459';
 
-export const WORKLET_MODULE_TYPES = ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'ADSR', 'LFO', 'MATH1', 'MATH2', 'SH', 'FOLD', 'CVDELAY', 'SCOPE', 'LISS', 'MARKOV', 'CHORD', 'FMx3', 'FMCORE', 'DIST4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD', 'COUNT', 'LUT'];
+export const WORKLET_MODULE_TYPES = ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'PAT2', 'ADSR', 'LFO', 'MATH1', 'MATH2', 'SH', 'FOLD', 'CVDELAY', 'SCOPE', 'LISS', 'MARKOV', 'CHORD', 'FMx3', 'FMCORE', 'DIST4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD', 'COUNT', 'LUT'];
 
 
 export class SynthEngine {
@@ -53,7 +53,7 @@ export class SynthEngine {
         this.masterBPM = bpm;
         if (this.ctx) {
             Object.values(this.modules).forEach(m => {
-                if (m.type === 'CLK' || m.type === 'PAT') {
+                if (m.type === 'CLK' || m.type === 'PAT' || m.type === 'PAT2') {
                     AudioHelpers.set(m.nodes.w?.parameters.get('bpm'), bpm, this.ctx, 0.02);
                 } else if (m.type === 'LFO') {
                     m.nodes.w?.port.postMessage({ type: 'SET_CONFIG', bpm: bpm });
@@ -65,7 +65,7 @@ export class SynthEngine {
     setPlaybackState(isPlaying) {
         this.isPlaying = isPlaying;
         Object.values(this.modules).forEach(m => {
-            if (m.type === 'CLK' || m.type === 'PAT') {
+            if (m.type === 'CLK' || m.type === 'PAT' || m.type === 'PAT2') {
                 m.nodes.w?.port.postMessage({ type: 'SET_STATE', running: isPlaying });
             }
         });
@@ -73,7 +73,7 @@ export class SynthEngine {
 
     resetSequencers() {
         Object.values(this.modules).forEach(m => {
-            if (m.type === 'SEQ8' || m.type === 'SEQ16' || m.type === 'PAT' || m.type === 'MARKOV' || m.type === 'DIST4' || m.type === 'ARP' || m.type === 'COUNT') {
+            if (m.type === 'SEQ8' || m.type === 'SEQ16' || m.type === 'PAT' || m.type === 'PAT2' || m.type === 'MARKOV' || m.type === 'DIST4' || m.type === 'ARP' || m.type === 'COUNT') {
                 m.resetStep?.();
                 m.nodes.w?.port.postMessage({ type: 'RESET' });
             }

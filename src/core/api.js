@@ -1,4 +1,4 @@
-import { MODULE_REGISTRY } from '../modules/registry.js?v=510';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=512';
 import { parseConn, isSameConn, safeClone } from './utils.js?v=459';
 import { FACTORY_SUBPATCHES } from '../presets/subpatches.js';
 
