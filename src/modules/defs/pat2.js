@@ -253,35 +253,34 @@ export const PAT2 = {
 
         return `
             <div id="pat2-modal-root-${uid}" class="space-y-1 p-0.5 select-none touch-none w-full">
-                <!-- 1st Row: Pitch display, Pitch changer / Rest changer, Grouping ([] / <>), Ungroup, Modifiers (*n, !n), Trash Delete -->
+                <!-- 1st Row: Pitch changer / Rest changer, Grouping ([] / <>), Ungroup, Modifiers (*n, !n), Trash Delete -->
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-1 overflow-x-auto">
-                    <!-- Left: Current Pitch Display & Fast Pitch / Rest Selector -->
+                    <!-- Left: Fast Note / Rest Appender (Clean Blue theme) -->
                     <div class="flex items-center gap-1 shrink-0">
-                        <span id="pat2-pitch-disp-${uid}" class="text-[9.5px] font-mono font-black text-cyan-300 min-w-[20px]">--</span>
-                        <div id="pat2-add-note-box-${uid}" class="h-5 px-1.5 bg-cyan-900/80 hover:bg-cyan-800 text-cyan-200 rounded border border-cyan-500/70 shadow-sm transition cursor-ns-resize flex items-center gap-0.5 touch-none" title="上下スワイプで音程変更 / タップで入替・追加">
-                            <span id="pat2-add-pitch-disp-${uid}" class="text-[8px] font-mono font-black text-cyan-100 pointer-events-none">${curAddPitch}</span>
-                            <span class="text-[6px] text-cyan-400/80 pointer-events-none">↕</span>
+                        <div id="pat2-add-note-box-${uid}" class="h-5 px-2 bg-sky-950/90 hover:bg-sky-900 text-sky-200 rounded border border-sky-600/80 shadow-sm transition cursor-ns-resize flex items-center gap-1 touch-none" title="上下スワイプで音程変更 / タップで末尾に追加">
+                            <span id="pat2-add-pitch-disp-${uid}" class="text-[8.5px] font-mono font-black text-sky-100 pointer-events-none">${curAddPitch}</span>
+                            <span class="text-[6.5px] text-sky-400 pointer-events-none">↕</span>
                         </div>
-                        <button id="pat2-add-rest-${uid}" class="h-5 px-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded text-[8px] font-bold border border-slate-700 shadow-sm transition active:scale-95 flex items-center justify-center font-mono" title="休符を入替・追加">
+                        <button id="pat2-add-rest-${uid}" class="h-5 px-2 bg-sky-950/90 hover:bg-sky-900 text-sky-300 hover:text-white rounded text-[8.5px] font-bold border border-sky-600/80 shadow-sm transition active:scale-95 flex items-center justify-center font-mono" title="休符を末尾に追加">
                             <span>~</span>
                         </button>
                     </div>
 
-                    <!-- Right: Grouping Buttons ([] / <>), Ungroup, Modifiers (*n, !n), Trash Delete -->
+                    <!-- Right: Grouping Buttons ([] / <>), Ungroup, Modifiers (*n, !n), Trash Delete (Matching Blue theme) -->
                     <div class="flex items-center gap-1 shrink-0">
-                        <button id="pat2-bracket-btn-${uid}" disabled class="h-5 px-1.5 bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed" title="隣接選択した項目を [] 分割グループにまとめる">
+                        <button id="pat2-bracket-btn-${uid}" disabled class="h-5 px-1.5 bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed" title="横並び選択した項目を [] 分割グループにまとめる">
                             [ ]
                         </button>
-                        <button id="pat2-angle-btn-${uid}" disabled class="h-5 px-1.5 bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed" title="隣接選択した項目を <> 周期交代グループにまとめる">
+                        <button id="pat2-angle-btn-${uid}" disabled class="h-5 px-1.5 bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed" title="横並び選択した項目を <> 周期交代グループにまとめる">
                             &lt; &gt;
                         </button>
-                        <button id="pat2-ungroup-btn-${uid}" class="h-5 px-1.5 bg-slate-900 hover:bg-slate-800 text-slate-400 rounded text-[7.5px] font-bold border border-slate-800 shadow-sm transition active:scale-95" title="グループ解除">
+                        <button id="pat2-ungroup-btn-${uid}" class="h-5 px-1.5 bg-sky-950/80 hover:bg-sky-900 text-sky-300 rounded text-[7.5px] font-bold border border-sky-700/60 shadow-sm transition active:scale-95" title="グループ解除">
                             UNGROUP
                         </button>
-                        <button id="pat2-subdiv-btn-${uid}" class="h-5 px-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded text-[7.5px] font-bold border border-amber-500/50 transition" title="細分化 (*2, *3, *4)">
+                        <button id="pat2-subdiv-btn-${uid}" class="h-5 px-1.5 bg-sky-950/80 hover:bg-sky-900 text-sky-300 rounded text-[7.5px] font-bold border border-sky-700/60 transition" title="細分化 (*2, *3, *4)">
                             *n
                         </button>
-                        <button id="pat2-repeat-btn-${uid}" class="h-5 px-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded text-[7.5px] font-bold border border-amber-500/50 transition" title="複製 (!2, !3, !4)">
+                        <button id="pat2-repeat-btn-${uid}" class="h-5 px-1.5 bg-sky-950/80 hover:bg-sky-900 text-sky-300 rounded text-[7.5px] font-bold border border-sky-700/60 transition" title="複製 (!2, !3, !4)">
                             !n
                         </button>
                         <button id="pat2-del-btn-${uid}" class="h-5 px-1.5 bg-red-950/80 hover:bg-red-900 text-red-300 rounded border border-red-500/60 transition flex items-center justify-center active:scale-95" title="選択削除">
@@ -538,44 +537,22 @@ export const PAT2 = {
             if (bracketBtn) {
                 bracketBtn.disabled = !adjGroup;
                 if (adjGroup) {
-                    bracketBtn.className = 'h-5 px-1.5 bg-purple-900/90 hover:bg-purple-800 text-purple-200 border border-purple-500 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 cursor-pointer';
+                    bracketBtn.className = 'h-5 px-1.5 bg-sky-900 hover:bg-sky-800 text-sky-100 border border-sky-400 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 cursor-pointer';
                 } else {
-                    bracketBtn.className = 'h-5 px-1.5 bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed';
+                    bracketBtn.className = 'h-5 px-1.5 bg-slate-900 text-slate-600 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 opacity-40 cursor-not-allowed';
                 }
             }
             if (angleBtn) {
                 angleBtn.disabled = !adjGroup;
                 if (adjGroup) {
-                    angleBtn.className = 'h-5 px-1.5 bg-purple-900/90 hover:bg-purple-800 text-purple-200 border border-purple-500 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 cursor-pointer';
+                    angleBtn.className = 'h-5 px-1.5 bg-sky-900 hover:bg-sky-800 text-sky-100 border border-sky-400 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 cursor-pointer';
                 } else {
-                    angleBtn.className = 'h-5 px-1.5 bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed';
+                    angleBtn.className = 'h-5 px-1.5 bg-slate-900 text-slate-600 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 opacity-40 cursor-not-allowed';
                 }
             }
 
-            if (selected.length === 0) {
-                if (pitchDisp) pitchDisp.textContent = '--';
-                return;
-            }
-
-            if (selected.length === 1) {
-                const n = selected[0];
-                if (n.type === 'note') {
-                    const midi = noteToMidiNum(n.val) ?? 48;
-                    const noteStr = midiNumToNote(midi).toUpperCase();
-                    if (pitchDisp) pitchDisp.textContent = noteStr;
-                } else {
-                    if (pitchDisp) pitchDisp.textContent = n.type === 'rest' ? '~' : 'GRP';
-                }
-            } else {
-                const firstNote = selected.find(n => n.type === 'note');
-                if (firstNote) {
-                    const midi = noteToMidiNum(firstNote.val) ?? 48;
-                    const noteStr = midiNumToNote(midi).toUpperCase();
-                    if (pitchDisp) pitchDisp.textContent = `${noteStr} (±)`;
-                } else {
-                    if (pitchDisp) pitchDisp.textContent = 'MULTI';
-                }
-            }
+            // Update group buttons ([] and <>) availability
+            // (no longer displaying pitchDisp in top row)
         };
 
         const shiftSelectedPitch = (delta) => {
@@ -595,8 +572,8 @@ export const PAT2 = {
             }
         };
 
-        // Automatic Drag-and-drop: Move / Reorder (drop between/near tokens)
-        const moveTokens = (sourceId, targetId, insertPos = 'after') => {
+        // Automatic Drag-and-drop: Move / Reorder (drop between/near tokens or groups)
+        const moveTokens = (sourceId, targetId, insertPos = 'after', isInsideGroup = false) => {
             if (!sourceId || !targetId || sourceId === targetId) return;
 
             let sourceNode = null;
@@ -613,10 +590,19 @@ export const PAT2 = {
             extractSource(m._tokens);
             if (!sourceNode) return;
 
-            // Move / Reorder before or after target
+            // Move / Reorder: supports dropping inside a group or before/after any target
             function insertNearTarget(list) {
                 for (let i = 0; i < list.length; i++) {
                     if (list[i].id === targetId) {
+                        if (isInsideGroup && list[i].type === 'group') {
+                            list[i].children = list[i].children || [];
+                            if (insertPos === 'before') {
+                                list[i].children.unshift(sourceNode);
+                            } else {
+                                list[i].children.push(sourceNode);
+                            }
+                            return true;
+                        }
                         const insertIdx = insertPos === 'before' ? i : i + 1;
                         list.splice(insertIdx, 0, sourceNode);
                         return true;
@@ -641,7 +627,8 @@ export const PAT2 = {
                 let isHorizontalDrag = false;
                 let lastDiff = 0;
                 let targetOverEl = null;
-                let dropMode = 'group'; // 'group' (center) | 'before' (left edge) | 'after' (right edge)
+                let dropMode = 'after'; // 'before' | 'after'
+                let isInsideGroup = false;
 
                 const onPointerDown = (e) => {
                     e.preventDefault();
@@ -652,7 +639,8 @@ export const PAT2 = {
                     isHorizontalDrag = false;
                     lastDiff = 0;
                     targetOverEl = null;
-                    dropMode = 'group';
+                    dropMode = 'after';
+                    isInsideGroup = false;
 
                     // Long press detection (300ms) for multi-select
                     pressTimer = setTimeout(() => {
@@ -669,7 +657,11 @@ export const PAT2 = {
 
                     const clearTargetIndicators = (nodeEl) => {
                         if (!nodeEl) return;
-                        nodeEl.classList.remove('border-l-2', 'border-l-cyan-400', 'border-r-2', 'border-r-cyan-400');
+                        nodeEl.classList.remove(
+                            'border-l-2', 'border-l-cyan-400',
+                            'border-r-2', 'border-r-cyan-400',
+                            'ring-2', 'ring-cyan-400', 'bg-cyan-950/40'
+                        );
                     };
 
                     const onPointerMove = (me) => {
@@ -693,17 +685,39 @@ export const PAT2 = {
                                 }
                                 targetOverEl = targetNode;
 
-                                // Determine whether dropping before or after target
                                 const rect = targetNode.getBoundingClientRect();
                                 const relX = (me.clientX - rect.left) / Math.max(1, rect.width);
                                 clearTargetIndicators(targetNode);
 
-                                if (relX < 0.5) {
-                                    dropMode = 'before';
-                                    targetNode.classList.add('border-l-2', 'border-l-cyan-400');
+                                const isGroupNode = targetNode.classList.contains('pat2-group-box');
+                                if (isGroupNode) {
+                                    // Group target: detect outside (before/after) vs inside group
+                                    if (relX < 0.22) {
+                                        // Outside group: before []/<>
+                                        dropMode = 'before';
+                                        isInsideGroup = false;
+                                        targetNode.classList.add('border-l-2', 'border-l-cyan-400');
+                                    } else if (relX > 0.78) {
+                                        // Outside group: after []/<>
+                                        dropMode = 'after';
+                                        isInsideGroup = false;
+                                        targetNode.classList.add('border-r-2', 'border-r-cyan-400');
+                                    } else {
+                                        // Inside group
+                                        isInsideGroup = true;
+                                        dropMode = relX < 0.5 ? 'before' : 'after';
+                                        targetNode.classList.add('ring-2', 'ring-cyan-400', 'bg-cyan-950/40');
+                                    }
                                 } else {
-                                    dropMode = 'after';
-                                    targetNode.classList.add('border-r-2', 'border-r-cyan-400');
+                                    // Regular token: determine whether inserting before or after target
+                                    isInsideGroup = false;
+                                    if (relX < 0.5) {
+                                        dropMode = 'before';
+                                        targetNode.classList.add('border-l-2', 'border-l-cyan-400');
+                                    } else {
+                                        dropMode = 'after';
+                                        targetNode.classList.add('border-r-2', 'border-r-cyan-400');
+                                    }
                                 }
                             } else if (targetOverEl) {
                                 clearTargetIndicators(targetOverEl);
@@ -739,7 +753,7 @@ export const PAT2 = {
                             const targetId = targetOverEl.dataset.nodeId;
                             targetOverEl = null;
                             if (targetId && targetId !== id) {
-                                moveOrMergeTokens(id, targetId, dropMode);
+                                moveTokens(id, targetId, dropMode, isInsideGroup);
                                 cleanup();
                                 return;
                             }
@@ -807,23 +821,15 @@ export const PAT2 = {
                 window.removeEventListener('pointerup', onBoxUp);
                 window.removeEventListener('pointercancel', onBoxUp);
                 if (!addBoxMoved) {
-                    const selected = getSelectedNodes();
                     const newPitch = (m._addPitch || 'c2').toLowerCase();
-                    if (selected.length > 0) {
-                        // Replace pitch / type of all selected tokens in-place
-                        selected.forEach(n => {
-                            n.type = 'note';
-                            n.val = newPitch;
-                        });
-                    } else {
-                        // No selection: append to end
-                        const newNode = { id: genId(), type: 'note', val: newPitch };
-                        m._tokens.push(newNode);
-                        selectedIds.clear();
-                        selectedIds.add(newNode.id);
-                    }
+                    // Always append to the end without highlighting
+                    const newNode = { id: genId(), type: 'note', val: newPitch };
+                    m._tokens.push(newNode);
+                    selectedIds.clear();
                     renderTokens();
                     syncPattern();
+                    // Auto-scroll strip to rightmost end so newly appended note is visible
+                    if (tokenStrip) tokenStrip.scrollLeft = tokenStrip.scrollWidth;
                 }
             };
 
@@ -832,22 +838,15 @@ export const PAT2 = {
             window.addEventListener('pointercancel', onBoxUp);
         });
 
-        // Add / Replace Rest button
+        // Add Rest button: Always appends to the end without highlighting
         addRestBtn?.addEventListener('click', () => {
-            const selected = getSelectedNodes();
-            if (selected.length > 0) {
-                // Replace selected tokens into rest in-place
-                selected.forEach(n => {
-                    n.type = 'rest';
-                    n.val = '~';
-                });
-            } else {
-                // No selection: append to end
-                const newNode = { id: genId(), type: 'rest', val: '~' };
-                m._tokens.push(newNode);
-                selectedIds.clear();
-                selectedIds.add(newNode.id);
-            }
+            const newNode = { id: genId(), type: 'rest', val: '~' };
+            m._tokens.push(newNode);
+            selectedIds.clear();
+            renderTokens();
+            syncPattern();
+            if (tokenStrip) tokenStrip.scrollLeft = tokenStrip.scrollWidth;
+        });
             renderTokens();
             syncPattern();
         });
