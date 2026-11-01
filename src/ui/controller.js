@@ -309,6 +309,7 @@ export class UIController {
     instantiateSubpatch(subpatchId, slotIdx) { return this.pageManager.instantiateSubpatch(subpatchId, slotIdx); }
 
     updateSelectionClasses() { return this.interactionManager.updateSelectionClasses(); }
+    deleteSelectedModules() { return this.interactionManager.deleteSelectedModules(); }
 
     showToast(msg, duration = 1800) { return this.modalManager.showToast(msg, duration); }
     openModal(idx, title, widthCls, renderFn) { return this.modalManager.openModal(idx, title, widthCls, renderFn); }

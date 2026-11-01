@@ -1,4 +1,4 @@
-﻿// src/ui/managers/interaction-manager.js
+// src/ui/managers/interaction-manager.js
 import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=459';
 import { MODULE_REGISTRY } from '../../modules/registry.js?v=459';
 import { RowManager } from './row-manager.js?v=459';
@@ -85,12 +85,47 @@ export class InteractionManager {
             cell.classList.toggle('selected-module', Boolean(mId && this.selectedModuleIds.includes(mId)));
         }
         this.ui.updatePortHighlight();
+
+        // Update Delete button state in header
+        const deleteBtn = document.getElementById('delete-selected-btn');
+        if (deleteBtn) {
+            const hasSelection = this.selectedModuleIds.length > 0;
+            deleteBtn.disabled = !hasSelection;
+            if (hasSelection) {
+                deleteBtn.classList.remove('opacity-40', 'cursor-not-allowed', 'text-slate-400');
+                deleteBtn.classList.add('text-red-400', 'border-red-500/70', 'bg-red-950/60', 'hover:bg-red-900/80', 'cursor-pointer');
+            } else {
+                deleteBtn.classList.add('opacity-40', 'cursor-not-allowed', 'text-slate-400');
+                deleteBtn.classList.remove('text-red-400', 'border-red-500/70', 'bg-red-950/60', 'hover:bg-red-900/80', 'cursor-pointer');
+            }
+        }
     }
 
     clearHighlight() {
         this.lastHighlightedCells.forEach(c => c.classList.remove('drop-highlight-valid', 'drop-highlight-invalid', 'drop-highlight-copy-valid'));
         this.lastHighlightedCells = [];
         this.dropTargetIndex = null;
+    }
+
+    async deleteSelectedModules() {
+        if (!this.selectedModuleIds || this.selectedModuleIds.length === 0) return;
+        const hasLocked = this.selectedModuleIds.some(id => this.ui.modules[id]?.type === 'SUB_IO');
+        if (hasLocked) {
+            this.selectedModuleIds = [];
+            this.updateSelectionClasses();
+            return this.ui.showToast('SUB_IO モジュールは削除できません（保護中）');
+        }
+        this.ui.saveHistory();
+        const targets = [...this.selectedModuleIds];
+        this.selectedModuleIds = [];
+        this.updateSelectionClasses();
+        this.ui._destroyCount = 0;
+        for (const id of targets) {
+            await this.ui.destroyModule(this.ui.currentPageId, id);
+        }
+        this.ui.updateAllCells();
+        this.ui.renderCables();
+        this.ui.showToast(`モジュールを削除しました (${this.ui._destroyCount}個)`);
     }
 
     resetAllInteractions({ keepSelection = false } = {}) {
@@ -350,28 +385,12 @@ export class InteractionManager {
                     return;
                 }
                 if (this.selectedModuleIds.length > 0) {
-                    if (this.selectedModuleIds.includes(mId)) {
-                        const hasLocked = this.selectedModuleIds.some(id => this.ui.modules[id]?.type === 'SUB_IO');
-                        if (hasLocked) {
-                            this.selectedModuleIds = [];
-                            this.updateSelectionClasses();
-                            return this.ui.showToast('SUB_IO モジュールは削除できません（保護中）');
-                        }
-                        this.ui.saveHistory();
-                        const targets = [...this.selectedModuleIds];
+                    // Tap on already selected module does NOT delete (prevents accidental deletion)
+                    // If tap on a non-selected module or background, clear selection
+                    if (!this.selectedModuleIds.includes(mId)) {
                         this.selectedModuleIds = [];
                         this.updateSelectionClasses();
-                        this.ui._destroyCount = 0;
-                        for (const id of targets) {
-                            await this.ui.destroyModule(this.ui.currentPageId, id);
-                        }
-                        this.ui.updateAllCells();
-                        this.ui.renderCables();
-                        this.ui.showToast(`モジュールを破棄しました (${this.ui._destroyCount}個)`);
-                        return;
                     }
-                    this.selectedModuleIds = [];
-                    this.updateSelectionClasses();
                     return;
                 }
                 if (this.ui.modules[mId]?.type === 'SUB_IO') {

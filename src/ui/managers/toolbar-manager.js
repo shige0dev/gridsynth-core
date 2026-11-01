@@ -1,4 +1,4 @@
-﻿// src/ui/managers/toolbar-manager.js
+// src/ui/managers/toolbar-manager.js
 
 export class ToolbarManager {
     constructor(ui) {
@@ -66,6 +66,7 @@ export class ToolbarManager {
     }
 
     bindToolbarEvents() {
+        document.getElementById('delete-selected-btn')?.addEventListener('click', () => this.ui.deleteSelectedModules());
         document.getElementById('undo-btn')?.addEventListener('click', () => this.ui.undo());
 
         const fullscreenBtn = document.getElementById('fullscreen-btn');
