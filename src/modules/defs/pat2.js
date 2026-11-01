@@ -817,15 +817,25 @@ export const PAT2 = {
                 window.removeEventListener('pointerup', onBoxUp);
                 window.removeEventListener('pointercancel', onBoxUp);
                 if (!addBoxMoved) {
+                    const selected = getSelectedNodes();
                     const newPitch = (m._addPitch || 'c2').toLowerCase();
-                    // Always append to the end without highlighting
-                    const newNode = { id: genId(), type: 'note', val: newPitch };
-                    m._tokens.push(newNode);
-                    selectedIds.clear();
-                    renderTokens();
-                    syncPattern();
-                    // Auto-scroll strip to rightmost end so newly appended note is visible
-                    if (tokenStrip) tokenStrip.scrollLeft = tokenStrip.scrollWidth;
+                    if (selected.length > 0) {
+                        // Replace pitch / type of all selected tokens in-place
+                        selected.forEach(n => {
+                            n.type = 'note';
+                            n.val = newPitch;
+                        });
+                        renderTokens();
+                        syncPattern();
+                    } else {
+                        // No selection: append to end without highlighting
+                        const newNode = { id: genId(), type: 'note', val: newPitch };
+                        m._tokens.push(newNode);
+                        selectedIds.clear();
+                        renderTokens();
+                        syncPattern();
+                        if (tokenStrip) tokenStrip.scrollLeft = tokenStrip.scrollWidth;
+                    }
                 }
             };
 
@@ -834,14 +844,26 @@ export const PAT2 = {
             window.addEventListener('pointercancel', onBoxUp);
         });
 
-        // Add Rest button: Always appends to the end without highlighting
+        // Add / Replace Rest button
         addRestBtn?.addEventListener('click', () => {
-            const newNode = { id: genId(), type: 'rest', val: '~' };
-            m._tokens.push(newNode);
-            selectedIds.clear();
-            renderTokens();
-            syncPattern();
-            if (tokenStrip) tokenStrip.scrollLeft = tokenStrip.scrollWidth;
+            const selected = getSelectedNodes();
+            if (selected.length > 0) {
+                // Replace selected tokens into rest in-place
+                selected.forEach(n => {
+                    n.type = 'rest';
+                    n.val = '~';
+                });
+                renderTokens();
+                syncPattern();
+            } else {
+                // No selection: append rest to end
+                const newNode = { id: genId(), type: 'rest', val: '~' };
+                m._tokens.push(newNode);
+                selectedIds.clear();
+                renderTokens();
+                syncPattern();
+                if (tokenStrip) tokenStrip.scrollLeft = tokenStrip.scrollWidth;
+            }
         });
 
         // Group into [ ] (subdivision group)
