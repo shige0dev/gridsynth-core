@@ -42,12 +42,9 @@ export const COUNT = {
         `;
     },
 
-    updateLiveUI: (m, inst) => {
-        const countEl = document.getElementById(`count-val-${m.id}`);
-        if (!countEl || !inst?.read) return;
-
-        const data = inst.read();
-        const curCount = data.count ?? 0;
+    updateLive: (cell, data, isPlaying, modalEl, m) => {
+        const curCount = data?.count ?? 0;
+        const curMax = data?.max ?? (m.max || 256);
         const curFmt = m.format || 'HEX';
 
         let displayStr;
@@ -57,17 +54,20 @@ export const COUNT = {
             displayStr = curCount.toString(10);
         }
 
-        if (countEl.textContent.trim() !== displayStr) {
+        const countEl = cell?.querySelector(`#count-val-${m.id}`) || document.getElementById(`count-val-${m.id}`);
+        if (countEl && countEl.textContent.trim() !== displayStr) {
             countEl.textContent = displayStr;
         }
 
-        const modalCountEl = document.getElementById('count-modal-val');
-        if (modalCountEl) {
-            modalCountEl.textContent = displayStr;
-            const cvPercent = data.max > 0 ? ((curCount / data.max) * 100).toFixed(1) : '0.0';
-            const modalCvEl = document.getElementById('count-modal-cv');
+        if (modalEl) {
+            const modalCountEl = modalEl.querySelector('#count-modal-val') || document.getElementById('count-modal-val');
+            if (modalCountEl && modalCountEl.textContent.trim() !== displayStr) {
+                modalCountEl.textContent = displayStr;
+            }
+            const modalCvEl = modalEl.querySelector('#count-modal-cv') || document.getElementById('count-modal-cv');
             if (modalCvEl) {
-                modalCvEl.textContent = `${(curCount / data.max).toFixed(3)}V (${cvPercent}%)`;
+                const cvPercent = curMax > 0 ? ((curCount / curMax) * 100).toFixed(1) : '0.0';
+                modalCvEl.textContent = `${(curCount / curMax).toFixed(3)}V (${cvPercent}%)`;
             }
         }
     },
@@ -126,33 +126,36 @@ export const COUNT = {
         `;
     },
 
-    bindModalEvents: (m, ctx, cb) => {
-        document.querySelectorAll('.count-max-btn').forEach(btn => {
+    bindEvents: (m, ctx, cb) => {
+        const root = ctx?.getDialogElement ? (ctx.getDialogElement() || document) : document;
+
+        root.querySelectorAll('.count-max-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const newMax = parseInt(e.currentTarget.dataset.max, 10);
                 m.max = newMax;
                 ctx.reRenderModal();
-                ctx.reRenderGrid();
+                ctx.reRenderGrid?.();
                 cb();
             });
         });
 
-        document.querySelectorAll('.count-fmt-btn').forEach(btn => {
+        root.querySelectorAll('.count-fmt-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const newFmt = e.currentTarget.dataset.fmt;
                 m.format = newFmt;
                 ctx.reRenderModal();
-                ctx.reRenderGrid();
+                ctx.reRenderGrid?.();
                 cb();
             });
         });
 
-        document.getElementById('count-reset-btn')?.addEventListener('click', () => {
-            const inst = ctx.synth?.modules?.[m.id];
+        root.querySelector('#count-reset-btn')?.addEventListener('click', () => {
+            const fullId = `${ctx.currentPageId || 0}/${m.id}`;
+            const inst = ctx.synth?.modules?.[fullId] || ctx.synth?.modules?.[m.id];
             if (inst?.resetStep) {
                 inst.resetStep();
             }
-            ctx.reRenderGrid();
+            ctx.reRenderGrid?.();
         });
     }
 };
