@@ -1,4 +1,4 @@
-import './processors/clock.js?v=511';
+import './processors/clock.js?v=513';
 import './processors/seq.js?v=459';
 import './processors/adsr.js';
 import './processors/lfo.js?v=459';
@@ -7,7 +7,7 @@ import './processors/sh.js?v=462';
 import './processors/fold.js';
 import './processors/cv-delay.js';
 import './processors/scope.js';
-import './processors/pat.js?v=511';
+import './processors/pat.js?v=513';
 import './processors/markov.js?v=459';
 import './processors/chord.js';
 import './processors/fm.js?v=459';

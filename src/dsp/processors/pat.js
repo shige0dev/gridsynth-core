@@ -127,7 +127,7 @@ export class PatProcessor extends AudioWorkletProcessor {
             if (this.gap > 0) {
                 this.gap--;
                 this.gate = 0.0;
-            } else if (curEv && !curEv.isRest && isRunning) {
+            } else if (curEv && !curEv.isRest) {
                 const evDur = curEv.end - curEv.start;
                 const evProg = (this.phase - curEv.start) / Math.max(0.0001, evDur);
                 const gRatio = this.gateLen ?? 0.80;
