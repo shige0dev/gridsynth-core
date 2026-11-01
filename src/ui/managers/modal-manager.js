@@ -1,5 +1,5 @@
 // src/ui/managers/modal-manager.js
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=569';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=571';
 import { FACTORY_SUBPATCHES } from '../../presets/subpatches.js';
 import { UIHelpers } from '../helpers.js?v=459';
 

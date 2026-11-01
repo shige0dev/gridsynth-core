@@ -84,8 +84,9 @@ export const LUT = {
 
         // 2. Draw Table Bars / Fill (Step Mode)
         const barW = w / divs;
+        const slotW256 = 256 / divs;
         for (let d = 0; d < divs; d++) {
-            const tableIdx = Math.floor((d / (divs - 1 || 1)) * 255);
+            const tableIdx = Math.min(255, Math.floor(d * slotW256));
             let val = Math.max(0, Math.min(1, table[tableIdx] ?? 0));
             if (isQ) {
                 val = Math.round(val * 12) / 12.0;
@@ -107,7 +108,9 @@ export const LUT = {
 
         // 3. Live Playhead Indicator (active input & output)
         if (typeof activeIn === 'number' && activeIn >= 0 && activeIn <= 1) {
-            const liveX = activeIn * w;
+            const barW = w / divs;
+            const curSlot = Math.min(divs - 1, Math.floor(activeIn * divs));
+            const liveX = curSlot * barW + barW * 0.5;
             ctx2d.strokeStyle = '#f59e0b'; // Amber cursor
             ctx2d.lineWidth = isModal ? 2 : 1.5;
             ctx2d.beginPath();

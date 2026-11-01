@@ -70,7 +70,8 @@ class LutProcessor extends AudioWorkletProcessor {
       let idx = Math.floor(rawIn * divs);
       if (idx >= divs) idx = divs - 1;
       // Map division index into 256 table space
-      const tableIdx = Math.floor((idx / (divs - 1 || 1)) * 255);
+      const slotW256 = 256 / divs;
+      const tableIdx = Math.min(255, Math.floor(idx * slotW256));
       let outVal = this.table[tableIdx] ?? 0;
 
       // Pitch Quantize (1V/Oct semitones -> 1/12V step)
