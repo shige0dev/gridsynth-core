@@ -28,22 +28,6 @@ function midiNumToNote(midi) {
     return `${SEMITONE_NOTES[semi]}${oct}`;
 }
 
-/**
- * Token Tree Node structure:
- * {
- *   id: string,
- *   type: 'note' | 'rest' | 'group',
- *   groupType?: 'bracket' | 'angle', // '[' or '<'
- *   val?: string,                    // 'c2'
- *   children?: TokenNode[],
- *   subdiv?: number,                 // *n
- *   repeat?: number,                 // !n
- *   prob?: number,                   // ?p (0.1〜1.0)
- *   eucK?: number,                   // (k, n)
- *   eucN?: number
- * }
- */
-
 let nextTokenId = 1;
 function genId() {
     return 't_' + (nextTokenId++);
@@ -63,7 +47,6 @@ export function parsePatternToTokens(str) {
     function parseTokensList(endChars = '') {
         const list = [];
         while (i < len) {
-            // Skip whitespace
             while (i < len && /\s/.test(s[i])) i++;
             if (i >= len) break;
             if (endChars && endChars.includes(s[i])) {
@@ -86,10 +69,8 @@ export function parsePatternToTokens(str) {
                 parseModifiers(groupNode);
                 list.push(groupNode);
             } else if (s[i] === ']' || s[i] === '>') {
-                // Unexpected closing, advance
                 i++;
             } else {
-                // Read atomic token until whitespace, [, ], <, or >
                 let atomStr = '';
                 while (i < len && !/\s/.test(s[i]) && s[i] !== '[' && s[i] !== ']' && s[i] !== '<' && s[i] !== '>') {
                     atomStr += s[i];
@@ -122,17 +103,6 @@ export function parsePatternToTokens(str) {
                 let p = '';
                 while (i < len && /[\d.]/.test(s[i])) { p += s[i]; i++; }
                 node.prob = parseFloat(p);
-            } else if (s[i] === '(') {
-                // Euclidean (k, n)
-                i++;
-                let content = '';
-                while (i < len && s[i] !== ')') { content += s[i]; i++; }
-                if (i < len && s[i] === ')') i++;
-                const parts = content.split(',');
-                if (parts.length === 2) {
-                    node.eucK = parseInt(parts[0], 10);
-                    node.eucN = parseInt(parts[1], 10);
-                }
             } else {
                 break;
             }
@@ -141,14 +111,7 @@ export function parsePatternToTokens(str) {
 
     function parseAtomicToken(raw) {
         let base = raw;
-        let repeat, subdiv, prob, eucK, eucN;
-
-        const eucMatch = base.match(/\((\d+)\s*,\s*(\d+)\)$/);
-        if (eucMatch) {
-            eucK = parseInt(eucMatch[1], 10);
-            eucN = parseInt(eucMatch[2], 10);
-            base = base.slice(0, eucMatch.index);
-        }
+        let repeat, subdiv, prob;
 
         const probMatch = base.match(/\?([0-9.]+)$/);
         if (probMatch) {
@@ -175,9 +138,7 @@ export function parsePatternToTokens(str) {
             val: isRest ? '~' : base.toLowerCase(),
             repeat,
             subdiv,
-            prob,
-            eucK,
-            eucN
+            prob
         };
     }
 
@@ -205,7 +166,6 @@ export function tokensToPattern(tokens) {
 
         if (n.subdiv && n.subdiv > 1) res += `*${n.subdiv}`;
         if (n.repeat && n.repeat > 1) res += `!${n.repeat}`;
-        if (n.eucK && n.eucN) res += `(${n.eucK},${n.eucN})`;
         if (n.prob !== undefined && n.prob < 1.0) res += `?${Number(n.prob).toFixed(2).replace(/\.?0+$/, '')}`;
 
         return res;
@@ -266,9 +226,10 @@ export const PAT2 = {
         if (modal) {
             modal.querySelectorAll('[data-pat2-step]').forEach(el => {
                 const idx = parseInt(el.dataset.pat2Step, 10);
-                el.classList.toggle('ring-2', idx === activeIdx);
-                el.classList.toggle('ring-yellow-400', idx === activeIdx);
-                el.classList.toggle('shadow-[0_0_10px_rgba(250,204,21,0.7)]', idx === activeIdx);
+                const isActive = idx === activeIdx;
+                el.classList.toggle('ring-1', isActive);
+                el.classList.toggle('ring-yellow-400', isActive);
+                el.classList.toggle('bg-yellow-400/30', isActive);
             });
         }
     },
@@ -285,41 +246,41 @@ export const PAT2 = {
         }
 
         return `
-            <div id="pat2-modal-root-${uid}" class="space-y-1.5 p-0.5 select-none touch-none">
-                <!-- Top Toolbar: PRESET, GATE slider, Quick Action Buttons -->
+            <div id="pat2-modal-root-${uid}" class="space-y-1 p-0.5 select-none touch-none w-full">
+                <!-- Top Toolbar: PRESET, TEXT, GATE slider -->
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-1.5">
                     <div class="flex items-center gap-1 shrink-0">
-                        <button id="pat2-toggle-presets-${uid}" class="flex items-center gap-0.5 text-[7.5px] font-bold text-slate-400 hover:text-cyan-300 uppercase tracking-wider transition bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">
-                            <span class="text-[6.5px] font-mono text-cyan-400">${showPresets ? '▼' : '▶'}</span>
+                        <button id="pat2-toggle-presets-${uid}" class="flex items-center gap-0.5 text-[7px] font-bold text-slate-400 hover:text-cyan-300 uppercase tracking-wider transition bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">
+                            <span class="text-[6px] font-mono text-cyan-400">${showPresets ? '▼' : '▶'}</span>
                             <span>PRESET</span>
                         </button>
-                        <button id="pat2-toggle-text-${uid}" class="flex items-center gap-0.5 text-[7.5px] font-bold text-slate-400 hover:text-cyan-300 uppercase tracking-wider transition bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">
-                            <span class="text-[6.5px] font-mono text-cyan-400">${showText ? '▼' : '▶'}</span>
+                        <button id="pat2-toggle-text-${uid}" class="flex items-center gap-0.5 text-[7px] font-bold text-slate-400 hover:text-cyan-300 uppercase tracking-wider transition bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">
+                            <span class="text-[6px] font-mono text-cyan-400">${showText ? '▼' : '▶'}</span>
                             <span>TEXT</span>
                         </button>
                     </div>
 
                     <!-- Middle: GATE Slider -->
-                    <div class="flex-1 flex items-center min-w-0 bg-slate-950 px-2 py-0.5 rounded-lg border border-slate-800 gap-1.5">
-                        <span class="text-[7.5px] text-slate-400 uppercase font-mono shrink-0">GATE</span>
+                    <div class="flex-1 flex items-center min-w-0 bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800 gap-1.5">
+                        <span class="text-[7px] text-slate-400 uppercase font-mono shrink-0">GATE</span>
                         <input type="range" id="pat2-gate-slider-${uid}" min="10" max="95" step="5" value="${gatePct}" class="flex-1 w-full h-1 accent-cyan-400 cursor-pointer touch-none">
-                        <span id="pat2-gate-disp-${uid}" class="text-[8px] font-mono font-bold text-cyan-300 min-w-[24px] text-right shrink-0">${gatePct}%</span>
+                        <span id="pat2-gate-disp-${uid}" class="text-[7.5px] font-mono font-bold text-cyan-300 min-w-[20px] text-right shrink-0">${gatePct}%</span>
                     </div>
 
-                    <!-- Right: Add Note / Rest buttons -->
+                    <!-- Right Action: +NOTE, +REST -->
                     <div class="flex items-center gap-1 shrink-0">
-                        <button id="pat2-add-note-${uid}" class="h-5 px-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded text-[8px] font-bold border border-cyan-400 shadow-sm transition active:scale-95 flex items-center gap-0.5">
-                            <span>+</span><span>NOTE</span>
+                        <button id="pat2-add-note-${uid}" class="h-5 px-1.5 bg-cyan-700/80 hover:bg-cyan-600 text-white rounded text-[7.5px] font-bold border border-cyan-500/70 shadow-sm transition active:scale-95 flex items-center gap-0.5" title="音符を追加">
+                            <span>+NOTE</span>
                         </button>
-                        <button id="pat2-add-rest-${uid}" class="h-5 px-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded text-[8px] font-bold border border-slate-700 shadow-sm transition active:scale-95 flex items-center gap-0.5">
-                            <span>+</span><span>REST</span>
+                        <button id="pat2-add-rest-${uid}" class="h-5 px-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded text-[7.5px] font-bold border border-slate-700 shadow-sm transition active:scale-95 flex items-center gap-0.5" title="休符を追加">
+                            <span>+REST</span>
                         </button>
                     </div>
                 </div>
 
                 <!-- Presets Grid (Collapsible) -->
                 ${showPresets ? `
-                <div class="grid grid-cols-4 sm:grid-cols-6 gap-1 pt-0.5 border-b border-slate-800/80 pb-1.5">
+                <div class="grid grid-cols-4 sm:grid-cols-6 gap-1 pt-0.5 border-b border-slate-800/80 pb-1">
                     ${STRUDEL_PRESETS.map((p) => `
                         <button class="pat2-preset-btn h-5 px-1 bg-slate-800/90 hover:bg-cyan-950/80 border border-slate-700 hover:border-cyan-500/80 rounded flex items-center justify-center transition group truncate" data-pattern="${p.pattern}">
                             <span class="text-[7px] font-bold text-cyan-300 group-hover:text-white truncate pointer-events-none">${p.name}</span>
@@ -328,79 +289,50 @@ export const PAT2 = {
                 </div>
                 ` : ''}
 
-                <!-- Token Strip Area (Horizontal Scrollable Strip) -->
-                <div class="relative w-full bg-slate-950/80 rounded-xl border border-cyan-500/30 p-2 overflow-hidden shadow-inner">
-                    <div id="pat2-token-strip-${uid}" class="flex items-center gap-1.5 overflow-x-auto min-h-[58px] py-1 px-1 scrollbar-thin scrollbar-thumb-slate-700 select-none">
-                        <!-- Populated dynamically via renderTokensHTML -->
+                <!-- Token Strip: Compact container, 16 steps fit at once -->
+                <div class="relative w-full bg-slate-950 border border-slate-800 rounded-lg p-1 overflow-hidden shadow-inner">
+                    <div id="pat2-token-strip-${uid}" class="flex items-center gap-[3px] overflow-x-auto min-h-[30px] h-7.5 py-0 px-0.5 scrollbar-thin scrollbar-thumb-slate-700 select-none">
+                        <!-- Populated dynamically via renderTokens -->
                     </div>
                 </div>
 
-                <!-- Inspector / Multi-Select Action Bar -->
-                <div id="pat2-inspector-${uid}" class="bg-slate-950/90 rounded-xl border border-slate-800 p-2 space-y-1.5 shadow-sm">
-                    <!-- Top Info of Selection & Pitch controls -->
-                    <div class="flex items-center justify-between gap-1.5">
-                        <div class="flex items-center gap-1 min-w-0">
-                            <span id="pat2-sel-badge-${uid}" class="text-[8px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-bold">NO SELECTION</span>
-                            <span id="pat2-pitch-disp-${uid}" class="text-[11px] font-mono font-black text-cyan-300 ml-1">--</span>
-                        </div>
-                        <div class="flex items-center gap-1 shrink-0">
-                            <button id="pat2-pitch-down-${uid}" class="h-5 px-2 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded text-[9px] font-bold border border-slate-700 active:bg-cyan-900 transition flex items-center justify-center">
-                                ▼ -1
-                            </button>
-                            <button id="pat2-pitch-up-${uid}" class="h-5 px-2 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded text-[9px] font-bold border border-slate-700 active:bg-cyan-900 transition flex items-center justify-center">
-                                ▲ +1
-                            </button>
-                            <button id="pat2-oct-down-${uid}" class="h-5 px-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded text-[8px] font-mono border border-slate-700 active:bg-cyan-900 transition">
-                                -12
-                            </button>
-                            <button id="pat2-oct-up-${uid}" class="h-5 px-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded text-[8px] font-mono border border-slate-700 active:bg-cyan-900 transition">
-                                +12
-                            </button>
-                        </div>
+                <!-- Compact Inspector / Action Bar -->
+                <div id="pat2-inspector-${uid}" class="bg-slate-950/90 rounded-lg border border-slate-800 px-1.5 py-1 flex items-center justify-between gap-1 shadow-sm">
+                    <!-- Left: Selection Info & Pitch Display -->
+                    <div class="flex items-center gap-1 min-w-0 shrink-0">
+                        <span id="pat2-sel-badge-${uid}" class="text-[7px] font-mono px-1 py-0.2 rounded bg-slate-800 text-slate-400 font-bold">ALL</span>
+                        <span id="pat2-pitch-disp-${uid}" class="text-[9.5px] font-mono font-black text-cyan-300 ml-0.5">--</span>
+                        <span class="text-[6.5px] font-mono text-slate-500 hidden sm:inline">(↕スワイプで音程)</span>
                     </div>
 
-                    <!-- Pitch Slider -->
-                    <div class="flex items-center gap-2 bg-slate-900/60 px-2 py-1 rounded-lg border border-slate-800/80">
-                        <span class="text-[7.5px] font-mono text-slate-400 shrink-0 uppercase">PITCH SLIDER</span>
-                        <input type="range" id="pat2-pitch-slider-${uid}" min="24" max="84" step="1" value="48" class="flex-1 h-1.5 accent-cyan-400 cursor-pointer touch-none">
-                        <span id="pat2-pitch-slider-disp-${uid}" class="text-[8.5px] font-mono font-bold text-cyan-300 min-w-[28px] text-right shrink-0">C2</span>
-                    </div>
-
-                    <!-- Attributes & Grouping Buttons Row -->
-                    <div class="flex items-center justify-between gap-1 pt-1 border-t border-slate-800/60">
-                        <!-- Grouping buttons -->
-                        <div class="flex items-center gap-1">
-                            <button id="pat2-group-btn-${uid}" class="h-5 px-1.5 bg-slate-800 hover:bg-slate-700 text-purple-300 rounded text-[8px] font-bold border border-purple-500/50 shadow-sm transition active:scale-95 flex items-center gap-0.5">
-                                <span>[ ]</span><span>GROUP</span>
-                            </button>
-                            <button id="pat2-ungroup-btn-${uid}" class="h-5 px-1.5 bg-slate-900 hover:bg-slate-800 text-slate-400 rounded text-[8px] font-bold border border-slate-800 shadow-sm transition active:scale-95 flex items-center gap-0.5">
-                                <span>UNGROUP</span>
-                            </button>
-                        </div>
-
-                        <!-- Modifiers: Repeat !n, Subdiv *n, Rest toggle -->
-                        <div class="flex items-center gap-1">
-                            <button id="pat2-subdiv-btn-${uid}" class="h-5 px-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded text-[8px] font-bold border border-amber-500/50 transition">
-                                SUBDIV *
-                            </button>
-                            <button id="pat2-repeat-btn-${uid}" class="h-5 px-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded text-[8px] font-bold border border-amber-500/50 transition">
-                                REP !
-                            </button>
-                            <button id="pat2-toggle-rest-btn-${uid}" class="h-5 px-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded text-[8px] font-bold border border-cyan-500/50 transition">
-                                REST (~)
-                            </button>
-                            <button id="pat2-del-btn-${uid}" class="h-5 px-2 bg-red-950/80 hover:bg-red-900 text-red-300 rounded text-[8px] font-bold border border-red-500/60 transition">
-                                DEL
-                            </button>
-                        </div>
+                    <!-- Right: Group, Modifiers, Rest, Delete -->
+                    <div class="flex items-center gap-1 shrink-0">
+                        <button id="pat2-group-btn-${uid}" class="h-4.5 px-1.5 bg-slate-800 hover:bg-slate-700 text-purple-300 rounded text-[7px] font-bold border border-purple-500/50 shadow-sm transition active:scale-95" title="選択した項目を[]グループにまとめる">
+                            [ ] GROUP
+                        </button>
+                        <button id="pat2-ungroup-btn-${uid}" class="h-4.5 px-1.5 bg-slate-900 hover:bg-slate-800 text-slate-400 rounded text-[7px] font-bold border border-slate-800 shadow-sm transition active:scale-95" title="グループ解除">
+                            UNGROUP
+                        </button>
+                        <button id="pat2-subdiv-btn-${uid}" class="h-4.5 px-1 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded text-[7px] font-bold border border-amber-500/50 transition" title="細分化 (*2, *3, *4)">
+                            *n
+                        </button>
+                        <button id="pat2-repeat-btn-${uid}" class="h-4.5 px-1 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded text-[7px] font-bold border border-amber-500/50 transition" title="複製 (!2, !3, !4)">
+                            !n
+                        </button>
+                        <button id="pat2-toggle-rest-btn-${uid}" class="h-4.5 px-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded text-[7px] font-bold border border-cyan-500/50 transition" title="音符/休符(~)切替">
+                            ~
+                        </button>
+                        <button id="pat2-del-btn-${uid}" class="h-4.5 px-1.5 bg-red-950/80 hover:bg-red-900 text-red-300 rounded text-[7px] font-bold border border-red-500/60 transition" title="選択削除">
+                            DEL
+                        </button>
                     </div>
                 </div>
 
                 <!-- Text representation (Collapsible) -->
                 ${showText ? `
-                <div class="flex items-center gap-1 pt-1">
-                    <input type="text" id="pat2-raw-input-${uid}" value="${pat}" class="flex-1 h-6 bg-slate-950 border border-slate-700 rounded px-2 font-mono text-[9px] text-cyan-300 focus:outline-none focus:border-cyan-400">
-                    <button id="pat2-apply-raw-${uid}" class="h-6 px-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded text-[8.5px] font-bold border border-cyan-400">
+                <div class="flex items-center gap-1 pt-0.5">
+                    <input type="text" id="pat2-raw-input-${uid}" value="${pat}" class="flex-1 h-5.5 bg-slate-950 border border-slate-700 rounded px-1.5 font-mono text-[8.5px] text-cyan-300 focus:outline-none focus:border-cyan-400">
+                    <button id="pat2-apply-raw-${uid}" class="h-5.5 px-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded text-[8px] font-bold border border-cyan-400">
                         APPLY
                     </button>
                 </div>
@@ -415,12 +347,6 @@ export const PAT2 = {
         const tokenStrip = document.getElementById(`pat2-token-strip-${uid}`);
         const selBadge = document.getElementById(`pat2-sel-badge-${uid}`);
         const pitchDisp = document.getElementById(`pat2-pitch-disp-${uid}`);
-        const pitchSlider = document.getElementById(`pat2-pitch-slider-${uid}`);
-        const pitchSliderDisp = document.getElementById(`pat2-pitch-slider-disp-${uid}`);
-        const pitchDownBtn = document.getElementById(`pat2-pitch-down-${uid}`);
-        const pitchUpBtn = document.getElementById(`pat2-pitch-up-${uid}`);
-        const octDownBtn = document.getElementById(`pat2-oct-down-${uid}`);
-        const octUpBtn = document.getElementById(`pat2-oct-up-${uid}`);
         const groupBtn = document.getElementById(`pat2-group-btn-${uid}`);
         const ungroupBtn = document.getElementById(`pat2-ungroup-btn-${uid}`);
         const subdivBtn = document.getElementById(`pat2-subdiv-btn-${uid}`);
@@ -439,7 +365,7 @@ export const PAT2 = {
         let selectedIds = new Set();
         let stepCounter = 0;
 
-        // Render HTML for tokens
+        // Render HTML for tokens with compact styling
         const renderTokens = () => {
             if (!tokenStrip) return;
             stepCounter = 0;
@@ -447,16 +373,16 @@ export const PAT2 = {
             function renderNode(node, depth = 0) {
                 const isSelected = selectedIds.has(node.id);
                 const borderCls = isSelected
-                    ? 'border-yellow-400 bg-yellow-400/20 shadow-md shadow-yellow-500/30 ring-1 ring-yellow-400'
-                    : 'border-slate-700 bg-slate-900/90 hover:border-cyan-500/70';
+                    ? 'border-yellow-400 bg-yellow-400/25 shadow-sm ring-1 ring-yellow-400'
+                    : 'border-slate-800 bg-slate-900/90 hover:border-cyan-500/70';
 
                 if (node.type === 'group') {
                     const isAngle = node.groupType === 'angle';
-                    const label = isAngle ? '< CYCLE >' : '[ SUBDIV ]';
+                    const label = isAngle ? '<>' : '[]';
                     return `
-                        <div data-node-id="${node.id}" class="pat2-node-token pat2-group-box relative flex items-center gap-1 px-2 py-1 rounded-xl border ${borderCls} cursor-pointer transition">
-                            <span class="text-[6.5px] font-mono text-purple-400 font-bold absolute -top-2 left-2 bg-slate-950 px-1 rounded border border-purple-500/40">${label}</span>
-                            <div class="flex items-center gap-1 pt-1 pb-0.5">
+                        <div data-node-id="${node.id}" class="pat2-node-token pat2-group-box relative flex items-center gap-[2px] px-1 py-0.5 rounded border border-dashed ${borderCls} cursor-pointer transition shrink-0">
+                            <span class="text-[6px] font-mono text-purple-400 font-bold absolute -top-1.5 left-1 bg-slate-950 px-0.5 rounded leading-none">${label}</span>
+                            <div class="flex items-center gap-[2px]">
                                 ${(node.children || []).map(c => renderNode(c, depth + 1)).join('')}
                             </div>
                             ${renderBadge(node)}
@@ -467,9 +393,8 @@ export const PAT2 = {
                 const noteVal = (node.val || 'c2').toUpperCase();
                 const stepIdx = stepCounter++;
                 return `
-                    <div data-node-id="${node.id}" data-pat2-step="${stepIdx}" class="pat2-node-token relative flex flex-col items-center justify-center min-w-[38px] h-11 px-2 rounded-xl border ${borderCls} cursor-ns-resize transition select-none group touch-none">
-                        <span class="pat2-node-val text-[11px] font-mono font-black ${isRest ? 'text-slate-500' : 'text-cyan-300 group-hover:text-white'} leading-none">${isRest ? '~' : noteVal}</span>
-                        <span class="text-[6.5px] font-mono text-slate-500 mt-1 leading-none">↕ SWIPE</span>
+                    <div data-node-id="${node.id}" data-pat2-step="${stepIdx}" class="pat2-node-token relative flex items-center justify-center min-w-[16px] h-6 px-1 rounded border ${borderCls} cursor-ns-resize transition select-none group touch-none shrink-0">
+                        <span class="pat2-node-val text-[8.5px] font-mono font-bold ${isRest ? 'text-slate-600' : 'text-cyan-300 group-hover:text-white'} leading-none">${isRest ? '~' : noteVal}</span>
                         ${renderBadge(node)}
                     </div>`;
             }
@@ -478,9 +403,8 @@ export const PAT2 = {
                 const badges = [];
                 if (node.subdiv && node.subdiv > 1) badges.push(`*${node.subdiv}`);
                 if (node.repeat && node.repeat > 1) badges.push(`!${node.repeat}`);
-                if (node.prob !== undefined && node.prob < 1.0) badges.push(`?${Math.round(node.prob * 100)}%`);
                 if (!badges.length) return '';
-                return `<div class="absolute -top-1.5 -right-1.5 bg-amber-500 text-slate-950 text-[6.5px] font-mono font-black px-1 rounded-full shadow pointer-events-none">${badges.join(' ')}</div>`;
+                return `<div class="absolute -top-1 -right-1 bg-amber-500 text-slate-950 text-[5.5px] font-mono font-black px-0.5 rounded-full shadow pointer-events-none leading-tight">${badges.join(' ')}</div>`;
             }
 
             tokenStrip.innerHTML = m._tokens.map(t => renderNode(t)).join('');
@@ -496,7 +420,6 @@ export const PAT2 = {
             cb();
         };
 
-        // Find all selected nodes in the AST tree
         const getSelectedNodes = () => {
             const list = [];
             function traverse(nodes) {
@@ -513,45 +436,38 @@ export const PAT2 = {
             const selected = getSelectedNodes();
             if (selected.length === 0) {
                 if (selBadge) {
-                    selBadge.textContent = 'NO SELECTION';
-                    selBadge.className = 'text-[8px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-bold';
+                    selBadge.textContent = 'NO SEL';
+                    selBadge.className = 'text-[7px] font-mono px-1 py-0.2 rounded bg-slate-800 text-slate-400 font-bold';
                 }
                 if (pitchDisp) pitchDisp.textContent = '--';
-                if (pitchSliderDisp) pitchSliderDisp.textContent = '--';
                 return;
             }
 
             if (selected.length === 1) {
                 const n = selected[0];
                 if (selBadge) {
-                    selBadge.textContent = n.type === 'group' ? 'GROUP SELECTED' : '1 TOKEN';
-                    selBadge.className = 'text-[8px] font-mono px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-500/40 font-bold';
+                    selBadge.textContent = n.type === 'group' ? 'GRP' : '1 TOKEN';
+                    selBadge.className = 'text-[7px] font-mono px-1 py-0.2 rounded bg-cyan-950 text-cyan-300 border border-cyan-500/40 font-bold';
                 }
                 if (n.type === 'note') {
                     const midi = noteToMidiNum(n.val) ?? 48;
                     const noteStr = midiNumToNote(midi).toUpperCase();
                     if (pitchDisp) pitchDisp.textContent = noteStr;
-                    if (pitchSlider) pitchSlider.value = midi;
-                    if (pitchSliderDisp) pitchSliderDisp.textContent = noteStr;
                 } else {
-                    if (pitchDisp) pitchDisp.textContent = n.type === 'rest' ? 'REST (~)' : 'GRP';
-                    if (pitchSliderDisp) pitchSliderDisp.textContent = '--';
+                    if (pitchDisp) pitchDisp.textContent = n.type === 'rest' ? '~' : 'GRP';
                 }
             } else {
                 if (selBadge) {
-                    selBadge.textContent = `${selected.length} TOKENS SELECTED`;
-                    selBadge.className = 'text-[8px] font-mono px-1.5 py-0.5 rounded bg-yellow-950 text-yellow-300 border border-yellow-500/50 font-bold';
+                    selBadge.textContent = `${selected.length} SEL`;
+                    selBadge.className = 'text-[7px] font-mono px-1 py-0.2 rounded bg-yellow-950 text-yellow-300 border border-yellow-500/50 font-bold';
                 }
                 const firstNote = selected.find(n => n.type === 'note');
                 if (firstNote) {
                     const midi = noteToMidiNum(firstNote.val) ?? 48;
                     const noteStr = midiNumToNote(midi).toUpperCase();
-                    if (pitchDisp) pitchDisp.textContent = `${noteStr} (±SHIFT)`;
-                    if (pitchSlider) pitchSlider.value = midi;
-                    if (pitchSliderDisp) pitchSliderDisp.textContent = noteStr;
+                    if (pitchDisp) pitchDisp.textContent = `${noteStr} (±)`;
                 } else {
                     if (pitchDisp) pitchDisp.textContent = 'MULTI';
-                    if (pitchSliderDisp) pitchSliderDisp.textContent = '--';
                 }
             }
         };
@@ -603,7 +519,7 @@ export const PAT2 = {
 
                     const onPointerMove = (me) => {
                         const dy = startY - me.clientY;
-                        if (Math.abs(dy) >= 8) {
+                        if (Math.abs(dy) >= 6) {
                             if (pressTimer) {
                                 clearTimeout(pressTimer);
                                 pressTimer = null;
@@ -613,7 +529,7 @@ export const PAT2 = {
                                 selectedIds.add(id);
                                 renderTokens();
                             }
-                            const semitoneSteps = Math.trunc(dy / 10);
+                            const semitoneSteps = Math.trunc(dy / 8);
                             const diff = semitoneSteps - lastDiff;
                             if (diff !== 0) {
                                 shiftSelectedPitch(diff);
@@ -626,7 +542,6 @@ export const PAT2 = {
                         if (pressTimer) {
                             clearTimeout(pressTimer);
                             pressTimer = null;
-                            // Tap behavior (single select or toggle)
                             if (selectedIds.has(id) && selectedIds.size === 1) {
                                 selectedIds.clear();
                             } else {
@@ -650,61 +565,44 @@ export const PAT2 = {
             });
         };
 
-        // Pitch button controls
-        pitchDownBtn?.addEventListener('click', () => shiftSelectedPitch(-1));
-        pitchUpBtn?.addEventListener('click', () => shiftSelectedPitch(1));
-        octDownBtn?.addEventListener('click', () => shiftSelectedPitch(-12));
-        octUpBtn?.addEventListener('click', () => shiftSelectedPitch(12));
-
-        // Pitch slider control
-        pitchSlider?.addEventListener('input', (e) => {
-            const targetMidi = parseInt(e.target.value, 10);
-            const selected = getSelectedNodes();
-            if (selected.length === 1 && selected[0].type === 'note') {
-                selected[0].val = midiNumToNote(targetMidi);
-                renderTokens();
-                syncPattern();
-            } else if (selected.length > 1) {
-                const firstNote = selected.find(n => n.type === 'note');
-                if (firstNote) {
-                    const baseMidi = noteToMidiNum(firstNote.val) ?? 48;
-                    const delta = targetMidi - baseMidi;
-                    shiftSelectedPitch(delta);
-                }
-            }
-        });
-
-        // Grouping: wrap selected items in a bracket group
+        // Grouping: in-place replacement of selected items!
         groupBtn?.addEventListener('click', () => {
             if (selectedIds.size < 2) return;
-            const newChildren = [];
-            const remainingTokens = [];
 
-            m._tokens.forEach(t => {
-                if (selectedIds.has(t.id)) {
-                    newChildren.push(t);
-                } else {
-                    remainingTokens.push(t);
+            function groupInPlace(list) {
+                const selectedInThisList = list.filter(n => selectedIds.has(n.id));
+                if (selectedInThisList.length >= 2) {
+                    const firstIdx = list.findIndex(n => selectedIds.has(n.id));
+                    const newGroup = {
+                        id: genId(),
+                        type: 'group',
+                        groupType: 'bracket',
+                        children: selectedInThisList
+                    };
+                    const res = [];
+                    for (let idx = 0; idx < list.length; idx++) {
+                        if (idx === firstIdx) {
+                            res.push(newGroup);
+                        } else if (!selectedIds.has(list[idx].id)) {
+                            res.push(list[idx]);
+                        }
+                    }
+                    selectedIds.clear();
+                    selectedIds.add(newGroup.id);
+                    return res;
                 }
-            });
-
-            if (newChildren.length > 0) {
-                const newGroup = {
-                    id: genId(),
-                    type: 'group',
-                    groupType: 'bracket',
-                    children: newChildren
-                };
-                remainingTokens.push(newGroup);
-                m._tokens = remainingTokens;
-                selectedIds.clear();
-                selectedIds.add(newGroup.id);
-                renderTokens();
-                syncPattern();
+                list.forEach(node => {
+                    if (node.children) node.children = groupInPlace(node.children);
+                });
+                return list;
             }
+
+            m._tokens = groupInPlace(m._tokens);
+            renderTokens();
+            syncPattern();
         });
 
-        // Ungroup: unwrap children of selected groups
+        // Ungroup: in-place unwrap
         ungroupBtn?.addEventListener('click', () => {
             const selected = getSelectedNodes();
             let changed = false;
@@ -864,4 +762,3 @@ export const PAT2 = {
 export const pat2Defs = {
     PAT2
 };
-
