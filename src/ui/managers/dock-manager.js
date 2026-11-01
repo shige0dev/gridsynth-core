@@ -1,5 +1,5 @@
 // src/ui/managers/dock-manager.js
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=565';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=569';
 import { UIHelpers } from '../helpers.js?v=459';
 
 export const DOCK_TITLES = {

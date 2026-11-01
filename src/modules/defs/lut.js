@@ -157,20 +157,20 @@ export const LUT = {
             <div class="space-y-2 p-1 select-none w-full">
                 <!-- Top controls: DIVISIONS & QUANTIZE -->
                 <div class="flex items-center justify-between gap-1 pb-1 border-b border-slate-800">
-                    <div class="flex items-center gap-1">
-                        <span class="text-[8px] font-mono text-slate-400 font-bold uppercase">DIV:</span>
+                    <div class="flex items-center gap-1 shrink-0">
+                        <span class="text-[8.5px] font-mono text-slate-400 font-bold uppercase">DIV:</span>
                         <div class="inline-flex rounded border border-slate-700 overflow-hidden">
                             ${divOptions.map(opt => `
-                                <button class="lut-div-btn px-2 py-0.5 text-[8.5px] font-mono font-bold transition-colors ${divs === opt ? 'bg-teal-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}" data-div="${opt}">
+                                <button class="lut-div-btn px-2.5 py-0.5 text-[9px] font-mono font-bold transition-colors ${divs === opt ? 'bg-teal-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}" data-div="${opt}">
                                     ${opt}
                                 </button>
                             `).join('')}
                         </div>
                     </div>
-                    <div class="flex items-center gap-1">
-                        <button id="lut-quantize-btn" class="px-2 py-0.5 text-[8.5px] font-mono font-bold rounded border transition-colors flex items-center gap-1 ${isQ ? 'bg-amber-600 text-white border-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.5)]' : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'}" title="1V/Oct 半音音程クオンタイズ (1/12Vステップにスナップ)">
+                    <div class="flex items-center gap-1 shrink-0">
+                        <button id="lut-quantize-btn" class="h-6 px-3 rounded-md text-[9.5px] font-mono font-bold border transition-all flex items-center gap-1.5 shadow-sm active:scale-95 ${isQ ? 'bg-amber-600 hover:bg-amber-500 text-white border-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.6)]' : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-600'}" title="1V/Oct 半音音程クオンタイズ (1/12Vステップにスナップ)">
                             <span>♯ PITCH QNT:</span>
-                            <span class="font-black">${isQ ? 'ON' : 'OFF'}</span>
+                            <span class="font-black ${isQ ? 'text-yellow-200' : 'text-slate-400'}">${isQ ? 'ON' : 'OFF'}</span>
                         </button>
                     </div>
                 </div>
