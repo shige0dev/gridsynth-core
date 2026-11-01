@@ -127,7 +127,7 @@ export const PAT2 = {
                         </button>
                     </div>
 
-                    <!-- Right / Middle: Grouping Buttons ([] / <>), Ungroup, Modifiers (*n, !n), Trash Delete -->
+                    <!-- Right / Middle: Grouping Buttons ([] / <>), Ungroup, Modifiers (*n, /n, !n, ?), Trash Delete -->
                     <div class="flex items-center gap-0.5 shrink-0">
                         <button id="pat2-bracket-btn-${uid}" disabled class="h-5 w-[18px] flex items-center justify-center bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 opacity-50 cursor-not-allowed" title="横並び選択した項目を [] 分割グループにまとめる">
                             []
@@ -141,8 +141,14 @@ export const PAT2 = {
                         <button id="pat2-subdiv-btn-${uid}" class="h-5 px-1 bg-sky-950/80 hover:bg-sky-900 text-sky-300 rounded text-[7px] font-bold border border-sky-700/60 transition" title="細分化 (*2, *3, *4)">
                             *n
                         </button>
+                        <button id="pat2-slowdown-btn-${uid}" class="h-5 px-1 bg-sky-950/80 hover:bg-sky-900 text-sky-300 rounded text-[7px] font-bold border border-sky-700/60 transition" title="スローダウン・ゲート伸長 (/2, /3, /4)">
+                            /n
+                        </button>
                         <button id="pat2-repeat-btn-${uid}" class="h-5 px-1 bg-sky-950/80 hover:bg-sky-900 text-sky-300 rounded text-[7px] font-bold border border-sky-700/60 transition" title="複製 (!2, !3, !4)">
                             !n
+                        </button>
+                        <button id="pat2-prob-btn-${uid}" class="h-5 px-1 bg-sky-950/80 hover:bg-sky-900 text-sky-300 rounded text-[7px] font-bold border border-sky-700/60 transition" title="発音確率 (?, ?0.8, ?0.2)">
+                            ?
                         </button>
                         <button id="pat2-del-btn-${uid}" class="h-5 px-1 bg-red-950/80 hover:bg-red-900 text-red-300 rounded border border-red-500/60 transition flex items-center justify-center active:scale-95" title="選択削除">
                             <i data-lucide="trash-2" class="w-2.5 h-2.5 pointer-events-none"></i>
@@ -174,10 +180,12 @@ export const PAT2 = {
                         <span>PRESET</span>
                     </button>
                     <span class="text-cyan-400 font-bold">MANUAL:</span>
-                    <span><strong class="text-purple-300 font-bold">[A B]</strong> 1拍内等分</span>
-                    <span><strong class="text-purple-300 font-bold">&lt;A B&gt;</strong> 周期交代</span>
-                    <span><strong class="text-amber-300 font-bold">*N</strong> N倍細分</span>
-                    <span><strong class="text-amber-300 font-bold">!N</strong> N回連続</span>
+                    <span><strong class="text-purple-300 font-bold">[A B]</strong> 等分</span>
+                    <span><strong class="text-purple-300 font-bold">&lt;A B&gt;</strong> 交代</span>
+                    <span><strong class="text-amber-300 font-bold">*N</strong> 細分</span>
+                    <span><strong class="text-amber-300 font-bold">/N</strong> 伸長</span>
+                    <span><strong class="text-amber-300 font-bold">!N</strong> 連続</span>
+                    <span><strong class="text-emerald-300 font-bold">?</strong> 確率</span>
                     <span><strong class="text-slate-300 font-bold">~</strong> 休符</span>
                     <span class="text-slate-500">(↕音程 / ↔移動)</span>
                 </div>
@@ -205,7 +213,9 @@ export const PAT2 = {
         const angleBtn = document.getElementById(`pat2-angle-btn-${uid}`);
         const ungroupBtn = document.getElementById(`pat2-ungroup-btn-${uid}`);
         const subdivBtn = document.getElementById(`pat2-subdiv-btn-${uid}`);
+        const slowdownBtn = document.getElementById(`pat2-slowdown-btn-${uid}`);
         const repeatBtn = document.getElementById(`pat2-repeat-btn-${uid}`);
+        const probBtn = document.getElementById(`pat2-prob-btn-${uid}`);
         const delBtn = document.getElementById(`pat2-del-btn-${uid}`);
         const addNoteBox = document.getElementById(`pat2-add-note-box-${uid}`);
         const addPitchDisp = document.getElementById(`pat2-add-pitch-disp-${uid}`);
@@ -312,9 +322,13 @@ export const PAT2 = {
             function renderBadge(node) {
                 const badges = [];
                 if (node.subdiv && node.subdiv > 1) badges.push(`*${node.subdiv}`);
+                if (node.slowdown && node.slowdown > 1) badges.push(`/${node.slowdown}`);
                 if (node.repeat && node.repeat > 1) badges.push(`!${node.repeat}`);
+                if (node.prob !== undefined && node.prob < 1.0) {
+                    badges.push(node.prob === 0.5 ? '?' : `?${node.prob}`);
+                }
                 if (!badges.length) return '';
-                return `<div class="absolute -top-1 -right-0.5 bg-amber-500 text-slate-950 text-[5px] font-mono font-black px-0.5 rounded-full shadow pointer-events-none leading-tight">${badges.join(' ')}</div>`;
+                return `<div class="absolute -top-1 -right-0.5 bg-amber-500 text-slate-950 text-[5px] font-mono font-black px-0.5 rounded-full shadow pointer-events-none leading-tight whitespace-nowrap">${badges.join(' ')}</div>`;
             }
 
             tokenStrip.innerHTML = m._tokens.map(t => renderNode(t)).join('');
@@ -787,7 +801,23 @@ export const PAT2 = {
         // Modifier: cycle subdiv *1 -> *2 -> *3 -> *4 -> *1
         subdivBtn?.addEventListener('click', () => {
             walkTokens(m._tokens, n => {
-                if (selectedIds.has(n.id)) n.subdiv = ((n.subdiv || 1) >= 4) ? 1 : (n.subdiv || 1) + 1;
+                if (selectedIds.has(n.id)) {
+                    n.subdiv = ((n.subdiv || 1) >= 4) ? 1 : (n.subdiv || 1) + 1;
+                    if (n.subdiv > 1) n.slowdown = 1; // Mutually exclusive with slowdown
+                }
+                return n;
+            });
+            renderTokens();
+            syncPattern();
+        });
+
+        // Modifier: cycle slowdown /1 -> /2 -> /3 -> /4 -> /1
+        slowdownBtn?.addEventListener('click', () => {
+            walkTokens(m._tokens, n => {
+                if (selectedIds.has(n.id)) {
+                    n.slowdown = ((n.slowdown || 1) >= 4) ? 1 : (n.slowdown || 1) + 1;
+                    if (n.slowdown > 1) n.subdiv = 1; // Mutually exclusive with subdiv
+                }
                 return n;
             });
             renderTokens();
@@ -798,6 +828,22 @@ export const PAT2 = {
         repeatBtn?.addEventListener('click', () => {
             walkTokens(m._tokens, n => {
                 if (selectedIds.has(n.id)) n.repeat = ((n.repeat || 1) >= 4) ? 1 : (n.repeat || 1) + 1;
+                return n;
+            });
+            renderTokens();
+            syncPattern();
+        });
+
+        // Modifier: cycle prob 1.0 -> 0.5 (?) -> 0.8 (?0.8) -> 0.2 (?0.2) -> 1.0
+        probBtn?.addEventListener('click', () => {
+            walkTokens(m._tokens, n => {
+                if (selectedIds.has(n.id)) {
+                    const cur = n.prob !== undefined ? n.prob : 1.0;
+                    if (cur >= 1.0) n.prob = 0.5;
+                    else if (Math.abs(cur - 0.5) < 0.05) n.prob = 0.8;
+                    else if (Math.abs(cur - 0.8) < 0.05) n.prob = 0.2;
+                    else delete n.prob;
+                }
                 return n;
             });
             renderTokens();

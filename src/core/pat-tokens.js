@@ -116,11 +116,19 @@ export function parsePatternToTokens(str) {
                 let num = '';
                 while (i < len && /\d/.test(s[i])) { num += s[i]; i++; }
                 node.subdiv = parseInt(num, 10);
+            } else if (s[i] === '/' && /\d/.test(s[i + 1])) {
+                i++;
+                let num = '';
+                while (i < len && /\d/.test(s[i])) { num += s[i]; i++; }
+                node.slowdown = parseInt(num, 10);
             } else if (s[i] === '?' && /[\d.]/.test(s[i + 1])) {
                 i++;
                 let p = '';
                 while (i < len && /[\d.]/.test(s[i])) { p += s[i]; i++; }
                 node.prob = parseFloat(p);
+            } else if (s[i] === '?') {
+                i++;
+                node.prob = 0.5;
             } else {
                 break;
             }
@@ -129,11 +137,11 @@ export function parsePatternToTokens(str) {
 
     function parseAtomicToken(raw) {
         let base = raw;
-        let repeat, subdiv, prob;
+        let repeat, subdiv, slowdown, prob;
 
-        const probMatch = base.match(/\?([0-9.]+)$/);
+        const probMatch = base.match(/\?([0-9.]+)?$/);
         if (probMatch) {
-            prob = parseFloat(probMatch[1]);
+            prob = probMatch[1] !== undefined ? parseFloat(probMatch[1]) : 0.5;
             base = base.slice(0, probMatch.index);
         }
 
@@ -141,6 +149,12 @@ export function parsePatternToTokens(str) {
         if (repMatch) {
             repeat = parseInt(repMatch[1], 10);
             base = base.slice(0, repMatch.index);
+        }
+
+        const slowMatch = base.match(/\/(\d+)$/);
+        if (slowMatch) {
+            slowdown = parseInt(slowMatch[1], 10);
+            base = base.slice(0, slowMatch.index);
         }
 
         const multMatch = base.match(/\*(\d+)$/);
@@ -156,6 +170,7 @@ export function parsePatternToTokens(str) {
             val: isRest ? '~' : base.toLowerCase(),
             repeat,
             subdiv,
+            slowdown,
             prob
         };
     }
@@ -180,8 +195,11 @@ export function tokensToPattern(tokens) {
         }
 
         if (n.subdiv && n.subdiv > 1) res += `*${n.subdiv}`;
+        if (n.slowdown && n.slowdown > 1) res += `/${n.slowdown}`;
         if (n.repeat && n.repeat > 1) res += `!${n.repeat}`;
-        if (n.prob !== undefined && n.prob < 1.0) res += `?${n.prob}`;
+        if (n.prob !== undefined && n.prob < 1.0) {
+            res += n.prob === 0.5 ? '?' : `?${n.prob}`;
+        }
         return res;
     }
 

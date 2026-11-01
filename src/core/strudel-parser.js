@@ -124,19 +124,55 @@ function countLeafTokens(tokens) {
     return count;
 }
 
+function getTokenWeight(token) {
+    if (!token) return 1;
+    // Check for explicit slowdown: e.g. token/2 -> weight = 2
+    const slowMatch = token.match(/\/((\d+)(\.\d+)?)$/);
+    if (slowMatch) {
+        const val = parseFloat(slowMatch[1]);
+        if (!isNaN(val) && val > 0) return val;
+    }
+    // Check for explicit speedup weight reduction: e.g. token*2 in a division
+    return 1;
+}
+
 /**
  * Recursive parser generating a list of leaf events with normalized time ranges [start, end) within [0, 1).
  */
 function parseTokensRecursive(tokens, start, end, cycleIndex = 0, counter = { val: 0 }) {
     if (!tokens || tokens.length === 0) return [];
     const dur = end - start;
-    const stepDur = dur / tokens.length;
+
+    // Calculate total weight for proportional step duration
+    const weights = tokens.map(tok => {
+        let t = tok.trim();
+        // Check for slowdown /N on atom or group
+        const slowMatch = t.match(/^(.*?)\/(\d+(\.\d+)?)$/);
+        if (slowMatch) {
+            const factor = parseFloat(slowMatch[2]);
+            return factor > 0 ? factor : 1;
+        }
+        return 1;
+    });
+    const totalWeight = weights.reduce((sum, w) => sum + w, 0) || tokens.length;
+
     let events = [];
+    let curTime = start;
 
     tokens.forEach((rawToken, idx) => {
-        const tStart = start + idx * stepDur;
+        const tokenWeight = weights[idx];
+        const stepDur = dur * (tokenWeight / totalWeight);
+        const tStart = curTime;
         const tEnd = tStart + stepDur;
+        curTime = tEnd;
         let token = rawToken.trim();
+
+        // 0. Slowdown modifier: token/N or [inner]/N
+        const slowMatch = token.match(/^(.*?)\/(\d+(\.\d+)?)$/);
+        if (slowMatch) {
+            token = slowMatch[1].trim();
+            // The stepDur is already expanded proportionally to tokenWeight!
+        }
 
         // 1. Alternations: <a b c>
         if (token.startsWith('<') && token.endsWith('>')) {
