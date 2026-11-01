@@ -85,6 +85,9 @@ export const PAT = {
         const curBar = (m.cycleBeats || 4) / 4;
         const gatePct = Math.round((m.gateLen ?? 0.8) * 100);
         const curAddPitch = (m._addPitch || 'c2').toUpperCase();
+        if (m._confirmedPattern === undefined) {
+            m._confirmedPattern = pat;
+        }
         if (!m._tokens) m._tokens = parsePatternToTokens(pat);
 
         const isBar = (val) => Math.abs(curBar - val) < 0.001 ? 'selected' : '';
@@ -137,8 +140,11 @@ export const PAT = {
                         <button id="pat-slowdown-${uid}" class="${btnCls}">/n</button>
                         <button id="pat-repeat-${uid}" class="${btnCls}">!n</button>
                         <button id="pat-prob-${uid}" class="${btnCls} text-[8.5px] font-mono">?</button>
-                        <button id="pat-del-${uid}" class="h-5 px-1.5 bg-red-950/80 hover:bg-red-900 text-red-300 rounded border border-red-500/60 flex items-center justify-center" title="削除">
+                        <button id="pat-del-${uid}" class="h-5 px-1.5 bg-red-950/80 hover:bg-red-900 text-red-300 rounded border border-red-500/60 flex items-center justify-center" title="選択削除 / 修飾子削除 / グループ解除">
                             <i data-lucide="trash-2" class="w-2.5 h-2.5 pointer-events-none"></i>
+                        </button>
+                        <button id="pat-revert-${uid}" class="h-5 px-1.5 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 rounded border border-slate-700 flex items-center justify-center font-mono text-[9px] font-bold" title="編集破棄 / 前に戻す (確定状態に復帰)">
+                            <i data-lucide="undo-2" class="w-2.5 h-2.5 pointer-events-none"></i>
                         </button>
                     </div>
                     <div class="flex-1 min-w-[4px]"></div>
@@ -433,9 +439,31 @@ export const PAT = {
             sync(false);
         });
 
+        // Revert (編集破棄・前に戻す) button
+        root.querySelector(`#pat-revert-${uid}`)?.addEventListener('click', () => {
+            const revertPat = m._confirmedPattern || m.pattern || 'c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2';
+            m._tokens = parsePatternToTokens(revertPat);
+            m.pattern = revertPat;
+            selectedIds.clear();
+            sync(false);
+            if (ctx?.showToast) ctx.showToast('編集を破棄して前に戻しました');
+        });
+
+        // Dialog close / cancel cleanup: revert unconfirmed edits
+        m._onCloseDialog = () => {
+            if (m._confirmedPattern && m.pattern !== m._confirmedPattern) {
+                m.pattern = m._confirmedPattern;
+                m._tokens = parsePatternToTokens(m._confirmedPattern);
+                cb();
+            }
+            delete m._confirmedPattern;
+            delete m._onCloseDialog;
+        };
+
         // SEND, Manual, Presets, Bars, Gate
         root.querySelector(`#pat-send-${uid}`)?.addEventListener('click', () => {
             selectedIds.clear();
+            m._confirmedPattern = tokensToPattern(m._tokens);
             sync(true);
             if (ctx?.showToast) ctx.showToast('SEND: 反映しました');
         });
