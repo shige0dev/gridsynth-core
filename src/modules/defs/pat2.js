@@ -665,8 +665,6 @@ export const PAT2 = {
                         }
                         cleanup();
                     };
-                        cleanup();
-                    };
 
                     const cleanup = () => {
                         window.removeEventListener('pointermove', onPointerMove);
