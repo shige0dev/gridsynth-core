@@ -20,4 +20,4 @@ import './processors/ar.js';
 import './processors/wave.js?v=459';
 import './processors/pad.js';
 import './processors/count.js?v=510';
-import './processors/lut.js?v=566';
+import './processors/lut.js?v=568';

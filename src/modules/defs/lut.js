@@ -5,7 +5,7 @@ export const LUT = {
     defaults: () => ({
         type: 'LUT',
         divisions: 16,     // 16, 32, 64, 256
-        interp: 'linear',  // 'step' | 'linear'
+        quantize: false,   // Pitch quantize to 1V/Oct semitones (1/12V)
         table: Array.from({ length: 256 }, (_, i) => i / 255),
         name: 'LUT'
     }),
@@ -17,12 +17,12 @@ export const LUT = {
 
     renderGrid: (m) => {
         const curDiv = m.divisions || 16;
-        const curInterp = (m.interp || 'linear').toUpperCase();
+        const isQ = m.quantize === true;
         return `
             <div class="h-full flex flex-col justify-between py-1 select-none pointer-events-none">
                 <div class="flex items-center justify-between px-1.5 pt-0.5">
                     <span class="text-[7px] font-mono text-teal-400 font-bold tracking-tight">${curDiv}DIV</span>
-                    <span class="text-[6.5px] font-mono text-slate-400 font-bold">${curInterp.slice(0, 3)}</span>
+                    <span class="text-[6.5px] font-mono ${isQ ? 'text-amber-400 font-black' : 'text-slate-400 font-bold'}">${isQ ? 'QNT' : 'RAW'}</span>
                 </div>
                 <div class="relative w-full px-2 flex items-center justify-center my-auto">
                     <canvas id="lut-grid-canvas-${m.id}" class="w-[38px] h-[22px] bg-slate-950 rounded border border-teal-500/40" width="76" height="44"></canvas>
@@ -45,12 +45,12 @@ export const LUT = {
         ctx2d.clearRect(0, 0, w, h);
 
         const divs = m.divisions || 16;
-        const isStep = m.interp === 'step';
+        const isQ = m.quantize === true;
         const table = Array.isArray(m.table) && m.table.length === 256
             ? m.table
             : Array.from({ length: 256 }, (_, i) => i / 255);
 
-        // 1. Grid Guidelines (16 subdivisions)
+        // 1. Grid Guidelines
         ctx2d.strokeStyle = isModal ? '#1e293b' : 'rgba(30, 41, 59, 0.6)';
         ctx2d.lineWidth = 1;
         const gridDivs = 16;
@@ -70,46 +70,42 @@ export const LUT = {
             ctx2d.stroke();
         }
 
-        // 2. Draw Table Bars / Fill
+        // Semitone pitch horizontal reference lines when Quantize is ON (12 semitones per octave)
+        if (isQ && isModal) {
+            ctx2d.strokeStyle = 'rgba(245, 158, 11, 0.12)';
+            for (let s = 1; s < 12; s++) {
+                const sy = h - (s / 12) * h;
+                ctx2d.beginPath();
+                ctx2d.moveTo(0, sy);
+                ctx2d.lineTo(w, sy);
+                ctx2d.stroke();
+            }
+        }
+
+        // 2. Draw Table Bars / Fill (Step Mode)
         const barW = w / divs;
         for (let d = 0; d < divs; d++) {
             const tableIdx = Math.floor((d / (divs - 1 || 1)) * 255);
-            const val = Math.max(0, Math.min(1, table[tableIdx] ?? 0));
+            let val = Math.max(0, Math.min(1, table[tableIdx] ?? 0));
+            if (isQ) {
+                val = Math.round(val * 12) / 12.0;
+            }
             const barH = val * (h - 2);
-            const x = isStep
-                ? d * barW
-                : (d === 0 ? 0 : (d === divs - 1 ? w - barW * 0.5 : (d / (divs - 1)) * w - barW * 0.5));
-            const curW = isStep
-                ? barW
-                : (d === 0 || d === divs - 1 ? barW * 0.5 : barW);
+            const x = d * barW;
             const y = h - barH;
 
             // Bar background
-            ctx2d.fillStyle = isModal ? 'rgba(20, 184, 166, 0.25)' : 'rgba(20, 184, 166, 0.2)';
-            ctx2d.fillRect(x + 0.5, y, Math.max(1, curW - 1), barH);
+            ctx2d.fillStyle = isModal
+                ? (isQ ? 'rgba(245, 158, 11, 0.22)' : 'rgba(20, 184, 166, 0.25)')
+                : (isQ ? 'rgba(245, 158, 11, 0.18)' : 'rgba(20, 184, 166, 0.2)');
+            ctx2d.fillRect(x + 0.5, y, Math.max(1, barW - 1), barH);
 
             // Bar top line
-            ctx2d.fillStyle = '#2dd4bf';
-            ctx2d.fillRect(x + 0.5, y, Math.max(1, curW - 1), isModal ? 2 : 1.5);
+            ctx2d.fillStyle = isQ ? '#fbbf24' : '#2dd4bf';
+            ctx2d.fillRect(x + 0.5, y, Math.max(1, barW - 1), isModal ? 2 : 1.5);
         }
 
-        // 3. Draw Continuous Line (Linear interpolation overlay if in LINEAR mode)
-        if (!isStep) {
-            ctx2d.strokeStyle = '#5eead4';
-            ctx2d.lineWidth = isModal ? 2 : 1.5;
-            ctx2d.beginPath();
-            for (let d = 0; d < divs; d++) {
-                const tableIdx = Math.floor((d / (divs - 1 || 1)) * 255);
-                const val = Math.max(0, Math.min(1, table[tableIdx] ?? 0));
-                const x = (d / (divs - 1 || 1)) * w;
-                const y = h - val * (h - 4) - 2;
-                if (d === 0) ctx2d.moveTo(x, y);
-                else ctx2d.lineTo(x, y);
-            }
-            ctx2d.stroke();
-        }
-
-        // 4. Live Playhead Indicator (active input & output)
+        // 3. Live Playhead Indicator (active input & output)
         if (typeof activeIn === 'number' && activeIn >= 0 && activeIn <= 1) {
             const liveX = activeIn * w;
             ctx2d.strokeStyle = '#f59e0b'; // Amber cursor
@@ -154,12 +150,12 @@ export const LUT = {
 
     renderModal: (m) => {
         const divs = m.divisions || 16;
-        const interp = m.interp || 'linear';
+        const isQ = m.quantize === true;
         const divOptions = [16, 32, 64, 256];
 
         return `
             <div class="space-y-2 p-1 select-none w-full">
-                <!-- Top controls: DIVISIONS & INTERP -->
+                <!-- Top controls: DIVISIONS & QUANTIZE -->
                 <div class="flex items-center justify-between gap-1 pb-1 border-b border-slate-800">
                     <div class="flex items-center gap-1">
                         <span class="text-[8px] font-mono text-slate-400 font-bold uppercase">DIV:</span>
@@ -172,18 +168,17 @@ export const LUT = {
                         </div>
                     </div>
                     <div class="flex items-center gap-1">
-                        <span class="text-[8px] font-mono text-slate-400 font-bold uppercase">MODE:</span>
-                        <div class="inline-flex rounded border border-slate-700 overflow-hidden">
-                            <button id="lut-mode-step" class="px-2 py-0.5 text-[8.5px] font-mono font-bold transition-colors ${interp === 'step' ? 'bg-teal-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}">STEP</button>
-                            <button id="lut-mode-linear" class="px-2 py-0.5 text-[8.5px] font-mono font-bold transition-colors ${interp === 'linear' ? 'bg-teal-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}">LINEAR</button>
-                        </div>
+                        <button id="lut-quantize-btn" class="px-2 py-0.5 text-[8.5px] font-mono font-bold rounded border transition-colors flex items-center gap-1 ${isQ ? 'bg-amber-600 text-white border-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.5)]' : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'}" title="1V/Oct 半音音程クオンタイズ (1/12Vステップにスナップ)">
+                            <span>♯ PITCH QNT:</span>
+                            <span class="font-black">${isQ ? 'ON' : 'OFF'}</span>
+                        </button>
                     </div>
                 </div>
 
-                <!-- Main Canvas (Oscilloscope Style with Touch Draw) -->
+                <!-- Main Canvas (Step Mode with Touch Draw) -->
                 <div class="relative bg-slate-950 p-1 rounded-lg border border-teal-500/40 shadow-inner w-full">
                     <div class="flex items-center justify-between text-[7.5px] font-mono text-slate-400 px-1 pb-0.5">
-                        <span class="text-teal-400 font-bold">16-DIV GUIDELINE (TOUCH & DRAG TO SHAPE)</span>
+                        <span class="text-teal-400 font-bold">${divs}-DIV STEP (TOUCH & DRAG TO SHAPE)</span>
                         <div>IN: <span id="lut-modal-in-disp" class="text-amber-400 font-bold">0.000V</span> | OUT: <span id="lut-modal-out-disp" class="text-teal-300 font-bold">0.000V</span></div>
                     </div>
                     <canvas id="lut-modal-canvas" class="w-full h-[140px] block rounded bg-slate-950 touch-none cursor-crosshair border border-slate-800" width="560" height="280"></canvas>
@@ -206,15 +201,14 @@ export const LUT = {
             });
         });
 
-        // Interp buttons
-        root.querySelector('#lut-mode-step')?.addEventListener('click', () => {
-            m.interp = 'step';
-            ctx.reRenderModal();
-            ctx.reRenderGrid?.();
-            cb();
-        });
-        root.querySelector('#lut-mode-linear')?.addEventListener('click', () => {
-            m.interp = 'linear';
+        // Quantize button toggle
+        root.querySelector('#lut-quantize-btn')?.addEventListener('click', () => {
+            m.quantize = !m.quantize;
+            const fullId = `${ctx.currentPageId || 0}/${m.id}`;
+            const inst = ctx.synth?.modules?.[fullId] || ctx.synth?.modules?.[m.id];
+            if (inst?.nodes?.w?.port) {
+                inst.nodes.w.port.postMessage({ type: 'SET_QUANTIZE', value: m.quantize });
+            }
             ctx.reRenderModal();
             ctx.reRenderGrid?.();
             cb();
@@ -235,33 +229,23 @@ export const LUT = {
                 const normY = Math.max(0, Math.min(1, 1.0 - (y / rect.height)));
 
                 const divs = m.divisions || 16;
-                const slot = Math.max(0, Math.min(divs - 1, Math.round(normX * (divs - 1))));
+                const slot = Math.max(0, Math.min(divs - 1, Math.floor(normX * divs)));
 
                 if (!Array.isArray(m.table) || m.table.length !== 256) {
                     m.table = Array.from({ length: 256 }, (_, i) => i / 255);
                 }
 
-                // If dragged across multiple slots, interpolate between lastSlot and slot
+                // If dragged across multiple slots, assign normY to all slots
                 const start = lastSlot === -1 ? slot : Math.min(lastSlot, slot);
                 const end = lastSlot === -1 ? slot : Math.max(lastSlot, slot);
 
+                const slotW256 = 256 / divs;
                 for (let s = start; s <= end; s++) {
-                    const tableIdx = Math.floor((s / (divs - 1 || 1)) * 255);
-                    m.table[tableIdx] = normY;
-                }
-
-                // Interpolate whole table values between defined division anchors
-                for (let i = 0; i < 256; i++) {
-                    const pos = (i / 255) * (divs - 1);
-                    const i0 = Math.floor(pos);
-                    const i1 = Math.min(divs - 1, i0 + 1);
-                    const frac = pos - i0;
-
-                    const t0 = Math.floor((i0 / (divs - 1 || 1)) * 255);
-                    const t1 = Math.floor((i1 / (divs - 1 || 1)) * 255);
-                    const v0 = m.table[t0] ?? 0;
-                    const v1 = m.table[t1] ?? 0;
-                    m.table[i] = v0 + (v1 - v0) * frac;
+                    const iStart = Math.floor(s * slotW256);
+                    const iEnd = Math.min(256, Math.floor((s + 1) * slotW256));
+                    for (let i = iStart; i < iEnd; i++) {
+                        m.table[i] = normY;
+                    }
                 }
 
                 lastSlot = slot;

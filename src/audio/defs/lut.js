@@ -8,7 +8,7 @@ export const LUT = {
         });
 
         const initialDivs = [16, 32, 64, 256].includes(d.divisions) ? d.divisions : 16;
-        const initialInterp = d.interp === 'step' ? 'step' : 'linear';
+        const initialQuantize = d.quantize === true;
 
         // Default table ramp 0..1 if not provided
         let table = d.table;
@@ -18,7 +18,7 @@ export const LUT = {
         }
 
         w.port.postMessage({ type: 'SET_DIVISIONS', value: initialDivs });
-        w.port.postMessage({ type: 'SET_INTERP', value: initialInterp });
+        w.port.postMessage({ type: 'SET_QUANTIZE', value: initialQuantize });
         w.port.postMessage({ type: 'SET_TABLE', table });
 
         const cvIn = ctx.createGain();
@@ -59,9 +59,9 @@ export const LUT = {
     },
     update: (ctx, inst, d) => {
         const divs = [16, 32, 64, 256].includes(d.divisions) ? d.divisions : 16;
-        const interp = d.interp === 'step' ? 'step' : 'linear';
+        const quantize = d.quantize === true;
         inst.nodes.w.port.postMessage({ type: 'SET_DIVISIONS', value: divs });
-        inst.nodes.w.port.postMessage({ type: 'SET_INTERP', value: interp });
+        inst.nodes.w.port.postMessage({ type: 'SET_QUANTIZE', value: quantize });
         if (Array.isArray(d.table)) {
             inst.nodes.w.port.postMessage({ type: 'SET_TABLE', table: d.table });
         }

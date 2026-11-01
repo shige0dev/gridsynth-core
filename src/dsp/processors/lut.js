@@ -8,8 +8,8 @@ class LutProcessor extends AudioWorkletProcessor {
     super();
 
     this.divisions = 16;
-    this.interp = 'linear'; // 'step' | 'linear'
-    // Default table: linear ramp 0..1
+    this.quantize = false; // Pitch quantize (1V/Oct semitones: 1/12V)
+    // Default table: 0..1
     this.table = new Float32Array(256);
     for (let i = 0; i < 256; i++) {
       this.table[i] = i / 255.0;
@@ -27,8 +27,8 @@ class LutProcessor extends AudioWorkletProcessor {
         if ([16, 32, 64, 256].includes(d)) {
           this.divisions = d;
         }
-      } else if (data.type === 'SET_INTERP') {
-        this.interp = data.value === 'step' ? 'step' : 'linear';
+      } else if (data.type === 'SET_QUANTIZE') {
+        this.quantize = data.value === true;
       } else if (data.type === 'SET_TABLE') {
         if (Array.isArray(data.table) || data.table instanceof Float32Array) {
           const len = Math.min(256, data.table.length);
@@ -54,7 +54,7 @@ class LutProcessor extends AudioWorkletProcessor {
     const cvOut = outputs[0]?.[0];
     const bufferLength = 128;
     const divs = this.divisions;
-    const isStep = this.interp === 'step';
+    const isQ = this.quantize === true;
 
     let lastSampleIn = 0;
     let lastSampleOut = 0;
@@ -66,27 +66,16 @@ class LutProcessor extends AudioWorkletProcessor {
       if (rawIn > 1) rawIn = 1;
       lastSampleIn = rawIn;
 
-      let outVal = 0;
-      if (isStep) {
-        // Step mode: discrete bucket mapping
-        let idx = Math.floor(rawIn * divs);
-        if (idx >= divs) idx = divs - 1;
-        // Map division index into 256 table space
-        const tableIdx = Math.floor((idx / (divs - 1 || 1)) * 255);
-        outVal = this.table[tableIdx] ?? 0;
-      } else {
-        // Linear interpolation between the discrete divisions
-        const pos = rawIn * (divs - 1);
-        const idxLow = Math.floor(pos);
-        const idxHigh = Math.min(divs - 1, idxLow + 1);
-        const frac = pos - idxLow;
+      // Step mode: discrete bucket mapping
+      let idx = Math.floor(rawIn * divs);
+      if (idx >= divs) idx = divs - 1;
+      // Map division index into 256 table space
+      const tableIdx = Math.floor((idx / (divs - 1 || 1)) * 255);
+      let outVal = this.table[tableIdx] ?? 0;
 
-        const tableIdxLow = Math.floor((idxLow / (divs - 1 || 1)) * 255);
-        const tableIdxHigh = Math.floor((idxHigh / (divs - 1 || 1)) * 255);
-
-        const v0 = this.table[tableIdxLow] ?? 0;
-        const v1 = this.table[tableIdxHigh] ?? 0;
-        outVal = v0 + (v1 - v0) * frac;
+      // Pitch Quantize (1V/Oct semitones -> 1/12V step)
+      if (isQ) {
+        outVal = Math.round(outVal * 12) / 12.0;
       }
 
       lastSampleOut = outVal;
