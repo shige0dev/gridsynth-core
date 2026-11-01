@@ -213,10 +213,18 @@ function parseTokensRecursive(tokens, start, end, cycleIndex = 0, counter = { va
             return;
         }
 
-        // 4. Sub-divisions: [a b c]
+        // 4. Sub-divisions [a b c] or Random Choices [a | b | c]
         if (token.startsWith('[') && token.endsWith(']')) {
             const inner = token.slice(1, -1).trim();
-            if (inner.includes(',')) {
+            if (inner.includes('|')) {
+                // Random choice: pick one branch randomly per cycle/evaluation
+                const branches = inner.split('|').map(s => s.trim()).filter(Boolean);
+                if (branches.length > 0) {
+                    const pickedBranch = branches[Math.floor(Math.random() * branches.length)];
+                    const subTokens = splitTopLevelTokens(pickedBranch);
+                    events = events.concat(parseTokensRecursive(subTokens, tStart, tEnd, cycleIndex, counter));
+                }
+            } else if (inner.includes(',')) {
                 const layers = inner.split(',').map(s => s.trim()).filter(Boolean);
                 const subTokens = splitTopLevelTokens(layers[0]);
                 events = events.concat(parseTokensRecursive(subTokens, tStart, tEnd, cycleIndex, counter));

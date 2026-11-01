@@ -80,19 +80,32 @@ export function parsePatternToTokens(str) {
                 const children = parseTokensList(closeChar);
                 if (i < len && s[i] === closeChar) i++;
 
+                // Check if any child was a pipe '|' or if children form a choice
+                const hasPipe = children.some(c => c.type === 'pipe');
+                let groupType = isAngle ? 'angle' : 'bracket';
+                let filteredChildren = children;
+
+                if (hasPipe) {
+                    groupType = 'choice';
+                    filteredChildren = children.filter(c => c.type !== 'pipe');
+                }
+
                 const groupNode = {
                     id: genTokenId(),
                     type: 'group',
-                    groupType: isAngle ? 'angle' : 'bracket',
-                    children
+                    groupType,
+                    children: filteredChildren
                 };
                 parseModifiers(groupNode);
                 list.push(groupNode);
             } else if (s[i] === ']' || s[i] === '>') {
                 i++;
+            } else if (s[i] === '|') {
+                i++;
+                list.push({ id: genTokenId(), type: 'pipe' });
             } else {
                 let atomStr = '';
-                while (i < len && !/\s/.test(s[i]) && s[i] !== '[' && s[i] !== ']' && s[i] !== '<' && s[i] !== '>') {
+                while (i < len && !/\s/.test(s[i]) && s[i] !== '[' && s[i] !== ']' && s[i] !== '<' && s[i] !== '>' && s[i] !== '|') {
                     atomStr += s[i];
                     i++;
                 }
@@ -184,9 +197,12 @@ export function tokensToPattern(tokens) {
     function serializeNode(n) {
         let res = '';
         if (n.type === 'group') {
-            const open = n.groupType === 'angle' ? '<' : '[';
-            const close = n.groupType === 'angle' ? '>' : ']';
-            const childStr = (n.children || []).map(serializeNode).join(' ');
+            const isAngle = n.groupType === 'angle';
+            const isChoice = n.groupType === 'choice';
+            const open = isAngle ? '<' : '[';
+            const close = isAngle ? '>' : ']';
+            const separator = isChoice ? ' | ' : ' ';
+            const childStr = (n.children || []).map(serializeNode).join(separator);
             res = `${open}${childStr}${close}`;
         } else if (n.type === 'rest') {
             res = '~';

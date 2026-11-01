@@ -127,13 +127,16 @@ export const PAT2 = {
                         </button>
                     </div>
 
-                    <!-- Right / Middle: Grouping Buttons ([] / <>), Ungroup, Modifiers (*n, /n, !n, ?), Trash Delete -->
+                    <!-- Right / Middle: Grouping Buttons ([] / <> / [|]), Ungroup, Modifiers (*n, /n, !n, ?), Trash Delete -->
                     <div class="flex items-center gap-0.5 shrink-0">
                         <button id="pat2-bracket-btn-${uid}" disabled class="h-5 w-[18px] flex items-center justify-center bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 opacity-50 cursor-not-allowed" title="横並び選択した項目を [] 分割グループにまとめる">
                             []
                         </button>
                         <button id="pat2-angle-btn-${uid}" disabled class="h-5 w-[18px] flex items-center justify-center bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 opacity-50 cursor-not-allowed tracking-tighter" title="横並び選択した項目を <> 周期交代グループにまとめる">
                             &lt;&gt;
+                        </button>
+                        <button id="pat2-choice-btn-${uid}" disabled class="h-5 w-[18px] flex items-center justify-center bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 opacity-50 cursor-not-allowed tracking-tighter" title="横並び選択した項目を [ | ] ランダム選択グループにまとめる">
+                            [|]
                         </button>
                         <button id="pat2-ungroup-btn-${uid}" class="h-5 px-1 bg-sky-950/80 hover:bg-sky-900 text-sky-300 rounded text-[7px] font-bold border border-sky-700/60 shadow-sm transition active:scale-95" title="グループ解除">
                             UNGRP
@@ -182,6 +185,7 @@ export const PAT2 = {
                     <span class="text-cyan-400 font-bold">MANUAL:</span>
                     <span><strong class="text-purple-300 font-bold">[A B]</strong> 等分</span>
                     <span><strong class="text-purple-300 font-bold">&lt;A B&gt;</strong> 交代</span>
+                    <span><strong class="text-emerald-300 font-bold">[A|B]</strong> ランダム選択</span>
                     <span><strong class="text-amber-300 font-bold">*N</strong> 細分</span>
                     <span><strong class="text-amber-300 font-bold">/N</strong> 伸長</span>
                     <span><strong class="text-amber-300 font-bold">!N</strong> 連続</span>
@@ -211,6 +215,7 @@ export const PAT2 = {
         const tokenContainer = document.getElementById(`pat2-token-container-${uid}`);
         const bracketBtn = document.getElementById(`pat2-bracket-btn-${uid}`);
         const angleBtn = document.getElementById(`pat2-angle-btn-${uid}`);
+        const choiceBtn = document.getElementById(`pat2-choice-btn-${uid}`);
         const ungroupBtn = document.getElementById(`pat2-ungroup-btn-${uid}`);
         const subdivBtn = document.getElementById(`pat2-subdiv-btn-${uid}`);
         const slowdownBtn = document.getElementById(`pat2-slowdown-btn-${uid}`);
@@ -292,14 +297,18 @@ export const PAT2 = {
 
                 if (node.type === 'group') {
                     const isAngle = node.groupType === 'angle';
+                    const isChoice = node.groupType === 'choice';
                     const openSym = isAngle ? '<' : '[';
                     const closeSym = isAngle ? '>' : ']';
-                    const symColor = isDirty ? 'text-amber-400' : 'text-sky-400';
+                    const symColor = isChoice ? 'text-emerald-400' : (isDirty ? 'text-amber-400' : 'text-sky-400');
                     return `
                         <div data-node-id="${node.id}" class="pat2-node-token pat2-group-box relative flex items-center gap-[1px] px-[2px] py-[1px] rounded border border-dashed ${borderCls} cursor-pointer transition shrink-0">
                             <span class="text-[9px] font-mono font-bold ${symColor} select-none pointer-events-none px-[1px] leading-none">${openSym}</span>
                             <div class="flex items-center gap-[1px]">
-                                ${(node.children || []).map(c => renderNode(c, depth + 1)).join('')}
+                                ${(node.children || []).map((c, i) => {
+                                    const sep = (isChoice && i > 0) ? `<span class="text-[8px] font-mono font-bold text-emerald-400/90 pointer-events-none px-[1px]">|</span>` : '';
+                                    return sep + renderNode(c, depth + 1);
+                                }).join('')}
                             </div>
                             <span class="text-[9px] font-mono font-bold ${symColor} select-none pointer-events-none px-[1px] leading-none">${closeSym}</span>
                             ${renderBadge(node)}
@@ -410,16 +419,17 @@ export const PAT2 = {
 
         const updateInspector = () => {
             const adjGroup = getAdjacentSelectedGroup();
-            const setGrpBtn = (btn, isAngle = false) => {
+            const setGrpBtn = (btn, extraCls = '') => {
                 if (!btn) return;
                 btn.disabled = !adjGroup;
                 const stateCls = adjGroup
                     ? 'bg-sky-900 hover:bg-sky-800 text-sky-100 border-sky-400 cursor-pointer'
                     : 'bg-slate-900 text-slate-500 border-slate-800 opacity-50 cursor-not-allowed';
-                btn.className = `h-5 w-[18px] flex items-center justify-center ${stateCls} border rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 ${isAngle ? 'tracking-tighter' : ''}`;
+                btn.className = `h-5 w-[18px] flex items-center justify-center ${stateCls} border rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 ${extraCls}`;
             };
-            setGrpBtn(bracketBtn, false);
-            setGrpBtn(angleBtn, true);
+            setGrpBtn(bracketBtn, '');
+            setGrpBtn(angleBtn, 'tracking-tighter');
+            setGrpBtn(choiceBtn, 'tracking-tighter text-emerald-300');
         };
 
         const shiftSelectedPitch = (delta) => {
@@ -780,6 +790,9 @@ export const PAT2 = {
 
         // Group into < > (cycle group)
         angleBtn?.addEventListener('click', () => groupAdjacent('angle'));
+
+        // Group into [ | ] (choice group)
+        choiceBtn?.addEventListener('click', () => groupAdjacent('choice'));
 
         // Ungroup: in-place unwrap
         ungroupBtn?.addEventListener('click', () => {
