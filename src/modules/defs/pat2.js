@@ -845,9 +845,6 @@ export const PAT2 = {
             syncPattern();
             if (tokenStrip) tokenStrip.scrollLeft = tokenStrip.scrollWidth;
         });
-            renderTokens();
-            syncPattern();
-        });
 
         // Group into [ ] (subdivision group)
         bracketBtn?.addEventListener('click', () => {
