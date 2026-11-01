@@ -553,7 +553,7 @@ const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, view, isModal) => {
 
 export const SPEC = {
     color: 'teal',
-    defaults: () => ({ type: 'SPEC', mode: 'bar', view: '3d', smooth: 0.75 }),
+    defaults: () => ({ type: 'SPEC', mode: 'bar', view: '2d', smooth: 0.75 }),
     ports: () => ({
         in: [{ port: 'wave_in', pin: 5, color: 'bg-blue-500' }],
         out: []
@@ -568,7 +568,7 @@ export const SPEC = {
         // Lightweight 48-band spectrum (0.9 KB buffer for 5 slices)
         const { bands } = extractBands(data.freqs, 48, data.sampleRate || 48000);
         const mode = m.mode || 'bar';
-        const view = m.view || '3d';
+        const view = m.view || '2d';
 
         // Maintain 5-slice history buffer on the module instance
         if (!m._historyBands || m._historyBands[0]?.length !== bands.length) {
