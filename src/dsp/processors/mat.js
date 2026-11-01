@@ -1,9 +1,9 @@
 // ============================================================================
-// GATE4 Processor (AudioWorklet)
-// 4-Track Gate / Trigger Sequencer driven by CV or Step scan
+// MAT Processor (AudioWorklet)
+// 4-Track Gate / Trigger Matrix Sequencer driven by CV scan
 // ============================================================================
 
-class Gate4Processor extends AudioWorkletProcessor {
+class MatProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
 
@@ -128,7 +128,7 @@ class Gate4Processor extends AudioWorkletProcessor {
     if (this.uiThrottleSamples >= 1440) {
       this.uiThrottleSamples = 0;
       this.port.postMessage({
-        type: 'GATE4_STATUS',
+        type: 'MAT_STATUS',
         slot: this.latestSlot
       });
     }
@@ -137,5 +137,5 @@ class Gate4Processor extends AudioWorkletProcessor {
   }
 }
 
-registerProcessor('gate4-processor', Gate4Processor);
+registerProcessor('mat-processor', MatProcessor);
 

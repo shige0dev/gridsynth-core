@@ -1,8 +1,8 @@
 import { AudioHelpers } from '../helpers.js';
 
-export const GATE4 = {
+export const MAT = {
     create: (ctx, d, patch, eng) => {
-        const w = new AudioWorkletNode(ctx, 'gate4-processor', {
+        const w = new AudioWorkletNode(ctx, 'mat-processor', {
             numberOfInputs: 1,
             numberOfOutputs: 4,
             outputChannelCount: [1, 1, 1, 1]
@@ -41,7 +41,7 @@ export const GATE4 = {
 
         let latestSlot = 0;
         w.port.onmessage = e => {
-            if (e.data?.type === 'GATE4_STATUS') {
+            if (e.data?.type === 'MAT_STATUS') {
                 latestSlot = e.data.slot ?? 0;
             }
         };
@@ -77,8 +77,8 @@ export const GATE4 = {
     }
 };
 
-export const gate4AudioDefs = {
-    GATE4
+export const matAudioDefs = {
+    MAT
 };
-export default gate4AudioDefs;
+export default matAudioDefs;
 

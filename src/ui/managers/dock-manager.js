@@ -13,7 +13,7 @@ export const DOCK_TITLES = {
     LISS: 'LISSAJOUS (X-Y)',
     WAVE: 'WAVE RECORDER & SLICER',
     LUT: 'LOOK-UP TABLE (WAVESHAPER)',
-    GATE4: '4-TRACK GATE / TRIGGER SEQUENCER'
+    MAT: '4-TRACK MATRIX SEQUENCER'
 };
 
 export const DOCK_ICONS = {
@@ -27,7 +27,7 @@ export const DOCK_ICONS = {
     LISS: 'activity',
     WAVE: 'audio-waveform',
     LUT: 'trending-up',
-    GATE4: 'grid'
+    MAT: 'grid'
 };
 
 export class DockManager {

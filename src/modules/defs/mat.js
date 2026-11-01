@@ -3,7 +3,7 @@ import { UIHelpers } from '../../ui/helpers.js?v=351';
 const TRACK_COLORS = ['#38bdf8', '#f43f5e', '#34d399', '#fbbf24']; // Sky, Rose, Emerald, Amber
 const TRACK_NAMES = ['BD / T1', 'SD / T2', 'CH / T3', 'OH / T4'];
 
-export const GATE4 = {
+export const MAT = {
     color: 'indigo',
     defaults: () => {
         const p1 = new Array(64).fill(0);
@@ -17,11 +17,11 @@ export const GATE4 = {
         [2, 6, 10, 14].forEach(s => { p4[s] = 1; });
 
         return {
-            type: 'GATE4',
+            type: 'MAT',
             divisions: 16, // 16, 32, 64
             patterns: [p1, p2, p3, p4],
             modes: ['gate', 'gate', 'gate', 'gate'], // 'gate' or 'trig'
-            name: 'GATE4'
+            name: 'MAT'
         };
     },
     ports: () => ({
@@ -40,7 +40,7 @@ export const GATE4 = {
         return `
             <div class="flex items-center justify-center w-full h-full pointer-events-none">
                 <div class="w-14 h-7 rounded border border-slate-600 bg-slate-950 p-[1px] relative flex items-center justify-center shadow-inner panel-bar-slot">
-                    <canvas id="gate4-grid-canvas-${m.id}" class="w-full h-full block rounded-[3px] bg-slate-950" width="112" height="56"></canvas>
+                    <canvas id="mat-grid-canvas-${m.id}" class="w-full h-full block rounded-[3px] bg-slate-950" width="112" height="56"></canvas>
                 </div>
             </div>
         `;
@@ -154,17 +154,17 @@ export const GATE4 = {
     updateLive: (cell, data, isPlaying, modalEl, m) => {
         const slot = data?.slot ?? 0;
 
-        const cellCanvas = cell?.querySelector(`#gate4-grid-canvas-${m.id}`) || document.getElementById(`gate4-grid-canvas-${m.id}`);
+        const cellCanvas = cell?.querySelector(`#mat-grid-canvas-${m.id}`) || document.getElementById(`mat-grid-canvas-${m.id}`);
         if (cellCanvas) {
-            GATE4.drawGridCanvas(cellCanvas, m, slot);
+            MAT.drawGridCanvas(cellCanvas, m, slot);
         }
 
         if (modalEl) {
-            const modalCanvas = modalEl.querySelector('#gate4-modal-canvas') || document.getElementById('gate4-modal-canvas');
+            const modalCanvas = modalEl.querySelector('#mat-modal-canvas') || document.getElementById('mat-modal-canvas');
             if (modalCanvas) {
-                GATE4.drawModalCanvas(modalCanvas, m, slot);
+                MAT.drawModalCanvas(modalCanvas, m, slot);
             }
-            const stepDisp = modalEl.querySelector('#gate4-step-disp');
+            const stepDisp = modalEl.querySelector('#mat-step-disp');
             if (stepDisp) {
                 stepDisp.textContent = `${slot + 1} / ${m.divisions || 16}`;
             }
@@ -184,7 +184,7 @@ export const GATE4 = {
                         <span class="text-[8.5px] font-mono text-slate-400 font-bold uppercase">STEPS:</span>
                         <div class="inline-flex rounded border border-slate-700 overflow-hidden">
                             ${divOptions.map(opt => `
-                                <button class="gate4-div-btn px-2.5 py-0.5 text-[9px] font-mono font-bold transition-colors ${divs === opt ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}" data-div="${opt}">
+                                <button class="mat-div-btn px-2.5 py-0.5 text-[9px] font-mono font-bold transition-colors ${divs === opt ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}" data-div="${opt}">
                                     ${opt}
                                 </button>
                             `).join('')}
@@ -192,16 +192,16 @@ export const GATE4 = {
                     </div>
                     <div class="flex items-center gap-1.5">
                         <span class="text-[8px] font-mono text-slate-400 font-bold uppercase">STEP:</span>
-                        <span id="gate4-step-disp" class="text-[9px] font-mono font-bold text-amber-400">1 / ${divs}</span>
+                        <span id="mat-step-disp" class="text-[9px] font-mono font-bold text-amber-400">1 / ${divs}</span>
                     </div>
                 </div>
 
-                <!-- 4 Track Labels & Mode Toggles (Row side-by-side or mini headers) -->
+                <!-- 4 Track Labels & Mode Toggles -->
                 <div class="grid grid-cols-4 gap-1 py-0.5">
                     ${[0, 1, 2, 3].map(t => `
                         <div class="flex items-center justify-between px-1.5 py-0.5 bg-slate-900/90 rounded border border-slate-800 text-[8px] font-mono">
                             <span class="font-bold" style="color: ${TRACK_COLORS[t]};">${TRACK_NAMES[t]}</span>
-                            <button class="gate4-mode-btn px-1 rounded text-[7.5px] font-bold border transition-colors ${modes[t] === 'trig' ? 'bg-amber-600 text-white border-amber-400' : 'bg-slate-800 text-slate-300 border-slate-700'}" data-track="${t}">
+                            <button class="mat-mode-btn px-1 rounded text-[7.5px] font-bold border transition-colors ${modes[t] === 'trig' ? 'bg-amber-600 text-white border-amber-400' : 'bg-slate-800 text-slate-300 border-slate-700'}" data-track="${t}">
                                 ${modes[t] === 'trig' ? 'TRIG' : 'GATE'}
                             </button>
                         </div>
@@ -210,13 +210,13 @@ export const GATE4 = {
 
                 <!-- Main Matrix Canvas: Exactly identical height to SCOPE (106px) -->
                 <div class="relative bg-slate-950 p-1 rounded-lg border border-indigo-500/40 shadow-inner w-full">
-                    <canvas id="gate4-modal-canvas" class="w-full h-[106px] block rounded bg-slate-950 touch-none cursor-pointer border border-slate-800" width="560" height="212"></canvas>
+                    <canvas id="mat-modal-canvas" class="w-full h-[106px] block rounded bg-slate-950 touch-none cursor-pointer border border-slate-800" width="560" height="212"></canvas>
                 </div>
 
                 <!-- Quick actions -->
                 <div class="flex items-center justify-between text-[8px] font-mono text-slate-400 pt-0.5">
                     <span>TOUCH / DRAG TO TOGGLE CELLS</span>
-                    <button id="gate4-clear-btn" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-rose-950/80 hover:text-rose-300 border border-slate-700 text-[8px] font-mono font-bold transition-colors">
+                    <button id="mat-clear-btn" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-rose-950/80 hover:text-rose-300 border border-slate-700 text-[8px] font-mono font-bold transition-colors">
                         CLEAR ALL
                     </button>
                 </div>
@@ -228,7 +228,7 @@ export const GATE4 = {
         const root = ctx?.getDialogElement ? (ctx.getDialogElement() || document) : document;
 
         // Division selector buttons
-        root.querySelectorAll('.gate4-div-btn').forEach(btn => {
+        root.querySelectorAll('.mat-div-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const newDiv = parseInt(e.currentTarget.dataset.div, 10);
                 m.divisions = newDiv;
@@ -244,7 +244,7 @@ export const GATE4 = {
         });
 
         // Mode toggles (GATE / TRIG)
-        root.querySelectorAll('.gate4-mode-btn').forEach(btn => {
+        root.querySelectorAll('.mat-mode-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const t = parseInt(e.currentTarget.dataset.track, 10);
                 if (!Array.isArray(m.modes)) m.modes = ['gate', 'gate', 'gate', 'gate'];
@@ -260,7 +260,7 @@ export const GATE4 = {
         });
 
         // Clear all button
-        root.querySelector('#gate4-clear-btn')?.addEventListener('click', () => {
+        root.querySelector('#mat-clear-btn')?.addEventListener('click', () => {
             m.patterns = [
                 new Array(64).fill(0),
                 new Array(64).fill(0),
@@ -278,10 +278,10 @@ export const GATE4 = {
         });
 
         // Canvas touch & drag grid toggle
-        const canvas = root.querySelector('#gate4-modal-canvas');
+        const canvas = root.querySelector('#mat-modal-canvas');
         if (canvas) {
             let isDragging = false;
-            let dragPaintValue = 1; // Set by first tapped cell toggle
+            let dragPaintValue = 1;
             let lastCellKey = '';
 
             const toggleCellAtPointer = (e, isFirstTap = false) => {
@@ -317,7 +317,7 @@ export const GATE4 = {
                         value: dragPaintValue
                     });
                 }
-                GATE4.drawModalCanvas(canvas, m, inst?.read?.()?.slot ?? 0);
+                MAT.drawModalCanvas(canvas, m, inst?.read?.()?.slot ?? 0);
                 ctx.reRenderGrid?.();
                 cb();
             };
@@ -345,13 +345,13 @@ export const GATE4 = {
             canvas.addEventListener('pointercancel', stopDrag);
 
             // Initial render of modal canvas
-            GATE4.drawModalCanvas(canvas, m, 0);
+            MAT.drawModalCanvas(canvas, m, 0);
         }
     }
 };
 
-export const gate4Defs = {
-    GATE4
+export const matDefs = {
+    MAT
 };
-export default gate4Defs;
+export default matDefs;
 

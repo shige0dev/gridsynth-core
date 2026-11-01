@@ -172,7 +172,7 @@ export class ModalManager {
     openSettingsModal(mId) {
         const m = this.ui.modules[mId];
         if (!m || m.type === 'SUB_IO') return;
-        if (['KEY', 'SEQ8', 'SEQ16', 'PAT', 'SPEC', 'SCOPE', 'LISS', 'WAVE', 'PAD', 'LUT', 'GATE4'].includes(m.type)) {
+        if (['KEY', 'SEQ8', 'SEQ16', 'PAT', 'SPEC', 'SCOPE', 'LISS', 'WAVE', 'PAD', 'LUT', 'MAT'].includes(m.type)) {
             this.openDockModal(mId);
             return;
         }
@@ -298,7 +298,7 @@ export class ModalManager {
                         name: 'CV',
                         sub: 'CV (変調・演算・エンベロープ)',
                         color: 'purple',
-                        types: ['LFO', 'ADSR', 'RF', 'AR', 'CHORD', 'SCALE', 'MATH1', 'MATH2', 'SH', 'COUNT', 'LUT', 'GATE4', 'CVDELAY', 'JOG', 'THROUGH', 'SUB_IO']
+                        types: ['LFO', 'ADSR', 'RF', 'AR', 'CHORD', 'SCALE', 'MATH1', 'MATH2', 'SH', 'COUNT', 'LUT', 'MAT', 'CVDELAY', 'JOG', 'THROUGH', 'SUB_IO']
                     },
                     {
                         name: 'VISUALIZER',

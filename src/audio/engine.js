@@ -2,7 +2,7 @@ import { AUDIO_REGISTRY } from './registry.js?v=513';
 import { AudioHelpers } from './helpers.js';
 import { parseConn, normalizeSubPort, PORT_ALIASES } from '../core/utils.js?v=459';
 
-export const WORKLET_MODULE_TYPES = ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'ADSR', 'LFO', 'MATH1', 'MATH2', 'SH', 'FOLD', 'CVDELAY', 'SCOPE', 'LISS', 'MARKOV', 'CHORD', 'FMx3', 'FMCORE', 'DIST4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD', 'COUNT', 'LUT', 'GATE4'];
+export const WORKLET_MODULE_TYPES = ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'ADSR', 'LFO', 'MATH1', 'MATH2', 'SH', 'FOLD', 'CVDELAY', 'SCOPE', 'LISS', 'MARKOV', 'CHORD', 'FMx3', 'FMCORE', 'DIST4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD', 'COUNT', 'LUT', 'MAT'];
 
 
 export class SynthEngine {
