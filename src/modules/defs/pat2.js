@@ -658,11 +658,21 @@ export const PAT2 = {
                 window.removeEventListener('pointerup', onBoxUp);
                 window.removeEventListener('pointercancel', onBoxUp);
                 if (!addBoxMoved) {
-                    // Tap: add note with current _addPitch
-                    const newNode = { id: genId(), type: 'note', val: (m._addPitch || 'c2').toLowerCase() };
-                    m._tokens.push(newNode);
-                    selectedIds.clear();
-                    selectedIds.add(newNode.id);
+                    const selected = getSelectedNodes();
+                    const newPitch = (m._addPitch || 'c2').toLowerCase();
+                    if (selected.length > 0) {
+                        // Replace pitch / type of all selected tokens in-place
+                        selected.forEach(n => {
+                            n.type = 'note';
+                            n.val = newPitch;
+                        });
+                    } else {
+                        // No selection: append to end
+                        const newNode = { id: genId(), type: 'note', val: newPitch };
+                        m._tokens.push(newNode);
+                        selectedIds.clear();
+                        selectedIds.add(newNode.id);
+                    }
                     renderTokens();
                     syncPattern();
                 }
@@ -673,12 +683,22 @@ export const PAT2 = {
             window.addEventListener('pointercancel', onBoxUp);
         });
 
-        // Add Rest button
+        // Add / Replace Rest button
         addRestBtn?.addEventListener('click', () => {
-            const newNode = { id: genId(), type: 'rest', val: '~' };
-            m._tokens.push(newNode);
-            selectedIds.clear();
-            selectedIds.add(newNode.id);
+            const selected = getSelectedNodes();
+            if (selected.length > 0) {
+                // Replace selected tokens into rest in-place
+                selected.forEach(n => {
+                    n.type = 'rest';
+                    n.val = '~';
+                });
+            } else {
+                // No selection: append to end
+                const newNode = { id: genId(), type: 'rest', val: '~' };
+                m._tokens.push(newNode);
+                selectedIds.clear();
+                selectedIds.add(newNode.id);
+            }
             renderTokens();
             syncPattern();
         });
