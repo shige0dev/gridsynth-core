@@ -37,8 +37,6 @@ export class ClockProcessor extends AudioWorkletProcessor {
         this.div = 'x2';
         this.limitPct = 90.0;
         this.running = false;
-        this.hasRunIn = false;
-        this.lastRunState = true;
         this.lastResetTrig = false;
         this.port.onmessage = e => {
             if (e.data.type === 'SET_STATE') {
@@ -51,13 +49,9 @@ export class ClockProcessor extends AudioWorkletProcessor {
                 }
                 if (e.data.div) this.div = e.data.div;
                 if (e.data.limitPct !== undefined) this.limitPct = Math.min(90.0, e.data.limitPct);
-                if (typeof e.data.hasRunIn === 'boolean') {
-                    this.hasRunIn = e.data.hasRunIn;
-                }
             } else if (e.data.type === 'RESET') {
                 this.T = 0;
                 this.left = 0;
-                this.lastRunState = true;
                 this.lastResetTrig = false;
             }
         };
@@ -66,8 +60,7 @@ export class ClockProcessor extends AudioWorkletProcessor {
     process(ins, outs, params) {
         const out = outs[0]?.[0];
         if (!out) return true;
-        const runIn = ins[0]?.[0];
-        const rstIn = ins[1]?.[0];
+        const rstIn = ins[0]?.[0];
         const mult = parseClockRate(this.div);
         const sr = getSR();
         const bpm = params.bpm[0] || 120.0;
@@ -92,25 +85,15 @@ export class ClockProcessor extends AudioWorkletProcessor {
             }
             this.lastResetTrig = isRstHi;
 
-            // 2. RUN 端子 (run_in) の判定: 接続がなければ常時オン (true)
-            const isRunning = this.hasRunIn ? ((runIn ? runIn[i] : 0.0) > 0.3) : true;
-
-            // RUN が 0 -> 1 へ立ち上がった瞬間に T = 0 から即座に発振開始
-            if (isRunning && !this.lastRunState) {
-                this.T = 0;
+            // 2. 整数マスターカウンタ割り算方式: 周期で割った余りが 0 の瞬間にパルス発火
+            if (this.T % periodSamples === 0) {
                 this.left = pDur;
-            } else if (isRunning) {
-                // 3. 整数マスターカウンタ割り算方式: 周期で割った余りが 0 の瞬間にパルス発火！
-                if (this.T % periodSamples === 0) {
-                    this.left = pDur;
-                }
-                this.T++;
             }
-            this.lastRunState = isRunning;
+            this.T++;
 
             if (this.left > 0) {
                 this.left--;
-                out[i] = isRunning ? 1.0 : 0.0;
+                out[i] = 1.0;
             } else {
                 out[i] = 0.0;
             }
