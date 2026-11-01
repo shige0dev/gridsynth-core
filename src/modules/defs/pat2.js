@@ -545,45 +545,12 @@ export const PAT2 = {
                     const clearTargetIndicators = () => {
                         tokenStrip.querySelectorAll('.pat2-node-token').forEach(nodeEl => {
                             nodeEl.classList.remove(
-                                'border-l-2', 'border-l-cyan-400',
-                                'border-r-2', 'border-r-cyan-400',
-                                'ring-2', 'ring-cyan-400', 'bg-cyan-950/40'
+                                'border-l-2', 'border-l-white',
+                                'border-r-2', 'border-r-white',
+                                'border-l-cyan-400', 'border-r-cyan-400',
+                                'ring-2', 'ring-white', 'bg-white/10'
                             );
-                            if (nodeEl !== el) {
-                                nodeEl.style.transform = '';
-                                nodeEl.style.transition = 'transform 0.12s ease';
-                            }
-                        });
-                    };
-
-                    const updateGapDisplacement = (targetNode, dropMode, isInsideGroup) => {
-                        // Only select top-level direct token nodes or root items inside tokenStrip to avoid selector hierarchy bugs
-                        const topNodes = Array.from(tokenStrip.children);
-                        if (!targetNode || isInsideGroup) {
-                            topNodes.forEach(n => {
-                                if (n !== el) {
-                                    n.style.transform = '';
-                                }
-                            });
-                            return;
-                        }
-
-                        // Find the top-level parent container of targetNode
-                        const targetTopNode = targetNode.closest('#pat2-token-strip-' + uid + ' > *') || targetNode;
-                        const targetIdx = topNodes.indexOf(targetTopNode);
-                        if (targetIdx < 0) return;
-
-                        // Calculate split point: items at or after splitIdx shift right
-                        const splitIdx = dropMode === 'before' ? targetIdx : targetIdx + 1;
-                        const shiftPx = 18; // Visual gap width in px
-
-                        topNodes.forEach((n, idx) => {
-                            if (n === el || n.contains(el)) return; // Don't shift self
-                            if (idx >= splitIdx) {
-                                n.style.transform = `translateX(${shiftPx}px)`;
-                            } else {
-                                n.style.transform = '';
-                            }
+                            nodeEl.style.transform = '';
                         });
                     };
 
@@ -592,12 +559,13 @@ export const PAT2 = {
                         const dy = startY - me.clientY;
 
                         // Check horizontal drag for moving/reordering between tokens
-                        if (!isDraggingSwipe && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) {
+                        if (!isDraggingSwipe && Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) {
                             if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
                             isHorizontalDrag = true;
-                            el.style.transform = `translateX(${dx}px) scale(1.05)`;
+                            el.style.transform = `translateX(${dx}px) scale(1.06)`;
                             el.style.zIndex = '50';
-                            el.style.opacity = '0.85';
+                            el.style.opacity = '0.9';
+                            el.style.boxShadow = '0 4px 12px rgba(0,0,0,0.5)';
 
                             // Temporarily hide pointer events on dragged element so elementFromPoint sees what's underneath
                             el.style.pointerEvents = 'none';
@@ -617,34 +585,34 @@ export const PAT2 = {
 
                                 const isGroupNode = targetNode.classList.contains('pat2-group-box');
                                 if (isGroupNode) {
-                                    // Group target: detect outside (before/after) vs inside group
-                                    if (relX < 0.22) {
+                                    // Group target: detect before group, after group, or inside group
+                                    if (relX < 0.20) {
                                         dropMode = 'before';
                                         isInsideGroup = false;
-                                        targetNode.classList.add('border-l-2', 'border-l-cyan-400');
-                                    } else if (relX > 0.78) {
+                                        targetNode.classList.add('border-l-2', 'border-l-white');
+                                    } else if (relX > 0.80) {
                                         dropMode = 'after';
                                         isInsideGroup = false;
-                                        targetNode.classList.add('border-r-2', 'border-r-cyan-400');
+                                        targetNode.classList.add('border-r-2', 'border-r-white');
                                     } else {
+                                        // Drop inside the group
                                         isInsideGroup = true;
                                         dropMode = relX < 0.5 ? 'before' : 'after';
-                                        targetNode.classList.add('ring-2', 'ring-cyan-400', 'bg-cyan-950/40');
+                                        targetNode.classList.add('ring-2', 'ring-white', 'bg-white/10');
                                     }
                                 } else {
+                                    // Regular token: crisp white line on the left or right edge
                                     isInsideGroup = false;
                                     if (relX < 0.5) {
                                         dropMode = 'before';
-                                        targetNode.classList.add('border-l-2', 'border-l-cyan-400');
+                                        targetNode.classList.add('border-l-2', 'border-l-white');
                                     } else {
                                         dropMode = 'after';
-                                        targetNode.classList.add('border-r-2', 'border-r-cyan-400');
+                                        targetNode.classList.add('border-r-2', 'border-r-white');
                                     }
                                 }
-                                updateGapDisplacement(targetNode, dropMode, isInsideGroup);
                             } else if (targetOverEl) {
                                 clearTargetIndicators();
-                                updateGapDisplacement(null);
                                 targetOverEl = null;
                             }
                             return;
@@ -671,8 +639,8 @@ export const PAT2 = {
                         el.style.transform = '';
                         el.style.zIndex = '';
                         el.style.opacity = '';
+                        el.style.boxShadow = '';
                         clearTargetIndicators();
-                        updateGapDisplacement(null);
 
                         if (targetOverEl) {
                             const targetId = targetOverEl.dataset.nodeId;
