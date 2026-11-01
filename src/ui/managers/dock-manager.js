@@ -12,7 +12,8 @@ export const DOCK_TITLES = {
     SCOPE: 'OSCILLOSCOPE',
     LISS: 'LISSAJOUS (X-Y)',
     WAVE: 'WAVE RECORDER & SLICER',
-    LUT: 'LOOK-UP TABLE (WAVESHAPER)'
+    LUT: 'LOOK-UP TABLE (WAVESHAPER)',
+    GATE4: '4-TRACK GATE / TRIGGER SEQUENCER'
 };
 
 export const DOCK_ICONS = {
@@ -25,7 +26,8 @@ export const DOCK_ICONS = {
     SCOPE: 'activity',
     LISS: 'activity',
     WAVE: 'audio-waveform',
-    LUT: 'trending-up'
+    LUT: 'trending-up',
+    GATE4: 'grid'
 };
 
 export class DockManager {
