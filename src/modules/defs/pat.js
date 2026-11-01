@@ -171,17 +171,17 @@ export const PAT = {
 
                 <!-- 3rd Row: Token Strip Container with Scroll Left [ ◀ ] and Scroll Right [ ▶ ] Buttons -->
                 <div class="flex items-center gap-0.5 w-full min-w-0">
-                    <!-- Scroll Left Button -->
-                    <button id="pat-scroll-left-${uid}" class="w-4 h-6 shrink-0 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 rounded text-[7.5px] font-bold border border-slate-800 flex items-center justify-center transition cursor-pointer select-none active:bg-cyan-950/80 active:text-cyan-200 touch-none" title="左へスクロール">
+                    <!-- Scroll Left Button (compact 12px width) -->
+                    <button id="pat-scroll-left-${uid}" class="w-3 h-5 shrink-0 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 rounded text-[6.5px] font-bold border border-slate-800 flex items-center justify-center transition cursor-pointer select-none active:bg-cyan-950/80 active:text-cyan-200 touch-none px-0" title="左へスクロール">
                         ◀
                     </button>
-                    <div id="pat-token-container-${uid}" class="relative flex-1 bg-slate-950 border border-slate-800 rounded p-[2px] overflow-hidden shadow-inner cursor-default min-w-0">
-                        <div id="pat-token-strip-${uid}" class="flex items-center gap-[2px] overflow-x-auto min-h-[26px] h-6 py-0 px-[2px] no-scrollbar select-none">
+                    <div id="pat-token-container-${uid}" class="relative flex-1 bg-slate-950 border border-slate-800 rounded p-[1px] overflow-hidden shadow-inner cursor-default min-w-0">
+                        <div id="pat-token-strip-${uid}" class="flex items-center gap-[1px] overflow-x-auto min-h-[24px] h-5 py-0 px-[1px] no-scrollbar select-none">
                             <!-- Populated dynamically via renderTokens -->
                         </div>
                     </div>
-                    <!-- Scroll Right Button -->
-                    <button id="pat-scroll-right-${uid}" class="w-4 h-6 shrink-0 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 rounded text-[7.5px] font-bold border border-slate-800 flex items-center justify-center transition cursor-pointer select-none active:bg-cyan-950/80 active:text-cyan-200 touch-none" title="右へスクロール">
+                    <!-- Scroll Right Button (compact 12px width) -->
+                    <button id="pat-scroll-right-${uid}" class="w-3 h-5 shrink-0 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 rounded text-[6.5px] font-bold border border-slate-800 flex items-center justify-center transition cursor-pointer select-none active:bg-cyan-950/80 active:text-cyan-200 touch-none px-0" title="右へスクロール">
                         ▶
                     </button>
                 </div>
@@ -334,7 +334,7 @@ export const PAT = {
                     : (isDirty ? 'text-amber-300 group-hover:text-white' : 'text-cyan-300 group-hover:text-white');
 
                 return `
-                    <div data-node-id="${node.id}" class="pat-node-token relative flex items-center justify-center min-w-[15px] h-5 px-1 rounded border ${borderCls} cursor-ns-resize transition select-none group touch-none shrink-0 gap-0.5">
+                    <div data-node-id="${node.id}" class="pat-node-token relative flex items-center justify-center min-w-[13px] h-5 px-[3px] rounded border ${borderCls} cursor-ns-resize transition select-none group touch-none shrink-0 gap-[1px]">
                         <span class="pat-node-val text-[8px] font-mono font-bold ${noteTextColor} leading-none pointer-events-none">${isRest ? '~' : noteVal}</span>
                         ${renderModifiersInline(node)}
                     </div>`;
