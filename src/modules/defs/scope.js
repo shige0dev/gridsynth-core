@@ -92,8 +92,8 @@ export const SCOPE = {
         const curTrig = m.trigMode || 'auto';
 
         return `
-            <div class="space-y-1.5">
-                <div class="flex items-center justify-between pb-1 border-b border-slate-800 select-none">
+            <div class="space-y-1.5 select-none w-full">
+                <div class="h-5 flex items-center justify-between gap-1 pb-1 border-b border-slate-800 select-none">
                     <button id="scope-trig-toggle" class="h-4 px-2 rounded text-[8px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${curTrig === 'auto' ? 'bg-amber-950 text-amber-300 border-amber-600/70 shadow-sm shadow-amber-500/30' : 'bg-slate-800 text-slate-400 border-slate-700'}" title="トリガー同期切替 (PIN6)">
                         TRIG: ${curTrig.toUpperCase()}
                     </button>
@@ -191,8 +191,8 @@ export const LISS = {
     renderModal: (m) => {
         const curV = m.vRange || 2.0;
         return `
-            <div class="space-y-1.5">
-                <div class="flex items-center justify-between pb-1 border-b border-slate-800 select-none">
+            <div class="space-y-1.5 select-none w-full">
+                <div class="h-5 flex items-center justify-between gap-1 pb-1 border-b border-slate-800 select-none">
                     <div class="flex items-center gap-1 font-mono text-[9px] text-emerald-400 font-bold">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span>LISSAJOUS (X-Y)
                     </div>
@@ -601,8 +601,8 @@ export const SPEC = {
         const curMode = m.mode || 'bar';
         const curView = m.view || '3d';
         return `
-            <div class="space-y-1.5">
-                <div class="flex items-center justify-between pb-1 border-b border-slate-800 select-none">
+            <div class="space-y-1.5 select-none w-full">
+                <div class="h-5 flex items-center justify-between gap-1 pb-1 border-b border-slate-800 select-none">
                     <div class="flex items-center gap-1">
                         <span class="text-[8px] text-slate-400 font-bold uppercase tracking-tight">STYLE:</span>
                         <button id="spec-mode-bar" class="h-4 px-1.5 rounded text-[8px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${curMode === 'bar' ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">BAR</button>

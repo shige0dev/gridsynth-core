@@ -40,7 +40,7 @@ export const MATRIX = {
         return `
             <div class="flex items-center justify-center w-full h-full pointer-events-none">
                 <div class="w-14 h-7 rounded border border-slate-600 bg-slate-950 p-[1px] relative flex items-center justify-center shadow-inner panel-bar-slot">
-                    <canvas id="matrix-grid-canvas-${m.id}" class="w-full h-full block rounded-[3px] bg-slate-950" width="112" height="56"></canvas>
+                    <canvas id="matrix-grid-canvas-${m.id}" class="w-full h-full block rounded-[3px] bg-slate-950" width="112" height="28"></canvas>
                 </div>
             </div>
         `;
@@ -62,13 +62,14 @@ export const MATRIX = {
 
         // Draw cells (All white)
         ctx2d.fillStyle = '#ffffff';
+        const cellMargin = 0.5;
         for (let t = 0; t < 4; t++) {
             const pat = patterns[t] || [];
             const y = t * rowH;
             for (let s = 0; s < divs; s++) {
                 if (pat[s] === 1) {
                     const x = s * colW;
-                    ctx2d.fillRect(x + 0.5, y + 0.5, Math.max(1, colW - 1), Math.max(1, rowH - 1));
+                    ctx2d.fillRect(x + cellMargin, y + cellMargin, Math.max(1, colW - cellMargin * 2), Math.max(1, rowH - cellMargin * 2));
                 }
             }
         }
@@ -128,13 +129,15 @@ export const MATRIX = {
 
         // Render active ON cells (All pure white with crisp glow)
         ctx2d.fillStyle = '#f8fafc';
+        const gapX = 1.0;
+        const gapY = 1.0;
         for (let t = 0; t < 4; t++) {
             const pat = patterns[t] || [];
             const y = t * rowH;
             for (let s = 0; s < divs; s++) {
                 if (pat[s] === 1) {
                     const x = s * colW;
-                    ctx2d.fillRect(x + 1, y + 1.5, Math.max(1, colW - 2), Math.max(1, rowH - 3));
+                    ctx2d.fillRect(x + gapX, y + gapY, Math.max(1, colW - gapX * 2), Math.max(1, rowH - gapY * 2));
                 }
             }
         }
@@ -176,14 +179,14 @@ export const MATRIX = {
         const divOptions = [16, 32, 64];
 
         return `
-            <div class="space-y-1.5 p-1 select-none w-full">
-                <!-- 1行目: Steps切り替え + 現在ステップ + CLEAR ALL -->
-                <div class="flex items-center justify-between gap-1 pb-1 border-b border-slate-800">
+            <div class="space-y-1.5 select-none w-full">
+                <!-- 1行目: SCOPEと共通の高さ (h-5 pb-1 flex items-center justify-between border-b) -->
+                <div class="h-5 flex items-center justify-between gap-1 pb-1 border-b border-slate-800">
                     <div class="flex items-center gap-1 shrink-0">
-                        <span class="text-[8.5px] font-mono text-slate-400 font-bold uppercase">STEPS:</span>
+                        <span class="text-[8px] font-mono text-slate-400 font-bold uppercase">STEPS:</span>
                         <div class="inline-flex rounded border border-slate-700 overflow-hidden">
                             ${divOptions.map(opt => `
-                                <button class="matrix-div-btn px-2.5 py-0.5 text-[9px] font-mono font-bold transition-colors ${divs === opt ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}" data-div="${opt}">
+                                <button class="matrix-div-btn h-4 px-2 text-[8px] font-mono font-bold leading-none inline-flex items-center justify-center transition-colors ${divs === opt ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}" data-div="${opt}">
                                     ${opt}
                                 </button>
                             `).join('')}
@@ -192,16 +195,16 @@ export const MATRIX = {
                     <div class="flex items-center gap-2">
                         <div class="flex items-center gap-1">
                             <span class="text-[8px] font-mono text-slate-400 font-bold uppercase">STEP:</span>
-                            <span id="matrix-step-disp" class="text-[9px] font-mono font-bold text-amber-400">1 / ${divs}</span>
+                            <span id="matrix-step-disp" class="text-[8.5px] font-mono font-bold text-amber-400">1 / ${divs}</span>
                         </div>
-                        <button id="matrix-clear-btn" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-rose-950/80 hover:text-rose-300 border border-slate-700 text-[8px] font-mono font-bold transition-colors">
+                        <button id="matrix-clear-btn" class="h-4 px-2 rounded bg-slate-800 hover:bg-rose-950/80 hover:text-rose-300 border border-slate-700 text-[8px] font-mono font-bold leading-none inline-flex items-center justify-center transition-colors">
                             CLEAR ALL
                         </button>
                     </div>
                 </div>
 
                 <!-- Main Matrix Canvas: 正方形セル比率 (aspect 4:1) -->
-                <div class="relative bg-slate-950 p-1 rounded-lg border border-indigo-500/40 shadow-inner w-full">
+                <div class="w-full bg-slate-950 p-1 rounded-lg border border-indigo-500/40 shadow-inner overflow-hidden">
                     <canvas id="matrix-modal-canvas" class="modal-canvas-4x1 rounded bg-slate-950 touch-none cursor-pointer border border-slate-800" width="560" height="140"></canvas>
                 </div>
             </div>

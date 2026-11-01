@@ -154,10 +154,6 @@ export const LUT = {
             if (modalCanvas) {
                 LUT.drawCanvas(modalCanvas, m, inVal, outVal, true);
             }
-            const inDisp = modalEl.querySelector('#lut-modal-in-disp') || document.getElementById('lut-modal-in-disp');
-            if (inDisp) inDisp.textContent = `${inVal.toFixed(3)}V`;
-            const outDisp = modalEl.querySelector('#lut-modal-out-disp') || document.getElementById('lut-modal-out-disp');
-            if (outDisp) outDisp.textContent = `${outVal.toFixed(3)}V`;
         }
     },
 
@@ -167,33 +163,28 @@ export const LUT = {
         const divOptions = [16, 32, 64, 256];
 
         return `
-            <div class="space-y-2 p-1 select-none w-full">
-                <!-- Top controls: DIVISIONS & QUANTIZE -->
-                <div class="flex items-center justify-between gap-1 pb-1 border-b border-slate-800">
+            <div class="space-y-1.5 select-none w-full">
+                <!-- 1行目コントロール: SCOPEと共通の高さ (h-5 pb-1 flex items-center justify-between border-b) -->
+                <div class="h-5 flex items-center justify-between gap-1 pb-1 border-b border-slate-800">
                     <div class="flex items-center gap-1 shrink-0">
-                        <span class="text-[8.5px] font-mono text-slate-400 font-bold uppercase">DIV:</span>
+                        <span class="text-[8px] font-mono text-slate-400 font-bold uppercase">DIV:</span>
                         <div class="inline-flex rounded border border-slate-700 overflow-hidden">
                             ${divOptions.map(opt => `
-                                <button class="lut-div-btn px-2.5 py-0.5 text-[9px] font-mono font-bold transition-colors ${divs === opt ? 'bg-teal-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}" data-div="${opt}">
+                                <button class="lut-div-btn h-4 px-2 text-[8px] font-mono font-bold leading-none inline-flex items-center justify-center transition-colors ${divs === opt ? 'bg-teal-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}" data-div="${opt}">
                                     ${opt}
                                 </button>
                             `).join('')}
                         </div>
                     </div>
                     <div class="flex items-center gap-1 shrink-0">
-                        <button id="lut-quantize-btn" class="h-6 px-3 rounded-md text-[9.5px] font-mono font-bold border transition-all flex items-center gap-1.5 shadow-sm active:scale-95 ${isQ ? 'bg-amber-600 hover:bg-amber-500 text-white border-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.6)]' : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-600'}" title="1V/Oct 半音音程クオンタイズ (1/12Vステップにスナップ)">
-                            <span>♯ PITCH QNT:</span>
-                            <span class="font-black ${isQ ? 'text-yellow-200' : 'text-slate-400'}">${isQ ? 'ON' : 'OFF'}</span>
+                        <button id="lut-quantize-btn" class="h-4 px-2 rounded text-[8px] font-mono font-bold border leading-none inline-flex items-center justify-center transition-all active:scale-95 ${isQ ? 'bg-amber-600 hover:bg-amber-500 text-white border-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.5)]' : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-600'}" title="1V/Oct 半音音程クオンタイズ (1/12Vステップにスナップ)">
+                            <span>♯ PITCH QNT: ${isQ ? 'ON' : 'OFF'}</span>
                         </button>
                     </div>
                 </div>
 
                 <!-- Main Canvas (Step Mode with Touch Draw) - Aspect 4:1 matching MATRIX -->
-                <div class="relative bg-slate-950 p-1 rounded-lg border border-teal-500/40 shadow-inner w-full">
-                    <div class="flex items-center justify-between text-[7.5px] font-mono text-slate-400 px-1 pb-0.5">
-                        <span class="text-teal-400 font-bold">${divs}-DIV STEP (TOUCH & DRAG TO SHAPE)</span>
-                        <div>IN: <span id="lut-modal-in-disp" class="text-amber-400 font-bold">0.000V</span> | OUT: <span id="lut-modal-out-disp" class="text-teal-300 font-bold">0.000V</span></div>
-                    </div>
+                <div class="w-full bg-slate-950 p-1 rounded-lg border border-teal-500/40 shadow-inner overflow-hidden">
                     <canvas id="lut-modal-canvas" class="modal-canvas-4x1 rounded bg-slate-950 touch-none cursor-crosshair border border-slate-800" width="560" height="140"></canvas>
                 </div>
             </div>
