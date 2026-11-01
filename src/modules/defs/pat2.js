@@ -237,6 +237,7 @@ export const PAT2 = {
     renderModal: (m, ctx) => {
         const uid = ctx?.id || m?.id || 'pat2';
         const pat = m.pattern || 'c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2';
+        const bars = Math.max(1, Math.round((m.cycleBeats || 4) / 4));
         const gatePct = Math.round((m.gateLen ?? 0.8) * 100);
         const showPresets = m._showPresets === true;
         const curAddPitch = (m._addPitch || 'c2').toUpperCase();
@@ -288,11 +289,22 @@ export const PAT2 = {
                         </button>
                     </div>
 
-                    <!-- Right: GATE slider in Row 1 -->
-                    <div class="flex items-center min-w-[66px] bg-slate-950 px-1 py-0.5 rounded border border-slate-800 gap-1 shrink-0">
-                        <span class="text-[6.5px] text-slate-400 uppercase font-mono shrink-0">GATE</span>
-                        <input type="range" id="pat2-gate-slider-${uid}" min="10" max="95" step="5" value="${gatePct}" class="w-8 h-1 accent-cyan-400 cursor-pointer touch-none">
-                        <span id="pat2-gate-disp-${uid}" class="text-[7px] font-mono font-bold text-cyan-300 min-w-[16px] text-right shrink-0">${gatePct}%</span>
+                    <!-- Right: BAR selector & GATE slider in Row 1 -->
+                    <div class="flex items-center gap-1 shrink-0">
+                        <div class="flex items-center bg-slate-950 px-1 py-0.5 rounded border border-slate-800 gap-0.5 shrink-0" title="繰り返し単位（小節数 BAR）">
+                            <span class="text-[6.5px] text-slate-400 uppercase font-mono shrink-0">BAR</span>
+                            <select id="pat2-bars-select-${uid}" class="bg-slate-900 text-cyan-300 font-mono text-[7.5px] font-bold border border-slate-700 rounded px-0.5 py-0 focus:outline-none cursor-pointer">
+                                <option value="1" ${bars === 1 ? 'selected' : ''}>1</option>
+                                <option value="2" ${bars === 2 ? 'selected' : ''}>2</option>
+                                <option value="4" ${bars === 4 ? 'selected' : ''}>4</option>
+                                <option value="8" ${bars === 8 ? 'selected' : ''}>8</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center min-w-[62px] bg-slate-950 px-1 py-0.5 rounded border border-slate-800 gap-1 shrink-0">
+                            <span class="text-[6.5px] text-slate-400 uppercase font-mono shrink-0">GATE</span>
+                            <input type="range" id="pat2-gate-slider-${uid}" min="10" max="95" step="5" value="${gatePct}" class="w-7 h-1 accent-cyan-400 cursor-pointer touch-none">
+                            <span id="pat2-gate-disp-${uid}" class="text-[7px] font-mono font-bold text-cyan-300 min-w-[15px] text-right shrink-0">${gatePct}%</span>
+                        </div>
                     </div>
                 </div>
 
@@ -353,6 +365,7 @@ export const PAT2 = {
         const addNoteBox = document.getElementById(`pat2-add-note-box-${uid}`);
         const addPitchDisp = document.getElementById(`pat2-add-pitch-disp-${uid}`);
         const addRestBtn = document.getElementById(`pat2-add-rest-${uid}`);
+        const barsSelect = document.getElementById(`pat2-bars-select-${uid}`);
         const gateSlider = document.getElementById(`pat2-gate-slider-${uid}`);
         const gateDisp = document.getElementById(`pat2-gate-disp-${uid}`);
         const togglePresets = document.getElementById(`pat2-toggle-presets-${uid}`);
@@ -651,13 +664,44 @@ export const PAT2 = {
 
                     try { el.setPointerCapture(e.pointerId); } catch (_) {}
 
-                    const clearTargetIndicators = (nodeEl) => {
-                        if (!nodeEl) return;
-                        nodeEl.classList.remove(
-                            'border-l-2', 'border-l-cyan-400',
-                            'border-r-2', 'border-r-cyan-400',
-                            'ring-2', 'ring-cyan-400', 'bg-cyan-950/40'
-                        );
+                    const clearTargetIndicators = () => {
+                        tokenStrip.querySelectorAll('.pat2-node-token').forEach(nodeEl => {
+                            nodeEl.classList.remove(
+                                'border-l-2', 'border-l-cyan-400',
+                                'border-r-2', 'border-r-cyan-400',
+                                'ring-2', 'ring-cyan-400', 'bg-cyan-950/40'
+                            );
+                            if (nodeEl !== el) {
+                                nodeEl.style.transform = '';
+                                nodeEl.style.transition = 'transform 0.12s ease';
+                            }
+                        });
+                    };
+
+                    const updateGapDisplacement = (targetNode, dropMode, isInsideGroup) => {
+                        const allTokens = Array.from(tokenStrip.querySelectorAll('.pat2-node-token'));
+                        if (!targetNode || isInsideGroup) {
+                            allTokens.forEach(n => {
+                                if (n !== el) n.style.transform = '';
+                            });
+                            return;
+                        }
+
+                        const targetIdx = allTokens.indexOf(targetNode);
+                        if (targetIdx < 0) return;
+
+                        // Calculate split point: tokens at or after this index will shift right
+                        const splitIdx = dropMode === 'before' ? targetIdx : targetIdx + 1;
+                        const shiftPx = 16; // Visual gap width in px
+
+                        allTokens.forEach((n, idx) => {
+                            if (n === el) return; // The dragged token handles its own transform
+                            if (idx >= splitIdx) {
+                                n.style.transform = `translateX(${shiftPx}px)`;
+                            } else {
+                                n.style.transform = '';
+                            }
+                        });
                     };
 
                     const onPointerMove = (me) => {
@@ -677,13 +721,13 @@ export const PAT2 = {
                             const targetNode = elemBelow?.closest?.('.pat2-node-token');
                             if (targetNode && targetNode !== el) {
                                 if (targetOverEl && targetOverEl !== targetNode) {
-                                    clearTargetIndicators(targetOverEl);
+                                    clearTargetIndicators();
                                 }
                                 targetOverEl = targetNode;
 
                                 const rect = targetNode.getBoundingClientRect();
                                 const relX = (me.clientX - rect.left) / Math.max(1, rect.width);
-                                clearTargetIndicators(targetNode);
+                                clearTargetIndicators();
 
                                 const isGroupNode = targetNode.classList.contains('pat2-group-box');
                                 if (isGroupNode) {
@@ -715,8 +759,10 @@ export const PAT2 = {
                                         targetNode.classList.add('border-r-2', 'border-r-cyan-400');
                                     }
                                 }
+                                updateGapDisplacement(targetNode, dropMode, isInsideGroup);
                             } else if (targetOverEl) {
-                                clearTargetIndicators(targetOverEl);
+                                clearTargetIndicators();
+                                updateGapDisplacement(null);
                                 targetOverEl = null;
                             }
                             return;
@@ -743,9 +789,10 @@ export const PAT2 = {
                         el.style.transform = '';
                         el.style.zIndex = '';
                         el.style.opacity = '';
+                        clearTargetIndicators();
+                        updateGapDisplacement(null);
 
                         if (targetOverEl) {
-                            clearTargetIndicators(targetOverEl);
                             const targetId = targetOverEl.dataset.nodeId;
                             targetOverEl = null;
                             if (targetId && targetId !== id) {
@@ -992,6 +1039,13 @@ export const PAT2 = {
                     syncPattern();
                 }
             });
+        });
+
+        // Bars selector (cycleBeats = bars * 4)
+        barsSelect?.addEventListener('change', (e) => {
+            const b = parseInt(e.target.value, 10) || 1;
+            m.cycleBeats = b * 4;
+            cb();
         });
 
         // Gate slider
