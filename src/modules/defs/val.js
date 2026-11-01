@@ -53,25 +53,15 @@ export const VALUE = {
 
         return `
             <div class="val-box relative w-full h-full flex flex-col items-center justify-center p-1 select-none overflow-hidden touch-none" data-module-id="${m.id}">
-                <!-- Square Centered Wheel Container (54px x 54px) -->
-                <div class="relative w-[54px] h-[54px] flex items-center justify-center overflow-hidden rounded bg-slate-950 border border-slate-800/90 shadow-inner">
-                    <canvas class="val-canvas block w-full h-full" width="54" height="54"></canvas>
-
-                    <!-- Center Overlay: Variable Label at top, VAL at center -->
-                    <div class="absolute inset-0 flex flex-col items-center justify-between py-1 pointer-events-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
-                        <span class="val-label-disp text-[7px] font-mono font-bold text-amber-400 uppercase tracking-tight leading-none px-1 py-0.5 rounded bg-slate-900/80 border border-amber-500/30 max-w-[48px] truncate">${labelText}</span>
-                        <div class="val-val-disp font-mono text-[13px] font-extrabold text-amber-300 tracking-tight leading-none flex items-baseline justify-center w-full">${VALUE.formatValHtml(curVal, m.stepType)}</div>
-                        <div class="h-1"></div>
-                    </div>
+                <!-- Simplified Display Container -->
+                <div class="w-full h-full flex flex-col items-center justify-center gap-1">
+                    <span class="val-label-disp text-[8.5px] font-mono font-bold text-amber-400/90 uppercase tracking-wider leading-none px-1.5 py-0.5 rounded bg-slate-900/90 border border-amber-500/30 max-w-[56px] truncate shadow-sm pointer-events-none">${labelText}</span>
+                    <div class="val-val-disp font-mono text-[14px] font-extrabold text-amber-300 tracking-tight leading-none flex items-baseline justify-center select-none pointer-events-none">${VALUE.formatValHtml(curVal, m.stepType)}</div>
                 </div>
             </div>`;
     },
 
     updateLive: (cell, data, isP, modal, m) => {
-        const cvs = cell?.querySelector('.val-canvas');
-        if (cvs) {
-            VALUE.drawWheel(cvs.getContext('2d'), cvs.width, cvs.height, m);
-        }
         const valDisp = cell?.querySelector('.val-val-disp');
         if (valDisp && m) {
             const v = m.val ?? (m.def ?? 0.0);
@@ -103,58 +93,6 @@ export const VALUE = {
         }
     },
 
-    drawWheel: (ctx, w, h, m) => {
-        ctx.clearRect(0, 0, w, h);
-
-        const cx = w / 2;
-        const cy = h / 2;
-        const r = Math.min(cx, cy) - 3;
-        const minVal = m.min ?? -1.0;
-        const maxVal = m.max ?? 1.0;
-        const curVal = m.val ?? (m.def ?? 0.0);
-
-        // Track background circle
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        ctx.strokeStyle = '#1e293b';
-        ctx.lineWidth = 4;
-        ctx.stroke();
-
-        // Active value arc (from 7 o'clock to 5 o'clock = 135 deg to 405 deg)
-        const startAngle = Math.PI * 0.75; // 135 deg
-        const totalSpan = Math.PI * 1.5;   // 270 deg
-        const span = maxVal > minVal ? (maxVal - minVal) : 1;
-        const pct = Math.max(0, Math.min(1, (curVal - minVal) / span));
-        const endAngle = startAngle + totalSpan * pct;
-
-        if (pct > 0.005) {
-            ctx.beginPath();
-            ctx.arc(cx, cy, r, startAngle, endAngle);
-            ctx.strokeStyle = '#f59e0b';
-            ctx.lineWidth = 4;
-            ctx.lineCap = 'round';
-            ctx.stroke();
-        }
-
-        // Notch marks on perimeter (12 subtle tick marks)
-        ctx.save();
-        ctx.translate(cx, cy);
-        for (let i = 0; i <= 10; i++) {
-            const a = startAngle + (totalSpan / 10) * i;
-            const x1 = Math.cos(a) * (r - 4);
-            const y1 = Math.sin(a) * (r - 4);
-            const x2 = Math.cos(a) * (r - 7);
-            const y2 = Math.sin(a) * (r - 7);
-            ctx.beginPath();
-            ctx.moveTo(x1, y1);
-            ctx.lineTo(x2, y2);
-            ctx.strokeStyle = 'rgba(100, 116, 139, 0.4)';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-        }
-        ctx.restore();
-    },
-
     bindGridEvents: (cell, m, ctx, onChange) => {
         const valBox = cell.querySelector('.val-box');
         if (!valBox) return;
@@ -165,11 +103,6 @@ export const VALUE = {
         let min = m.min ?? -1.0;
         let max = m.max ?? 1.0;
         let step = m.step ?? 0.01;
-
-        const initCvs = cell.querySelector('.val-canvas');
-        if (initCvs) {
-            VALUE.drawWheel(initCvs.getContext('2d'), initCvs.width, initCvs.height, m);
-        }
 
         const updateVal = (newVal) => {
             const clamped = Math.max(min, Math.min(max, newVal));
@@ -183,8 +116,6 @@ export const VALUE = {
                 valDisp.innerHTML = html;
                 valDisp._lastHtml = html;
             }
-            const cvs = cell.querySelector('.val-canvas');
-            if (cvs) VALUE.drawWheel(cvs.getContext('2d'), cvs.width, cvs.height, m);
 
             onChange?.();
         };
