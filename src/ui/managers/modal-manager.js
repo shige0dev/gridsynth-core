@@ -1,5 +1,5 @@
 // src/ui/managers/modal-manager.js
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=512';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=565';
 import { FACTORY_SUBPATCHES } from '../../presets/subpatches.js';
 import { UIHelpers } from '../helpers.js?v=459';
 
@@ -172,7 +172,7 @@ export class ModalManager {
     openSettingsModal(mId) {
         const m = this.ui.modules[mId];
         if (!m || m.type === 'SUB_IO') return;
-        if (['KEY', 'SEQ8', 'SEQ16', 'PAT', 'SPEC', 'SCOPE', 'LISS', 'WAVE', 'PAD'].includes(m.type)) {
+        if (['KEY', 'SEQ8', 'SEQ16', 'PAT', 'SPEC', 'SCOPE', 'LISS', 'WAVE', 'PAD', 'LUT'].includes(m.type)) {
             this.openDockModal(mId);
             return;
         }

@@ -1,5 +1,5 @@
 // src/ui/managers/dock-manager.js
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=459';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=565';
 import { UIHelpers } from '../helpers.js?v=459';
 
 export const DOCK_TITLES = {
@@ -11,7 +11,8 @@ export const DOCK_TITLES = {
     SPEC: 'SPECTRUM ANALYZER',
     SCOPE: 'OSCILLOSCOPE',
     LISS: 'LISSAJOUS (X-Y)',
-    WAVE: 'WAVE RECORDER & SLICER'
+    WAVE: 'WAVE RECORDER & SLICER',
+    LUT: 'LOOK-UP TABLE (WAVESHAPER)'
 };
 
 export const DOCK_ICONS = {
@@ -23,7 +24,8 @@ export const DOCK_ICONS = {
     SPEC: 'activity',
     SCOPE: 'activity',
     LISS: 'activity',
-    WAVE: 'audio-waveform'
+    WAVE: 'audio-waveform',
+    LUT: 'trending-up'
 };
 
 export class DockManager {
