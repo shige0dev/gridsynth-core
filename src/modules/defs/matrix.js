@@ -60,11 +60,11 @@ export const MATRIX = {
         const rowH = h / 4;
         const colW = w / divs;
 
-        // Draw cells
+        // Draw cells (All white)
+        ctx2d.fillStyle = '#ffffff';
         for (let t = 0; t < 4; t++) {
             const pat = patterns[t] || [];
             const y = t * rowH;
-            ctx2d.fillStyle = TRACK_COLORS[t];
             for (let s = 0; s < divs; s++) {
                 if (pat[s] === 1) {
                     const x = s * colW;
@@ -126,11 +126,11 @@ export const MATRIX = {
             ctx2d.stroke();
         }
 
-        // Render active ON cells
+        // Render active ON cells (All pure white with crisp glow)
+        ctx2d.fillStyle = '#f8fafc';
         for (let t = 0; t < 4; t++) {
             const pat = patterns[t] || [];
             const y = t * rowH;
-            ctx2d.fillStyle = TRACK_COLORS[t];
             for (let s = 0; s < divs; s++) {
                 if (pat[s] === 1) {
                     const x = s * colW;
