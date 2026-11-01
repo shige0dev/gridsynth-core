@@ -9,12 +9,12 @@ class LutProcessor extends AudioWorkletProcessor {
 
     this.divisions = 16;
     this.quantize = false; // Pitch quantize (1V/Oct semitones: 1/12V)
-    // Default stepped table: 16 steps
+    // Default stepped table: 16 steps (slot s is s / initialDivs: 0/16, 1/16, 2/16, ...)
     this.table = new Float32Array(256);
     const initialDivs = 16;
     const initialSlotW = 256 / initialDivs;
     for (let s = 0; s < initialDivs; s++) {
-      const v = s / (initialDivs - 1);
+      const v = s / initialDivs;
       for (let i = s * initialSlotW; i < (s + 1) * initialSlotW; i++) {
         this.table[i] = v;
       }
@@ -71,9 +71,10 @@ class LutProcessor extends AudioWorkletProcessor {
       if (rawIn > 1) rawIn = 1;
       lastSampleIn = rawIn;
 
-      // Step mode: discrete bucket mapping
-      let idx = Math.floor(rawIn * divs);
+      // Step mode: discrete bucket mapping with half-LSB rounding to prevent boundary truncation
+      let idx = Math.floor(rawIn * divs + 0.0001);
       if (idx >= divs) idx = divs - 1;
+      if (idx < 0) idx = 0;
       // Map division index into 256 table space
       const slotW256 = 256 / divs;
       const tableIdx = Math.min(255, Math.floor(idx * slotW256));

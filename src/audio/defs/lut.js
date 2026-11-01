@@ -16,7 +16,7 @@ export const LUT = {
             table = new Array(256);
             const slotW = 256 / initialDivs;
             for (let s = 0; s < initialDivs; s++) {
-                const v = s / (initialDivs - 1);
+                const v = s / initialDivs;
                 for (let i = s * slotW; i < (s + 1) * slotW; i++) {
                     table[i] = v;
                 }

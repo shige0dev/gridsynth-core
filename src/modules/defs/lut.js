@@ -3,12 +3,12 @@ import { UIHelpers } from '../../ui/helpers.js?v=351';
 export const LUT = {
     color: 'teal',
     defaults: () => {
-        // Default stepped table for 16 divisions (each slot filled with s / 15)
+        // Default stepped table for 16 divisions (slot s is s / divs: 0/16, 1/16, 2/16, ...)
         const divs = 16;
         const slotW = 256 / divs;
         const table = new Array(256);
         for (let s = 0; s < divs; s++) {
-            const v = s / (divs - 1);
+            const v = s / divs;
             for (let i = s * slotW; i < (s + 1) * slotW; i++) {
                 table[i] = v;
             }
@@ -63,7 +63,7 @@ export const LUT = {
         if (!Array.isArray(table) || table.length !== 256) {
             table = new Array(256);
             for (let s = 0; s < divs; s++) {
-                const v = s / (divs - 1);
+                const v = s / divs;
                 for (let i = s * slotW256; i < (s + 1) * slotW256; i++) {
                     table[i] = v;
                 }
@@ -130,7 +130,7 @@ export const LUT = {
         // 3. Live Playhead Indicator (active input & output)
         if (typeof activeIn === 'number' && activeIn >= 0 && activeIn <= 1) {
             const barW = w / divs;
-            const curSlot = Math.min(divs - 1, Math.floor(activeIn * divs));
+            const curSlot = Math.max(0, Math.min(divs - 1, Math.floor(activeIn * divs + 0.0001)));
             const liveX = curSlot * barW + barW * 0.5;
             ctx2d.strokeStyle = '#f59e0b'; // Amber cursor
             ctx2d.lineWidth = isModal ? 2 : 1.5;
@@ -259,7 +259,7 @@ export const LUT = {
                     m.table = new Array(256);
                     const slotW = 256 / divs;
                     for (let s = 0; s < divs; s++) {
-                        const v = s / (divs - 1);
+                        const v = s / divs;
                         for (let i = s * slotW; i < (s + 1) * slotW; i++) {
                             m.table[i] = v;
                         }
