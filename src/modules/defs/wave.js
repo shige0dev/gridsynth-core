@@ -44,7 +44,7 @@ export const WAVE = {
     },
     ports: () => ({
         in: [
-            { port: 'gate_in', color: 'bg-orange-500', pin: 5 },
+            { port: 'gate_in', color: 'bg-red-500', pin: 5 },
             { port: 'start_cv', color: 'bg-yellow-400', pin: 6 },
             { port: 'end_cv', color: 'bg-yellow-400', pin: 7 },
             { port: 'speed_cv', color: 'bg-yellow-400', pin: 8 },

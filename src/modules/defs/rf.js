@@ -10,7 +10,7 @@ export const RF = {
     }),
     ports: () => ({
         in: [
-            { port: 'trig_in', color: 'bg-orange-500' },
+            { port: 'trig_in', color: 'bg-red-500' },
             { port: 'time_cv', color: 'bg-yellow-400' },
             { port: 'peak_cv', color: 'bg-yellow-400' }
         ],

@@ -70,7 +70,7 @@ export const SCOPE = {
     ports: () => ({
         in: [
             { port: 'cv_in', pin: 5, color: 'bg-yellow-400' },
-            { port: 'trig_in', pin: 6, color: 'bg-orange-500' }
+            { port: 'trig_in', pin: 6, color: 'bg-red-500' }
         ],
         out: []
     }),

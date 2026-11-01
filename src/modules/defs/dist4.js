@@ -6,7 +6,7 @@ export const DIST4 = {
     ports: (m) => ({
         in: [
             { port: 'cv_in', pin: 4, color: 'bg-yellow-400' },
-            { port: 'gate_in', pin: 5, color: 'bg-rose-500' }
+            { port: 'gate_in', pin: 5, color: 'bg-red-500' }
         ],
         out: [1, 2, 3, 4].map(idx => ({
             port: `cv_out${idx}`,

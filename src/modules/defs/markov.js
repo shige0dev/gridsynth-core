@@ -38,7 +38,7 @@ export const MARKOV = {
         };
         return {
             in: [
-                { port: 'gate_in', pin: 5, color: 'bg-rose-500' },
+                { port: 'gate_in', pin: 5, color: 'bg-red-500' },
                 { port: 'trans_in', pin: 6, color: 'bg-slate-400' }
             ],
             out: [

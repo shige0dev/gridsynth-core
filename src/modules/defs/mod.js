@@ -155,8 +155,8 @@ export const LFO = {
     },
     ports: () => ({
         in: [
-            { port: 'freq_cv_in', pin: 4, color: 'bg-yellow-400' },
-            { port: 'trig_in', pin: 5, color: 'bg-orange-500' }
+            { port: 'reset_in', pin: 4, color: 'bg-red-500' },
+            { port: 'freq_cv_in', pin: 5, color: 'bg-yellow-400' }
         ],
         out: [{ port: 'cv_out', pin: 10, color: 'bg-yellow-400' }]
     }),
@@ -282,8 +282,8 @@ export const CLK = {
     defaults: () => ({ type: 'CLK', div: 'x2', pulseWidthMs: 15, limitPct: 90 }),
     ports: () => ({
         in: [
-            { port: 'run_in', pin: 5, color: 'bg-emerald-500' },
-            { port: 'reset_in', pin: 6, color: 'bg-red-500' }
+            { port: 'run_in', pin: 4, color: 'bg-emerald-500' },
+            { port: 'reset_in', pin: 3, color: 'bg-red-500' }
         ],
         out: [{ port: 'gate_out', pin: 10, color: 'bg-red-500' }]
     }),
@@ -453,7 +453,7 @@ export const SH = {
     ports: () => ({
         in: [
             { port: 'cv_in', color: 'bg-yellow-400' },
-            { port: 'trig_in', color: 'bg-orange-500' }
+            { port: 'trig_in', color: 'bg-red-500' }
         ],
         out: [{ port: 'cv_out', color: 'bg-yellow-400' }]
     }),

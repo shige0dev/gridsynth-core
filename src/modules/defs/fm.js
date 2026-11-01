@@ -46,7 +46,7 @@ export const FMx3 = {
     },
     ports: () => ({
         in: [
-            { port: 'gate_in', color: 'bg-orange-500' },
+            { port: 'gate_in', color: 'bg-red-500' },
             { port: 'cv_in', color: 'bg-yellow-400' }
         ],
         out: [

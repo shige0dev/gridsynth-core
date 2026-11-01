@@ -10,7 +10,7 @@ export const AR = {
     }),
     ports: () => ({
         in: [
-            { port: 'gate_in', color: 'bg-orange-500' },
+            { port: 'gate_in', color: 'bg-red-500' },
             { port: 'attack_in', color: 'bg-yellow-400' },
             { port: 'release_in', color: 'bg-yellow-400' }
         ],

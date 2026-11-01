@@ -40,7 +40,7 @@ export const ADSR = {
         m.releaseCurve = curveVal(m.rCurve);
     },
     ports: () => ({
-        in: [{ port: 'gate_in', color: 'bg-orange-500' }],
+        in: [{ port: 'gate_in', color: 'bg-red-500' }],
         out: [{ port: 'cv_out', color: 'bg-yellow-400' }]
     }),
     MAX_STAGES: [2, 3, 1, 5],
