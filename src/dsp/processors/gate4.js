@@ -138,3 +138,4 @@ class Gate4Processor extends AudioWorkletProcessor {
 }
 
 registerProcessor('gate4-processor', Gate4Processor);
+

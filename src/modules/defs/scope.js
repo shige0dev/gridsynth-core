@@ -94,9 +94,9 @@ export const SCOPE = {
         return `
             <div class="space-y-1.5">
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800 select-none">
-                    <div class="flex items-center gap-1 font-mono text-[9px] text-cyan-400 font-bold">
-                        <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 inline-block"></span>1-CH SCOPE
-                    </div>
+                    <button id="scope-trig-toggle" class="h-4 px-2 rounded text-[8px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${curTrig === 'auto' ? 'bg-amber-950 text-amber-300 border-amber-600/70 shadow-sm shadow-amber-500/30' : 'bg-slate-800 text-slate-400 border-slate-700'}" title="トリガー同期切替 (PIN6)">
+                        TRIG: ${curTrig.toUpperCase()}
+                    </button>
                     <div class="flex items-center gap-2">
                         <div class="flex items-center gap-1">
                             <span class="text-[8px] text-slate-400 font-bold uppercase tracking-tight">V/DIV:</span>
@@ -114,12 +114,6 @@ export const SCOPE = {
                 </div>
                 <div class="h-[108px] bg-slate-950 p-1 rounded-lg border border-slate-800 select-none shadow-sm overflow-hidden" style="opacity: ${m?.opacity ?? 0.8};">
                     <canvas id="scope-modal-canvas" class="w-full h-full block rounded bg-slate-950" width="360" height="106"></canvas>
-                </div>
-                <div class="flex items-center justify-between text-[8px] text-slate-400 select-none pt-0.5">
-                    <span class="text-[8px] text-slate-400 font-mono">INPUT: PIN5 (WAVE)</span>
-                    <button id="scope-trig-toggle" class="h-4 px-2 rounded text-[8px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${curTrig === 'auto' ? 'bg-amber-950 text-amber-300 border-amber-600/70 shadow-sm shadow-amber-500/30' : 'bg-slate-800 text-slate-400 border-slate-700'}">
-                        TRIG: ${curTrig.toUpperCase()} (PIN6)
-                    </button>
                 </div>
             </div>`;
     },
