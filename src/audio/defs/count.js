@@ -8,7 +8,8 @@ export const COUNT = {
             outputChannelCount: [1, 1]
         });
 
-        const initialMax = [16, 32, 64, 256].includes(d.max) ? d.max : 16;
+        const parsedMax = parseInt(d.max, 10);
+        const initialMax = (Number.isFinite(parsedMax) && parsedMax >= 1) ? parsedMax : 16;
         w.port.postMessage({
             type: 'SET_MAX',
             value: initialMax
@@ -61,7 +62,8 @@ export const COUNT = {
         };
     },
     update: (ctx, inst, d) => {
-        const targetMax = [16, 32, 64, 256].includes(d.max) ? d.max : 256;
+        const parsedMax = parseInt(d.max, 10);
+        const targetMax = (Number.isFinite(parsedMax) && parsedMax >= 1) ? parsedMax : 16;
         inst.nodes.w.port.postMessage({
             type: 'SET_MAX',
             value: targetMax

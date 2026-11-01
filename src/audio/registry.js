@@ -25,7 +25,7 @@ import { rfAudioDefs } from './defs/rf.js?v=459';
 import { arAudioDefs } from './defs/ar.js?v=459';
 import { waveAudioDefs } from './defs/wave.js?v=459';
 import { padAudioDefs } from './defs/pad.js?v=459';
-import { countAudioDefs } from './defs/count.js?v=570';
+import { countAudioDefs } from './defs/count.js?v=576';
 import { lutAudioDefs } from './defs/lut.js?v=573';
 import { JOG } from './defs/jog.js?v=494';
 

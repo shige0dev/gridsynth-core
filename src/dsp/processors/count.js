@@ -24,7 +24,7 @@ class CountProcessor extends AudioWorkletProcessor {
       if (!data) return;
       if (data.type === 'SET_MAX') {
         const newMax = parseInt(data.value, 10);
-        if ([16, 32, 64, 256].includes(newMax)) {
+        if (Number.isFinite(newMax) && newMax >= 1 && newMax <= 1024) {
           this.max = newMax;
           if (this.count >= this.max) {
             this.count = 0;
