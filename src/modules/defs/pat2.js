@@ -492,7 +492,9 @@ export const PAT2 = {
                             list[i].children = list[i].children || [];
                             insertPos === 'before' ? list[i].children.unshift(sourceNode) : list[i].children.push(sourceNode);
                         } else {
-                            list.splice(insertPos === 'before' ? i : i + 1, 0, sourceNode);
+                            // If dropping into regular list
+                            const insertIndex = insertPos === 'before' ? i : i + 1;
+                            list.splice(insertIndex, 0, sourceNode);
                         }
                         return true;
                     }
@@ -503,6 +505,7 @@ export const PAT2 = {
             insertNear(m._tokens);
 
             selectedIds.clear();
+            selectedIds.add(sourceId); // keep moved token selected for feedback
             renderTokens();
             syncPattern();
         };
@@ -559,23 +562,28 @@ export const PAT2 = {
                     };
 
                     const updateGapDisplacement = (targetNode, dropMode, isInsideGroup) => {
-                        const allTokens = Array.from(tokenStrip.querySelectorAll('.pat2-node-token'));
+                        // Only select top-level direct token nodes or root items inside tokenStrip to avoid selector hierarchy bugs
+                        const topNodes = Array.from(tokenStrip.children);
                         if (!targetNode || isInsideGroup) {
-                            allTokens.forEach(n => {
-                                if (n !== el) n.style.transform = '';
+                            topNodes.forEach(n => {
+                                if (n !== el) {
+                                    n.style.transform = '';
+                                }
                             });
                             return;
                         }
 
-                        const targetIdx = allTokens.indexOf(targetNode);
+                        // Find the top-level parent container of targetNode
+                        const targetTopNode = targetNode.closest('#pat2-token-strip-' + uid + ' > *') || targetNode;
+                        const targetIdx = topNodes.indexOf(targetTopNode);
                         if (targetIdx < 0) return;
 
-                        // Calculate split point: tokens at or after this index will shift right
+                        // Calculate split point: items at or after splitIdx shift right
                         const splitIdx = dropMode === 'before' ? targetIdx : targetIdx + 1;
-                        const shiftPx = 16; // Visual gap width in px
+                        const shiftPx = 18; // Visual gap width in px
 
-                        allTokens.forEach((n, idx) => {
-                            if (n === el) return; // The dragged token handles its own transform
+                        topNodes.forEach((n, idx) => {
+                            if (n === el || n.contains(el)) return; // Don't shift self
                             if (idx >= splitIdx) {
                                 n.style.transform = `translateX(${shiftPx}px)`;
                             } else {
@@ -596,10 +604,13 @@ export const PAT2 = {
                             el.style.zIndex = '50';
                             el.style.opacity = '0.85';
 
-                            // Find element underneath
+                            // Temporarily hide pointer events on dragged element so elementFromPoint sees what's underneath
+                            el.style.pointerEvents = 'none';
                             const elemBelow = document.elementFromPoint(me.clientX, me.clientY);
+                            el.style.pointerEvents = '';
+
                             const targetNode = elemBelow?.closest?.('.pat2-node-token');
-                            if (targetNode && targetNode !== el) {
+                            if (targetNode && targetNode !== el && !el.contains(targetNode)) {
                                 if (targetOverEl && targetOverEl !== targetNode) {
                                     clearTargetIndicators();
                                 }
@@ -613,23 +624,19 @@ export const PAT2 = {
                                 if (isGroupNode) {
                                     // Group target: detect outside (before/after) vs inside group
                                     if (relX < 0.22) {
-                                        // Outside group: before []/<>
                                         dropMode = 'before';
                                         isInsideGroup = false;
                                         targetNode.classList.add('border-l-2', 'border-l-cyan-400');
                                     } else if (relX > 0.78) {
-                                        // Outside group: after []/<>
                                         dropMode = 'after';
                                         isInsideGroup = false;
                                         targetNode.classList.add('border-r-2', 'border-r-cyan-400');
                                     } else {
-                                        // Inside group
                                         isInsideGroup = true;
                                         dropMode = relX < 0.5 ? 'before' : 'after';
                                         targetNode.classList.add('ring-2', 'ring-cyan-400', 'bg-cyan-950/40');
                                     }
                                 } else {
-                                    // Regular token: determine whether inserting before or after target
                                     isInsideGroup = false;
                                     if (relX < 0.5) {
                                         dropMode = 'before';
