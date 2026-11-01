@@ -268,10 +268,10 @@ export const PAT2 = {
 
                     <!-- Middle: Grouping Buttons ([] / <>), Ungroup, Modifiers (*n, !n), Trash Delete (Matching Blue theme) -->
                     <div class="flex items-center gap-0.5 shrink-0">
-                        <button id="pat2-bracket-btn-${uid}" class="h-5 px-1 bg-sky-950/80 hover:bg-sky-900 text-sky-300 hover:text-white border border-sky-700/60 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 cursor-pointer" title="選択項目を [] 分割グループにまとめる（または選択ノードを細分化）">
+                        <button id="pat2-bracket-btn-${uid}" disabled class="h-5 px-1 bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 opacity-50 cursor-not-allowed" title="横並び選択した項目を [] 分割グループにまとめる">
                             []
                         </button>
-                        <button id="pat2-angle-btn-${uid}" class="h-5 px-1 bg-sky-950/80 hover:bg-sky-900 text-sky-300 hover:text-white border border-sky-700/60 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 cursor-pointer tracking-tight" title="選択項目を <> 周期交代グループにまとめる">
+                        <button id="pat2-angle-btn-${uid}" disabled class="h-5 px-1 bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 opacity-50 cursor-not-allowed tracking-tight" title="横並び選択した項目を <> 周期交代グループにまとめる">
                             &lt;&gt;
                         </button>
                         <button id="pat2-ungroup-btn-${uid}" class="h-5 px-1 bg-sky-950/80 hover:bg-sky-900 text-sky-300 rounded text-[7px] font-bold border border-sky-700/60 shadow-sm transition active:scale-95" title="グループ解除">
@@ -528,7 +528,27 @@ export const PAT2 = {
         };
 
         const updateInspector = () => {
-            // Group buttons are always displayed and active in the blue theme
+            const adjGroup = getAdjacentSelectedGroup();
+
+            // Enable/disable [] and <> group buttons:
+            // Always displayed; when no multiple contiguous selection exists, disabled in dark gray.
+            // When multiple adjacent tokens are selected, active in blue theme.
+            if (bracketBtn) {
+                bracketBtn.disabled = !adjGroup;
+                if (adjGroup) {
+                    bracketBtn.className = 'h-5 px-1 bg-sky-900 hover:bg-sky-800 text-sky-100 border border-sky-400 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 cursor-pointer';
+                } else {
+                    bracketBtn.className = 'h-5 px-1 bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 opacity-50 cursor-not-allowed';
+                }
+            }
+            if (angleBtn) {
+                angleBtn.disabled = !adjGroup;
+                if (adjGroup) {
+                    angleBtn.className = 'h-5 px-1 bg-sky-900 hover:bg-sky-800 text-sky-100 border border-sky-400 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 cursor-pointer tracking-tight';
+                } else {
+                    angleBtn.className = 'h-5 px-1 bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 opacity-50 cursor-not-allowed tracking-tight';
+                }
+            }
         };
 
         const shiftSelectedPitch = (delta) => {
@@ -825,154 +845,43 @@ export const PAT2 = {
         });
 
         // Group into [ ] (subdivision group)
-        // Works in 3 intuitive ways:
-        // 1) Adjacent multiple selection: wraps them into a group [A B ...]
-        // 2) Single note/rest selected: subdivides that step into [A A] (true 1-step subdivision)
-        // 3) Nothing selected: appends a new subdivision group [c2 c2] to the end
         bracketBtn?.addEventListener('click', () => {
             const adj = getAdjacentSelectedGroup();
-            if (adj) {
-                const { list, start, end } = adj;
-                const count = end - start + 1;
-                const children = list.slice(start, end + 1);
-                const newGroup = {
-                    id: genId(),
-                    type: 'group',
-                    groupType: 'bracket',
-                    children
-                };
-                list.splice(start, count, newGroup);
-                selectedIds.clear();
-                selectedIds.add(newGroup.id);
-                renderTokens();
-                syncPattern();
-                return;
-            }
-
-            // Single selected token: subdivide this 1 step into [A A]
-            const selected = getSelectedNodes();
-            if (selected.length === 1) {
-                const sel = selected[0];
-                function replaceNodeInTree(list) {
-                    for (let i = 0; i < list.length; i++) {
-                        if (list[i].id === sel.id) {
-                            const child1 = { ...sel, id: genId() };
-                            const child2 = { ...sel, id: genId() };
-                            const newGroup = {
-                                id: genId(),
-                                type: 'group',
-                                groupType: 'bracket',
-                                children: [child1, child2]
-                            };
-                            list.splice(i, 1, newGroup);
-                            selectedIds.clear();
-                            selectedIds.add(newGroup.id);
-                            return true;
-                        }
-                        if (list[i].children && replaceNodeInTree(list[i].children)) return true;
-                    }
-                    return false;
-                }
-                replaceNodeInTree(m._tokens);
-                renderTokens();
-                syncPattern();
-                return;
-            }
-
-            // Nothing selected (or non-adjacent selection): append subdivision group to the end
-            const curPitch = (m._addPitch || 'c2').toLowerCase();
+            if (!adj) return;
+            const { list, start, end } = adj;
+            const count = end - start + 1;
+            const children = list.slice(start, end + 1);
             const newGroup = {
                 id: genId(),
                 type: 'group',
                 groupType: 'bracket',
-                children: [
-                    { id: genId(), type: 'note', val: curPitch },
-                    { id: genId(), type: 'note', val: curPitch }
-                ]
+                children
             };
-            m._tokens.push(newGroup);
+            list.splice(start, count, newGroup);
             selectedIds.clear();
+            selectedIds.add(newGroup.id);
             renderTokens();
             syncPattern();
-            if (tokenStrip) tokenStrip.scrollLeft = tokenStrip.scrollWidth;
         });
 
         // Group into < > (cycle group)
-        // 1) Adjacent multiple selection: wraps them into a group <A B ...>
-        // 2) Single note selected: wraps into <A B> with default alternation
-        // 3) Nothing selected: appends an alternation group <c2 eb2> to the end
         angleBtn?.addEventListener('click', () => {
             const adj = getAdjacentSelectedGroup();
-            if (adj) {
-                const { list, start, end } = adj;
-                const count = end - start + 1;
-                const children = list.slice(start, end + 1);
-                const newGroup = {
-                    id: genId(),
-                    type: 'group',
-                    groupType: 'angle',
-                    children
-                };
-                list.splice(start, count, newGroup);
-                selectedIds.clear();
-                selectedIds.add(newGroup.id);
-                renderTokens();
-                syncPattern();
-                return;
-            }
-
-            const selected = getSelectedNodes();
-            if (selected.length === 1) {
-                const sel = selected[0];
-                function replaceNodeInTree(list) {
-                    for (let i = 0; i < list.length; i++) {
-                        if (list[i].id === sel.id) {
-                            const child1 = { ...sel, id: genId() };
-                            const child2 = { ...sel, id: genId() };
-                            // If it's a note, alternate with octave or third
-                            if (child2.type === 'note') {
-                                const mNum = noteToMidiNum(child2.val) ?? 48;
-                                child2.val = midiNumToNote(Math.min(108, mNum + 3));
-                            }
-                            const newGroup = {
-                                id: genId(),
-                                type: 'group',
-                                groupType: 'angle',
-                                children: [child1, child2]
-                            };
-                            list.splice(i, 1, newGroup);
-                            selectedIds.clear();
-                            selectedIds.add(newGroup.id);
-                            return true;
-                        }
-                        if (list[i].children && replaceNodeInTree(list[i].children)) return true;
-                    }
-                    return false;
-                }
-                replaceNodeInTree(m._tokens);
-                renderTokens();
-                syncPattern();
-                return;
-            }
-
-            // Nothing selected: append alternation group to end
-            const curPitch = (m._addPitch || 'c2').toLowerCase();
-            const mNum = noteToMidiNum(curPitch) ?? 48;
-            const altPitch = midiNumToNote(Math.min(108, mNum + 3));
+            if (!adj) return;
+            const { list, start, end } = adj;
+            const count = end - start + 1;
+            const children = list.slice(start, end + 1);
             const newGroup = {
                 id: genId(),
                 type: 'group',
                 groupType: 'angle',
-                children: [
-                    { id: genId(), type: 'note', val: curPitch },
-                    { id: genId(), type: 'note', val: altPitch }
-                ]
+                children
             };
-            m._tokens.push(newGroup);
+            list.splice(start, count, newGroup);
             selectedIds.clear();
+            selectedIds.add(newGroup.id);
             renderTokens();
             syncPattern();
-            if (tokenStrip) tokenStrip.scrollLeft = tokenStrip.scrollWidth;
         });
 
         // Ungroup: in-place unwrap
