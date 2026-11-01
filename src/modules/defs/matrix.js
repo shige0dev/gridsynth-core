@@ -3,7 +3,7 @@ import { UIHelpers } from '../../ui/helpers.js?v=351';
 const TRACK_COLORS = ['#38bdf8', '#f43f5e', '#34d399', '#fbbf24']; // Sky, Rose, Emerald, Amber
 const TRACK_NAMES = ['BD / T1', 'SD / T2', 'CH / T3', 'OH / T4'];
 
-export const MAT = {
+export const MATRIX = {
     color: 'indigo',
     defaults: () => {
         const p1 = new Array(64).fill(0);
@@ -17,11 +17,11 @@ export const MAT = {
         [2, 6, 10, 14].forEach(s => { p4[s] = 1; });
 
         return {
-            type: 'MAT',
+            type: 'MATRIX',
             divisions: 16, // 16, 32, 64
             patterns: [p1, p2, p3, p4],
             modes: ['gate', 'gate', 'gate', 'gate'], // 'gate' or 'trig'
-            name: 'MAT'
+            name: 'MATRIX'
         };
     },
     ports: () => ({
@@ -40,7 +40,7 @@ export const MAT = {
         return `
             <div class="flex items-center justify-center w-full h-full pointer-events-none">
                 <div class="w-14 h-7 rounded border border-slate-600 bg-slate-950 p-[1px] relative flex items-center justify-center shadow-inner panel-bar-slot">
-                    <canvas id="mat-grid-canvas-${m.id}" class="w-full h-full block rounded-[3px] bg-slate-950" width="112" height="56"></canvas>
+                    <canvas id="matrix-grid-canvas-${m.id}" class="w-full h-full block rounded-[3px] bg-slate-950" width="112" height="56"></canvas>
                 </div>
             </div>
         `;
@@ -154,17 +154,17 @@ export const MAT = {
     updateLive: (cell, data, isPlaying, modalEl, m) => {
         const slot = data?.slot ?? 0;
 
-        const cellCanvas = cell?.querySelector(`#mat-grid-canvas-${m.id}`) || document.getElementById(`mat-grid-canvas-${m.id}`);
+        const cellCanvas = cell?.querySelector(`#matrix-grid-canvas-${m.id}`) || document.getElementById(`matrix-grid-canvas-${m.id}`);
         if (cellCanvas) {
-            MAT.drawGridCanvas(cellCanvas, m, slot);
+            MATRIX.drawGridCanvas(cellCanvas, m, slot);
         }
 
         if (modalEl) {
-            const modalCanvas = modalEl.querySelector('#mat-modal-canvas') || document.getElementById('mat-modal-canvas');
+            const modalCanvas = modalEl.querySelector('#matrix-modal-canvas') || document.getElementById('matrix-modal-canvas');
             if (modalCanvas) {
-                MAT.drawModalCanvas(modalCanvas, m, slot);
+                MATRIX.drawModalCanvas(modalCanvas, m, slot);
             }
-            const stepDisp = modalEl.querySelector('#mat-step-disp');
+            const stepDisp = modalEl.querySelector('#matrix-step-disp');
             if (stepDisp) {
                 stepDisp.textContent = `${slot + 1} / ${m.divisions || 16}`;
             }
@@ -184,7 +184,7 @@ export const MAT = {
                         <span class="text-[8.5px] font-mono text-slate-400 font-bold uppercase">STEPS:</span>
                         <div class="inline-flex rounded border border-slate-700 overflow-hidden">
                             ${divOptions.map(opt => `
-                                <button class="mat-div-btn px-2.5 py-0.5 text-[9px] font-mono font-bold transition-colors ${divs === opt ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}" data-div="${opt}">
+                                <button class="matrix-div-btn px-2.5 py-0.5 text-[9px] font-mono font-bold transition-colors ${divs === opt ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}" data-div="${opt}">
                                     ${opt}
                                 </button>
                             `).join('')}
@@ -192,7 +192,7 @@ export const MAT = {
                     </div>
                     <div class="flex items-center gap-1.5">
                         <span class="text-[8px] font-mono text-slate-400 font-bold uppercase">STEP:</span>
-                        <span id="mat-step-disp" class="text-[9px] font-mono font-bold text-amber-400">1 / ${divs}</span>
+                        <span id="matrix-step-disp" class="text-[9px] font-mono font-bold text-amber-400">1 / ${divs}</span>
                     </div>
                 </div>
 
@@ -201,7 +201,7 @@ export const MAT = {
                     ${[0, 1, 2, 3].map(t => `
                         <div class="flex items-center justify-between px-1.5 py-0.5 bg-slate-900/90 rounded border border-slate-800 text-[8px] font-mono">
                             <span class="font-bold" style="color: ${TRACK_COLORS[t]};">${TRACK_NAMES[t]}</span>
-                            <button class="mat-mode-btn px-1 rounded text-[7.5px] font-bold border transition-colors ${modes[t] === 'trig' ? 'bg-amber-600 text-white border-amber-400' : 'bg-slate-800 text-slate-300 border-slate-700'}" data-track="${t}">
+                            <button class="matrix-mode-btn px-1 rounded text-[7.5px] font-bold border transition-colors ${modes[t] === 'trig' ? 'bg-amber-600 text-white border-amber-400' : 'bg-slate-800 text-slate-300 border-slate-700'}" data-track="${t}">
                                 ${modes[t] === 'trig' ? 'TRIG' : 'GATE'}
                             </button>
                         </div>
@@ -210,13 +210,13 @@ export const MAT = {
 
                 <!-- Main Matrix Canvas: Exactly identical height to SCOPE (106px) -->
                 <div class="relative bg-slate-950 p-1 rounded-lg border border-indigo-500/40 shadow-inner w-full">
-                    <canvas id="mat-modal-canvas" class="w-full h-[106px] block rounded bg-slate-950 touch-none cursor-pointer border border-slate-800" width="560" height="212"></canvas>
+                    <canvas id="matrix-modal-canvas" class="w-full h-[106px] block rounded bg-slate-950 touch-none cursor-pointer border border-slate-800" width="560" height="212"></canvas>
                 </div>
 
                 <!-- Quick actions -->
                 <div class="flex items-center justify-between text-[8px] font-mono text-slate-400 pt-0.5">
                     <span>TOUCH / DRAG TO TOGGLE CELLS</span>
-                    <button id="mat-clear-btn" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-rose-950/80 hover:text-rose-300 border border-slate-700 text-[8px] font-mono font-bold transition-colors">
+                    <button id="matrix-clear-btn" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-rose-950/80 hover:text-rose-300 border border-slate-700 text-[8px] font-mono font-bold transition-colors">
                         CLEAR ALL
                     </button>
                 </div>
@@ -228,7 +228,7 @@ export const MAT = {
         const root = ctx?.getDialogElement ? (ctx.getDialogElement() || document) : document;
 
         // Division selector buttons
-        root.querySelectorAll('.mat-div-btn').forEach(btn => {
+        root.querySelectorAll('.matrix-div-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const newDiv = parseInt(e.currentTarget.dataset.div, 10);
                 m.divisions = newDiv;
@@ -244,7 +244,7 @@ export const MAT = {
         });
 
         // Mode toggles (GATE / TRIG)
-        root.querySelectorAll('.mat-mode-btn').forEach(btn => {
+        root.querySelectorAll('.matrix-mode-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const t = parseInt(e.currentTarget.dataset.track, 10);
                 if (!Array.isArray(m.modes)) m.modes = ['gate', 'gate', 'gate', 'gate'];
@@ -260,7 +260,7 @@ export const MAT = {
         });
 
         // Clear all button
-        root.querySelector('#mat-clear-btn')?.addEventListener('click', () => {
+        root.querySelector('#matrix-clear-btn')?.addEventListener('click', () => {
             m.patterns = [
                 new Array(64).fill(0),
                 new Array(64).fill(0),
@@ -278,7 +278,7 @@ export const MAT = {
         });
 
         // Canvas touch & drag grid toggle
-        const canvas = root.querySelector('#mat-modal-canvas');
+        const canvas = root.querySelector('#matrix-modal-canvas');
         if (canvas) {
             let isDragging = false;
             let dragPaintValue = 1;
@@ -317,7 +317,7 @@ export const MAT = {
                         value: dragPaintValue
                     });
                 }
-                MAT.drawModalCanvas(canvas, m, inst?.read?.()?.slot ?? 0);
+                MATRIX.drawModalCanvas(canvas, m, inst?.read?.()?.slot ?? 0);
                 ctx.reRenderGrid?.();
                 cb();
             };
@@ -345,13 +345,13 @@ export const MAT = {
             canvas.addEventListener('pointercancel', stopDrag);
 
             // Initial render of modal canvas
-            MAT.drawModalCanvas(canvas, m, 0);
+            MATRIX.drawModalCanvas(canvas, m, 0);
         }
     }
 };
 
-export const matDefs = {
-    MAT
+export const matrixDefs = {
+    MATRIX
 };
-export default matDefs;
+export default matrixDefs;
 

@@ -1,8 +1,8 @@
 import { AudioHelpers } from '../helpers.js';
 
-export const MAT = {
+export const MATRIX = {
     create: (ctx, d, patch, eng) => {
-        const w = new AudioWorkletNode(ctx, 'mat-processor', {
+        const w = new AudioWorkletNode(ctx, 'matrix-processor', {
             numberOfInputs: 1,
             numberOfOutputs: 4,
             outputChannelCount: [1, 1, 1, 1]
@@ -41,7 +41,7 @@ export const MAT = {
 
         let latestSlot = 0;
         w.port.onmessage = e => {
-            if (e.data?.type === 'MAT_STATUS') {
+            if (e.data?.type === 'MATRIX_STATUS') {
                 latestSlot = e.data.slot ?? 0;
             }
         };
@@ -77,8 +77,8 @@ export const MAT = {
     }
 };
 
-export const matAudioDefs = {
-    MAT
+export const matrixAudioDefs = {
+    MATRIX
 };
-export default matAudioDefs;
+export default matrixAudioDefs;
 
