@@ -65,14 +65,10 @@ export const COUNT = {
             if (modalCountEl && modalCountEl.textContent.trim() !== String(curCount)) {
                 modalCountEl.textContent = String(curCount);
             }
-            const modalDenomEl = modalEl.querySelector('#count-modal-denom') || document.getElementById('count-modal-denom');
-            if (modalDenomEl && modalDenomEl.textContent.trim() !== String(curMax)) {
-                modalDenomEl.textContent = String(curMax);
-            }
             const modalCvEl = modalEl.querySelector('#count-modal-cv') || document.getElementById('count-modal-cv');
             if (modalCvEl) {
-                const cvPercent = curMax > 0 ? ((curCount / curMax) * 100).toFixed(1) : '0.0';
-                modalCvEl.textContent = `${(curCount / curMax).toFixed(3)}V (${cvPercent}%)`;
+                const cvVal = curMax > 0 ? (curCount / curMax).toFixed(4) : '0.0000';
+                modalCvEl.textContent = `${cvVal}V`;
             }
         }
     },
@@ -83,31 +79,23 @@ export const COUNT = {
 
         return `
             <div class="space-y-3 p-1">
-                <!-- Monitor Box (Fraction Display with Equal Font Size) -->
-                <div class="bg-slate-950/80 rounded-lg p-2.5 border border-emerald-500/30 text-center shadow-inner flex flex-col items-center">
-                    <div class="text-[7.5px] font-mono text-slate-400 uppercase tracking-widest mb-1">CURRENT COUNT / RATIO</div>
-                    <div class="inline-flex flex-col items-center justify-center font-mono font-black text-emerald-400 py-1">
-                        <div id="count-modal-val" class="text-2xl leading-none tracking-wider">
-                            0
-                        </div>
-                        <div class="w-12 h-[2px] bg-emerald-400/80 my-1 rounded-full"></div>
-                        <div id="count-modal-denom" class="text-2xl leading-none tracking-wider">
-                            ${curMax}
-                        </div>
+                <!-- Monitor & MAX Row: 現在値 / (MAX入力欄) = 0.0000V を1行で表示 -->
+                <div class="bg-slate-950/80 rounded-lg p-2.5 border border-emerald-500/30 shadow-inner flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-1.5 font-mono text-sm">
+                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">RATIO:</span>
+                        <span id="count-modal-val" class="font-black text-emerald-300 text-base min-w-[20px] text-right">0</span>
+                        <span class="text-emerald-500/80 font-black text-base">/</span>
+                        <input id="count-max-input" type="number" min="1" max="1024" value="${curMax}" class="w-16 bg-slate-900 border border-emerald-500/60 rounded px-1.5 py-0.5 text-emerald-300 font-mono font-black text-sm text-center focus:outline-none focus:ring-1 focus:ring-emerald-400" placeholder="1-1024" />
                     </div>
-                    <div class="w-full flex items-center justify-between mt-1 pt-1.5 border-t border-slate-800 text-[8px] font-mono text-slate-400">
-                        <span>CV OUT:</span>
-                        <span id="count-modal-cv" class="text-amber-400 font-bold">0.000V (0.0%)</span>
+                    <div class="flex items-center gap-1.5 font-mono text-sm border-l border-slate-800 pl-2">
+                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">CV OUT:</span>
+                        <span id="count-modal-cv" class="font-black text-amber-400 text-sm">0.0000V</span>
                     </div>
                 </div>
 
-                <!-- Custom MAX Input & Preset Buttons -->
+                <!-- PRESET BUTTONS (タップで即入力欄に反映・即時適用) -->
                 <div>
-                    <div class="text-[8px] font-mono text-slate-400 font-bold uppercase mb-1">MAX COUNT (OVERFLOW / DIVISION)</div>
-                    <div class="flex items-center gap-1.5 mb-1.5">
-                        <input id="count-max-input" type="number" min="1" max="1024" value="${curMax}" class="flex-1 bg-slate-900 border border-emerald-500/60 rounded px-2 py-1 text-emerald-300 font-mono font-bold text-xs focus:outline-none focus:ring-1 focus:ring-emerald-400" placeholder="1-1024" />
-                        <button id="count-apply-btn" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-mono font-bold text-[10px] tracking-wide active:scale-95 transition-colors">SET</button>
-                    </div>
+                    <div class="text-[8px] font-mono text-slate-400 font-bold uppercase mb-1">PRESET DIVISION (MAX)</div>
                     <div class="grid grid-cols-6 gap-1">
                         ${presetOptions.map(opt => `
                             <button class="count-preset-btn py-1 rounded text-[9px] font-mono font-bold border transition-colors ${curMax === opt ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/30' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}" data-max="${opt}">
@@ -130,7 +118,7 @@ export const COUNT = {
     bindEvents: (m, ctx, cb) => {
         const root = ctx?.getDialogElement ? (ctx.getDialogElement() || document) : document;
 
-        const applyMax = (newMax) => {
+        const applyMax = (newMax, skipInputUpdate = false) => {
             const parsed = parseInt(newMax, 10);
             if (Number.isFinite(parsed) && parsed >= 1 && parsed <= 1024) {
                 m.max = parsed;
@@ -139,33 +127,37 @@ export const COUNT = {
                 if (inst?.nodes?.w?.port) {
                     inst.nodes.w.port.postMessage({ type: 'SET_MAX', value: parsed });
                 }
-                ctx.reRenderModal();
+                const input = root.querySelector('#count-max-input');
+                if (input && !skipInputUpdate && input.value !== String(parsed)) {
+                    input.value = parsed;
+                }
+                // Highlight active preset button if matches
+                root.querySelectorAll('.count-preset-btn').forEach(btn => {
+                    const opt = parseInt(btn.dataset.max, 10);
+                    if (opt === parsed) {
+                        btn.className = 'count-preset-btn py-1 rounded text-[9px] font-mono font-bold border transition-colors bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/30';
+                    } else {
+                        btn.className = 'count-preset-btn py-1 rounded text-[9px] font-mono font-bold border transition-colors bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700';
+                    }
+                });
                 ctx.reRenderGrid?.();
                 cb();
             }
         };
 
-        // Preset buttons: fill input and apply
+        // Preset buttons: 即時入力欄に反映して適用
         root.querySelectorAll('.count-preset-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const optMax = e.currentTarget.dataset.max;
-                const input = root.querySelector('#count-max-input');
-                if (input) input.value = optMax;
                 applyMax(optMax);
             });
         });
 
-        // Set button and Enter key on input
+        // Input field: 即時（inputイベント）で適用
         const input = root.querySelector('#count-max-input');
-        const setBtn = root.querySelector('#count-apply-btn');
-        if (setBtn && input) {
-            setBtn.addEventListener('click', () => {
-                applyMax(input.value);
-            });
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    applyMax(input.value);
-                }
+        if (input) {
+            input.addEventListener('input', (e) => {
+                applyMax(e.target.value, true);
             });
         }
 
