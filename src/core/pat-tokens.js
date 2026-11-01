@@ -187,3 +187,4 @@ export function tokensToPattern(tokens) {
 
     return tokens.map(serializeNode).join(' ');
 }
+

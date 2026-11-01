@@ -63,7 +63,8 @@ export const PAT2 = {
     renderModal: (m, ctx) => {
         const uid = ctx?.id || m?.id || 'pat2';
         const pat = m.pattern || 'c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2';
-        const bars = Math.max(1, Math.round((m.cycleBeats || 4) / 4));
+        const curCycle = m.cycleBeats || 4;
+        const curBar = curCycle / 4;
         const gatePct = Math.round((m.gateLen ?? 0.8) * 100);
         const showPresets = m._showPresets === true;
         const curAddPitch = (m._addPitch || 'c2').toUpperCase();
@@ -78,9 +79,42 @@ export const PAT2 = {
             m._lastPatStr = pat;
         }
 
+        // Helper to check selection for bar dropdown
+        const isBarSelected = (val) => Math.abs(curBar - val) < 0.001;
+
         return `
             <div id="pat2-modal-root-${uid}" class="space-y-1 p-0.5 select-none touch-none w-full">
-                <!-- 1st Row: Pitch changer / Rest changer, Grouping ([] / <>), Ungroup, Modifiers (*n, !n), Trash Delete, GATE slider (No scrollbar) -->
+                <!-- 1st Row: BAR selector, GATE slider, and SEND button -->
+                <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-1 overflow-x-auto no-scrollbar">
+                    <div class="flex items-center gap-2 shrink-0">
+                        <!-- BAR selector (multiplication and division) -->
+                        <div class="flex items-center bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800 gap-1 shrink-0" title="繰り返し単位（小節数 BAR）: 1/4, 1/2, 1, 2, 4, 8">
+                            <span class="text-[7px] text-slate-400 uppercase font-mono font-bold shrink-0">BAR</span>
+                            <select id="pat2-bars-select-${uid}" class="bg-slate-900 text-cyan-300 font-mono text-[8px] font-bold border border-slate-700 rounded px-1 py-0.5 focus:outline-none cursor-pointer">
+                                <option value="0.25" ${isBarSelected(0.25) ? 'selected' : ''}>/4 (1/4)</option>
+                                <option value="0.5" ${isBarSelected(0.5) ? 'selected' : ''}>/2 (1/2)</option>
+                                <option value="1" ${isBarSelected(1) ? 'selected' : ''}>x1 (1)</option>
+                                <option value="2" ${isBarSelected(2) ? 'selected' : ''}>x2 (2)</option>
+                                <option value="4" ${isBarSelected(4) ? 'selected' : ''}>x4 (4)</option>
+                                <option value="8" ${isBarSelected(8) ? 'selected' : ''}>x8 (8)</option>
+                            </select>
+                        </div>
+                        <!-- GATE slider -->
+                        <div class="flex items-center bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800 gap-1 shrink-0">
+                            <span class="text-[7px] text-slate-400 uppercase font-mono font-bold shrink-0">GATE</span>
+                            <input type="range" id="pat2-gate-slider-${uid}" min="10" max="95" step="5" value="${gatePct}" class="w-12 h-1 accent-cyan-400 cursor-pointer touch-none">
+                            <span id="pat2-gate-disp-${uid}" class="text-[7.5px] font-mono font-bold text-cyan-300 min-w-[18px] text-right shrink-0">${gatePct}%</span>
+                        </div>
+                    </div>
+
+                    <!-- Right: Minimalist SEND (↵) Button -->
+                    <button id="pat2-send-btn-${uid}" class="h-5 px-2 bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 hover:text-white border border-cyan-500/70 rounded flex items-center justify-center gap-0.5 shadow-sm transition active:scale-95 shrink-0 cursor-pointer font-mono text-[9px] font-bold" title="パターンをシンセへ反映 (SEND / Enter)">
+                        <span class="text-[11px] leading-none">↵</span>
+                        <span>SEND</span>
+                    </button>
+                </div>
+
+                <!-- 2nd Row: Pitch changer / Rest, Grouping ([] / <>), Ungroup, Modifiers (*n, !n), Trash Delete -->
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-1 overflow-x-auto no-scrollbar">
                     <!-- Left: Fast Note / Rest Appender (Clean Blue theme) -->
                     <div class="flex items-center gap-1 shrink-0">
@@ -93,7 +127,7 @@ export const PAT2 = {
                         </button>
                     </div>
 
-                    <!-- Middle: Grouping Buttons ([] / <>), Ungroup, Modifiers (*n, !n), Trash Delete (Matching Blue theme) -->
+                    <!-- Right / Middle: Grouping Buttons ([] / <>), Ungroup, Modifiers (*n, !n), Trash Delete -->
                     <div class="flex items-center gap-0.5 shrink-0">
                         <button id="pat2-bracket-btn-${uid}" disabled class="h-5 w-[18px] flex items-center justify-center bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 opacity-50 cursor-not-allowed" title="横並び選択した項目を [] 分割グループにまとめる">
                             []
@@ -114,31 +148,9 @@ export const PAT2 = {
                             <i data-lucide="trash-2" class="w-2.5 h-2.5 pointer-events-none"></i>
                         </button>
                     </div>
-
-                    <!-- Right: BAR selector, GATE slider, and minimal SEND button in Row 1 -->
-                    <div class="flex items-center gap-1 shrink-0">
-                        <div class="flex items-center bg-slate-950 px-1 py-0.5 rounded border border-slate-800 gap-0.5 shrink-0" title="繰り返し単位（小節数 BAR）">
-                            <span class="text-[6.5px] text-slate-400 uppercase font-mono shrink-0">BAR</span>
-                            <select id="pat2-bars-select-${uid}" class="bg-slate-900 text-cyan-300 font-mono text-[7.5px] font-bold border border-slate-700 rounded px-0.5 py-0 focus:outline-none cursor-pointer">
-                                <option value="1" ${bars === 1 ? 'selected' : ''}>1</option>
-                                <option value="2" ${bars === 2 ? 'selected' : ''}>2</option>
-                                <option value="4" ${bars === 4 ? 'selected' : ''}>4</option>
-                                <option value="8" ${bars === 8 ? 'selected' : ''}>8</option>
-                            </select>
-                        </div>
-                        <div class="flex items-center min-w-[58px] bg-slate-950 px-1 py-0.5 rounded border border-slate-800 gap-1 shrink-0">
-                            <span class="text-[6.5px] text-slate-400 uppercase font-mono shrink-0">GATE</span>
-                            <input type="range" id="pat2-gate-slider-${uid}" min="10" max="95" step="5" value="${gatePct}" class="w-6 h-1 accent-cyan-400 cursor-pointer touch-none">
-                            <span id="pat2-gate-disp-${uid}" class="text-[7px] font-mono font-bold text-cyan-300 min-w-[14px] text-right shrink-0">${gatePct}%</span>
-                        </div>
-                        <!-- Minimalist SEND (↵) Button in Row 1 -->
-                        <button id="pat2-send-btn-${uid}" class="w-5 h-5 bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 hover:text-white border border-cyan-500/70 rounded flex items-center justify-center shadow-sm transition active:scale-95 shrink-0 cursor-pointer font-mono text-[10px] font-bold" title="パターンをシンセへ反映 (SEND / Enter)">
-                            <span>↵</span>
-                        </button>
-                    </div>
                 </div>
 
-                <!-- 2nd Row: Token Strip Container with Scroll Left [ ◀ ] and Scroll Right [ ▶ ] Buttons -->
+                <!-- 3rd Row: Token Strip Container with Scroll Left [ ◀ ] and Scroll Right [ ▶ ] Buttons -->
                 <div class="flex items-center gap-0.5 w-full min-w-0">
                     <!-- Scroll Left Button -->
                     <button id="pat2-scroll-left-${uid}" class="w-4 h-6 shrink-0 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 rounded text-[7.5px] font-bold border border-slate-800 flex items-center justify-center transition cursor-pointer select-none active:bg-cyan-950/80 active:text-cyan-200 touch-none" title="左へスクロール">
@@ -825,7 +837,7 @@ export const PAT2 = {
 
         // Bars selector (cycleBeats = bars * 4)
         barsSelect?.addEventListener('change', (e) => {
-            const b = parseInt(e.target.value, 10) || 1;
+            const b = parseFloat(e.target.value) || 1;
             m.cycleBeats = b * 4;
             cb();
         });
