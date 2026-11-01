@@ -105,7 +105,6 @@ export const LUT = {
 
         // 2. Draw Table Bars / Fill (Step Mode)
         const barW = w / divs;
-        const slotW256 = 256 / divs;
         for (let d = 0; d < divs; d++) {
             const tableIdx = Math.min(255, Math.floor(d * slotW256));
             let val = Math.max(0, Math.min(1, table[tableIdx] ?? 0));
