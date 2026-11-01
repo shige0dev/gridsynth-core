@@ -1,5 +1,5 @@
 // src/ui/managers/modal-manager.js
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=459';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=510';
 import { FACTORY_SUBPATCHES } from '../../presets/subpatches.js';
 import { UIHelpers } from '../helpers.js?v=459';
 
@@ -21,6 +21,7 @@ export const MODAL_WIDTHS = {
     SH: 'w-[200px]',
     CLK: 'w-[200px]',
     COUNT: 'w-[200px]',
+    LUT: 'w-[260px]',
     THROUGH: 'w-[170px]',
 
     // Sound Generation & Processing
@@ -295,7 +296,7 @@ export class ModalManager {
                         name: 'CV',
                         sub: 'CV (変調・演算・エンベロープ)',
                         color: 'purple',
-                        types: ['LFO', 'ADSR', 'RF', 'AR', 'CHORD', 'SCALE', 'MATH1', 'MATH2', 'SH', 'COUNT', 'CVDELAY', 'JOG', 'THROUGH', 'SUB_IO']
+                        types: ['LFO', 'ADSR', 'RF', 'AR', 'CHORD', 'SCALE', 'MATH1', 'MATH2', 'SH', 'COUNT', 'LUT', 'CVDELAY', 'JOG', 'THROUGH', 'SUB_IO']
                     },
                     {
                         name: 'VISUALIZER',

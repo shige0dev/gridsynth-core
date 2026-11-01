@@ -1,5 +1,5 @@
 import { safeClone, parseConn, isSubModule, normalizeSubPort, isPortMatching } from './utils.js?v=459';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=459';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=510';
 import { FACTORY_SUBPATCHES } from '../presets/subpatches.js?v=459';
 import { WaveCodec } from '../audio/wave-codec.js?v=459';
 

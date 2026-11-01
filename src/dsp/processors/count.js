@@ -14,7 +14,6 @@ class CountProcessor extends AudioWorkletProcessor {
 
     // Carry pulse generator (15ms high on overflow/carry)
     this.carryCounter = 0;
-    this.sampleRate = 48000;
 
     // Throttle UI notification (~30fps)
     this.uiThrottleSamples = 0;
@@ -83,7 +82,6 @@ class CountProcessor extends AudioWorkletProcessor {
       }
 
       // 4. CV output: normalized 0.0V .. 1.0V (count / max)
-      // When count is 0, cv is 0; when count is max - 1, cv is (max - 1) / max
       const cvVal = this.max > 0 ? (this.count / this.max) : 0;
 
       if (cvOut) cvOut[i] = cvVal;
@@ -109,4 +107,3 @@ class CountProcessor extends AudioWorkletProcessor {
 }
 
 registerProcessor('count-processor', CountProcessor);
-

@@ -25,7 +25,8 @@ import { rfDefs } from './defs/rf.js?v=396';
 import { arDefs } from './defs/ar.js?v=396';
 import { waveDefs } from './defs/wave.js?v=402';
 import { padDefs } from './defs/pad.js?v=351';
-import { countDefs } from './defs/count.js?v=508';
+import { countDefs } from './defs/count.js?v=510';
+import { lutDefs } from './defs/lut.js?v=510';
 import { JOG } from './defs/jog.js?v=494';
 
 export const MODULE_REGISTRY = {
@@ -52,6 +53,7 @@ export const MODULE_REGISTRY = {
     ...waveDefs,
     ...padDefs,
     ...countDefs,
+    ...lutDefs,
     JOG
 };
 

@@ -4,7 +4,8 @@ export const COUNT = {
     create: (ctx, d, patch, eng) => {
         const w = new AudioWorkletNode(ctx, 'count-processor', {
             numberOfInputs: 2,
-            numberOfOutputs: 2
+            numberOfOutputs: 2,
+            outputChannelCount: [1, 1]
         });
 
         const initialMax = [16, 32, 64, 256].includes(d.max) ? d.max : 256;
@@ -42,6 +43,7 @@ export const COUNT = {
             nodes: { w, clkIn, rstIn, cvOut, carryOut },
             inputs: {
                 clk_in: clkIn,
+                gate_in: clkIn, // alias
                 reset_in: rstIn
             },
             outputs: {
@@ -70,4 +72,3 @@ export const COUNT = {
 export const countAudioDefs = {
     COUNT
 };
-
