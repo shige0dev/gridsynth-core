@@ -188,10 +188,10 @@ export const PAT2 = {
                     </button>
                 </div>
 
-                <!-- Collapsible Manual (150% text size, placed at the bottom when toggled) -->
+                <!-- Collapsible Manual (80% text size, placed at the bottom when toggled) -->
                 ${showManual ? `
-                <div class="bg-slate-950 rounded border border-cyan-800/80 p-1.5 text-[10px] font-mono text-slate-300 space-y-1 shadow-inner">
-                    <div class="text-[10.5px] font-bold text-cyan-300 flex items-center gap-1 border-b border-slate-800 pb-0.5">
+                <div class="bg-slate-950 rounded border border-cyan-800/80 p-1.5 text-[8px] font-mono text-slate-300 shadow-inner">
+                    <div class="text-[8.5px] font-bold text-cyan-300 flex items-center gap-1 border-b border-slate-800 pb-0.5 mb-1">
                         <span class="text-cyan-400">📖</span>
                         <span>PAT2 MINI-NOTATION GUIDE</span>
                     </div>
@@ -204,11 +204,6 @@ export const PAT2 = {
                         <div><strong class="text-amber-300 font-bold">!N</strong> : N回連続リピート</div>
                         <div><strong class="text-emerald-300 font-bold">?</strong> : 発音確率 (?, ?0.8, ?0.2)</div>
                         <div><strong class="text-slate-400 font-bold">~</strong> : 休符</div>
-                    </div>
-                    <div class="text-[9px] text-slate-400 pt-0.5 border-t border-slate-800/80">
-                        ※トークン選択中に上部の <span class="text-sky-300 font-bold">↕上下スワイプ</span> で音程変更、<span class="text-sky-300 font-bold">↔ドラッグ</span> で位置入替。<br>
-                        ※修飾子（*N / /N / !N）は <span class="text-amber-300 font-bold">↕上下スライド</span> で数値変更可能（下スライドで 2 未満にするかタップで即消去）。<br>
-                        ※グループや修飾子を選択して <span class="text-red-400 font-bold">🗑（ゴミ箱）</span> を押しても解除・消去できます。
                     </div>
                 </div>
                 ` : ''}
