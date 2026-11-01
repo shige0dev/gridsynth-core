@@ -302,7 +302,7 @@ export const PAT2 = {
                         </button>
                     </div>
 
-                    <!-- Right: BAR selector & GATE slider in Row 1 -->
+                    <!-- Right: BAR selector, GATE slider, and minimal SEND button in Row 1 -->
                     <div class="flex items-center gap-1 shrink-0">
                         <div class="flex items-center bg-slate-950 px-1 py-0.5 rounded border border-slate-800 gap-0.5 shrink-0" title="繰り返し単位（小節数 BAR）">
                             <span class="text-[6.5px] text-slate-400 uppercase font-mono shrink-0">BAR</span>
@@ -313,24 +313,32 @@ export const PAT2 = {
                                 <option value="8" ${bars === 8 ? 'selected' : ''}>8</option>
                             </select>
                         </div>
-                        <div class="flex items-center min-w-[62px] bg-slate-950 px-1 py-0.5 rounded border border-slate-800 gap-1 shrink-0">
+                        <div class="flex items-center min-w-[58px] bg-slate-950 px-1 py-0.5 rounded border border-slate-800 gap-1 shrink-0">
                             <span class="text-[6.5px] text-slate-400 uppercase font-mono shrink-0">GATE</span>
-                            <input type="range" id="pat2-gate-slider-${uid}" min="10" max="95" step="5" value="${gatePct}" class="w-7 h-1 accent-cyan-400 cursor-pointer touch-none">
-                            <span id="pat2-gate-disp-${uid}" class="text-[7px] font-mono font-bold text-cyan-300 min-w-[15px] text-right shrink-0">${gatePct}%</span>
+                            <input type="range" id="pat2-gate-slider-${uid}" min="10" max="95" step="5" value="${gatePct}" class="w-6 h-1 accent-cyan-400 cursor-pointer touch-none">
+                            <span id="pat2-gate-disp-${uid}" class="text-[7px] font-mono font-bold text-cyan-300 min-w-[14px] text-right shrink-0">${gatePct}%</span>
                         </div>
+                        <!-- Minimalist SEND (↵) Button in Row 1 -->
+                        <button id="pat2-send-btn-${uid}" class="w-5 h-5 bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 hover:text-white border border-cyan-500/70 rounded flex items-center justify-center shadow-sm transition active:scale-95 shrink-0 cursor-pointer font-mono text-[10px] font-bold" title="パターンをシンセへ反映 (SEND / Enter)">
+                            <span>↵</span>
+                        </button>
                     </div>
                 </div>
 
-                <!-- Token Strip Container with Compact SEND (↵) Button at the right end -->
-                <div class="flex items-center gap-1 w-full min-w-0">
+                <!-- 2nd Row: Token Strip Container with Scroll Left [ ◀ ] and Scroll Right [ ▶ ] Buttons -->
+                <div class="flex items-center gap-0.5 w-full min-w-0">
+                    <!-- Scroll Left Button -->
+                    <button id="pat2-scroll-left-${uid}" class="w-4 h-6 shrink-0 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 rounded text-[7.5px] font-bold border border-slate-800 flex items-center justify-center transition cursor-pointer select-none active:bg-cyan-950/80 active:text-cyan-200 touch-none" title="左へスクロール">
+                        ◀
+                    </button>
                     <div id="pat2-token-container-${uid}" class="relative flex-1 bg-slate-950 border border-slate-800 rounded p-[2px] overflow-hidden shadow-inner cursor-default min-w-0">
                         <div id="pat2-token-strip-${uid}" class="flex items-center gap-[2px] overflow-x-auto min-h-[26px] h-6 py-0 px-[2px] no-scrollbar select-none">
                             <!-- Populated dynamically via renderTokens -->
                         </div>
                     </div>
-                    <!-- Minimalist SEND Button (Icon only) -->
-                    <button id="pat2-send-btn-${uid}" class="w-6 h-6 bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 hover:text-white border border-cyan-500/70 rounded flex items-center justify-center shadow-sm transition active:scale-95 shrink-0 cursor-pointer font-mono text-[11px] font-bold" title="パターンをシンセへ反映 (SEND / Enter)">
-                        <span>↵</span>
+                    <!-- Scroll Right Button -->
+                    <button id="pat2-scroll-right-${uid}" class="w-4 h-6 shrink-0 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 rounded text-[7.5px] font-bold border border-slate-800 flex items-center justify-center transition cursor-pointer select-none active:bg-cyan-950/80 active:text-cyan-200 touch-none" title="右へスクロール">
+                        ▶
                     </button>
                 </div>
 
@@ -382,6 +390,18 @@ export const PAT2 = {
         const gateDisp = document.getElementById(`pat2-gate-disp-${uid}`);
         const togglePresets = document.getElementById(`pat2-toggle-presets-${uid}`);
         const sendBtn = document.getElementById(`pat2-send-btn-${uid}`);
+        const scrollLeftBtn = document.getElementById(`pat2-scroll-left-${uid}`);
+        const scrollRightBtn = document.getElementById(`pat2-scroll-right-${uid}`);
+
+        // Horizontal scroll button handlers for tokenStrip
+        scrollLeftBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (tokenStrip) tokenStrip.scrollBy({ left: -60, behavior: 'smooth' });
+        });
+        scrollRightBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (tokenStrip) tokenStrip.scrollBy({ left: 60, behavior: 'smooth' });
+        });
 
         // Save original committed pattern on dialog open for reverting if dismissed without SEND
         if (m._committedPattern === undefined) {
@@ -485,10 +505,10 @@ export const PAT2 = {
             const isDirty = draftPat !== (m._committedPattern || '');
             if (isDirty) {
                 sendBtn.disabled = false;
-                sendBtn.className = 'w-6 h-6 bg-cyan-500 hover:bg-cyan-400 text-slate-950 border border-cyan-300 font-black rounded flex items-center justify-center shadow-md shadow-cyan-500/40 transition active:scale-95 shrink-0 cursor-pointer font-mono text-[11px] animate-pulse';
+                sendBtn.className = 'w-5 h-5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 border border-cyan-300 font-black rounded flex items-center justify-center shadow-md shadow-cyan-500/40 transition active:scale-95 shrink-0 cursor-pointer font-mono text-[10px] animate-pulse';
             } else {
                 sendBtn.disabled = false;
-                sendBtn.className = 'w-6 h-6 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 border border-slate-700 rounded flex items-center justify-center shadow-sm transition active:scale-95 shrink-0 cursor-pointer font-mono text-[11px] font-bold';
+                sendBtn.className = 'w-5 h-5 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 border border-slate-700 rounded flex items-center justify-center shadow-sm transition active:scale-95 shrink-0 cursor-pointer font-mono text-[10px] font-bold';
             }
         };
 
