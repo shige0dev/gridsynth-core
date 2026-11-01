@@ -469,8 +469,8 @@ export const PAT2 = {
             }
         };
 
-        // Automatic Drag-and-drop grouping (merges source note into target)
-        const mergeTokens = (sourceId, targetId) => {
+        // Automatic Drag-and-drop: Grouping (drop on token) OR Move/Reorder (drop between tokens)
+        const moveOrMergeTokens = (sourceId, targetId, insertPos = 'group') => {
             if (!sourceId || !targetId || sourceId === targetId) return;
 
             let sourceNode = null;
@@ -487,29 +487,46 @@ export const PAT2 = {
             extractSource(m._tokens);
             if (!sourceNode) return;
 
-            function insertIntoTarget(list) {
-                for (let i = 0; i < list.length; i++) {
-                    if (list[i].id === targetId) {
-                        if (list[i].type === 'group') {
-                            list[i].children = list[i].children || [];
-                            list[i].children.push(sourceNode);
-                        } else {
-                            const origTarget = list[i];
-                            const newGroup = {
-                                id: genId(),
-                                type: 'group',
-                                groupType: 'bracket',
-                                children: [origTarget, sourceNode]
-                            };
-                            list[i] = newGroup;
+            if (insertPos === 'group') {
+                // Merge into group on drop
+                function insertIntoTargetGroup(list) {
+                    for (let i = 0; i < list.length; i++) {
+                        if (list[i].id === targetId) {
+                            if (list[i].type === 'group') {
+                                list[i].children = list[i].children || [];
+                                list[i].children.push(sourceNode);
+                            } else {
+                                const origTarget = list[i];
+                                const newGroup = {
+                                    id: genId(),
+                                    type: 'group',
+                                    groupType: 'bracket',
+                                    children: [origTarget, sourceNode]
+                                };
+                                list[i] = newGroup;
+                            }
+                            return true;
                         }
-                        return true;
+                        if (list[i].children && insertIntoTargetGroup(list[i].children)) return true;
                     }
-                    if (list[i].children && insertIntoTarget(list[i].children)) return true;
+                    return false;
                 }
-                return false;
+                insertIntoTargetGroup(m._tokens);
+            } else {
+                // Move / Reorder before or after target
+                function insertNearTarget(list) {
+                    for (let i = 0; i < list.length; i++) {
+                        if (list[i].id === targetId) {
+                            const insertIdx = insertPos === 'before' ? i : i + 1;
+                            list.splice(insertIdx, 0, sourceNode);
+                            return true;
+                        }
+                        if (list[i].children && insertNearTarget(list[i].children)) return true;
+                    }
+                    return false;
+                }
+                insertNearTarget(m._tokens);
             }
-            insertIntoTarget(m._tokens);
 
             selectedIds.clear();
             renderTokens();
@@ -525,6 +542,7 @@ export const PAT2 = {
                 let isHorizontalDrag = false;
                 let lastDiff = 0;
                 let targetOverEl = null;
+                let dropMode = 'group'; // 'group' (center) | 'before' (left edge) | 'after' (right edge)
 
                 const onPointerDown = (e) => {
                     e.preventDefault();
@@ -535,6 +553,7 @@ export const PAT2 = {
                     isHorizontalDrag = false;
                     lastDiff = 0;
                     targetOverEl = null;
+                    dropMode = 'group';
 
                     // Long press detection (300ms) for multi-select
                     pressTimer = setTimeout(() => {
@@ -549,12 +568,17 @@ export const PAT2 = {
 
                     try { el.setPointerCapture(e.pointerId); } catch (_) {}
 
+                    const clearTargetIndicators = (nodeEl) => {
+                        if (!nodeEl) return;
+                        nodeEl.classList.remove('ring-2', 'ring-purple-400', 'border-l-2', 'border-l-cyan-400', 'border-r-2', 'border-r-cyan-400');
+                    };
+
                     const onPointerMove = (me) => {
                         const dx = me.clientX - startX;
                         const dy = startY - me.clientY;
 
-                        // Check horizontal drag for grouping
-                        if (!isDraggingSwipe && Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy)) {
+                        // Check horizontal drag for moving/reordering or grouping
+                        if (!isDraggingSwipe && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) {
                             if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
                             isHorizontalDrag = true;
                             el.style.transform = `translateX(${dx}px) scale(1.05)`;
@@ -566,12 +590,30 @@ export const PAT2 = {
                             const targetNode = elemBelow?.closest?.('.pat2-node-token');
                             if (targetNode && targetNode !== el) {
                                 if (targetOverEl && targetOverEl !== targetNode) {
-                                    targetOverEl.classList.remove('ring-2', 'ring-purple-400');
+                                    clearTargetIndicators(targetOverEl);
                                 }
                                 targetOverEl = targetNode;
-                                targetOverEl.classList.add('ring-2', 'ring-purple-400');
+
+                                // Determine whether dropping on center (group) or on edge (move/reorder between)
+                                const rect = targetNode.getBoundingClientRect();
+                                const relX = (me.clientX - rect.left) / Math.max(1, rect.width);
+                                clearTargetIndicators(targetNode);
+
+                                if (relX < 0.28) {
+                                    // Drop between tokens (before target)
+                                    dropMode = 'before';
+                                    targetNode.classList.add('border-l-2', 'border-l-cyan-400');
+                                } else if (relX > 0.72) {
+                                    // Drop between tokens (after target)
+                                    dropMode = 'after';
+                                    targetNode.classList.add('border-r-2', 'border-r-cyan-400');
+                                } else {
+                                    // Drop directly on icon (group)
+                                    dropMode = 'group';
+                                    targetNode.classList.add('ring-2', 'ring-purple-400');
+                                }
                             } else if (targetOverEl) {
-                                targetOverEl.classList.remove('ring-2', 'ring-purple-400');
+                                clearTargetIndicators(targetOverEl);
                                 targetOverEl = null;
                             }
                             return;
@@ -600,11 +642,11 @@ export const PAT2 = {
                         el.style.opacity = '';
 
                         if (targetOverEl) {
-                            targetOverEl.classList.remove('ring-2', 'ring-purple-400');
+                            clearTargetIndicators(targetOverEl);
                             const targetId = targetOverEl.dataset.nodeId;
                             targetOverEl = null;
                             if (targetId && targetId !== id) {
-                                mergeTokens(id, targetId);
+                                moveOrMergeTokens(id, targetId, dropMode);
                                 cleanup();
                                 return;
                             }
@@ -621,6 +663,8 @@ export const PAT2 = {
                             }
                             renderTokens();
                         }
+                        cleanup();
+                    };
                         cleanup();
                     };
 
