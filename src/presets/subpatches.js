@@ -980,5 +980,44 @@ export const FACTORY_SUBPATCHES = {
                 { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }
             ]
         }
+    },
+    'FACTORY_MAP': {
+        id: 'FACTORY_MAP',
+        subType: 'CvMapper',
+        format: 'gridsynth-submodule',
+        version: '2.1',
+        name: 'MAP',
+        category: 'Function',
+        isSystem: true,
+        description: 'CV Linear Remapper: Out = (In * Scale) + Offset',
+        manifest: {
+            description: 'CVリマッパー（スケール＆オフセット変換: Out = In * Scale + Offset）',
+            ports: {
+                cv_in: { pin: 'PIN5', signal: 'cv' },
+                cv_out: { pin: 'PIN10', signal: 'cv' }
+            }
+        },
+        pins: {
+            PIN5: { label: 'CV In', type: 'cv_in' },
+            PIN10: { label: 'CV Out', type: 'cv_out' }
+        },
+        pageData: {
+            name: 'MAP',
+            slots: {
+                "2": "SUB_IO1",
+                "6": "MATH2_1",
+                "7": "MATH2_2"
+            },
+            modules: {
+                "SUB_IO1": { "type": "SUB_IO", "col": 2, "row": 0 },
+                "MATH2_1": { "type": "MATH2", "mode": "MULTI", "valA": 0.0, "valB": 1.0, "col": 1, "row": 1 },
+                "MATH2_2": { "type": "MATH2", "mode": "ADD", "valA": 0.0, "valB": 0.0, "col": 2, "row": 1 }
+            },
+            connections: [
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "MATH2_1", port: "cv_in_a" } },
+                { from: { moduleId: "MATH2_1", port: "cv_out" }, to: { moduleId: "MATH2_2", port: "cv_in_a" } },
+                { from: { moduleId: "MATH2_2", port: "cv_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }
+            ]
+        }
     }
 };

@@ -371,7 +371,8 @@ export class ModalManager {
                     { id: 'ALL', label: 'ALL', count: factorySubs.length },
                     { id: 'Synth Voice', label: 'SYNTH', count: factorySubs.filter(s => s.category === 'Synth Voice').length },
                     { id: 'Percussion', label: 'PERC', count: factorySubs.filter(s => s.category === 'Percussion').length },
-                    { id: 'Effect', label: 'FX', count: factorySubs.filter(s => s.category === 'Effect').length }
+                    { id: 'Effect', label: 'FX', count: factorySubs.filter(s => s.category === 'Effect').length },
+                    { id: 'Function', label: 'FUNC', count: factorySubs.filter(s => s.category === 'Function').length }
                 ];
 
                 const filteredFactorySubs = factoryCategory === 'ALL'
