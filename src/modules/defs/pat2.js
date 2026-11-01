@@ -178,10 +178,10 @@ export const PAT2 = {
     color: 'sky',
     defaults: () => ({
         type: 'PAT2',
-        pattern: 'c2 c2 c2 c2',
+        pattern: 'c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2',
         cycleBeats: 4,
         gateLen: 0.8,
-        presetName: '4-on-floor',
+        presetName: '16-step',
         _addPitch: 'c2'
     }),
     ports: () => ({
@@ -236,7 +236,7 @@ export const PAT2 = {
     },
     renderModal: (m, ctx) => {
         const uid = ctx?.id || m?.id || 'pat2';
-        const pat = m.pattern || 'c2 c2 c2 c2';
+        const pat = m.pattern || 'c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2';
         const gatePct = Math.round((m.gateLen ?? 0.8) * 100);
         const showPresets = m._showPresets === true;
         const curAddPitch = (m._addPitch || 'c2').toUpperCase();
