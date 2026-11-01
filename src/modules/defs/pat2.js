@@ -253,7 +253,7 @@ export const PAT2 = {
 
         return `
             <div id="pat2-modal-root-${uid}" class="space-y-1 p-0.5 select-none touch-none w-full">
-                <!-- 1st Row: Pitch changer / Rest changer, Grouping ([] / <>), Ungroup, Modifiers (*n, !n), Trash Delete -->
+                <!-- 1st Row: Pitch changer / Rest changer, Grouping ([] / <>), Ungroup, Modifiers (*n, !n), Trash Delete, GATE slider -->
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-1 overflow-x-auto">
                     <!-- Left: Fast Note / Rest Appender (Clean Blue theme) -->
                     <div class="flex items-center gap-1 shrink-0">
@@ -266,7 +266,7 @@ export const PAT2 = {
                         </button>
                     </div>
 
-                    <!-- Right: Grouping Buttons ([] / <>), Ungroup, Modifiers (*n, !n), Trash Delete (Matching Blue theme) -->
+                    <!-- Middle: Grouping Buttons ([] / <>), Ungroup, Modifiers (*n, !n), Trash Delete (Matching Blue theme) -->
                     <div class="flex items-center gap-1 shrink-0">
                         <button id="pat2-bracket-btn-${uid}" disabled class="h-5 px-1.5 bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed" title="横並び選択した項目を [] 分割グループにまとめる">
                             [ ]
@@ -287,24 +287,34 @@ export const PAT2 = {
                             <i data-lucide="trash-2" class="w-3 h-3 pointer-events-none"></i>
                         </button>
                     </div>
+
+                    <!-- Right: GATE slider in Row 1 -->
+                    <div class="flex items-center min-w-[70px] bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800 gap-1 shrink-0">
+                        <span class="text-[7px] text-slate-400 uppercase font-mono shrink-0">GATE</span>
+                        <input type="range" id="pat2-gate-slider-${uid}" min="10" max="95" step="5" value="${gatePct}" class="w-10 h-1 accent-cyan-400 cursor-pointer touch-none">
+                        <span id="pat2-gate-disp-${uid}" class="text-[7.5px] font-mono font-bold text-cyan-300 min-w-[18px] text-right shrink-0">${gatePct}%</span>
+                    </div>
                 </div>
 
-                <!-- Token Strip Container with SEND (↵) Button at the right end -->
+                <!-- Token Strip Container with Compact SEND (↵) Button at the right end -->
                 <div class="flex items-center gap-1 w-full min-w-0">
                     <div id="pat2-token-container-${uid}" class="relative flex-1 bg-slate-950 border border-slate-800 rounded p-[2px] overflow-hidden shadow-inner cursor-default min-w-0">
                         <div id="pat2-token-strip-${uid}" class="flex items-center gap-[2px] overflow-x-auto min-h-[26px] h-6 py-0 px-[2px] scrollbar-thin scrollbar-thumb-slate-700 select-none">
                             <!-- Populated dynamically via renderTokens -->
                         </div>
                     </div>
-                    <!-- SEND Button (↵) at the rightmost of input strip -->
-                    <button id="pat2-send-btn-${uid}" class="h-7 px-2 bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 hover:text-white border border-cyan-500/70 rounded flex items-center justify-center gap-1 shadow-sm transition active:scale-95 shrink-0 cursor-pointer font-mono text-[9px] font-bold" title="パターンをシンセへ反映 (SEND / Enter)">
-                        <span>SEND</span>
-                        <span class="text-[11px] leading-none">↵</span>
+                    <!-- Minimalist SEND Button (Icon only) -->
+                    <button id="pat2-send-btn-${uid}" class="w-6 h-6 bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 hover:text-white border border-cyan-500/70 rounded flex items-center justify-center shadow-sm transition active:scale-95 shrink-0 cursor-pointer font-mono text-[11px] font-bold" title="パターンをシンセへ反映 (SEND / Enter)">
+                        <span>↵</span>
                     </button>
                 </div>
 
-                <!-- Mini Manual / Symbol Reference Bar (Explaining notation symbols: [], <>, *n, !n, ~) -->
-                <div class="bg-slate-950/90 rounded border border-slate-800/80 px-2 py-0.5 text-[6.5px] font-mono text-slate-400 flex flex-wrap items-center gap-x-2 gap-y-0.5 leading-tight">
+                <!-- Manual / Symbol Reference Bar with PRESET button placed at the left end -->
+                <div class="bg-slate-950/90 rounded border border-slate-800/80 px-1 py-0.5 text-[6.5px] font-mono text-slate-400 flex flex-wrap items-center gap-x-2 gap-y-0.5 leading-tight">
+                    <button id="pat2-toggle-presets-${uid}" class="flex items-center gap-0.5 text-[7px] font-bold text-slate-300 hover:text-cyan-300 uppercase tracking-wider transition bg-slate-900 hover:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 shrink-0">
+                        <span class="text-[6px] font-mono text-cyan-400">${showPresets ? '▼' : '▶'}</span>
+                        <span>PRESET</span>
+                    </button>
                     <span class="text-cyan-400 font-bold">MANUAL:</span>
                     <span><strong class="text-purple-300 font-bold">[A B]</strong> 1拍内等分</span>
                     <span><strong class="text-purple-300 font-bold">&lt;A B&gt;</strong> 周期交代</span>
@@ -312,20 +322,6 @@ export const PAT2 = {
                     <span><strong class="text-amber-300 font-bold">!N</strong> N回連続</span>
                     <span><strong class="text-slate-300 font-bold">~</strong> 休符</span>
                     <span class="text-slate-500">(↕音程 / ↔移動)</span>
-                </div>
-
-                <!-- Bottom Row: GATE slider & PRESET Toggle -->
-                <div class="flex items-center justify-between pt-0.5 border-t border-slate-800/80 gap-2">
-                    <div class="flex-1 flex items-center min-w-0 bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800 gap-1.5">
-                        <span class="text-[7px] text-slate-400 uppercase font-mono shrink-0">GATE</span>
-                        <input type="range" id="pat2-gate-slider-${uid}" min="10" max="95" step="5" value="${gatePct}" class="flex-1 w-full h-1 accent-cyan-400 cursor-pointer touch-none">
-                        <span id="pat2-gate-disp-${uid}" class="text-[7.5px] font-mono font-bold text-cyan-300 min-w-[20px] text-right shrink-0">${gatePct}%</span>
-                    </div>
-
-                    <button id="pat2-toggle-presets-${uid}" class="flex items-center gap-0.5 text-[7px] font-bold text-slate-400 hover:text-cyan-300 uppercase tracking-wider transition bg-slate-950 px-2 py-1 rounded border border-slate-800 shrink-0">
-                        <span class="text-[6px] font-mono text-cyan-400">${showPresets ? '▼' : '▶'}</span>
-                        <span>PRESET</span>
-                    </button>
                 </div>
 
                 <!-- Presets Grid (Collapsible at the bottom) -->
@@ -415,13 +411,15 @@ export const PAT2 = {
 
                 if (node.type === 'group') {
                     const isAngle = node.groupType === 'angle';
-                    const label = isAngle ? '<>' : '[]';
+                    const openSym = isAngle ? '<' : '[';
+                    const closeSym = isAngle ? '>' : ']';
                     return `
                         <div data-node-id="${node.id}" class="pat2-node-token pat2-group-box relative flex items-center gap-[1px] px-[2px] py-[1px] rounded border border-dashed ${borderCls} cursor-pointer transition shrink-0">
-                            <span class="text-[5.5px] font-mono text-purple-400 font-bold absolute -top-1.5 left-0.5 bg-slate-950 px-0.5 rounded leading-none pointer-events-none">${label}</span>
+                            <span class="text-[9px] font-mono font-bold text-sky-400 select-none pointer-events-none px-[1px] leading-none">${openSym}</span>
                             <div class="flex items-center gap-[1px]">
                                 ${(node.children || []).map(c => renderNode(c, depth + 1)).join('')}
                             </div>
+                            <span class="text-[9px] font-mono font-bold text-sky-400 select-none pointer-events-none px-[1px] leading-none">${closeSym}</span>
                             ${renderBadge(node)}
                         </div>`;
                 }
@@ -457,10 +455,10 @@ export const PAT2 = {
             const isDirty = draftPat !== (m._committedPattern || '');
             if (isDirty) {
                 sendBtn.disabled = false;
-                sendBtn.className = 'h-7 px-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 border border-cyan-300 font-black rounded flex items-center justify-center gap-1 shadow-md shadow-cyan-500/40 transition active:scale-95 shrink-0 cursor-pointer font-mono text-[9px] animate-pulse';
+                sendBtn.className = 'w-6 h-6 bg-cyan-500 hover:bg-cyan-400 text-slate-950 border border-cyan-300 font-black rounded flex items-center justify-center shadow-md shadow-cyan-500/40 transition active:scale-95 shrink-0 cursor-pointer font-mono text-[11px] animate-pulse';
             } else {
                 sendBtn.disabled = false;
-                sendBtn.className = 'h-7 px-2 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 border border-slate-700 rounded flex items-center justify-center gap-1 shadow-sm transition active:scale-95 shrink-0 cursor-pointer font-mono text-[9px] font-bold';
+                sendBtn.className = 'w-6 h-6 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 border border-slate-700 rounded flex items-center justify-center shadow-sm transition active:scale-95 shrink-0 cursor-pointer font-mono text-[11px] font-bold';
             }
         };
 
