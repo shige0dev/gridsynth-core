@@ -262,15 +262,14 @@ export const PAT2 = {
                         <span id="pat2-gate-disp-${uid}" class="text-[7.5px] font-mono font-bold text-cyan-300 min-w-[20px] text-right shrink-0">${gatePct}%</span>
                     </div>
 
-                    <!-- Right Action: +NOTE (slide-adjustable pitch) and +REST -->
+                    <!-- Right Action: Note (slide-adjustable pitch) and Rest (~) without '+' -->
                     <div class="flex items-center gap-1 shrink-0">
-                        <div id="pat2-add-note-box-${uid}" class="h-5 px-1.5 bg-cyan-900/80 hover:bg-cyan-800 text-cyan-200 rounded border border-cyan-500/70 shadow-sm transition cursor-ns-resize flex items-center gap-1 touch-none" title="上下スワイプで音程変更 / タップで追加">
-                            <span class="text-[7px] text-cyan-400 font-bold pointer-events-none">+</span>
+                        <div id="pat2-add-note-box-${uid}" class="h-5 px-1.5 bg-cyan-900/80 hover:bg-cyan-800 text-cyan-200 rounded border border-cyan-500/70 shadow-sm transition cursor-ns-resize flex items-center gap-1 touch-none" title="上下スワイプで音程変更 / タップで設定・追加">
                             <span id="pat2-add-pitch-disp-${uid}" class="text-[8px] font-mono font-black text-cyan-100 pointer-events-none">${curAddPitch}</span>
                             <span class="text-[6px] text-cyan-400/80 pointer-events-none">↕</span>
                         </div>
-                        <button id="pat2-add-rest-${uid}" class="h-5 px-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded text-[7.5px] font-bold border border-slate-700 shadow-sm transition active:scale-95 flex items-center gap-0.5" title="休符を追加">
-                            <span>+~</span>
+                        <button id="pat2-add-rest-${uid}" class="h-5 px-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded text-[8px] font-bold border border-slate-700 shadow-sm transition active:scale-95 flex items-center justify-center font-mono" title="休符を設定・追加">
+                            <span>~</span>
                         </button>
                     </div>
                 </div>
@@ -286,22 +285,22 @@ export const PAT2 = {
                 </div>
                 ` : ''}
 
-                <!-- Token Strip: Ultra-compact, 2px margin/padding, 16 steps fit at once -->
-                <div class="relative w-full bg-slate-950 border border-slate-800 rounded p-[2px] overflow-hidden shadow-inner">
+                <!-- Token Strip Container: Clicking outside tokens cancels selection -->
+                <div id="pat2-token-container-${uid}" class="relative w-full bg-slate-950 border border-slate-800 rounded p-[2px] overflow-hidden shadow-inner cursor-default">
                     <div id="pat2-token-strip-${uid}" class="flex items-center gap-[2px] overflow-x-auto min-h-[26px] h-6 py-0 px-[2px] scrollbar-thin scrollbar-thumb-slate-700 select-none">
                         <!-- Populated dynamically via renderTokens -->
                     </div>
                 </div>
 
-                <!-- Compact Inspector / Action Bar (Without count & group button) -->
+                <!-- Compact Inspector / Action Bar (Without redundant rest button; Trash icon for DEL) -->
                 <div id="pat2-inspector-${uid}" class="bg-slate-950/90 rounded border border-slate-800 px-1.5 py-0.5 flex items-center justify-between gap-1 shadow-sm">
-                    <!-- Left: Current Pitch Display (without token count) -->
+                    <!-- Left: Current Pitch Display -->
                     <div class="flex items-center gap-1 min-w-0 shrink-0">
                         <span id="pat2-pitch-disp-${uid}" class="text-[9.5px] font-mono font-black text-cyan-300">--</span>
                         <span class="text-[6.5px] font-mono text-slate-500 hidden sm:inline">(ドラッグで重ねてグループ化 / ↕スワイプで音程)</span>
                     </div>
 
-                    <!-- Right: Modifiers (*n, !n), Rest (~), Delete -->
+                    <!-- Right: Ungroup, Modifiers (*n, !n), Trash Delete -->
                     <div class="flex items-center gap-1 shrink-0">
                         <button id="pat2-ungroup-btn-${uid}" class="h-4 px-1.5 bg-slate-900 hover:bg-slate-800 text-slate-400 rounded text-[7px] font-bold border border-slate-800 shadow-sm transition active:scale-95" title="グループ解除">
                             UNGROUP
@@ -312,11 +311,8 @@ export const PAT2 = {
                         <button id="pat2-repeat-btn-${uid}" class="h-4 px-1 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded text-[7px] font-bold border border-amber-500/50 transition" title="複製 (!2, !3, !4)">
                             !n
                         </button>
-                        <button id="pat2-toggle-rest-btn-${uid}" class="h-4 px-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded text-[7px] font-bold border border-cyan-500/50 transition" title="音符/休符(~)切替">
-                            ~
-                        </button>
-                        <button id="pat2-del-btn-${uid}" class="h-4 px-1.5 bg-red-950/80 hover:bg-red-900 text-red-300 rounded text-[7px] font-bold border border-red-500/60 transition" title="選択削除">
-                            DEL
+                        <button id="pat2-del-btn-${uid}" class="h-4 px-1.5 bg-red-950/80 hover:bg-red-900 text-red-300 rounded border border-red-500/60 transition flex items-center justify-center active:scale-95" title="選択削除">
+                            <i data-lucide="trash-2" class="w-2.5 h-2.5 pointer-events-none"></i>
                         </button>
                     </div>
                 </div>
@@ -328,11 +324,11 @@ export const PAT2 = {
         if (!root) return;
 
         const tokenStrip = document.getElementById(`pat2-token-strip-${uid}`);
+        const tokenContainer = document.getElementById(`pat2-token-container-${uid}`);
         const pitchDisp = document.getElementById(`pat2-pitch-disp-${uid}`);
         const ungroupBtn = document.getElementById(`pat2-ungroup-btn-${uid}`);
         const subdivBtn = document.getElementById(`pat2-subdiv-btn-${uid}`);
         const repeatBtn = document.getElementById(`pat2-repeat-btn-${uid}`);
-        const toggleRestBtn = document.getElementById(`pat2-toggle-rest-btn-${uid}`);
         const delBtn = document.getElementById(`pat2-del-btn-${uid}`);
         const addNoteBox = document.getElementById(`pat2-add-note-box-${uid}`);
         const addPitchDisp = document.getElementById(`pat2-add-pitch-disp-${uid}`);
@@ -343,6 +339,23 @@ export const PAT2 = {
 
         let selectedIds = new Set();
         let stepCounter = 0;
+
+        // Render Lucide icons for Trash
+        const refreshIcons = () => {
+            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                try { lucide.createIcons({ root }); } catch (_) {}
+            }
+        };
+
+        // Click outside of any token inside container clears selection
+        tokenContainer?.addEventListener('pointerdown', (e) => {
+            if (!e.target.closest('.pat2-node-token')) {
+                if (selectedIds.size > 0) {
+                    selectedIds.clear();
+                    renderTokens();
+                }
+            }
+        });
 
         // Render HTML for tokens with tight 2px spacing
         const renderTokens = () => {
@@ -389,6 +402,7 @@ export const PAT2 = {
             tokenStrip.innerHTML = m._tokens.map(t => renderNode(t)).join('');
             bindTokenEvents();
             updateInspector();
+            refreshIcons();
         };
 
         const syncPattern = () => {
@@ -753,23 +767,7 @@ export const PAT2 = {
             syncPattern();
         });
 
-        // Toggle Rest / Note
-        toggleRestBtn?.addEventListener('click', () => {
-            const selected = getSelectedNodes();
-            selected.forEach(n => {
-                if (n.type === 'note') {
-                    n.type = 'rest';
-                    n.val = '~';
-                } else if (n.type === 'rest') {
-                    n.type = 'note';
-                    n.val = (m._addPitch || 'c2').toLowerCase();
-                }
-            });
-            renderTokens();
-            syncPattern();
-        });
-
-        // Delete selected tokens
+        // Delete selected tokens (Trash)
         delBtn?.addEventListener('click', () => {
             if (selectedIds.size === 0) return;
             function filterOut(list) {
