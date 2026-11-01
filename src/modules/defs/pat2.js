@@ -268,10 +268,10 @@ export const PAT2 = {
 
                     <!-- Middle: Grouping Buttons ([] / <>), Ungroup, Modifiers (*n, !n), Trash Delete (Matching Blue theme) -->
                     <div class="flex items-center gap-0.5 shrink-0">
-                        <button id="pat2-bracket-btn-${uid}" disabled class="h-5 px-1 bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 opacity-50 cursor-not-allowed" title="横並び選択した項目を [] 分割グループにまとめる">
+                        <button id="pat2-bracket-btn-${uid}" disabled class="h-5 w-[18px] flex items-center justify-center bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 opacity-50 cursor-not-allowed" title="横並び選択した項目を [] 分割グループにまとめる">
                             []
                         </button>
-                        <button id="pat2-angle-btn-${uid}" disabled class="h-5 px-1 bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 opacity-50 cursor-not-allowed tracking-tight" title="横並び選択した項目を <> 周期交代グループにまとめる">
+                        <button id="pat2-angle-btn-${uid}" disabled class="h-5 w-[18px] flex items-center justify-center bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 opacity-50 cursor-not-allowed tracking-tighter" title="横並び選択した項目を <> 周期交代グループにまとめる">
                             &lt;&gt;
                         </button>
                         <button id="pat2-ungroup-btn-${uid}" class="h-5 px-1 bg-sky-950/80 hover:bg-sky-900 text-sky-300 rounded text-[7px] font-bold border border-sky-700/60 shadow-sm transition active:scale-95" title="グループ解除">
@@ -536,17 +536,17 @@ export const PAT2 = {
             if (bracketBtn) {
                 bracketBtn.disabled = !adjGroup;
                 if (adjGroup) {
-                    bracketBtn.className = 'h-5 px-1 bg-sky-900 hover:bg-sky-800 text-sky-100 border border-sky-400 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 cursor-pointer';
+                    bracketBtn.className = 'h-5 w-[18px] flex items-center justify-center bg-sky-900 hover:bg-sky-800 text-sky-100 border border-sky-400 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 cursor-pointer';
                 } else {
-                    bracketBtn.className = 'h-5 px-1 bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 opacity-50 cursor-not-allowed';
+                    bracketBtn.className = 'h-5 w-[18px] flex items-center justify-center bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 opacity-50 cursor-not-allowed';
                 }
             }
             if (angleBtn) {
                 angleBtn.disabled = !adjGroup;
                 if (adjGroup) {
-                    angleBtn.className = 'h-5 px-1 bg-sky-900 hover:bg-sky-800 text-sky-100 border border-sky-400 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 cursor-pointer tracking-tight';
+                    angleBtn.className = 'h-5 w-[18px] flex items-center justify-center bg-sky-900 hover:bg-sky-800 text-sky-100 border border-sky-400 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 cursor-pointer tracking-tighter';
                 } else {
-                    angleBtn.className = 'h-5 px-1 bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 opacity-50 cursor-not-allowed tracking-tight';
+                    angleBtn.className = 'h-5 w-[18px] flex items-center justify-center bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 opacity-50 cursor-not-allowed tracking-tighter';
                 }
             }
         };
