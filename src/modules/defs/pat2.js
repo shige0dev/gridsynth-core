@@ -248,42 +248,42 @@ export const PAT2 = {
 
         return `
             <div id="pat2-modal-root-${uid}" class="space-y-1 p-0.5 select-none touch-none w-full">
-                <!-- Top Toolbar: PRESET, GATE slider, +NOTE, +REST -->
-                <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-1.5">
-                    <button id="pat2-toggle-presets-${uid}" class="flex items-center gap-0.5 text-[7px] font-bold text-slate-400 hover:text-cyan-300 uppercase tracking-wider transition bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800 shrink-0">
-                        <span class="text-[6px] font-mono text-cyan-400">${showPresets ? '▼' : '▶'}</span>
-                        <span>PRESET</span>
-                    </button>
-
-                    <!-- Middle: GATE Slider -->
-                    <div class="flex-1 flex items-center min-w-0 bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800 gap-1.5">
-                        <span class="text-[7px] text-slate-400 uppercase font-mono shrink-0">GATE</span>
-                        <input type="range" id="pat2-gate-slider-${uid}" min="10" max="95" step="5" value="${gatePct}" class="flex-1 w-full h-1 accent-cyan-400 cursor-pointer touch-none">
-                        <span id="pat2-gate-disp-${uid}" class="text-[7.5px] font-mono font-bold text-cyan-300 min-w-[20px] text-right shrink-0">${gatePct}%</span>
-                    </div>
-
-                    <!-- Right Action: Note (slide-adjustable pitch) and Rest (~) without '+' -->
+                <!-- 1st Row: Pitch display, Pitch changer / Rest changer, Grouping ([] / <>), Ungroup, Modifiers (*n, !n), Trash Delete -->
+                <div class="flex items-center justify-between pb-1 border-b border-slate-800 gap-1 overflow-x-auto">
+                    <!-- Left: Current Pitch Display & Fast Pitch / Rest Selector -->
                     <div class="flex items-center gap-1 shrink-0">
-                        <div id="pat2-add-note-box-${uid}" class="h-5 px-1.5 bg-cyan-900/80 hover:bg-cyan-800 text-cyan-200 rounded border border-cyan-500/70 shadow-sm transition cursor-ns-resize flex items-center gap-1 touch-none" title="上下スワイプで音程変更 / タップで設定・追加">
+                        <span id="pat2-pitch-disp-${uid}" class="text-[9.5px] font-mono font-black text-cyan-300 min-w-[20px]">--</span>
+                        <div id="pat2-add-note-box-${uid}" class="h-5 px-1.5 bg-cyan-900/80 hover:bg-cyan-800 text-cyan-200 rounded border border-cyan-500/70 shadow-sm transition cursor-ns-resize flex items-center gap-0.5 touch-none" title="上下スワイプで音程変更 / タップで入替・追加">
                             <span id="pat2-add-pitch-disp-${uid}" class="text-[8px] font-mono font-black text-cyan-100 pointer-events-none">${curAddPitch}</span>
                             <span class="text-[6px] text-cyan-400/80 pointer-events-none">↕</span>
                         </div>
-                        <button id="pat2-add-rest-${uid}" class="h-5 px-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded text-[8px] font-bold border border-slate-700 shadow-sm transition active:scale-95 flex items-center justify-center font-mono" title="休符を設定・追加">
+                        <button id="pat2-add-rest-${uid}" class="h-5 px-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded text-[8px] font-bold border border-slate-700 shadow-sm transition active:scale-95 flex items-center justify-center font-mono" title="休符を入替・追加">
                             <span>~</span>
                         </button>
                     </div>
-                </div>
 
-                <!-- Presets Grid (Collapsible) -->
-                ${showPresets ? `
-                <div class="grid grid-cols-4 sm:grid-cols-6 gap-1 pt-0.5 border-b border-slate-800/80 pb-1">
-                    ${STRUDEL_PRESETS.map((p) => `
-                        <button class="pat2-preset-btn h-5 px-1 bg-slate-800/90 hover:bg-cyan-950/80 border border-slate-700 hover:border-cyan-500/80 rounded flex items-center justify-center transition group truncate" data-pattern="${p.pattern}">
-                            <span class="text-[7px] font-bold text-cyan-300 group-hover:text-white truncate pointer-events-none">${p.name}</span>
+                    <!-- Right: Grouping Buttons ([] / <>), Ungroup, Modifiers (*n, !n), Trash Delete -->
+                    <div class="flex items-center gap-1 shrink-0">
+                        <button id="pat2-bracket-btn-${uid}" disabled class="h-5 px-1.5 bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed" title="隣接選択した項目を [] 分割グループにまとめる">
+                            [ ]
                         </button>
-                    `).join('')}
+                        <button id="pat2-angle-btn-${uid}" disabled class="h-5 px-1.5 bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed" title="隣接選択した項目を <> 周期交代グループにまとめる">
+                            &lt; &gt;
+                        </button>
+                        <button id="pat2-ungroup-btn-${uid}" class="h-5 px-1.5 bg-slate-900 hover:bg-slate-800 text-slate-400 rounded text-[7.5px] font-bold border border-slate-800 shadow-sm transition active:scale-95" title="グループ解除">
+                            UNGROUP
+                        </button>
+                        <button id="pat2-subdiv-btn-${uid}" class="h-5 px-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded text-[7.5px] font-bold border border-amber-500/50 transition" title="細分化 (*2, *3, *4)">
+                            *n
+                        </button>
+                        <button id="pat2-repeat-btn-${uid}" class="h-5 px-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded text-[7.5px] font-bold border border-amber-500/50 transition" title="複製 (!2, !3, !4)">
+                            !n
+                        </button>
+                        <button id="pat2-del-btn-${uid}" class="h-5 px-1.5 bg-red-950/80 hover:bg-red-900 text-red-300 rounded border border-red-500/60 transition flex items-center justify-center active:scale-95" title="選択削除">
+                            <i data-lucide="trash-2" class="w-3 h-3 pointer-events-none"></i>
+                        </button>
+                    </div>
                 </div>
-                ` : ''}
 
                 <!-- Token Strip Container: Clicking outside tokens cancels selection -->
                 <div id="pat2-token-container-${uid}" class="relative w-full bg-slate-950 border border-slate-800 rounded p-[2px] overflow-hidden shadow-inner cursor-default">
@@ -292,36 +292,41 @@ export const PAT2 = {
                     </div>
                 </div>
 
-                <!-- Compact Inspector / Action Bar (Without redundant rest button; Trash icon for DEL) -->
-                <div id="pat2-inspector-${uid}" class="bg-slate-950/90 rounded border border-slate-800 px-1.5 py-0.5 flex items-center justify-between gap-1 shadow-sm">
-                    <!-- Left: Current Pitch Display -->
-                    <div class="flex items-center gap-1 min-w-0 shrink-0">
-                        <span id="pat2-pitch-disp-${uid}" class="text-[9.5px] font-mono font-black text-cyan-300">--</span>
-                        <span class="text-[6.5px] font-mono text-slate-500 hidden sm:inline">(ドラッグで移動 / ↕スワイプで音程)</span>
+                <!-- Mini Manual / Symbol Reference Bar (Explaining notation symbols: [], <>, *n, !n, ~) -->
+                <div class="bg-slate-950/90 rounded border border-slate-800/80 px-2 py-0.5 text-[6.5px] font-mono text-slate-400 flex flex-wrap items-center gap-x-2 gap-y-0.5 leading-tight">
+                    <span class="text-cyan-400 font-bold">MANUAL:</span>
+                    <span><strong class="text-purple-300 font-bold">[A B]</strong> 1拍内等分</span>
+                    <span><strong class="text-purple-300 font-bold">&lt;A B&gt;</strong> 周期交代</span>
+                    <span><strong class="text-amber-300 font-bold">*N</strong> N倍細分</span>
+                    <span><strong class="text-amber-300 font-bold">!N</strong> N回連続</span>
+                    <span><strong class="text-slate-300 font-bold">~</strong> 休符</span>
+                    <span class="text-slate-500">(↕音程 / ↔移動)</span>
+                </div>
+
+                <!-- Bottom Row: GATE slider & PRESET Toggle -->
+                <div class="flex items-center justify-between pt-0.5 border-t border-slate-800/80 gap-2">
+                    <div class="flex-1 flex items-center min-w-0 bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800 gap-1.5">
+                        <span class="text-[7px] text-slate-400 uppercase font-mono shrink-0">GATE</span>
+                        <input type="range" id="pat2-gate-slider-${uid}" min="10" max="95" step="5" value="${gatePct}" class="flex-1 w-full h-1 accent-cyan-400 cursor-pointer touch-none">
+                        <span id="pat2-gate-disp-${uid}" class="text-[7.5px] font-mono font-bold text-cyan-300 min-w-[20px] text-right shrink-0">${gatePct}%</span>
                     </div>
 
-                    <!-- Right: Grouping Buttons ([] / <>), Ungroup, Modifiers (*n, !n), Trash Delete -->
-                    <div class="flex items-center gap-1 shrink-0">
-                        <button id="pat2-bracket-btn-${uid}" disabled class="h-4 px-1.5 bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7px] font-bold shadow-sm transition active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed" title="隣接選択した項目を [] 分割グループにまとめる">
-                            [ ]
-                        </button>
-                        <button id="pat2-angle-btn-${uid}" disabled class="h-4 px-1.5 bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7px] font-bold shadow-sm transition active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed" title="隣接選択した項目を <> 周期交代グループにまとめる">
-                            &lt; &gt;
-                        </button>
-                        <button id="pat2-ungroup-btn-${uid}" class="h-4 px-1.5 bg-slate-900 hover:bg-slate-800 text-slate-400 rounded text-[7px] font-bold border border-slate-800 shadow-sm transition active:scale-95" title="グループ解除">
-                            UNGROUP
-                        </button>
-                        <button id="pat2-subdiv-btn-${uid}" class="h-4 px-1 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded text-[7px] font-bold border border-amber-500/50 transition" title="細分化 (*2, *3, *4)">
-                            *n
-                        </button>
-                        <button id="pat2-repeat-btn-${uid}" class="h-4 px-1 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded text-[7px] font-bold border border-amber-500/50 transition" title="複製 (!2, !3, !4)">
-                            !n
-                        </button>
-                        <button id="pat2-del-btn-${uid}" class="h-4 px-1.5 bg-red-950/80 hover:bg-red-900 text-red-300 rounded border border-red-500/60 transition flex items-center justify-center active:scale-95" title="選択削除">
-                            <i data-lucide="trash-2" class="w-2.5 h-2.5 pointer-events-none"></i>
-                        </button>
-                    </div>
+                    <button id="pat2-toggle-presets-${uid}" class="flex items-center gap-0.5 text-[7px] font-bold text-slate-400 hover:text-cyan-300 uppercase tracking-wider transition bg-slate-950 px-2 py-1 rounded border border-slate-800 shrink-0">
+                        <span class="text-[6px] font-mono text-cyan-400">${showPresets ? '▼' : '▶'}</span>
+                        <span>PRESET</span>
+                    </button>
                 </div>
+
+                <!-- Presets Grid (Collapsible at the bottom) -->
+                ${showPresets ? `
+                <div class="grid grid-cols-4 sm:grid-cols-6 gap-1 pt-1 border-t border-slate-800 pb-0.5">
+                    ${STRUDEL_PRESETS.map((p) => `
+                        <button class="pat2-preset-btn h-5 px-1 bg-slate-800/90 hover:bg-cyan-950/80 border border-slate-700 hover:border-cyan-500/80 rounded flex items-center justify-center transition group truncate" data-pattern="${p.pattern}">
+                            <span class="text-[7px] font-bold text-cyan-300 group-hover:text-white truncate pointer-events-none">${p.name}</span>
+                        </button>
+                    `).join('')}
+                </div>
+                ` : ''}
             </div>`;
     },
     bindEvents: (m, ctx, cb) => {
@@ -473,17 +478,17 @@ export const PAT2 = {
             if (bracketBtn) {
                 bracketBtn.disabled = !adjGroup;
                 if (adjGroup) {
-                    bracketBtn.className = 'h-4 px-1.5 bg-purple-900/90 hover:bg-purple-800 text-purple-200 border border-purple-500 rounded text-[7px] font-bold shadow-sm transition active:scale-95 cursor-pointer';
+                    bracketBtn.className = 'h-5 px-1.5 bg-purple-900/90 hover:bg-purple-800 text-purple-200 border border-purple-500 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 cursor-pointer';
                 } else {
-                    bracketBtn.className = 'h-4 px-1.5 bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7px] font-bold shadow-sm transition active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed';
+                    bracketBtn.className = 'h-5 px-1.5 bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed';
                 }
             }
             if (angleBtn) {
                 angleBtn.disabled = !adjGroup;
                 if (adjGroup) {
-                    angleBtn.className = 'h-4 px-1.5 bg-purple-900/90 hover:bg-purple-800 text-purple-200 border border-purple-500 rounded text-[7px] font-bold shadow-sm transition active:scale-95 cursor-pointer';
+                    angleBtn.className = 'h-5 px-1.5 bg-purple-900/90 hover:bg-purple-800 text-purple-200 border border-purple-500 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 cursor-pointer';
                 } else {
-                    angleBtn.className = 'h-4 px-1.5 bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7px] font-bold shadow-sm transition active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed';
+                    angleBtn.className = 'h-5 px-1.5 bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed';
                 }
             }
 
