@@ -559,3 +559,12 @@ body.is-row-dragging .grid-cell * {
     color: #475569 !important;
     border-color: #1e293b !important;
 }
+
+/* Hide scrollbar utility for touch/clean strips */
+.no-scrollbar::-webkit-scrollbar {
+    display: none !important;
+}
+.no-scrollbar {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+}
