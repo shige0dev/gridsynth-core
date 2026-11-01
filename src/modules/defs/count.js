@@ -5,7 +5,6 @@ export const COUNT = {
     defaults: () => ({
         type: 'COUNT',
         max: 16,          // 16, 32, 64, 256
-        format: 'HEX',    // 'HEX' or 'DEC'
         name: 'COUNT'
     }),
     ports: () => ({
@@ -21,17 +20,19 @@ export const COUNT = {
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
 
     renderGrid: (m) => {
-        const curMax = m.max || 256;
-        const curFmt = m.format || 'HEX';
+        const curMax = m.max || 16;
         return `
             <div class="h-full flex flex-col justify-between py-1 select-none pointer-events-none">
                 <div class="flex items-center justify-between px-1.5 pt-0.5">
-                    <span class="text-[7px] font-mono text-emerald-400/80 font-bold tracking-tight">MAX:${curMax}</span>
-                    <span class="text-[6.5px] font-mono text-slate-400 font-bold">${curFmt}</span>
+                    <span class="text-[7px] font-mono text-emerald-400/80 font-bold tracking-tight">COUNTER</span>
+                    <span id="count-ratio-label-${m.id}" class="text-[6.5px] font-mono text-slate-400 font-bold">0/${curMax}</span>
                 </div>
                 <div class="flex flex-col items-center justify-center my-auto">
-                    <div id="count-val-${m.id}" class="text-[17px] font-mono font-black text-emerald-300 tracking-wider leading-none drop-shadow-[0_0_6px_rgba(52,211,153,0.4)]">
-                        ${curFmt === 'HEX' ? '00' : '0'}
+                    <div id="count-val-${m.id}" class="text-[20px] font-mono font-black text-emerald-300 tracking-wider leading-none drop-shadow-[0_0_6px_rgba(52,211,153,0.4)]">
+                        0
+                    </div>
+                    <div id="count-denom-${m.id}" class="text-[7.5px] font-mono font-bold text-emerald-500/70 leading-none mt-0.5">
+                        /${curMax}
                     </div>
                 </div>
                 <div class="flex items-center justify-between px-1.5 pb-0.5 text-[6.5px] font-mono text-slate-500">
@@ -44,25 +45,31 @@ export const COUNT = {
 
     updateLive: (cell, data, isPlaying, modalEl, m) => {
         const curCount = data?.count ?? 0;
-        const curMax = data?.max ?? (m.max || 256);
-        const curFmt = m.format || 'HEX';
-
-        let displayStr;
-        if (curFmt === 'HEX') {
-            displayStr = curCount.toString(16).toUpperCase().padStart(2, '0');
-        } else {
-            displayStr = curCount.toString(10);
-        }
+        const curMax = data?.max ?? (m.max || 16);
 
         const countEl = cell?.querySelector(`#count-val-${m.id}`) || document.getElementById(`count-val-${m.id}`);
-        if (countEl && countEl.textContent.trim() !== displayStr) {
-            countEl.textContent = displayStr;
+        if (countEl && countEl.textContent.trim() !== String(curCount)) {
+            countEl.textContent = String(curCount);
+        }
+
+        const denomEl = cell?.querySelector(`#count-denom-${m.id}`) || document.getElementById(`count-denom-${m.id}`);
+        if (denomEl && denomEl.textContent.trim() !== `/${curMax}`) {
+            denomEl.textContent = `/${curMax}`;
+        }
+
+        const ratioLabelEl = cell?.querySelector(`#count-ratio-label-${m.id}`) || document.getElementById(`count-ratio-label-${m.id}`);
+        if (ratioLabelEl) {
+            ratioLabelEl.textContent = `${curCount}/${curMax}`;
         }
 
         if (modalEl) {
             const modalCountEl = modalEl.querySelector('#count-modal-val') || document.getElementById('count-modal-val');
-            if (modalCountEl && modalCountEl.textContent.trim() !== displayStr) {
-                modalCountEl.textContent = displayStr;
+            if (modalCountEl && modalCountEl.textContent.trim() !== String(curCount)) {
+                modalCountEl.textContent = String(curCount);
+            }
+            const modalDenomEl = modalEl.querySelector('#count-modal-denom') || document.getElementById('count-modal-denom');
+            if (modalDenomEl && modalDenomEl.textContent.trim() !== `/${curMax}`) {
+                modalDenomEl.textContent = `/${curMax}`;
             }
             const modalCvEl = modalEl.querySelector('#count-modal-cv') || document.getElementById('count-modal-cv');
             if (modalCvEl) {
@@ -73,18 +80,21 @@ export const COUNT = {
     },
 
     renderModal: (m) => {
-        const curMax = m.max || 256;
-        const curFmt = m.format || 'HEX';
+        const curMax = m.max || 16;
         const maxOptions = [16, 32, 64, 256];
-        const fmtOptions = ['HEX', 'DEC'];
 
         return `
             <div class="space-y-3 p-1">
                 <!-- Monitor Box -->
                 <div class="bg-slate-950/80 rounded-lg p-2.5 border border-emerald-500/30 text-center shadow-inner">
-                    <div class="text-[7.5px] font-mono text-slate-400 uppercase tracking-widest mb-0.5">CURRENT COUNT</div>
-                    <div id="count-modal-val" class="text-3xl font-mono font-black text-emerald-400 tracking-wider">
-                        ${curFmt === 'HEX' ? '00' : '0'}
+                    <div class="text-[7.5px] font-mono text-slate-400 uppercase tracking-widest mb-0.5">CURRENT COUNT / RATIO</div>
+                    <div class="flex items-baseline justify-center gap-1">
+                        <span id="count-modal-val" class="text-3xl font-mono font-black text-emerald-400 tracking-wider">
+                            0
+                        </span>
+                        <span id="count-modal-denom" class="text-base font-mono font-bold text-emerald-500/70">
+                            /${curMax}
+                        </span>
                     </div>
                     <div class="flex items-center justify-between mt-1 pt-1 border-t border-slate-800 text-[8px] font-mono text-slate-400">
                         <span>CV OUT:</span>
@@ -94,22 +104,10 @@ export const COUNT = {
 
                 <!-- MAX SELECTOR -->
                 <div>
-                    <div class="text-[8px] font-mono text-slate-400 font-bold uppercase mb-1">MAX COUNT (OVERFLOW)</div>
+                    <div class="text-[8px] font-mono text-slate-400 font-bold uppercase mb-1">MAX COUNT (OVERFLOW / DIVISION)</div>
                     <div class="grid grid-cols-4 gap-1">
                         ${maxOptions.map(opt => `
                             <button class="count-max-btn py-1 rounded text-[9px] font-mono font-bold border transition-colors ${curMax === opt ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/30' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}" data-max="${opt}">
-                                ${opt}
-                            </button>
-                        `).join('')}
-                    </div>
-                </div>
-
-                <!-- DISPLAY FORMAT -->
-                <div>
-                    <div class="text-[8px] font-mono text-slate-400 font-bold uppercase mb-1">DISPLAY FORMAT</div>
-                    <div class="grid grid-cols-2 gap-1">
-                        ${fmtOptions.map(opt => `
-                            <button class="count-fmt-btn py-1 rounded text-[9px] font-mono font-bold border transition-colors ${curFmt === opt ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/30' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}" data-fmt="${opt}">
                                 ${opt}
                             </button>
                         `).join('')}
@@ -133,16 +131,11 @@ export const COUNT = {
             btn.addEventListener('click', (e) => {
                 const newMax = parseInt(e.currentTarget.dataset.max, 10);
                 m.max = newMax;
-                ctx.reRenderModal();
-                ctx.reRenderGrid?.();
-                cb();
-            });
-        });
-
-        root.querySelectorAll('.count-fmt-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const newFmt = e.currentTarget.dataset.fmt;
-                m.format = newFmt;
+                const fullId = `${ctx.currentPageId || 0}/${m.id}`;
+                const inst = ctx.synth?.modules?.[fullId] || ctx.synth?.modules?.[m.id];
+                if (inst?.nodes?.w?.port) {
+                    inst.nodes.w.port.postMessage({ type: 'SET_MAX', value: newMax });
+                }
                 ctx.reRenderModal();
                 ctx.reRenderGrid?.();
                 cb();
