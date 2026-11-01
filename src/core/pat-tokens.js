@@ -222,3 +222,93 @@ export function tokensToPattern(tokens) {
     return tokens.map(serializeNode).join(' ');
 }
 
+export const MODIFIER_KEYS = ['subdiv', 'slowdown', 'repeat', 'prob'];
+
+export function clearTokenModifiers(node) {
+    let cleared = false;
+    for (const k of MODIFIER_KEYS) {
+        if (node[k] !== undefined) {
+            delete node[k];
+            cleared = true;
+        }
+    }
+    return cleared;
+}
+
+export function getAdjacentGroup(tokens, selectedIds) {
+    if (!selectedIds || selectedIds.size < 2) return null;
+    let result = null;
+
+    function searchList(list) {
+        const indices = [];
+        for (let i = 0; i < list.length; i++) {
+            if (selectedIds.has(list[i].id)) indices.push(i);
+        }
+        if (indices.length === selectedIds.size) {
+            let contiguous = true;
+            for (let j = 0; j < indices.length; j++) {
+                if (indices[j] !== indices[0] + j) {
+                    contiguous = false;
+                    break;
+                }
+            }
+            if (contiguous) {
+                result = { list, start: indices[0], end: indices[indices.length - 1] };
+                return true;
+            }
+        }
+        for (const node of list) {
+            if (node.children && searchList(node.children)) return true;
+        }
+        return false;
+    }
+
+    searchList(tokens);
+    return result;
+}
+
+export function groupTokens(tokens, selectedIds, groupType) {
+    const adj = getAdjacentGroup(tokens, selectedIds);
+    if (!adj) return null;
+    const { list, start, end } = adj;
+    const newGroup = {
+        id: genTokenId(),
+        type: 'group',
+        groupType,
+        children: list.slice(start, end + 1)
+    };
+    list.splice(start, end - start + 1, newGroup);
+    return newGroup;
+}
+
+export function moveTokenNode(tokens, sourceId, targetId, insertPos = 'after', isInsideGroup = false) {
+    if (!sourceId || !targetId || sourceId === targetId) return tokens;
+
+    let sourceNode = null;
+    const nextTokens = walkTokens(tokens, n => {
+        if (n.id === sourceId) { sourceNode = n; return null; }
+        return n;
+    });
+    if (!sourceNode) return tokens;
+
+    function insertNear(list) {
+        for (let i = 0; i < list.length; i++) {
+            if (list[i].id === targetId) {
+                if (isInsideGroup && list[i].type === 'group') {
+                    list[i].children = list[i].children || [];
+                    insertPos === 'before' ? list[i].children.unshift(sourceNode) : list[i].children.push(sourceNode);
+                } else {
+                    const insertIndex = insertPos === 'before' ? i : i + 1;
+                    list.splice(insertIndex, 0, sourceNode);
+                }
+                return true;
+            }
+            if (list[i].children && insertNear(list[i].children)) return true;
+        }
+        return false;
+    }
+    insertNear(nextTokens);
+    return nextTokens;
+}
+
+
