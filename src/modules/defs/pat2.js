@@ -207,7 +207,8 @@ export const PAT2 = {
                     </div>
                     <div class="text-[9px] text-slate-400 pt-0.5 border-t border-slate-800/80">
                         ※トークン選択中に上部の <span class="text-sky-300 font-bold">↕上下スワイプ</span> で音程変更、<span class="text-sky-300 font-bold">↔ドラッグ</span> で位置入替。<br>
-                        ※グループや修飾子を選択して <span class="text-red-400 font-bold">🗑（ゴミ箱）</span> を押すと、グループ解除や修飾子削除ができます。
+                        ※修飾子（*N / /N / !N）は <span class="text-amber-300 font-bold">↕上下スライド</span> で数値変更可能（下スライドで 2 未満にするかタップで即消去）。<br>
+                        ※グループや修飾子を選択して <span class="text-red-400 font-bold">🗑（ゴミ箱）</span> を押しても解除・消去できます。
                     </div>
                 </div>
                 ` : ''}
@@ -349,17 +350,17 @@ export const PAT2 = {
             function renderModifiersInline(node) {
                 const items = [];
                 if (node.subdiv && node.subdiv > 1) {
-                    items.push(`<span data-mod="subdiv" data-parent-id="${node.id}" class="pat2-mod-tag bg-amber-500/90 hover:bg-red-500 text-slate-950 hover:text-white text-[7px] font-mono font-black px-1 rounded cursor-pointer leading-tight" title="クリックで細分化(*${node.subdiv})を解除">*${node.subdiv}</span>`);
+                    items.push(`<span data-mod="subdiv" data-parent-id="${node.id}" data-val="${node.subdiv}" class="pat2-mod-tag bg-amber-500/90 hover:bg-red-500 text-slate-950 hover:text-white text-[7px] font-mono font-black px-1 rounded cursor-ns-resize leading-tight touch-none select-none" title="上下スワイプで数値変更 (下で消去) / タップで消去">*${node.subdiv}</span>`);
                 }
                 if (node.slowdown && node.slowdown > 1) {
-                    items.push(`<span data-mod="slowdown" data-parent-id="${node.id}" class="pat2-mod-tag bg-cyan-500/90 hover:bg-red-500 text-slate-950 hover:text-white text-[7px] font-mono font-black px-1 rounded cursor-pointer leading-tight" title="クリックで伸長(/${node.slowdown})を解除">/${node.slowdown}</span>`);
+                    items.push(`<span data-mod="slowdown" data-parent-id="${node.id}" data-val="${node.slowdown}" class="pat2-mod-tag bg-cyan-500/90 hover:bg-red-500 text-slate-950 hover:text-white text-[7px] font-mono font-black px-1 rounded cursor-ns-resize leading-tight touch-none select-none" title="上下スワイプで数値変更 (下で消去) / タップで消去">/${node.slowdown}</span>`);
                 }
                 if (node.repeat && node.repeat > 1) {
-                    items.push(`<span data-mod="repeat" data-parent-id="${node.id}" class="pat2-mod-tag bg-emerald-500/90 hover:bg-red-500 text-slate-950 hover:text-white text-[7px] font-mono font-black px-1 rounded cursor-pointer leading-tight" title="クリックで連続リピート(!${node.repeat})を解除">!${node.repeat}</span>`);
+                    items.push(`<span data-mod="repeat" data-parent-id="${node.id}" data-val="${node.repeat}" class="pat2-mod-tag bg-emerald-500/90 hover:bg-red-500 text-slate-950 hover:text-white text-[7px] font-mono font-black px-1 rounded cursor-ns-resize leading-tight touch-none select-none" title="上下スワイプで数値変更 (下で消去) / タップで消去">!${node.repeat}</span>`);
                 }
                 if (node.prob !== undefined && node.prob < 1.0) {
                     const txt = node.prob === 0.5 ? '?' : `?${node.prob}`;
-                    items.push(`<span data-mod="prob" data-parent-id="${node.id}" class="pat2-mod-tag bg-purple-500/90 hover:bg-red-500 text-slate-950 hover:text-white text-[7px] font-mono font-black px-1 rounded cursor-pointer leading-tight" title="クリックで確率(${txt})を解除">${txt}</span>`);
+                    items.push(`<span data-mod="prob" data-parent-id="${node.id}" class="pat2-mod-tag bg-purple-500/90 hover:bg-red-500 text-slate-950 hover:text-white text-[7px] font-mono font-black px-1 rounded cursor-pointer leading-tight" title="タップで確率(${txt})を解除">${txt}</span>`);
                 }
                 if (!items.length) return '';
                 return `<div class="flex items-center gap-[1px] ml-0.5 pointer-events-auto">${items.join('')}</div>`;
@@ -710,28 +711,85 @@ export const PAT2 = {
                 el.addEventListener('pointerdown', onPointerDown);
             });
 
-            // Modifier inline tags click to delete specific modifier
+            // Modifier inline tags: swipe up/down to adjust value (swipe down below 2 to delete), or tap to delete
             tokenStrip.querySelectorAll('.pat2-mod-tag').forEach(tag => {
-                tag.addEventListener('pointerdown', (e) => {
+                let startY = 0;
+                let initialVal = parseInt(tag.dataset.val, 10) || 2;
+                let isSwipe = false;
+                let lastDelta = 0;
+
+                const onTagDown = (e) => {
+                    e.preventDefault();
                     e.stopPropagation();
-                });
-                tag.addEventListener('click', (e) => {
-                    e.stopPropagation();
+                    startY = e.clientY;
+                    initialVal = parseInt(tag.dataset.val, 10) || 2;
+                    isSwipe = false;
+                    lastDelta = 0;
+
                     const pId = tag.dataset.parentId;
                     const modType = tag.dataset.mod;
-                    if (!pId || !modType) return;
-                    walkTokens(m._tokens, n => {
-                        if (n.id === pId) {
-                            if (modType === 'subdiv') delete n.subdiv;
-                            else if (modType === 'slowdown') delete n.slowdown;
-                            else if (modType === 'repeat') delete n.repeat;
-                            else if (modType === 'prob') delete n.prob;
+
+                    const onTagMove = (me) => {
+                        const dy = startY - me.clientY; // positive = swipe up, negative = swipe down
+                        if (Math.abs(dy) >= 6) {
+                            isSwipe = true;
+                            // 10px per unit step
+                            const stepDiff = Math.trunc(dy / 10);
+                            if (stepDiff !== lastDelta) {
+                                lastDelta = stepDiff;
+                                const targetVal = initialVal + stepDiff;
+
+                                walkTokens(m._tokens, n => {
+                                    if (n.id === pId) {
+                                        if (targetVal < 2) {
+                                            // Swipe down below 2 -> Clear modifier
+                                            if (modType === 'subdiv') delete n.subdiv;
+                                            else if (modType === 'slowdown') delete n.slowdown;
+                                            else if (modType === 'repeat') delete n.repeat;
+                                        } else {
+                                            const capped = Math.min(32, targetVal);
+                                            if (modType === 'subdiv') n.subdiv = capped;
+                                            else if (modType === 'slowdown') n.slowdown = capped;
+                                            else if (modType === 'repeat') n.repeat = capped;
+                                        }
+                                    }
+                                    return n;
+                                });
+                                renderTokens();
+                                syncPattern();
+                            }
                         }
-                        return n;
-                    });
-                    renderTokens();
-                    syncPattern();
-                });
+                    };
+
+                    const onTagUp = () => {
+                        window.removeEventListener('pointermove', onTagMove);
+                        window.removeEventListener('pointerup', onTagUp);
+                        window.removeEventListener('pointercancel', onTagUp);
+                        try { tag.releasePointerCapture(e.pointerId); } catch (_) {}
+
+                        // If not swiped (tap), delete modifier directly
+                        if (!isSwipe) {
+                            walkTokens(m._tokens, n => {
+                                if (n.id === pId) {
+                                    if (modType === 'subdiv') delete n.subdiv;
+                                    else if (modType === 'slowdown') delete n.slowdown;
+                                    else if (modType === 'repeat') delete n.repeat;
+                                    else if (modType === 'prob') delete n.prob;
+                                }
+                                return n;
+                            });
+                            renderTokens();
+                            syncPattern();
+                        }
+                    };
+
+                    try { tag.setPointerCapture(e.pointerId); } catch (_) {}
+                    window.addEventListener('pointermove', onTagMove, { passive: false });
+                    window.addEventListener('pointerup', onTagUp);
+                    window.addEventListener('pointercancel', onTagUp);
+                };
+
+                tag.addEventListener('pointerdown', onTagDown);
             });
         };
 
