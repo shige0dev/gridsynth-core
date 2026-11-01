@@ -1005,17 +1005,23 @@ export const FACTORY_SUBPATCHES = {
             name: 'MAP',
             slots: {
                 "2": "SUB_IO1",
-                "6": "MATH2_1",
-                "7": "MATH2_2"
+                "5": "MATH2_1",
+                "6": "MATH2_2",
+                "9": "VALUE_1",
+                "10": "VALUE_2"
             },
             modules: {
                 "SUB_IO1": { "type": "SUB_IO", "col": 2, "row": 0 },
                 "MATH2_1": { "type": "MATH2", "mode": "MULTI", "valA": 0.0, "valB": 1.0, "col": 1, "row": 1 },
-                "MATH2_2": { "type": "MATH2", "mode": "ADD", "valA": 0.0, "valB": 0.0, "col": 2, "row": 1 }
+                "MATH2_2": { "type": "MATH2", "mode": "ADD", "valA": 0.0, "valB": 0.0, "col": 2, "row": 1 },
+                "VALUE_1": { "type": "VALUE", "label": "SCALE", "val": 1.0, "min": -5.0, "max": 5.0, "def": 1.0, "step": 0.01, "col": 1, "row": 2 },
+                "VALUE_2": { "type": "VALUE", "label": "OFFSET", "val": 0.0, "min": -5.0, "max": 5.0, "def": 0.0, "step": 0.01, "col": 2, "row": 2 }
             },
             connections: [
                 { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "MATH2_1", port: "cv_in_a" } },
+                { from: { moduleId: "VALUE_1", port: "cv_out" }, to: { moduleId: "MATH2_1", port: "cv_in_b" } },
                 { from: { moduleId: "MATH2_1", port: "cv_out" }, to: { moduleId: "MATH2_2", port: "cv_in_a" } },
+                { from: { moduleId: "VALUE_2", port: "cv_out" }, to: { moduleId: "MATH2_2", port: "cv_in_b" } },
                 { from: { moduleId: "MATH2_2", port: "cv_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }
             ]
         }

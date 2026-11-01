@@ -1,6 +1,6 @@
 import { AudioHelpers } from '../helpers.js';
 
-export const JOG = {
+export const VALUE = {
     create: (ctx, d) => {
         const s = ctx.createConstantSource();
         s.offset.value = d.val ?? (d.def ?? 0.0);
@@ -17,4 +17,10 @@ export const JOG = {
         AudioHelpers.set(inst.nodes.s.offset, targetVal, ctx);
     }
 };
+
+export const valAudioDefs = {
+    VALUE
+};
+export default valAudioDefs;
+
 

@@ -1,10 +1,11 @@
 import { UIHelpers } from '../../ui/helpers.js?v=351';
 import { cvToNoteName } from '../../core/musical.js?v=367';
 
-export const JOG = {
+export const VALUE = {
     color: 'amber',
     defaults: () => ({
-        type: 'JOG',
+        type: 'VALUE',
+        label: 'VAL',
         val: 0.0,
         min: -1.0,
         max: 1.0,
@@ -12,7 +13,7 @@ export const JOG = {
         step: 0.01,
         stepType: '0.01', // '0.01' | '0.1' | '1semi' | '1' | '10'
         mode: 'latch',
-        name: 'JOG'
+        name: 'VALUE'
     }),
     ports: () => ({
         in: [],
@@ -47,55 +48,54 @@ export const JOG = {
     },
 
     renderGrid: (m) => {
-        const minVal = m.min ?? -1.0;
-        const maxVal = m.max ?? 1.0;
         const curVal = m.val ?? (m.def ?? 0.0);
-
-        const formatEdgeVal = (v) => {
-            if (m.stepType === '1semi') return cvToNoteName(v);
-            const n = Number(v);
-            if (m.stepType === '1' || m.stepType === '10') return `${Math.round(n)}`;
-            return (Math.abs(n) >= 10) ? n.toFixed(0) : n.toFixed(1);
-        };
+        const labelText = m.label || m.name || 'VAL';
 
         return `
-            <div class="jog-box relative w-full h-full flex flex-col items-center justify-center p-1 select-none overflow-hidden touch-none" data-module-id="${m.id}">
+            <div class="val-box relative w-full h-full flex flex-col items-center justify-center p-1 select-none overflow-hidden touch-none" data-module-id="${m.id}">
                 <!-- Square Centered Wheel Container (54px x 54px) -->
                 <div class="relative w-[54px] h-[54px] flex items-center justify-center overflow-hidden rounded bg-slate-950 border border-slate-800/90 shadow-inner">
-                    <canvas class="jog-canvas block w-full h-full" width="54" height="54"></canvas>
+                    <canvas class="val-canvas block w-full h-full" width="54" height="54"></canvas>
 
-                    <!-- Center Overlay: MAX at top-center, VAL at absolute center, MIN at bottom-center -->
+                    <!-- Center Overlay: Variable Label at top, VAL at center -->
                     <div class="absolute inset-0 flex flex-col items-center justify-between py-1 pointer-events-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
-                        <span class="text-[6.5px] font-mono text-slate-400 font-semibold tracking-tighter leading-none">${formatEdgeVal(maxVal)}</span>
-                        <div class="jog-val-disp font-mono text-[13px] font-extrabold text-amber-300 tracking-tight leading-none flex items-baseline justify-center w-full">${JOG.formatValHtml(curVal, m.stepType)}</div>
-                        <span class="text-[6.5px] font-mono text-slate-400 font-semibold tracking-tighter leading-none">${formatEdgeVal(minVal)}</span>
+                        <span class="val-label-disp text-[7px] font-mono font-bold text-amber-400 uppercase tracking-tight leading-none px-1 py-0.5 rounded bg-slate-900/80 border border-amber-500/30 max-w-[48px] truncate">${labelText}</span>
+                        <div class="val-val-disp font-mono text-[13px] font-extrabold text-amber-300 tracking-tight leading-none flex items-baseline justify-center w-full">${VALUE.formatValHtml(curVal, m.stepType)}</div>
+                        <div class="h-1"></div>
                     </div>
                 </div>
             </div>`;
     },
 
     updateLive: (cell, data, isP, modal, m) => {
-        const cvs = cell?.querySelector('.jog-canvas');
+        const cvs = cell?.querySelector('.val-canvas');
         if (cvs) {
-            JOG.drawWheel(cvs.getContext('2d'), cvs.width, cvs.height, m);
+            VALUE.drawWheel(cvs.getContext('2d'), cvs.width, cvs.height, m);
         }
-        const valDisp = cell?.querySelector('.jog-val-disp');
+        const valDisp = cell?.querySelector('.val-val-disp');
         if (valDisp && m) {
             const v = m.val ?? (m.def ?? 0.0);
-            const html = JOG.formatValHtml(v, m.stepType);
+            const html = VALUE.formatValHtml(v, m.stepType);
             if (valDisp._lastHtml !== html) {
                 valDisp.innerHTML = html;
                 valDisp._lastHtml = html;
             }
         }
+        const labelDisp = cell?.querySelector('.val-label-disp');
+        if (labelDisp && m) {
+            const lText = m.label || m.name || 'VAL';
+            if (labelDisp.textContent !== lText) {
+                labelDisp.textContent = lText;
+            }
+        }
 
         // Live update for scrubbable badges in Modal
         if (modal && m) {
-            const valEl = modal.querySelector('#jog-scrub-val');
-            const maxEl = modal.querySelector('#jog-scrub-max');
-            const defEl = modal.querySelector('#jog-scrub-def');
-            const minEl = modal.querySelector('#jog-scrub-min');
-            const fmt = (val) => JOG.formatModalVal(val, m.stepType);
+            const valEl = modal.querySelector('#val-scrub-val');
+            const maxEl = modal.querySelector('#val-scrub-max');
+            const defEl = modal.querySelector('#val-scrub-def');
+            const minEl = modal.querySelector('#val-scrub-min');
+            const fmt = (val) => VALUE.formatModalVal(val, m.stepType);
             if (valEl && !valEl._isDragging) valEl.textContent = fmt(m.val ?? (m.def ?? 0.0));
             if (maxEl && !maxEl._isDragging) maxEl.textContent = fmt(m.max ?? 1.0);
             if (defEl && !defEl._isDragging) defEl.textContent = fmt(m.def ?? 0.0);
@@ -103,131 +103,105 @@ export const JOG = {
         }
     },
 
-    drawWheel: (ctx, w, h, m, isModal = false) => {
+    drawWheel: (ctx, w, h, m) => {
         ctx.clearRect(0, 0, w, h);
 
+        const cx = w / 2;
+        const cy = h / 2;
+        const r = Math.min(cx, cy) - 3;
         const minVal = m.min ?? -1.0;
         const maxVal = m.max ?? 1.0;
         const curVal = m.val ?? (m.def ?? 0.0);
-        const range = Math.max(0.0001, maxVal - minVal);
-        const norm = Math.max(0, Math.min(1, (curVal - minVal) / range)); // 0.0 (bottom) to 1.0 (top)
 
-        // 1. Draw 3D Cylinder Background (Solid metal/carbon body)
-        const gradBg = ctx.createLinearGradient(0, 0, 0, h);
-        gradBg.addColorStop(0, '#020617');
-        gradBg.addColorStop(0.2, '#0f172a');
-        gradBg.addColorStop(0.5, '#1e293b');
-        gradBg.addColorStop(0.8, '#0f172a');
-        gradBg.addColorStop(1, '#020617');
-        ctx.fillStyle = gradBg;
-        ctx.fillRect(0, 0, w, h);
+        // Track background circle
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 4;
+        ctx.stroke();
 
-        // 2. Beveled side edges
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-        ctx.fillRect(0, 0, 2, h);
-        ctx.fillRect(w - 2, 0, 2, h);
+        // Active value arc (from 7 o'clock to 5 o'clock = 135 deg to 405 deg)
+        const startAngle = Math.PI * 0.75; // 135 deg
+        const totalSpan = Math.PI * 1.5;   // 270 deg
+        const span = maxVal > minVal ? (maxVal - minVal) : 1;
+        const pct = Math.max(0, Math.min(1, (curVal - minVal) / span));
+        const endAngle = startAngle + totalSpan * pct;
 
-        // 3. Cylinder Grooves / Knurling Lines in SOLID BLACK
-        const numVisibleGrooves = 8;
-        const spacing = h / (numVisibleGrooves - 1);
-        // Grooves follow drag or continuous value smoothly
-        const phaseVal = (m._dragOffset !== undefined) ? m._dragOffset : (norm * h * 3.5);
-        const phaseOffset = spacing - ((phaseVal % spacing + spacing) % spacing);
-
-        ctx.lineWidth = isModal ? 2.0 : 1.4;
-        for (let y = -spacing + phaseOffset; y <= h + spacing; y += spacing) {
-            const distFromMid = (y - h / 2) / (h / 2);
-            if (Math.abs(distFromMid) > 1.0) continue;
-
-            const alpha = Math.cos(distFromMid * (Math.PI / 2.2));
-            if (alpha <= 0.05) continue;
-
-            // Deep black engraved groove
-            ctx.strokeStyle = `rgba(0, 0, 0, ${(alpha * 0.95).toFixed(2)})`;
+        if (pct > 0.005) {
             ctx.beginPath();
-            ctx.moveTo(3, y);
-            ctx.lineTo(w - 3, y);
-            ctx.stroke();
-
-            // Subtle lower highlight to give deep 3D cut impression
-            ctx.strokeStyle = `rgba(255, 255, 255, ${(alpha * 0.12).toFixed(2)})`;
-            ctx.beginPath();
-            ctx.moveTo(3, y + 1);
-            ctx.lineTo(w - 3, y + 1);
+            ctx.arc(cx, cy, r, startAngle, endAngle);
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
             ctx.stroke();
         }
 
-        // 4. Current Value Marker Line (Solid Yellow Line)
-        const curY = (1.0 - norm) * h;
-        ctx.strokeStyle = '#facc15'; // Vibrant solid yellow
-        ctx.lineWidth = 1.6;
-        ctx.setLineDash([]); // Ensure solid line (no dash)
-        ctx.beginPath();
-        ctx.moveTo(0, curY);
-        ctx.lineTo(w, curY);
-        ctx.stroke();
+        // Notch marks on perimeter (12 subtle tick marks)
+        ctx.save();
+        ctx.translate(cx, cy);
+        for (let i = 0; i <= 10; i++) {
+            const a = startAngle + (totalSpan / 10) * i;
+            const x1 = Math.cos(a) * (r - 4);
+            const y1 = Math.sin(a) * (r - 4);
+            const x2 = Math.cos(a) * (r - 7);
+            const y2 = Math.sin(a) * (r - 7);
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.strokeStyle = 'rgba(100, 116, 139, 0.4)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+        ctx.restore();
     },
 
-    bindGridEvents: (cell, m, ui) => {
-        const jogBox = cell.querySelector('.jog-box');
-        if (!jogBox) return;
-
-        // Render initial wheel visual immediately (even before audio starts / PLAY)
-        const initCvs = cell.querySelector('.jog-canvas');
-        if (initCvs) {
-            JOG.drawWheel(initCvs.getContext('2d'), initCvs.width, initCvs.height, m);
-        }
+    bindGridEvents: (cell, m, ctx, onChange) => {
+        const valBox = cell.querySelector('.val-box');
+        if (!valBox) return;
 
         let isInteracting = false;
         let startY = 0;
         let startVal = 0;
-        let startDragOffset = 0;
+        let min = m.min ?? -1.0;
+        let max = m.max ?? 1.0;
+        let step = m.step ?? 0.01;
 
-        const getStepValue = () => {
-            if (m.stepType === '1semi') return 1.0 / 12.0; // 1 semitone
-            if (m.stepType === '0.1') return 0.1;
-            if (m.stepType === '1') return 1.0;
-            if (m.stepType === '10') return 10.0;
-            return m.step || 0.01;
-        };
+        const initCvs = cell.querySelector('.val-canvas');
+        if (initCvs) {
+            VALUE.drawWheel(initCvs.getContext('2d'), initCvs.width, initCvs.height, m);
+        }
 
         const updateVal = (newVal) => {
-            const min = m.min ?? -1.0;
-            const max = m.max ?? 1.0;
-            const step = getStepValue();
-            let clamped = Math.max(min, Math.min(max, newVal));
-            if (step > 0) {
-                clamped = Math.round((clamped - min) / step) * step + min;
-                clamped = Math.max(min, Math.min(max, clamped));
-            }
+            const clamped = Math.max(min, Math.min(max, newVal));
+            if (m.val === clamped) return;
             m.val = clamped;
-            ui.synth.updateModule(`${ui.currentPageId}/${m.id}`, m);
 
-            const valDisp = cell.querySelector('.jog-val-disp');
+            // Direct DOM update for high-speed responsiveness
+            const valDisp = cell.querySelector('.val-val-disp');
             if (valDisp) {
-                const html = JOG.formatValHtml(clamped, m.stepType);
-                if (valDisp._lastHtml !== html) {
-                    valDisp.innerHTML = html;
-                    valDisp._lastHtml = html;
-                }
+                const html = VALUE.formatValHtml(clamped, m.stepType);
+                valDisp.innerHTML = html;
+                valDisp._lastHtml = html;
             }
-            const cvs = cell.querySelector('.jog-canvas');
-            if (cvs) JOG.drawWheel(cvs.getContext('2d'), cvs.width, cvs.height, m);
+            const cvs = cell.querySelector('.val-canvas');
+            if (cvs) VALUE.drawWheel(cvs.getContext('2d'), cvs.width, cvs.height, m);
+
+            onChange?.();
         };
 
         const handleDown = (clientY) => {
             isInteracting = true;
             startY = clientY;
             startVal = m.val ?? (m.def ?? 0.0);
-            startDragOffset = m._dragOffset || 0;
+            min = m.min ?? -1.0;
+            max = m.max ?? 1.0;
+            step = m.step ?? 0.01;
+            if (m.stepType === '1semi') step = 1.0 / 12.0;
         };
 
         const handleMove = (clientY) => {
             if (!isInteracting) return;
-            const deltaY = startY - clientY; // upward drag increases value
-            m._dragOffset = startDragOffset + deltaY;
-            const step = getStepValue();
-            // Gear-linked sensitivity: 8px drag = exactly 1 STEP change
+            const deltaY = startY - clientY;
             const stepsCount = Math.round(deltaY / 8.0);
             const targetVal = startVal + stepsCount * step;
             updateVal(targetVal);
@@ -238,14 +212,14 @@ export const JOG = {
             isInteracting = false;
         };
 
-        jogBox.addEventListener('pointerdown', (e) => {
+        valBox.addEventListener('pointerdown', (e) => {
             if (e.target.closest('.port')) return;
             e.stopPropagation();
-            jogBox.setPointerCapture?.(e.pointerId);
+            valBox.setPointerCapture?.(e.pointerId);
             handleDown(e.clientY);
         });
 
-        jogBox.addEventListener('pointermove', (e) => {
+        valBox.addEventListener('pointermove', (e) => {
             if (!isInteracting) return;
             e.stopPropagation();
             handleMove(e.clientY);
@@ -254,12 +228,12 @@ export const JOG = {
         const onPointerEnd = (e) => {
             if (!isInteracting) return;
             e.stopPropagation();
-            try { jogBox.releasePointerCapture?.(e.pointerId); } catch (_) {}
+            try { valBox.releasePointerCapture?.(e.pointerId); } catch (_) {}
             handleUp();
         };
 
-        jogBox.addEventListener('pointerup', onPointerEnd);
-        jogBox.addEventListener('pointercancel', onPointerEnd);
+        valBox.addEventListener('pointerup', onPointerEnd);
+        valBox.addEventListener('pointercancel', onPointerEnd);
     },
 
     renderModal: (m) => {
@@ -268,8 +242,9 @@ export const JOG = {
         const curDef = m.def ?? 0.0;
         const curMin = m.min ?? -1.0;
         const curStepType = m.stepType || '0.01';
+        const curLabel = m.label || m.name || 'VAL';
 
-        const fmt = (val) => JOG.formatModalVal(val, curStepType);
+        const fmt = (val) => VALUE.formatModalVal(val, curStepType);
 
         const stepBtns = [
             { id: '0.01', label: '0.01' },
@@ -281,7 +256,13 @@ export const JOG = {
 
         return `
             <div class="space-y-2 select-none text-[9px]">
-                <!-- STEP Button Group (Top-most) -->
+                <!-- Variable Name / Label Row -->
+                <div class="flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded px-2.5 py-1.5">
+                    <span class="font-bold text-slate-400 tracking-wider">VARIABLE NAME (変数名)</span>
+                    <input id="val-label-input" type="text" maxlength="8" class="bg-slate-900 border border-amber-500/60 rounded px-2 py-0.5 text-amber-300 font-mono font-bold text-right text-[10px] w-24 outline-none focus:border-amber-400" value="${curLabel}" placeholder="VAL" />
+                </div>
+
+                <!-- STEP Button Group -->
                 <div class="flex flex-col gap-1 bg-slate-950/80 border border-slate-800 rounded px-2.5 py-1.5">
                     <div class="flex items-center justify-between">
                         <span class="font-bold text-slate-400 tracking-wider">STEP (差分刻み)</span>
@@ -289,7 +270,7 @@ export const JOG = {
                     </div>
                     <div class="grid grid-cols-5 gap-1 pt-0.5">
                         ${stepBtns.map(btn => `
-                            <button class="jog-step-btn h-5 rounded font-mono font-bold text-[8.5px] border leading-none transition-colors ${curStepType === btn.id ? 'bg-amber-600 text-white border-amber-400 shadow-sm' : 'bg-slate-900 text-slate-400 border-slate-700/80 hover:text-slate-200'}" data-step="${btn.id}">
+                            <button class="val-step-btn h-5 rounded font-mono font-bold text-[8.5px] border leading-none transition-colors ${curStepType === btn.id ? 'bg-amber-600 text-white border-amber-400 shadow-sm' : 'bg-slate-900 text-slate-400 border-slate-700/80 hover:text-slate-200'}" data-step="${btn.id}">
                                 ${btn.label}
                             </button>
                         `).join('')}
@@ -302,32 +283,42 @@ export const JOG = {
                         <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
                         <span class="font-bold text-amber-300 tracking-wider">VALUE (現在値)</span>
                     </div>
-                    <div id="jog-scrub-val" class="cursor-ns-resize touch-none select-none px-2 py-0.5 rounded bg-slate-900 border border-amber-500/70 hover:border-amber-400 font-mono font-extrabold text-amber-300 min-w-[70px] text-right transition-colors" title="上下スワイプで増減 / タップで手入力">${fmt(curVal)}</div>
+                    <div id="val-scrub-val" class="cursor-ns-resize touch-none select-none px-2 py-0.5 rounded bg-slate-900 border border-amber-500/70 hover:border-amber-400 font-mono font-extrabold text-amber-300 min-w-[70px] text-right transition-colors" title="上下スワイプで増減 / タップで手入力">${fmt(curVal)}</div>
                 </div>
 
                 <!-- MAX Row -->
                 <div class="flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded px-2.5 py-1.5">
                     <span class="font-bold text-slate-400 tracking-wider">MAX (最大値)</span>
-                    <div id="jog-scrub-max" class="cursor-ns-resize touch-none select-none px-2 py-0.5 rounded bg-slate-900 border border-slate-700 hover:border-amber-500 font-mono font-bold text-amber-300 min-w-[70px] text-right transition-colors" title="上下スワイプで増減 / タップで手入力">${fmt(curMax)}</div>
+                    <div id="val-scrub-max" class="cursor-ns-resize touch-none select-none px-2 py-0.5 rounded bg-slate-900 border border-slate-700 hover:border-amber-500 font-mono font-bold text-amber-300 min-w-[70px] text-right transition-colors" title="上下スワイプで増減 / タップで手入力">${fmt(curMax)}</div>
                 </div>
 
                 <!-- DEFAULT Row (Middle) -->
                 <div class="flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded px-2.5 py-1.5">
                     <span class="font-bold text-slate-400 tracking-wider">DEFAULT (初期値)</span>
-                    <div id="jog-scrub-def" class="cursor-ns-resize touch-none select-none px-2 py-0.5 rounded bg-slate-900 border border-slate-700 hover:border-amber-500 font-mono font-bold text-amber-300 min-w-[70px] text-right transition-colors" title="上下スワイプで増減 / タップで手入力">${fmt(curDef)}</div>
+                    <div id="val-scrub-def" class="cursor-ns-resize touch-none select-none px-2 py-0.5 rounded bg-slate-900 border border-slate-700 hover:border-amber-500 font-mono font-bold text-amber-300 min-w-[70px] text-right transition-colors" title="上下スワイプで増減 / タップで手入力">${fmt(curDef)}</div>
                 </div>
 
                 <!-- MIN Row (Bottom) -->
                 <div class="flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded px-2.5 py-1.5">
                     <span class="font-bold text-slate-400 tracking-wider">MIN (下限値)</span>
-                    <div id="jog-scrub-min" class="cursor-ns-resize touch-none select-none px-2 py-0.5 rounded bg-slate-950 border border-slate-700 hover:border-amber-500 font-mono font-bold text-amber-300 min-w-[70px] text-right transition-colors" title="上下スワイプで増減 / タップで手入力">${fmt(curMin)}</div>
+                    <div id="val-scrub-min" class="cursor-ns-resize touch-none select-none px-2 py-0.5 rounded bg-slate-950 border border-slate-700 hover:border-amber-500 font-mono font-bold text-amber-300 min-w-[70px] text-right transition-colors" title="上下スワイプで増減 / タップで手入力">${fmt(curMin)}</div>
                 </div>
             </div>`;
     },
 
     bindEvents: (m, ctx, onChange) => {
+        // 0. Variable Label Input
+        const labelInput = document.getElementById('val-label-input');
+        if (labelInput) {
+            labelInput.addEventListener('input', (e) => {
+                m.label = e.target.value.trim() || 'VAL';
+                ctx.reRenderGrid?.();
+                onChange();
+            });
+        }
+
         // 1. STEP Button Group events
-        document.querySelectorAll('.jog-step-btn').forEach(btn => {
+        document.querySelectorAll('.val-step-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const stepKey = btn.dataset.step;
                 if (!stepKey) return;
@@ -357,7 +348,6 @@ export const JOG = {
                 if (Math.abs(deltaY) > 3) moved = true;
 
                 const stepAmount = (m.stepType === '1semi') ? (1.0 / 12.0) : (parseFloat(m.stepType) || 0.1);
-                // 15px drag step
                 const stepsCount = Math.round(deltaY / 15);
                 let targetVal = startVal + stepsCount * stepAmount;
 
@@ -368,8 +358,13 @@ export const JOG = {
                 }
                 m.val = Math.max(m.min ?? -1.0, Math.min(m.max ?? 1.0, m.val ?? (m.def ?? 0.0)));
 
-                const fmt = (v) => JOG.formatModalVal(v, m.stepType);
-                el.textContent = fmt(m[propKey]);
+                const fmt = (v) => VALUE.formatModalVal(v, m.stepType);
+                el.textContent = fmt(targetVal);
+
+                const valEl = document.getElementById('val-scrub-val');
+                if (valEl) valEl.textContent = fmt(m.val);
+
+                ctx.reRenderGrid?.();
                 onChange();
             };
 
@@ -416,10 +411,14 @@ export const JOG = {
             });
         };
 
-        setupScrub('jog-scrub-val', 'val', 'VALUE (現在値)');
-        setupScrub('jog-scrub-max', 'max', 'MAX (最大値)');
-        setupScrub('jog-scrub-def', 'def', 'DEFAULT (初期値)');
-        setupScrub('jog-scrub-min', 'min', 'MIN (下限値)');
+        setupScrub('val-scrub-val', 'val', 'VALUE (現在値)');
+        setupScrub('val-scrub-max', 'max', 'MAX (最大値)');
+        setupScrub('val-scrub-def', 'def', 'DEFAULT (初期値)');
+        setupScrub('val-scrub-min', 'min', 'MIN (下限値)');
     }
 };
 
+export const valDefs = {
+    VALUE
+};
+export default valDefs;

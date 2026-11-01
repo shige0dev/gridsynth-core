@@ -184,14 +184,16 @@ export const preset03 = {
           "valB": 1
         },
         "SLIDER1": {
-          "type": "JOG",
+          "type": "VALUE",
+          "label": "LVL1",
           "val": 0.7,
           "min": 0,
           "max": 1,
           "def": 0.7
         },
         "SLIDER2": {
-          "type": "JOG",
+          "type": "VALUE",
+          "label": "LVL2",
           "val": 0.7,
           "min": 0,
           "max": 1,

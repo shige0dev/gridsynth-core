@@ -28,7 +28,7 @@ import { padDefs } from './defs/pad.js?v=351';
 import { countDefs } from './defs/count.js?v=578';
 import { lutDefs } from './defs/lut.js?v=589';
 import { matrixDefs } from './defs/matrix.js?v=595';
-import { JOG } from './defs/jog.js?v=494';
+import { valDefs } from './defs/val.js?v=596';
 
 export const MODULE_REGISTRY = {
     ...vcoDefs,
@@ -56,7 +56,7 @@ export const MODULE_REGISTRY = {
     ...countDefs,
     ...lutDefs,
     ...matrixDefs,
-    JOG
+    ...valDefs
 };
 
 export { ADSR_CURVES };

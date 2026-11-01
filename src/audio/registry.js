@@ -28,7 +28,7 @@ import { padAudioDefs } from './defs/pad.js?v=459';
 import { countAudioDefs } from './defs/count.js?v=576';
 import { lutAudioDefs } from './defs/lut.js?v=573';
 import { matrixAudioDefs } from './defs/matrix.js?v=591';
-import { JOG } from './defs/jog.js?v=494';
+import { valAudioDefs } from './defs/val.js?v=596';
 
 export const AUDIO_REGISTRY = {
     ...vcoAudioDefs,
@@ -56,7 +56,7 @@ export const AUDIO_REGISTRY = {
     ...countAudioDefs,
     ...lutAudioDefs,
     ...matrixAudioDefs,
-    JOG
+    ...valAudioDefs
 };
 
 export default AUDIO_REGISTRY;

@@ -33,7 +33,7 @@ export const MODAL_WIDTHS = {
     FOLD: 'w-[220px]',
     VCA: 'w-[185px]',
     MIX: 'w-[230px]',
-    JOG: 'w-[200px]',
+    VALUE: 'w-[200px]',
 
     // Effects
     DELAY: 'w-[200px]',
@@ -298,7 +298,7 @@ export class ModalManager {
                         name: 'CV',
                         sub: 'CV (変調・演算・エンベロープ)',
                         color: 'purple',
-                        types: ['LFO', 'ADSR', 'RF', 'AR', 'CHORD', 'SCALE', 'MATH1', 'MATH2', 'SH', 'COUNT', 'LUT', 'MATRIX', 'CVDELAY', 'JOG', 'THROUGH', 'SUB_IO']
+                        types: ['LFO', 'ADSR', 'RF', 'AR', 'CHORD', 'SCALE', 'MATH1', 'MATH2', 'SH', 'COUNT', 'LUT', 'MATRIX', 'CVDELAY', 'VALUE', 'THROUGH', 'SUB_IO']
                     },
                     {
                         name: 'VISUALIZER',
