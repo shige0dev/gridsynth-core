@@ -297,11 +297,17 @@ export const PAT2 = {
                     <!-- Left: Current Pitch Display -->
                     <div class="flex items-center gap-1 min-w-0 shrink-0">
                         <span id="pat2-pitch-disp-${uid}" class="text-[9.5px] font-mono font-black text-cyan-300">--</span>
-                        <span class="text-[6.5px] font-mono text-slate-500 hidden sm:inline">(ドラッグで重ねてグループ化 / ↕スワイプで音程)</span>
+                        <span class="text-[6.5px] font-mono text-slate-500 hidden sm:inline">(ドラッグで移動 / ↕スワイプで音程)</span>
                     </div>
 
-                    <!-- Right: Ungroup, Modifiers (*n, !n), Trash Delete -->
+                    <!-- Right: Grouping Buttons ([] / <>), Ungroup, Modifiers (*n, !n), Trash Delete -->
                     <div class="flex items-center gap-1 shrink-0">
+                        <button id="pat2-bracket-btn-${uid}" disabled class="h-4 px-1.5 bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7px] font-bold shadow-sm transition active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed" title="隣接選択した項目を [] 分割グループにまとめる">
+                            [ ]
+                        </button>
+                        <button id="pat2-angle-btn-${uid}" disabled class="h-4 px-1.5 bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7px] font-bold shadow-sm transition active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed" title="隣接選択した項目を <> 周期交代グループにまとめる">
+                            &lt; &gt;
+                        </button>
                         <button id="pat2-ungroup-btn-${uid}" class="h-4 px-1.5 bg-slate-900 hover:bg-slate-800 text-slate-400 rounded text-[7px] font-bold border border-slate-800 shadow-sm transition active:scale-95" title="グループ解除">
                             UNGROUP
                         </button>
@@ -326,6 +332,8 @@ export const PAT2 = {
         const tokenStrip = document.getElementById(`pat2-token-strip-${uid}`);
         const tokenContainer = document.getElementById(`pat2-token-container-${uid}`);
         const pitchDisp = document.getElementById(`pat2-pitch-disp-${uid}`);
+        const bracketBtn = document.getElementById(`pat2-bracket-btn-${uid}`);
+        const angleBtn = document.getElementById(`pat2-angle-btn-${uid}`);
         const ungroupBtn = document.getElementById(`pat2-ungroup-btn-${uid}`);
         const subdivBtn = document.getElementById(`pat2-subdiv-btn-${uid}`);
         const repeatBtn = document.getElementById(`pat2-repeat-btn-${uid}`);
@@ -424,8 +432,61 @@ export const PAT2 = {
             return list;
         };
 
+        // Check if selected tokens form a contiguous slice within the same parent list
+        const getAdjacentSelectedGroup = () => {
+            if (selectedIds.size < 2) return null;
+
+            let result = null;
+            function searchList(list) {
+                const indices = [];
+                for (let i = 0; i < list.length; i++) {
+                    if (selectedIds.has(list[i].id)) indices.push(i);
+                }
+                if (indices.length === selectedIds.size) {
+                    // Check if strictly contiguous: indices[j] === indices[0] + j
+                    let contiguous = true;
+                    for (let j = 0; j < indices.length; j++) {
+                        if (indices[j] !== indices[0] + j) {
+                            contiguous = false;
+                            break;
+                        }
+                    }
+                    if (contiguous) {
+                        result = { list, start: indices[0], end: indices[indices.length - 1] };
+                        return true;
+                    }
+                }
+                for (let node of list) {
+                    if (node.children && searchList(node.children)) return true;
+                }
+                return false;
+            }
+            searchList(m._tokens);
+            return result;
+        };
+
         const updateInspector = () => {
             const selected = getSelectedNodes();
+            const adjGroup = getAdjacentSelectedGroup();
+
+            // Enable/disable [] and <> group buttons only when adjacent multiple selection exists
+            if (bracketBtn) {
+                bracketBtn.disabled = !adjGroup;
+                if (adjGroup) {
+                    bracketBtn.className = 'h-4 px-1.5 bg-purple-900/90 hover:bg-purple-800 text-purple-200 border border-purple-500 rounded text-[7px] font-bold shadow-sm transition active:scale-95 cursor-pointer';
+                } else {
+                    bracketBtn.className = 'h-4 px-1.5 bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7px] font-bold shadow-sm transition active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed';
+                }
+            }
+            if (angleBtn) {
+                angleBtn.disabled = !adjGroup;
+                if (adjGroup) {
+                    angleBtn.className = 'h-4 px-1.5 bg-purple-900/90 hover:bg-purple-800 text-purple-200 border border-purple-500 rounded text-[7px] font-bold shadow-sm transition active:scale-95 cursor-pointer';
+                } else {
+                    angleBtn.className = 'h-4 px-1.5 bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7px] font-bold shadow-sm transition active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed';
+                }
+            }
+
             if (selected.length === 0) {
                 if (pitchDisp) pitchDisp.textContent = '--';
                 return;
@@ -469,8 +530,8 @@ export const PAT2 = {
             }
         };
 
-        // Automatic Drag-and-drop: Grouping (drop on token) OR Move/Reorder (drop between tokens)
-        const moveOrMergeTokens = (sourceId, targetId, insertPos = 'group') => {
+        // Automatic Drag-and-drop: Move / Reorder (drop between/near tokens)
+        const moveTokens = (sourceId, targetId, insertPos = 'after') => {
             if (!sourceId || !targetId || sourceId === targetId) return;
 
             let sourceNode = null;
@@ -487,46 +548,19 @@ export const PAT2 = {
             extractSource(m._tokens);
             if (!sourceNode) return;
 
-            if (insertPos === 'group') {
-                // Merge into group on drop
-                function insertIntoTargetGroup(list) {
-                    for (let i = 0; i < list.length; i++) {
-                        if (list[i].id === targetId) {
-                            if (list[i].type === 'group') {
-                                list[i].children = list[i].children || [];
-                                list[i].children.push(sourceNode);
-                            } else {
-                                const origTarget = list[i];
-                                const newGroup = {
-                                    id: genId(),
-                                    type: 'group',
-                                    groupType: 'bracket',
-                                    children: [origTarget, sourceNode]
-                                };
-                                list[i] = newGroup;
-                            }
-                            return true;
-                        }
-                        if (list[i].children && insertIntoTargetGroup(list[i].children)) return true;
+            // Move / Reorder before or after target
+            function insertNearTarget(list) {
+                for (let i = 0; i < list.length; i++) {
+                    if (list[i].id === targetId) {
+                        const insertIdx = insertPos === 'before' ? i : i + 1;
+                        list.splice(insertIdx, 0, sourceNode);
+                        return true;
                     }
-                    return false;
+                    if (list[i].children && insertNearTarget(list[i].children)) return true;
                 }
-                insertIntoTargetGroup(m._tokens);
-            } else {
-                // Move / Reorder before or after target
-                function insertNearTarget(list) {
-                    for (let i = 0; i < list.length; i++) {
-                        if (list[i].id === targetId) {
-                            const insertIdx = insertPos === 'before' ? i : i + 1;
-                            list.splice(insertIdx, 0, sourceNode);
-                            return true;
-                        }
-                        if (list[i].children && insertNearTarget(list[i].children)) return true;
-                    }
-                    return false;
-                }
-                insertNearTarget(m._tokens);
+                return false;
             }
+            insertNearTarget(m._tokens);
 
             selectedIds.clear();
             renderTokens();
@@ -570,14 +604,14 @@ export const PAT2 = {
 
                     const clearTargetIndicators = (nodeEl) => {
                         if (!nodeEl) return;
-                        nodeEl.classList.remove('ring-2', 'ring-purple-400', 'border-l-2', 'border-l-cyan-400', 'border-r-2', 'border-r-cyan-400');
+                        nodeEl.classList.remove('border-l-2', 'border-l-cyan-400', 'border-r-2', 'border-r-cyan-400');
                     };
 
                     const onPointerMove = (me) => {
                         const dx = me.clientX - startX;
                         const dy = startY - me.clientY;
 
-                        // Check horizontal drag for moving/reordering or grouping
+                        // Check horizontal drag for moving/reordering between tokens
                         if (!isDraggingSwipe && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) {
                             if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
                             isHorizontalDrag = true;
@@ -594,23 +628,17 @@ export const PAT2 = {
                                 }
                                 targetOverEl = targetNode;
 
-                                // Determine whether dropping on center (group) or on edge (move/reorder between)
+                                // Determine whether dropping before or after target
                                 const rect = targetNode.getBoundingClientRect();
                                 const relX = (me.clientX - rect.left) / Math.max(1, rect.width);
                                 clearTargetIndicators(targetNode);
 
-                                if (relX < 0.28) {
-                                    // Drop between tokens (before target)
+                                if (relX < 0.5) {
                                     dropMode = 'before';
                                     targetNode.classList.add('border-l-2', 'border-l-cyan-400');
-                                } else if (relX > 0.72) {
-                                    // Drop between tokens (after target)
+                                } else {
                                     dropMode = 'after';
                                     targetNode.classList.add('border-r-2', 'border-r-cyan-400');
-                                } else {
-                                    // Drop directly on icon (group)
-                                    dropMode = 'group';
-                                    targetNode.classList.add('ring-2', 'ring-purple-400');
                                 }
                             } else if (targetOverEl) {
                                 clearTargetIndicators(targetOverEl);
@@ -755,6 +783,46 @@ export const PAT2 = {
                 selectedIds.clear();
                 selectedIds.add(newNode.id);
             }
+            renderTokens();
+            syncPattern();
+        });
+
+        // Group into [ ] (subdivision group)
+        bracketBtn?.addEventListener('click', () => {
+            const adj = getAdjacentSelectedGroup();
+            if (!adj) return;
+            const { list, start, end } = adj;
+            const count = end - start + 1;
+            const children = list.slice(start, end + 1);
+            const newGroup = {
+                id: genId(),
+                type: 'group',
+                groupType: 'bracket',
+                children
+            };
+            list.splice(start, count, newGroup);
+            selectedIds.clear();
+            selectedIds.add(newGroup.id);
+            renderTokens();
+            syncPattern();
+        });
+
+        // Group into < > (cycle group)
+        angleBtn?.addEventListener('click', () => {
+            const adj = getAdjacentSelectedGroup();
+            if (!adj) return;
+            const { list, start, end } = adj;
+            const count = end - start + 1;
+            const children = list.slice(start, end + 1);
+            const newGroup = {
+                id: genId(),
+                type: 'group',
+                groupType: 'angle',
+                children
+            };
+            list.splice(start, count, newGroup);
+            selectedIds.clear();
+            selectedIds.add(newGroup.id);
             renderTokens();
             syncPattern();
         });
