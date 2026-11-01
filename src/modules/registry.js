@@ -17,8 +17,7 @@ import { seqDefs } from './defs/seq.js?v=436';
 import { chordDefs } from './defs/chord.js?v=351';
 import { arpDefs } from './defs/arp.js?v=424';
 import { dist4Defs } from './defs/dist4.js?v=470';
-import { patDefs } from './defs/pat.js?v=514';
-import { pat2Defs } from './defs/pat2.js?v=548';
+import { patDefs } from './defs/pat.js?v=549';
 import { markovDefs } from './defs/markov.js?v=460';
 import { fmDefs } from './defs/fm.js?v=351';
 import { scaleDefs } from './defs/scale.js?v=351';
@@ -46,7 +45,6 @@ export const MODULE_REGISTRY = {
     ...arpDefs,
     ...dist4Defs,
     ...patDefs,
-    ...pat2Defs,
     ...markovDefs,
     ...fmDefs,
     ...scaleDefs,
