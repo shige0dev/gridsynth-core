@@ -206,10 +206,6 @@ export const LISS = {
                 <div class="h-[108px] bg-slate-950 p-1 rounded-lg border border-slate-800 select-none shadow-sm overflow-hidden" style="opacity: ${m?.opacity ?? 0.8};">
                     <canvas id="liss-modal-canvas" class="w-full h-full block rounded bg-slate-950" width="360" height="106"></canvas>
                 </div>
-                <div class="flex items-center justify-between text-[8px] text-slate-400 select-none pt-0.5">
-                    <span class="font-mono text-emerald-400">CV_IN_X: PIN5</span>
-                    <span class="font-mono text-emerald-400">CV_IN_Y: PIN6</span>
-                </div>
             </div>`;
     },
     bindEvents: (m, ctx, cb) => {
