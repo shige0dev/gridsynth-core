@@ -52,12 +52,13 @@ export const PAT = {
             }
         }
 
-        // Highlight active token in modal
+        // Highlight active playing token in modal (only when playing and not manually selecting)
         if (modal) {
             const activeTokenId = (isP && data?.activeTokenId) ? data.activeTokenId : null;
             const isGate = isP && !!data?.gate;
             modal.querySelectorAll('.pat-tok').forEach(tok => {
                 const isActive = activeTokenId && tok.dataset.id === activeTokenId;
+                // Add playhead pulse highlight
                 tok.classList.toggle('ring-1', isActive);
                 tok.classList.toggle('ring-cyan-400', isActive && !isGate);
                 tok.classList.toggle('ring-yellow-300', isActive && isGate);
@@ -422,7 +423,11 @@ export const PAT = {
         });
 
         // SEND, Manual, Presets, Bars, Gate
-        root.querySelector(`#pat-send-${uid}`)?.addEventListener('click', () => { sync(true); if (ctx?.showToast) ctx.showToast('SEND: 反映しました'); });
+        root.querySelector(`#pat-send-${uid}`)?.addEventListener('click', () => {
+            selectedIds.clear();
+            sync(true);
+            if (ctx?.showToast) ctx.showToast('SEND: 反映しました');
+        });
         root.querySelector(`#pat-btn-manual-${uid}`)?.addEventListener('click', () => { m._showManual = !m._showManual; ctx.reRenderModal(); });
         root.querySelector(`#pat-btn-presets-${uid}`)?.addEventListener('click', () => { m._showPresets = !m._showPresets; ctx.reRenderModal(); });
         root.querySelectorAll('.pat-preset-btn').forEach(btn => btn.addEventListener('click', () => {
