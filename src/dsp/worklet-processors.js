@@ -21,4 +21,4 @@ import './processors/wave.js?v=459';
 import './processors/pad.js';
 import './processors/count.js?v=576';
 import './processors/lut.js?v=573';
-import './processors/matrix.js?v=585';
+import './processors/matrix.js?v=591';

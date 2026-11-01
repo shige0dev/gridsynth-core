@@ -27,10 +27,10 @@ export const MATRIX = {
     ports: () => ({
         in: [{ port: 'cv_in', pin: 5, color: 'bg-yellow-400' }],
         out: [
-            { port: 'out_1', pin: 7, color: 'bg-red-500' },
-            { port: 'out_2', pin: 8, color: 'bg-red-500' },
-            { port: 'out_3', pin: 9, color: 'bg-red-500' },
-            { port: 'out_4', pin: 10, color: 'bg-red-500' }
+            { port: 'out_1', pin: 7, color: 'bg-yellow-400' },
+            { port: 'out_2', pin: 8, color: 'bg-yellow-400' },
+            { port: 'out_3', pin: 9, color: 'bg-yellow-400' },
+            { port: 'out_4', pin: 10, color: 'bg-yellow-400' }
         ]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
@@ -226,22 +226,6 @@ export const MATRIX = {
                 }
                 ctx.reRenderModal();
                 ctx.reRenderGrid?.();
-                cb();
-            });
-        });
-
-        // Mode toggles (GATE / TRIG)
-        root.querySelectorAll('.matrix-mode-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const t = parseInt(e.currentTarget.dataset.track, 10);
-                if (!Array.isArray(m.modes)) m.modes = ['gate', 'gate', 'gate', 'gate'];
-                m.modes[t] = m.modes[t] === 'trig' ? 'gate' : 'trig';
-                const fullId = `${ctx.currentPageId || 0}/${m.id}`;
-                const inst = ctx.synth?.modules?.[fullId] || ctx.synth?.modules?.[m.id];
-                if (inst?.nodes?.w?.port) {
-                    inst.nodes.w.port.postMessage({ type: 'SET_MODES', modes: m.modes });
-                }
-                ctx.reRenderModal();
                 cb();
             });
         });

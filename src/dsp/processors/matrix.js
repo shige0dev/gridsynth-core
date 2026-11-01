@@ -97,29 +97,13 @@ class MatrixProcessor extends AudioWorkletProcessor {
       if (slot >= divs) slot = divs - 1;
       if (slot < 0) slot = 0;
 
-      const isNewSlot = (slot !== this.lastSlot);
-      this.lastSlot = slot;
       this.latestSlot = slot;
 
       for (let t = 0; t < 4; t++) {
+        // Continuous CV: 1.0 while CV IN stays within ON cell, 0.0 when in OFF cell
         const isStepOn = (this.patterns[t][slot] === 1);
-        const mode = this.trackModes[t];
-
-        if (mode === 'trig') {
-          if (isNewSlot && isStepOn) {
-            this.pulseCounters[t] = this.pulseLengthSamples;
-          }
-          let sig = 0;
-          if (this.pulseCounters[t] > 0) {
-            sig = 1.0;
-            this.pulseCounters[t]--;
-          }
-          if (outs[t]) outs[t][i] = sig;
-        } else {
-          // Gate mode: 1.0 while inside ON step
-          const sig = isStepOn ? 1.0 : 0.0;
-          if (outs[t]) outs[t][i] = sig;
-        }
+        const sig = isStepOn ? 1.0 : 0.0;
+        if (outs[t]) outs[t][i] = sig;
       }
     }
 

@@ -27,7 +27,7 @@ import { waveAudioDefs } from './defs/wave.js?v=459';
 import { padAudioDefs } from './defs/pad.js?v=459';
 import { countAudioDefs } from './defs/count.js?v=576';
 import { lutAudioDefs } from './defs/lut.js?v=573';
-import { matrixAudioDefs } from './defs/matrix.js?v=585';
+import { matrixAudioDefs } from './defs/matrix.js?v=591';
 import { JOG } from './defs/jog.js?v=494';
 
 export const AUDIO_REGISTRY = {
