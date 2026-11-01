@@ -1,4 +1,4 @@
-﻿// src/ui/managers/dock-manager.js
+// src/ui/managers/dock-manager.js
 import { MODULE_REGISTRY } from '../../modules/registry.js?v=459';
 import { UIHelpers } from '../helpers.js?v=459';
 
@@ -254,11 +254,23 @@ export class DockManager {
         if (mId) {
             const info = this.openDocks.get(mId);
             if (info) {
+                const m = this.ui.modules[mId];
+                if (m && typeof m._onCloseDialog === 'function') {
+                    try { m._onCloseDialog(); } catch (_) {}
+                    delete m._onCloseDialog;
+                }
                 info.element.remove();
                 this.openDocks.delete(mId);
             }
         } else {
-            this.openDocks.forEach(info => info.element.remove());
+            this.openDocks.forEach((info, id) => {
+                const m = this.ui.modules[id];
+                if (m && typeof m._onCloseDialog === 'function') {
+                    try { m._onCloseDialog(); } catch (_) {}
+                    delete m._onCloseDialog;
+                }
+                info.element.remove();
+            });
             this.openDocks.clear();
         }
         if (this.openDocks.size === 0) {

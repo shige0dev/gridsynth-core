@@ -241,7 +241,12 @@ export const PAT2 = {
         const showPresets = m._showPresets === true;
         const curAddPitch = (m._addPitch || 'c2').toUpperCase();
 
-        if (!m._tokens || m._lastPatStr !== pat) {
+        if (m._committedPattern === undefined) {
+            m._committedPattern = pat;
+        }
+
+        // Initialize tokens if missing or if no uncommitted draft exists and pattern changed externally
+        if (!m._tokens || (!m._draftPattern && m._lastPatStr !== pat)) {
             m._tokens = parsePatternToTokens(pat);
             m._lastPatStr = pat;
         }
@@ -285,11 +290,18 @@ export const PAT2 = {
                     </div>
                 </div>
 
-                <!-- Token Strip Container: Clicking outside tokens cancels selection -->
-                <div id="pat2-token-container-${uid}" class="relative w-full bg-slate-950 border border-slate-800 rounded p-[2px] overflow-hidden shadow-inner cursor-default">
-                    <div id="pat2-token-strip-${uid}" class="flex items-center gap-[2px] overflow-x-auto min-h-[26px] h-6 py-0 px-[2px] scrollbar-thin scrollbar-thumb-slate-700 select-none">
-                        <!-- Populated dynamically via renderTokens -->
+                <!-- Token Strip Container with SEND (↵) Button at the right end -->
+                <div class="flex items-center gap-1 w-full min-w-0">
+                    <div id="pat2-token-container-${uid}" class="relative flex-1 bg-slate-950 border border-slate-800 rounded p-[2px] overflow-hidden shadow-inner cursor-default min-w-0">
+                        <div id="pat2-token-strip-${uid}" class="flex items-center gap-[2px] overflow-x-auto min-h-[26px] h-6 py-0 px-[2px] scrollbar-thin scrollbar-thumb-slate-700 select-none">
+                            <!-- Populated dynamically via renderTokens -->
+                        </div>
                     </div>
+                    <!-- SEND Button (↵) at the rightmost of input strip -->
+                    <button id="pat2-send-btn-${uid}" class="h-7 px-2 bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 hover:text-white border border-cyan-500/70 rounded flex items-center justify-center gap-1 shadow-sm transition active:scale-95 shrink-0 cursor-pointer font-mono text-[9px] font-bold" title="パターンをシンセへ反映 (SEND / Enter)">
+                        <span>SEND</span>
+                        <span class="text-[11px] leading-none">↵</span>
+                    </button>
                 </div>
 
                 <!-- Mini Manual / Symbol Reference Bar (Explaining notation symbols: [], <>, *n, !n, ~) -->
@@ -349,6 +361,27 @@ export const PAT2 = {
         const gateSlider = document.getElementById(`pat2-gate-slider-${uid}`);
         const gateDisp = document.getElementById(`pat2-gate-disp-${uid}`);
         const togglePresets = document.getElementById(`pat2-toggle-presets-${uid}`);
+        const sendBtn = document.getElementById(`pat2-send-btn-${uid}`);
+
+        // Save original committed pattern on dialog open for reverting if dismissed without SEND
+        if (m._committedPattern === undefined) {
+            m._committedPattern = m.pattern || 'c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2';
+        }
+
+        // On dialog dismiss/close without SEND: reset m._tokens & pattern back to committed state
+        m._onCloseDialog = () => {
+            if (m._committedPattern !== undefined) {
+                if (m.pattern !== m._committedPattern) {
+                    m.pattern = m._committedPattern;
+                    cb();
+                }
+                m._tokens = parsePatternToTokens(m._committedPattern);
+                m._lastPatStr = m._committedPattern;
+                m._draftPattern = null;
+            }
+            delete m._committedPattern;
+            delete m._draftPattern;
+        };
 
         let selectedIds = new Set();
         let stepCounter = 0;
@@ -415,15 +448,42 @@ export const PAT2 = {
             tokenStrip.innerHTML = m._tokens.map(t => renderNode(t)).join('');
             bindTokenEvents();
             updateInspector();
+            updateSendBtnState();
             refreshIcons();
+        };
+
+        const updateSendBtnState = () => {
+            if (!sendBtn) return;
+            const draftPat = tokensToPattern(m._tokens);
+            const isDirty = draftPat !== (m._committedPattern || '');
+            if (isDirty) {
+                sendBtn.disabled = false;
+                sendBtn.className = 'h-7 px-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 border border-cyan-300 font-black rounded flex items-center justify-center gap-1 shadow-md shadow-cyan-500/40 transition active:scale-95 shrink-0 cursor-pointer font-mono text-[9px] animate-pulse';
+            } else {
+                sendBtn.disabled = false;
+                sendBtn.className = 'h-7 px-2 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 border border-slate-700 rounded flex items-center justify-center gap-1 shadow-sm transition active:scale-95 shrink-0 cursor-pointer font-mono text-[9px] font-bold';
+            }
         };
 
         const syncPattern = () => {
             const newPat = tokensToPattern(m._tokens);
-            m.pattern = newPat;
+            m._draftPattern = newPat;
             m._lastPatStr = newPat;
-            cb();
+            updateSendBtnState();
         };
+
+        const doSend = () => {
+            const finalPat = tokensToPattern(m._tokens);
+            m.pattern = finalPat;
+            m._committedPattern = finalPat;
+            m._draftPattern = null;
+            m._lastPatStr = finalPat;
+            updateSendBtnState();
+            cb();
+            if (ctx?.showToast) ctx.showToast('SEND: パターンを反映しました');
+        };
+
+        sendBtn?.addEventListener('click', doSend);
 
         const getSelectedNodes = () => {
             const list = [];
@@ -911,7 +971,6 @@ export const PAT2 = {
             btn.addEventListener('click', () => {
                 const patStr = btn.dataset.pattern;
                 if (patStr) {
-                    m.pattern = patStr;
                     m._tokens = parsePatternToTokens(patStr);
                     m._lastPatStr = patStr;
                     selectedIds.clear();
