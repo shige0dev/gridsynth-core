@@ -200,9 +200,9 @@ export const MATRIX = {
                     </div>
                 </div>
 
-                <!-- Main Matrix Canvas: 正方形セル比率 (aspect-[4/1] -> 各行1:1の正方形) -->
+                <!-- Main Matrix Canvas: 正方形セル比率 (aspect 4:1) -->
                 <div class="relative bg-slate-950 p-1 rounded-lg border border-indigo-500/40 shadow-inner w-full">
-                    <canvas id="matrix-modal-canvas" class="w-full aspect-[4/1] block rounded bg-slate-950 touch-none cursor-pointer border border-slate-800" width="560" height="140"></canvas>
+                    <canvas id="matrix-modal-canvas" class="modal-canvas-4x1 rounded bg-slate-950 touch-none cursor-pointer border border-slate-800" width="560" height="140"></canvas>
                 </div>
             </div>
         `;

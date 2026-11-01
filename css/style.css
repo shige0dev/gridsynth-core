@@ -568,3 +568,11 @@ body.is-row-dragging .grid-cell * {
     -ms-overflow-style: none !important;
     scrollbar-width: none !important;
 }
+
+/* Standardized 4:1 Aspect Ratio Full-Width Modal Canvases */
+.modal-canvas-4x1 {
+    width: 100% !important;
+    aspect-ratio: 4 / 1 !important;
+    height: auto !important;
+    display: block;
+}

@@ -113,7 +113,7 @@ export const SCOPE = {
                     </div>
                 </div>
                 <div class="w-full bg-slate-950 p-1 rounded-lg border border-slate-800 select-none shadow-sm overflow-hidden" style="opacity: ${m?.opacity ?? 0.8};">
-                    <canvas id="scope-modal-canvas" class="w-full aspect-[4/1] block rounded bg-slate-950" width="560" height="140"></canvas>
+                    <canvas id="scope-modal-canvas" class="modal-canvas-4x1 rounded bg-slate-950" width="560" height="140"></canvas>
                 </div>
             </div>`;
     },
@@ -204,7 +204,7 @@ export const LISS = {
                     </div>
                 </div>
                 <div class="w-full bg-slate-950 p-1 rounded-lg border border-slate-800 select-none shadow-sm overflow-hidden" style="opacity: ${m?.opacity ?? 0.8};">
-                    <canvas id="liss-modal-canvas" class="w-full aspect-[4/1] block rounded bg-slate-950" width="560" height="140"></canvas>
+                    <canvas id="liss-modal-canvas" class="modal-canvas-4x1 rounded bg-slate-950" width="560" height="140"></canvas>
                 </div>
             </div>`;
     },
@@ -616,7 +616,7 @@ export const SPEC = {
                 </div>
 
                 <div class="w-full bg-slate-950 p-1 rounded-lg border border-slate-800 select-none shadow-sm overflow-hidden">
-                    <canvas id="spec-modal-canvas" class="w-full aspect-[4/1] block rounded bg-slate-950" width="560" height="140"></canvas>
+                    <canvas id="spec-modal-canvas" class="modal-canvas-4x1 rounded bg-slate-950" width="560" height="140"></canvas>
                 </div>
             </div>`;
     },

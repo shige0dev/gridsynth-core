@@ -194,7 +194,7 @@ export const LUT = {
                         <span class="text-teal-400 font-bold">${divs}-DIV STEP (TOUCH & DRAG TO SHAPE)</span>
                         <div>IN: <span id="lut-modal-in-disp" class="text-amber-400 font-bold">0.000V</span> | OUT: <span id="lut-modal-out-disp" class="text-teal-300 font-bold">0.000V</span></div>
                     </div>
-                    <canvas id="lut-modal-canvas" class="w-full aspect-[4/1] block rounded bg-slate-950 touch-none cursor-crosshair border border-slate-800" width="560" height="140"></canvas>
+                    <canvas id="lut-modal-canvas" class="modal-canvas-4x1 rounded bg-slate-950 touch-none cursor-crosshair border border-slate-800" width="560" height="140"></canvas>
                 </div>
             </div>
         `;
