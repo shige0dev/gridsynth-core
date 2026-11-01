@@ -9,8 +9,6 @@ import {
     tokensToPattern
 } from '../../core/pat-tokens.js';
 
-export { parsePatternToTokens, tokensToPattern };
-
 export const PAT = {
     color: 'sky',
     defaults: () => ({

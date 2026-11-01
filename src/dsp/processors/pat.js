@@ -28,8 +28,6 @@ export class PatProcessor extends AudioWorkletProcessor {
             if (e.data.type === 'SET_EVENTS') {
                 if (e.data.cycles && e.data.cycles.length > 0) {
                     this.cycles = e.data.cycles;
-                } else if (e.data.events) {
-                    this.cycles = [e.data.events];
                 }
                 if (e.data.cycleBeats) this.cycleBeats = e.data.cycleBeats;
                 if (e.data.gateLen !== undefined) this.gateLen = Math.max(0.05, Math.min(0.98, e.data.gateLen));
