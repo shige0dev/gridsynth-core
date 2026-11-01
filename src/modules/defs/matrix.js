@@ -62,7 +62,7 @@ export const MATRIX = {
 
         // Draw cells (All white)
         ctx2d.fillStyle = '#ffffff';
-        const cellMargin = 0.5;
+        const cellMargin = 1.0;
         for (let t = 0; t < 4; t++) {
             const pat = patterns[t] || [];
             const y = t * rowH;
@@ -129,8 +129,8 @@ export const MATRIX = {
 
         // Render active ON cells (All pure white with crisp glow)
         ctx2d.fillStyle = '#f8fafc';
-        const gapX = 1.0;
-        const gapY = 1.0;
+        const gapX = 2.0;
+        const gapY = 2.0;
         for (let t = 0; t < 4; t++) {
             const pat = patterns[t] || [];
             const y = t * rowH;
