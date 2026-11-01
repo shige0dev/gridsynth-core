@@ -4,7 +4,7 @@ export const COUNT = {
     color: 'emerald',
     defaults: () => ({
         type: 'COUNT',
-        max: 256,         // 16, 32, 64, 256
+        max: 16,          // 16, 32, 64, 256
         format: 'HEX',    // 'HEX' or 'DEC'
         name: 'COUNT'
     }),

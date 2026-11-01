@@ -8,7 +8,7 @@ export const COUNT = {
             outputChannelCount: [1, 1]
         });
 
-        const initialMax = [16, 32, 64, 256].includes(d.max) ? d.max : 256;
+        const initialMax = [16, 32, 64, 256].includes(d.max) ? d.max : 16;
         w.port.postMessage({
             type: 'SET_MAX',
             value: initialMax

@@ -8,7 +8,7 @@ class CountProcessor extends AudioWorkletProcessor {
     super();
 
     this.count = 0;
-    this.max = 256;      // Default 256 (0..255)
+    this.max = 16;       // Default 16 (0..15)
     this.prevClk = 0;
     this.prevReset = 0;
 
