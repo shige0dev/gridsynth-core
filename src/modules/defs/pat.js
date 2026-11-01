@@ -52,19 +52,30 @@ export const PAT = {
             }
         }
 
-        // Highlight active playing token in modal (only when playing and not manually selecting)
+        // Highlight active playing token in modal
         if (modal) {
             const activeTokenId = (isP && data?.activeTokenId) ? data.activeTokenId : null;
             const isGate = isP && !!data?.gate;
             modal.querySelectorAll('.pat-tok').forEach(tok => {
                 const isActive = activeTokenId && tok.dataset.id === activeTokenId;
-                // Add playhead pulse highlight
-                tok.classList.toggle('ring-1', isActive);
-                tok.classList.toggle('ring-cyan-400', isActive && !isGate);
-                tok.classList.toggle('ring-yellow-300', isActive && isGate);
-                tok.classList.toggle('shadow-[0_0_8px_rgba(34,211,238,0.7)]', isActive && !isGate);
-                tok.classList.toggle('shadow-[0_0_12px_rgba(253,224,71,0.9)]', isActive && isGate);
-                tok.classList.toggle('scale-105', isActive);
+                if (isActive) {
+                    if (isGate) {
+                        tok.classList.remove('border-slate-800', 'border-cyan-400', 'bg-slate-900/90');
+                        tok.classList.add('border-yellow-300', 'bg-yellow-400/30', 'scale-105', 'shadow-[0_0_10px_rgba(253,224,71,0.85)]');
+                    } else {
+                        tok.classList.remove('border-slate-800', 'border-yellow-300', 'bg-yellow-400/30', 'scale-105', 'shadow-[0_0_10px_rgba(253,224,71,0.85)]');
+                        tok.classList.add('border-cyan-400', 'bg-cyan-950/60');
+                    }
+                } else {
+                    tok.classList.remove(
+                        'border-cyan-400', 'border-yellow-300',
+                        'bg-cyan-950/60', 'bg-yellow-400/30',
+                        'scale-105', 'shadow-[0_0_10px_rgba(253,224,71,0.85)]'
+                    );
+                    if (!tok.classList.contains('border-yellow-400')) {
+                        tok.classList.add('border-slate-800', 'bg-slate-900/90');
+                    }
+                }
             });
         }
     },
