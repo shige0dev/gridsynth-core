@@ -78,18 +78,24 @@ export const COUNT = {
         const presetOptions = [8, 16, 32, 64, 128, 256];
 
         return `
-            <div class="space-y-3 p-1">
-                <!-- Monitor & MAX Row: 現在値 / (MAX入力欄) = 0.0000V を1行で表示 -->
-                <div class="bg-slate-950/80 rounded-lg p-2.5 border border-emerald-500/30 shadow-inner flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-1.5 font-mono text-sm">
-                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">RATIO:</span>
-                        <span id="count-modal-val" class="font-black text-emerald-300 text-base min-w-[20px] text-right">0</span>
-                        <span class="text-emerald-500/80 font-black text-base">/</span>
-                        <input id="count-max-input" type="number" min="1" max="1024" value="${curMax}" class="w-16 bg-slate-900 border border-emerald-500/60 rounded px-1.5 py-0.5 text-emerald-300 font-mono font-black text-sm text-center focus:outline-none focus:ring-1 focus:ring-emerald-400" placeholder="1-1024" />
+            <div class="space-y-2.5 p-1">
+                <!-- Monitor & MAX: 分子・分母の縦並び分数表示と CV OUT をダイアログ幅内にコンパクト配置 -->
+                <div class="bg-slate-950/90 rounded-lg p-2 border border-emerald-500/40 shadow-inner flex items-center justify-around gap-2">
+                    <!-- 分数表示 (分母の真上に分子) -->
+                    <div class="flex items-center gap-2">
+                        <div class="inline-flex flex-col items-center justify-center font-mono font-black text-emerald-300">
+                            <div id="count-modal-val" class="text-base leading-none text-center">
+                                0
+                            </div>
+                            <div class="w-12 h-[1.5px] bg-emerald-400/80 my-1 rounded-full"></div>
+                            <input id="count-max-input" type="number" min="1" max="1024" value="${curMax}" class="w-12 bg-slate-900 border border-emerald-500/60 rounded px-0.5 py-0 text-emerald-300 font-mono font-black text-base text-center leading-tight focus:outline-none focus:ring-1 focus:ring-emerald-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                        </div>
                     </div>
-                    <div class="flex items-center gap-1.5 font-mono text-sm border-l border-slate-800 pl-2">
-                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">CV OUT:</span>
-                        <span id="count-modal-cv" class="font-black text-amber-400 text-sm">0.0000V</span>
+
+                    <!-- 出力電圧 -->
+                    <div class="flex flex-col items-center justify-center font-mono border-l border-slate-800 pl-3">
+                        <span class="text-[7.5px] font-bold text-slate-400 tracking-tight">OUT (CV)</span>
+                        <span id="count-modal-cv" class="font-black text-amber-400 text-sm mt-0.5 tracking-tight">0.0000V</span>
                     </div>
                 </div>
 
@@ -106,7 +112,7 @@ export const COUNT = {
                 </div>
 
                 <!-- RESET ACTION -->
-                <div class="pt-1">
+                <div class="pt-0.5">
                     <button id="count-reset-btn" class="w-full py-1.5 rounded bg-rose-950/80 hover:bg-rose-900 border border-rose-700 text-rose-300 font-mono font-bold text-[9px] tracking-wider transition-colors active:scale-95 flex items-center justify-center gap-1 shadow-sm">
                         <span>↺ RESET TO 0</span>
                     </button>

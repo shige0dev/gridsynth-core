@@ -25,7 +25,7 @@ import { rfDefs } from './defs/rf.js?v=396';
 import { arDefs } from './defs/ar.js?v=396';
 import { waveDefs } from './defs/wave.js?v=402';
 import { padDefs } from './defs/pad.js?v=351';
-import { countDefs } from './defs/count.js?v=577';
+import { countDefs } from './defs/count.js?v=578';
 import { lutDefs } from './defs/lut.js?v=574';
 import { JOG } from './defs/jog.js?v=494';
 
