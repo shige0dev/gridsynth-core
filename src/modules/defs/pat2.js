@@ -136,25 +136,25 @@ export const PAT2 = {
 
                     <!-- Middle: Grouping Buttons ([] / <> / [|]), Modifiers (*n, /n, !n, ?), all left-aligned -->
                     <div class="flex items-center gap-0.5 shrink-0">
-                        <button id="pat2-bracket-btn-${uid}" disabled class="h-5 w-[18px] flex items-center justify-center bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 opacity-50 cursor-not-allowed" title="横並び選択した項目を [] 分割グループにまとめる">
+                        <button id="pat2-bracket-btn-${uid}" disabled class="h-5 w-[18px] flex items-center justify-center bg-slate-900 text-slate-500 border border-slate-800 rounded text-[8.5px] font-bold shadow-sm transition active:scale-95 opacity-50 cursor-not-allowed" title="横並び選択した項目を [] 分割グループにまとめる">
                             []
                         </button>
-                        <button id="pat2-angle-btn-${uid}" disabled class="h-5 w-[18px] flex items-center justify-center bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 opacity-50 cursor-not-allowed tracking-tighter" title="横並び選択した項目を <> 周期交代グループにまとめる">
+                        <button id="pat2-angle-btn-${uid}" disabled class="h-5 w-[18px] flex items-center justify-center bg-slate-900 text-slate-500 border border-slate-800 rounded text-[8.5px] font-bold shadow-sm transition active:scale-95 opacity-50 cursor-not-allowed tracking-tighter" title="横並び選択した項目を <> 周期交代グループにまとめる">
                             &lt;&gt;
                         </button>
-                        <button id="pat2-choice-btn-${uid}" disabled class="h-5 w-[18px] flex items-center justify-center bg-slate-900 text-slate-500 border border-slate-800 rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 opacity-50 cursor-not-allowed tracking-tighter" title="横並び選択した項目を [ | ] ランダム選択グループにまとめる">
+                        <button id="pat2-choice-btn-${uid}" disabled class="h-5 w-[18px] flex items-center justify-center bg-slate-900 text-slate-500 border border-slate-800 rounded text-[8.5px] font-bold shadow-sm transition active:scale-95 opacity-50 cursor-not-allowed tracking-tighter" title="横並び選択した項目を [ | ] ランダム選択グループにまとめる">
                             [|]
                         </button>
-                        <button id="pat2-subdiv-btn-${uid}" class="h-5 px-1 bg-sky-950/80 hover:bg-sky-900 text-sky-300 rounded text-[7px] font-bold border border-sky-700/60 transition" title="細分化 (*2, *3, *4)">
+                        <button id="pat2-subdiv-btn-${uid}" class="h-5 px-1 bg-sky-950/80 hover:bg-sky-900 text-sky-300 rounded text-[8px] font-bold border border-sky-700/60 transition" title="細分化 (*2, *3, *4)">
                             *n
                         </button>
-                        <button id="pat2-slowdown-btn-${uid}" class="h-5 px-1 bg-sky-950/80 hover:bg-sky-900 text-sky-300 rounded text-[7px] font-bold border border-sky-700/60 transition" title="スローダウン・ゲート伸長 (/2, /3, /4)">
+                        <button id="pat2-slowdown-btn-${uid}" class="h-5 px-1 bg-sky-950/80 hover:bg-sky-900 text-sky-300 rounded text-[8px] font-bold border border-sky-700/60 transition" title="スローダウン・ゲート伸長 (/2, /3, /4)">
                             /n
                         </button>
-                        <button id="pat2-repeat-btn-${uid}" class="h-5 px-1 bg-sky-950/80 hover:bg-sky-900 text-sky-300 rounded text-[7px] font-bold border border-sky-700/60 transition" title="複製 (!2, !3, !4)">
+                        <button id="pat2-repeat-btn-${uid}" class="h-5 px-1 bg-sky-950/80 hover:bg-sky-900 text-sky-300 rounded text-[8px] font-bold border border-sky-700/60 transition" title="複製 (!2, !3, !4)">
                             !n
                         </button>
-                        <button id="pat2-prob-btn-${uid}" class="h-5 px-1 bg-sky-950/80 hover:bg-sky-900 text-sky-300 rounded text-[7px] font-bold border border-sky-700/60 transition" title="発音確率 (?, ?0.8, ?0.2)">
+                        <button id="pat2-prob-btn-${uid}" class="h-5 px-1 bg-sky-950/80 hover:bg-sky-900 text-sky-300 rounded text-[8.5px] font-bold border border-sky-700/60 transition font-mono" title="発音確率 (?, ?0.8, ?0.2)">
                             ?
                         </button>
                         <button id="pat2-del-btn-${uid}" class="h-5 px-1.5 bg-red-950/80 hover:bg-red-900 text-red-300 rounded border border-red-500/60 transition flex items-center justify-center active:scale-95" title="選択削除 / 修飾子削除 / グループ解除">
@@ -446,7 +446,7 @@ export const PAT2 = {
                 const stateCls = adjGroup
                     ? 'bg-sky-900 hover:bg-sky-800 text-sky-100 border-sky-400 cursor-pointer'
                     : 'bg-slate-900 text-slate-500 border-slate-800 opacity-50 cursor-not-allowed';
-                btn.className = `h-5 w-[18px] flex items-center justify-center ${stateCls} border rounded text-[7.5px] font-bold shadow-sm transition active:scale-95 ${extraCls}`;
+                btn.className = `h-5 w-[18px] flex items-center justify-center ${stateCls} border rounded text-[8.5px] font-bold shadow-sm transition active:scale-95 ${extraCls}`;
             };
             setGrpBtn(bracketBtn, '');
             setGrpBtn(angleBtn, 'tracking-tighter');
