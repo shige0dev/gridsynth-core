@@ -19,6 +19,7 @@ export class PatProcessor extends AudioWorkletProcessor {
         this.gate = 0;
         this.gap = 0;
         this.activeIdx = -1;
+        this.activeTokenId = null;
         this.activeLabel = '\u2014';
         this.activeIsRest = true;
         this.postCounter = 0;
@@ -104,6 +105,7 @@ export class PatProcessor extends AudioWorkletProcessor {
 
             if (curIdx !== this.activeIdx) {
                 this.activeIdx = curIdx;
+                this.activeTokenId = curEv ? curEv.tokenId : null;
                 if (curEv && !curEv.isRest) {
                     const trigger = (curEv.prob === undefined || curEv.prob >= 1.0) ? true : (Math.random() < curEv.prob);
                     if (trigger) {
@@ -146,6 +148,7 @@ export class PatProcessor extends AudioWorkletProcessor {
                 phase: this.phase,
                 cycleCount: this.cycleCount,
                 activeIdx: this.activeIdx,
+                activeTokenId: this.activeTokenId,
                 activeLabel: this.activeLabel,
                 isRest: this.activeIsRest,
                 gate: this.gate > 0,

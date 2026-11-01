@@ -365,7 +365,8 @@ export function tokensToEvents(tokens, start = 0.0, end = 1.0, cycleIndex = 0) {
                     gate: !isRest,
                     isRest,
                     prob: node.prob !== undefined ? node.prob : 1.0,
-                    label: isRest ? '~' : (node.val || 'c2').toUpperCase()
+                    label: isRest ? '~' : (node.val || 'c2').toUpperCase(),
+                    tokenId: node.id
                 });
             }
             return;
@@ -381,7 +382,8 @@ export function tokensToEvents(tokens, start = 0.0, end = 1.0, cycleIndex = 0) {
             gate: !isRest,
             isRest,
             prob: node.prob !== undefined ? node.prob : 1.0,
-            label: isRest ? '~' : (node.val || 'c2').toUpperCase()
+            label: isRest ? '~' : (node.val || 'c2').toUpperCase(),
+            tokenId: node.id
         });
     });
 

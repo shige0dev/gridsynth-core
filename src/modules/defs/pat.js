@@ -34,22 +34,38 @@ export const PAT = {
         <div class="flex items-center justify-center w-full h-full pointer-events-none select-none">
             <span class="pat-state-disp text-[17px] font-mono font-bold text-slate-500 tracking-wider">&mdash;</span>
         </div>`,
-    updateLive: (cell, data, isP) => {
+    updateLive: (cell, data, isP, modal) => {
         const stateEl = cell?.querySelector('.pat-state-disp');
-        if (!stateEl) return;
-        if (!isP || !data || data.powerOn === false) {
-            stateEl.textContent = (!isP || !data) ? '\u2014' : 'OFF';
-            stateEl.className = 'pat-state-disp text-[17px] font-mono font-bold text-slate-600 tracking-wider';
-            return;
+        if (stateEl) {
+            if (!isP || !data || data.powerOn === false) {
+                stateEl.textContent = (!isP || !data) ? '\u2014' : 'OFF';
+                stateEl.className = 'pat-state-disp text-[17px] font-mono font-bold text-slate-600 tracking-wider';
+            } else {
+                const label = data.activeLabel || (data.activeIdx >= 0 ? `STEP ${data.activeIdx + 1}` : '\u2014');
+                const isRest = data.isRest || label === '~' || label === '\u2014';
+                stateEl.textContent = label;
+                stateEl.className = isRest
+                    ? 'pat-state-disp text-[17px] font-mono font-bold text-cyan-400/30 tracking-wider'
+                    : data.gate
+                        ? 'pat-state-disp text-[17px] font-mono font-black text-yellow-300 tracking-wider drop-shadow-[0_0_8px_rgba(250,204,21,0.85)]'
+                        : 'pat-state-disp text-[17px] font-mono font-bold text-cyan-300 tracking-wider';
+            }
         }
-        const label = data.activeLabel || (data.activeIdx >= 0 ? `STEP ${data.activeIdx + 1}` : '\u2014');
-        const isRest = data.isRest || label === '~' || label === '\u2014';
-        stateEl.textContent = label;
-        stateEl.className = isRest
-            ? 'pat-state-disp text-[17px] font-mono font-bold text-cyan-400/30 tracking-wider'
-            : data.gate
-                ? 'pat-state-disp text-[17px] font-mono font-black text-yellow-300 tracking-wider drop-shadow-[0_0_8px_rgba(250,204,21,0.85)]'
-                : 'pat-state-disp text-[17px] font-mono font-bold text-cyan-300 tracking-wider';
+
+        // Highlight active token in modal
+        if (modal) {
+            const activeTokenId = (isP && data?.activeTokenId) ? data.activeTokenId : null;
+            const isGate = isP && !!data?.gate;
+            modal.querySelectorAll('.pat-tok').forEach(tok => {
+                const isActive = activeTokenId && tok.dataset.id === activeTokenId;
+                tok.classList.toggle('ring-1', isActive);
+                tok.classList.toggle('ring-cyan-400', isActive && !isGate);
+                tok.classList.toggle('ring-yellow-300', isActive && isGate);
+                tok.classList.toggle('shadow-[0_0_8px_rgba(34,211,238,0.7)]', isActive && !isGate);
+                tok.classList.toggle('shadow-[0_0_12px_rgba(253,224,71,0.9)]', isActive && isGate);
+                tok.classList.toggle('scale-105', isActive);
+            });
+        }
     },
     renderModal: (m, ctx) => {
         const uid = ctx?.id || m?.id || 'pat';
