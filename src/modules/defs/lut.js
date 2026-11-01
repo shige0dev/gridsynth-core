@@ -76,16 +76,21 @@ export const LUT = {
             const tableIdx = Math.floor((d / (divs - 1 || 1)) * 255);
             const val = Math.max(0, Math.min(1, table[tableIdx] ?? 0));
             const barH = val * (h - 2);
-            const x = d * barW;
+            const x = isStep
+                ? d * barW
+                : (d === 0 ? 0 : (d === divs - 1 ? w - barW * 0.5 : (d / (divs - 1)) * w - barW * 0.5));
+            const curW = isStep
+                ? barW
+                : (d === 0 || d === divs - 1 ? barW * 0.5 : barW);
             const y = h - barH;
 
             // Bar background
             ctx2d.fillStyle = isModal ? 'rgba(20, 184, 166, 0.25)' : 'rgba(20, 184, 166, 0.2)';
-            ctx2d.fillRect(x + 0.5, y, Math.max(1, barW - 1), barH);
+            ctx2d.fillRect(x + 0.5, y, Math.max(1, curW - 1), barH);
 
             // Bar top line
             ctx2d.fillStyle = '#2dd4bf';
-            ctx2d.fillRect(x + 0.5, y, Math.max(1, barW - 1), isModal ? 2 : 1.5);
+            ctx2d.fillRect(x + 0.5, y, Math.max(1, curW - 1), isModal ? 2 : 1.5);
         }
 
         // 3. Draw Continuous Line (Linear interpolation overlay if in LINEAR mode)
@@ -96,7 +101,7 @@ export const LUT = {
             for (let d = 0; d < divs; d++) {
                 const tableIdx = Math.floor((d / (divs - 1 || 1)) * 255);
                 const val = Math.max(0, Math.min(1, table[tableIdx] ?? 0));
-                const x = d * barW + barW * 0.5;
+                const x = (d / (divs - 1 || 1)) * w;
                 const y = h - val * (h - 4) - 2;
                 if (d === 0) ctx2d.moveTo(x, y);
                 else ctx2d.lineTo(x, y);
@@ -230,7 +235,7 @@ export const LUT = {
                 const normY = Math.max(0, Math.min(1, 1.0 - (y / rect.height)));
 
                 const divs = m.divisions || 16;
-                const slot = Math.max(0, Math.min(divs - 1, Math.floor(normX * divs)));
+                const slot = Math.max(0, Math.min(divs - 1, Math.round(normX * (divs - 1))));
 
                 if (!Array.isArray(m.table) || m.table.length !== 256) {
                     m.table = Array.from({ length: 256 }, (_, i) => i / 255);
