@@ -1,6 +1,8 @@
 // src/core/pat-tokens.js
 // Token tree (AST) parser, serializer, and manipulation utilities for PAT modules
 
+import { noteToCv } from './musical.js?v=367';
+
 const NOTE_SEMITONES_MAP = {
     'c': 0, 'c#': 1, 'db': 1,
     'd': 2, 'd#': 3, 'eb': 3,
@@ -306,7 +308,9 @@ export function moveTokenNode(tokens, sourceId, targetId, insertPos = 'after', i
         }
         return false;
     }
-import { noteToCv } from './musical.js?v=367';
+    insertNear(nextTokens);
+    return nextTokens;
+}
 
 export function tokensToEvents(tokens, start = 0.0, end = 1.0, cycleIndex = 0) {
     if (!tokens || !tokens.length) return [];
