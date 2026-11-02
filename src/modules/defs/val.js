@@ -61,11 +61,8 @@ export const VALUE = {
         };
 
         return `
-            <div class="val-box relative w-full h-full flex flex-col items-center justify-center p-0.5 select-none overflow-hidden touch-none" data-module-id="${m.id}">
-                <!-- Centered Variable Name Label on top (Unframed, small & clean) -->
-                <span class="val-label-disp text-[7px] font-mono font-bold text-amber-400 uppercase tracking-wider leading-none max-w-[50px] truncate pointer-events-none text-center mb-1">${labelText}</span>
-
-                <!-- Display Wheel Container (Matching SEQ8 width: 50px, height: h-7 / 28px) -->
+            <div class="val-box relative w-full h-full flex items-center justify-center select-none overflow-hidden touch-none" data-module-id="${m.id}">
+                <!-- Display Wheel Container (Exactly matching SEQ8 position & dimensions: w-[50px] h-7) -->
                 <div class="relative w-[50px] h-7 flex items-center justify-center overflow-hidden rounded bg-slate-950 border border-slate-800/90 shadow-inner shrink-0">
                     <canvas class="val-canvas block w-full h-full" width="50" height="28"></canvas>
 
@@ -76,6 +73,9 @@ export const VALUE = {
                         <span class="text-[6px] font-mono text-slate-400 font-semibold tracking-tighter leading-none">${formatEdgeVal(minVal)}</span>
                     </div>
                 </div>
+
+                <!-- Absolutely Positioned Variable Name Label (Pinned above the dial without displacing it) -->
+                <span class="val-label-disp absolute bottom-[calc(50%+16px)] left-1/2 -translate-x-1/2 text-[7px] font-mono font-bold text-amber-400 uppercase tracking-wider leading-none max-w-[50px] truncate pointer-events-none text-center">${labelText}</span>
             </div>`;
     },
 
