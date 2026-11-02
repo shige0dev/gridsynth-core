@@ -47,11 +47,20 @@ export const VALUE = {
         return num.toFixed(2);
     },
 
+    getNormPct: (m) => {
+        const minVal = m.min ?? -1.0;
+        const maxVal = m.max ?? 1.0;
+        const curVal = m.val ?? (m.def ?? 0.0);
+        const range = Math.max(0.0001, maxVal - minVal);
+        return Math.max(0, Math.min(100, Math.round(((curVal - minVal) / range) * 100)));
+    },
+
     renderGrid: (m) => {
         const minVal = m.min ?? -1.0;
         const maxVal = m.max ?? 1.0;
         const curVal = m.val ?? (m.def ?? 0.0);
         const labelText = m.label || m.name || 'VAL';
+        const pct = VALUE.getNormPct(m);
 
         const formatEdgeVal = (v) => {
             if (m.stepType === '1semi') return cvToNoteName(v);
@@ -60,32 +69,48 @@ export const VALUE = {
             return (Math.abs(n) >= 10) ? n.toFixed(0) : n.toFixed(1);
         };
 
+        const barSlotHtml = UIHelpers.renderPanelBars([
+            {
+                pct,
+                width: 'w-full',
+                innerCls: 'val-fill-bar transition-[height] duration-75',
+                color: 'bg-gradient-to-t from-amber-600 to-yellow-400 opacity-90'
+            }
+        ], {
+            widthCls: 'w-14',
+            heightCls: 'h-7',
+            noWrapper: true
+        });
+
         return `
             <div class="val-box relative w-full h-full flex items-center justify-center select-none overflow-hidden touch-none" data-module-id="${m.id}">
-                <!-- Display Wheel Container (Standardized Module Panel Slot: w-14 h-7 / 56px x 28px) -->
-                <div class="w-14 h-7 rounded border border-slate-600 bg-slate-950 p-[1px] relative flex items-center justify-center shadow-inner panel-bar-slot shrink-0 overflow-hidden">
-                    <canvas class="val-canvas block w-full h-full rounded-[3px]" width="56" height="28"></canvas>
+                <!-- Shared Panel Bar Slot Container (w-14 h-7 / 56px x 28px) -->
+                <div class="relative w-14 h-7 shrink-0 flex items-center justify-center">
+                    ${barSlotHtml}
 
                     <!-- Center Overlay: MAX at top, VAL at center, MIN at bottom -->
-                    <div class="absolute inset-0 flex flex-col items-center justify-between py-0.5 pointer-events-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.95)]">
-                        <span class="text-[6px] font-mono text-slate-400 font-semibold tracking-tighter leading-none">${formatEdgeVal(maxVal)}</span>
-                        <div class="val-val-disp font-mono text-[12px] font-extrabold text-amber-300 tracking-tight leading-none flex items-baseline justify-center select-none">${VALUE.formatValHtml(curVal, m.stepType)}</div>
-                        <span class="text-[6px] font-mono text-slate-400 font-semibold tracking-tighter leading-none">${formatEdgeVal(minVal)}</span>
+                    <div class="absolute inset-0 flex flex-col items-center justify-between py-0.5 pointer-events-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.95)] z-10">
+                        <span class="text-[6px] font-mono text-slate-300 font-semibold tracking-tighter leading-none">${formatEdgeVal(maxVal)}</span>
+                        <div class="val-val-disp font-mono text-[12px] font-extrabold text-amber-200 tracking-tight leading-none flex items-baseline justify-center select-none">${VALUE.formatValHtml(curVal, m.stepType)}</div>
+                        <span class="text-[6px] font-mono text-slate-300 font-semibold tracking-tighter leading-none">${formatEdgeVal(minVal)}</span>
                     </div>
                 </div>
 
-                <!-- Absolutely Positioned Variable Name Label (Pinned above the dial without displacing it) -->
+                <!-- Absolutely Positioned Variable Name Label (Pinned above the bar slot without displacing it) -->
                 <span class="val-label-disp absolute bottom-[calc(50%+16px)] left-1/2 -translate-x-1/2 text-[7px] font-mono font-bold text-amber-400 uppercase tracking-wider leading-none max-w-[56px] truncate pointer-events-none text-center">${labelText}</span>
             </div>`;
     },
 
     updateLive: (cell, data, isP, modal, m) => {
-        const cvs = cell?.querySelector('.val-canvas');
-        if (cvs && m) {
-            VALUE.drawWheel(cvs.getContext('2d'), cvs.width, cvs.height, m);
+        if (!cell || !m) return;
+
+        const fillBar = cell.querySelector('.val-fill-bar');
+        if (fillBar) {
+            const pct = VALUE.getNormPct(m);
+            fillBar.style.height = `${pct}%`;
         }
-        const valDisp = cell?.querySelector('.val-val-disp');
-        if (valDisp && m) {
+        const valDisp = cell.querySelector('.val-val-disp');
+        if (valDisp) {
             const v = m.val ?? (m.def ?? 0.0);
             const html = VALUE.formatValHtml(v, m.stepType);
             if (valDisp._lastHtml !== html) {
@@ -93,8 +118,8 @@ export const VALUE = {
                 valDisp._lastHtml = html;
             }
         }
-        const labelDisp = cell?.querySelector('.val-label-disp');
-        if (labelDisp && m) {
+        const labelDisp = cell.querySelector('.val-label-disp');
+        if (labelDisp) {
             const lText = m.label || m.name || 'VAL';
             if (labelDisp.textContent !== lText) {
                 labelDisp.textContent = lText;
@@ -115,59 +140,13 @@ export const VALUE = {
         }
     },
 
-    drawWheel: (ctx, w, h, m, isModal = false) => {
-        ctx.clearRect(0, 0, w, h);
-
-        const minVal = m.min ?? -1.0;
-        const maxVal = m.max ?? 1.0;
-        const curVal = m.val ?? (m.def ?? 0.0);
-        const range = Math.max(0.0001, maxVal - minVal);
-        const norm = Math.max(0, Math.min(1, (curVal - minVal) / range)); // 0.0 (bottom) to 1.0 (top)
-
-        // 1. Flat dark slate background matching GridSynth theme
-        ctx.fillStyle = '#030712'; // slate-950
-        ctx.fillRect(0, 0, w, h);
-
-        // 2. Simplified Clean Horizontal Lines (tracking vertical movement smoothly)
-        const numVisibleGrooves = 4;
-        const spacing = h / (numVisibleGrooves - 1);
-        const phaseVal = (m._dragOffset !== undefined) ? m._dragOffset : (norm * h * 3.5);
-        const phaseOffset = spacing - ((phaseVal % spacing + spacing) % spacing);
-
-        ctx.lineWidth = isModal ? 1.5 : 1.0;
-        ctx.strokeStyle = 'rgba(148, 163, 184, 0.22)'; // subtle slate-400 stroke
-
-        for (let y = -spacing + phaseOffset; y <= h + spacing; y += spacing) {
-            ctx.beginPath();
-            ctx.moveTo(4, y);
-            ctx.lineTo(w - 4, y);
-            ctx.stroke();
-        }
-
-        // 3. Current Value Marker Line (Clear yellow indicator)
-        const curY = (1.0 - norm) * h;
-        ctx.strokeStyle = '#facc15'; // Amber/Yellow
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(2, curY);
-        ctx.lineTo(w - 2, curY);
-        ctx.stroke();
-    },
-
     bindGridEvents: (cell, m, ctx, onChange) => {
         const valBox = cell.querySelector('.val-box');
         if (!valBox) return;
 
-        // Render initial wheel visual immediately
-        const initCvs = cell.querySelector('.val-canvas');
-        if (initCvs) {
-            VALUE.drawWheel(initCvs.getContext('2d'), initCvs.width, initCvs.height, m);
-        }
-
         let isInteracting = false;
         let startY = 0;
         let startVal = 0;
-        let startDragOffset = 0;
 
         const getStepValue = () => {
             if (m.stepType === '1semi') return 1.0 / 12.0;
@@ -197,8 +176,10 @@ export const VALUE = {
                     valDisp._lastHtml = html;
                 }
             }
-            const cvs = cell.querySelector('.val-canvas');
-            if (cvs) VALUE.drawWheel(cvs.getContext('2d'), cvs.width, cvs.height, m);
+            const fillBar = cell.querySelector('.val-fill-bar');
+            if (fillBar) {
+                fillBar.style.height = `${VALUE.getNormPct(m)}%`;
+            }
 
             onChange?.();
         };
@@ -207,13 +188,11 @@ export const VALUE = {
             isInteracting = true;
             startY = clientY;
             startVal = m.val ?? (m.def ?? 0.0);
-            startDragOffset = m._dragOffset || 0;
         };
 
         const handleMove = (clientY) => {
             if (!isInteracting) return;
             const deltaY = startY - clientY; // upward drag increases value
-            m._dragOffset = startDragOffset + deltaY;
             const step = getStepValue();
             // Gear-linked sensitivity: 8px drag = exactly 1 STEP change
             const stepsCount = Math.round(deltaY / 8.0);
