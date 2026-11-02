@@ -124,58 +124,33 @@ export const VALUE = {
         const range = Math.max(0.0001, maxVal - minVal);
         const norm = Math.max(0, Math.min(1, (curVal - minVal) / range)); // 0.0 (bottom) to 1.0 (top)
 
-        // 1. Draw 3D Cylinder Background (Solid metal/carbon body)
-        const gradBg = ctx.createLinearGradient(0, 0, 0, h);
-        gradBg.addColorStop(0, '#020617');
-        gradBg.addColorStop(0.2, '#0f172a');
-        gradBg.addColorStop(0.5, '#1e293b');
-        gradBg.addColorStop(0.8, '#0f172a');
-        gradBg.addColorStop(1, '#020617');
-        ctx.fillStyle = gradBg;
+        // 1. Flat dark slate background matching GridSynth theme
+        ctx.fillStyle = '#030712'; // slate-950
         ctx.fillRect(0, 0, w, h);
 
-        // 2. Beveled side edges
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-        ctx.fillRect(0, 0, 2, h);
-        ctx.fillRect(w - 2, 0, 2, h);
-
-        // 3. Cylinder Grooves / Knurling Lines in SOLID BLACK (Vertical movement indicator)
-        const numVisibleGrooves = 8;
+        // 2. Simplified Clean Horizontal Lines (tracking vertical movement smoothly)
+        const numVisibleGrooves = 7;
         const spacing = h / (numVisibleGrooves - 1);
         const phaseVal = (m._dragOffset !== undefined) ? m._dragOffset : (norm * h * 3.5);
         const phaseOffset = spacing - ((phaseVal % spacing + spacing) % spacing);
 
-        ctx.lineWidth = isModal ? 2.0 : 1.4;
+        ctx.lineWidth = isModal ? 1.5 : 1.0;
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.22)'; // subtle slate-400 stroke
+
         for (let y = -spacing + phaseOffset; y <= h + spacing; y += spacing) {
-            const distFromMid = (y - h / 2) / (h / 2);
-            if (Math.abs(distFromMid) > 1.0) continue;
-
-            const alpha = Math.cos(distFromMid * (Math.PI / 2.2));
-            if (alpha <= 0.05) continue;
-
-            // Deep black engraved groove
-            ctx.strokeStyle = `rgba(0, 0, 0, ${(alpha * 0.95).toFixed(2)})`;
             ctx.beginPath();
-            ctx.moveTo(3, y);
-            ctx.lineTo(w - 3, y);
-            ctx.stroke();
-
-            // Subtle lower highlight to give deep 3D cut impression
-            ctx.strokeStyle = `rgba(255, 255, 255, ${(alpha * 0.12).toFixed(2)})`;
-            ctx.beginPath();
-            ctx.moveTo(3, y + 1);
-            ctx.lineTo(w - 3, y + 1);
+            ctx.moveTo(4, y);
+            ctx.lineTo(w - 4, y);
             ctx.stroke();
         }
 
-        // 4. Current Value Marker Line (Solid Yellow Line)
+        // 3. Current Value Marker Line (Clear yellow indicator)
         const curY = (1.0 - norm) * h;
-        ctx.strokeStyle = '#facc15'; // Vibrant solid yellow
-        ctx.lineWidth = 1.6;
-        ctx.setLineDash([]);
+        ctx.strokeStyle = '#facc15'; // Amber/Yellow
+        ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.moveTo(0, curY);
-        ctx.lineTo(w, curY);
+        ctx.moveTo(2, curY);
+        ctx.lineTo(w - 2, curY);
         ctx.stroke();
     },
 
