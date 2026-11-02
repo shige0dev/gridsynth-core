@@ -61,19 +61,19 @@ export const VALUE = {
         };
 
         return `
-            <div class="val-box relative w-full h-full flex flex-col items-center justify-center p-1 select-none overflow-hidden touch-none" data-module-id="${m.id}">
-                <!-- Square Centered Wheel Container (54px x 54px) -->
-                <div class="relative w-[54px] h-[54px] flex items-center justify-center overflow-hidden rounded bg-slate-950 border border-slate-800/90 shadow-inner">
-                    <canvas class="val-canvas block w-full h-full" width="54" height="54"></canvas>
+            <div class="val-box relative w-full h-full flex flex-col items-center justify-center p-1 select-none overflow-hidden touch-none gap-0.5" data-module-id="${m.id}">
+                <!-- Centered Variable Name Label on top -->
+                <span class="val-label-disp text-[8px] font-mono font-bold text-amber-400 uppercase tracking-wider leading-none px-1.5 py-0.5 rounded bg-slate-900/90 border border-amber-500/30 max-w-[56px] truncate shadow-sm pointer-events-none text-center">${labelText}</span>
 
-                    <!-- Center Overlay: Variable Label & MAX at top, VAL at center, MIN at bottom -->
-                    <div class="absolute inset-0 flex flex-col items-center justify-between py-1 pointer-events-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
-                        <div class="flex items-center justify-between w-full px-1.5 leading-none">
-                            <span class="val-label-disp text-[7px] font-mono font-bold text-amber-400 uppercase tracking-tight max-w-[28px] truncate">${labelText}</span>
-                            <span class="text-[6.5px] font-mono text-slate-400 font-semibold tracking-tighter">${formatEdgeVal(maxVal)}</span>
-                        </div>
-                        <div class="val-val-disp font-mono text-[13px] font-extrabold text-amber-300 tracking-tight leading-none flex items-baseline justify-center w-full">${VALUE.formatValHtml(curVal, m.stepType)}</div>
+                <!-- Display Wheel Container (Matching SEQ height ~32px, 54px width) -->
+                <div class="relative w-[54px] h-[32px] flex items-center justify-center overflow-hidden rounded bg-slate-950 border border-slate-800/90 shadow-inner">
+                    <canvas class="val-canvas block w-full h-full" width="54" height="32"></canvas>
+
+                    <!-- Center Overlay: VAL at center, MAX/MIN subtly at edges -->
+                    <div class="absolute inset-0 flex items-center justify-between px-1 pointer-events-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.95)]">
                         <span class="text-[6.5px] font-mono text-slate-400 font-semibold tracking-tighter leading-none">${formatEdgeVal(minVal)}</span>
+                        <div class="val-val-disp font-mono text-[12.5px] font-extrabold text-amber-300 tracking-tight leading-none flex items-baseline justify-center select-none">${VALUE.formatValHtml(curVal, m.stepType)}</div>
+                        <span class="text-[6.5px] font-mono text-slate-400 font-semibold tracking-tighter leading-none">${formatEdgeVal(maxVal)}</span>
                     </div>
                 </div>
             </div>`;
@@ -129,7 +129,7 @@ export const VALUE = {
         ctx.fillRect(0, 0, w, h);
 
         // 2. Simplified Clean Horizontal Lines (tracking vertical movement smoothly)
-        const numVisibleGrooves = 7;
+        const numVisibleGrooves = 5;
         const spacing = h / (numVisibleGrooves - 1);
         const phaseVal = (m._dragOffset !== undefined) ? m._dragOffset : (norm * h * 3.5);
         const phaseOffset = spacing - ((phaseVal % spacing + spacing) % spacing);
