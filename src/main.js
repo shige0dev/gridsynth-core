@@ -1,4 +1,4 @@
-export const APP_VERSION = 'v1.0.0606';
+export const APP_VERSION = 'v1.0.0607';
 
 import { SynthEngine } from './audio/engine.js?v=522';
 import { UIController } from './ui/controller.js?v=522';
@@ -6,7 +6,8 @@ import { initExternalAPI } from './core/api.js?v=522';
 
 function applyDeviceMode() {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
-        (window.matchMedia && window.matchMedia('(pointer: coarse)').matches && window.innerWidth < 768);
+        (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ||
+        (window.innerWidth < 768);
     document.documentElement.classList.toggle('is-mobile-device', isMobile);
     document.documentElement.classList.toggle('is-desktop-device', !isMobile);
 }
@@ -30,6 +31,13 @@ function initApp() {
     }, 50));
     const frame = document.getElementById('phone-frame');
     if (frame) ro.observe(frame);
+
+    // Safeguard: Prevent outer window/body from scrolling on mobile browsers
+    window.addEventListener('scroll', () => {
+        if (window.scrollY !== 0 || window.scrollX !== 0) {
+            window.scrollTo(0, 0);
+        }
+    }, { passive: true });
 }
 
 if (document.readyState === 'loading') {

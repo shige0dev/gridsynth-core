@@ -3,7 +3,8 @@ html, body {
     width: 100%;
     margin: 0;
     padding: 0;
-    overscroll-behavior: none;
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
     -webkit-overflow-scrolling: auto;
 }
 
@@ -20,20 +21,20 @@ html, body {
     flex-shrink: 0;
 }
 
-/* PC / Desktop: Strictly lock to 360px x 780px, align from top (y=0) so header is NEVER clipped */
+/* PC / Desktop: Strictly lock to 360px x 780px on desktop with fine pointer, centered/top-aligned, window itself NEVER scrolls */
 html.is-desktop-device body,
-@media (pointer: fine), (min-width: 768px) {
+@media (pointer: fine) and (min-width: 768px) {
     html, body {
-        min-height: 100%;
-        width: 100%;
-        margin: 0;
-        padding: 0;
+        height: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: flex-start;
-        overflow-x: hidden;
-        overflow-y: auto;
+        overflow: hidden !important;
+        overscroll-behavior: none !important;
     }
 
     #phone-frame {
@@ -52,7 +53,7 @@ html.is-desktop-device body,
 
 /* Mobile Touch Devices (Smartphones): full viewport fit, zero bounce, header pinned at top */
 html.is-mobile-device body,
-@media (pointer: coarse) and (max-width: 767px) {
+@media (pointer: coarse), (max-width: 767px) {
     html, body {
         height: 100% !important;
         height: 100vh !important;
@@ -91,7 +92,7 @@ body {
     background: #030712;
     color: #f8fafc;
     font-family: system-ui, sans-serif;
-    overscroll-behavior: none;
+    overscroll-behavior: none !important;
     -webkit-tap-highlight-color: transparent;
 }
 
@@ -100,7 +101,7 @@ body {
     padding-right: 7px !important;
     touch-action: pan-y pinch-zoom;
     -webkit-overflow-scrolling: touch;
-    overscroll-behavior-y: auto !important;
+    overscroll-behavior-y: contain !important;
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
 }
