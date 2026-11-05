@@ -81,10 +81,15 @@ export const ARP = {
         if (!data) return;
         const ch = data.activeChannel; // 0..3
         const activeInputs = data.activeInputs || [];
-        cell?.querySelectorAll('[data-arp-bar]').forEach((bar, idx) => {
+        cell?.querySelectorAll('[data-arp-bar]').forEach((slot) => {
+            const idx = parseInt(slot.dataset.arpBar, 10);
             const isConnected = activeInputs.includes(idx);
             const isAct = (idx === ch) && isConnected && isPlaying;
-            bar.classList.toggle('bar-active', isAct);
+            slot.classList.toggle('bar-active', isAct);
+            // opacity-25 などを除去してアクティブ時に確実に表示
+            slot.classList.toggle('opacity-25', !isConnected);
+            const inner = slot.firstElementChild;
+            if (inner) inner.classList.toggle('opacity-20', !isConnected);
         });
     }
 };
