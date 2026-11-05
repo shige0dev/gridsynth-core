@@ -48,8 +48,6 @@ export class ArpProcessor extends AudioWorkletProcessor {
         const gateIn = ins[0]?.[0];
         const outBuf = outs[0]?.[0];
 
-        if (!outBuf) return true;
-
         const len = (outBuf || gateIn || []).length || 128;
         const sr = getSR();
         const fadeLen = Math.max(1, Math.round(0.0015 * sr)); // 1.5ms equal-power crossfade

@@ -23,6 +23,7 @@ export const ARP = {
         const outSig = ctx.createGain();
 
         w.connect(outSig, 0, 0);
+        if (eng?.silentSink) outSig.connect(eng.silentSink);
 
         const activeInputs = [1, 2, 3, 4]
             .filter(i => patch?.has?.(`cv_in${i}`) || patch?.has?.(`in_${i}`) || patch?.has?.(`in${i}`))
