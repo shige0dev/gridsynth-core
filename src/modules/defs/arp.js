@@ -12,8 +12,7 @@ export const ARP = {
             { port: 'cv_in1', pin: 5, color: 'bg-yellow-400', dimmed: !ctx?.patched?.has('cv_in1') && !ctx?.patched?.has('in_1') && !ctx?.patched?.has('in1') }
         ],
         out: [
-            { port: 'cv_out', pin: 10, color: 'bg-yellow-400' },
-            { port: 'gate_out', pin: 11, color: 'bg-red-500' }
+            { port: 'cv_out', pin: 10, color: 'bg-yellow-400' }
         ]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),

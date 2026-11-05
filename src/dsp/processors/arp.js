@@ -45,19 +45,18 @@ export class ArpProcessor extends AudioWorkletProcessor {
     }
 
     process(ins, outs) {
-        const clkIn = ins[0]?.[0];
+        const gateIn = ins[0]?.[0];
         const outBuf = outs[0]?.[0];
-        const gateBuf = outs[1]?.[0];
 
-        if (!outBuf && !gateBuf) return true;
+        if (!outBuf) return true;
 
-        const len = (outBuf || gateBuf || clkIn || []).length || 128;
+        const len = (outBuf || gateIn || []).length || 128;
         const sr = getSR();
         const fadeLen = Math.max(1, Math.round(0.0015 * sr)); // 1.5ms equal-power crossfade
 
         for (let i = 0; i < len; i++) {
-            const clkVal = clkIn ? clkIn[i] : 0.0;
-            const isHi = clkVal > 0.3;
+            const gateVal = gateIn ? gateIn[i] : 0.0;
+            const isHi = gateVal > 0.3;
             const N = this.activeInputs.length;
 
             if (isHi && !this.lastHi) {
@@ -128,11 +127,6 @@ export class ArpProcessor extends AudioWorkletProcessor {
 
             if (outBuf) {
                 outBuf[i] = sig;
-            }
-
-            if (gateBuf) {
-                // 出力ゲートは入力ゲートそのものを出力
-                gateBuf[i] = (N > 0) ? clkVal : 0.0;
             }
         }
 

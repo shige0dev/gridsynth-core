@@ -13,7 +13,7 @@ import './processors/chord.js';
 import './processors/fm.js?v=459';
 import './processors/fm-core.js';
 import './processors/dist4.js?v=470';
-import './processors/arp.js';
+import './processors/arp.js?v=608';
 import './processors/scale.js';
 import './processors/rf.js';
 import './processors/ar.js';
