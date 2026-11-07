@@ -54,7 +54,7 @@ export const MODAL_WIDTHS = {
     SUB: 'w-[240px]'
 };
 
-import { DockManager } from './dock-manager.js?v=459';
+import { DockManager } from './dock-manager.js?v=612';
 
 export class ModalManager {
     constructor(ui) {
@@ -135,6 +135,7 @@ export class ModalManager {
     }
 
     openModal(idx, title, widthCls, renderFn) {
+        if (this.ui.isPerformanceMode) return;
         const modal = document.getElementById('shared-modal');
         const content = document.getElementById('modal-content');
         if (!modal || !content) return;
@@ -170,9 +171,10 @@ export class ModalManager {
     }
 
     openSettingsModal(mId) {
+        if (this.ui.isPerformanceMode) return;
         const m = this.ui.modules[mId];
         if (!m || m.type === 'SUB_IO') return;
-        if (['KEY', 'SEQ8', 'SEQ16', 'PAT', 'SPEC', 'SCOPE', 'LISS', 'WAVE', 'PAD', 'LUT', 'MATRIX'].includes(m.type)) {
+        if (['KEY', 'SEQ8', 'SEQ16', 'PAT', 'SPEC', 'SCOPE', 'LISS', 'WAVE', 'PAD', 'VAL', 'LUT', 'MATRIX'].includes(m.type)) {
             this.openDockModal(mId);
             return;
         }

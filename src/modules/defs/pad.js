@@ -419,6 +419,8 @@ export const PAD = {
 
         // 1. Direct hardware-level Touch Events with passive: false for 0ms mobile latency
         padBox.addEventListener('touchstart', (e) => {
+            const isPerf = Boolean(ui?.isPerformanceMode || window.__GS_APP__?.isPerformanceMode);
+            if (!isPerf) return;
             // If user clicked a pin port, do not capture
             if (e.target.closest('.port')) return;
             if (e.cancelable) e.preventDefault();
@@ -431,6 +433,8 @@ export const PAD = {
         }, { passive: false });
 
         padBox.addEventListener('touchmove', (e) => {
+            const isPerf = Boolean(ui?.isPerformanceMode || window.__GS_APP__?.isPerformanceMode);
+            if (!isPerf) return;
             if (e.cancelable) e.preventDefault();
             e.stopPropagation();
 
@@ -445,6 +449,8 @@ export const PAD = {
         }, { passive: false });
 
         const handleGridTouchEnd = (e) => {
+            const isPerf = Boolean(ui?.isPerformanceMode || window.__GS_APP__?.isPerformanceMode);
+            if (!isPerf) return;
             if (e.cancelable) e.preventDefault();
             e.stopPropagation();
 
@@ -465,6 +471,8 @@ export const PAD = {
 
         // 2. Desktop Mouse / Pointer Events fallback (Touch pointers bypassed to prevent double triggers)
         padBox.addEventListener('pointerdown', (e) => {
+            const isPerf = Boolean(ui?.isPerformanceMode || window.__GS_APP__?.isPerformanceMode);
+            if (!isPerf) return;
             if (e.target.closest('.port')) return;
             if (e.pointerType === 'touch' || (Date.now() - lastTouchEndTime < 400)) return;
             activePointerId = e.pointerId;
@@ -475,6 +483,8 @@ export const PAD = {
         });
 
         padBox.addEventListener('pointermove', (e) => {
+            const isPerf = Boolean(ui?.isPerformanceMode || window.__GS_APP__?.isPerformanceMode);
+            if (!isPerf) return;
             if (e.pointerType === 'touch') return;
             if (activePointerId === null || e.pointerId !== activePointerId) return;
             sendGridPad('PAD_MOVE', e.clientX, e.clientY);
@@ -483,6 +493,8 @@ export const PAD = {
         });
 
         const handleGridPointerEnd = (e) => {
+            const isPerf = Boolean(ui?.isPerformanceMode || window.__GS_APP__?.isPerformanceMode);
+            if (!isPerf) return;
             if (e.pointerType === 'touch') return;
             if (activePointerId !== null && e.pointerId === activePointerId) {
                 sendGridPad('PAD_UP', e.clientX, e.clientY);

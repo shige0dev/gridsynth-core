@@ -85,20 +85,6 @@ export class InteractionManager {
             cell.classList.toggle('selected-module', Boolean(mId && this.selectedModuleIds.includes(mId)));
         }
         this.ui.updatePortHighlight();
-
-        // Update Delete button state in header
-        const deleteBtn = document.getElementById('delete-selected-btn');
-        if (deleteBtn) {
-            const hasSelection = this.selectedModuleIds.length > 0;
-            deleteBtn.disabled = !hasSelection;
-            if (hasSelection) {
-                deleteBtn.classList.remove('opacity-40', 'cursor-not-allowed', 'text-slate-400');
-                deleteBtn.classList.add('text-red-400', 'border-red-500/70', 'bg-red-950/60', 'hover:bg-red-900/80', 'cursor-pointer');
-            } else {
-                deleteBtn.classList.add('opacity-40', 'cursor-not-allowed', 'text-slate-400');
-                deleteBtn.classList.remove('text-red-400', 'border-red-500/70', 'bg-red-950/60', 'hover:bg-red-900/80', 'cursor-pointer');
-            }
-        }
     }
 
     clearHighlight() {
@@ -385,12 +371,28 @@ export class InteractionManager {
                     return;
                 }
                 if (this.selectedModuleIds.length > 0) {
-                    // Tap on already selected module does NOT delete (prevents accidental deletion)
-                    // If tap on a non-selected module or background, clear selection
-                    if (!this.selectedModuleIds.includes(mId)) {
+                    if (this.selectedModuleIds.includes(mId)) {
+                        const hasLocked = this.selectedModuleIds.some(id => this.ui.modules[id]?.type === 'SUB_IO');
+                        if (hasLocked) {
+                            this.selectedModuleIds = [];
+                            this.updateSelectionClasses();
+                            return this.ui.showToast('SUB_IO モジュールは削除できません（保護中）');
+                        }
+                        this.ui.saveHistory();
+                        const targets = [...this.selectedModuleIds];
                         this.selectedModuleIds = [];
                         this.updateSelectionClasses();
+                        this.ui._destroyCount = 0;
+                        for (const id of targets) {
+                            await this.ui.destroyModule(this.ui.currentPageId, id);
+                        }
+                        this.ui.updateAllCells();
+                        this.ui.renderCables();
+                        this.ui.showToast(`モジュールを破棄しました (${this.ui._destroyCount}個)`);
+                        return;
                     }
+                    this.selectedModuleIds = [];
+                    this.updateSelectionClasses();
                     return;
                 }
                 if (this.ui.modules[mId]?.type === 'SUB_IO') {
@@ -469,8 +471,8 @@ export class InteractionManager {
             const container = document.getElementById('canvas-container');
             if (container) {
                 const controlSelector = this.ui.isPerformanceMode
-                    ? 'input, button, select, textarea, .pad-grid-container, .pad-grid-canvas'
-                    : '.port, input, button, select, textarea, .pad-grid-container, .pad-grid-canvas';
+                    ? 'input, button, select, textarea, .pad-grid-container, .pad-grid-canvas, .val-box'
+                    : '.port, input, button, select, textarea';
                 const isControl = e.target.closest(controlSelector);
                 if (!isControl) {
                     this._scrollStartY = e.clientY;
@@ -500,7 +502,7 @@ export class InteractionManager {
             }
 
             if (this.ui.isPerformanceMode) return;
-            const isControl = e.target.closest('.port, input, button, select, textarea, .pad-grid-container, .pad-grid-canvas');
+            const isControl = e.target.closest('.port, input, button, select, textarea');
             if (isControl) return;
 
             const body = e.target.closest('.module-body');
@@ -607,7 +609,8 @@ export class InteractionManager {
             const isButtonHeld = e.pointerType === 'mouse' ? ((e.buttons & 1) !== 0) : (e.buttons > 0 || e.pressure > 0);
             const container = document.getElementById('canvas-container');
             if (isButtonHeld && this._gridPointerActive && !this.isDragging && !this.moduleLongPressed && !isCandidateSelected && !isRowBusy && container) {
-                if (e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal, .pad-grid-container, .pad-grid-canvas, #main-menu-bar, #page-nav-bar')) {
+                const padBlock = this.ui.isPerformanceMode && e.target.closest('.pad-grid-container, .pad-grid-canvas, .val-box');
+                if (padBlock || e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal, #main-menu-bar, #page-nav-bar')) {
                     this._isScrollDragging = false;
                     return;
                 }
@@ -824,16 +827,16 @@ export class InteractionManager {
             this.cancelPendingPresses();
         }, { passive: true });
 
-        // On mobile touch: cancel scrolling specifically when touching/swiping over a PAD module
+        // On mobile touch: cancel scrolling specifically when touching/swiping over a PAD/VAL module in performance mode or inside pad modal
         const canvasContainer = document.getElementById('canvas-container');
         if (canvasContainer) {
             canvasContainer.addEventListener('touchstart', (e) => {
-                if (e.target.closest('.pad-grid-container, .pad-grid-canvas, .pad-modal-touch-area')) {
+                if (e.target.closest('.pad-modal-touch-area') || (this.ui.isPerformanceMode && e.target.closest('.pad-grid-container, .pad-grid-canvas, .val-box'))) {
                     if (e.cancelable) e.preventDefault();
                 }
             }, { passive: false });
             canvasContainer.addEventListener('touchmove', (e) => {
-                if (e.target.closest('.pad-grid-container, .pad-grid-canvas, .pad-modal-touch-area')) {
+                if (e.target.closest('.pad-modal-touch-area') || (this.ui.isPerformanceMode && e.target.closest('.pad-grid-container, .pad-grid-canvas, .val-box'))) {
                     if (e.cancelable) e.preventDefault();
                 }
             }, { passive: false });

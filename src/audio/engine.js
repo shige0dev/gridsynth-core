@@ -123,7 +123,9 @@ export class SynthEngine {
     removeModule(id) {
         const fullId = this.modules[id] ? id : (this.modules[`0/${id}`] ? `0/${id}` : null);
         if (fullId && this.modules[fullId]) {
-            AudioHelpers.cleanup(this.modules[fullId].nodes);
+            const inst = this.modules[fullId];
+            AUDIO_REGISTRY[inst.type]?.destroy?.(inst);
+            AudioHelpers.cleanup(inst.nodes);
             delete this.modules[fullId];
         }
     }

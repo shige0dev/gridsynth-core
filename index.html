@@ -22,7 +22,7 @@
     <script src="./src/vendor/lucide.min.js"></script>
     <script src="./src/vendor/lame.min.js"></script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230284c7'/><circle cx='50' cy='50' r='25' fill='%2338bdf8'/></svg>">
-    <link rel="stylesheet" href="./css/style.css?v=609">
+    <link rel="stylesheet" href="./css/style.css?v=612">
     <script>
         (function() {
             var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
@@ -58,7 +58,6 @@
                 <button id="preset-trigger-btn" class="w-full max-w-[140px] h-5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-[8px] font-medium rounded-md px-1.5 flex items-center justify-between transition truncate shadow-sm shrink min-w-[50px]">
                     <span id="current-preset-name" class="truncate">DEMO_01</span><i data-lucide="chevron-down" class="w-2.5 h-2.5 text-slate-500 shrink-0 ml-0.5"></i>
                 </button>
-                <button id="delete-selected-btn" class="h-5 w-5 bg-slate-900 text-slate-400 border border-slate-700 rounded-md transition flex items-center justify-center opacity-40 cursor-not-allowed shadow-sm shrink-0" title="選択モジュールを削除" disabled><i data-lucide="trash-2" class="w-2.5 h-2.5"></i></button>
                 <button id="undo-btn" class="h-5 w-5 bg-slate-900 text-slate-400 border border-slate-700 rounded-md transition flex items-center justify-center opacity-40 cursor-not-allowed shadow-sm shrink-0" title="UNDO" disabled><i data-lucide="undo-2" class="w-2.5 h-2.5"></i></button>
             </div>
         </header>
@@ -207,6 +206,6 @@
         <div id="toast" class="absolute top-[26px] left-1/2 -translate-x-1/2 h-[22px] px-3 bg-slate-950/95 border border-cyan-400 text-cyan-200 rounded-full text-[10px] font-bold shadow-2xl pointer-events-none opacity-0 transition-opacity duration-200 z-[100] whitespace-nowrap ring-1 ring-cyan-500/40 flex items-center justify-center max-w-[calc(100%-40px)] truncate">Message</div>
     </div>
 
-    <script type="module" src="./src/main.js?v=610"></script>
+    <script type="module" src="./src/main.js?v=612"></script>
 </body>
 </html>

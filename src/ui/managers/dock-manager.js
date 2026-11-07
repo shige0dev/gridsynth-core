@@ -1,10 +1,11 @@
 // src/ui/managers/dock-manager.js
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=571';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=612';
 import { UIHelpers } from '../helpers.js?v=459';
 
 export const DOCK_TITLES = {
     KEY: 'KEYBOARD',
     PAD: 'TOUCH PAD',
+    VAL: 'VALUE / SLIDER',
     PAT: 'STRUDEL PATTERN',
     SEQ16: '16-STEP SEQUENCER',
     SEQ8: '8-STEP SEQUENCER',
@@ -19,6 +20,7 @@ export const DOCK_TITLES = {
 export const DOCK_ICONS = {
     KEY: 'music',
     PAD: 'fingerprint',
+    VAL: 'sliders',
     PAT: 'code',
     SEQ16: 'sliders',
     SEQ8: 'sliders',
@@ -65,6 +67,7 @@ export class DockManager {
     }
 
     openDockModal(mId) {
+        if (this.ui.isPerformanceMode) return;
         const m = this.ui.modules[mId];
         if (!m) return;
 

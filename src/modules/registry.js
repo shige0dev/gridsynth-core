@@ -24,11 +24,12 @@ import { scaleDefs } from './defs/scale.js?v=351';
 import { rfDefs } from './defs/rf.js?v=396';
 import { arDefs } from './defs/ar.js?v=396';
 import { waveDefs } from './defs/wave.js?v=402';
-import { padDefs } from './defs/pad.js?v=351';
+import { padDefs } from './defs/pad.js?v=612';
 import { countDefs } from './defs/count.js?v=578';
 import { lutDefs } from './defs/lut.js?v=589';
 import { matrixDefs } from './defs/matrix.js?v=595';
-import { valDefs } from './defs/val.js?v=596';
+import { valDefs } from './defs/val.js?v=612';
+import { snsDefs } from './defs/sns.js?v=611';
 
 export const MODULE_REGISTRY = {
     ...vcoDefs,
@@ -56,7 +57,8 @@ export const MODULE_REGISTRY = {
     ...countDefs,
     ...lutDefs,
     ...matrixDefs,
-    ...valDefs
+    ...valDefs,
+    ...snsDefs
 };
 
 export { ADSR_CURVES };

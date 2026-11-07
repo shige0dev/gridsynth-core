@@ -137,6 +137,14 @@ export const VALUE = {
             if (maxEl && !maxEl._isDragging) maxEl.textContent = fmt(m.max ?? 1.0);
             if (defEl && !defEl._isDragging) defEl.textContent = fmt(m.def ?? 0.0);
             if (minEl && !minEl._isDragging) minEl.textContent = fmt(m.min ?? -1.0);
+
+            const sliderFill = modal.querySelector('#val-modal-slider-fill');
+            const sliderHandle = modal.querySelector('#val-modal-slider-handle');
+            const sliderDisp = modal.querySelector('#val-modal-slider-disp');
+            const normPct = VALUE.getNormPct(m);
+            if (sliderFill) sliderFill.style.width = `${normPct}%`;
+            if (sliderHandle) sliderHandle.style.left = `${normPct}%`;
+            if (sliderDisp && !modal._isSliderDragging) sliderDisp.textContent = fmt(m.val ?? (m.def ?? 0.0));
         }
     },
 
@@ -206,6 +214,8 @@ export const VALUE = {
         };
 
         valBox.addEventListener('pointerdown', (e) => {
+            const isPerf = Boolean(ctx?.ui?.isPerformanceMode || window.__GS_APP__?.isPerformanceMode);
+            if (!isPerf) return;
             if (e.target.closest('.port')) return;
             e.stopPropagation();
             valBox.setPointerCapture?.(e.pointerId);
@@ -249,6 +259,20 @@ export const VALUE = {
 
         return `
             <div class="space-y-2 select-none text-[9px]">
+                <!-- Large Real-time Performance Slider -->
+                <div class="bg-slate-950/90 border border-slate-800 rounded p-2 flex flex-col gap-1 shadow-inner select-none">
+                    <div class="flex items-center justify-between text-[7.5px] font-mono text-slate-400">
+                        <span>MIN: ${fmt(curMin)}</span>
+                        <span class="text-amber-400 font-bold tracking-wider">TOUCH SLIDER</span>
+                        <span>MAX: ${fmt(curMax)}</span>
+                    </div>
+                    <div id="val-modal-slider-track" class="relative w-full h-8 bg-slate-900 border border-amber-500/60 hover:border-amber-400 rounded-lg overflow-hidden cursor-ew-resize touch-none flex items-center shadow-inner">
+                        <div id="val-modal-slider-fill" class="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-amber-600/60 to-yellow-400/80 pointer-events-none transition-none" style="width: ${VALUE.getNormPct(m)}%;"></div>
+                        <div id="val-modal-slider-handle" class="absolute top-0 bottom-0 w-2.5 bg-yellow-300 border border-white/90 rounded shadow-md -translate-x-1/2 pointer-events-none transition-none" style="left: ${VALUE.getNormPct(m)}%;"></div>
+                        <div class="absolute inset-0 flex items-center justify-center font-mono font-extrabold text-amber-200 text-[10.5px] pointer-events-none drop-shadow z-10" id="val-modal-slider-disp">${fmt(curVal)}</div>
+                    </div>
+                </div>
+
                 <!-- Variable Name / Label Row -->
                 <div class="flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded px-2.5 py-1.5">
                     <span class="font-bold text-slate-400 tracking-wider">VARIABLE NAME (変数名)</span>
@@ -300,6 +324,77 @@ export const VALUE = {
     },
 
     bindEvents: (m, ctx, onChange) => {
+        // Touch Slider in Modal
+        const sliderTrack = document.getElementById('val-modal-slider-track');
+        if (sliderTrack) {
+            let isSliderDragging = false;
+
+            const updateFromClientX = (clientX) => {
+                const rect = sliderTrack.getBoundingClientRect();
+                const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / Math.max(1, rect.width)));
+                const min = m.min ?? -1.0;
+                const max = m.max ?? 1.0;
+                let val = min + ratio * (max - min);
+
+                // Snap to step
+                let step = 0.01;
+                if (m.stepType === '1semi') step = 1.0 / 12.0;
+                else if (m.stepType === '0.1') step = 0.1;
+                else if (m.stepType === '1') step = 1.0;
+                else if (m.stepType === '10') step = 10.0;
+                else step = m.step || 0.01;
+
+                if (step > 0) {
+                    val = Math.round((val - min) / step) * step + min;
+                }
+                val = Math.max(min, Math.min(max, val));
+                val = Math.round(val * 10000) / 10000;
+                m.val = val;
+
+                const sliderFill = document.getElementById('val-modal-slider-fill');
+                const sliderHandle = document.getElementById('val-modal-slider-handle');
+                const sliderDisp = document.getElementById('val-modal-slider-disp');
+                const normPct = VALUE.getNormPct(m);
+                if (sliderFill) sliderFill.style.width = `${normPct}%`;
+                if (sliderHandle) sliderHandle.style.left = `${normPct}%`;
+                if (sliderDisp) sliderDisp.textContent = VALUE.formatModalVal(val, m.stepType);
+
+                const valEl = document.getElementById('val-scrub-val');
+                if (valEl) valEl.textContent = VALUE.formatModalVal(val, m.stepType);
+
+                ctx.reRenderGrid?.();
+                onChange();
+            };
+
+            sliderTrack.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                isSliderDragging = true;
+                const modal = sliderTrack.closest('.dock-dialog') || sliderTrack.closest('.modal-content');
+                if (modal) modal._isSliderDragging = true;
+                try { sliderTrack.setPointerCapture(e.pointerId); } catch (_) {}
+                updateFromClientX(e.clientX);
+            });
+
+            sliderTrack.addEventListener('pointermove', (e) => {
+                if (!isSliderDragging) return;
+                e.preventDefault();
+                e.stopPropagation();
+                updateFromClientX(e.clientX);
+            });
+
+            const onSliderEnd = (e) => {
+                if (!isSliderDragging) return;
+                isSliderDragging = false;
+                const modal = sliderTrack.closest('.dock-dialog') || sliderTrack.closest('.modal-content');
+                if (modal) modal._isSliderDragging = false;
+                try { sliderTrack.releasePointerCapture(e.pointerId); } catch (_) {}
+            };
+
+            sliderTrack.addEventListener('pointerup', onSliderEnd);
+            sliderTrack.addEventListener('pointercancel', onSliderEnd);
+        }
+
         // 0. Variable Label Input
         const labelInput = document.getElementById('val-label-input');
         if (labelInput) {
