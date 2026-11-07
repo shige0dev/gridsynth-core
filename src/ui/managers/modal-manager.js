@@ -278,10 +278,12 @@ export class ModalManager {
             let currentTab = 'basic'; // 'basic' | 'factory' | 'user'
             let factoryCategory = 'ALL'; // 'ALL' | 'Synth Voice' | 'Percussion' | 'Effect'
 
+            const ALIAS_TYPES = new Set(['SENSOR', 'SNS']);
             const renderContent = () => {
                 const basicTypes = Object.keys(MODULE_REGISTRY).filter(t => {
                     if (t === 'SUB') return false; // Placed under User Subpatch area
                     if (t === 'SUB_IO') return !isMain;
+                    if (ALIAS_TYPES.has(t)) return false;
                     return true;
                 });
 

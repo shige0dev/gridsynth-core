@@ -1,12 +1,5 @@
 import { UIHelpers } from '../../ui/helpers.js';
 
-const SMOOTH_PRESETS = [
-    { label: 'RAW', val: 0.0, desc: '0% (無補正)' },
-    { label: 'LOW', val: 0.4, desc: '40% (弱補正)' },
-    { label: 'MED', val: 0.7, desc: '70% (標準・手ブレ除去)' },
-    { label: 'HIGH', val: 0.9, desc: '90% (強・振動除去)' }
-];
-
 export const TILT = {
     color: 'teal',
     defaults: () => ({
@@ -44,13 +37,12 @@ export const TILT = {
     },
 
     renderModal: (m) => {
-        const curSmooth = m.smooth ?? 0.7;
-        const isTared = (m.tareX || m.tareY || m.tareZ);
+        const isTared = Boolean(m.tareX || m.tareY || m.tareZ);
 
         return `
             <div class="flex flex-col gap-2 p-1 select-none text-[9px] w-[164px] mx-auto">
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800">
-                    <span class="text-[8px] font-mono font-bold text-teal-300 tracking-wider">3-AXIS TILT SENSOR</span>
+                    <span class="text-[8px] font-mono font-bold text-teal-300 tracking-wider">3-AXIS TILT</span>
                     <span id="tilt-modal-status" class="px-1.5 py-0.2 rounded text-[6.5px] font-mono font-bold bg-slate-900 text-slate-500 border border-slate-800">NO SENSOR</span>
                 </div>
 
@@ -74,36 +66,21 @@ export const TILT = {
                     `).join('')}
                 </div>
 
-                <!-- Smoothing (Low-pass filter) -->
-                <div class="space-y-1">
-                    <div class="flex justify-between items-center text-[7.5px]">
-                        <span class="text-slate-400 font-bold uppercase tracking-wider">SMOOTH (防振フィルター)</span>
-                    </div>
-                    <div class="grid grid-cols-4 gap-1">
-                        ${SMOOTH_PRESETS.map(p => `
-                            <button class="tilt-smooth-btn py-1 rounded text-[7.5px] font-mono font-bold border transition-all ${Math.abs(curSmooth - p.val) < 0.05
-                                ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/50'
-                                : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'
-                            }" data-val="${p.val}" title="${p.desc}">
-                                ${p.label}
-                            </button>
-                        `).join('')}
-                    </div>
-                </div>
-
-                <!-- Tare / Calibration -->
+                <!-- Zero Point Calibration (Tare / Reset) -->
                 <div class="space-y-1 pt-1 border-t border-slate-800/80">
                     <div class="flex justify-between items-center text-[7px] text-slate-400">
-                        <span>ゼロ点校正 (水平基準)</span>
-                        <span class="font-mono text-[6.5px] ${isTared ? 'text-amber-400 font-bold' : 'text-slate-600'}">${isTared ? 'TARED' : 'DEFAULT'}</span>
+                        <span class="font-bold uppercase tracking-wider">ゼロ点基準</span>
+                        <span class="font-mono text-[6.5px] px-1 py-0.2 rounded ${isTared ? 'bg-amber-950/80 text-amber-300 border border-amber-500/50' : 'bg-slate-900 text-slate-500 border border-slate-800'}">${isTared ? '校正中 (TARED)' : '机上水平 (DEFAULT)'}</span>
                     </div>
                     <div class="flex gap-1">
                         <button id="tilt-tare-btn" class="flex-1 py-1 rounded bg-slate-900 hover:bg-teal-950/80 text-teal-300 border border-teal-500/60 font-bold text-[7.5px] transition active:scale-95 shadow-sm">
-                            SET TARE (0点校正)
+                            現在の角度を0点にする
                         </button>
-                        <button id="tilt-reset-tare-btn" class="px-2 py-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-400 border border-slate-800 font-bold text-[7.5px] transition active:scale-95 ${!isTared ? 'opacity-40 cursor-not-allowed' : ''}">
-                            RESET
-                        </button>
+                        ${isTared ? `
+                            <button id="tilt-reset-tare-btn" class="px-2 py-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 font-bold text-[7.5px] transition active:scale-95">
+                                机上水平に戻す
+                            </button>
+                        ` : ''}
                     </div>
                 </div>
             </div>`;
@@ -112,20 +89,7 @@ export const TILT = {
     bindEvents: (m, ctx, onChange) => {
         const root = ctx?.getDialogElement ? (ctx.getDialogElement() || document) : document;
 
-        // Smooth preset buttons
-        root.querySelectorAll('.tilt-smooth-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const val = parseFloat(btn.dataset.val);
-                if (!isNaN(val) && m.smooth !== val) {
-                    m.smooth = val;
-                    ctx.reRenderModal();
-                    onChange();
-                }
-            });
-        });
-
-        // Tare button
+        // Tare button (sets current tilt as 0 reference)
         root.querySelector('#tilt-tare-btn')?.addEventListener('click', (e) => {
             e.stopPropagation();
             const inst = ctx.synth?.modules?.[`${ctx.currentPageId}/${m.id}`] || ctx.synth?.modules?.[m.id];
@@ -134,19 +98,19 @@ export const TILT = {
                 m.tareX = raw.x;
                 m.tareY = raw.y;
                 m.tareZ = raw.z;
-                if (ctx.showToast) ctx.showToast('傾きゼロ点を現在位置に校正しました');
+                if (ctx.showToast) ctx.showToast('現在の角度を0点として校正しました');
                 ctx.reRenderModal();
                 onChange();
             }
         });
 
-        // Reset Tare button
+        // Reset Tare button (reverts back to flat horizontal on desk)
         root.querySelector('#tilt-reset-tare-btn')?.addEventListener('click', (e) => {
             e.stopPropagation();
             m.tareX = 0;
             m.tareY = 0;
             m.tareZ = 0;
-            if (ctx.showToast) ctx.showToast('ゼロ点校正を初期状態にリセットしました');
+            if (ctx.showToast) ctx.showToast('机上水平の初期状態に戻しました');
             ctx.reRenderModal();
             onChange();
         });
