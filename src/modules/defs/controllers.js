@@ -56,8 +56,7 @@ export const KEY = {
         { s: 6, l: 45.0 },
         { s: 8, l: 56.667 },
         { s: 10, l: 68.333 },
-        { s: 13, l: 85.833 },
-        { s: 15, l: 97.5 }
+        { s: 13, l: 85.833 }
     ],
     renderGrid: (m) => `<div class="flex items-center justify-center w-full h-full pointer-events-none text-cyan-400"><span class="text-[15px] font-mono font-bold text-white tracking-tight">${m.lastNote || 'C2'}</span></div>`,
     renderModal: (m) => {
@@ -73,11 +72,11 @@ export const KEY = {
                     <button id="key-oct-up" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold">＋</button></div>
                     <span class="text-[9px] font-mono font-bold text-sky-300" id="key-active-note">${curNote}</span>
                 </div>
-                <div class="relative h-28 bg-slate-950 border-2 border-slate-400 flex select-none touch-none overflow-hidden" id="kb-box">
-                    ${W.map(k => `<div class="key-white flex-1 bg-slate-950 border-r-2 border-slate-400 last:border-r-0 flex flex-col justify-end items-center pb-1 cursor-pointer select-none transition-colors" data-semi="${k.s}"><span class="text-[7.5px] font-bold text-slate-400 pointer-events-none">${k.n}</span></div>`).join('')}
+                <div class="relative h-28 bg-slate-950 border border-slate-400 flex select-none touch-none overflow-hidden" id="kb-box">
+                    ${W.map(k => `<div class="key-white flex-1 bg-slate-950 border-r border-slate-400 last:border-r-0 flex flex-col justify-end items-center pb-1 cursor-pointer select-none transition-colors" data-semi="${k.s}"><span class="text-[7.5px] font-bold text-slate-400 pointer-events-none">${k.n}</span></div>`).join('')}
                     <div class="absolute inset-0 pointer-events-none">
-                        <!-- Accidentals aligned to user centers (1.5, 3.5, 6.5, 8.5, 10.5 * 5.833% + 10%) with uniform 2px border and sharp corners -->
-                        ${B.map(bk => `<div class="key-black absolute h-16 bg-slate-950 border-2 border-slate-400 border-t-0 pointer-events-auto cursor-pointer select-none transition-colors" style="left:${bk.l}%;width:5.833%;" data-semi="${bk.s}"></div>`).join('')}
+                        <!-- Accidentals aligned to user centers (1.5, 3.5, 6.5, 8.5, 10.5 * 5.833% + 10%) with uniform 1px border and sharp corners -->
+                        ${B.map(bk => `<div class="key-black absolute h-16 bg-slate-950 border border-slate-400 border-t-0 pointer-events-auto cursor-pointer select-none transition-colors" style="left:${bk.l}%;width:5.833%;" data-semi="${bk.s}"></div>`).join('')}
                     </div>
                 </div>
             </div>`;
