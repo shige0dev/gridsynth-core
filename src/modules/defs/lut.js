@@ -219,7 +219,6 @@ export const LUT = {
         // Touch & Drag drawing on Canvas
         const canvas = root.querySelector('#lut-modal-canvas');
         if (canvas) {
-            let isDrawing = false;
             let lastSlot = -1;
 
             const handlePointer = (e) => {
@@ -269,28 +268,16 @@ export const LUT = {
                 cb();
             };
 
-            canvas.addEventListener('pointerdown', (e) => {
-                isDrawing = true;
-                lastSlot = -1;
-                canvas.setPointerCapture(e.pointerId);
-                handlePointer(e);
-            });
-
-            canvas.addEventListener('pointermove', (e) => {
-                if (!isDrawing) return;
-                handlePointer(e);
-            });
-
-            const stopDraw = (e) => {
-                if (isDrawing) {
-                    isDrawing = false;
+            UIHelpers.bindPointerDrag(canvas, {
+                onDown: (e) => {
                     lastSlot = -1;
-                    try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
+                    handlePointer(e);
+                },
+                onMove: handlePointer,
+                onUp: () => {
+                    lastSlot = -1;
                 }
-            };
-
-            canvas.addEventListener('pointerup', stopDraw);
-            canvas.addEventListener('pointercancel', stopDraw);
+            });
 
             // Initial render
             LUT.drawCanvas(canvas, m, null, null, true);

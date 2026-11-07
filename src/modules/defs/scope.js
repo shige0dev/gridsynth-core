@@ -247,311 +247,126 @@ const extractBands = (freqs, numBands = 96, sampleRate = 48000) => {
 
 const drawSpectrumCanvas = (ctx, w, h, historyBands, mode, view, isModal) => {
     ctx.clearRect(0, 0, w, h);
-
     if (!historyBands || historyBands.length === 0) return;
     const n = historyBands[0].length;
     const bandsPerOct = 12;
 
-    // --- 1. 2D FLAT VIEW (MODAL or PANEL when view === '2d') ---
-    if (isModal || view === '2d') {
-        const bands = historyBands[0];
-        ctx.strokeStyle = '#1e293b';
-        ctx.lineWidth = 0.6;
-        const gridY = [h * 0.25, h * 0.5, h * 0.75];
-        gridY.forEach(y => {
-            ctx.beginPath();
-            ctx.moveTo(0, y);
-            ctx.lineTo(w, y);
-            ctx.stroke();
-        });
-
-        const gap = 1.0;
-        const barW = (w - gap * (n - 1)) / n;
-
-        if (isModal) {
-            const octFreqs = [
-                { f: 55, l: '55' },
-                { f: 110, l: '110' },
-                { f: 220, l: '220' },
-                { f: 440, l: '440', isA4: true },
-                { f: 880, l: '880' },
-                { f: 1760, l: '1.7k' },
-                { f: 3520, l: '3.5k' },
-                { f: 7040, l: '7k' },
-                { f: 14080, l: '14k' }
-            ];
-
-            octFreqs.forEach(item => {
-                const b = bandsPerOct * Math.log2(item.f / 55);
-                if (b >= 0 && b <= n) {
-                    const x = mode === 'bar' ? (b < n ? b * (barW + gap) + barW / 2 : w - 1) : ((b / (n - 1)) * w);
-                    ctx.save();
-                    ctx.strokeStyle = item.isA4 ? 'rgba(45, 212, 191, 0.85)' : 'rgba(148, 163, 184, 0.45)';
-                    ctx.lineWidth = item.isA4 ? 1.2 : 0.8;
-                    ctx.setLineDash(item.isA4 ? [3, 2] : [2, 2]);
-                    ctx.beginPath();
-                    ctx.moveTo(x, 0);
-                    ctx.lineTo(x, h);
-                    ctx.stroke();
-
-                    ctx.font = 'bold 8.5px ui-monospace, monospace';
-                    ctx.fillStyle = item.isA4 ? '#2dd4bf' : '#cbd5e1';
-                    ctx.textAlign = 'center';
-                    const clampedX = Math.max(10, Math.min(w - 10, x));
-                    ctx.fillText(item.l, clampedX, 10);
-                    ctx.restore();
-                }
-            });
-        }
-
-        if (mode === 'bar') {
-            for (let i = 0; i < n; i++) {
-                const v = Math.max(0, Math.min(1, bands[i]));
-                const barH = Math.max(1, v * (h - 4));
-                const x = i * (barW + gap);
-                const y = h - barH;
-
-                const grad = ctx.createLinearGradient(0, h, 0, 0);
-                grad.addColorStop(0, '#0d9488');
-                grad.addColorStop(0.65, '#2dd4bf');
-                grad.addColorStop(1, '#facc15');
-
-                ctx.fillStyle = grad;
-                ctx.beginPath();
-                if (typeof ctx.roundRect === 'function' && barW >= 2) {
-                    ctx.roundRect(x, y, barW, barH, [1, 1, 0, 0]);
-                } else {
-                    ctx.rect(x, y, barW, barH);
-                }
-                ctx.fill();
-            }
-        } else {
-            const pts = [];
-            for (let i = 0; i < n; i++) {
-                const x = (i / (n - 1)) * w;
-                const v = Math.max(0, Math.min(1, bands[i]));
-                const y = h - (v * (h - 6)) - 2;
-                pts.push({ x, y });
-            }
-
-            const grad = ctx.createLinearGradient(0, 0, 0, h);
-            grad.addColorStop(0, 'rgba(45, 212, 191, 0.45)');
-            grad.addColorStop(0.7, 'rgba(13, 148, 136, 0.15)');
-            grad.addColorStop(1, 'rgba(13, 148, 136, 0.0)');
-
-            ctx.beginPath();
-            ctx.moveTo(0, h);
-            ctx.lineTo(pts[0].x, pts[0].y);
-            for (let i = 1; i < pts.length; i++) {
-                const midX = (pts[i - 1].x + pts[i].x) / 2;
-                const midY = (pts[i - 1].y + pts[i].y) / 2;
-                ctx.quadraticCurveTo(pts[i - 1].x, pts[i - 1].y, midX, midY);
-            }
-            ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
-            ctx.lineTo(w, h);
-            ctx.closePath();
-            ctx.fillStyle = grad;
-            ctx.fill();
-
-            ctx.beginPath();
-            ctx.moveTo(pts[0].x, pts[0].y);
-            for (let i = 1; i < pts.length; i++) {
-                const midX = (pts[i - 1].x + pts[i].x) / 2;
-                const midY = (pts[i - 1].y + pts[i].y) / 2;
-                ctx.quadraticCurveTo(pts[i - 1].x, pts[i - 1].y, midX, midY);
-            }
-            ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
-            ctx.strokeStyle = '#2dd4bf';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-        }
-        return;
-    }
-
-    // --- 2. PANEL (3D AXONOMETRIC CENTER-ORIGIN PARALLEL PROJECTION) ---
-    // Universal 3D Axis-Vector Model centered at (cx, cy):
-    // Coordinates are normalized [-1, 1] relative to center (0, 0, 0)
-    // Suitable for both Spectrum Analyzer and future 3D Lissajous
-    const totalSlices = historyBands.length; // 5 lines
-    const rad30 = Math.PI / 6; // 30 degrees
-    const cos30 = Math.cos(rad30); // ~0.866
-    const sin30 = Math.sin(rad30); // 0.500
-
-    // Center of Panel (0, 0, 0) in screen coordinates
-    const cx = 60;
-    const cy = 60;
-
-    // True Isometric Cube (2x2x2) in [-1, 1]^3 space: Lx = Ly = Lz = L
-    // Max Y displacement is 2L (at corners (+1, -1, -1) and (-1, +1, +1))
-    // With L = 30px, corners touch/slightly reach canvas boundaries Y in [0, 120]
-    const L = 30;
-    const Lx = L; // X axis (frequency): right-down 30°
-    const Ly = L; // Y axis (time-series): right-up 30°
-    const Lz = L; // Z axis (amplitude): vertical up
-
-    // 3D Axis Vectors in screen space
-    const Vx = { x:  Lx * cos30, y:  Lx * sin30 };
-    const Vy = { x:  Ly * cos30, y: -Ly * sin30 };
-    const Vz = { x:  0,          y: -Lz };
-
-    // Direct 3D Projector from normalized space to screen (px, py)
-    const project3D = (nx, ny, nz) => ({
-        x: cx + nx * Vx.x + ny * Vy.x + nz * Vz.x,
-        y: cy + nx * Vx.y + ny * Vy.y + nz * Vz.y
+    const bands = historyBands[0];
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 0.6;
+    const gridY = [h * 0.25, h * 0.5, h * 0.75];
+    gridY.forEach(y => {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
     });
 
-    // Spectrum Mapping onto normalized [-1, 1] space:
-    // Frequency u [0, 1] -> nx in [-1, 1]
-    // Time-series v [0, 1] (0=front, 1=back) -> ny in [-1, 1]
-    // Amplitude val [0, 1] -> nz in [-1, 1] (0 sits on bottom floor nz=-1, 1 rises to top ceiling nz=1)
-    const projectSpec = (u, v, val = 0) => {
-        const nx = 2 * u - 1;
-        const ny = 2 * v - 1;
-        const nz = 2 * val - 1;
-        return project3D(nx, ny, nz);
-    };
+    const gap = 1.0;
+    const barW = (w - gap * (n - 1)) / n;
 
-    // A. Draw floor bounding side rails (Left: u=0, Right: u=1, for v from 0 to 1)
-    ctx.save();
-    ctx.strokeStyle = 'rgba(30, 41, 59, 0.6)';
-    ctx.lineWidth = 0.6;
-    // Left boundary rail
-    const p00 = projectSpec(0, 0, 0);
-    const p01 = projectSpec(0, 1, 0);
-    ctx.beginPath();
-    ctx.moveTo(p00.x, p00.y);
-    ctx.lineTo(p01.x, p01.y);
-    ctx.stroke();
+    if (isModal) {
+        const octFreqs = [
+            { f: 55, l: '55' },
+            { f: 110, l: '110' },
+            { f: 220, l: '220' },
+            { f: 440, l: '440', isA4: true },
+            { f: 880, l: '880' },
+            { f: 1760, l: '1.7k' },
+            { f: 3520, l: '3.5k' },
+            { f: 7040, l: '7k' },
+            { f: 14080, l: '14k' }
+        ];
 
-    // Right boundary rail
-    const p10 = projectSpec(1, 0, 0);
-    const p11 = projectSpec(1, 1, 0);
-    ctx.beginPath();
-    ctx.moveTo(p10.x, p10.y);
-    ctx.lineTo(p11.x, p11.y);
-    ctx.stroke();
-    ctx.restore();
-
-    // B. Render 5 time-series slices from back (k = 4, v = 1) to front (k = 0, v = 0)
-    for (let k = totalSlices - 1; k >= 0; k--) {
-        const bands = historyBands[k];
-        const vRatio = k / (totalSlices - 1); // 0 (front) to 1 (back)
-        const depthRatio = 1 - vRatio;        // 1 (front) to 0 (back)
-
-        // Always draw the 0-point baseline (oblique 30° line from left to right)
-        const pStart = projectSpec(0, vRatio, 0);
-        const pEnd = projectSpec(1, vRatio, 0);
-
-        ctx.save();
-        ctx.strokeStyle = k === 0 
-            ? 'rgba(45, 212, 191, 0.95)' 
-            : `rgba(45, 212, 191, ${(0.18 + depthRatio * 0.35).toFixed(2)})`;
-        ctx.lineWidth = k === 0 ? 1.0 : 0.6;
-        ctx.beginPath();
-        ctx.moveTo(pStart.x, pStart.y);
-        ctx.lineTo(pEnd.x, pEnd.y);
-        ctx.stroke();
-        ctx.restore();
-
-        if (!bands) continue;
-
-        const strokeColor = k === 0 
-            ? '#2dd4bf' 
-            : `rgba(45, 212, 191, ${(0.3 + depthRatio * 0.55).toFixed(2)})`;
-
-        if (mode === 'bar') {
-            for (let i = 0; i < n; i++) {
-                const val = Math.max(0, Math.min(1, bands[i]));
-                if (val < 0.005) continue; // keep 0 baseline line visible
-
-                const u = i / (n - 1);
-                const uNext = Math.min(1, (i + 0.8) / (n - 1));
-                const pBase = projectSpec(u, vRatio, 0);
-                const pTop = projectSpec(u, vRatio, val);
-                const pBaseNext = projectSpec(uNext, vRatio, 0);
-                const pTopNext = projectSpec(uNext, vRatio, val);
-
-                // Occlusion polygon
-                ctx.fillStyle = '#020617';
+        octFreqs.forEach(item => {
+            const b = bandsPerOct * Math.log2(item.f / 55);
+            if (b >= 0 && b <= n) {
+                const x = mode === 'bar' ? (b < n ? b * (barW + gap) + barW / 2 : w - 1) : ((b / (n - 1)) * w);
+                ctx.save();
+                ctx.strokeStyle = item.isA4 ? 'rgba(45, 212, 191, 0.85)' : 'rgba(148, 163, 184, 0.45)';
+                ctx.lineWidth = item.isA4 ? 1.2 : 0.8;
+                ctx.setLineDash(item.isA4 ? [3, 2] : [2, 2]);
                 ctx.beginPath();
-                ctx.moveTo(pBase.x, pBase.y);
-                ctx.lineTo(pTop.x, pTop.y);
-                ctx.lineTo(pTopNext.x, pTopNext.y);
-                ctx.lineTo(pBaseNext.x, pBaseNext.y);
-                ctx.closePath();
-                ctx.fill();
-
-                // Axonometric bar gradient
-                const grad = ctx.createLinearGradient(pBase.x, pBase.y, pTop.x, pTop.y);
-                if (k === 0) {
-                    grad.addColorStop(0, '#0d9488');
-                    grad.addColorStop(0.7, '#2dd4bf');
-                    grad.addColorStop(1, '#facc15');
-                } else {
-                    grad.addColorStop(0, `rgba(13, 148, 136, ${(0.3 + depthRatio * 0.5).toFixed(2)})`);
-                    grad.addColorStop(1, `rgba(45, 212, 191, ${(0.4 + depthRatio * 0.5).toFixed(2)})`);
-                }
-                ctx.fillStyle = grad;
-                ctx.fill();
-            }
-        } else {
-            // CURVE mode
-            let hasSignal = false;
-            const pts = [];
-            for (let i = 0; i < n; i++) {
-                const val = Math.max(0, Math.min(1, bands[i]));
-                if (val > 0.008) hasSignal = true;
-                const u = i / (n - 1);
-                pts.push(projectSpec(u, vRatio, val));
-            }
-
-            if (hasSignal) {
-                // Occlusion & Area fill
-                ctx.beginPath();
-                ctx.moveTo(pStart.x, pStart.y);
-                ctx.lineTo(pts[0].x, pts[0].y);
-                for (let i = 1; i < pts.length; i++) {
-                    const midX = (pts[i - 1].x + pts[i].x) / 2;
-                    const midY = (pts[i - 1].y + pts[i].y) / 2;
-                    ctx.quadraticCurveTo(pts[i - 1].x, pts[i - 1].y, midX, midY);
-                }
-                ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
-                ctx.lineTo(pEnd.x, pEnd.y);
-                ctx.closePath();
-
-                const pMaxTop = projectSpec(0.5, vRatio, 1.0);
-                const grad = ctx.createLinearGradient(pStart.x, pStart.y, pMaxTop.x, pMaxTop.y);
-                if (k === 0) {
-                    grad.addColorStop(0, '#020617');
-                    grad.addColorStop(0.4, 'rgba(13, 148, 136, 0.25)');
-                    grad.addColorStop(1, 'rgba(45, 212, 191, 0.55)');
-                } else {
-                    grad.addColorStop(0, '#020617');
-                    grad.addColorStop(1, `rgba(45, 212, 191, ${(0.12 + depthRatio * 0.15).toFixed(2)})`);
-                }
-                ctx.fillStyle = grad;
-                ctx.fill();
-
-                // Ridge line stroke
-                ctx.beginPath();
-                ctx.moveTo(pts[0].x, pts[0].y);
-                for (let i = 1; i < pts.length; i++) {
-                    const midX = (pts[i - 1].x + pts[i].x) / 2;
-                    const midY = (pts[i - 1].y + pts[i].y) / 2;
-                    ctx.quadraticCurveTo(pts[i - 1].x, pts[i - 1].y, midX, midY);
-                }
-                ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
-                ctx.strokeStyle = strokeColor;
-                ctx.lineWidth = k === 0 ? 1.4 : 0.8;
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, h);
                 ctx.stroke();
+
+                ctx.font = 'bold 8.5px ui-monospace, monospace';
+                ctx.fillStyle = item.isA4 ? '#2dd4bf' : '#cbd5e1';
+                ctx.textAlign = 'center';
+                const clampedX = Math.max(10, Math.min(w - 10, x));
+                ctx.fillText(item.l, clampedX, 10);
+                ctx.restore();
             }
+        });
+    }
+
+    if (mode === 'bar') {
+        for (let i = 0; i < n; i++) {
+            const v = Math.max(0, Math.min(1, bands[i]));
+            const barH = Math.max(1, v * (h - 4));
+            const x = i * (barW + gap);
+            const y = h - barH;
+
+            const grad = ctx.createLinearGradient(0, h, 0, 0);
+            grad.addColorStop(0, '#0d9488');
+            grad.addColorStop(0.65, '#2dd4bf');
+            grad.addColorStop(1, '#facc15');
+
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            if (typeof ctx.roundRect === 'function' && barW >= 2) {
+                ctx.roundRect(x, y, barW, barH, [1, 1, 0, 0]);
+            } else {
+                ctx.rect(x, y, barW, barH);
+            }
+            ctx.fill();
         }
+    } else {
+        const pts = [];
+        for (let i = 0; i < n; i++) {
+            const x = (i / (n - 1)) * w;
+            const v = Math.max(0, Math.min(1, bands[i]));
+            const y = h - (v * (h - 6)) - 2;
+            pts.push({ x, y });
+        }
+
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, 'rgba(45, 212, 191, 0.45)');
+        grad.addColorStop(0.7, 'rgba(13, 148, 136, 0.15)');
+        grad.addColorStop(1, 'rgba(13, 148, 136, 0.0)');
+
+        ctx.beginPath();
+        ctx.moveTo(0, h);
+        ctx.lineTo(pts[0].x, pts[0].y);
+        for (let i = 1; i < pts.length; i++) {
+            const midX = (pts[i - 1].x + pts[i].x) / 2;
+            const midY = (pts[i - 1].y + pts[i].y) / 2;
+            ctx.quadraticCurveTo(pts[i - 1].x, pts[i - 1].y, midX, midY);
+        }
+        ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+        ctx.lineTo(w, h);
+        ctx.closePath();
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (let i = 1; i < pts.length; i++) {
+            const midX = (pts[i - 1].x + pts[i].x) / 2;
+            const midY = (pts[i - 1].y + pts[i].y) / 2;
+            ctx.quadraticCurveTo(pts[i - 1].x, pts[i - 1].y, midX, midY);
+        }
+        ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+        ctx.strokeStyle = '#2dd4bf';
+        ctx.lineWidth = 2;
+        ctx.stroke();
     }
 };
 
 export const SPEC = {
     color: 'teal',
-    defaults: () => ({ type: 'SPEC', mode: 'bar', view: '2d', smooth: 0.75 }),
+    defaults: () => ({ type: 'SPEC', mode: 'bar', smooth: 0.75 }),
     ports: () => ({
         in: [{ port: 'wave_in', pin: 5, color: 'bg-blue-500' }],
         out: []
@@ -563,45 +378,15 @@ export const SPEC = {
         </div>`,
     updateLive: (cell, data, isP, modal, m) => {
         if (!data?.freqs) return;
-        // Lightweight 48-band spectrum (0.9 KB buffer for 5 slices)
         const { bands } = extractBands(data.freqs, 48, data.sampleRate || 48000);
-        const mode = m.mode || 'bar';
-        const view = m.view || '2d';
-
-        // Maintain 5-slice history buffer on the module instance
         if (!m._historyBands || m._historyBands[0]?.length !== bands.length) {
-            m._historyBands = [];
-            for (let i = 0; i < 5; i++) {
-                m._historyBands.push(new Float32Array(bands.length));
-            }
-            m._accumBands = new Float32Array(bands.length);
-            m._lastSliceTime = performance.now();
+            m._historyBands = [new Float32Array(bands.length)];
         }
-
-        // 1. High-frequency peak capture (~15ms per frame) to prevent missing sharp transients
-        for (let i = 0; i < bands.length; i++) {
-            if (bands[i] > m._accumBands[i]) {
-                m._accumBands[i] = bands[i];
-            }
-        }
-
-        // 2. Shift snapshot into 5-slice history buffer every 120ms
-        const now = performance.now();
-        if (now - m._lastSliceTime >= 120) {
-            m._lastSliceTime = now;
-            m._historyBands.pop();
-            m._historyBands.unshift(new Float32Array(m._accumBands));
-            m._accumBands.set(bands);
-        } else if (view === '2d') {
-            // For 2D real-time viewing, update slice 0 directly
-            m._historyBands[0].set(bands);
-        }
-
-        renderDualCanvases(cell, modal, '.spec-canvas', '#spec-modal-canvas', (c, w, h, isM) => drawSpectrumCanvas(c, w, h, m._historyBands, mode, view, isM));
+        m._historyBands[0].set(bands);
+        renderDualCanvases(cell, modal, '.spec-canvas', '#spec-modal-canvas', (c, w, h, isM) => drawSpectrumCanvas(c, w, h, m._historyBands, m.mode || 'bar', '2d', isM));
     },
     renderModal: (m) => {
         const curMode = m.mode || 'bar';
-        const curView = m.view || '3d';
         return `
             <div class="space-y-1.5 select-none w-full">
                 <div class="h-5 flex items-center justify-between gap-1 pb-1 border-b border-slate-800 select-none">
@@ -609,11 +394,6 @@ export const SPEC = {
                         <span class="text-[8px] text-slate-400 font-bold uppercase tracking-tight">STYLE:</span>
                         <button id="spec-mode-bar" class="h-4 px-1.5 rounded text-[8px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${curMode === 'bar' ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">BAR</button>
                         <button id="spec-mode-curve" class="h-4 px-1.5 rounded text-[8px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${curMode === 'curve' ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">CURVE</button>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <span class="text-[8px] text-slate-400 font-bold uppercase tracking-tight">VIEW:</span>
-                        <button id="spec-view-2d" class="h-4 px-1.5 rounded text-[8px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${curView === '2d' ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">2D</button>
-                        <button id="spec-view-3d" class="h-4 px-1.5 rounded text-[8px] font-bold border leading-none inline-flex items-center justify-center transition-colors ${curView === '3d' ? 'bg-teal-600 text-white border-teal-400 shadow-sm shadow-teal-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'}">3D</button>
                     </div>
                 </div>
 
@@ -631,16 +411,6 @@ export const SPEC = {
         });
         root.querySelector('#spec-mode-curve')?.addEventListener('click', () => {
             m.mode = 'curve';
-            ctx.reRenderModal();
-            cb();
-        });
-        root.querySelector('#spec-view-2d')?.addEventListener('click', () => {
-            m.view = '2d';
-            ctx.reRenderModal();
-            cb();
-        });
-        root.querySelector('#spec-view-3d')?.addEventListener('click', () => {
-            m.view = '3d';
             ctx.reRenderModal();
             cb();
         });

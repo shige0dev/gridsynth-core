@@ -246,7 +246,6 @@ export const MATRIX = {
         // Canvas touch & drag grid toggle
         const canvas = root.querySelector('#matrix-modal-canvas');
         if (canvas) {
-            let isDragging = false;
             let dragPaintValue = 1;
             let lastCellKey = '';
 
@@ -287,27 +286,11 @@ export const MATRIX = {
                 cb();
             };
 
-            canvas.addEventListener('pointerdown', (e) => {
-                isDragging = true;
-                canvas.setPointerCapture(e.pointerId);
-                toggleCellAtPointer(e, true);
+            UIHelpers.bindPointerDrag(canvas, {
+                onDown: (e) => toggleCellAtPointer(e, true),
+                onMove: (e) => toggleCellAtPointer(e, false),
+                onUp: () => { lastCellKey = ''; }
             });
-
-            canvas.addEventListener('pointermove', (e) => {
-                if (!isDragging) return;
-                toggleCellAtPointer(e, false);
-            });
-
-            const stopDrag = (e) => {
-                if (isDragging) {
-                    isDragging = false;
-                    lastCellKey = '';
-                    try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
-                }
-            };
-
-            canvas.addEventListener('pointerup', stopDrag);
-            canvas.addEventListener('pointercancel', stopDrag);
 
             // Initial render of modal canvas
             MATRIX.drawModalCanvas(canvas, m, 0);

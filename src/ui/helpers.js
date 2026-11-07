@@ -547,6 +547,32 @@ export const UIHelpers = {
         if (options.noWrapper) return barsHTML;
         const containerCls = options.containerCls || '';
         return `<div class="flex items-end justify-center ${gapCls} ${containerCls}">${barsHTML}</div>`;
+    },
+
+    /**
+     * Standardized pointer-drag helper on a Canvas or interactive element
+     */
+    bindPointerDrag: (el, { onDown, onMove, onUp }) => {
+        if (!el) return;
+        let isDragging = false;
+        el.addEventListener('pointerdown', (e) => {
+            isDragging = true;
+            try { el.setPointerCapture?.(e.pointerId); } catch (_) {}
+            onDown?.(e);
+        });
+        el.addEventListener('pointermove', (e) => {
+            if (!isDragging) return;
+            onMove?.(e);
+        });
+        const stopDrag = (e) => {
+            if (isDragging) {
+                isDragging = false;
+                try { el.releasePointerCapture?.(e.pointerId); } catch (_) {}
+                onUp?.(e);
+            }
+        };
+        el.addEventListener('pointerup', stopDrag);
+        el.addEventListener('pointercancel', stopDrag);
     }
 };
 
