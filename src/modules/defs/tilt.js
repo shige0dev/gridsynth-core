@@ -75,12 +75,12 @@ export const TILT = {
                 <!-- Zero Point Calibration (Tare / Reset) -->
                 <div class="space-y-1 pt-1 border-t border-slate-800/80">
                     <div class="flex justify-between items-center text-[7px] text-slate-400">
-                        <span class="font-bold uppercase tracking-wider">基準</span>
+                        <span class="font-bold uppercase tracking-wider font-mono">ZERO REF</span>
                         <span class="font-mono text-[6.5px] px-1 py-0.2 rounded ${isTared ? 'bg-amber-950/80 text-amber-300 border border-amber-500/50' : 'bg-slate-900 text-slate-500 border border-slate-800'}">${isTared ? 'CALIBRATED' : 'DEFAULT'}</span>
                     </div>
                     <div class="flex gap-1">
-                        <button id="tilt-tare-btn" class="flex-1 py-1 rounded bg-slate-900 hover:bg-teal-950/80 text-teal-300 border border-teal-500/60 font-bold text-[7.5px] transition active:scale-95 shadow-sm">
-                            キャリブレーション
+                        <button id="tilt-tare-btn" class="flex-1 py-1 rounded bg-slate-900 hover:bg-teal-950/80 text-teal-300 border border-teal-500/60 font-bold text-[7.5px] transition active:scale-95 shadow-sm font-mono tracking-wider">
+                            CALIBRATE
                         </button>
                         ${isTared ? `
                             <button id="tilt-reset-tare-btn" class="px-2.5 py-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 font-bold text-[7.5px] transition active:scale-95">
