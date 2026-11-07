@@ -1,6 +1,6 @@
 // src/ui/managers/dock-manager.js
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=619';
-import { UIHelpers } from '../helpers.js?v=619';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=620';
+import { UIHelpers } from '../helpers.js?v=620';
 
 export const DOCK_TITLES = {
     KEY: 'KEYBOARD',

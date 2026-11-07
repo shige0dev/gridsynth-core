@@ -1,8 +1,8 @@
 // src/ui/managers/cable-manager.js
-import { parseConn, isSameConn, getPortSignalType, resolveConnectionSignalType, isSubModule, normalizeSubPort, getOppositeSubPort, getPortAliases, isPortMatching, getSubPortAlias } from '../../core/utils.js?v=459';
-import { resolveModManifest } from '../../core/patch.js?v=459';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=459';
-import { WaveCodec } from '../../audio/wave-codec.js?v=459';
+import { parseConn, isSameConn, getPortSignalType, resolveConnectionSignalType, isSubModule, normalizeSubPort, getOppositeSubPort, getPortAliases, isPortMatching, getSubPortAlias } from '../../core/utils.js?v=620';
+import { resolveModManifest } from '../../core/patch.js?v=620';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=620';
+import { WaveCodec } from '../../audio/wave-codec.js?v=620';
 
 export class CableManager {
     constructor(ui) {
@@ -12,6 +12,16 @@ export class CableManager {
 
     get cableCanvas() {
         return this.ui.cableCanvas;
+    }
+
+    matchesEndpoint(connEnd, targetMId, targetPort) {
+        if (!connEnd || connEnd.moduleId !== targetMId) return false;
+        if (connEnd.port === targetPort) return true;
+        if (isPortMatching(connEnd.port, targetPort)) return true;
+        if (isSubModule(targetMId)) {
+            return normalizeSubPort(connEnd.port, targetMId) === normalizeSubPort(targetPort, targetMId);
+        }
+        return false;
     }
 
     getSubManifest(moduleId, pageId = null) {
@@ -128,16 +138,9 @@ export class CableManager {
                 const conn = typeof c === 'string' ? parseConn(c) : c;
                 if (!conn) return;
                 let target = null;
-                const isFromSub = isSubModule(conn.from.moduleId);
-                const isToSub = isSubModule(conn.to.moduleId);
-                const isCurSub = isSubModule(moduleId);
-
-                const fromMatch = conn.from.moduleId === moduleId && (conn.from.port === port || isPortMatching(conn.from.port, port) || (isFromSub && isCurSub && normalizeSubPort(conn.from.port, conn.from.moduleId) === normalizeSubPort(port, moduleId)));
-                const toMatch = conn.to.moduleId === moduleId && (conn.to.port === port || isPortMatching(conn.to.port, port) || (isToSub && isCurSub && normalizeSubPort(conn.to.port, conn.to.moduleId) === normalizeSubPort(port, moduleId)));
-
-                if (fromMatch) {
+                if (this.matchesEndpoint(conn.from, moduleId, port)) {
                     target = conn.to;
-                } else if (toMatch) {
+                } else if (this.matchesEndpoint(conn.to, moduleId, port)) {
                     target = conn.from;
                 }
                 if (target) {
@@ -356,13 +359,9 @@ export class CableManager {
             const strokeColor = sig.stroke;
             const brightStrokeColor = sig.brightStroke;
 
-            const isFromSub = isSubModule(conn.from.moduleId);
-            const isToSub = isSubModule(conn.to.moduleId);
-            const isSelSub = sel && isSubModule(sel.moduleId);
-
             const isMatched = hasSel && (
-                (conn.from.moduleId === sel.moduleId && (conn.from.port === sel.port || (isFromSub && isSelSub && normalizeSubPort(conn.from.port, conn.from.moduleId) === normalizeSubPort(sel.port, sel.moduleId)))) ||
-                (conn.to.moduleId === sel.moduleId && (conn.to.port === sel.port || (isToSub && isSelSub && normalizeSubPort(conn.to.port, conn.to.moduleId) === normalizeSubPort(sel.port, sel.moduleId))))
+                this.matchesEndpoint(conn.from, sel.moduleId, sel.port) ||
+                this.matchesEndpoint(conn.to, sel.moduleId, sel.port)
             );
 
             path.setAttribute('fill', 'none');
@@ -489,15 +488,7 @@ export class CableManager {
     }
 
     removeConnectionsForPort(mId, port) {
-        const isSub = isSubModule(mId);
-        const normPort = isSub ? normalizeSubPort(port, mId) : port;
-
-        const matches = (cMId, cPort) => {
-            if (cMId !== mId) return false;
-            if (cPort === port) return true;
-            if (isSub && normalizeSubPort(cPort, cMId) === normPort) return true;
-            return false;
-        };
+        const matches = (cMId, cPort) => this.matchesEndpoint({ moduleId: cMId, port: cPort }, mId, port);
 
         const toRemove = this.ui.connections.filter(c => matches(c.to.moduleId, c.to.port) || matches(c.from.moduleId, c.from.port));
         if (toRemove.length === 0) return 0;
