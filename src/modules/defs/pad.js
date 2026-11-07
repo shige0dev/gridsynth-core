@@ -148,52 +148,50 @@ export const PAD = {
         const dispInitY = (polY === 'bi' && initValY >= 0 ? '+' : '') + initValY.toFixed(2);
 
         return `
-        <div class="space-y-2 p-1">
-            <div class="grid grid-cols-3 gap-2 pb-2 border-b border-slate-800 items-start">
-                <div class="space-y-1">
-                    <div class="flex items-center justify-between text-[8.5px] font-bold h-4">
-                        <span class="text-slate-400 uppercase tracking-wider">SAT</span>
-                        <span id="pad-sat-slider-disp" class="font-mono text-cyan-300 font-bold cursor-ew-resize select-none">${(m.sat ?? 1.0).toFixed(2)}</span>
-                    </div>
-                    <input type="range" id="pad-sat-slider" min="0" max="1" step="0.01" value="${m.sat ?? 1.0}" class="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
-                </div>
-                <div class="space-y-1">
-                    <div class="flex items-center justify-between text-[8.5px] font-bold h-4">
-                        <span class="text-slate-400 uppercase tracking-wider">HUE</span>
-                        <span id="pad-hue-slider-disp" class="font-mono text-cyan-300 font-bold cursor-ew-resize select-none">${(m.hue ?? 0.5).toFixed(2)}</span>
-                    </div>
-                    <input type="range" id="pad-hue-slider" min="0" max="1" step="0.01" value="${m.hue ?? 0.5}" class="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
-                </div>
-                <div class="space-y-1">
-                    <div class="flex items-center justify-between text-[8.5px] font-bold h-4">
-                        <span class="text-slate-400 uppercase tracking-wider">BRIGHT</span>
-                        <span id="pad-bright-slider-disp" class="font-mono text-cyan-300 font-bold cursor-ew-resize select-none">${(m.bright ?? 0.0).toFixed(2)}</span>
-                    </div>
-                    <input type="range" id="pad-bright-slider" min="0" max="1" step="0.01" value="${m.bright ?? 0.0}" class="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
-                </div>
-            </div>
-
-            <div class="relative w-[calc(100%-48px)] max-w-[320px] aspect-square mx-auto mb-7 select-none">
-                <!-- Inner Touch Area (Canvas) - Centered in dialog -->
-                <div class="relative w-full h-full bg-black rounded-none border border-slate-700/80 overflow-hidden shadow-inner select-none touch-none overscroll-contain" id="pad-modal-touch-area" style="opacity: ${m.opacity ?? 0.8};">
+        <div class="flex flex-col gap-1.5 p-0.5 select-none w-[160px] mx-auto">
+            <!-- 1. Pad Canvas with Polarity Buttons -->
+            <div class="relative w-[136px] h-[136px] ml-5 mb-5 select-none shrink-0">
+                <!-- Inner Touch Area (Canvas) -->
+                <div class="relative w-full h-full bg-black rounded border border-slate-700/80 overflow-hidden shadow-inner select-none touch-none overscroll-contain" id="pad-modal-touch-area" style="opacity: ${m.opacity ?? 0.8};">
                     <canvas id="pad-modal-canvas" class="w-full h-full block cursor-crosshair" width="400" height="400"></canvas>
-                    <div class="absolute top-2 left-2 flex items-center gap-2.5 font-mono text-[9px] select-none pointer-events-none drop-shadow">
-                        <span class="text-slate-400 text-[8px] font-sans font-bold">X</span><span id="pad-stat-x" class="text-cyan-300 font-bold">${dispInitX}</span>
-                        <span class="text-slate-400 text-[8px] font-sans font-bold">Y</span><span id="pad-stat-y" class="text-cyan-300 font-bold">${dispInitY}</span>
+                    <div class="absolute top-1 left-1.5 flex items-center gap-1.5 font-mono text-[8px] select-none pointer-events-none drop-shadow">
+                        <span class="text-slate-400 font-sans font-bold text-[7.5px]">X</span><span id="pad-stat-x" class="text-cyan-300 font-bold">${dispInitX}</span>
+                        <span class="text-slate-400 font-sans font-bold text-[7.5px]">Y</span><span id="pad-stat-y" class="text-cyan-300 font-bold">${dispInitY}</span>
                     </div>
                 </div>
 
                 <!-- Y-Axis Polarity Option Buttons (Left of Canvas, pointing Right ▶) -->
-                <!-- Center (BI: 0V at Center Line) -->
-                <button class="pad-pol-toggle-y absolute -left-6 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center text-[10px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polY === 'bi' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="bi" title="Y軸 0点: 中央 (BI -1~1V)">▶</button>
-                <!-- Bottom (UNI: 0V at Bottom Edge) -->
-                <button class="pad-pol-toggle-y absolute -left-6 bottom-0 translate-y-1/2 w-5 h-5 flex items-center justify-center text-[10px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polY === 'uni' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="uni" title="Y軸 0点: 下端 (UNI 0~2V)">▶</button>
+                <button class="pad-pol-toggle-y absolute -left-5 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center text-[9px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polY === 'bi' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="bi" title="Y軸 0点: 中央 (BI -1~1V)">▶</button>
+                <button class="pad-pol-toggle-y absolute -left-5 bottom-0 translate-y-1/2 w-4 h-4 flex items-center justify-center text-[9px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polY === 'uni' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="uni" title="Y軸 0点: 下端 (UNI 0~2V)">▶</button>
 
                 <!-- X-Axis Polarity Option Buttons (Below Canvas, pointing Up ▲) -->
-                <!-- Left (UNI: 0V at Left Edge) -->
-                <button class="pad-pol-toggle-x absolute left-0 -translate-x-1/2 -bottom-6 w-5 h-5 flex items-center justify-center text-[10px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polX === 'uni' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="uni" title="X軸 0点: 左端 (UNI 0~2V)">▲</button>
-                <!-- Center (BI: 0V at Center Line) -->
-                <button class="pad-pol-toggle-x absolute left-1/2 -translate-x-1/2 -bottom-6 w-5 h-5 flex items-center justify-center text-[10px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polX === 'bi' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="bi" title="X軸 0点: 中央 (BI -1~1V)">▲</button>
+                <button class="pad-pol-toggle-x absolute left-0 -translate-x-1/2 -bottom-5 w-4 h-4 flex items-center justify-center text-[9px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polX === 'uni' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="uni" title="X軸 0点: 左端 (UNI 0~2V)">▲</button>
+                <button class="pad-pol-toggle-x absolute left-1/2 -translate-x-1/2 -bottom-5 w-4 h-4 flex items-center justify-center text-[9px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polX === 'bi' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="bi" title="X軸 0点: 中央 (BI -1~1V)">▲</button>
+            </div>
+
+            <!-- 2. カラー設定 (パッドの下に1行で配置) -->
+            <div class="grid grid-cols-3 gap-1.5 pt-1 border-t border-slate-800 select-none">
+                <div class="flex flex-col gap-0.5">
+                    <div class="flex items-center justify-between text-[7px] font-mono leading-none">
+                        <span class="text-slate-400 font-bold">HUE</span>
+                        <span id="pad-hue-slider-disp" class="text-cyan-300 font-bold cursor-ew-resize">${(m.hue ?? 0.5).toFixed(2)}</span>
+                    </div>
+                    <input type="range" id="pad-hue-slider" min="0" max="1" step="0.01" value="${m.hue ?? 0.5}" class="w-full accent-cyan-400 h-1 bg-slate-800 rounded cursor-pointer">
+                </div>
+                <div class="flex flex-col gap-0.5">
+                    <div class="flex items-center justify-between text-[7px] font-mono leading-none">
+                        <span class="text-slate-400 font-bold">SAT</span>
+                        <span id="pad-sat-slider-disp" class="text-cyan-300 font-bold cursor-ew-resize">${(m.sat ?? 1.0).toFixed(2)}</span>
+                    </div>
+                    <input type="range" id="pad-sat-slider" min="0" max="1" step="0.01" value="${m.sat ?? 1.0}" class="w-full accent-cyan-400 h-1 bg-slate-800 rounded cursor-pointer">
+                </div>
+                <div class="flex flex-col gap-0.5">
+                    <div class="flex items-center justify-between text-[7px] font-mono leading-none">
+                        <span class="text-slate-400 font-bold">BRT</span>
+                        <span id="pad-bright-slider-disp" class="text-cyan-300 font-bold cursor-ew-resize">${(m.bright ?? 0.0).toFixed(2)}</span>
+                    </div>
+                    <input type="range" id="pad-bright-slider" min="0" max="1" step="0.01" value="${m.bright ?? 0.0}" class="w-full accent-cyan-400 h-1 bg-slate-800 rounded cursor-pointer">
+                </div>
             </div>
         </div>`;
     },

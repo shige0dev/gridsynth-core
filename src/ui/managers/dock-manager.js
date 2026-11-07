@@ -83,13 +83,14 @@ export class DockManager {
         modal?.classList.remove('hidden');
 
         const isValue = m.type === 'VALUE';
+        const isCompact = isValue || m.type === 'PAD';
         const titleText = isValue ? 'VAL' : (DOCK_TITLES[m.type] || m.type);
         const iconName = DOCK_ICONS[m.type] || 'sliders';
 
         const dialogEl = document.createElement('div');
         dialogEl.id = `dock-dialog-${mId}`;
         dialogEl.dataset.moduleId = mId;
-        dialogEl.className = `dock-dialog absolute bg-slate-900/95 border border-cyan-500/70 rounded-xl p-1.5 shadow-2xl backdrop-blur-md pointer-events-auto transition-none ${isValue ? 'w-[172px]' : 'left-2 right-2 w-[calc(100%-16px)]'} max-h-[calc(100%-84px)] overflow-hidden flex flex-col overscroll-contain`;
+        dialogEl.className = `dock-dialog absolute bg-slate-900/95 border border-cyan-500/70 rounded-xl p-1.5 shadow-2xl backdrop-blur-md pointer-events-auto transition-none ${isCompact ? 'w-[172px]' : 'left-2 right-2 w-[calc(100%-16px)]'} max-h-[calc(100%-84px)] overflow-hidden flex flex-col overscroll-contain`;
 
         dialogEl.innerHTML = `
             <div class="dock-dialog-header border-b border-slate-800 pb-1 flex items-center justify-between cursor-move touch-none select-none shrink-0">
@@ -97,9 +98,9 @@ export class DockManager {
                     <i data-lucide="${iconName}" class="w-3.5 h-3.5 text-cyan-400 pointer-events-none shrink-0"></i>
                     <h3 class="dock-dialog-title text-[10px] font-bold text-cyan-300 uppercase tracking-wider pointer-events-none shrink-0">${titleText}</h3>
                     ${m.type === 'PAD' ? `
-                        <input type="text" class="dock-title-name-input bg-slate-950/90 border border-slate-700/80 hover:border-cyan-400 focus:border-cyan-400 rounded px-1.5 py-0 text-[9.5px] font-mono font-bold text-cyan-300 focus:outline-none focus:ring-1 focus:ring-cyan-400/50 h-[20px] w-28 select-text cursor-text leading-none shadow-inner ml-1" value="${m.name || 'PAD'}" placeholder="PAD" maxlength="12" title="PADの名前を編集">
+                        <input type="text" class="dock-title-name-input bg-slate-950/90 border border-slate-700/80 hover:border-cyan-400 focus:border-cyan-400 rounded px-1 py-0 text-[9px] font-mono font-bold text-cyan-300 focus:outline-none focus:ring-1 focus:ring-cyan-400/50 h-[19px] w-20 select-text cursor-text leading-none shadow-inner ml-1 text-center" value="${m.name || 'PAD'}" placeholder="PAD" maxlength="10" title="PADの名前を編集">
                     ` : (m.type === 'VALUE' ? `
-                        <input type="text" class="dock-title-name-input bg-slate-950/90 border border-slate-700/80 hover:border-amber-400 focus:border-amber-400 rounded px-1.5 py-0 text-[9px] font-mono font-bold text-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-400/50 h-[19px] w-20 select-text cursor-text leading-none shadow-inner ml-1 text-center" value="${m.label || m.name || 'VAL'}" placeholder="VAL" maxlength="8" title="VALUE変数名を編集">
+                        <input type="text" class="dock-title-name-input bg-slate-950/90 border border-slate-700/80 hover:border-amber-400 focus:border-amber-400 rounded px-1 py-0 text-[9px] font-mono font-bold text-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-400/50 h-[19px] w-20 select-text cursor-text leading-none shadow-inner ml-1 text-center" value="${m.label || m.name || 'VAL'}" placeholder="VAL" maxlength="8" title="VALUE変数名を編集">
                     ` : '')}
                 </div>
                 <div class="flex items-center gap-1 shrink-0">
@@ -183,16 +184,16 @@ export class DockManager {
 
         // Header draggable
         const headerEl = dialogEl.querySelector('.dock-dialog-header');
-        this.makeDialogDraggable(headerEl, dialogEl, { minMargin: 4, canMoveX: () => isValue });
+        this.makeDialogDraggable(headerEl, dialogEl, { minMargin: 4, canMoveX: () => isCompact });
 
         // Position dialog
-        if (isValue) {
-            const otherValueDocks = Array.from(this.openDocks.values()).filter(d => {
+        if (isCompact) {
+            const otherCompactDocks = Array.from(this.openDocks.values()).filter(d => {
                 const mod = this.ui.modules[d.moduleId];
-                return mod && mod.type === 'VALUE' && d.element !== dialogEl;
+                return mod && (mod.type === 'VALUE' || mod.type === 'PAD') && d.element !== dialogEl;
             });
-            if (otherValueDocks.length > 0) {
-                const lastVal = otherValueDocks[otherValueDocks.length - 1];
+            if (otherCompactDocks.length > 0) {
+                const lastVal = otherCompactDocks[otherCompactDocks.length - 1];
                 const lastL = parseFloat(lastVal.element.style.left) || lastVal.element.offsetLeft;
                 dialogEl.style.left = (lastL < 90) ? '180px' : '8px';
             } else {
@@ -223,7 +224,7 @@ export class DockManager {
                 const lastTop = parseFloat(lastOther.element.style.top) || lastOther.element.offsetTop;
                 const thisLeft = parseFloat(dialogEl.style.left) || dialogEl.offsetLeft;
                 const lastLeft = parseFloat(lastOther.element.style.left) || lastOther.element.offsetLeft;
-                if (isValue && Math.abs(thisLeft - lastLeft) > 100) {
+                if (isCompact && Math.abs(thisLeft - lastLeft) > 100) {
                     dialogEl.style.top = `${lastTop}px`;
                 } else {
                     const targetTop = lastTop - cR.height - 8;

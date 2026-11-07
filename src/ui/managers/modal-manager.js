@@ -34,6 +34,7 @@ export const MODAL_WIDTHS = {
     VCA: 'w-[185px]',
     MIX: 'w-[230px]',
     VALUE: 'w-[172px]',
+    PAD: 'w-[172px]',
 
     // Effects
     DELAY: 'w-[200px]',
