@@ -211,13 +211,13 @@ export class InteractionManager {
                             this.ui.showToast('複製（コピー）モード', 900);
                         }
                     }
-                }, 1200);
+                }, 800);
             }
             this.updateDropHighlight();
         }
     }
 
-    _startRowLongPress(targetRow, clientY, delay = 600) {
+    _startRowLongPress(targetRow, clientY, delay = 800) {
         if (this._rowLpTimer) {
             clearTimeout(this._rowLpTimer);
             this._rowLpTimer = null;
@@ -537,9 +537,9 @@ export class InteractionManager {
 
                         if (this.selectedModuleIds.length === 1) {
                             this.ui.showToast('モジュールを選択（さらに長押しで行移動）', 1200);
-                            // Stage 2: continuing to hold for another 600ms (0.6s after module selection) -> row reorder mode!
+                            // Stage 2: continuing to hold for another 800ms (0.8s after module selection) -> row reorder mode!
                             if (targetRow !== undefined) {
-                                this._startRowLongPress(targetRow, this._stage2Y, 600);
+                                this._startRowLongPress(targetRow, this._stage2Y, 800);
                             }
                         } else {
                             this.ui.showToast(`${this.selectedModuleIds.length}個選択中（ドラッグで一括移動・複製）`, 1000);
@@ -547,12 +547,12 @@ export class InteractionManager {
                     }, 220);
                 } else {
                     // Already selected module:
-                    // If single module selected & held 600ms without moving -> triggers row reorder mode!
+                    // If single module selected & held 800ms without moving -> triggers row reorder mode!
                     // If moved > 8px, pointermove immediately enters module/group dragging.
                     this._stage2X = e.clientX;
                     this._stage2Y = e.clientY;
                     if (this.selectedModuleIds.length === 1 && targetRow !== undefined) {
-                        this._startRowLongPress(targetRow, clientY, 600);
+                        this._startRowLongPress(targetRow, clientY, 800);
                     }
                 }
                 return;
@@ -561,8 +561,8 @@ export class InteractionManager {
             if (rowEl) {
                 const targetRow = parseInt(rowEl.dataset.row, 10);
                 if (!isNaN(targetRow)) {
-                    // Direct row selection on empty grid space: 600ms from touch down
-                    this._startRowLongPress(targetRow, e.clientY, 600);
+                    // Direct row selection on empty grid space: 800ms from touch down
+                    this._startRowLongPress(targetRow, e.clientY, 800);
                 }
                 return;
             }
