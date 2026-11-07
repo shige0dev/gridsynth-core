@@ -591,7 +591,6 @@ body.is-row-dragging .grid-cell * {
     opacity: 0 !important;
 }
 
-.is-power-off .dock-dialog #kb-box,
 .is-power-off .dock-dialog #pad-modal-touch-area {
     opacity: 0.35 !important;
     filter: grayscale(0.8) !important;

@@ -50,7 +50,6 @@ export const KEY = {
     }),
     WHITE_KEYS: [{n:'B',s:-1},{n:'C',s:0},{n:'D',s:2},{n:'E',s:4},{n:'F',s:5},{n:'G',s:7},{n:'A',s:9},{n:'B',s:11},{n:'C',s:12},{n:'D',s:14}],
     BLACK_KEYS: [
-        { s: -2, l: -1.667 },
         { s: 1, l: 15.833 },
         { s: 3, l: 27.5 },
         { s: 6, l: 45.0 },
@@ -64,16 +63,16 @@ export const KEY = {
         const curOct = m.octave ?? 2;
         const curNote = m.lastNote || `C${curOct}`;
         return `
-            <div class="space-y-2">
-                <div class="flex items-center justify-between pb-1 border-b border-slate-800">
+            <div class="space-y-2 flex flex-col items-center">
+                <div class="w-full flex items-center justify-between pb-1 border-b border-slate-800" id="key-oct-row">
                     <div class="flex items-center gap-1.5"><span class="text-[8px] text-slate-400 uppercase font-semibold">OCTAVE</span>
                     <button id="key-oct-down" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold">−</button>
                     <span id="key-oct-disp" class="w-5 text-center text-[10px] font-mono font-bold text-cyan-300">${curOct}</span>
                     <button id="key-oct-up" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold">＋</button></div>
                     <span class="text-[9px] font-mono font-bold text-sky-300" id="key-active-note">${curNote}</span>
                 </div>
-                <div class="relative h-28 bg-slate-950 border border-slate-400 flex select-none touch-none overflow-hidden" id="kb-box">
-                    ${W.map(k => `<div class="key-white flex-1 bg-slate-950 border-r border-slate-400 last:border-r-0 flex flex-col justify-end items-center pb-1 cursor-pointer select-none transition-colors" data-semi="${k.s}"><span class="text-[7.5px] font-bold text-slate-400 pointer-events-none">${k.n}</span></div>`).join('')}
+                <div class="relative h-28 bg-slate-950 border border-slate-400 flex select-none touch-none overflow-hidden w-full" id="kb-box">
+                    ${W.map(k => `<div class="key-white w-[10%] shrink-0 bg-slate-950 border-r border-slate-400 last:border-r-0 flex flex-col justify-end items-center pb-1 cursor-pointer select-none transition-colors" data-semi="${k.s}"><span class="text-[7.5px] font-bold text-slate-400 pointer-events-none">${k.n}</span></div>`).join('')}
                     <div class="absolute inset-0 pointer-events-none">
                         <!-- Accidentals aligned to user centers (1.5, 3.5, 6.5, 8.5, 10.5 * 5.833% + 10%) with uniform 1px border and sharp corners -->
                         ${B.map(bk => `<div class="key-black absolute h-16 bg-slate-950 border border-slate-400 border-t-0 pointer-events-auto cursor-pointer select-none transition-colors" style="left:${bk.l}%;width:5.833%;" data-semi="${bk.s}"></div>`).join('')}
@@ -108,6 +107,23 @@ export const KEY = {
             if (isDown) cb();
         };
         const kb = root.querySelector('#kb-box');
+        const alignKeyboardWidth = () => {
+            if (!kb) return;
+            const parent = kb.parentElement;
+            const parentW = parent?.clientWidth || kb.clientWidth;
+            if (parentW > 0) {
+                const keyW = Math.floor((parentW - 2) / 10);
+                const exactOuterW = (keyW * 10) + 2;
+                kb.style.width = `${exactOuterW}px`;
+                const octRow = root.querySelector('#key-oct-row');
+                if (octRow) octRow.style.width = `${exactOuterW}px`;
+            }
+        };
+        alignKeyboardWidth();
+        if (typeof ResizeObserver !== 'undefined' && kb.parentElement) {
+            const ro = new ResizeObserver(() => alignKeyboardWidth());
+            ro.observe(kb.parentElement);
+        }
         const setKeyHighlight = (semi, isPressed) => {
             if (semi === null || semi === undefined || isNaN(semi) || !kb) return;
             const elements = kb.querySelectorAll(`[data-semi="${semi}"]`);
