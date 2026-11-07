@@ -198,8 +198,10 @@ export const PAD = {
         </div>`;
     },
     bindEvents: (m, ctx, onChange) => {
+        const root = ctx?.getDialogElement ? (ctx.getDialogElement() || document) : document;
+
         // Axis Polarity Option Buttons (X: ▲, Y: ▶)
-        document.querySelectorAll('.pad-pol-toggle-x').forEach(btn => {
+        root.querySelectorAll('.pad-pol-toggle-x').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const targetVal = btn.dataset.val;
@@ -211,7 +213,7 @@ export const PAD = {
             });
         });
 
-        document.querySelectorAll('.pad-pol-toggle-y').forEach(btn => {
+        root.querySelectorAll('.pad-pol-toggle-y').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const targetVal = btn.dataset.val;
@@ -242,7 +244,7 @@ export const PAD = {
         }, 1, 0.0, 1.0);
 
         // Touch Pad interactions in Modal
-        const touchArea = document.getElementById('pad-modal-touch-area');
+        const touchArea = root.querySelector('#pad-modal-touch-area');
         if (!touchArea) return;
 
         let activePointerId = null;
@@ -258,7 +260,7 @@ export const PAD = {
         };
 
         const renderOptimisticModal = (normX, normY, isDown) => {
-            const modalCvs = document.getElementById('pad-modal-canvas');
+            const modalCvs = root.querySelector('#pad-modal-canvas');
             if (!modalCvs) return;
             const patched = window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(m.id) : null;
             const hasX = Boolean(patched && (patched.has('x_cv') || patched.has('cv_x') || patched.has('PIN8') || patched.has('PIN8_out')));
@@ -278,8 +280,8 @@ export const PAD = {
             modalCvs._lastRenderState = { ...state, hasX, hasY, polX, polY };
 
             // Update stats (X, Y)
-            const xEl = document.getElementById('pad-stat-x');
-            const yEl = document.getElementById('pad-stat-y');
+            const xEl = root.querySelector('#pad-stat-x');
+            const yEl = root.querySelector('#pad-stat-y');
             const valX = polX === 'uni' ? (normX * 2.0) : ((normX * 2.0) - 1.0);
             const valY = polY === 'uni' ? (normY * 2.0) : ((normY * 2.0) - 1.0);
             if (xEl) xEl.textContent = (polX === 'bi' && valX >= 0 ? '+' : '') + valX.toFixed(2);

@@ -88,9 +88,11 @@ export const UIHelpers = {
                 <span class="text-[8px] font-mono text-slate-400 truncate min-h-[12px] flex items-center justify-center leading-none">${unitHtml}</span>
             </div>`;
     },
-    bindScrubber: (dispId, sliderId, formatter, cb, power = 1, min = null, max = null) => {
-        const disp = typeof dispId === 'string' ? document.getElementById(dispId) : dispId;
-        const slider = typeof sliderId === 'string' ? document.getElementById(sliderId) : sliderId;
+    _activeRoot: null,
+    bindScrubber: (dispId, sliderId, formatter, cb, power = 1, min = null, max = null, root = null) => {
+        const activeRoot = root || UIHelpers._activeRoot || document;
+        const disp = typeof dispId === 'string' ? (activeRoot.querySelector?.('#' + dispId) || document.getElementById(dispId)) : dispId;
+        const slider = typeof sliderId === 'string' ? (activeRoot.querySelector?.('#' + sliderId) || document.getElementById(sliderId)) : sliderId;
         if (!disp || !slider) return;
         if (disp._hasScrubber) return;
         disp._hasScrubber = true;
@@ -150,8 +152,9 @@ export const UIHelpers = {
             window.addEventListener('pointercancel', stop);
         });
     },
-    bindSlider: (id, formatter, cb, power = 1, min = null, max = null) => {
-        const el = document.getElementById(id);
+    bindSlider: (id, formatter, cb, power = 1, min = null, max = null, root = null) => {
+        const activeRoot = root || UIHelpers._activeRoot || document;
+        const el = typeof id === 'string' ? (activeRoot.querySelector?.('#' + id) || document.getElementById(id)) : id;
         if (!el) return;
         el.addEventListener('input', (e) => {
             const raw = parseFloat(e.target.value);
@@ -161,16 +164,17 @@ export const UIHelpers = {
                 const sMax = (max !== null && max !== undefined) ? max : (parseFloat(el.max) || 100);
                 v = sMin + (sMax - sMin) * Math.pow(Math.max(0, Math.min(1, raw)), power);
             }
-            const disp = document.getElementById(`${id}-disp`);
+            const disp = activeRoot.querySelector?.(`#${id}-disp`) || document.getElementById(`${id}-disp`);
             if (disp) disp.textContent = formatter(v);
             cb(v);
         });
-        UIHelpers.bindScrubber(`${id}-disp`, id, formatter, cb, power, min, max);
+        UIHelpers.bindScrubber(`${id}-disp`, id, formatter, cb, power, min, max, activeRoot);
     },
-    bindButtonGroup: (selector, activeCls, inactiveCls, cb) => {
-        document.querySelectorAll(selector).forEach(btn => {
+    bindButtonGroup: (selector, activeCls, inactiveCls, cb, root = null) => {
+        const activeRoot = root || UIHelpers._activeRoot || document;
+        activeRoot.querySelectorAll(selector).forEach(btn => {
             btn.addEventListener('click', (e) => {
-                document.querySelectorAll(selector).forEach(b => b.className = `${b.className.replace(activeCls, '').replace(inactiveCls, '')} ${inactiveCls}`);
+                activeRoot.querySelectorAll(selector).forEach(b => b.className = `${b.className.replace(activeCls, '').replace(inactiveCls, '')} ${inactiveCls}`);
                 e.target.className = `${e.target.className.replace(inactiveCls, '')} ${activeCls}`;
                 cb(e.target.dataset.val);
             });

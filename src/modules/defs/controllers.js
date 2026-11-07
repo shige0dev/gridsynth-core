@@ -83,14 +83,15 @@ export const KEY = {
             </div>`;
     },
     bindEvents: (m, ctx, cb) => {
-        const octD = document.getElementById('key-oct-disp'), nD = document.getElementById('key-active-note');
-        document.getElementById('key-oct-down')?.addEventListener('click', () => {
+        const root = ctx?.getDialogElement ? (ctx.getDialogElement() || document) : document;
+        const octD = root.querySelector('#key-oct-disp'), nD = root.querySelector('#key-active-note');
+        root.querySelector('#key-oct-down')?.addEventListener('click', () => {
             if ((m.octave ?? 2) > 1) {
                 m.octave = (m.octave ?? 2) - 1;
                 if (octD) octD.textContent = m.octave;
             }
         });
-        document.getElementById('key-oct-up')?.addEventListener('click', () => {
+        root.querySelector('#key-oct-up')?.addEventListener('click', () => {
             if ((m.octave ?? 2) < 7) {
                 m.octave = (m.octave ?? 2) + 1;
                 if (octD) octD.textContent = m.octave;
@@ -107,7 +108,7 @@ export const KEY = {
             ctx.sendKeyNote?.(midi, isDown);
             if (isDown) cb();
         };
-        const kb = document.getElementById('kb-box');
+        const kb = root.querySelector('#kb-box');
         const setKeyHighlight = (semi, isPressed) => {
             if (semi === null || semi === undefined || isNaN(semi) || !kb) return;
             const elements = kb.querySelectorAll(`[data-semi="${semi}"]`);

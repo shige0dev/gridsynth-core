@@ -243,11 +243,16 @@ export class ModalManager {
             this.ui.renderCell(m.row * this.ui.COLS + m.col);
             if (afterChange) afterChange();
         };
-        if (reg.renderModal) containerEl.innerHTML = reg.renderModal(m, ctx);
-        else if (reg.schema) containerEl.innerHTML = UIHelpers.renderSchemaModal(m, ctx, reg.schema);
+        UIHelpers._activeRoot = containerEl;
+        try {
+            if (reg.renderModal) containerEl.innerHTML = reg.renderModal(m, ctx);
+            else if (reg.schema) containerEl.innerHTML = UIHelpers.renderSchemaModal(m, ctx, reg.schema);
 
-        if (reg.bindEvents) reg.bindEvents(m, ctx, onChange);
-        else if (reg.schema) UIHelpers.bindSchemaEvents(m, ctx, reg.schema, onChange);
+            if (reg.bindEvents) reg.bindEvents(m, ctx, onChange);
+            else if (reg.schema) UIHelpers.bindSchemaEvents(m, ctx, reg.schema, onChange);
+        } finally {
+            UIHelpers._activeRoot = null;
+        }
     }
 
     reRenderModal() {

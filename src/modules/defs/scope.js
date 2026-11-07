@@ -1,6 +1,7 @@
 import { UIHelpers } from '../../ui/helpers.js?v=351';
 
 const bindStepPair = (downId, upId, steps, m, prop, defVal, ctx, cb) => {
+    const root = ctx?.getDialogElement ? (ctx.getDialogElement() || document) : document;
     const step = (dir) => {
         const cur = m[prop] || defVal;
         const idx = steps.findIndex(v => v >= cur - 0.0001);
@@ -11,8 +12,8 @@ const bindStepPair = (downId, upId, steps, m, prop, defVal, ctx, cb) => {
             cb();
         }
     };
-    document.getElementById(downId)?.addEventListener('click', () => step(-1));
-    document.getElementById(upId)?.addEventListener('click', () => step(1));
+    root.querySelector('#' + downId)?.addEventListener('click', () => step(-1));
+    root.querySelector('#' + upId)?.addEventListener('click', () => step(1));
 };
 
 const renderDualCanvases = (cell, modal, cellSel, modalSel, drawFn) => {
@@ -118,9 +119,10 @@ export const SCOPE = {
             </div>`;
     },
     bindEvents: (m, ctx, cb) => {
+        const root = ctx?.getDialogElement ? (ctx.getDialogElement() || document) : document;
         bindStepPair('scope-t-down', 'scope-t-up', SCOPE.T_STEPS, m, 'timeSpan', 0.1, ctx, cb);
         bindStepPair('scope-v-down', 'scope-v-up', SCOPE.V_STEPS, m, 'vRange', 2.0, ctx, cb);
-        document.getElementById('scope-trig-toggle')?.addEventListener('click', () => {
+        root.querySelector('#scope-trig-toggle')?.addEventListener('click', () => {
             m.trigMode = (m.trigMode || 'auto') === 'auto' ? 'free' : 'auto';
             ctx.reRenderModal();
             cb();
@@ -621,22 +623,23 @@ export const SPEC = {
             </div>`;
     },
     bindEvents: (m, ctx, cb) => {
-        document.getElementById('spec-mode-bar')?.addEventListener('click', () => {
+        const root = ctx?.getDialogElement ? (ctx.getDialogElement() || document) : document;
+        root.querySelector('#spec-mode-bar')?.addEventListener('click', () => {
             m.mode = 'bar';
             ctx.reRenderModal();
             cb();
         });
-        document.getElementById('spec-mode-curve')?.addEventListener('click', () => {
+        root.querySelector('#spec-mode-curve')?.addEventListener('click', () => {
             m.mode = 'curve';
             ctx.reRenderModal();
             cb();
         });
-        document.getElementById('spec-view-2d')?.addEventListener('click', () => {
+        root.querySelector('#spec-view-2d')?.addEventListener('click', () => {
             m.view = '2d';
             ctx.reRenderModal();
             cb();
         });
-        document.getElementById('spec-view-3d')?.addEventListener('click', () => {
+        root.querySelector('#spec-view-3d')?.addEventListener('click', () => {
             m.view = '3d';
             ctx.reRenderModal();
             cb();

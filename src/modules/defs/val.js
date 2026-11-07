@@ -252,22 +252,7 @@ export const VALUE = {
 
         return `
             <div class="flex flex-col gap-1.5 p-0.5 select-none text-[9px] w-[160px] mx-auto">
-                <!-- Row 1: NAME -->
-                <div class="flex items-center justify-between gap-1 pb-1 border-b border-slate-800">
-                    <span class="text-[7.5px] font-mono font-bold text-slate-400">NAME:</span>
-                    <input id="val-label-input" type="text" maxlength="8" class="bg-slate-900 border border-amber-500/60 rounded px-1.5 py-0 text-amber-300 font-mono font-bold text-[9px] w-24 h-5 outline-none focus:border-amber-400 text-center" value="${curLabel}" placeholder="VAL" />
-                </div>
-
-                <!-- Row 2: 単位 (Step) -->
-                <div class="grid grid-cols-5 gap-0.5 pb-1 border-b border-slate-800">
-                    ${stepBtns.map(btn => `
-                        <button class="val-step-btn h-5 rounded font-mono font-bold text-[7.5px] border transition-colors flex items-center justify-center ${curStepType === btn.id ? 'bg-amber-600 text-white border-amber-400 shadow-sm' : 'bg-slate-900 text-slate-400 border-slate-700/80 hover:text-slate-200'}" data-step="${btn.id}">
-                            ${btn.label}
-                        </button>
-                    `).join('')}
-                </div>
-
-                <!-- Row 3: 2x Panel Slider with Quick Limits (MAX / DEF / MIN) -->
+                <!-- Row 1: 2x Panel Slider with Quick Limits (MAX / DEF / MIN) -->
                 <div class="flex items-center justify-between gap-1.5 pt-0.5">
                     <!-- Vertical 2x Slider (w-28 h-14 -> 112px x 56px, exactly 2x of w-14 h-7) -->
                     <div id="val-modal-slider-box" class="relative w-28 h-14 shrink-0 rounded border border-slate-600 bg-slate-950/60 p-[2px] flex flex-col justify-end overflow-hidden cursor-ns-resize touch-none shadow-lg">
@@ -293,22 +278,23 @@ export const VALUE = {
                         </button>
                     </div>
                 </div>
+
+                <!-- Row 2: 単位ステップ選択 (スライダの下に配置) -->
+                <div class="grid grid-cols-5 gap-0.5 pt-1 border-t border-slate-800">
+                    ${stepBtns.map(btn => `
+                        <button class="val-step-btn h-5 rounded font-mono font-bold text-[7.5px] border transition-colors flex items-center justify-center ${curStepType === btn.id ? 'bg-amber-600 text-white border-amber-400 shadow-sm' : 'bg-slate-900 text-slate-400 border-slate-700/80 hover:text-slate-200'}" data-step="${btn.id}">
+                            ${btn.label}
+                        </button>
+                    `).join('')}
+                </div>
             </div>`;
     },
 
     bindEvents: (m, ctx, onChange) => {
-        // 0. Variable Label Input
-        const labelInput = document.getElementById('val-label-input');
-        if (labelInput) {
-            labelInput.addEventListener('input', (e) => {
-                m.label = e.target.value.trim() || 'VAL';
-                ctx.reRenderGrid?.();
-                onChange();
-            });
-        }
+        const root = ctx?.getDialogElement ? (ctx.getDialogElement() || document) : document;
 
         // 1. STEP Button Group
-        document.querySelectorAll('.val-step-btn').forEach(btn => {
+        root.querySelectorAll('.val-step-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const stepKey = btn.dataset.step;
                 if (!stepKey) return;
@@ -321,7 +307,7 @@ export const VALUE = {
         });
 
         // 2. 2x Slider Swipe Control
-        const sliderBox = document.getElementById('val-modal-slider-box');
+        const sliderBox = root.querySelector('#val-modal-slider-box');
         if (sliderBox) {
             let isDragging = false;
             let startY = 0;
@@ -348,9 +334,9 @@ export const VALUE = {
                 m.val = clamped;
 
                 // Direct DOM update in modal
-                const mFill = document.getElementById('val-modal-fill-bar');
+                const mFill = root.querySelector('#val-modal-fill-bar');
                 if (mFill) mFill.style.height = `${VALUE.getNormPct(m)}%`;
-                const mVal = document.getElementById('val-modal-val-disp');
+                const mVal = root.querySelector('#val-modal-val-disp');
                 if (mVal) mVal.innerHTML = VALUE.formatValHtml(clamped, m.stepType);
 
                 ctx.reRenderGrid?.();
@@ -389,7 +375,24 @@ export const VALUE = {
 
         // 3. Compact Limits Tap-to-Edit (MAX, DEF, MIN)
         const setupLimitEdit = (btnId, propKey, label) => {
-            const btn = document.getElementById(btnId);
+            const btn = root.querySelector('#' + btnId);
+            if (!btn) return;
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const cur = String(m[propKey] ?? 0);
+                const res = await ctx.prompt(`${label} 入力`, cur);
+                if (res !== null && res !== '') {
+                    const num = parseFloat(res);
+                    if (!isNaN(num)) {
+                        m[propKey] = num;
+                        if (m.min > m.max) [m.min, m.max] = [m.max, m.min];
+                        m.val = Math.max(m.min, Math.min(m.max, m.val ?? (m.def ?? 0.0)));
+                        ctx.reRenderModal();
+                        onChange();
+                    }
+                }
+            });
+        };
             if (!btn) return;
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();

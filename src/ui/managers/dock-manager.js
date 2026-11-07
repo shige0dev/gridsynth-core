@@ -83,7 +83,7 @@ export class DockManager {
         modal?.classList.remove('hidden');
 
         const isValue = m.type === 'VALUE';
-        const titleText = isValue ? 'VALUE' : (DOCK_TITLES[m.type] || m.type);
+        const titleText = isValue ? 'VAL' : (DOCK_TITLES[m.type] || m.type);
         const iconName = DOCK_ICONS[m.type] || 'sliders';
 
         const dialogEl = document.createElement('div');
@@ -93,12 +93,14 @@ export class DockManager {
 
         dialogEl.innerHTML = `
             <div class="dock-dialog-header border-b border-slate-800 pb-1 flex items-center justify-between cursor-move touch-none select-none shrink-0">
-                <div class="flex items-center gap-1.5 flex-1 min-w-0 mr-2">
+                <div class="flex items-center gap-1 flex-1 min-w-0 mr-1.5">
                     <i data-lucide="${iconName}" class="w-3.5 h-3.5 text-cyan-400 pointer-events-none shrink-0"></i>
                     <h3 class="dock-dialog-title text-[10px] font-bold text-cyan-300 uppercase tracking-wider pointer-events-none shrink-0">${titleText}</h3>
                     ${m.type === 'PAD' ? `
                         <input type="text" class="dock-title-name-input bg-slate-950/90 border border-slate-700/80 hover:border-cyan-400 focus:border-cyan-400 rounded px-1.5 py-0 text-[9.5px] font-mono font-bold text-cyan-300 focus:outline-none focus:ring-1 focus:ring-cyan-400/50 h-[20px] w-28 select-text cursor-text leading-none shadow-inner ml-1" value="${m.name || 'PAD'}" placeholder="PAD" maxlength="12" title="PADの名前を編集">
-                    ` : ''}
+                    ` : (m.type === 'VALUE' ? `
+                        <input type="text" class="dock-title-name-input bg-slate-950/90 border border-slate-700/80 hover:border-amber-400 focus:border-amber-400 rounded px-1.5 py-0 text-[9px] font-mono font-bold text-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-400/50 h-[19px] w-20 select-text cursor-text leading-none shadow-inner ml-1 text-center" value="${m.label || m.name || 'VAL'}" placeholder="VAL" maxlength="8" title="VALUE変数名を編集">
+                    ` : '')}
                 </div>
                 <div class="flex items-center gap-1 shrink-0">
                     <button class="dock-lock-btn h-5 px-1.5 rounded text-[8.5px] font-bold flex items-center gap-1 border transition-colors bg-slate-800 text-slate-400 border-slate-700 cursor-pointer" title="ロック/ピン留め">
@@ -124,22 +126,35 @@ export class DockManager {
         // Render content
         this.reRenderDockModal(mId);
 
-        // Bind title name input if PAD
-        if (m.type === 'PAD') {
+        // Bind title name input if PAD or VALUE
+        if (m.type === 'PAD' || m.type === 'VALUE') {
             const titleNameInput = dialogEl.querySelector('.dock-title-name-input');
             if (titleNameInput) {
                 titleNameInput.addEventListener('pointerdown', (e) => e.stopPropagation());
                 titleNameInput.addEventListener('mousedown', (e) => e.stopPropagation());
                 titleNameInput.addEventListener('keydown', (e) => e.stopPropagation());
                 titleNameInput.addEventListener('input', (e) => {
-                    m.name = e.target.value;
+                    const val = e.target.value;
+                    if (m.type === 'VALUE') {
+                        m.label = val;
+                        m.name = val;
+                    } else {
+                        m.name = val;
+                    }
                     this.ui.synth.updateModule(`${this.ui.currentPageId}/${mId}`, m, this.ui.getPatchState(mId));
                     this.ui.renderCell(m.row * this.ui.COLS + m.col);
                 });
                 titleNameInput.addEventListener('blur', (e) => {
-                    if (!m.name || !m.name.trim()) {
-                        m.name = 'PAD';
-                        e.target.value = 'PAD';
+                    const fallback = m.type === 'VALUE' ? 'VAL' : 'PAD';
+                    const cur = m.type === 'VALUE' ? m.label : m.name;
+                    if (!cur || !cur.trim()) {
+                        if (m.type === 'VALUE') {
+                            m.label = fallback;
+                            m.name = fallback;
+                        } else {
+                            m.name = fallback;
+                        }
+                        e.target.value = fallback;
                         this.ui.synth.updateModule(`${this.ui.currentPageId}/${mId}`, m, this.ui.getPatchState(mId));
                         this.ui.renderCell(m.row * this.ui.COLS + m.col);
                     }
@@ -172,7 +187,17 @@ export class DockManager {
 
         // Position dialog
         if (isValue) {
-            dialogEl.style.left = '12px';
+            const otherValueDocks = Array.from(this.openDocks.values()).filter(d => {
+                const mod = this.ui.modules[d.moduleId];
+                return mod && mod.type === 'VALUE' && d.element !== dialogEl;
+            });
+            if (otherValueDocks.length > 0) {
+                const lastVal = otherValueDocks[otherValueDocks.length - 1];
+                const lastL = parseFloat(lastVal.element.style.left) || lastVal.element.offsetLeft;
+                dialogEl.style.left = (lastL < 90) ? '180px' : '8px';
+            } else {
+                dialogEl.style.left = '8px';
+            }
             dialogEl.style.right = 'auto';
             dialogEl.style.width = '172px';
         } else {
@@ -196,12 +221,18 @@ export class DockManager {
             } else {
                 const lastOther = otherDocks[otherDocks.length - 1];
                 const lastTop = parseFloat(lastOther.element.style.top) || lastOther.element.offsetTop;
-                const targetTop = lastTop - cR.height - 8;
-                if (targetTop >= 6) {
-                    dialogEl.style.top = `${targetTop}px`;
+                const thisLeft = parseFloat(dialogEl.style.left) || dialogEl.offsetLeft;
+                const lastLeft = parseFloat(lastOther.element.style.left) || lastOther.element.offsetLeft;
+                if (isValue && Math.abs(thisLeft - lastLeft) > 100) {
+                    dialogEl.style.top = `${lastTop}px`;
                 } else {
-                    const cascadeTop = Math.max(6, Math.min(fR.height - cR.height - 84, lastTop + 28));
-                    dialogEl.style.top = `${cascadeTop}px`;
+                    const targetTop = lastTop - cR.height - 8;
+                    if (targetTop >= 6) {
+                        dialogEl.style.top = `${targetTop}px`;
+                    } else {
+                        const cascadeTop = Math.max(6, Math.min(fR.height - cR.height - 84, lastTop + 28));
+                        dialogEl.style.top = `${cascadeTop}px`;
+                    }
                 }
             }
         });
@@ -353,7 +384,7 @@ export class DockManager {
 
             const headerInput = info.element.querySelector('.dock-title-name-input');
             if (headerInput && headerInput !== document.activeElement) {
-                headerInput.value = m.name || 'PAD';
+                headerInput.value = m.type === 'VALUE' ? (m.label || m.name || 'VAL') : (m.name || 'PAD');
             }
         });
         if (typeof lucide !== 'undefined') lucide.createIcons();

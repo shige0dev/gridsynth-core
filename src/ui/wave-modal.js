@@ -822,13 +822,13 @@ export const WaveModal = {
             UIHelpers.bindSlider('wave-slider-start', v => {
                 const b = WaveView.resolveEffectiveBounds(m, Math.max(0, Math.min(1, v)), m.end ?? 1.0);
                 return WaveView.formatBoundDisp(m, b.rawStart, b.effStart, false);
-            }, v => applyRangeCv('start', v), 1, 0.0, 1.0);
+            }, v => applyRangeCv('start', v), 1, 0.0, 1.0, root);
         }
         if (!isEndPatched) {
             UIHelpers.bindSlider('wave-slider-end', v => {
                 const b = WaveView.resolveEffectiveBounds(m, m.start ?? 0.0, Math.max(0, Math.min(1, v)));
                 return WaveView.formatBoundDisp(m, b.rawEnd, b.effEnd, false);
-            }, v => applyRangeCv('end', v), 1, 0.0, 1.0);
+            }, v => applyRangeCv('end', v), 1, 0.0, 1.0, root);
         }
         if (!isSpeedPatched) {
             if (m.semiMode) {
@@ -837,13 +837,13 @@ export const WaveModal = {
                     m.speedCv = snapped / 12.0;
                     m.speed = Math.pow(2.0, m.speedCv);
                     syncRangeAndAudio();
-                }, 1, -24, 24);
+                }, 1, -24, 24, root);
             } else {
                 UIHelpers.bindSlider('wave-slider-speed', v => m.pitchMode ? WaveView.formatPitch(v) : WaveView.formatSpeed(v), v => {
                     m.speedCv = v;
                     m.speed = Math.pow(2.0, v);
                     syncRangeAndAudio();
-                }, 1, -2.0, 2.0);
+                }, 1, -2.0, 2.0, root);
             }
         }
     }

@@ -353,7 +353,7 @@ function createSeqModule(maxSteps) {
                 </div>`;
         },
         bindEvents: (m, ctx, cb) => {
-            const root = document.getElementById(`${prefix}-modal-root`);
+            const root = (ctx?.getDialogElement ? ctx.getDialogElement() : null) || document.getElementById(`${prefix}-modal-root`);
             if (!root) return;
             if (typeof lucide !== 'undefined') {
                 try { lucide.createIcons({ root }); } catch (_) {}
@@ -383,7 +383,7 @@ function createSeqModule(maxSteps) {
                     const idx = parseInt(sl.dataset.seqSlider), val = parseFloat(sl.value);
                     if (!isNaN(idx) && m.steps[idx]) {
                         m.steps[idx].cv = val;
-                        const disp = document.getElementById(`${prefix}-slider-${idx}-disp`);
+                        const disp = root.querySelector?.(`#${prefix}-slider-${idx}-disp`) || document.getElementById(`${prefix}-slider-${idx}-disp`);
                         if (disp) disp.textContent = m.quantize !== false ? UIHelpers.cvToNoteName(val) : val.toFixed(2);
                         cb();
                     }
