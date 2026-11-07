@@ -126,25 +126,13 @@ export const VALUE = {
             }
         }
 
-        // Live update for scrubbable badges in Modal
-        if (modal && m) {
-            const valEl = modal.querySelector('#val-scrub-val');
-            const maxEl = modal.querySelector('#val-scrub-max');
-            const defEl = modal.querySelector('#val-scrub-def');
-            const minEl = modal.querySelector('#val-scrub-min');
-            const fmt = (val) => VALUE.formatModalVal(val, m.stepType);
-            if (valEl && !valEl._isDragging) valEl.textContent = fmt(m.val ?? (m.def ?? 0.0));
-            if (maxEl && !maxEl._isDragging) maxEl.textContent = fmt(m.max ?? 1.0);
-            if (defEl && !defEl._isDragging) defEl.textContent = fmt(m.def ?? 0.0);
-            if (minEl && !minEl._isDragging) minEl.textContent = fmt(m.min ?? -1.0);
-
-            const sliderFill = modal.querySelector('#val-modal-slider-fill');
-            const sliderHandle = modal.querySelector('#val-modal-slider-handle');
-            const sliderDisp = modal.querySelector('#val-modal-slider-disp');
-            const normPct = VALUE.getNormPct(m);
-            if (sliderFill) sliderFill.style.width = `${normPct}%`;
-            if (sliderHandle) sliderHandle.style.left = `${normPct}%`;
-            if (sliderDisp && !modal._isSliderDragging) sliderDisp.textContent = fmt(m.val ?? (m.def ?? 0.0));
+        // Modal 2x Slider Sync
+        if (modal) {
+            const pct = VALUE.getNormPct(m);
+            const mFill = modal.querySelector('#val-modal-fill-bar');
+            if (mFill) mFill.style.height = `${pct}%`;
+            const mVal = modal.querySelector('#val-modal-val-disp');
+            if (mVal) mVal.innerHTML = VALUE.formatValHtml(m.val ?? (m.def ?? 0.0), m.stepType);
         }
     },
 
@@ -173,6 +161,7 @@ export const VALUE = {
                 clamped = Math.round((clamped - min) / step) * step + min;
                 clamped = Math.max(min, Math.min(max, clamped));
             }
+            clamped = Math.round(clamped * 10000) / 10000;
             m.val = clamped;
 
             // Direct DOM update for high-speed responsiveness
@@ -189,6 +178,11 @@ export const VALUE = {
                 fillBar.style.height = `${VALUE.getNormPct(m)}%`;
             }
 
+            // Immediately notify audio engine & patch
+            const ui = ctx?.ui || ctx || window.__GS_APP__;
+            if (ui?.synth) {
+                ui.synth.updateModule(`${ui.currentPageId}/${m.id}`, m, ui.getPatchState(m.id));
+            }
             onChange?.();
         };
 
@@ -202,10 +196,8 @@ export const VALUE = {
             if (!isInteracting) return;
             const deltaY = startY - clientY; // upward drag increases value
             const step = getStepValue();
-            // Gear-linked sensitivity: 8px drag = exactly 1 STEP change
             const stepsCount = Math.round(deltaY / 8.0);
-            const targetVal = startVal + stepsCount * step;
-            updateVal(targetVal);
+            updateVal(startVal + stepsCount * step);
         };
 
         const handleUp = () => {
@@ -246,6 +238,7 @@ export const VALUE = {
         const curMin = m.min ?? -1.0;
         const curStepType = m.stepType || '0.01';
         const curLabel = m.label || m.name || 'VAL';
+        const pct = VALUE.getNormPct(m);
 
         const fmt = (val) => VALUE.formatModalVal(val, curStepType);
 
@@ -258,143 +251,52 @@ export const VALUE = {
         ];
 
         return `
-            <div class="space-y-2 select-none text-[9px]">
-                <!-- Large Real-time Performance Slider -->
-                <div class="bg-slate-950/90 border border-slate-800 rounded p-2 flex flex-col gap-1 shadow-inner select-none">
-                    <div class="flex items-center justify-between text-[7.5px] font-mono text-slate-400">
-                        <span>MIN: ${fmt(curMin)}</span>
-                        <span class="text-amber-400 font-bold tracking-wider">TOUCH SLIDER</span>
-                        <span>MAX: ${fmt(curMax)}</span>
+            <div class="flex flex-col gap-2 p-1 select-none text-[9px]">
+                <!-- Top Row: Compact Name & Step buttons -->
+                <div class="flex items-center justify-between gap-1.5 pb-1 border-b border-slate-800">
+                    <div class="flex items-center gap-1 shrink-0">
+                        <span class="text-[7.5px] font-mono font-bold text-slate-400">NAME:</span>
+                        <input id="val-label-input" type="text" maxlength="8" class="bg-slate-900 border border-amber-500/60 rounded px-1.5 py-0 text-amber-300 font-mono font-bold text-[9px] w-16 h-5 outline-none focus:border-amber-400" value="${curLabel}" placeholder="VAL" />
                     </div>
-                    <div id="val-modal-slider-track" class="relative w-full h-8 bg-slate-900 border border-amber-500/60 hover:border-amber-400 rounded-lg overflow-hidden cursor-ew-resize touch-none flex items-center shadow-inner">
-                        <div id="val-modal-slider-fill" class="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-amber-600/60 to-yellow-400/80 pointer-events-none transition-none" style="width: ${VALUE.getNormPct(m)}%;"></div>
-                        <div id="val-modal-slider-handle" class="absolute top-0 bottom-0 w-2.5 bg-yellow-300 border border-white/90 rounded shadow-md -translate-x-1/2 pointer-events-none transition-none" style="left: ${VALUE.getNormPct(m)}%;"></div>
-                        <div class="absolute inset-0 flex items-center justify-center font-mono font-extrabold text-amber-200 text-[10.5px] pointer-events-none drop-shadow z-10" id="val-modal-slider-disp">${fmt(curVal)}</div>
-                    </div>
-                </div>
-
-                <!-- Variable Name / Label Row -->
-                <div class="flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded px-2.5 py-1.5">
-                    <span class="font-bold text-slate-400 tracking-wider">VARIABLE NAME (変数名)</span>
-                    <input id="val-label-input" type="text" maxlength="8" class="bg-slate-900 border border-amber-500/60 rounded px-2 py-0.5 text-amber-300 font-mono font-bold text-right text-[10px] w-24 outline-none focus:border-amber-400" value="${curLabel}" placeholder="VAL" />
-                </div>
-
-                <!-- STEP Button Group -->
-                <div class="flex flex-col gap-1 bg-slate-950/80 border border-slate-800 rounded px-2.5 py-1.5">
-                    <div class="flex items-center justify-between">
-                        <span class="font-bold text-slate-400 tracking-wider">STEP (差分刻み)</span>
-                        <span class="font-mono text-[8px] text-amber-400/80 font-bold">${curStepType === '1semi' ? '1半音 (1/12V)' : curStepType}</span>
-                    </div>
-                    <div class="grid grid-cols-5 gap-1 pt-0.5">
+                    <div class="flex items-center gap-0.5">
                         ${stepBtns.map(btn => `
-                            <button class="val-step-btn h-5 rounded font-mono font-bold text-[8.5px] border leading-none transition-colors ${curStepType === btn.id ? 'bg-amber-600 text-white border-amber-400 shadow-sm' : 'bg-slate-900 text-slate-400 border-slate-700/80 hover:text-slate-200'}" data-step="${btn.id}">
+                            <button class="val-step-btn h-5 px-1.5 rounded font-mono font-bold text-[8px] border transition-colors ${curStepType === btn.id ? 'bg-amber-600 text-white border-amber-400 shadow-sm' : 'bg-slate-900 text-slate-400 border-slate-700/80 hover:text-slate-200'}" data-step="${btn.id}">
                                 ${btn.label}
                             </button>
                         `).join('')}
                     </div>
                 </div>
 
-                <!-- VALUE Row (Current Value) -->
-                <div class="flex items-center justify-between bg-amber-950/20 border border-amber-500/40 rounded px-2.5 py-1.5 shadow-sm">
-                    <div class="flex items-center gap-1.5">
-                        <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
-                        <span class="font-bold text-amber-300 tracking-wider">VALUE (現在値)</span>
+                <!-- Center: 2x Panel Slider with MAX & MIN Touch Badges -->
+                <div class="flex items-center justify-center gap-3 py-1">
+                    <!-- Vertical 2x Slider (w-28 h-14 -> 112px x 56px, exactly 2x of w-14 h-7) -->
+                    <div id="val-modal-slider-box" class="relative w-28 h-14 shrink-0 rounded border border-slate-600 bg-slate-950/60 p-[2px] flex flex-col justify-end overflow-hidden cursor-ns-resize touch-none shadow-lg">
+                        <div id="val-modal-fill-bar" class="w-full bg-gradient-to-t from-amber-600 to-yellow-400 rounded-xs pointer-events-none transition-[height] duration-75" style="height: ${pct}%;"></div>
+                        <!-- Overlay: MAX (Top), Value (Center), MIN (Bottom) -->
+                        <div class="absolute inset-0 flex flex-col items-center justify-between py-1 pointer-events-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.95)] z-10">
+                            <span class="text-[8px] font-mono text-slate-300 font-bold tracking-tight leading-none">${fmt(curMax)}</span>
+                            <div id="val-modal-val-disp" class="font-mono text-[20px] font-extrabold text-amber-200 tracking-tight leading-none flex items-baseline justify-center select-none">${VALUE.formatValHtml(curVal, m.stepType)}</div>
+                            <span class="text-[8px] font-mono text-slate-300 font-bold tracking-tight leading-none">${fmt(curMin)}</span>
+                        </div>
                     </div>
-                    <div id="val-scrub-val" class="cursor-ns-resize touch-none select-none px-2 py-0.5 rounded bg-slate-900 border border-amber-500/70 hover:border-amber-400 font-mono font-extrabold text-amber-300 min-w-[70px] text-right transition-colors" title="上下スワイプで増減 / タップで手入力">${fmt(curVal)}</div>
-                </div>
 
-                <!-- MAX Row -->
-                <div class="flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded px-2.5 py-1.5">
-                    <span class="font-bold text-slate-400 tracking-wider">MAX (最大値)</span>
-                    <div id="val-scrub-max" class="cursor-ns-resize touch-none select-none px-2 py-0.5 rounded bg-slate-900 border border-slate-700 hover:border-amber-500 font-mono font-bold text-amber-300 min-w-[70px] text-right transition-colors" title="上下スワイプで増減 / タップで手入力">${fmt(curMax)}</div>
-                </div>
-
-                <!-- DEFAULT Row (Middle) -->
-                <div class="flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded px-2.5 py-1.5">
-                    <span class="font-bold text-slate-400 tracking-wider">DEFAULT (初期値)</span>
-                    <div id="val-scrub-def" class="cursor-ns-resize touch-none select-none px-2 py-0.5 rounded bg-slate-900 border border-slate-700 hover:border-amber-500 font-mono font-bold text-amber-300 min-w-[70px] text-right transition-colors" title="上下スワイプで増減 / タップで手入力">${fmt(curDef)}</div>
-                </div>
-
-                <!-- MIN Row (Bottom) -->
-                <div class="flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded px-2.5 py-1.5">
-                    <span class="font-bold text-slate-400 tracking-wider">MIN (下限値)</span>
-                    <div id="val-scrub-min" class="cursor-ns-resize touch-none select-none px-2 py-0.5 rounded bg-slate-950 border border-slate-700 hover:border-amber-500 font-mono font-bold text-amber-300 min-w-[70px] text-right transition-colors" title="上下スワイプで増減 / タップで手入力">${fmt(curMin)}</div>
+                    <!-- Quick Limits Adjustment (MAX / DEF / MIN Buttons) -->
+                    <div class="flex flex-col justify-between h-14 py-0.5 text-[8px] font-mono">
+                        <button id="val-edit-max" class="h-4 px-1.5 rounded bg-slate-900 border border-slate-700 hover:border-amber-400 text-amber-300 flex items-center justify-between gap-1 transition-colors" title="MAXをタップして編集">
+                            <span class="text-slate-500">MAX</span><span class="font-bold">${fmt(curMax)}</span>
+                        </button>
+                        <button id="val-edit-def" class="h-4 px-1.5 rounded bg-slate-900 border border-slate-700 hover:border-amber-400 text-amber-300 flex items-center justify-between gap-1 transition-colors" title="初期値（DEF）をタップして編集">
+                            <span class="text-slate-500">DEF</span><span class="font-bold">${fmt(curDef)}</span>
+                        </button>
+                        <button id="val-edit-min" class="h-4 px-1.5 rounded bg-slate-900 border border-slate-700 hover:border-amber-400 text-amber-300 flex items-center justify-between gap-1 transition-colors" title="MINをタップして編集">
+                            <span class="text-slate-500">MIN</span><span class="font-bold">${fmt(curMin)}</span>
+                        </button>
+                    </div>
                 </div>
             </div>`;
     },
 
     bindEvents: (m, ctx, onChange) => {
-        // Touch Slider in Modal
-        const sliderTrack = document.getElementById('val-modal-slider-track');
-        if (sliderTrack) {
-            let isSliderDragging = false;
-
-            const updateFromClientX = (clientX) => {
-                const rect = sliderTrack.getBoundingClientRect();
-                const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / Math.max(1, rect.width)));
-                const min = m.min ?? -1.0;
-                const max = m.max ?? 1.0;
-                let val = min + ratio * (max - min);
-
-                // Snap to step
-                let step = 0.01;
-                if (m.stepType === '1semi') step = 1.0 / 12.0;
-                else if (m.stepType === '0.1') step = 0.1;
-                else if (m.stepType === '1') step = 1.0;
-                else if (m.stepType === '10') step = 10.0;
-                else step = m.step || 0.01;
-
-                if (step > 0) {
-                    val = Math.round((val - min) / step) * step + min;
-                }
-                val = Math.max(min, Math.min(max, val));
-                val = Math.round(val * 10000) / 10000;
-                m.val = val;
-
-                const sliderFill = document.getElementById('val-modal-slider-fill');
-                const sliderHandle = document.getElementById('val-modal-slider-handle');
-                const sliderDisp = document.getElementById('val-modal-slider-disp');
-                const normPct = VALUE.getNormPct(m);
-                if (sliderFill) sliderFill.style.width = `${normPct}%`;
-                if (sliderHandle) sliderHandle.style.left = `${normPct}%`;
-                if (sliderDisp) sliderDisp.textContent = VALUE.formatModalVal(val, m.stepType);
-
-                const valEl = document.getElementById('val-scrub-val');
-                if (valEl) valEl.textContent = VALUE.formatModalVal(val, m.stepType);
-
-                ctx.reRenderGrid?.();
-                onChange();
-            };
-
-            sliderTrack.addEventListener('pointerdown', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                isSliderDragging = true;
-                const modal = sliderTrack.closest('.dock-dialog') || sliderTrack.closest('.modal-content');
-                if (modal) modal._isSliderDragging = true;
-                try { sliderTrack.setPointerCapture(e.pointerId); } catch (_) {}
-                updateFromClientX(e.clientX);
-            });
-
-            sliderTrack.addEventListener('pointermove', (e) => {
-                if (!isSliderDragging) return;
-                e.preventDefault();
-                e.stopPropagation();
-                updateFromClientX(e.clientX);
-            });
-
-            const onSliderEnd = (e) => {
-                if (!isSliderDragging) return;
-                isSliderDragging = false;
-                const modal = sliderTrack.closest('.dock-dialog') || sliderTrack.closest('.modal-content');
-                if (modal) modal._isSliderDragging = false;
-                try { sliderTrack.releasePointerCapture(e.pointerId); } catch (_) {}
-            };
-
-            sliderTrack.addEventListener('pointerup', onSliderEnd);
-            sliderTrack.addEventListener('pointercancel', onSliderEnd);
-        }
-
         // 0. Variable Label Input
         const labelInput = document.getElementById('val-label-input');
         if (labelInput) {
@@ -405,7 +307,7 @@ export const VALUE = {
             });
         }
 
-        // 1. STEP Button Group events
+        // 1. STEP Button Group
         document.querySelectorAll('.val-step-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const stepKey = btn.dataset.step;
@@ -413,96 +315,102 @@ export const VALUE = {
                 m.stepType = stepKey;
                 if (stepKey === '1semi') m.step = 1.0 / 12.0;
                 else m.step = parseFloat(stepKey) || 0.01;
-
                 ctx.reRenderModal();
                 onChange();
             });
         });
 
-        // 2. Scrubbable Badges for MAX, DEFAULT, MIN
-        const setupScrub = (id, propKey, label) => {
-            const el = document.getElementById(id);
-            if (!el) return;
-
+        // 2. 2x Slider Swipe Control
+        const sliderBox = document.getElementById('val-modal-slider-box');
+        if (sliderBox) {
             let isDragging = false;
             let startY = 0;
             let startVal = 0;
-            let moved = false;
 
-            const onPointerMove = (e) => {
-                if (!isDragging) return;
-                e.preventDefault();
-                const deltaY = startY - e.clientY;
-                if (Math.abs(deltaY) > 3) moved = true;
+            const getStepValue = () => {
+                if (m.stepType === '1semi') return 1.0 / 12.0;
+                if (m.stepType === '0.1') return 0.1;
+                if (m.stepType === '1') return 1.0;
+                if (m.stepType === '10') return 10.0;
+                return m.step || 0.01;
+            };
 
-                const stepAmount = (m.stepType === '1semi') ? (1.0 / 12.0) : (parseFloat(m.stepType) || 0.1);
-                const stepsCount = Math.round(deltaY / 15);
-                let targetVal = startVal + stepsCount * stepAmount;
-
-                m[propKey] = targetVal;
-                if (m.min !== undefined && m.max !== undefined && m.min > m.max) {
-                    if (propKey === 'min') m.max = m.min;
-                    else if (propKey === 'max') m.min = m.max;
+            const updateModalVal = (newVal) => {
+                const min = m.min ?? -1.0;
+                const max = m.max ?? 1.0;
+                const step = getStepValue();
+                let clamped = Math.max(min, Math.min(max, newVal));
+                if (step > 0) {
+                    clamped = Math.round((clamped - min) / step) * step + min;
+                    clamped = Math.max(min, Math.min(max, clamped));
                 }
-                m.val = Math.max(m.min ?? -1.0, Math.min(m.max ?? 1.0, m.val ?? (m.def ?? 0.0)));
+                clamped = Math.round(clamped * 10000) / 10000;
+                m.val = clamped;
 
-                const fmt = (v) => VALUE.formatModalVal(v, m.stepType);
-                el.textContent = fmt(targetVal);
-
-                const valEl = document.getElementById('val-scrub-val');
-                if (valEl) valEl.textContent = fmt(m.val);
+                // Direct DOM update in modal
+                const mFill = document.getElementById('val-modal-fill-bar');
+                if (mFill) mFill.style.height = `${VALUE.getNormPct(m)}%`;
+                const mVal = document.getElementById('val-modal-val-disp');
+                if (mVal) mVal.innerHTML = VALUE.formatValHtml(clamped, m.stepType);
 
                 ctx.reRenderGrid?.();
                 onChange();
             };
 
-            const onPointerUp = async (e) => {
-                if (!isDragging) return;
-                isDragging = false;
-                el._isDragging = false;
-                window.removeEventListener('pointermove', onPointerMove);
-                window.removeEventListener('pointerup', onPointerUp);
-                window.removeEventListener('pointercancel', onPointerUp);
-                el.classList.remove('ring-1', 'ring-amber-400', 'bg-amber-950/60');
-                try { el.releasePointerCapture(e.pointerId); } catch (_) {}
-
-                // Tap opens custom prompt for manual numeric input
-                if (!moved) {
-                    const cur = String(m[propKey] ?? 0);
-                    const res = await ctx.prompt(`${label} 入力`, cur);
-                    if (res !== null && res !== '') {
-                        const num = parseFloat(res);
-                        if (!isNaN(num)) {
-                            m[propKey] = num;
-                            if (m.min > m.max) [m.min, m.max] = [m.max, m.min];
-                            m.val = Math.max(m.min, Math.min(m.max, m.val ?? (m.def ?? 0.0)));
-                            ctx.reRenderModal();
-                            onChange();
-                        }
-                    }
-                }
-            };
-
-            el.addEventListener('pointerdown', (e) => {
+            sliderBox.addEventListener('pointerdown', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 isDragging = true;
-                el._isDragging = true;
-                moved = false;
                 startY = e.clientY;
-                startVal = m[propKey] ?? 0.0;
-                el.classList.add('ring-1', 'ring-amber-400', 'bg-amber-950/60');
-                try { el.setPointerCapture(e.pointerId); } catch (_) {}
-                window.addEventListener('pointermove', onPointerMove, { passive: false });
-                window.addEventListener('pointerup', onPointerUp);
-                window.addEventListener('pointercancel', onPointerUp);
+                startVal = m.val ?? (m.def ?? 0.0);
+                try { sliderBox.setPointerCapture(e.pointerId); } catch (_) {}
+            });
+
+            sliderBox.addEventListener('pointermove', (e) => {
+                if (!isDragging) return;
+                e.preventDefault();
+                e.stopPropagation();
+                const deltaY = startY - e.clientY;
+                const step = getStepValue();
+                // 6px drag = 1 step
+                const stepsCount = Math.round(deltaY / 6.0);
+                updateModalVal(startVal + stepsCount * step);
+            });
+
+            const onEnd = (e) => {
+                if (!isDragging) return;
+                isDragging = false;
+                try { sliderBox.releasePointerCapture(e.pointerId); } catch (_) {}
+            };
+
+            sliderBox.addEventListener('pointerup', onEnd);
+            sliderBox.addEventListener('pointercancel', onEnd);
+        }
+
+        // 3. Compact Limits Tap-to-Edit (MAX, DEF, MIN)
+        const setupLimitEdit = (btnId, propKey, label) => {
+            const btn = document.getElementById(btnId);
+            if (!btn) return;
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const cur = String(m[propKey] ?? 0);
+                const res = await ctx.prompt(`${label} 入力`, cur);
+                if (res !== null && res !== '') {
+                    const num = parseFloat(res);
+                    if (!isNaN(num)) {
+                        m[propKey] = num;
+                        if (m.min > m.max) [m.min, m.max] = [m.max, m.min];
+                        m.val = Math.max(m.min, Math.min(m.max, m.val ?? (m.def ?? 0.0)));
+                        ctx.reRenderModal();
+                        onChange();
+                    }
+                }
             });
         };
 
-        setupScrub('val-scrub-val', 'val', 'VALUE (現在値)');
-        setupScrub('val-scrub-max', 'max', 'MAX (最大値)');
-        setupScrub('val-scrub-def', 'def', 'DEFAULT (初期値)');
-        setupScrub('val-scrub-min', 'min', 'MIN (下限値)');
+        setupLimitEdit('val-edit-max', 'max', 'MAX');
+        setupLimitEdit('val-edit-def', 'def', 'DEFAULT');
+        setupLimitEdit('val-edit-min', 'min', 'MIN');
     }
 };
 

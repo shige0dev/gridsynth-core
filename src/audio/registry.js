@@ -28,7 +28,7 @@ import { padAudioDefs } from './defs/pad.js?v=459';
 import { countAudioDefs } from './defs/count.js?v=576';
 import { lutAudioDefs } from './defs/lut.js?v=573';
 import { matrixAudioDefs } from './defs/matrix.js?v=591';
-import { valAudioDefs } from './defs/val.js?v=596';
+import { valAudioDefs } from './defs/val.js?v=614';
 import { snsAudioDefs } from './defs/sns.js?v=611';
 
 export const AUDIO_REGISTRY = {

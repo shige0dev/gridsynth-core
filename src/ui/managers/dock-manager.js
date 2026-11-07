@@ -5,7 +5,7 @@ import { UIHelpers } from '../helpers.js?v=459';
 export const DOCK_TITLES = {
     KEY: 'KEYBOARD',
     PAD: 'TOUCH PAD',
-    VAL: 'VALUE / SLIDER',
+    VALUE: 'VALUE / SLIDER',
     PAT: 'STRUDEL PATTERN',
     SEQ16: '16-STEP SEQUENCER',
     SEQ8: '8-STEP SEQUENCER',
@@ -20,7 +20,7 @@ export const DOCK_TITLES = {
 export const DOCK_ICONS = {
     KEY: 'music',
     PAD: 'fingerprint',
-    VAL: 'sliders',
+    VALUE: 'sliders',
     PAT: 'code',
     SEQ16: 'sliders',
     SEQ8: 'sliders',

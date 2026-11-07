@@ -174,7 +174,7 @@ export class ModalManager {
         if (this.ui.isPerformanceMode) return;
         const m = this.ui.modules[mId];
         if (!m || m.type === 'SUB_IO') return;
-        if (['KEY', 'SEQ8', 'SEQ16', 'PAT', 'SPEC', 'SCOPE', 'LISS', 'WAVE', 'PAD', 'VAL', 'LUT', 'MATRIX'].includes(m.type)) {
+        if (['KEY', 'SEQ8', 'SEQ16', 'PAT', 'SPEC', 'SCOPE', 'LISS', 'WAVE', 'PAD', 'VALUE', 'LUT', 'MATRIX'].includes(m.type)) {
             this.openDockModal(mId);
             return;
         }
