@@ -71,19 +71,19 @@ export class ClockProcessor extends AudioWorkletProcessor {
         const pDur = Math.min(reqPDur, maxPDur);
 
         for (let i = 0; i < out.length; i++) {
+            // 1. 外部リセット端子 (reset_in) の立ち上がり検知 (> 0.3)
+            const rstVal = rstIn ? rstIn[i] : 0.0;
+            const isRstHi = rstVal > 0.3;
+            if (isRstHi && !this.lastResetTrig) {
+                this.T = 0;
+                this.left = this.running ? pDur : 0; // リセットと同時に拍頭パルスを出力 (再生中のみ)
+            }
+            this.lastResetTrig = isRstHi;
+
             if (!this.running) {
                 out[i] = 0;
                 continue;
             }
-
-            // 1. 外部リセット端子 (reset_in) の立ち上がり検知 (> 0.001)
-            const rstVal = rstIn ? rstIn[i] : 0.0;
-            const isRstHi = rstVal > 0.001;
-            if (isRstHi && !this.lastResetTrig) {
-                this.T = 0;
-                this.left = pDur; // リセットと同時に拍頭パルスを出力
-            }
-            this.lastResetTrig = isRstHi;
 
             // 2. 整数マスターカウンタ割り算方式: 周期で割った余りが 0 の瞬間にパルス発火
             if (this.T % periodSamples === 0) {

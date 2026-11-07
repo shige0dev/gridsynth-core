@@ -13,6 +13,7 @@ export class LfoProcessor extends AudioWorkletProcessor {
     constructor() {
         super();
         this.ph = 0;
+        this.syncBaseSample = 0;
         this.type = 'sine';
         this.pol = 'bipolar';
         this.syncMode = 'free';
@@ -43,6 +44,10 @@ export class LfoProcessor extends AudioWorkletProcessor {
                 if (e.data.phase !== undefined && e.data.phase !== null) {
                     this.configPhase = Number(e.data.phase);
                 }
+            } else if (e.data.type === 'RESET') {
+                this.ph = 0;
+                this.syncBaseSample = (typeof currentFrame !== 'undefined') ? currentFrame : ((typeof currentTime !== 'undefined') ? (currentTime * getSR()) : 0);
+                this.lastTrig = false;
             }
         };
     }
@@ -81,7 +86,15 @@ export class LfoProcessor extends AudioWorkletProcessor {
             const frameStart = (typeof currentFrame !== 'undefined') ? currentFrame : ((typeof currentTime !== 'undefined') ? (currentTime * sr) : 0);
 
             for (let i = 0; i < out.length; i++) {
-                const rawP = ((frameStart + i) / sr) * baseRate + phaseOffset;
+                const trigVal = resetIn ? resetIn[i] : 0;
+                const isHi = trigVal > 0.3;
+                if (isHi && !this.lastTrig) {
+                    this.syncBaseSample = frameStart + i;
+                }
+                this.lastTrig = isHi;
+
+                const currentSample = frameStart + i - this.syncBaseSample;
+                const rawP = (currentSample / sr) * baseRate + phaseOffset;
                 const p = ((rawP % 1.0) + 1.0) % 1.0;
                 let r = 0;
                 if (type === 'sine') r = Math.sin(2 * Math.PI * p);
@@ -125,4 +138,3 @@ export class LfoProcessor extends AudioWorkletProcessor {
 }
 
 registerProcessor('lfo-processor', LfoProcessor);
-

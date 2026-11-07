@@ -99,7 +99,7 @@ export const getPortSignalType = (portName = '', modId = '') => {
     ) {
         return SIGNAL_TYPES.GATE_SEQ;
     }
-    if (p.includes('trig') || p.includes('transition') || p === 'reset') {
+    if (p.includes('trig') || p.includes('transition') || p.includes('reset')) {
         return SIGNAL_TYPES.TRIGGER;
     }
     if (p.includes('gate')) {

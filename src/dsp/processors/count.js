@@ -57,15 +57,18 @@ class CountProcessor extends AudioWorkletProcessor {
       const clkVal = clkIn ? clkIn[i] : 0;
       const resetVal = resetIn ? resetIn[i] : 0;
 
-      // 1. Reset check (Rising edge > 0.3)
+      // 1. Reset check (Rising edge >= 0.3)
+      let didReset = false;
       if (resetVal >= 0.3 && this.prevReset < 0.3) {
         this.count = 0;
         this.carryCounter = 0;
+        this.lastReportedCount = -1;
+        didReset = true;
       }
       this.prevReset = resetVal;
 
-      // 2. Clock check (Rising edge > 0.3)
-      if (clkVal >= 0.3 && this.prevClk < 0.3) {
+      // 2. Clock check (Rising edge >= 0.3) - ignored on the sample reset occurs
+      if (!didReset && clkVal >= 0.3 && this.prevClk < 0.3) {
         this.count++;
         if (this.count >= this.max) {
           this.count = 0;

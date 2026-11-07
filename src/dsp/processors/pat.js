@@ -67,15 +67,9 @@ export class PatProcessor extends AudioWorkletProcessor {
         const minGapSamples = Math.max(1, Math.round(0.002 * sr));
 
         for (let i = 0; i < len; i++) {
-            if (!this.running) {
-                if (cvOut) cvOut[i] = this.cv;
-                if (gOut) gOut[i] = 0;
-                continue;
-            }
-
-            // 1. 外部リセット端子 (reset_in) の立ち上がり検知 (> 0.001)
+            // 1. 外部リセット端子 (reset_in) の立ち上がり検知 (> 0.3)
             const rstVal = rstIn ? rstIn[i] : 0.0;
-            const isRstHi = rstVal > 0.001;
+            const isRstHi = rstVal > 0.3;
             if (isRstHi && !this.lastResetTrig) {
                 this.phase = 0.0;
                 this.cycleCount = 0;
@@ -83,6 +77,12 @@ export class PatProcessor extends AudioWorkletProcessor {
                 this.activeIdx = -1;
             }
             this.lastResetTrig = isRstHi;
+
+            if (!this.running) {
+                if (cvOut) cvOut[i] = this.cv;
+                if (gOut) gOut[i] = 0;
+                continue;
+            }
 
             this.phase += phaseInc;
             if (this.phase >= 1.0) {
