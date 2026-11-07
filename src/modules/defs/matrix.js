@@ -1,8 +1,5 @@
 import { UIHelpers } from '../../ui/helpers.js?v=351';
 
-const TRACK_COLORS = ['#38bdf8', '#f43f5e', '#34d399', '#fbbf24']; // Sky, Rose, Emerald, Amber
-const TRACK_NAMES = ['BD / T1', 'SD / T2', 'CH / T3', 'OH / T4'];
-
 export const MATRIX = {
     color: 'indigo',
     defaults: () => {
@@ -225,7 +222,6 @@ export const MATRIX = {
                     inst.nodes.w.port.postMessage({ type: 'SET_DIVISIONS', value: newDiv });
                 }
                 ctx.reRenderModal();
-                ctx.reRenderGrid?.();
                 cb();
             });
         });
@@ -244,7 +240,6 @@ export const MATRIX = {
                 inst.nodes.w.port.postMessage({ type: 'SET_PATTERNS', patterns: m.patterns });
             }
             ctx.reRenderModal();
-            ctx.reRenderGrid?.();
             cb();
         });
 
@@ -289,7 +284,6 @@ export const MATRIX = {
                     });
                 }
                 MATRIX.drawModalCanvas(canvas, m, inst?.read?.()?.slot ?? 0);
-                ctx.reRenderGrid?.();
                 cb();
             };
 

@@ -1,6 +1,6 @@
 // src/ui/managers/dock-manager.js
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=612';
-import { UIHelpers } from '../helpers.js?v=459';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=618';
+import { UIHelpers } from '../helpers.js?v=616';
 
 export const DOCK_TITLES = {
     KEY: 'KEYBOARD',
@@ -97,11 +97,9 @@ export class DockManager {
                 <div class="flex items-center gap-1 flex-1 min-w-0 mr-1.5">
                     <i data-lucide="${iconName}" class="w-3.5 h-3.5 text-cyan-400 pointer-events-none shrink-0"></i>
                     <h3 class="dock-dialog-title text-[10px] font-bold text-cyan-300 uppercase tracking-wider pointer-events-none shrink-0">${titleText}</h3>
-                    ${m.type === 'PAD' ? `
-                        <input type="text" class="dock-title-name-input bg-slate-950/90 border border-slate-700/80 hover:border-cyan-400 focus:border-cyan-400 rounded px-1 py-0 text-[9px] font-mono font-bold text-cyan-300 focus:outline-none focus:ring-1 focus:ring-cyan-400/50 h-[19px] w-20 select-text cursor-text leading-none shadow-inner ml-1 text-center" value="${m.name || 'PAD'}" placeholder="PAD" maxlength="10" title="PADの名前を編集">
-                    ` : (m.type === 'VALUE' ? `
-                        <input type="text" class="dock-title-name-input bg-slate-950/90 border border-slate-700/80 hover:border-amber-400 focus:border-amber-400 rounded px-1 py-0 text-[9px] font-mono font-bold text-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-400/50 h-[19px] w-20 select-text cursor-text leading-none shadow-inner ml-1 text-center" value="${m.label || m.name || 'VAL'}" placeholder="VAL" maxlength="8" title="VALUE変数名を編集">
-                    ` : '')}
+                    ${isCompact ? `
+                        <input type="text" class="dock-title-name-input bg-slate-950/90 border border-slate-700/80 ${isValue ? 'hover:border-amber-400 focus:border-amber-400 text-amber-300 focus:ring-amber-400/50' : 'hover:border-cyan-400 focus:border-cyan-400 text-cyan-300 focus:ring-cyan-400/50'} rounded px-1 py-0 text-[9px] font-mono font-bold focus:outline-none focus:ring-1 h-[19px] w-20 select-text cursor-text leading-none shadow-inner ml-1 text-center" value="${isValue ? (m.label || m.name || 'VAL') : (m.name || 'PAD')}" placeholder="${isValue ? 'VAL' : 'PAD'}" maxlength="${isValue ? 8 : 10}" title="${isValue ? 'VALUE変数名を編集' : 'PADの名前を編集'}">
+                    ` : ''}
                 </div>
                 <div class="flex items-center gap-1 shrink-0">
                     <button class="dock-lock-btn h-5 px-1.5 rounded text-[8.5px] font-bold flex items-center gap-1 border transition-colors bg-slate-800 text-slate-400 border-slate-700 cursor-pointer" title="ロック/ピン留め">
@@ -128,39 +126,24 @@ export class DockManager {
         this.reRenderDockModal(mId);
 
         // Bind title name input if PAD or VALUE
-        if (m.type === 'PAD' || m.type === 'VALUE') {
-            const titleNameInput = dialogEl.querySelector('.dock-title-name-input');
-            if (titleNameInput) {
-                titleNameInput.addEventListener('pointerdown', (e) => e.stopPropagation());
-                titleNameInput.addEventListener('mousedown', (e) => e.stopPropagation());
-                titleNameInput.addEventListener('keydown', (e) => e.stopPropagation());
-                titleNameInput.addEventListener('input', (e) => {
-                    const val = e.target.value;
-                    if (m.type === 'VALUE') {
-                        m.label = val;
-                        m.name = val;
-                    } else {
-                        m.name = val;
-                    }
-                    this.ui.synth.updateModule(`${this.ui.currentPageId}/${mId}`, m, this.ui.getPatchState(mId));
-                    this.ui.renderCell(m.row * this.ui.COLS + m.col);
-                });
-                titleNameInput.addEventListener('blur', (e) => {
-                    const fallback = m.type === 'VALUE' ? 'VAL' : 'PAD';
-                    const cur = m.type === 'VALUE' ? m.label : m.name;
-                    if (!cur || !cur.trim()) {
-                        if (m.type === 'VALUE') {
-                            m.label = fallback;
-                            m.name = fallback;
-                        } else {
-                            m.name = fallback;
-                        }
-                        e.target.value = fallback;
-                        this.ui.synth.updateModule(`${this.ui.currentPageId}/${mId}`, m, this.ui.getPatchState(mId));
-                        this.ui.renderCell(m.row * this.ui.COLS + m.col);
-                    }
-                });
-            }
+        const titleNameInput = dialogEl.querySelector('.dock-title-name-input');
+        if (titleNameInput) {
+            const applyName = (val) => {
+                if (isValue) m.label = val;
+                m.name = val;
+                this.ui.synth.updateModule(`${this.ui.currentPageId}/${mId}`, m, this.ui.getPatchState(mId));
+                this.ui.renderCell(m.row * this.ui.COLS + m.col);
+            };
+            ['pointerdown', 'mousedown', 'keydown'].forEach(ev => titleNameInput.addEventListener(ev, (e) => e.stopPropagation()));
+            titleNameInput.addEventListener('input', (e) => applyName(e.target.value));
+            titleNameInput.addEventListener('blur', (e) => {
+                const fallback = isValue ? 'VAL' : 'PAD';
+                const cur = isValue ? m.label : m.name;
+                if (!cur || !cur.trim()) {
+                    e.target.value = fallback;
+                    applyName(fallback);
+                }
+            });
         }
 
         // Bring to front on pointerdown anywhere on this dialog, and stop propagation to prevent background grid interaction/scroll

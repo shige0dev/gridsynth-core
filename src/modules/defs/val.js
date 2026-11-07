@@ -12,7 +12,6 @@ export const VALUE = {
         def: 0.0,
         step: 0.01,
         stepType: '0.01', // '0.01' | '0.1' | '1semi' | '1' | '10'
-        mode: 'latch',
         name: 'VALUE'
     }),
     ports: () => ({
@@ -21,30 +20,39 @@ export const VALUE = {
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
 
+    getStep: (m) => {
+        if (m.stepType === '1semi') return 1.0 / 12.0;
+        if (m.stepType === '0.1') return 0.1;
+        if (m.stepType === '1') return 1.0;
+        if (m.stepType === '10') return 10.0;
+        return m.step || 0.01;
+    },
+
+    clampVal: (m, newVal) => {
+        const min = m.min ?? -1.0;
+        const max = m.max ?? 1.0;
+        const step = VALUE.getStep(m);
+        let clamped = Math.max(min, Math.min(max, newVal));
+        if (step > 0) {
+            clamped = Math.round((clamped - min) / step) * step + min;
+            clamped = Math.max(min, Math.min(max, clamped));
+        }
+        return Math.round(clamped * 10000) / 10000;
+    },
+
     formatValHtml: (v, stepType) => {
-        if (stepType === '1semi') {
-            return `<span>${cvToNoteName(v)}</span>`;
-        }
+        if (stepType === '1semi') return `<span>${cvToNoteName(v)}</span>`;
         const num = Number(v);
-        // If step is 1 or 10: no decimal point (integer display)
-        if (stepType === '1' || stepType === '10') {
-            return `<span>${Math.round(num)}</span>`;
-        }
-        // Otherwise (0.01, 0.1, or default): fixed 2 decimal places with fixed-slot alignment
-        const str = num.toFixed(2);
-        const parts = str.split('.');
+        if (stepType === '1' || stepType === '10') return `<span>${Math.round(num)}</span>`;
+        const parts = num.toFixed(2).split('.');
         return `<span class="inline-block w-[22px] text-right">${parts[0]}</span><span class="inline-block w-[3px] text-center">.</span><span class="inline-block w-[18px] text-left">${parts[1]}</span>`;
     },
 
-    formatModalVal: (v, stepType) => {
-        if (stepType === '1semi') {
-            return `${cvToNoteName(v)} (${Number(v).toFixed(2)})`;
-        }
-        const num = Number(v);
-        if (stepType === '1' || stepType === '10') {
-            return `${Math.round(num)}`;
-        }
-        return num.toFixed(2);
+    formatEdgeVal: (v, stepType) => {
+        if (stepType === '1semi') return cvToNoteName(v);
+        const n = Number(v);
+        if (stepType === '1' || stepType === '10') return `${Math.round(n)}`;
+        return (Math.abs(n) >= 10) ? n.toFixed(0) : n.toFixed(1);
     },
 
     getNormPct: (m) => {
@@ -55,19 +63,48 @@ export const VALUE = {
         return Math.max(0, Math.min(100, Math.round(((curVal - minVal) / range) * 100)));
     },
 
+    bindVerticalDrag: (el, m, pxPerStep, canStart, onUpdate) => {
+        if (!el) return;
+        let isDragging = false, startY = 0, startVal = 0;
+
+        el.addEventListener('pointerdown', (e) => {
+            if (canStart && !canStart(e)) return;
+            e.preventDefault();
+            e.stopPropagation();
+            isDragging = true;
+            startY = e.clientY;
+            startVal = m.val ?? (m.def ?? 0.0);
+            try { el.setPointerCapture?.(e.pointerId); } catch (_) {}
+        });
+
+        el.addEventListener('pointermove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            e.stopPropagation();
+            const stepsCount = Math.round((startY - e.clientY) / pxPerStep);
+            const clamped = VALUE.clampVal(m, startVal + stepsCount * VALUE.getStep(m));
+            m.val = clamped;
+            onUpdate(clamped);
+        });
+
+        const onEnd = (e) => {
+            if (!isDragging) return;
+            e.stopPropagation();
+            isDragging = false;
+            try { el.releasePointerCapture?.(e.pointerId); } catch (_) {}
+        };
+
+        el.addEventListener('pointerup', onEnd);
+        el.addEventListener('pointercancel', onEnd);
+    },
+
     renderGrid: (m) => {
         const minVal = m.min ?? -1.0;
         const maxVal = m.max ?? 1.0;
         const curVal = m.val ?? (m.def ?? 0.0);
         const labelText = m.label || m.name || 'VAL';
         const pct = VALUE.getNormPct(m);
-
-        const formatEdgeVal = (v) => {
-            if (m.stepType === '1semi') return cvToNoteName(v);
-            const n = Number(v);
-            if (m.stepType === '1' || m.stepType === '10') return `${Math.round(n)}`;
-            return (Math.abs(n) >= 10) ? n.toFixed(0) : n.toFixed(1);
-        };
+        const fmt = (v) => VALUE.formatEdgeVal(v, m.stepType);
 
         const barSlotHtml = UIHelpers.renderPanelBars([
             {
@@ -90,9 +127,9 @@ export const VALUE = {
 
                     <!-- Center Overlay: MAX at top, VAL at center, MIN at bottom -->
                     <div class="absolute inset-0 flex flex-col items-center justify-between py-0.5 pointer-events-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.95)] z-10">
-                        <span class="text-[6px] font-mono text-slate-300 font-semibold tracking-tighter leading-none">${formatEdgeVal(maxVal)}</span>
+                        <span class="text-[6px] font-mono text-slate-300 font-semibold tracking-tighter leading-none">${fmt(maxVal)}</span>
                         <div class="val-val-disp font-mono text-[12px] font-extrabold text-amber-200 tracking-tight leading-none flex items-baseline justify-center select-none">${VALUE.formatValHtml(curVal, m.stepType)}</div>
-                        <span class="text-[6px] font-mono text-slate-300 font-semibold tracking-tighter leading-none">${formatEdgeVal(minVal)}</span>
+                        <span class="text-[6px] font-mono text-slate-300 font-semibold tracking-tighter leading-none">${fmt(minVal)}</span>
                     </div>
                 </div>
 
@@ -104,131 +141,59 @@ export const VALUE = {
     updateLive: (cell, data, isP, modal, m) => {
         if (!cell || !m) return;
 
+        const pct = VALUE.getNormPct(m);
+        const curVal = m.val ?? (m.def ?? 0.0);
+        const html = VALUE.formatValHtml(curVal, m.stepType);
+
         const fillBar = cell.querySelector('.val-fill-bar');
-        if (fillBar) {
-            const pct = VALUE.getNormPct(m);
-            fillBar.style.height = `${pct}%`;
-        }
+        if (fillBar) fillBar.style.height = `${pct}%`;
+
         const valDisp = cell.querySelector('.val-val-disp');
-        if (valDisp) {
-            const v = m.val ?? (m.def ?? 0.0);
-            const html = VALUE.formatValHtml(v, m.stepType);
-            if (valDisp._lastHtml !== html) {
-                valDisp.innerHTML = html;
-                valDisp._lastHtml = html;
-            }
+        if (valDisp && valDisp._lastHtml !== html) {
+            valDisp.innerHTML = html;
+            valDisp._lastHtml = html;
         }
+
         const labelDisp = cell.querySelector('.val-label-disp');
         if (labelDisp) {
             const lText = m.label || m.name || 'VAL';
-            if (labelDisp.textContent !== lText) {
-                labelDisp.textContent = lText;
-            }
+            if (labelDisp.textContent !== lText) labelDisp.textContent = lText;
         }
 
-        // Modal 2x Slider Sync
         if (modal) {
-            const pct = VALUE.getNormPct(m);
             const mFill = modal.querySelector('#val-modal-fill-bar');
             if (mFill) mFill.style.height = `${pct}%`;
             const mVal = modal.querySelector('#val-modal-val-disp');
-            if (mVal) mVal.innerHTML = VALUE.formatValHtml(m.val ?? (m.def ?? 0.0), m.stepType);
+            if (mVal) mVal.innerHTML = html;
         }
     },
 
     bindGridEvents: (cell, m, ctx, onChange) => {
         const valBox = cell.querySelector('.val-box');
-        if (!valBox) return;
-
-        let isInteracting = false;
-        let startY = 0;
-        let startVal = 0;
-
-        const getStepValue = () => {
-            if (m.stepType === '1semi') return 1.0 / 12.0;
-            if (m.stepType === '0.1') return 0.1;
-            if (m.stepType === '1') return 1.0;
-            if (m.stepType === '10') return 10.0;
-            return m.step || 0.01;
-        };
-
-        const updateVal = (newVal) => {
-            const min = m.min ?? -1.0;
-            const max = m.max ?? 1.0;
-            const step = getStepValue();
-            let clamped = Math.max(min, Math.min(max, newVal));
-            if (step > 0) {
-                clamped = Math.round((clamped - min) / step) * step + min;
-                clamped = Math.max(min, Math.min(max, clamped));
-            }
-            clamped = Math.round(clamped * 10000) / 10000;
-            m.val = clamped;
-
-            // Direct DOM update for high-speed responsiveness
-            const valDisp = cell.querySelector('.val-val-disp');
-            if (valDisp) {
-                const html = VALUE.formatValHtml(clamped, m.stepType);
-                if (valDisp._lastHtml !== html) {
-                    valDisp.innerHTML = html;
-                    valDisp._lastHtml = html;
+        VALUE.bindVerticalDrag(
+            valBox,
+            m,
+            8.0,
+            (e) => Boolean(ctx?.ui?.isPerformanceMode || window.__GS_APP__?.isPerformanceMode) && !e.target.closest('.port'),
+            (clamped) => {
+                const valDisp = cell.querySelector('.val-val-disp');
+                if (valDisp) {
+                    const html = VALUE.formatValHtml(clamped, m.stepType);
+                    if (valDisp._lastHtml !== html) {
+                        valDisp.innerHTML = html;
+                        valDisp._lastHtml = html;
+                    }
                 }
+                const fillBar = cell.querySelector('.val-fill-bar');
+                if (fillBar) fillBar.style.height = `${VALUE.getNormPct(m)}%`;
+
+                const ui = ctx?.ui || ctx || window.__GS_APP__;
+                if (ui?.synth) {
+                    ui.synth.updateModule(`${ui.currentPageId}/${m.id}`, m, ui.getPatchState(m.id));
+                }
+                onChange?.();
             }
-            const fillBar = cell.querySelector('.val-fill-bar');
-            if (fillBar) {
-                fillBar.style.height = `${VALUE.getNormPct(m)}%`;
-            }
-
-            // Immediately notify audio engine & patch
-            const ui = ctx?.ui || ctx || window.__GS_APP__;
-            if (ui?.synth) {
-                ui.synth.updateModule(`${ui.currentPageId}/${m.id}`, m, ui.getPatchState(m.id));
-            }
-            onChange?.();
-        };
-
-        const handleDown = (clientY) => {
-            isInteracting = true;
-            startY = clientY;
-            startVal = m.val ?? (m.def ?? 0.0);
-        };
-
-        const handleMove = (clientY) => {
-            if (!isInteracting) return;
-            const deltaY = startY - clientY; // upward drag increases value
-            const step = getStepValue();
-            const stepsCount = Math.round(deltaY / 8.0);
-            updateVal(startVal + stepsCount * step);
-        };
-
-        const handleUp = () => {
-            if (!isInteracting) return;
-            isInteracting = false;
-        };
-
-        valBox.addEventListener('pointerdown', (e) => {
-            const isPerf = Boolean(ctx?.ui?.isPerformanceMode || window.__GS_APP__?.isPerformanceMode);
-            if (!isPerf) return;
-            if (e.target.closest('.port')) return;
-            e.stopPropagation();
-            valBox.setPointerCapture?.(e.pointerId);
-            handleDown(e.clientY);
-        });
-
-        valBox.addEventListener('pointermove', (e) => {
-            if (!isInteracting) return;
-            e.stopPropagation();
-            handleMove(e.clientY);
-        });
-
-        const onPointerEnd = (e) => {
-            if (!isInteracting) return;
-            e.stopPropagation();
-            try { valBox.releasePointerCapture?.(e.pointerId); } catch (_) {}
-            handleUp();
-        };
-
-        valBox.addEventListener('pointerup', onPointerEnd);
-        valBox.addEventListener('pointercancel', onPointerEnd);
+        );
     },
 
     renderModal: (m) => {
@@ -237,18 +202,9 @@ export const VALUE = {
         const curDef = m.def ?? 0.0;
         const curMin = m.min ?? -1.0;
         const curStepType = m.stepType || '0.01';
-        const curLabel = m.label || m.name || 'VAL';
         const pct = VALUE.getNormPct(m);
-
-        const fmt = (val) => VALUE.formatModalVal(val, curStepType);
-
-        const stepBtns = [
-            { id: '0.01', label: '0.01' },
-            { id: '0.1', label: '0.1' },
-            { id: '1semi', label: '1semi' },
-            { id: '1', label: '1' },
-            { id: '10', label: '10' }
-        ];
+        const fmt = (val) => VALUE.formatEdgeVal(val, curStepType);
+        const stepBtns = ['0.01', '0.1', '1semi', '1', '10'];
 
         return `
             <div class="flex flex-col gap-1.5 p-0.5 select-none text-[9px] w-[160px] mx-auto">
@@ -281,9 +237,9 @@ export const VALUE = {
 
                 <!-- Row 2: 単位ステップ選択 (スライダの下に配置) -->
                 <div class="grid grid-cols-5 gap-0.5 pt-1 border-t border-slate-800">
-                    ${stepBtns.map(btn => `
-                        <button class="val-step-btn h-5 rounded font-mono font-bold text-[7.5px] border transition-colors flex items-center justify-center ${curStepType === btn.id ? 'bg-amber-600 text-white border-amber-400 shadow-sm' : 'bg-slate-900 text-slate-400 border-slate-700/80 hover:text-slate-200'}" data-step="${btn.id}">
-                            ${btn.label}
+                    ${stepBtns.map(id => `
+                        <button class="val-step-btn h-5 rounded font-mono font-bold text-[7.5px] border transition-colors flex items-center justify-center ${curStepType === id ? 'bg-amber-600 text-white border-amber-400 shadow-sm' : 'bg-slate-900 text-slate-400 border-slate-700/80 hover:text-slate-200'}" data-step="${id}">
+                            ${id}
                         </button>
                     `).join('')}
                 </div>
@@ -295,83 +251,30 @@ export const VALUE = {
 
         // 1. STEP Button Group
         root.querySelectorAll('.val-step-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', () => {
                 const stepKey = btn.dataset.step;
                 if (!stepKey) return;
                 m.stepType = stepKey;
-                if (stepKey === '1semi') m.step = 1.0 / 12.0;
-                else m.step = parseFloat(stepKey) || 0.01;
+                m.step = VALUE.getStep(m);
                 ctx.reRenderModal();
                 onChange();
             });
         });
 
         // 2. 2x Slider Swipe Control
-        const sliderBox = root.querySelector('#val-modal-slider-box');
-        if (sliderBox) {
-            let isDragging = false;
-            let startY = 0;
-            let startVal = 0;
-
-            const getStepValue = () => {
-                if (m.stepType === '1semi') return 1.0 / 12.0;
-                if (m.stepType === '0.1') return 0.1;
-                if (m.stepType === '1') return 1.0;
-                if (m.stepType === '10') return 10.0;
-                return m.step || 0.01;
-            };
-
-            const updateModalVal = (newVal) => {
-                const min = m.min ?? -1.0;
-                const max = m.max ?? 1.0;
-                const step = getStepValue();
-                let clamped = Math.max(min, Math.min(max, newVal));
-                if (step > 0) {
-                    clamped = Math.round((clamped - min) / step) * step + min;
-                    clamped = Math.max(min, Math.min(max, clamped));
-                }
-                clamped = Math.round(clamped * 10000) / 10000;
-                m.val = clamped;
-
-                // Direct DOM update in modal
+        VALUE.bindVerticalDrag(
+            root.querySelector('#val-modal-slider-box'),
+            m,
+            6.0,
+            null,
+            (clamped) => {
                 const mFill = root.querySelector('#val-modal-fill-bar');
                 if (mFill) mFill.style.height = `${VALUE.getNormPct(m)}%`;
                 const mVal = root.querySelector('#val-modal-val-disp');
                 if (mVal) mVal.innerHTML = VALUE.formatValHtml(clamped, m.stepType);
-
-                ctx.reRenderGrid?.();
                 onChange();
-            };
-
-            sliderBox.addEventListener('pointerdown', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                isDragging = true;
-                startY = e.clientY;
-                startVal = m.val ?? (m.def ?? 0.0);
-                try { sliderBox.setPointerCapture(e.pointerId); } catch (_) {}
-            });
-
-            sliderBox.addEventListener('pointermove', (e) => {
-                if (!isDragging) return;
-                e.preventDefault();
-                e.stopPropagation();
-                const deltaY = startY - e.clientY;
-                const step = getStepValue();
-                // 6px drag = 1 step
-                const stepsCount = Math.round(deltaY / 6.0);
-                updateModalVal(startVal + stepsCount * step);
-            });
-
-            const onEnd = (e) => {
-                if (!isDragging) return;
-                isDragging = false;
-                try { sliderBox.releasePointerCapture(e.pointerId); } catch (_) {}
-            };
-
-            sliderBox.addEventListener('pointerup', onEnd);
-            sliderBox.addEventListener('pointercancel', onEnd);
-        }
+            }
+        );
 
         // 3. Compact Limits Tap-to-Edit (MAX, DEF, MIN)
         const setupLimitEdit = (btnId, propKey, label) => {
@@ -379,25 +282,7 @@ export const VALUE = {
             if (!btn) return;
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                const cur = String(m[propKey] ?? 0);
-                const res = await ctx.prompt(`${label} 入力`, cur);
-                if (res !== null && res !== '') {
-                    const num = parseFloat(res);
-                    if (!isNaN(num)) {
-                        m[propKey] = num;
-                        if (m.min > m.max) [m.min, m.max] = [m.max, m.min];
-                        m.val = Math.max(m.min, Math.min(m.max, m.val ?? (m.def ?? 0.0)));
-                        ctx.reRenderModal();
-                        onChange();
-                    }
-                }
-            });
-        };
-            if (!btn) return;
-            btn.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                const cur = String(m[propKey] ?? 0);
-                const res = await ctx.prompt(`${label} 入力`, cur);
+                const res = await ctx.prompt(`${label} 入力`, String(m[propKey] ?? 0));
                 if (res !== null && res !== '') {
                     const num = parseFloat(res);
                     if (!isNaN(num)) {

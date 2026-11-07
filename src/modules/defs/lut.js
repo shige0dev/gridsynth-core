@@ -200,7 +200,6 @@ export const LUT = {
                 const newDiv = parseInt(e.currentTarget.dataset.div, 10);
                 m.divisions = newDiv;
                 ctx.reRenderModal();
-                ctx.reRenderGrid?.();
                 cb();
             });
         });
@@ -214,7 +213,6 @@ export const LUT = {
                 inst.nodes.w.port.postMessage({ type: 'SET_QUANTIZE', value: m.quantize });
             }
             ctx.reRenderModal();
-            ctx.reRenderGrid?.();
             cb();
         });
 
@@ -288,7 +286,6 @@ export const LUT = {
                     isDrawing = false;
                     lastSlot = -1;
                     try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
-                    ctx.reRenderGrid?.();
                 }
             };
 

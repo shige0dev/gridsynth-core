@@ -1,7 +1,7 @@
 // src/ui/managers/modal-manager.js
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=571';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=618';
 import { FACTORY_SUBPATCHES } from '../../presets/subpatches.js';
-import { UIHelpers } from '../helpers.js?v=459';
+import { UIHelpers } from '../helpers.js?v=616';
 
 export const MODAL_WIDTHS = {
     // Complex Synthesizers
@@ -13,7 +13,6 @@ export const MODAL_WIDTHS = {
     ARP: 'w-[230px]',
     CHORD: 'w-[240px]',
     MARKOV: 'w-[260px]',
-    PAT: 'w-[320px]',
 
     // Logic & Math
     SCALE: 'w-[260px]',
@@ -22,19 +21,15 @@ export const MODAL_WIDTHS = {
     SH: 'w-[200px]',
     CLK: 'w-[200px]',
     COUNT: 'w-[200px]',
-    LUT: 'w-[260px]',
     THROUGH: 'w-[170px]',
 
     // Sound Generation & Processing
     VCO: 'w-[235px]',
-    WAVE: 'w-[360px]',
     NOISE: 'w-[185px]',
     VCF: 'w-[210px]',
     FOLD: 'w-[220px]',
     VCA: 'w-[185px]',
     MIX: 'w-[230px]',
-    VALUE: 'w-[172px]',
-    PAD: 'w-[172px]',
 
     // Effects
     DELAY: 'w-[200px]',
@@ -48,14 +43,11 @@ export const MODAL_WIDTHS = {
     LFO: 'w-[250px]',
 
     // IO & Monitoring
-    SCOPE: 'w-[235px]',
-    LISS: 'w-[235px]',
-    SPEC: 'w-[235px]',
     SPK: 'w-[185px]',
     SUB: 'w-[240px]'
 };
 
-import { DockManager } from './dock-manager.js?v=612';
+import { DockManager, DOCK_TITLES } from './dock-manager.js?v=618';
 
 export class ModalManager {
     constructor(ui) {
@@ -182,7 +174,7 @@ export class ModalManager {
         if (this.ui.isPerformanceMode) return;
         const m = this.ui.modules[mId];
         if (!m || m.type === 'SUB_IO') return;
-        if (['KEY', 'SEQ8', 'SEQ16', 'PAT', 'SPEC', 'SCOPE', 'LISS', 'WAVE', 'PAD', 'VALUE', 'LUT', 'MATRIX'].includes(m.type)) {
+        if (DOCK_TITLES[m.type]) {
             this.openDockModal(mId);
             return;
         }
@@ -270,7 +262,7 @@ export class ModalManager {
             const titleEl = document.getElementById('modal-title');
             if (!titleEl) return;
             titleEl.className = "text-[10px] font-bold text-cyan-300 uppercase tracking-wider pointer-events-none";
-            titleEl.textContent = (m.type === 'PAD' && m.name) ? `PAD: ${m.name}` : (m.name || m.type);
+            titleEl.textContent = m.name || m.type;
         };
 
         updateModalTitle();
