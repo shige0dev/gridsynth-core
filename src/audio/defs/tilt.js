@@ -1,5 +1,5 @@
-// SENSOR - Smartphone 3-Axis Tilt CV Module
-// Uses ConstantSourceNode x3 for minimal CPU overhead (no AudioWorklet).
+// TILT - Smartphone 3-Axis Tilt CV Module
+// Uses ConstantSourceNode x3 for minimal CPU overhead.
 // Reads devicemotion (accelerationIncludingGravity) throttled to ~30Hz.
 // Low-pass exponential smoothing filters out road vibration and hand tremors.
 
@@ -8,7 +8,7 @@ const G = 9.80665;
 
 function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
 
-export const SENSOR = {
+export const TILT = {
     create: (ctx, d, patch, eng) => {
         const makeAxis = () => {
             const src = ctx.createConstantSource();
@@ -25,8 +25,7 @@ export const SENSOR = {
         const axZ = makeAxis();
 
         let cfg = {
-            smooth: d.smooth ?? 0.6,
-            gain: d.gain ?? 1.0,
+            smooth: d.smooth ?? 0.7,
             tareX: d.tareX ?? 0,
             tareY: d.tareY ?? 0,
             tareZ: d.tareZ ?? 0
@@ -80,9 +79,9 @@ export const SENSOR = {
                 smoothedZ += alpha * (rz - smoothedZ);
             }
 
-            const x = clamp(((smoothedX - cfg.tareX) / G) * cfg.gain, -1, 1);
-            const y = clamp(((smoothedY - cfg.tareY) / G) * cfg.gain, -1, 1);
-            const z = clamp(((smoothedZ - cfg.tareZ) / G) * cfg.gain, -1, 1);
+            const x = clamp((smoothedX - cfg.tareX) / G, -1, 1);
+            const y = clamp((smoothedY - cfg.tareY) / G, -1, 1);
+            const z = clamp((smoothedZ - cfg.tareZ) / G, -1, 1);
 
             const t = ctx.currentTime;
             axX.src.offset.setTargetAtTime(x, t, 0.015);
@@ -129,8 +128,7 @@ export const SENSOR = {
     update: (ctx, inst, d) => {
         if (inst.setCfg) {
             inst.setCfg({
-                smooth: d.smooth ?? 0.6,
-                gain: d.gain ?? 1.0,
+                smooth: d.smooth ?? 0.7,
                 tareX: d.tareX ?? 0,
                 tareY: d.tareY ?? 0,
                 tareZ: d.tareZ ?? 0
@@ -143,5 +141,6 @@ export const SENSOR = {
     }
 };
 
-export const SNS = SENSOR;
-export const sensorAudioDefs = { SENSOR, SNS };
+export const SENSOR = TILT;
+export const SNS = TILT;
+export const tiltAudioDefs = { TILT, SENSOR, SNS };

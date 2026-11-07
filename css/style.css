@@ -581,6 +581,7 @@ body.is-row-dragging .grid-cell * {
 /* Power OFF State: Pitch black unlit bars and displays across modules */
 .is-power-off .panel-bar-slot > div,
 .is-power-off .val-fill-bar,
+.is-power-off [class*="tilt-bar-"],
 .is-power-off [class*="sensor-bar-"],
 .is-power-off .module-body canvas,
 .is-power-off .val-val-disp,
