@@ -121,28 +121,14 @@ export class ToolbarManager {
         this.applyPerformanceMode();
 
         document.getElementById('audio-power-btn')?.addEventListener('click', async () => {
-            await this.ui.synth.init();
-            const btn = document.getElementById('audio-power-btn');
-            if (this.ui.synth.isRunning()) {
-                this.ui.synth.suspend();
-                this.ui.synth.clearAllBuffers();
-                btn?.classList.remove('is-active');
-                this.ui.showToast('AUDIO STOPPED');
-            } else {
-                this.ui.synth.resume();
-                if (!this.ui.synth.hasModules()) {
-                    this.ui.synth.rebuildAll(this.ui.pagesData, (pId, id) => this.ui.getPatchState(id, pId));
-                }
-                btn?.classList.add('is-active');
-                this.ui.showToast('AUDIO RUNNING');
-            }
+            const nextPower = !this.ui.synth.isPowerOn;
+            await this.ui.setPowerState(nextPower);
+            this.ui.showToast(nextPower ? 'POWER ON' : 'POWER OFF');
         });
 
         document.getElementById('seq-play-btn')?.addEventListener('click', async () => {
-            await this.ui.synth.init();
-            this.ui.synth.resume();
-            if (!this.ui.synth.hasModules()) {
-                this.ui.synth.rebuildAll(this.ui.pagesData, (pId, id) => this.ui.getPatchState(id, pId));
+            if (!this.ui.synth.isPowerOn) {
+                await this.ui.setPowerState(true);
             }
             this.ui.synth.setPlaybackState(true);
             document.getElementById('seq-play-btn')?.classList.add('is-active');

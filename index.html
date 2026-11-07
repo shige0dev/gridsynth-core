@@ -22,7 +22,7 @@
     <script src="./src/vendor/lucide.min.js"></script>
     <script src="./src/vendor/lame.min.js"></script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230284c7'/><circle cx='50' cy='50' r='25' fill='%2338bdf8'/></svg>">
-    <link rel="stylesheet" href="./css/style.css?v=617">
+    <link rel="stylesheet" href="./css/style.css?v=622">
     <script>
         (function() {
             var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
@@ -37,9 +37,9 @@
     </script>
 </head>
 <body class="flex flex-col items-center justify-start bg-gray-950 p-0 select-none">
-    <div id="phone-frame" class="shrink-0 flex flex-col bg-slate-900/90 border border-slate-800 shadow-2xl relative overflow-hidden">
+    <div id="phone-frame" class="shrink-0 flex flex-col bg-slate-900/90 border border-slate-800 shadow-2xl relative overflow-hidden is-power-off">
         <!-- Top Playback Operation Menu (Header - 70% scaled, 24px bar matching Page Nav Bar) -->
-        <header id="main-menu-bar" class="h-6 min-h-[24px] border-b border-slate-800 bg-slate-950/95 px-2 flex items-center shrink-0 z-30 gap-1 overflow-x-auto pt-[env(safe-area-inset-top,0px)] box-content select-none">
+        <header id="main-menu-bar" class="h-6 min-h-[24px] border-b border-slate-800 bg-slate-950/95 px-2 flex items-center shrink-0 z-[60] gap-1 overflow-x-auto pt-[env(safe-area-inset-top,0px)] box-content select-none">
             <div class="flex items-center gap-1 shrink-0">
                 <button id="audio-power-btn" class="h-5 w-5 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 rounded-md border border-slate-700 transition flex items-center justify-center shadow-sm shrink-0" title="AUDIO ON/OFF"><i data-lucide="power" class="w-2.5 h-2.5"></i></button>
                 <button id="seq-play-btn" class="h-5 w-5 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 rounded-md border border-slate-700 transition flex items-center justify-center shadow-sm shrink-0" title="PLAY"><i data-lucide="play" class="w-2.5 h-2.5"></i></button>
@@ -188,7 +188,7 @@
             </div>
         </div>
 
-        <div id="shared-modal" class="absolute inset-0 hidden z-50">
+        <div id="shared-modal" class="absolute inset-0 top-6 hidden z-50">
             <div id="close-modal-bg" class="absolute inset-0 bg-black/20 backdrop-blur-[1px] cursor-pointer"></div>
             <div id="modal-content" class="absolute bg-slate-900/95 border border-slate-700 rounded-xl p-3 shadow-2xl backdrop-blur-md transition-none">
                 <div id="modal-header" class="border-b border-slate-800 pb-2 flex items-center cursor-move touch-none select-none">
@@ -198,7 +198,7 @@
             </div>
         </div>
 
-        <div id="dock-modal" class="absolute inset-0 hidden z-40 pointer-events-none">
+        <div id="dock-modal" class="absolute inset-0 top-6 hidden z-40 pointer-events-none">
             <div id="dock-backdrop" class="absolute inset-0 bg-black/25 backdrop-blur-[1px] cursor-pointer pointer-events-auto transition-opacity duration-200"></div>
             <div id="dock-container" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
         </div>
@@ -206,6 +206,6 @@
         <div id="toast" class="absolute top-[26px] left-1/2 -translate-x-1/2 h-[22px] px-3 bg-slate-950/95 border border-cyan-400 text-cyan-200 rounded-full text-[10px] font-bold shadow-2xl pointer-events-none opacity-0 transition-opacity duration-200 z-[100] whitespace-nowrap ring-1 ring-cyan-500/40 flex items-center justify-center max-w-[calc(100%-40px)] truncate">Message</div>
     </div>
 
-    <script type="module" src="./src/main.js?v=621"></script>
+    <script type="module" src="./src/main.js?v=622"></script>
 </body>
 </html>

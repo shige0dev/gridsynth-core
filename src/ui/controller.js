@@ -30,6 +30,7 @@ export class UIController {
         this.toolbarManager = new ToolbarManager(this);
 
         this.initDOM();
+        this.syncPowerUI(false);
         this.bindGlobalEvents();
         this.loadActivePreset();
         this.uiUpdateLoop(0);
@@ -266,8 +267,26 @@ export class UIController {
         });
     }
 
+    async setPowerState(on) {
+        await this.synth.setPowerState(on, this.pagesData, (pId, id) => this.getPatchState(id, pId));
+        this.syncPowerUI(on);
+    }
+
+    syncPowerUI(on = this.synth.isPowerOn) {
+        const frame = document.getElementById('phone-frame');
+        if (frame) frame.classList.toggle('is-power-off', !on);
+        const pBtn = document.getElementById('audio-power-btn');
+        if (pBtn) pBtn.classList.toggle('is-active', on);
+        if (!on) {
+            const playBtn = document.getElementById('seq-play-btn');
+            if (playBtn) playBtn.classList.remove('is-active');
+        }
+    }
+
     uiUpdateLoop(timestamp = 0) {
         requestAnimationFrame((t) => this.uiUpdateLoop(t));
+
+        if (!this.synth.isPowerOn) return;
 
         if (timestamp - this._lastUiUpdate < 15) return;
         this._lastUiUpdate = timestamp;

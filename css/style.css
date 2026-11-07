@@ -577,3 +577,25 @@ body.is-row-dragging .grid-cell * {
     height: auto !important;
     display: block;
 }
+
+/* Power OFF State: Pitch black unlit bars and displays across modules */
+.is-power-off .panel-bar-slot > div,
+.is-power-off .val-fill-bar,
+.is-power-off [class*="sensor-bar-"],
+.is-power-off .module-body canvas,
+.is-power-off .val-val-disp,
+.is-power-off [id^="count-val-"],
+.is-power-off [id^="count-denom-"],
+.is-power-off .pat-state-disp {
+    opacity: 0 !important;
+}
+
+.is-power-off .dock-dialog #kb-box,
+.is-power-off .dock-dialog #pad-modal-touch-area {
+    opacity: 0.35 !important;
+    filter: grayscale(0.8) !important;
+}
+
+.is-power-off .dock-dialog .modal-canvas-4x1 {
+    opacity: 0 !important;
+}

@@ -25,23 +25,11 @@ export const WaveModal = {
     async ensureSynthReady(ctx, m) {
         const synth = ctx?.synth || window.__GS_SYNTH__;
         const ui = ctx?.ui || window.__GS_UI__;
-        if (synth) {
-            await synth.init();
-            synth.resume?.();
-            if (synth.ctx && synth.ctx.state === 'suspended') {
-                try { await synth.ctx.resume(); } catch (_) {}
-            }
-            const pagesData = ctx?.pagesData || ui?.pagesData;
-            if ((!synth.hasModules() || !this.getActiveInst(ctx, m)) && pagesData) {
-                const resolvePatch = (pId, id) => {
-                    if (typeof ui?.getPatchState === 'function') return ui.getPatchState(id, pId);
-                    if (typeof ctx?.getPatchState === 'function') return ctx.getPatchState(id, pId);
-                    return new Set();
-                };
-                synth.rebuildAll(pagesData, resolvePatch);
-            }
+        if (ui?.setPowerState) {
+            await ui.setPowerState(true);
+        } else if (synth) {
+            await synth.setPowerState?.(true);
         }
-        document.getElementById('audio-power-btn')?.classList.add('is-active');
         return this.getActiveInst(ctx, m);
     },
 

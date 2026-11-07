@@ -12,6 +12,7 @@ export class SynthEngine {
         this.modules = {};
         this.masterBPM = 120;
         this.isPlaying = false;
+        this.isPowerOn = false;
         this.silentSink = null;
     }
 
@@ -47,6 +48,25 @@ export class SynthEngine {
 
     resume() {
         if (this.ctx?.state === 'suspended') this.ctx.resume();
+    }
+
+    async setPowerState(on, pagesData = null, patchResolver = null) {
+        if (on) {
+            await this.init();
+            if (this.ctx && this.ctx.state === 'suspended') {
+                try { await this.ctx.resume(); } catch (_) {}
+            }
+            this.isPowerOn = true;
+            if (pagesData && patchResolver) {
+                this.rebuildAll(pagesData, patchResolver);
+            }
+        } else {
+            this.isPowerOn = false;
+            this.setPlaybackState(false);
+            this.clearAllBuffers();
+            Object.keys(this.modules).forEach(id => this.removeModule(id));
+            this.suspend();
+        }
     }
 
     setBPM(bpm) {
@@ -94,7 +114,7 @@ export class SynthEngine {
 
     addModule(id, type, data, patchState) {
         this.removeModule(id);
-        if (!this.ctx || (!this.audioWorkletReady && WORKLET_MODULE_TYPES.includes(type))) return;
+        if (!this.isPowerOn || !this.ctx || (!this.audioWorkletReady && WORKLET_MODULE_TYPES.includes(type))) return;
         const def = AUDIO_REGISTRY[type];
         if (def?.create) {
             const inst = def.create(this.ctx, data, patchState, this);
@@ -158,7 +178,7 @@ export class SynthEngine {
     }
 
     isRunning() {
-        return this.ctx?.state === 'running';
+        return this.isPowerOn && this.ctx?.state === 'running';
     }
 
     hasModules() {
@@ -249,8 +269,8 @@ export class SynthEngine {
     }
 
     rebuildAll(pagesData, patchResolver) {
-        if (!this.ctx) return;
         Object.keys(this.modules).forEach(id => this.removeModule(id));
+        if (!this.isPowerOn || !this.ctx) return;
 
         const pages = pagesData.pages || pagesData;
         const isMultiPage = pages && (pages["0"] || Object.keys(pages).some(k => !isNaN(parseInt(k))));
