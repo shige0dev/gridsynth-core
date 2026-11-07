@@ -305,7 +305,7 @@ export class ModalManager {
                         name: 'CV',
                         sub: 'CV (変調・演算・エンベロープ)',
                         color: 'purple',
-                        types: ['LFO', 'ADSR', 'RF', 'AR', 'CHORD', 'SCALE', 'MATH1', 'MATH2', 'SH', 'COUNT', 'LUT', 'MATRIX', 'CVDELAY', 'VALUE', 'THROUGH', 'SUB_IO']
+                        types: ['LFO', 'ADSR', 'RF', 'AR', 'CHORD', 'SCALE', 'MATH1', 'MATH2', 'SH', 'COUNT', 'LUT', 'MATRIX', 'CVDELAY', 'VALUE', 'SENSOR', 'THROUGH', 'SUB_IO']
                     },
                     {
                         name: 'VISUALIZER',

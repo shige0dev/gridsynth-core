@@ -29,7 +29,7 @@ import { countAudioDefs } from './defs/count.js?v=576';
 import { lutAudioDefs } from './defs/lut.js?v=573';
 import { matrixAudioDefs } from './defs/matrix.js?v=591';
 import { valAudioDefs } from './defs/val.js?v=614';
-import { snsAudioDefs } from './defs/sns.js?v=611';
+import { sensorAudioDefs } from './defs/sensor.js?v=620';
 
 export const AUDIO_REGISTRY = {
     ...vcoAudioDefs,
@@ -58,7 +58,7 @@ export const AUDIO_REGISTRY = {
     ...lutAudioDefs,
     ...matrixAudioDefs,
     ...valAudioDefs,
-    ...snsAudioDefs
+    ...sensorAudioDefs
 };
 
 export default AUDIO_REGISTRY;

@@ -29,7 +29,7 @@ import { countDefs } from './defs/count.js?v=578';
 import { lutDefs } from './defs/lut.js?v=619';
 import { matrixDefs } from './defs/matrix.js?v=619';
 import { valDefs } from './defs/val.js?v=618';
-import { snsDefs } from './defs/sns.js?v=615';
+import { sensorDefs } from './defs/sensor.js?v=620';
 
 export const MODULE_REGISTRY = {
     ...vcoDefs,
@@ -58,7 +58,7 @@ export const MODULE_REGISTRY = {
     ...lutDefs,
     ...matrixDefs,
     ...valDefs,
-    ...snsDefs
+    ...sensorDefs
 };
 
 export { ADSR_CURVES };
