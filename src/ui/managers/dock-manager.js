@@ -84,13 +84,14 @@ export class DockManager {
 
         const isValue = m.type === 'VALUE';
         const isCompact = isValue || m.type === 'PAD';
+        const isKey = m.type === 'KEY';
         const titleText = isValue ? 'VAL' : (DOCK_TITLES[m.type] || m.type);
         const iconName = DOCK_ICONS[m.type] || 'sliders';
 
         const dialogEl = document.createElement('div');
         dialogEl.id = `dock-dialog-${mId}`;
         dialogEl.dataset.moduleId = mId;
-        dialogEl.className = `dock-dialog absolute bg-slate-900/95 border border-cyan-500/70 rounded-xl p-1.5 shadow-2xl backdrop-blur-md pointer-events-auto transition-none ${isCompact ? 'w-[172px]' : 'left-2 right-2 w-[calc(100%-16px)]'} max-h-[calc(100%-84px)] overflow-hidden flex flex-col overscroll-contain`;
+        dialogEl.className = `dock-dialog absolute bg-slate-900/95 border border-cyan-500/70 rounded-xl ${isKey ? 'p-[5px]' : 'p-1.5'} shadow-2xl backdrop-blur-md pointer-events-auto transition-none ${isCompact ? 'w-[172px]' : 'left-2 right-2 w-[calc(100%-16px)]'} max-h-[calc(100%-84px)] overflow-hidden flex flex-col overscroll-contain`;
 
         dialogEl.innerHTML = `
             <div class="dock-dialog-header border-b border-slate-800 pb-1 flex items-center justify-between cursor-move touch-none select-none shrink-0">
