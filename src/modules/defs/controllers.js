@@ -50,14 +50,14 @@ export const KEY = {
     }),
     WHITE_KEYS: [{n:'B',s:-1},{n:'C',s:0},{n:'D',s:2},{n:'E',s:4},{n:'F',s:5},{n:'G',s:7},{n:'A',s:9},{n:'B',s:11},{n:'C',s:12},{n:'D',s:14}],
     BLACK_KEYS: [
-        { s: -2, l: 0, w: 14, extraBorder: 'border-b border-r border-slate-400 border-l-0 border-t-0' },
-        { s: 1, l: 56, w: 20, extraBorder: 'border border-slate-400 border-t-0' },
-        { s: 3, l: 89, w: 20, extraBorder: 'border border-slate-400 border-t-0' },
-        { s: 6, l: 155, w: 20, extraBorder: 'border border-slate-400 border-t-0' },
-        { s: 8, l: 188, w: 20, extraBorder: 'border border-slate-400 border-t-0' },
-        { s: 10, l: 221, w: 20, extraBorder: 'border border-slate-400 border-t-0' },
-        { s: 13, l: 287, w: 20, extraBorder: 'border border-slate-400 border-t-0' },
-        { s: 15, l: 316, w: 14, extraBorder: 'border-b border-l border-slate-400 border-r-0 border-t-0' }
+        { s: -2, l: 0, w: 12, extraBorder: 'border-b border-r border-slate-400 border-l-0 border-t-0' },
+        { s: 1, l: 55, w: 16, extraBorder: 'border border-slate-400 border-t-0' },
+        { s: 3, l: 93, w: 16, extraBorder: 'border border-slate-400 border-t-0' },
+        { s: 6, l: 152, w: 16, extraBorder: 'border border-slate-400 border-t-0' },
+        { s: 8, l: 190, w: 16, extraBorder: 'border border-slate-400 border-t-0' },
+        { s: 10, l: 227, w: 16, extraBorder: 'border border-slate-400 border-t-0' },
+        { s: 13, l: 286, w: 16, extraBorder: 'border border-slate-400 border-t-0' },
+        { s: 15, l: 324, w: 5, extraBorder: 'border-b border-l border-slate-400 border-r-0 border-t-0' }
     ],
     renderGrid: (m) => `<div class="flex items-center justify-center w-full h-full pointer-events-none text-cyan-400"><span class="text-[15px] font-mono font-bold text-white tracking-tight">${m.lastNote || 'C2'}</span></div>`,
     renderModal: (m) => {
@@ -66,17 +66,17 @@ export const KEY = {
         const curNote = m.lastNote || `C${curOct}`;
         return `
             <div class="space-y-2 flex flex-col items-center select-none w-full">
-                <div class="w-[332px] flex items-center justify-between pb-1 border-b border-slate-800 shrink-0" id="key-oct-row">
+                <div class="w-[331px] flex items-center justify-between pb-1 border-b border-slate-800 shrink-0" id="key-oct-row">
                     <div class="flex items-center gap-1.5"><span class="text-[8px] text-slate-400 uppercase font-semibold">OCTAVE</span>
                     <button id="key-oct-down" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold">−</button>
                     <span id="key-oct-disp" class="w-5 text-center text-[10px] font-mono font-bold text-cyan-300">${curOct}</span>
                     <button id="key-oct-up" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold">＋</button></div>
                     <span class="text-[9px] font-mono font-bold text-sky-300" id="key-active-note">${curNote}</span>
                 </div>
-                <div class="relative h-28 bg-slate-950 border border-slate-400 flex select-none touch-none overflow-hidden w-[332px] shrink-0 box-border mx-auto" id="kb-box">
-                    ${W.map((k, idx) => `<div class="key-white w-[33px] shrink-0 bg-slate-950 ${idx < 9 ? 'border-r border-slate-400' : ''} flex flex-col justify-end items-center pb-1 cursor-pointer select-none transition-colors" data-semi="${k.s}"><span class="text-[7.5px] font-bold text-slate-400 pointer-events-none">${k.n}</span></div>`).join('')}
-                    <div class="absolute inset-0 pointer-events-none w-[330px] h-full">
-                        <!-- Accidentals: 6 full black keys centered over dividers + 2 edge half-keys aligned to outer frame without duplicate borders -->
+                <div class="relative h-28 bg-slate-950 border border-slate-400 flex select-none touch-none overflow-hidden w-[331px] shrink-0 box-border mx-auto" id="kb-box">
+                    ${W.map((k, idx) => `<div class="key-white ${idx < 9 ? 'w-[33px] border-r border-slate-400' : 'w-[32px]'} shrink-0 bg-slate-950 flex flex-col justify-end items-center pb-1 cursor-pointer select-none transition-colors" data-semi="${k.s}"><span class="text-[7.5px] font-bold text-slate-400 pointer-events-none">${k.n}</span></div>`).join('')}
+                    <div class="absolute inset-0 pointer-events-none w-[329px] h-full">
+                        <!-- Accidentals: Y=16px for full accidentals + edge accidentals aligned to white key top edges without duplicate borders -->
                         ${B.map(bk => `<div class="key-black absolute h-16 bg-slate-950 ${bk.extraBorder} pointer-events-auto cursor-pointer select-none transition-colors" style="left:${bk.l}px;width:${bk.w}px;" data-semi="${bk.s}"></div>`).join('')}
                     </div>
                 </div>
