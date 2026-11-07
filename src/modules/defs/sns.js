@@ -13,9 +13,9 @@ export const SNS = {
     ports: () => ({
         in: [],
         out: [
-            { port: 'x_out', pin: 1, color: 'bg-yellow-400' },
-            { port: 'y_out', pin: 2, color: 'bg-yellow-400' },
-            { port: 'z_out', pin: 3, color: 'bg-yellow-400' }
+            { port: 'x_out', pin: 11, color: 'bg-yellow-400' },
+            { port: 'y_out', pin: 12, color: 'bg-yellow-400' },
+            { port: 'z_out', pin: 13, color: 'bg-yellow-400' }
         ]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),

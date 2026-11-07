@@ -311,7 +311,7 @@ export class UIController {
     updateSelectionClasses() { return this.interactionManager.updateSelectionClasses(); }
     deleteSelectedModules() { return this.interactionManager.deleteSelectedModules(); }
 
-    showToast(msg, duration = 1800) { return this.modalManager.showToast(msg, duration); }
+    showToast(msg, duration = 1800, position = 'top') { return this.modalManager.showToast(msg, duration, position); }
     openModal(idx, title, widthCls, renderFn) { return this.modalManager.openModal(idx, title, widthCls, renderFn); }
     openSettingsModal(mId) { return this.modalManager.openSettingsModal(mId); }
     openDockModal(mId) { return this.modalManager.openDockModal(mId); }

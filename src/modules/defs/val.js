@@ -251,24 +251,24 @@ export const VALUE = {
         ];
 
         return `
-            <div class="flex flex-col gap-2 p-1 select-none text-[9px]">
-                <!-- Top Row: Compact Name & Step buttons -->
-                <div class="flex items-center justify-between gap-1.5 pb-1 border-b border-slate-800">
-                    <div class="flex items-center gap-1 shrink-0">
-                        <span class="text-[7.5px] font-mono font-bold text-slate-400">NAME:</span>
-                        <input id="val-label-input" type="text" maxlength="8" class="bg-slate-900 border border-amber-500/60 rounded px-1.5 py-0 text-amber-300 font-mono font-bold text-[9px] w-16 h-5 outline-none focus:border-amber-400" value="${curLabel}" placeholder="VAL" />
-                    </div>
-                    <div class="flex items-center gap-0.5">
-                        ${stepBtns.map(btn => `
-                            <button class="val-step-btn h-5 px-1.5 rounded font-mono font-bold text-[8px] border transition-colors ${curStepType === btn.id ? 'bg-amber-600 text-white border-amber-400 shadow-sm' : 'bg-slate-900 text-slate-400 border-slate-700/80 hover:text-slate-200'}" data-step="${btn.id}">
-                                ${btn.label}
-                            </button>
-                        `).join('')}
-                    </div>
+            <div class="flex flex-col gap-1.5 p-0.5 select-none text-[9px] w-[160px] mx-auto">
+                <!-- Row 1: NAME -->
+                <div class="flex items-center justify-between gap-1 pb-1 border-b border-slate-800">
+                    <span class="text-[7.5px] font-mono font-bold text-slate-400">NAME:</span>
+                    <input id="val-label-input" type="text" maxlength="8" class="bg-slate-900 border border-amber-500/60 rounded px-1.5 py-0 text-amber-300 font-mono font-bold text-[9px] w-24 h-5 outline-none focus:border-amber-400 text-center" value="${curLabel}" placeholder="VAL" />
                 </div>
 
-                <!-- Center: 2x Panel Slider with MAX & MIN Touch Badges -->
-                <div class="flex items-center justify-center gap-3 py-1">
+                <!-- Row 2: 単位 (Step) -->
+                <div class="grid grid-cols-5 gap-0.5 pb-1 border-b border-slate-800">
+                    ${stepBtns.map(btn => `
+                        <button class="val-step-btn h-5 rounded font-mono font-bold text-[7.5px] border transition-colors flex items-center justify-center ${curStepType === btn.id ? 'bg-amber-600 text-white border-amber-400 shadow-sm' : 'bg-slate-900 text-slate-400 border-slate-700/80 hover:text-slate-200'}" data-step="${btn.id}">
+                            ${btn.label}
+                        </button>
+                    `).join('')}
+                </div>
+
+                <!-- Row 3: 2x Panel Slider with Quick Limits (MAX / DEF / MIN) -->
+                <div class="flex items-center justify-between gap-1.5 pt-0.5">
                     <!-- Vertical 2x Slider (w-28 h-14 -> 112px x 56px, exactly 2x of w-14 h-7) -->
                     <div id="val-modal-slider-box" class="relative w-28 h-14 shrink-0 rounded border border-slate-600 bg-slate-950/60 p-[2px] flex flex-col justify-end overflow-hidden cursor-ns-resize touch-none shadow-lg">
                         <div id="val-modal-fill-bar" class="w-full bg-gradient-to-t from-amber-600 to-yellow-400 rounded-xs pointer-events-none transition-[height] duration-75" style="height: ${pct}%;"></div>
@@ -281,15 +281,15 @@ export const VALUE = {
                     </div>
 
                     <!-- Quick Limits Adjustment (MAX / DEF / MIN Buttons) -->
-                    <div class="flex flex-col justify-between h-14 py-0.5 text-[8px] font-mono">
-                        <button id="val-edit-max" class="h-4 px-1.5 rounded bg-slate-900 border border-slate-700 hover:border-amber-400 text-amber-300 flex items-center justify-between gap-1 transition-colors" title="MAXをタップして編集">
-                            <span class="text-slate-500">MAX</span><span class="font-bold">${fmt(curMax)}</span>
+                    <div class="flex flex-col justify-between h-14 w-[42px] py-0.5 text-[7.5px] font-mono shrink-0">
+                        <button id="val-edit-max" class="h-4 px-1 rounded bg-slate-900 border border-slate-700 hover:border-amber-400 text-amber-300 flex items-center justify-between transition-colors" title="MAX編集">
+                            <span class="text-slate-500 text-[6.5px]">MX</span><span class="font-bold truncate">${fmt(curMax)}</span>
                         </button>
-                        <button id="val-edit-def" class="h-4 px-1.5 rounded bg-slate-900 border border-slate-700 hover:border-amber-400 text-amber-300 flex items-center justify-between gap-1 transition-colors" title="初期値（DEF）をタップして編集">
-                            <span class="text-slate-500">DEF</span><span class="font-bold">${fmt(curDef)}</span>
+                        <button id="val-edit-def" class="h-4 px-1 rounded bg-slate-900 border border-slate-700 hover:border-amber-400 text-amber-300 flex items-center justify-between transition-colors" title="DEF編集">
+                            <span class="text-slate-500 text-[6.5px]">DF</span><span class="font-bold truncate">${fmt(curDef)}</span>
                         </button>
-                        <button id="val-edit-min" class="h-4 px-1.5 rounded bg-slate-900 border border-slate-700 hover:border-amber-400 text-amber-300 flex items-center justify-between gap-1 transition-colors" title="MINをタップして編集">
-                            <span class="text-slate-500">MIN</span><span class="font-bold">${fmt(curMin)}</span>
+                        <button id="val-edit-min" class="h-4 px-1 rounded bg-slate-900 border border-slate-700 hover:border-amber-400 text-amber-300 flex items-center justify-between transition-colors" title="MIN編集">
+                            <span class="text-slate-500 text-[6.5px]">MN</span><span class="font-bold truncate">${fmt(curMin)}</span>
                         </button>
                     </div>
                 </div>

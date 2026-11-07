@@ -275,7 +275,7 @@ export class InteractionManager {
                     if (this.ui.isPerformanceMode) return;
                     const info = this.ui.getPortDisplayInfo ? this.ui.getPortDisplayInfo(mId, p) : null;
                     const toastLabel = (info && info.hasAlias) ? info.label : p;
-                    this.ui.showToast(toastLabel, 1500);
+                    this.ui.showToast(toastLabel, 1500, 'center');
                 }, 50);
             }
         });

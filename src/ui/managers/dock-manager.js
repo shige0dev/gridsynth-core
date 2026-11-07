@@ -82,13 +82,14 @@ export class DockManager {
         const frame = document.getElementById('phone-frame');
         modal?.classList.remove('hidden');
 
-        const titleText = DOCK_TITLES[m.type] || m.type;
+        const isValue = m.type === 'VALUE';
+        const titleText = isValue ? 'VALUE' : (DOCK_TITLES[m.type] || m.type);
         const iconName = DOCK_ICONS[m.type] || 'sliders';
 
         const dialogEl = document.createElement('div');
         dialogEl.id = `dock-dialog-${mId}`;
         dialogEl.dataset.moduleId = mId;
-        dialogEl.className = "dock-dialog absolute bg-slate-900/95 border border-cyan-500/70 rounded-xl p-2 shadow-2xl backdrop-blur-md pointer-events-auto transition-none left-2 right-2 w-[calc(100%-16px)] max-h-[calc(100%-84px)] overflow-hidden flex flex-col overscroll-contain";
+        dialogEl.className = `dock-dialog absolute bg-slate-900/95 border border-cyan-500/70 rounded-xl p-1.5 shadow-2xl backdrop-blur-md pointer-events-auto transition-none ${isValue ? 'w-[172px]' : 'left-2 right-2 w-[calc(100%-16px)]'} max-h-[calc(100%-84px)] overflow-hidden flex flex-col overscroll-contain`;
 
         dialogEl.innerHTML = `
             <div class="dock-dialog-header border-b border-slate-800 pb-1 flex items-center justify-between cursor-move touch-none select-none shrink-0">
@@ -167,12 +168,18 @@ export class DockManager {
 
         // Header draggable
         const headerEl = dialogEl.querySelector('.dock-dialog-header');
-        this.makeDialogDraggable(headerEl, dialogEl);
+        this.makeDialogDraggable(headerEl, dialogEl, { minMargin: 4, canMoveX: () => isValue });
 
         // Position dialog
-        dialogEl.style.left = '8px';
-        dialogEl.style.right = '8px';
-        dialogEl.style.width = 'calc(100% - 16px)';
+        if (isValue) {
+            dialogEl.style.left = '12px';
+            dialogEl.style.right = 'auto';
+            dialogEl.style.width = '172px';
+        } else {
+            dialogEl.style.left = '8px';
+            dialogEl.style.right = '8px';
+            dialogEl.style.width = 'calc(100% - 16px)';
+        }
         dialogEl.style.maxWidth = 'none';
         dialogEl.style.margin = '0';
         dialogEl.style.bottom = 'auto';

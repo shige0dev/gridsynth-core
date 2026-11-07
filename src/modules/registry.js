@@ -28,8 +28,8 @@ import { padDefs } from './defs/pad.js?v=612';
 import { countDefs } from './defs/count.js?v=578';
 import { lutDefs } from './defs/lut.js?v=589';
 import { matrixDefs } from './defs/matrix.js?v=595';
-import { valDefs } from './defs/val.js?v=614';
-import { snsDefs } from './defs/sns.js?v=611';
+import { valDefs } from './defs/val.js?v=615';
+import { snsDefs } from './defs/sns.js?v=615';
 
 export const MODULE_REGISTRY = {
     ...vcoDefs,

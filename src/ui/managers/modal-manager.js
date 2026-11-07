@@ -33,7 +33,7 @@ export const MODAL_WIDTHS = {
     FOLD: 'w-[220px]',
     VCA: 'w-[185px]',
     MIX: 'w-[230px]',
-    VALUE: 'w-[200px]',
+    VALUE: 'w-[172px]',
 
     // Effects
     DELAY: 'w-[200px]',
@@ -120,10 +120,17 @@ export class ModalManager {
         document.getElementById('close-json-io-btn')?.addEventListener('click', () => document.getElementById('json-io-modal')?.classList.add('hidden'));
     }
 
-    showToast(msg, duration = 1800) {
+    showToast(msg, duration = 1800, position = 'top') {
         const t = document.getElementById('toast');
         if (!t) return Promise.resolve();
         t.textContent = msg;
+        if (position === 'center') {
+            t.classList.remove('top-[26px]');
+            t.classList.add('top-1/2', '-translate-y-1/2');
+        } else {
+            t.classList.remove('top-1/2', '-translate-y-1/2');
+            t.classList.add('top-[26px]');
+        }
         t.classList.remove('opacity-0');
         if (this._toastTimer) clearTimeout(this._toastTimer);
         return new Promise(resolve => {

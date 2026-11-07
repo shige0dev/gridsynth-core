@@ -1,4 +1,4 @@
-﻿// src/ui/managers/cable-manager.js
+// src/ui/managers/cable-manager.js
 import { parseConn, isSameConn, getPortSignalType, resolveConnectionSignalType, isSubModule, normalizeSubPort, getOppositeSubPort, getPortAliases, isPortMatching, getSubPortAlias } from '../../core/utils.js?v=459';
 import { resolveModManifest } from '../../core/patch.js?v=459';
 import { MODULE_REGISTRY } from '../../modules/registry.js?v=459';
@@ -410,20 +410,20 @@ export class CableManager {
             this.selectedTargetForConnection = cur;
             this.updatePortHighlight();
             const toastLabel = info.hasAlias ? info.label : pName;
-            this.ui.showToast(toastLabel);
+            this.ui.showToast(toastLabel, 1500, 'center');
         } else {
             const first = this.selectedTargetForConnection;
             if (first.moduleId === cur.moduleId && first.port === cur.port) {
                 this.selectedTargetForConnection = null;
                 this.updatePortHighlight();
-                this.ui.showToast('接続をキャンセルしました');
+                this.ui.showToast('接続をキャンセルしました', 1500, 'center');
                 return;
             }
             if (first.moduleId === cur.moduleId) {
                 this.selectedTargetForConnection = cur;
                 this.updatePortHighlight();
                 const toastLabel = info.hasAlias ? info.label : pName;
-                this.ui.showToast(toastLabel);
+                this.ui.showToast(toastLabel, 1500, 'center');
                 return;
             } else {
                 const m1 = this.ui.modules[first.moduleId], m2 = this.ui.modules[cur.moduleId];
@@ -442,7 +442,7 @@ export class CableManager {
 
                 const o1 = isOut(m1, first.port), o2 = isOut(m2, cur.port);
                 if (o1 === o2) {
-                    this.ui.showToast('IN同士/OUT同士は接続不可');
+                    this.ui.showToast('IN同士/OUT同士は接続不可', 1500, 'center');
                     this.selectedTargetForConnection = null;
                     this.updatePortHighlight();
                     return;
@@ -453,7 +453,7 @@ export class CableManager {
                 const isSrcLink = src.port === 'link_out' || src.port === 'link_in';
                 const isDstLink = dst.port === 'link_out' || dst.port === 'link_in';
                 if (isSrcLink !== isDstLink) {
-                    this.ui.showToast('LINK端子はWAVEのLINK端子同士のみ接続可能です');
+                    this.ui.showToast('LINK端子はWAVEのLINK端子同士のみ接続可能です', 1500, 'center');
                     this.selectedTargetForConnection = null;
                     this.updatePortHighlight();
                     return;
@@ -461,7 +461,7 @@ export class CableManager {
 
                 const cand = { from: src, to: dst };
                 if (this.ui.connections.some(c => isSameConn(c, cand))) {
-                    this.ui.showToast('既に接続されています');
+                    this.ui.showToast('既に接続されています', 1500, 'center');
                 } else {
                     this.ui.saveHistory();
                     if (dst.port === 'link_in') {
@@ -480,7 +480,7 @@ export class CableManager {
 
                     this.ui.synth.connect(`${this.ui.currentPageId}/${src.moduleId}`, src.port, `${this.ui.currentPageId}/${dst.moduleId}`, dst.port);
                     this._syncAfterConnectionChange([src.moduleId, dst.moduleId]);
-                    this.ui.showToast('結線しました');
+                    this.ui.showToast('結線しました', 1500, 'center');
                 }
             }
             this.selectedTargetForConnection = null;
