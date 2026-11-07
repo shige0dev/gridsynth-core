@@ -293,24 +293,24 @@ export const PAD = {
                 <input type="text" id="pad-modal-name-input" class="bg-slate-950/90 border border-slate-700/80 hover:border-cyan-400 focus:border-cyan-400 text-cyan-300 focus:ring-cyan-400/50 rounded px-1.5 py-0.5 text-[9px] font-mono font-bold focus:outline-none focus:ring-1 h-[20px] flex-1 text-center select-text cursor-text leading-none shadow-inner ml-2" value="${m.name || 'PAD'}" placeholder="PAD" maxlength="10" title="PADの名前を編集">
             </div>
 
-            <!-- 2. Pad Canvas with Polarity Buttons -->
-            <div class="relative w-[136px] h-[136px] ml-5 mb-5 select-none shrink-0">
+            <!-- 2. Pad Canvas with Polarity Buttons (Centered with ~5px margin on left and right) -->
+            <div class="relative w-[150px] h-[150px] mx-auto select-none shrink-0">
                 <!-- Inner Touch Area (Canvas) -->
                 <div class="relative w-full h-full bg-black rounded border border-slate-700/80 overflow-hidden shadow-inner select-none touch-none overscroll-contain" id="pad-modal-touch-area" style="opacity: ${m.opacity ?? 0.8};">
                     <canvas id="pad-modal-canvas" class="w-full h-full block cursor-crosshair" width="400" height="400"></canvas>
-                    <div class="absolute top-1 left-1.5 flex items-center gap-1.5 font-mono text-[8px] select-none pointer-events-none drop-shadow">
+                    <div class="absolute top-1 left-1.5 flex items-center gap-1.5 font-mono text-[8px] select-none pointer-events-none drop-shadow z-10">
                         <span class="text-slate-400 font-sans font-bold text-[7.5px]">X</span><span id="pad-stat-x" class="text-cyan-300 font-bold">${dispInitX}</span>
                         <span class="text-slate-400 font-sans font-bold text-[7.5px]">Y</span><span id="pad-stat-y" class="text-cyan-300 font-bold">${dispInitY}</span>
                     </div>
+
+                    <!-- Y-Axis Polarity Option Buttons (Inside Canvas at left edge, pointing Right ▶) -->
+                    <button class="pad-pol-toggle-y absolute left-1 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center text-[9px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/80 z-20 ${polY === 'bi' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="bi" title="Y軸 0点: 中央 (BI -1~1V)">▶</button>
+                    <button class="pad-pol-toggle-y absolute left-1 bottom-1 w-4 h-4 flex items-center justify-center text-[9px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/80 z-20 ${polY === 'uni' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="uni" title="Y軸 0点: 下端 (UNI 0~2V)">▶</button>
+
+                    <!-- X-Axis Polarity Option Buttons (Inside Canvas at bottom edge, pointing Up ▲) -->
+                    <button class="pad-pol-toggle-x absolute left-6 bottom-1 w-4 h-4 flex items-center justify-center text-[9px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/80 z-20 ${polX === 'uni' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="uni" title="X軸 0点: 左端 (UNI 0~2V)">▲</button>
+                    <button class="pad-pol-toggle-x absolute left-1/2 -translate-x-1/2 bottom-1 w-4 h-4 flex items-center justify-center text-[9px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/80 z-20 ${polX === 'bi' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="bi" title="X軸 0点: 中央 (BI -1~1V)">▲</button>
                 </div>
-
-                <!-- Y-Axis Polarity Option Buttons (Left of Canvas, pointing Right ▶) -->
-                <button class="pad-pol-toggle-y absolute -left-5 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center text-[9px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polY === 'bi' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="bi" title="Y軸 0点: 中央 (BI -1~1V)">▶</button>
-                <button class="pad-pol-toggle-y absolute -left-5 bottom-0 translate-y-1/2 w-4 h-4 flex items-center justify-center text-[9px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polY === 'uni' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="uni" title="Y軸 0点: 下端 (UNI 0~2V)">▶</button>
-
-                <!-- X-Axis Polarity Option Buttons (Below Canvas, pointing Up ▲) -->
-                <button class="pad-pol-toggle-x absolute left-0 -translate-x-1/2 -bottom-5 w-4 h-4 flex items-center justify-center text-[9px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polX === 'uni' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="uni" title="X軸 0点: 左端 (UNI 0~2V)">▲</button>
-                <button class="pad-pol-toggle-x absolute left-1/2 -translate-x-1/2 -bottom-5 w-4 h-4 flex items-center justify-center text-[9px] leading-none transition-all cursor-pointer select-none rounded hover:bg-slate-800/60 ${polX === 'bi' ? 'text-amber-400 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.8)] scale-110' : 'text-slate-600 hover:text-slate-300'}" data-val="bi" title="X軸 0点: 中央 (BI -1~1V)">▲</button>
             </div>
 
             <!-- 2. カラー設定 (パッドの下に1行で配置) -->
@@ -373,6 +373,9 @@ export const PAD = {
         // Axis Polarity Option Buttons (X: ▲, Y: ▶)
         const bindPol = (sel, key) => {
             root.querySelectorAll(sel).forEach(btn => {
+                ['pointerdown', 'mousedown', 'touchstart'].forEach(ev => {
+                    btn.addEventListener(ev, (e) => e.stopPropagation());
+                });
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const targetVal = btn.dataset.val;

@@ -19,21 +19,28 @@ export const TILT = {
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
 
-    renderGrid: (m) => {
-        return `
-            <div class="flex flex-col items-center justify-center w-full h-full pointer-events-none select-none">
-                <div class="flex items-center justify-center gap-1.5 my-auto">
-                    ${['x', 'y', 'z'].map(ax => `
-                        <div class="flex flex-col items-center gap-0.5">
-                            <div class="w-2.5 h-7 rounded-xs p-[1px] border border-slate-600 bg-slate-950/40 relative panel-bar-slot flex flex-col justify-end">
-                                <div class="w-full tilt-bar-${ax} sensor-bar-${ax} bg-gradient-to-t from-teal-500 to-cyan-300 rounded-xs transition-all duration-75" style="height: 50%;"></div>
-                            </div>
-                            <span class="font-mono text-[6.5px] font-bold text-slate-400 leading-none uppercase">${ax}</span>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>`;
-    },
+    renderGrid: (m) => `<div class="relative flex items-center justify-center w-full h-full pointer-events-none select-none text-teal-400">
+        ${UIHelpers.renderPanelBars([
+            {
+                pct: 50,
+                innerCls: 'tilt-bar-x sensor-bar-x transition-all duration-75',
+                width: 'w-2.5',
+                color: 'bg-gradient-to-t from-teal-500 to-cyan-300'
+            },
+            {
+                pct: 50,
+                innerCls: 'tilt-bar-y sensor-bar-y transition-all duration-75',
+                width: 'w-2.5',
+                color: 'bg-gradient-to-t from-teal-500 to-cyan-300'
+            },
+            {
+                pct: 50,
+                innerCls: 'tilt-bar-z sensor-bar-z transition-all duration-75',
+                width: 'w-2.5',
+                color: 'bg-gradient-to-t from-teal-500 to-cyan-300'
+            }
+        ], { heightCls: 'h-7', gapCls: 'gap-1.5' })}
+    </div>`,
 
     renderModal: (m) => {
         const isTared = Boolean(m.tareX || m.tareY || m.tareZ);

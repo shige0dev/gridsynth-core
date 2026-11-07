@@ -200,7 +200,7 @@ export const SPK = {
                 width: 'w-2.5'
             }
         ], { heightCls: 'h-7', gapCls: 'gap-1.5' })}
-        <span class="spk-vol-val absolute bottom-[11px] left-1/2 -translate-x-1/2 text-[7.5px] font-mono font-bold text-cyan-300 bg-slate-950/85 px-1 py-[0.5px] rounded border border-slate-700/80 leading-none shadow-sm select-none">${Math.round((m.masterVol??0.12)*100)}%</span>
+        <span class="spk-vol-val absolute bottom-[11px] left-1/2 -translate-x-1/2 text-[7.5px] font-mono font-bold text-cyan-300 leading-none select-none">${Math.round((m.masterVol??0.12)*100)}%</span>
     </div>`,
     renderModal: (m, ctx) => {
         const isRec = spkRecState.isRecording;
