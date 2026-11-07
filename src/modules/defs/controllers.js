@@ -50,12 +50,14 @@ export const KEY = {
     }),
     WHITE_KEYS: [{n:'B',s:-1},{n:'C',s:0},{n:'D',s:2},{n:'E',s:4},{n:'F',s:5},{n:'G',s:7},{n:'A',s:9},{n:'B',s:11},{n:'C',s:12},{n:'D',s:14}],
     BLACK_KEYS: [
-        { s: 1, l: 52, w: 19 },
-        { s: 3, l: 91, w: 19 },
-        { s: 6, l: 148, w: 19 },
-        { s: 8, l: 187, w: 19 },
-        { s: 10, l: 226, w: 19 },
-        { s: 13, l: 283, w: 19 }
+        { s: -2, l: 0, w: 14, extraBorder: 'border-b border-r border-slate-400 border-l-0 border-t-0' },
+        { s: 1, l: 56, w: 20, extraBorder: 'border border-slate-400 border-t-0' },
+        { s: 3, l: 89, w: 20, extraBorder: 'border border-slate-400 border-t-0' },
+        { s: 6, l: 155, w: 20, extraBorder: 'border border-slate-400 border-t-0' },
+        { s: 8, l: 188, w: 20, extraBorder: 'border border-slate-400 border-t-0' },
+        { s: 10, l: 221, w: 20, extraBorder: 'border border-slate-400 border-t-0' },
+        { s: 13, l: 287, w: 20, extraBorder: 'border border-slate-400 border-t-0' },
+        { s: 15, l: 316, w: 14, extraBorder: 'border-b border-l border-slate-400 border-r-0 border-t-0' }
     ],
     renderGrid: (m) => `<div class="flex items-center justify-center w-full h-full pointer-events-none text-cyan-400"><span class="text-[15px] font-mono font-bold text-white tracking-tight">${m.lastNote || 'C2'}</span></div>`,
     renderModal: (m) => {
@@ -74,8 +76,8 @@ export const KEY = {
                 <div class="relative h-28 bg-slate-950 border border-slate-400 flex select-none touch-none overflow-hidden w-[332px] shrink-0 box-border mx-auto" id="kb-box">
                     ${W.map((k, idx) => `<div class="key-white w-[33px] shrink-0 bg-slate-950 ${idx < 9 ? 'border-r border-slate-400' : ''} flex flex-col justify-end items-center pb-1 cursor-pointer select-none transition-colors" data-semi="${k.s}"><span class="text-[7.5px] font-bold text-slate-400 pointer-events-none">${k.n}</span></div>`).join('')}
                     <div class="absolute inset-0 pointer-events-none w-[330px] h-full">
-                        <!-- Accidentals aligned to exact integer pixel centers over white key dividers with uniform 1px border -->
-                        ${B.map(bk => `<div class="key-black absolute h-16 bg-slate-950 border border-slate-400 border-t-0 pointer-events-auto cursor-pointer select-none transition-colors" style="left:${bk.l}px;width:${bk.w}px;" data-semi="${bk.s}"></div>`).join('')}
+                        <!-- Accidentals: 6 full black keys centered over dividers + 2 edge half-keys aligned to outer frame without duplicate borders -->
+                        ${B.map(bk => `<div class="key-black absolute h-16 bg-slate-950 ${bk.extraBorder} pointer-events-auto cursor-pointer select-none transition-colors" style="left:${bk.l}px;width:${bk.w}px;" data-semi="${bk.s}"></div>`).join('')}
                     </div>
                 </div>
             </div>`;
