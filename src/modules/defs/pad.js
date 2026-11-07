@@ -287,7 +287,13 @@ export const PAD = {
 
         return `
         <div class="flex flex-col gap-1.5 p-0.5 select-none w-[160px] mx-auto">
-            <!-- 1. Pad Canvas with Polarity Buttons -->
+            <!-- Row 1: Title Setting Input -->
+            <div class="flex items-center justify-between gap-1 pb-1 border-b border-slate-800">
+                <span class="text-[7.5px] font-bold text-cyan-400/90 font-mono tracking-wider uppercase">NAME</span>
+                <input type="text" id="pad-modal-name-input" class="bg-slate-950/90 border border-slate-700/80 hover:border-cyan-400 focus:border-cyan-400 text-cyan-300 focus:ring-cyan-400/50 rounded px-1.5 py-0.5 text-[9px] font-mono font-bold focus:outline-none focus:ring-1 h-[20px] flex-1 text-center select-text cursor-text leading-none shadow-inner ml-2" value="${m.name || 'PAD'}" placeholder="PAD" maxlength="10" title="PADの名前を編集">
+            </div>
+
+            <!-- 2. Pad Canvas with Polarity Buttons -->
             <div class="relative w-[136px] h-[136px] ml-5 mb-5 select-none shrink-0">
                 <!-- Inner Touch Area (Canvas) -->
                 <div class="relative w-full h-full bg-black rounded border border-slate-700/80 overflow-hidden shadow-inner select-none touch-none overscroll-contain" id="pad-modal-touch-area" style="opacity: ${m.opacity ?? 0.8};">
@@ -335,6 +341,34 @@ export const PAD = {
     },
     bindEvents: (m, ctx, onChange) => {
         const root = ctx?.getDialogElement ? (ctx.getDialogElement() || document) : document;
+
+        // 0. Title Name Input
+        const nameInput = root.querySelector('#pad-modal-name-input');
+        if (nameInput) {
+            ['pointerdown', 'mousedown', 'keydown'].forEach(ev => nameInput.addEventListener(ev, (e) => e.stopPropagation()));
+            nameInput.addEventListener('input', (e) => {
+                const val = e.target.value;
+                m.name = val;
+                const ui = ctx?.ui || ctx || window.__GS_APP__;
+                if (ui?.synth) {
+                    ui.synth.updateModule(`${ui.currentPageId}/${m.id}`, m, ui.getPatchState(m.id));
+                }
+                ui?.renderCell?.(m.row * (ui.COLS || 4) + m.col);
+                onChange?.();
+            });
+            nameInput.addEventListener('blur', (e) => {
+                if (!e.target.value.trim()) {
+                    e.target.value = 'PAD';
+                    m.name = 'PAD';
+                    const ui = ctx?.ui || ctx || window.__GS_APP__;
+                    if (ui?.synth) {
+                        ui.synth.updateModule(`${ui.currentPageId}/${m.id}`, m, ui.getPatchState(m.id));
+                    }
+                    ui?.renderCell?.(m.row * (ui.COLS || 4) + m.col);
+                    onChange?.();
+                }
+            });
+        }
 
         // Axis Polarity Option Buttons (X: ▲, Y: ▶)
         const bindPol = (sel, key) => {

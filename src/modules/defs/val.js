@@ -208,7 +208,13 @@ export const VALUE = {
 
         return `
             <div class="flex flex-col gap-1.5 p-0.5 select-none text-[9px] w-[160px] mx-auto">
-                <!-- Row 1: 2x Panel Slider with Quick Limits (MAX / DEF / MIN) -->
+                <!-- Row 1: Variable Name / Title Setting Input -->
+                <div class="flex items-center justify-between gap-1 pb-1 border-b border-slate-800">
+                    <span class="text-[7.5px] font-bold text-amber-400/90 font-mono tracking-wider uppercase">NAME</span>
+                    <input type="text" id="val-modal-name-input" class="bg-slate-950/90 border border-slate-700/80 hover:border-amber-400 focus:border-amber-400 text-amber-300 focus:ring-amber-400/50 rounded px-1.5 py-0.5 text-[9px] font-mono font-bold focus:outline-none focus:ring-1 h-[20px] flex-1 text-center select-text cursor-text leading-none shadow-inner ml-2" value="${m.label || m.name || 'VAL'}" placeholder="VAL" maxlength="8" title="VALUE変数名を編集">
+                </div>
+
+                <!-- Row 2: 2x Panel Slider with Quick Limits (MAX / DEF / MIN) -->
                 <div class="flex items-center justify-between gap-1.5 pt-0.5">
                     <!-- Vertical 2x Slider (w-28 h-14 -> 112px x 56px, exactly 2x of w-14 h-7) -->
                     <div id="val-modal-slider-box" class="relative w-28 h-14 shrink-0 rounded border border-slate-600 bg-slate-950/60 p-[2px] flex flex-col justify-end overflow-hidden cursor-ns-resize touch-none shadow-lg">
@@ -248,6 +254,36 @@ export const VALUE = {
 
     bindEvents: (m, ctx, onChange) => {
         const root = ctx?.getDialogElement ? (ctx.getDialogElement() || document) : document;
+
+        // 0. Variable Name / Title input
+        const nameInput = root.querySelector('#val-modal-name-input');
+        if (nameInput) {
+            ['pointerdown', 'mousedown', 'keydown'].forEach(ev => nameInput.addEventListener(ev, (e) => e.stopPropagation()));
+            nameInput.addEventListener('input', (e) => {
+                const val = e.target.value;
+                m.label = val;
+                m.name = val;
+                const ui = ctx?.ui || ctx || window.__GS_APP__;
+                if (ui?.synth) {
+                    ui.synth.updateModule(`${ui.currentPageId}/${m.id}`, m, ui.getPatchState(m.id));
+                }
+                ui?.renderCell?.(m.row * (ui.COLS || 4) + m.col);
+                onChange?.();
+            });
+            nameInput.addEventListener('blur', (e) => {
+                if (!e.target.value.trim()) {
+                    e.target.value = 'VAL';
+                    m.label = 'VAL';
+                    m.name = 'VAL';
+                    const ui = ctx?.ui || ctx || window.__GS_APP__;
+                    if (ui?.synth) {
+                        ui.synth.updateModule(`${ui.currentPageId}/${m.id}`, m, ui.getPatchState(m.id));
+                    }
+                    ui?.renderCell?.(m.row * (ui.COLS || 4) + m.col);
+                    onChange?.();
+                }
+            });
+        }
 
         // 1. STEP Button Group
         root.querySelectorAll('.val-step-btn').forEach(btn => {
