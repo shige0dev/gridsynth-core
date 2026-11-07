@@ -20,30 +20,15 @@ export const TILT = {
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
 
     renderGrid: (m) => {
-        // Standardized panel bars shared with SPK, MIX, etc.
-        const barHtmls = ['x', 'y', 'z'].map(ax => UIHelpers.renderPanelBars([
-            {
-                pct: 50,
-                width: 'w-2',
-                innerCls: `tilt-bar-${ax} sensor-bar-${ax} transition-all duration-75`,
-                color: 'bg-gradient-to-t from-teal-500 to-cyan-300'
-            }
-        ], { noWrapper: true, heightCls: 'h-7' }));
-
         return `
-            <div class="relative w-full h-full pointer-events-none select-none">
-                <div class="absolute left-[5px] bottom-[16px] flex flex-col items-start leading-none pointer-events-none">
-                    <span class="text-[7.5px] font-mono font-bold text-teal-400/90 tracking-tight">3-AXIS</span>
-                    <span class="text-[6.5px] font-mono text-slate-500 font-semibold tracking-tighter">TILT</span>
-                </div>
-                <div class="absolute bottom-[14px] left-[2px] right-[2px] flex justify-between items-end pointer-events-none select-none">
-                    <div class="w-2"></div>
-                    <div class="w-2"></div>
-                    <div class="w-2"></div>
-                    ${['x', 'y', 'z'].map((ax, idx) => `
-                        <div class="w-2 flex flex-col items-center gap-0.5">
+            <div class="flex flex-col items-center justify-center w-full h-full pointer-events-none select-none">
+                <div class="flex items-center justify-center gap-1.5 my-auto">
+                    ${['x', 'y', 'z'].map(ax => `
+                        <div class="flex flex-col items-center gap-0.5">
+                            <div class="w-2.5 h-7 rounded-xs p-[1px] border border-slate-600 bg-slate-950/40 relative panel-bar-slot flex flex-col justify-end">
+                                <div class="w-full tilt-bar-${ax} sensor-bar-${ax} bg-gradient-to-t from-teal-500 to-cyan-300 rounded-xs transition-all duration-75" style="height: 50%;"></div>
+                            </div>
                             <span class="font-mono text-[6.5px] font-bold text-slate-400 leading-none uppercase">${ax}</span>
-                            ${barHtmls[idx]}
                         </div>
                     `).join('')}
                 </div>
@@ -54,26 +39,24 @@ export const TILT = {
         const isTared = Boolean(m.tareX || m.tareY || m.tareZ);
 
         return `
-            <div class="flex flex-col gap-2 p-1 select-none text-[9px] w-[164px] mx-auto">
+            <div class="flex flex-col gap-2.5 p-1 select-none text-[9px] w-[164px] mx-auto">
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800">
                     <span class="text-[8px] font-mono font-bold text-teal-300 tracking-wider">3-AXIS TILT</span>
                     <span id="tilt-modal-status" class="px-1.5 py-0.2 rounded text-[6.5px] font-mono font-bold bg-slate-900 text-slate-500 border border-slate-800">NO SENSOR</span>
                 </div>
 
-                <!-- Live Values (3 Columns: X, Y, Z titles with values below) -->
-                <div class="bg-slate-950/80 rounded-lg border border-slate-800/90 p-1.5 select-none">
-                    <div class="grid grid-cols-3 gap-1">
-                        ${['x', 'y', 'z'].map(ax => `
-                            <div class="flex flex-col items-center justify-center bg-slate-900/90 py-1.5 px-0.5 rounded border border-slate-800">
-                                <span class="text-[7.5px] font-mono font-bold text-slate-400 uppercase tracking-wider mb-0.5">${ax}</span>
-                                <span id="tilt-modal-val-${ax}" class="text-[12px] font-mono font-extrabold text-teal-300 leading-none tracking-tight">+0.00</span>
-                            </div>
-                        `).join('')}
-                    </div>
+                <!-- Live Values (Simple 3 columns without nested border frames) -->
+                <div class="grid grid-cols-3 gap-2 py-1 select-none text-center">
+                    ${['x', 'y', 'z'].map(ax => `
+                        <div class="flex flex-col items-center justify-center">
+                            <span class="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-wider mb-1">${ax}</span>
+                            <span id="tilt-modal-val-${ax}" class="text-[14px] font-mono font-extrabold text-teal-300 tracking-tight leading-none">+0.00</span>
+                        </div>
+                    `).join('')}
                 </div>
 
                 <!-- Zero Point Calibration (Tare / Reset) -->
-                <div class="space-y-1 pt-1 border-t border-slate-800/80">
+                <div class="space-y-1 pt-1.5 border-t border-slate-800/80">
                     <div class="flex justify-between items-center text-[7px] text-slate-400">
                         <span class="font-bold uppercase tracking-wider font-mono">ZERO REF</span>
                         <span class="font-mono text-[6.5px] px-1 py-0.2 rounded ${isTared ? 'bg-amber-950/80 text-amber-300 border border-amber-500/50' : 'bg-slate-900 text-slate-500 border border-slate-800'}">${isTared ? 'CALIBRATED' : 'DEFAULT'}</span>
