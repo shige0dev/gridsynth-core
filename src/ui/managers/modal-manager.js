@@ -33,6 +33,7 @@ export const MODAL_WIDTHS = {
 
     // Effects
     DELAY: 'w-[200px]',
+    LAG: 'w-[190px]',
     CVDELAY: 'w-[190px]',
     REVERB: 'w-[210px]',
 
@@ -279,7 +280,7 @@ export class ModalManager {
             let currentTab = 'basic'; // 'basic' | 'factory' | 'user'
             let factoryCategory = 'ALL'; // 'ALL' | 'Synth Voice' | 'Percussion' | 'Effect'
 
-            const ALIAS_TYPES = new Set(['SENSOR', 'SNS']);
+            const ALIAS_TYPES = new Set(['SENSOR', 'SNS', 'CVDELAY']);
             const renderContent = () => {
                 const basicTypes = Object.keys(MODULE_REGISTRY).filter(t => {
                     if (t === 'SUB') return false; // Placed under User Subpatch area
@@ -308,7 +309,7 @@ export class ModalManager {
                         name: 'CV',
                         sub: 'CV (変調・演算・エンベロープ)',
                         color: 'purple',
-                        types: ['LFO', 'ADSR', 'RF', 'AR', 'CHORD', 'SCALE', 'MATH1', 'MATH2', 'SH', 'COUNT', 'LUT', 'MATRIX', 'CVDELAY', 'VALUE', 'TILT', 'THROUGH', 'SUB_IO']
+                        types: ['LFO', 'ADSR', 'RF', 'AR', 'CHORD', 'SCALE', 'MATH1', 'MATH2', 'SH', 'COUNT', 'LUT', 'MATRIX', 'LAG', 'VALUE', 'TILT', 'THROUGH', 'SUB_IO']
                     },
                     {
                         name: 'VISUALIZER',

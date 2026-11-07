@@ -46,7 +46,7 @@ export const DELAY = {
     }
 };
 
-export const CVDELAY = {
+export const LAG = {
     create: (ctx, d) => {
         const w = new AudioWorkletNode(ctx, 'cv-delay-processor', { numberOfInputs: 2, numberOfOutputs: 1 });
         const pTime = w.parameters.get('timeMs');
@@ -78,6 +78,8 @@ export const CVDELAY = {
         if (pDepth) AudioHelpers.set(pDepth, d.cvDepth ?? 1.0, ctx, 0.005);
     }
 };
+
+export const CVDELAY = LAG;
 
 export const REVERB = {
     create: (ctx, d, patch) => {
@@ -124,6 +126,7 @@ export const REVERB = {
 
 export const effectsAudioDefs = {
     DELAY,
+    LAG,
     CVDELAY,
     REVERB
 };

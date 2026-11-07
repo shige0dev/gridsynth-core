@@ -16,9 +16,9 @@ export const DELAY = {
     renderGrid: (m) => `<div class="flex flex-col items-center justify-center leading-tight pointer-events-none text-cyan-400"><span class="text-[13px] font-mono font-bold">${Math.round((m.delayTime??0.3)*1000)}ms</span><span class="text-[9px] font-mono">fb:${(m.feedback??0.4).toFixed(2)}</span></div>`
 };
 
-export const CVDELAY = {
+export const LAG = {
     color: 'teal',
-    defaults: () => ({ type: 'CVDELAY', timeMs: 50, cvDepth: 1.0 }),
+    defaults: () => ({ type: 'LAG', timeMs: 50, cvDepth: 1.0 }),
     ports: () => ({
         in: [
             { port: 'cv_in', color: 'bg-yellow-400' },
@@ -29,17 +29,18 @@ export const CVDELAY = {
     schema: {
         color: 'teal',
         sliders: [
-            { key: 'timeMs', label: 'DELAY', min: 0, max: 2000, step: 1, default: 50, unit: 'ms', cvPort: 'time_cv', patchedVal: 50, patchedText: 'EXT CV', format: v => `${Math.round(v)}ms` }
+            { key: 'timeMs', label: 'TIME', min: 0, max: 2000, step: 1, default: 50, unit: 'ms', cvPort: 'time_cv', patchedVal: 50, patchedText: 'EXT CV', format: v => `${Math.round(v)}ms` }
         ]
     },
     renderGrid: (m, ctx) => {
         const isP = ctx?.patched?.has('time_cv');
         return `<div class="flex flex-col items-center justify-center leading-tight pointer-events-none text-teal-300">
-            <span class="text-[8px] font-bold uppercase tracking-wider text-slate-400">CV DELAY</span>
             <span class="text-[13px] font-mono font-bold">${isP ? 'EXT' : `${Math.round(m.timeMs ?? 50)}<span class="text-[9px] ml-0.5">ms</span>`}</span>
         </div>`;
     }
 };
+
+export const CVDELAY = LAG;
 
 export const REVERB = {
     color: 'violet',
@@ -66,6 +67,7 @@ export const REVERB = {
 
 export const effectsDefs = {
     DELAY,
+    LAG,
     CVDELAY,
     REVERB
 };

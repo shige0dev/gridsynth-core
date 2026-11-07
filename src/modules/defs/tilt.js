@@ -60,24 +60,16 @@ export const TILT = {
                     <span id="tilt-modal-status" class="px-1.5 py-0.2 rounded text-[6.5px] font-mono font-bold bg-slate-900 text-slate-500 border border-slate-800">NO SENSOR</span>
                 </div>
 
-                <!-- Live Meters -->
-                <div class="bg-slate-950/80 rounded border border-slate-800/90 p-1.5 space-y-1.5">
-                    ${[
-                        { id: 'x', label: 'X (ROLL)' },
-                        { id: 'y', label: 'Y (PITCH)' },
-                        { id: 'z', label: 'Z (VERT)' }
-                    ].map(ax => `
-                        <div class="space-y-0.5">
-                            <div class="flex justify-between items-center text-[7.5px] font-mono leading-none">
-                                <span class="text-slate-400 font-semibold">${ax.label}</span>
-                                <span id="tilt-modal-val-${ax.id}" class="text-teal-300 font-bold font-mono">0.00</span>
+                <!-- Live Values (3 Columns: X, Y, Z titles with values below) -->
+                <div class="bg-slate-950/80 rounded-lg border border-slate-800/90 p-1.5 select-none">
+                    <div class="grid grid-cols-3 gap-1">
+                        ${['x', 'y', 'z'].map(ax => `
+                            <div class="flex flex-col items-center justify-center bg-slate-900/90 py-1.5 px-0.5 rounded border border-slate-800">
+                                <span class="text-[7.5px] font-mono font-bold text-slate-400 uppercase tracking-wider mb-0.5">${ax}</span>
+                                <span id="tilt-modal-val-${ax}" class="text-[12px] font-mono font-extrabold text-teal-300 leading-none tracking-tight">+0.00</span>
                             </div>
-                            <div class="h-2 w-full bg-slate-900 rounded-sm relative overflow-hidden border border-slate-800">
-                                <div class="absolute top-0 bottom-0 left-1/2 w-[1px] bg-slate-600/80 z-10"></div>
-                                <div id="tilt-modal-bar-${ax.id}" class="absolute top-0 bottom-0 bg-gradient-to-r from-teal-500 to-cyan-300 transition-all duration-75" style="left:50%; width:0%;"></div>
-                            </div>
-                        </div>
-                    `).join('')}
+                        `).join('')}
+                    </div>
                 </div>
 
                 <!-- Zero Point Calibration (Tare / Reset) -->
@@ -151,10 +143,10 @@ export const TILT = {
             const statusEl = targetModal.querySelector('#tilt-modal-status') || targetModal.querySelector('#sensor-modal-status');
             if (statusEl) {
                 if (active) {
-                    statusEl.textContent = 'LIVE 30Hz';
-                    statusEl.className = 'px-1.5 py-0.2 rounded text-[6.5px] font-mono font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-500/50 shadow-[0_0_6px_rgba(52,211,153,0.3)]';
+                    statusEl.textContent = 'ACTIVE';
+                    statusEl.className = 'px-1.5 py-0.2 rounded text-[6.5px] font-mono font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-500/50';
                 } else {
-                    statusEl.textContent = 'DESKTOP / NO SENSOR';
+                    statusEl.textContent = 'NO SENSOR';
                     statusEl.className = 'px-1.5 py-0.2 rounded text-[6.5px] font-mono font-bold bg-slate-900 text-slate-500 border border-slate-800';
                 }
             }
@@ -165,18 +157,6 @@ export const TILT = {
                 if (valEl) {
                     const v = vals[ax];
                     valEl.textContent = (v >= 0 ? '+' : '') + v.toFixed(2);
-                }
-
-                const barEl = targetModal.querySelector(`#tilt-modal-bar-${ax}`) || targetModal.querySelector(`#sensor-modal-bar-${ax}`);
-                if (barEl) {
-                    const v = Math.max(-1, Math.min(1, vals[ax]));
-                    if (v >= 0) {
-                        barEl.style.left = '50%';
-                        barEl.style.width = `${v * 50}%`;
-                    } else {
-                        barEl.style.left = `${50 - Math.abs(v) * 50}%`;
-                        barEl.style.width = `${Math.abs(v) * 50}%`;
-                    }
                 }
             });
         }

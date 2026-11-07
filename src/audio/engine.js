@@ -2,7 +2,7 @@ import { AUDIO_REGISTRY } from './registry.js?v=609';
 import { AudioHelpers } from './helpers.js';
 import { parseConn, normalizeSubPort, PORT_ALIASES } from '../core/utils.js?v=459';
 
-export const WORKLET_MODULE_TYPES = ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'ADSR', 'LFO', 'MATH1', 'MATH2', 'SH', 'FOLD', 'CVDELAY', 'SCOPE', 'LISS', 'MARKOV', 'CHORD', 'FMx3', 'FMCORE', 'DIST4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD', 'COUNT', 'LUT', 'MATRIX'];
+export const WORKLET_MODULE_TYPES = ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'ADSR', 'LFO', 'MATH1', 'MATH2', 'SH', 'FOLD', 'LAG', 'CVDELAY', 'SCOPE', 'LISS', 'MARKOV', 'CHORD', 'FMx3', 'FMCORE', 'DIST4', 'ARP', 'SCALE', 'RF', 'AR', 'WAVE', 'PAD', 'COUNT', 'LUT', 'MATRIX'];
 
 
 export class SynthEngine {
@@ -98,7 +98,7 @@ export class SynthEngine {
                 m.nodes.w?.port.postMessage({ type: 'RESET' });
             }
             m.clear?.();
-            if (m.type === 'CVDELAY' || m.type === 'ADSR' || m.type === 'SH' || m.type === 'CLK' || m.type === 'LFO') {
+            if (m.type === 'LAG' || m.type === 'CVDELAY' || m.type === 'ADSR' || m.type === 'SH' || m.type === 'CLK' || m.type === 'LFO') {
                 m.nodes.w?.port?.postMessage({ type: 'RESET' });
             }
         });
