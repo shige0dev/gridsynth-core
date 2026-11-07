@@ -27,16 +27,6 @@ export const PAT = {
             _addPitch: 'c2'
         };
     },
-    onNormalize: (m) => {
-        if (!m._tokens && m.pattern) {
-            m._tokens = parsePatternToTokens(m.pattern);
-        }
-    },
-    onExport: (cloned, m) => {
-        if (m._tokens && m._tokens.length > 0) {
-            cloned.pattern = tokensToPattern(m._tokens);
-        }
-    },
     ports: () => ({
         in: [{ port: 'reset_in', pin: 5, color: 'bg-red-500' }],
         out: [
@@ -210,8 +200,8 @@ export const PAT = {
         let selectedIds = new Set();
 
         const sync = (triggerCb = false) => {
+            m.pattern = tokensToPattern(m._tokens);
             if (triggerCb) {
-                m.pattern = tokensToPattern(m._tokens);
                 m._isEditing = false;
                 cb();
             } else {

@@ -1,10 +1,10 @@
 import { isSubModule } from '../core/utils.js?v=459';
 import { parsePatch } from '../core/patch.js?v=459';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=620';
-import { UIHelpers } from './helpers.js?v=620';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=619';
+import { UIHelpers } from './helpers.js?v=619';
 import { PresetManager } from './managers/preset-manager.js?v=459';
-import { ModalManager } from './managers/modal-manager.js?v=620';
-import { CableManager } from './managers/cable-manager.js?v=620';
+import { ModalManager } from './managers/modal-manager.js?v=618';
+import { CableManager } from './managers/cable-manager.js?v=459';
 import { PageManager } from './managers/page-manager.js?v=459';
 import { InteractionManager } from './managers/interaction-manager.js?v=613';
 import { ToolbarManager } from './managers/toolbar-manager.js?v=459';
