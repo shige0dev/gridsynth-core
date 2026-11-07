@@ -282,7 +282,8 @@ export const VALUE = {
             if (!btn) return;
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                const res = await ctx.prompt(`${label} 入力`, String(m[propKey] ?? 0));
+                const numpadFn = ctx.numpad || ctx.prompt;
+                const res = await numpadFn(`${label} 入力`, m[propKey] ?? 0, -100, 100);
                 if (res !== null && res !== '') {
                     const num = parseFloat(res);
                     if (!isNaN(num)) {

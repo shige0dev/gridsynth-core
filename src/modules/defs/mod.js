@@ -29,11 +29,19 @@ const renderMathModalUI = (m, ctx, modeGroups, valKeys) => {
                             </div>`;
                     }
                     return `
-                        <div class="flex items-center justify-between bg-slate-950/70 px-2 py-1.5 rounded-lg border border-purple-500/40 shadow-sm select-none">
-                            <span class="text-[8px] font-bold text-purple-300 font-mono">VAL ${k}</span>
-                            <div id="math-val-${port}-box" class="flex items-center gap-1 cursor-ns-resize touch-none hover:bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700/60 transition group" title="上下スワイプで増減 / タップで数値入力">
-                                <span class="text-[7px] text-slate-500 group-hover:text-purple-300 transition-colors pointer-events-none">↕</span>
-                                <span id="math-val-${port}-disp" class="text-[9.5px] font-mono text-cyan-300 group-hover:text-cyan-100 font-bold leading-none pointer-events-none">${fmt(val)}</span>
+                        <div class="bg-slate-950/80 p-1.5 rounded-lg border border-purple-500/50 shadow-sm select-none space-y-1">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[8px] font-bold text-purple-300 font-mono">VAL ${k}</span>
+                                <button id="math-val-${port}-btn" class="px-2 py-0.5 rounded bg-slate-900 hover:bg-purple-950/90 border border-purple-500/60 hover:border-purple-400 text-cyan-300 hover:text-cyan-100 font-mono text-[10px] font-bold shadow-sm transition active:scale-95 flex items-center gap-1 cursor-pointer" title="タップして数値キーパッド入力">
+                                    <span class="text-[7.5px] text-purple-400">⌨</span>
+                                    <span id="math-val-${port}-disp">${fmt(val)}</span>
+                                </button>
+                            </div>
+                            <div class="grid grid-cols-4 gap-0.5">
+                                <button class="math-step-btn h-4 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/80 text-[6.5px] font-mono font-bold transition active:scale-95" data-key="${k}" data-delta="-1">-1</button>
+                                <button class="math-step-btn h-4 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/80 text-[6.5px] font-mono font-bold transition active:scale-95" data-key="${k}" data-delta="-0.1">-0.1</button>
+                                <button class="math-step-btn h-4 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/80 text-[6.5px] font-mono font-bold transition active:scale-95" data-key="${k}" data-delta="0.1">+0.1</button>
+                                <button class="math-step-btn h-4 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/80 text-[6.5px] font-mono font-bold transition active:scale-95" data-key="${k}" data-delta="1">+1</button>
                             </div>
                         </div>`;
                 }).join('')}
@@ -49,66 +57,38 @@ const bindMathEventsUI = (m, ctx, cb, valKeys) => {
             cb();
         });
     });
+
+    // Quick Step Buttons (-1, -0.1, +0.1, +1)
+    document.querySelectorAll('.math-step-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const k = btn.dataset.key;
+            const delta = parseFloat(btn.dataset.delta);
+            if (!k || isNaN(delta)) return;
+            const cur = Number(m[`val${k}`] ?? (k === 'B' ? 1.0 : 0.0));
+            const clamped = Math.max(-10.0, Math.min(10.0, Math.round((cur + delta) * 100) / 100));
+            m[`val${k}`] = clamped;
+            ctx.reRenderModal();
+            cb();
+        });
+    });
+
+    // Tap to open on-screen Numpad
     valKeys.forEach(k => {
         const port = k.toLowerCase();
-        const box = document.getElementById(`math-val-${port}-box`);
-        const disp = document.getElementById(`math-val-${port}-disp`);
-        if (!box) return;
-
-        let isDragging = false;
-        let startY = 0;
-        let startVal = 0;
-        let moved = false;
-
-        const onPointerMove = (e) => {
-            if (!isDragging) return;
-            e.preventDefault();
-            const deltaY = startY - e.clientY;
-            if (Math.abs(deltaY) > 3) moved = true;
-            // 15pxスワイプで約0.1V増減（感度よく滑らかに加減）
-            const deltaVal = deltaY * 0.01;
-            const clamped = Math.max(-10.0, Math.min(10.0, Math.round((startVal + deltaVal) * 20) / 20));
-            m[`val${k}`] = clamped;
-            if (disp) disp.textContent = (clamped >= 0 ? '+' : '') + clamped.toFixed(2);
-            cb();
-        };
-
-        const onPointerUp = async (e) => {
-            if (!isDragging) return;
-            isDragging = false;
-            window.removeEventListener('pointermove', onPointerMove);
-            window.removeEventListener('pointerup', onPointerUp);
-            window.removeEventListener('pointercancel', onPointerUp);
-            box.classList.remove('ring-1', 'ring-purple-400', 'bg-purple-950/60');
-            try { box.releasePointerCapture(e.pointerId); } catch (_) {}
-
-            // スワイプ移動がなく単にタップされた場合は手入力プロンプトを開く
-            if (!moved) {
-                const cur = String(m[`val${k}`] ?? (k === 'B' ? 1.0 : 0.0));
-                const res = await ctx.prompt(`CONSTANT ${k}`, cur);
-                if (res !== null && res !== '') {
-                    const num = parseFloat(res);
-                    if (!isNaN(num)) {
-                        m[`val${k}`] = Math.max(-10.0, Math.min(10.0, num));
-                        ctx.reRenderModal();
-                        cb();
-                    }
-                }
-            }
-        };
-
-        box.addEventListener('pointerdown', (e) => {
-            e.preventDefault();
+        const btn = document.getElementById(`math-val-${port}-btn`);
+        if (!btn) return;
+        btn.addEventListener('click', async (e) => {
             e.stopPropagation();
-            isDragging = true;
-            moved = false;
-            startY = e.clientY;
-            startVal = m[`val${k}`] ?? (k === 'B' ? 1.0 : 0.0);
-            box.classList.add('ring-1', 'ring-purple-400', 'bg-purple-950/60');
-            try { box.setPointerCapture(e.pointerId); } catch (_) {}
-            window.addEventListener('pointermove', onPointerMove, { passive: false });
-            window.addEventListener('pointerup', onPointerUp);
-            window.addEventListener('pointercancel', onPointerUp);
+            const cur = Number(m[`val${k}`] ?? (k === 'B' ? 1.0 : 0.0));
+            const numpadFn = ctx.numpad || ctx.prompt;
+            const res = await numpadFn(`CONSTANT ${k}`, cur, -10.0, 10.0);
+            if (res !== null && res !== '' && !isNaN(Number(res))) {
+                const num = parseFloat(res);
+                m[`val${k}`] = Math.max(-10.0, Math.min(10.0, Math.round(num * 100) / 100));
+                ctx.reRenderModal();
+                cb();
+            }
         });
     });
 };

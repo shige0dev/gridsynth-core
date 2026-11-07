@@ -341,6 +341,7 @@ export class UIController {
     reRenderModal() { return this.modalManager.reRenderModal(); }
     openAddModal(slotIdx) { return this.modalManager.openAddModal(slotIdx); }
     openCustomPrompt(title, init) { return this.modalManager.openCustomPrompt(title, init); }
+    openNumpadPrompt(title, init, min, max) { return this.modalManager.openNumpadPrompt(title, init, min, max); }
     openCustomAlert(title, message, details = [], options = {}) { return this.modalManager.openCustomAlert(title, message, details, options); }
 
     getUserSubpatches() { return this.presetManager.getUserSubpatches(); }
