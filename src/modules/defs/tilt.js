@@ -12,24 +12,38 @@ export const TILT = {
     ports: () => ({
         in: [],
         out: [
-            { port: 'x_out', pin: 7, color: 'bg-yellow-400' },
-            { port: 'y_out', pin: 8, color: 'bg-yellow-400' },
-            { port: 'z_out', pin: 9, color: 'bg-yellow-400' }
+            { port: 'x_out', pin: 8, color: 'bg-yellow-400' },
+            { port: 'y_out', pin: 9, color: 'bg-yellow-400' },
+            { port: 'z_out', pin: 10, color: 'bg-yellow-400' }
         ]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
 
     renderGrid: (m) => {
+        // Standardized panel bars shared with SPK, MIX, etc.
+        const barHtmls = ['x', 'y', 'z'].map(ax => UIHelpers.renderPanelBars([
+            {
+                pct: 50,
+                width: 'w-2',
+                innerCls: `tilt-bar-${ax} sensor-bar-${ax} transition-all duration-75`,
+                color: 'bg-gradient-to-t from-teal-500 to-cyan-300'
+            }
+        ], { noWrapper: true, heightCls: 'h-7' }));
+
         return `
-            <div class="flex flex-col items-center justify-between w-full h-full pt-2 pb-3 pointer-events-none select-none">
-                <div class="flex items-center justify-center gap-1.5 my-auto">
-                    ${['x', 'y', 'z'].map(ax => `
-                        <div class="flex flex-col items-center gap-0.5">
-                            <div class="w-2.5 h-7 rounded-xs p-[1px] border border-slate-700/80 bg-slate-950/80 relative overflow-hidden flex items-center justify-center panel-bar-slot" data-tilt-slot="${ax}">
-                                <div class="absolute top-1/2 left-0 right-0 h-[1px] bg-slate-600/70 z-10"></div>
-                                <div class="tilt-bar-${ax} sensor-bar-${ax} absolute left-[1px] right-[1px] bg-gradient-to-t from-teal-500 to-cyan-300 rounded-[1px] transition-all duration-75" style="top:50%; height:0%;"></div>
-                            </div>
+            <div class="relative w-full h-full pointer-events-none select-none">
+                <div class="absolute left-[5px] bottom-[16px] flex flex-col items-start leading-none pointer-events-none">
+                    <span class="text-[7.5px] font-mono font-bold text-teal-400/90 tracking-tight">3-AXIS</span>
+                    <span class="text-[6.5px] font-mono text-slate-500 font-semibold tracking-tighter">TILT</span>
+                </div>
+                <div class="absolute bottom-[14px] left-[2px] right-[2px] flex justify-between items-end pointer-events-none select-none">
+                    <div class="w-2"></div>
+                    <div class="w-2"></div>
+                    <div class="w-2"></div>
+                    ${['x', 'y', 'z'].map((ax, idx) => `
+                        <div class="w-2 flex flex-col items-center gap-0.5">
                             <span class="font-mono text-[6.5px] font-bold text-slate-400 leading-none uppercase">${ax}</span>
+                            ${barHtmls[idx]}
                         </div>
                     `).join('')}
                 </div>
@@ -120,20 +134,15 @@ export const TILT = {
         if (!data) return;
         const { x = 0, y = 0, z = 0, active = false } = data;
 
-        // Update cell
+        // Update cell standardized bars
         if (cell) {
             const vals = { x, y, z };
             ['x', 'y', 'z'].forEach(ax => {
                 const bar = cell.querySelector(`.tilt-bar-${ax}`) || cell.querySelector(`.sensor-bar-${ax}`);
                 if (!bar) return;
                 const v = Math.max(-1, Math.min(1, vals[ax]));
-                if (v >= 0) {
-                    bar.style.top = `${50 - v * 50}%`;
-                    bar.style.height = `${v * 50}%`;
-                } else {
-                    bar.style.top = '50%';
-                    bar.style.height = `${Math.abs(v) * 50}%`;
-                }
+                const pct = Math.max(0, Math.min(100, Math.round(((v + 1) / 2) * 100)));
+                bar.style.height = `${pct}%`;
             });
         }
 
