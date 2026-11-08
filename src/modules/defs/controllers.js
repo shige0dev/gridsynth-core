@@ -11,6 +11,38 @@ export const KEYS_16 = Array.from({ length: 16 }, (_, i) => {
     return { s, absSemi, name, isBlack };
 });
 
+const renderQuantizeMapHTML = (root, mask) => {
+    return NOTES.map((nIn, i) => {
+        const snapSemi = snapToScale(i, root, mask);
+        const snapName = NOTES[snapSemi];
+        const isScaleNote = (i === snapSemi);
+        const isBlack = nIn.includes('#');
+
+        // スナップ先が変わる場所に細い線（区分線）を配置
+        const nextSemi = (i + 1) % 12;
+        const nextSnap = snapToScale(nextSemi, root, mask);
+        const isBoundary = (snapSemi !== nextSnap);
+        const borderR = isBoundary ? 'border-r-2 border-amber-400/90' : 'border-r border-slate-800/50';
+
+        let bgCls = '';
+        if (isScaleNote) {
+            bgCls = isBlack
+                ? 'bg-[hsl(48,65%,20%)] text-yellow-300'
+                : 'bg-[hsl(48,80%,26%)] text-yellow-200 font-bold';
+        } else {
+            bgCls = 'bg-slate-950/80 text-slate-400';
+        }
+
+        return `
+            <div class="flex-1 h-full flex flex-col items-center justify-between py-1 select-none relative transition-colors ${borderR} ${bgCls}" data-quant-semi="${i}" title="${nIn} &rarr; ${snapName}">
+                <!-- 入力半音名 -->
+                <span class="text-[7px] font-mono leading-none ${isBlack ? 'text-slate-500' : 'text-slate-400'}">${nIn}</span>
+                <!-- クオンタイズスナップ先 -->
+                <span class="text-[8px] font-mono font-bold leading-none ${isScaleNote ? 'text-amber-300' : 'text-amber-400/70'}">${snapName}</span>
+            </div>`;
+    }).join('');
+};
+
 export const KEY = {
     color: 'sky',
     KEYS_16,
@@ -88,8 +120,25 @@ export const KEY = {
                 <span class="key-live-cell-note absolute bottom-[10px] left-1/2 -translate-x-1/2 text-[7.5px] font-mono font-bold text-cyan-300 leading-none">${curNote || ''}</span>
             </div>`;
     },
-    // 動的な選定キーの枠線・オクターブハイライトは不要（完全削除）
-    updateLive: null,
+    updateLive: (cell, data, isP, modal) => {
+        if (!modal || !data) return;
+        const inSemi = data.inputSemi ?? -1;
+
+        // モーダル上部のクオンタイズマップの入力ハイライト
+        modal.querySelectorAll('[data-quant-semi]').forEach(el => {
+            const semi = parseInt(el.getAttribute('data-quant-semi'), 10);
+            const isMatch = (inSemi >= 0 && semi === inSemi);
+            el.classList.toggle('!bg-cyan-500/40', isMatch);
+            el.classList.toggle('!text-cyan-200', isMatch);
+            el.classList.toggle('ring-1', isMatch);
+            el.classList.toggle('ring-cyan-300', isMatch);
+        });
+
+        const noteDisp = modal.querySelector('#key-active-note');
+        if (noteDisp && inSemi >= 0 && data.cv !== undefined) {
+            noteDisp.textContent = UIHelpers.cvToNoteName(data.cv);
+        }
+    },
     renderModal: (m) => {
         const curOct = m.octave ?? 3;
         const curRoot = m.root ?? 0;
@@ -127,6 +176,17 @@ export const KEY = {
                     </div>
 
                     <span class="text-[9.5px] font-mono font-bold text-cyan-300 min-w-[28px] text-right" id="key-active-note">${curNote}</span>
+                </div>
+
+                <!-- クオンタイズマッピングルーラー（細い線でクオンタイズ吸着範囲を区分） -->
+                <div class="w-[331px] bg-slate-950/90 p-1.5 rounded-lg border border-slate-800 flex flex-col gap-1 shrink-0">
+                    <div class="flex items-center justify-between text-[7px] font-bold text-slate-400 tracking-wider">
+                        <span>CV IN &rarr; QUANTIZE MAP</span>
+                        <span class="text-amber-400 font-mono text-[7px]">${NOTES[curRoot]} ${scaleKey}</span>
+                    </div>
+                    <div class="flex items-center w-full h-7 bg-slate-900/90 rounded border border-slate-700/60 overflow-hidden" id="key-quant-strip">
+                        ${renderQuantizeMapHTML(curRoot, mask)}
+                    </div>
                 </div>
 
                 <!-- VOLCAスタイル 16本 角のあるスクエアバー (-2 .. 13) -->
@@ -236,7 +296,6 @@ export const KEY = {
 
         const setHighlight = (semi, isPressed) => {
             if (semi === null || semi === undefined || isNaN(semi)) return;
-            // 触っているその1つのバーだけをハイライト（オクターブ上の複数点灯はしない）
             const el = box.querySelector(`[data-key-semi="${semi}"]`);
             if (el) {
                 el.classList.toggle('!bg-cyan-400', isPressed);

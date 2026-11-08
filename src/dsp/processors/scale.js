@@ -11,6 +11,8 @@ export class ScaleProcessor extends AudioWorkletProcessor {
 
         this.heldCv = 1.0;
         this.heldGate = 0.0;
+        this.inputSemi = -1; // 外部入力半音 (0..11)
+        this.sampleCount = 0;
 
         this.port.onmessage = (e) => {
             const d = e.data;
@@ -56,7 +58,10 @@ export class ScaleProcessor extends AudioWorkletProcessor {
         const oct = Math.floor(totalSemi / 12);
         const absSemi = ((totalSemi % 12) + 12) % 12;
         const snapped = this.snapSemi(absSemi);
-        return oct + (snapped / 12.0);
+        return {
+            cv: oct + (snapped / 12.0),
+            inSemi: absSemi
+        };
     }
 
     process(ins, outs) {
@@ -70,15 +75,27 @@ export class ScaleProcessor extends AudioWorkletProcessor {
 
         for (let i = 0; i < len; i++) {
             if (useExternal) {
-                this.heldCv = this.quantize(cvIn[i]);
+                const q = this.quantize(cvIn[i]);
+                this.heldCv = q.cv;
+                this.inputSemi = q.inSemi;
             } else {
                 this.heldCv = this.manualCv;
+                this.inputSemi = -1;
             }
-            // GATE は手動タッチ時のみ 1.0、未タッチ時は確実に 0.0
             this.heldGate = this.manualGate;
 
             cvOut[i] = this.heldCv;
             if (gateOut) gateOut[i] = this.heldGate;
+            this.sampleCount++;
+        }
+
+        if (this.sampleCount >= 1470) {
+            this.sampleCount = 0;
+            this.port.postMessage({
+                type: 'STATE',
+                inputSemi: this.inputSemi,
+                cv: this.heldCv
+            });
         }
 
         return true;

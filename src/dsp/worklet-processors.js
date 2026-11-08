@@ -14,7 +14,7 @@ import './processors/fm.js?v=459';
 import './processors/fm-core.js';
 import './processors/dist4.js?v=470';
 import './processors/arp.js?v=609';
-import './processors/scale.js?v=649';
+import './processors/scale.js?v=652';
 import './processors/rf.js';
 import './processors/ar.js';
 import './processors/wave.js?v=459';
