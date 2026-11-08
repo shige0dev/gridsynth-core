@@ -11,7 +11,7 @@ export const KEYS_16 = Array.from({ length: 16 }, (_, i) => {
     return { s, absSemi, name, isBlack };
 });
 
-const renderQuantizeMapHTML = (root, mask) => {
+const renderQuantizeMapHTML = (root, octave, mask) => {
     const scaleNotes = getScaleNotesInOctave(root, mask);
     const N = scaleNotes.length;
     if (N === 0) return '';
@@ -20,6 +20,9 @@ const renderQuantizeMapHTML = (root, mask) => {
     const vMin = -2.0 / 12.0;
     const vMax = 14.0 / 12.0;
     const totalV = vMax - vMin; // 16 / 12
+
+    const oct = octave ?? 3;
+    const vBase = oct - 1.0; // OCT 1 -> 0V, OCT 2 -> 1V, OCT 3 -> 2V...
 
     // 各スライスは幅 1/N V。オクターブ外も全く同じピッチ幅 1/N V で分割線を延長描画
     const kMin = Math.floor(vMin * N);
@@ -50,8 +53,11 @@ const renderQuantizeMapHTML = (root, mask) => {
             borderR = 'border-r border-slate-700/60';
         }
 
+        const noteOct = Math.floor(vBase + (k / N)) + 1;
+        const noteName = `${NOTES[absSemi]}${noteOct}`;
+
         slices.push(
-            `<div class="h-full relative transition-colors ${borderR} ${bgCls} shrink-0" style="width: ${widthPct}%;" data-quant-slice="${k}" title="${NOTES[absSemi]}"></div>`
+            `<div class="h-full relative transition-colors ${borderR} ${bgCls} shrink-0" style="width: ${widthPct}%;" data-quant-slice="${k}" title="${noteName}"></div>`
         );
     }
 
@@ -202,10 +208,10 @@ export const KEY = {
                 <div class="w-[331px] bg-slate-950/90 p-1.5 rounded-lg border border-slate-800 flex flex-col gap-1 shrink-0">
                     <div class="flex items-center justify-between text-[7px] font-bold text-slate-400 tracking-wider">
                         <span>CV IN &rarr; QUANTIZE MAP</span>
-                        <span class="text-amber-400 font-mono text-[7px]">${NOTES[curRoot]} ${scaleKey}</span>
+                        <span class="text-amber-400 font-mono text-[7px]">${NOTES[curRoot]}${curOct} ${scaleKey}</span>
                     </div>
                     <div class="flex items-center w-full h-[4px] bg-slate-900/90 rounded-[1px] border border-slate-700/60 overflow-hidden" id="key-quant-strip">
-                        ${renderQuantizeMapHTML(curRoot, mask)}
+                        ${renderQuantizeMapHTML(curRoot, curOct, mask)}
                     </div>
                 </div>
 

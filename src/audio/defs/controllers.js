@@ -23,6 +23,7 @@ export const KEY = {
 
         w.port.postMessage({
             type: 'SET_CONFIG',
+            octave: d.octave ?? 3,
             root: d.root ?? 0,
             mask: d.mask || [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
             isPatched
@@ -66,6 +67,7 @@ export const KEY = {
         if (inst?.nodes?.w) {
             inst.nodes.w.port.postMessage({
                 type: 'SET_CONFIG',
+                octave: d.octave ?? 3,
                 root: d.root ?? 0,
                 mask: d.mask || (d.scale ? SCALE_PRESETS[d.scale] : undefined),
                 isPatched: Boolean(patch?.has('cv_in'))
