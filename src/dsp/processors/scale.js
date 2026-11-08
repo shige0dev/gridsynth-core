@@ -3,6 +3,7 @@ export class ScaleProcessor extends AudioWorkletProcessor {
         super();
         this.root = 0; // 0: C, 1: C#, ..., 11: B
         this.mask = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]; // default: CHROMATIC
+        this.isPatched = false;
 
         this.manualCv = 1.0; // default C2 (cv=1.0)
         this.manualGate = 0.0;
@@ -10,8 +11,6 @@ export class ScaleProcessor extends AudioWorkletProcessor {
 
         this.heldCv = 1.0;
         this.heldGate = 0.0;
-        this.heldSemi = -1; // 初期値: -1（入力があるまでハイライトなし）
-        this.sampleCount = 0;
 
         this.port.onmessage = (e) => {
             const d = e.data;
@@ -21,6 +20,9 @@ export class ScaleProcessor extends AudioWorkletProcessor {
                 if (d.rootMidi !== undefined) this.root = Math.max(0, Math.min(11, Math.round(d.rootMidi)));
                 if (Array.isArray(d.mask) && d.mask.length === 12) {
                     this.mask = d.mask;
+                }
+                if (d.isPatched !== undefined) {
+                    this.isPatched = Boolean(d.isPatched);
                 }
             } else if (d.type === 'NOTE' || d.type === 'NOTE_ON' || d.type === 'NOTE_OFF') {
                 const isDown = d.isDown ?? (d.type !== 'NOTE_OFF');
@@ -33,8 +35,6 @@ export class ScaleProcessor extends AudioWorkletProcessor {
                 this.manualCv = cv;
                 this.manualGate = isDown ? 1.0 : 0.0;
                 this.isManualActive = isDown;
-                // タッチ中のみアクティブ半音を設定。離したら -1（消灯）
-                this.heldSemi = isDown ? snappedSemi : -1;
             }
         };
     }
@@ -52,15 +52,11 @@ export class ScaleProcessor extends AudioWorkletProcessor {
     }
 
     quantize(inCv) {
-        // 1V/Oct standard quantizer
         const totalSemi = Math.round(inCv * 12);
         const oct = Math.floor(totalSemi / 12);
         const absSemi = ((totalSemi % 12) + 12) % 12;
         const snapped = this.snapSemi(absSemi);
-        return {
-            cv: oct + (snapped / 12.0),
-            semi: snapped
-        };
+        return oct + (snapped / 12.0);
     }
 
     process(ins, outs) {
@@ -70,37 +66,19 @@ export class ScaleProcessor extends AudioWorkletProcessor {
 
         if (!cvOut) return true;
         const len = cvOut.length;
-        const hasExternalInput = !!(cvIn && cvIn.length > 0);
+        const useExternal = this.isPatched && cvIn && !this.isManualActive;
 
         for (let i = 0; i < len; i++) {
-            if (this.isManualActive) {
-                this.heldCv = this.manualCv;
-                this.heldGate = this.manualGate;
-            } else if (hasExternalInput) {
-                const rawCv = cvIn[i];
-                const q = this.quantize(rawCv);
-                this.heldCv = q.cv;
-                this.heldGate = 1.0;
-                this.heldSemi = q.semi;
+            if (useExternal) {
+                this.heldCv = this.quantize(cvIn[i]);
             } else {
                 this.heldCv = this.manualCv;
-                this.heldGate = 0.0;
-                this.heldSemi = -1; // 外部入力・タッチがない時は消灯
             }
+            // GATE は手動タッチ時のみ 1.0、未タッチ時は確実に 0.0
+            this.heldGate = this.manualGate;
 
             cvOut[i] = this.heldCv;
             if (gateOut) gateOut[i] = this.heldGate;
-            this.sampleCount++;
-        }
-
-        if (this.sampleCount >= 1470) {
-            this.sampleCount = 0;
-            this.port.postMessage({
-                type: 'STATE',
-                activeSemi: this.heldSemi,
-                cv: this.heldCv,
-                gate: this.heldGate
-            });
         }
 
         return true;

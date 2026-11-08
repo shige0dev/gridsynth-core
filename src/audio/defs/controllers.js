@@ -19,17 +19,20 @@ export const KEY = {
             numberOfOutputs: 2
         });
 
+        const isPatched = Boolean(patch?.has('cv_in'));
+
         w.port.postMessage({
             type: 'SET_CONFIG',
             root: d.root ?? 0,
-            mask: d.mask || [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+            mask: d.mask || [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            isPatched
         });
 
         const initMidi = d.currentMidi ?? (Math.round(initCv * 12) + 24);
         w.port.postMessage({
             type: 'NOTE',
             midi: initMidi,
-            isDown: false
+            isDown: false // 必ず未タッチ（GATE 0.0）で初期化
         });
 
         const cvIn = ctx.createGain();
@@ -45,7 +48,7 @@ export const KEY = {
             gateOut.connect(eng.silentSink);
         }
 
-        let liveData = { activeSemi: -1, cv: initCv, gate: 0 };
+        let liveData = { cv: initCv, gate: 0 };
         w.port.onmessage = (e) => {
             if (e.data.type === 'STATE') {
                 liveData = e.data;
@@ -59,12 +62,13 @@ export const KEY = {
             read: () => liveData
         };
     },
-    update: (ctx, inst, d) => {
+    update: (ctx, inst, d, patch) => {
         if (inst?.nodes?.w) {
             inst.nodes.w.port.postMessage({
                 type: 'SET_CONFIG',
                 root: d.root ?? 0,
-                mask: d.mask
+                mask: d.mask,
+                isPatched: Boolean(patch?.has('cv_in'))
             });
         }
     }

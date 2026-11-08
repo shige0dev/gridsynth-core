@@ -55,7 +55,7 @@ export const KEY = {
                     <span class="text-[7.5px] font-mono font-bold text-amber-400 truncate tracking-tight">${rootName} ${scaleName}</span>
                     <span class="text-[7.5px] font-mono font-bold text-cyan-300 ml-1 key-live-cell-note">${curNote}</span>
                 </div>
-                <!-- 16本 VOLCAスタイル タッチバー（-2〜13: A#〜C#） -->
+                <!-- 16本 VOLCAスタイル タッチバー（静的スケール表示、不要なハイライトなし） -->
                 <div class="flex items-center justify-center h-6 gap-[1px] p-0 pointer-events-none">
                     ${KEYS_16.map(k => {
                         const rel = ((k.absSemi - root) % 12 + 12) % 12;
@@ -72,49 +72,13 @@ export const KEY = {
                                 ? 'bg-slate-800/40 border border-slate-700/30'
                                 : 'bg-slate-700/50';
                         }
-                        return `<div data-key-bar="${k.s}" class="w-[3px] h-full rounded-[0.5px] relative shrink-0 ${barBg}"></div>`;
+                        return `<div class="w-[3px] h-full rounded-[0.5px] relative shrink-0 ${barBg}"></div>`;
                     }).join('')}
                 </div>
             </div>`;
     },
-    updateLive: (cell, data, isP, modal) => {
-        const semi = data?.activeSemi ?? -1;
-        const isAct = semi >= 0;
-
-        // パネル上のバーのハイライト（未入力時は消灯）
-        cell.querySelectorAll('[data-key-bar]').forEach(b => {
-            const barSemi = parseInt(b.getAttribute('data-key-bar'), 10);
-            const abs = ((barSemi % 12) + 12) % 12;
-            b.classList.toggle('key-active-bar', isAct && abs === semi);
-        });
-
-        // パネル上のノート名表示
-        const cellNoteEl = cell.querySelector('.key-live-cell-note');
-        if (cellNoteEl) {
-            if (isAct && data?.cv !== undefined) {
-                cellNoteEl.textContent = UIHelpers.cvToNoteName(data.cv);
-            }
-        }
-
-        if (modal) {
-            modal.querySelectorAll('[data-modal-key-bar]').forEach(b => {
-                const barSemi = parseInt(b.getAttribute('data-modal-key-bar'), 10);
-                const abs = ((barSemi % 12) + 12) % 12;
-                const isThisAct = isAct && (abs === semi);
-                b.classList.toggle('ring-2', isThisAct);
-                b.classList.toggle('ring-cyan-300', isThisAct);
-                b.classList.toggle('shadow-[0_0_8px_#67e8f9]', isThisAct);
-            });
-            const noteDisp = modal.querySelector('#key-active-note');
-            if (noteDisp) {
-                if (isAct && data?.cv !== undefined) {
-                    noteDisp.textContent = UIHelpers.cvToNoteName(data.cv);
-                } else if (!isAct && !noteDisp.textContent) {
-                    noteDisp.textContent = '--';
-                }
-            }
-        }
-    },
+    // 動的な選定キーの枠線・オクターブハイライトは不要（完全削除）
+    updateLive: null,
     renderModal: (m) => {
         const curOct = m.octave ?? 3;
         const curRoot = m.root ?? 0;
@@ -154,7 +118,7 @@ export const KEY = {
                     <span class="text-[9.5px] font-mono font-bold text-cyan-300 min-w-[28px] text-right" id="key-active-note">${curNote}</span>
                 </div>
 
-                <!-- VOLCAスタイル 16本 フラット・タッチバー (-2 .. 13) -->
+                <!-- VOLCAスタイル 16本 角のあるスクエアバー (-2 .. 13) -->
                 <div class="w-[331px] h-28 bg-slate-950 p-1.5 rounded-xl border border-slate-800 flex justify-between gap-[2px] select-none touch-none shrink-0" id="volca-key-box">
                     ${KEYS_16.map(k => {
                         const rel = ((k.absSemi - curRoot) % 12 + 12) % 12;
@@ -176,8 +140,8 @@ export const KEY = {
                         }
 
                         return `
-                            <div class="volca-key-item flex-1 h-full rounded-none flex flex-col justify-end items-center pb-1.5 cursor-pointer select-none transition-all duration-75 relative overflow-hidden ${barBg}" data-key-semi="${k.s}" data-modal-key-bar="${k.s}" title="${k.name}">
-                                <div class="absolute inset-0 bg-white opacity-0 active:opacity-20 pointer-events-none"></div>
+                            <div class="volca-key-item flex-1 h-full rounded-none flex flex-col justify-end items-center pb-1.5 cursor-pointer select-none transition-all duration-75 relative overflow-hidden ${barBg}" data-key-semi="${k.s}" title="${k.name}">
+                                <div class="absolute inset-0 bg-white opacity-0 active:opacity-25 pointer-events-none"></div>
                                 <span class="text-[7.5px] font-mono pointer-events-none ${textCls}">${k.name}</span>
                             </div>`;
                     }).join('')}
@@ -261,6 +225,7 @@ export const KEY = {
 
         const setHighlight = (semi, isPressed) => {
             if (semi === null || semi === undefined || isNaN(semi)) return;
+            // 触っているその1つのバーだけをハイライト（オクターブ上の複数点灯はしない）
             const el = box.querySelector(`[data-key-semi="${semi}"]`);
             if (el) {
                 el.classList.toggle('!bg-cyan-400', isPressed);
