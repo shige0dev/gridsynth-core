@@ -2,34 +2,34 @@
 
 export const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
-export const CHORD_TYPES = {
-    'min':  { label: 'MIN',  semis: [0, 3, 7, 12], binary: '000', index: 0 },
-    'maj':  { label: 'MAJ',  semis: [0, 4, 7, 12], binary: '001', index: 1 },
-    'm7':   { label: 'm7',   semis: [0, 3, 7, 10], binary: '010', index: 2 },
-    '7th':  { label: '7TH',  semis: [0, 4, 7, 10], binary: '011', index: 3 },
-    'dim7': { label: 'DIM7', semis: [0, 3, 6, 9],  binary: '100', index: 4 },
-    '5th':  { label: '5TH',  semis: [0, 7, 12, 19], binary: '101', index: 5 },
-    'sus4': { label: 'SUS4', semis: [0, 5, 7, 12], binary: '110', index: 6 },
-    'Maj7': { label: 'MAJ7', semis: [0, 4, 7, 11], binary: '111', index: 7 }
+export const CHORD_SPECS = {
+    'min':      { index: 0,  label: 'Minor',     intervals: [0, 3, 7, 12] },
+    'maj':      { index: 1,  label: 'Major',     intervals: [0, 4, 7, 12] },
+    'sus4':     { index: 2,  label: 'Sus 4',     intervals: [0, 5, 7, 12] },
+    'sus2':     { index: 3,  label: 'Sus 2',     intervals: [0, 2, 7, 12] },
+    'm7':       { index: 4,  label: 'Min 7th',   intervals: [0, 3, 7, 10] },
+    '7th':      { index: 5,  label: 'Dom 7th',   intervals: [0, 4, 7, 10] },
+    'Maj7':     { index: 6,  label: 'Maj 7th',   intervals: [0, 4, 7, 11] },
+    'm7b5':     { index: 7,  label: 'Half Dim',  intervals: [0, 3, 6, 10] },
+    '5th':      { index: 8,  label: 'Power 5th', intervals: [0, 7, 12, 19] },
+    'open_min': { index: 9,  label: 'Open Min',  intervals: [0, 7, 12, 15] },
+    'open_maj': { index: 10, label: 'Open Maj',  intervals: [0, 7, 12, 16] },
+    'add9':     { index: 11, label: 'Add 9th',   intervals: [0, 4, 7, 14] },
+    'm9':       { index: 12, label: 'Min 9th',   intervals: [0, 3, 10, 14] },
+    '9th':      { index: 13, label: 'Dom 9th',   intervals: [0, 4, 10, 14] },
+    'dim7':     { index: 14, label: 'Dim 7th',   intervals: [0, 3, 6, 9] },
+    'aug':      { index: 15, label: 'Augment',   intervals: [0, 4, 8, 12] }
 };
 
-export const CHORD_ORDER = ['min', 'maj', 'm7', '7th', 'dim7', '5th', 'sus4', 'Maj7'];
+export const CHORD_KEYS = [
+    'min', 'maj', 'sus4', 'sus2',
+    'm7', '7th', 'Maj7', 'm7b5',
+    '5th', 'open_min', 'open_maj', 'add9',
+    'm9', '9th', 'dim7', 'aug'
+];
 
-export const CHORD_VOICINGS = {
-    'close': [0, 0, 0, 0],
-    'drop2': [0, -12, 0, 0],
-    'drop3': [0, 0, -12, 0],
-    'open':  [0, 0, 12, 12]
-};
-
-export const VOICING_LABELS = {
-    'close': { label: 'CLOSE',  binary: '00', index: 0 },
-    'drop2': { label: 'DROP 2', binary: '01', index: 1 },
-    'drop3': { label: 'DROP 3', binary: '10', index: 2 },
-    'open':  { label: 'OPEN',   binary: '11', index: 3 }
-};
-
-export const VOICING_ORDER = ['close', 'drop2', 'drop3', 'open'];
+export const CHORD_TYPES = CHORD_SPECS;
+export const CHORD_ORDER = CHORD_KEYS;
 
 export const midiToNoteName = (midi) => {
     const m = Math.round(midi);

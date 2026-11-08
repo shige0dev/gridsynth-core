@@ -9,7 +9,7 @@ import './processors/cv-delay.js';
 import './processors/scope.js';
 import './processors/pat.js?v=621';
 import './processors/markov.js?v=459';
-import './processors/chord.js';
+import './processors/chord.js?v=641';
 import './processors/fm.js?v=459';
 import './processors/fm-core.js';
 import './processors/dist4.js?v=470';

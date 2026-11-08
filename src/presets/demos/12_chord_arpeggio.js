@@ -49,7 +49,6 @@ export const preset12 = {
         "CHORD1": {
           "type": "CHORD",
           "chord": "m7",
-          "voicing": "close",
           "rootMidi": 48
         },
         "ARP1": {
