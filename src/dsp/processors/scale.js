@@ -10,7 +10,7 @@ export class ScaleProcessor extends AudioWorkletProcessor {
 
         this.heldCv = 1.0;
         this.heldGate = 0.0;
-        this.heldSemi = 0; // 0..11 for UI highlight
+        this.heldSemi = -1; // 初期値: -1（入力があるまでハイライトなし）
         this.sampleCount = 0;
 
         this.port.onmessage = (e) => {
@@ -33,7 +33,8 @@ export class ScaleProcessor extends AudioWorkletProcessor {
                 this.manualCv = cv;
                 this.manualGate = isDown ? 1.0 : 0.0;
                 this.isManualActive = isDown;
-                this.heldSemi = snappedSemi;
+                // タッチ中のみアクティブ半音を設定。離したら -1（消灯）
+                this.heldSemi = isDown ? snappedSemi : -1;
             }
         };
     }
@@ -72,7 +73,10 @@ export class ScaleProcessor extends AudioWorkletProcessor {
         const hasExternalInput = !!(cvIn && cvIn.length > 0);
 
         for (let i = 0; i < len; i++) {
-            if (hasExternalInput && !this.isManualActive) {
+            if (this.isManualActive) {
+                this.heldCv = this.manualCv;
+                this.heldGate = this.manualGate;
+            } else if (hasExternalInput) {
                 const rawCv = cvIn[i];
                 const q = this.quantize(rawCv);
                 this.heldCv = q.cv;
@@ -80,7 +84,8 @@ export class ScaleProcessor extends AudioWorkletProcessor {
                 this.heldSemi = q.semi;
             } else {
                 this.heldCv = this.manualCv;
-                this.heldGate = this.manualGate;
+                this.heldGate = 0.0;
+                this.heldSemi = -1; // 外部入力・タッチがない時は消灯
             }
 
             cvOut[i] = this.heldCv;

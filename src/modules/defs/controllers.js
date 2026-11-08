@@ -10,8 +10,8 @@ export const KEY = {
         root: 0,
         scale: 'CHROMATIC',
         mask: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        lastNote: 'C3',
-        currentMidi: 48,
+        lastNote: '', // 入力するまでは表示なし
+        currentMidi: null,
         cv: 2.0
     }),
     onNormalize: (m) => {
@@ -20,11 +20,6 @@ export const KEY = {
         if (m.scale === undefined) m.scale = 'CHROMATIC';
         if (!Array.isArray(m.mask) || m.mask.length !== 12) {
             m.mask = SCALE_PRESETS[m.scale] || [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
-        }
-        if (m.currentMidi === undefined) {
-            m.currentMidi = (m.octave + 1) * 12 + m.root;
-            m.cv = (m.currentMidi - 24) / 12.0;
-            m.lastNote = `C${m.octave}`;
         }
     },
     ports: () => ({
@@ -41,14 +36,14 @@ export const KEY = {
         const rootName = NOTES[root] || 'C';
         const scaleName = m.scale || 'CHROMATIC';
         const mask = Array.isArray(m.mask) ? m.mask : (SCALE_PRESETS[scaleName] || SCALE_PRESETS['CHROMATIC']);
-        const curNote = m.lastNote || `C${m.octave ?? 3}`;
+        const curNote = m.lastNote || '';
 
         return `
             <div class="flex flex-col items-center justify-center w-full h-full pointer-events-none leading-none gap-1">
-                <!-- スケール表示 -->
+                <!-- スケール表示 ＆ ノート名（入力するまでは非表示） -->
                 <div class="flex items-center justify-between w-[59px] px-0.5 pointer-events-none text-center">
                     <span class="text-[7.5px] font-mono font-bold text-amber-400 truncate tracking-tight">${rootName} ${scaleName}</span>
-                    <span class="text-[7.5px] font-mono font-bold text-cyan-300 ml-1">${curNote}</span>
+                    <span class="text-[7.5px] font-mono font-bold text-cyan-300 ml-1 key-live-cell-note">${curNote}</span>
                 </div>
                 <!-- 12本 VOLCAスタイル タッチバー（C〜B固定） -->
                 <div class="flex items-center justify-center h-6 gap-[1px] p-0 pointer-events-none">
@@ -57,10 +52,11 @@ export const KEY = {
                         const isMasked = (mask[rel] ?? 1) === 1;
                         const isBlack = n.includes('#');
 
+                        // 色相は同一の黄色(Hue 48deg)。黒鍵は色相を変えず彩度のみ少し落とす (96% -> 60%)
                         let barBg = '';
                         if (isMasked) {
                             barBg = isBlack
-                                ? 'bg-amber-500 shadow-[0_0_3px_rgba(245,158,11,0.6)]'
+                                ? 'bg-[hsl(48,60%,50%)] shadow-[0_0_3px_rgba(200,175,50,0.5)]'
                                 : 'bg-yellow-400 shadow-[0_0_3px_rgba(250,204,21,0.6)]';
                         } else {
                             barBg = isBlack
@@ -74,21 +70,37 @@ export const KEY = {
     },
     updateLive: (cell, data, isP, modal) => {
         const semi = data?.activeSemi ?? -1;
+        const isAct = semi >= 0;
+
+        // パネル上のバーのハイライト（未入力時は消灯）
         cell.querySelectorAll('[data-key-bar]').forEach(b => {
             const barSemi = parseInt(b.getAttribute('data-key-bar'), 10);
-            b.classList.toggle('key-active-bar', barSemi === semi);
+            b.classList.toggle('key-active-bar', isAct && barSemi === semi);
         });
+
+        // パネル上のノート名表示
+        const cellNoteEl = cell.querySelector('.key-live-cell-note');
+        if (cellNoteEl) {
+            if (isAct && data?.cv !== undefined) {
+                cellNoteEl.textContent = UIHelpers.cvToNoteName(data.cv);
+            }
+        }
+
         if (modal) {
             modal.querySelectorAll('[data-modal-key-bar]').forEach(b => {
                 const barSemi = parseInt(b.getAttribute('data-modal-key-bar'), 10);
-                const isAct = (barSemi === semi);
-                b.classList.toggle('ring-2', isAct);
-                b.classList.toggle('ring-cyan-300', isAct);
-                b.classList.toggle('shadow-[0_0_8px_#67e8f9]', isAct);
+                const isThisAct = isAct && (barSemi === semi);
+                b.classList.toggle('ring-2', isThisAct);
+                b.classList.toggle('ring-cyan-300', isThisAct);
+                b.classList.toggle('shadow-[0_0_8px_#67e8f9]', isThisAct);
             });
             const noteDisp = modal.querySelector('#key-active-note');
-            if (noteDisp && data?.cv !== undefined) {
-                noteDisp.textContent = UIHelpers.cvToNoteName(data.cv);
+            if (noteDisp) {
+                if (isAct && data?.cv !== undefined) {
+                    noteDisp.textContent = UIHelpers.cvToNoteName(data.cv);
+                } else if (!isAct && !noteDisp.textContent) {
+                    noteDisp.textContent = '--';
+                }
             }
         }
     },
@@ -97,11 +109,11 @@ export const KEY = {
         const curRoot = m.root ?? 0;
         const scaleKey = m.scale || 'CHROMATIC';
         const mask = Array.isArray(m.mask) ? m.mask : (SCALE_PRESETS[scaleKey] || SCALE_PRESETS['CHROMATIC']);
-        const curNote = m.lastNote || `C${curOct}`;
+        const curNote = m.lastNote || '--';
 
         return `
             <div class="space-y-2 flex flex-col items-center select-none w-full p-1">
-                <!-- Top Row: Octave, Root, Scale (SCALEモジュール準拠) -->
+                <!-- Top Row: Octave, Root, Scale -->
                 <div class="w-[331px] flex items-center justify-between gap-1 bg-slate-950/70 p-1.5 rounded-lg border border-slate-800 shrink-0">
                     <div class="flex items-center gap-1">
                         <span class="text-[8px] text-slate-400 uppercase font-semibold">OCT:</span>
@@ -138,13 +150,14 @@ export const KEY = {
                         const isMasked = (mask[rel] ?? 1) === 1;
                         const isBlack = n.includes('#');
 
+                        // 色相は同一の黄色(Hue 48deg)。黒鍵は色相を変えず彩度のみ少し落とす
                         let barBg = '';
                         let textCls = '';
                         if (isMasked) {
                             barBg = isBlack
-                                ? 'bg-gradient-to-t from-amber-600 via-amber-500 to-amber-300 border border-amber-400/80 shadow-[0_0_6px_rgba(245,158,11,0.4)]'
+                                ? 'bg-gradient-to-t from-[hsl(48,50%,40%)] via-[hsl(48,60%,50%)] to-[hsl(48,55%,68%)] border border-[hsl(48,55%,55%)] shadow-[0_0_6px_rgba(200,175,50,0.35)]'
                                 : 'bg-gradient-to-t from-yellow-500 via-yellow-400 to-amber-200 border border-yellow-300 shadow-[0_0_6px_rgba(253,224,71,0.4)]';
-                            textCls = 'text-black font-black';
+                            textCls = 'text-yellow-950 font-black';
                         } else {
                             barBg = isBlack
                                 ? 'bg-slate-900/95 border border-slate-800'
@@ -213,16 +226,16 @@ export const KEY = {
         const playSemi = (rawSemi, isDown) => {
             const oct = m.octave ?? 3;
             const mask = m.mask || SCALE_PRESETS[m.scale] || SCALE_PRESETS['CHROMATIC'];
-            // Snap to nearest scale note
             const snappedSemi = snapToScale(rawSemi, m.root ?? 0, mask);
             const midi = (oct + 1) * 12 + snappedSemi;
             const name = `${NOTES[snappedSemi]}${oct}`;
 
-            m.lastNote = name;
-            m.currentMidi = midi;
-            m.cv = (midi - 24) / 12.0;
-
-            if (nD && isDown) nD.textContent = name;
+            if (isDown) {
+                m.lastNote = name;
+                m.currentMidi = midi;
+                m.cv = (midi - 24) / 12.0;
+                if (nD) nD.textContent = name;
+            }
             ctx.sendKeyNote?.(midi, isDown);
             if (isDown) cb();
         };
