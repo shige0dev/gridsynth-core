@@ -61,15 +61,15 @@ export const KEY = {
                         const rel = ((k.absSemi - root) % 12 + 12) % 12;
                         const isMasked = (mask[rel] ?? 1) === 1;
 
-                        // 色相は同一の黄色(Hue 48deg)。黒鍵は色相を変えず彩度のみ少し落とす
+                        // 色相・彩度は同一(Hue 48deg, Sat 90%+)。黒鍵は彩度を落とすのでなく明度を上げて淡く表現
                         let barBg = '';
                         if (isMasked) {
                             barBg = k.isBlack
-                                ? 'bg-[hsl(48,60%,50%)] shadow-[0_0_2px_rgba(200,175,50,0.5)]'
+                                ? 'bg-[hsl(48,90%,72%)] shadow-[0_0_2px_rgba(254,240,138,0.5)]'
                                 : 'bg-yellow-400 shadow-[0_0_2px_rgba(250,204,21,0.6)]';
                         } else {
                             barBg = k.isBlack
-                                ? 'bg-slate-900/90 border border-slate-800/80'
+                                ? 'bg-slate-800/40 border border-slate-700/30'
                                 : 'bg-slate-700/50';
                         }
                         return `<div data-key-bar="${k.s}" class="w-[3px] h-full rounded-[0.5px] relative shrink-0 ${barBg}"></div>`;
@@ -160,17 +160,17 @@ export const KEY = {
                         const rel = ((k.absSemi - curRoot) % 12 + 12) % 12;
                         const isMasked = (mask[rel] ?? 1) === 1;
 
-                        // 色相は同一の黄色(Hue 48deg)。黒鍵は色相を変えず彩度のみ少し落とす
+                        // 色相・彩度は同一(Hue 48deg, Sat 90%+)。黒鍵は彩度を落とすのでなく明度を上げて淡く表現
                         let barBg = '';
                         let textCls = '';
                         if (isMasked) {
                             barBg = k.isBlack
-                                ? 'bg-gradient-to-t from-[hsl(48,50%,40%)] via-[hsl(48,60%,50%)] to-[hsl(48,55%,68%)] border border-[hsl(48,55%,55%)] shadow-[0_0_6px_rgba(200,175,50,0.35)]'
+                                ? 'bg-gradient-to-t from-[hsl(48,85%,62%)] via-[hsl(48,90%,74%)] to-[hsl(48,95%,86%)] border border-[hsl(48,85%,78%)] shadow-[0_0_6px_rgba(254,240,138,0.4)]'
                                 : 'bg-gradient-to-t from-yellow-500 via-yellow-400 to-amber-200 border border-yellow-300 shadow-[0_0_6px_rgba(253,224,71,0.4)]';
-                            textCls = 'text-yellow-950 font-black';
+                            textCls = k.isBlack ? 'text-[hsl(48,60%,25%)] font-bold' : 'text-yellow-950 font-black';
                         } else {
                             barBg = k.isBlack
-                                ? 'bg-slate-900/95 border border-slate-800'
+                                ? 'bg-slate-900/70 border border-slate-800/60'
                                 : 'bg-slate-800/80 border border-slate-700/60';
                             textCls = 'text-slate-500 font-bold';
                         }
