@@ -49,14 +49,13 @@ export const KEY = {
         const curNote = m.lastNote || '';
 
         return `
-            <div class="flex flex-col items-center justify-center w-full h-full pointer-events-none leading-none gap-1">
-                <!-- スケール表示 ＆ ノート名（入力するまでは非表示） -->
-                <div class="flex items-center justify-between w-[63px] px-0.5 pointer-events-none text-center">
-                    <span class="text-[7.5px] font-mono font-bold text-amber-400 truncate tracking-tight">${rootName} ${scaleName}</span>
-                    <span class="text-[7.5px] font-mono font-bold text-cyan-300 ml-1 key-live-cell-note">${curNote}</span>
+            <div class="flex flex-col items-center justify-between w-full h-full py-1.5 px-1 select-none pointer-events-none leading-none">
+                <!-- 上段: スケール表示（全幅中央配置で文字が消えない） -->
+                <div class="flex items-center justify-center w-full px-0.5 text-center">
+                    <span class="text-[8px] font-mono font-bold text-amber-400 truncate tracking-tight">${rootName} ${scaleName}</span>
                 </div>
-                <!-- 16本 VOLCAスタイル タッチバー（静的スケール表示、不要なハイライトなし） -->
-                <div class="flex items-center justify-center h-6 gap-[1px] p-0 pointer-events-none">
+                <!-- 中段: 16本 VOLCAスタイル タッチバー（C〜B前後2音拡張） -->
+                <div class="flex items-center justify-center h-6 gap-[1px] p-0">
                     ${KEYS_16.map(k => {
                         const rel = ((k.absSemi - root) % 12 + 12) % 12;
                         const isMasked = (mask[rel] ?? 1) === 1;
@@ -74,6 +73,10 @@ export const KEY = {
                         }
                         return `<div class="w-[3px] h-full rounded-[0.5px] relative shrink-0 ${barBg}"></div>`;
                     }).join('')}
+                </div>
+                <!-- 下段: 現在音（バーの下に配置） -->
+                <div class="flex items-center justify-center w-full px-0.5 text-center h-[9px]">
+                    <span class="text-[8px] font-mono font-bold text-cyan-300 key-live-cell-note">${curNote}</span>
                 </div>
             </div>`;
     },

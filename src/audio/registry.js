@@ -20,7 +20,6 @@ import { dist4AudioDefs } from './defs/dist4.js?v=470';
 import { patAudioDefs } from './defs/pat.js?v=563';
 import { markovAudioDefs } from './defs/markov.js?v=459';
 import { fmAudioDefs } from './defs/fm.js?v=459';
-import { scaleAudioDefs } from './defs/scale.js?v=459';
 import { rfAudioDefs } from './defs/rf.js?v=459';
 import { arAudioDefs } from './defs/ar.js?v=459';
 import { waveAudioDefs } from './defs/wave.js?v=459';
@@ -49,7 +48,6 @@ export const AUDIO_REGISTRY = {
     ...patAudioDefs,
     ...markovAudioDefs,
     ...fmAudioDefs,
-    ...scaleAudioDefs,
     ...rfAudioDefs,
     ...arAudioDefs,
     ...waveAudioDefs,

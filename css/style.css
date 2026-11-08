@@ -346,18 +346,6 @@ body.is-row-dragging .grid-cell * {
     box-shadow: 0 0 6px rgba(253, 224, 71, 0.9) !important;
 }
 
-/* SCALE active note: outline glow on active output without shrinking internal width */
-.scale-bar-item {
-    transition: all 40ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.scale-bar-item.scale-active,
-.key-active-bar {
-    outline: 1.5px solid #ffffff !important;
-    outline-offset: 1px !important;
-    box-shadow: 0 0 10px 2px #38bdf8, 0 0 4px #ffffff !important;
-    z-index: 10;
-}
 
 .panel-bar-slot.bar-active-audio {
     border-color: #67e8f9 !important;
