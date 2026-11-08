@@ -57,14 +57,34 @@ export const snapToScale = (absSemi, root = 0, mask = [1, 1, 1, 1, 1, 1, 1, 1, 1
     return absSemi;
 };
 
+export const getScaleNotesInOctave = (root = 0, mask = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]) => {
+    const notes = [];
+    for (let s = 0; s < 12; s++) {
+        const rel = ((s - root) % 12 + 12) % 12;
+        if ((mask[rel] ?? 1) === 1) notes.push(s);
+    }
+    return notes.length > 0 ? notes : [((root % 12) + 12) % 12];
+};
+
+export const quantizeCvToEqualScale = (inCv, root = 0, mask = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]) => {
+    const scaleNotes = getScaleNotesInOctave(root, mask);
+    const N = scaleNotes.length;
+    const oct = Math.floor(inCv);
+    let frac = inCv - oct;
+    if (frac < 0) frac = 0;
+    if (frac >= 1) frac = 0.999999;
+    const sliceIdx = Math.min(N - 1, Math.max(0, Math.floor(frac * N)));
+    const targetSemi = scaleNotes[sliceIdx];
+    return {
+        cv: oct + (targetSemi / 12.0),
+        sliceIdx,
+        numSlices: N,
+        targetSemi
+    };
+};
+
 export const quantizeCvToScale = (inCv, root = 0, mask = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]) => {
-    const totalSemi = Math.round(inCv * 12);
-    const absSemi = ((totalSemi % 12) + 12) % 12;
-    const snappedSemi = snapToScale(absSemi, root, mask);
-    let diff = snappedSemi - absSemi;
-    if (diff > 6) diff -= 12;
-    else if (diff < -6) diff += 12;
-    return (totalSemi + diff) / 12.0;
+    return quantizeCvToEqualScale(inCv, root, mask).cv;
 };
 
 export const midiToNoteName = (midi) => {

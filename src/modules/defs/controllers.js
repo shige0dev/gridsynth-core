@@ -1,5 +1,5 @@
 import { UIHelpers } from '../../ui/helpers.js?v=354';
-import { NOTES, SCALE_PRESETS, SCALE_KEYS, snapToScale, parseKeyNoteToCv } from '../../core/musical.js?v=367';
+import { NOTES, SCALE_PRESETS, SCALE_KEYS, snapToScale, parseKeyNoteToCv, getScaleNotesInOctave } from '../../core/musical.js?v=367';
 export { parseKeyNoteToCv };
 
 // 16 Keys: 前2セミトーン (A#, B) + 12半音 (C〜B) + 後2セミトーン (C, C#) = -2 .. 13
@@ -12,34 +12,21 @@ export const KEYS_16 = Array.from({ length: 16 }, (_, i) => {
 });
 
 const renderQuantizeMapHTML = (root, mask) => {
-    return NOTES.map((nIn, i) => {
-        const snapSemi = snapToScale(i, root, mask);
-        const snapName = NOTES[snapSemi];
-        const isScaleNote = (i === snapSemi);
-        const isBlack = nIn.includes('#');
+    const scaleNotes = getScaleNotesInOctave(root, mask);
+    const N = scaleNotes.length;
 
-        // スナップ先が変わる場所に細い線（区分線）を配置
-        const nextSemi = (i + 1) % 12;
-        const nextSnap = snapToScale(nextSemi, root, mask);
-        const isBoundary = (snapSemi !== nextSnap);
-        const borderR = isBoundary ? 'border-r-2 border-amber-400/90' : 'border-r border-slate-800/50';
+    return scaleNotes.map((semi, sliceIdx) => {
+        const name = NOTES[semi];
+        const isBlack = name.includes('#');
+        const isLast = (sliceIdx === N - 1);
+        const borderR = isLast ? '' : 'border-r border-amber-400/50';
 
-        let bgCls = '';
-        if (isScaleNote) {
-            bgCls = isBlack
-                ? 'bg-[hsl(48,65%,20%)] text-yellow-300'
-                : 'bg-[hsl(48,80%,26%)] text-yellow-200 font-bold';
-        } else {
-            bgCls = 'bg-slate-950/80 text-slate-400';
-        }
+        // 白鍵・黒鍵セマンティクス（黒鍵は明度を上げて淡く表現）
+        const bgCls = isBlack
+            ? 'bg-[hsl(48,65%,22%)]'
+            : 'bg-[hsl(48,80%,28%)]';
 
-        return `
-            <div class="flex-1 h-full flex flex-col items-center justify-between py-1 select-none relative transition-colors ${borderR} ${bgCls}" data-quant-semi="${i}" title="${nIn} &rarr; ${snapName}">
-                <!-- 入力半音名 -->
-                <span class="text-[7px] font-mono leading-none ${isBlack ? 'text-slate-500' : 'text-slate-400'}">${nIn}</span>
-                <!-- クオンタイズスナップ先 -->
-                <span class="text-[8px] font-mono font-bold leading-none ${isScaleNote ? 'text-amber-300' : 'text-amber-400/70'}">${snapName}</span>
-            </div>`;
+        return `<div class="flex-1 h-full select-none relative transition-colors ${borderR} ${bgCls}" data-quant-slice="${sliceIdx}" title="${name} (${Math.round(100 / N)}% slice)"></div>`;
     }).join('');
 };
 
@@ -81,6 +68,7 @@ export const KEY = {
         const curNote = m.lastNote || '';
 
         // 枠・修飾・隙間のない16分割キー配列を単一の標準バー枠(w-[50px] h-7)内に収容
+        // 16キー × 3px = 48px + 左右ボーダー1px×2 = 外寸ちょうど 50px (全キー完全均等3px)
         const keysHTML = KEYS_16.map(k => {
             const rel = ((k.absSemi - root) % 12 + 12) % 12;
             const isMasked = (mask[rel] ?? 1) === 1;
@@ -93,16 +81,16 @@ export const KEY = {
                 bg = 'bg-transparent';
             }
 
-            return `<div class="flex-1 h-full ${bg} transition-colors" data-key-bar="${k.s}"></div>`;
+            return `<div class="w-[3px] h-full ${bg} transition-colors shrink-0" data-key-bar="${k.s}"></div>`;
         }).join('');
 
         return `
             <div class="relative flex items-center justify-center w-full h-full pointer-events-none select-none">
-                <!-- 単一の標準スロット枠(w-[50px] h-7) -->
-                <div class="relative w-[50px] h-7 rounded-sm p-[1px] flex flex-row border border-slate-600 bg-slate-950/40 panel-bar-slot overflow-hidden">
+                <!-- 単一の標準スロット枠(w-[50px] h-7, p-0 で内部48pxに3pxキー16本が完全均等配置) -->
+                <div class="relative w-[50px] h-7 rounded-sm p-0 flex flex-row border border-slate-600 bg-slate-950/40 panel-bar-slot overflow-hidden">
                     <!-- 上部: スケール名（バー上端から直近2px） -->
                     <span class="absolute bottom-full mb-[2px] left-1/2 -translate-x-1/2 text-[7.5px] font-mono font-bold text-amber-400 truncate tracking-tight text-center max-w-[64px] leading-none pointer-events-none select-none">${rootName} ${scaleName}</span>
-                    <!-- 隙間なし16キー矩形 -->
+                    <!-- 隙間なし16キー矩形 (各3px完全均等) -->
                     ${keysHTML}
                     <!-- 下部: 現在音（バー下端から直近2px） -->
                     <span class="key-live-cell-note absolute top-full mt-[2px] left-1/2 -translate-x-1/2 text-[7.5px] font-mono font-bold text-cyan-300 truncate tracking-tight text-center max-w-[64px] leading-none pointer-events-none select-none" data-manual-note="${curNote}">${curNote || ''}</span>
@@ -111,13 +99,13 @@ export const KEY = {
     },
     updateLive: (cell, data, isP, modal) => {
         if (!data) return;
-        const inSemi = data.inputSemi ?? -1;
+        const sliceIdx = data.sliceIdx ?? -1;
         const isPatched = Boolean(data.isPatched);
 
         // 1. Grid cell note display (バーの下の現在音)
         const cellNoteEl = cell?.querySelector('.key-live-cell-note');
         if (cellNoteEl) {
-            if (isPatched && inSemi >= 0 && data.cv !== undefined) {
+            if (isPatched && data.cv !== undefined) {
                 cellNoteEl.textContent = UIHelpers.cvToNoteName(data.cv);
             } else if (!isPatched) {
                 cellNoteEl.textContent = cellNoteEl.dataset.manualNote || '';
@@ -126,19 +114,19 @@ export const KEY = {
 
         if (!modal) return;
 
-        // 2. Modal header quantize map highlight (外部CV入力時)
-        modal.querySelectorAll('[data-quant-semi]').forEach(el => {
-            const semi = parseInt(el.getAttribute('data-quant-semi'), 10);
-            const isMatch = (isPatched && inSemi >= 0 && semi === inSemi);
-            el.classList.toggle('!bg-cyan-500/40', isMatch);
-            el.classList.toggle('!text-cyan-200', isMatch);
+        // 2. Modal header quantize map highlight (外部CV入力時：均等割スライスのリアルタイム点灯)
+        modal.querySelectorAll('[data-quant-slice]').forEach(el => {
+            const idx = parseInt(el.getAttribute('data-quant-slice'), 10);
+            const isMatch = (isPatched && sliceIdx >= 0 && idx === sliceIdx);
+            el.classList.toggle('!bg-cyan-400', isMatch);
+            el.classList.toggle('shadow-[0_0_8px_rgba(34,211,238,0.8)]', isMatch);
             el.classList.toggle('ring-1', isMatch);
-            el.classList.toggle('ring-cyan-300', isMatch);
+            el.classList.toggle('ring-cyan-200', isMatch);
         });
 
         const noteDisp = modal.querySelector('#key-active-note');
         if (noteDisp) {
-            if (isPatched && inSemi >= 0 && data.cv !== undefined) {
+            if (isPatched && data.cv !== undefined) {
                 noteDisp.textContent = UIHelpers.cvToNoteName(data.cv);
             }
         }

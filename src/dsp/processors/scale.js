@@ -3,6 +3,7 @@ export class ScaleProcessor extends AudioWorkletProcessor {
         super();
         this.root = 0; // 0: C, 1: C#, ..., 11: B
         this.mask = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]; // default: CHROMATIC
+        this.scaleNotes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
         this.isPatched = false;
 
         this.manualCv = 1.0; // default C2 (cv=1.0)
@@ -11,17 +12,31 @@ export class ScaleProcessor extends AudioWorkletProcessor {
 
         this.heldCv = 1.0;
         this.heldGate = 0.0;
-        this.inputSemi = -1; // 外部入力半音 (0..11)
+        this.sliceIdx = -1;
+        this.targetSemi = -1;
         this.sampleCount = 0;
+
+        this.updateScaleNotes();
 
         this.port.onmessage = (e) => {
             const d = e.data;
             if (!d) return;
             if (d.type === 'SET_CONFIG') {
-                if (d.root !== undefined) this.root = Math.max(0, Math.min(11, Math.round(d.root)));
-                if (d.rootMidi !== undefined) this.root = Math.max(0, Math.min(11, Math.round(d.rootMidi)));
+                let changed = false;
+                if (d.root !== undefined) {
+                    this.root = Math.max(0, Math.min(11, Math.round(d.root)));
+                    changed = true;
+                }
+                if (d.rootMidi !== undefined) {
+                    this.root = Math.max(0, Math.min(11, Math.round(d.rootMidi)));
+                    changed = true;
+                }
                 if (Array.isArray(d.mask) && d.mask.length === 12) {
                     this.mask = d.mask;
+                    changed = true;
+                }
+                if (changed) {
+                    this.updateScaleNotes();
                 }
                 if (d.isPatched !== undefined) {
                     this.isPatched = Boolean(d.isPatched);
@@ -41,6 +56,15 @@ export class ScaleProcessor extends AudioWorkletProcessor {
         };
     }
 
+    updateScaleNotes() {
+        const notes = [];
+        for (let s = 0; s < 12; s++) {
+            const rel = ((s - this.root) % 12 + 12) % 12;
+            if ((this.mask[rel] ?? 1) === 1) notes.push(s);
+        }
+        this.scaleNotes = notes.length > 0 ? notes : [((this.root % 12) + 12) % 12];
+    }
+
     snapSemi(absSemi) {
         const rel = ((absSemi - this.root) % 12 + 12) % 12;
         if ((this.mask[rel] ?? 1) === 1) return absSemi;
@@ -54,15 +78,18 @@ export class ScaleProcessor extends AudioWorkletProcessor {
     }
 
     quantize(inCv) {
-        const totalSemi = Math.round(inCv * 12);
-        const absSemi = ((totalSemi % 12) + 12) % 12;
-        const snapped = this.snapSemi(absSemi);
-        let diff = snapped - absSemi;
-        if (diff > 6) diff -= 12;
-        else if (diff < -6) diff += 12;
+        const notes = this.scaleNotes || [0];
+        const N = notes.length;
+        const oct = Math.floor(inCv);
+        let frac = inCv - oct;
+        if (frac < 0) frac = 0;
+        if (frac >= 1) frac = 0.999999;
+        const sliceIdx = Math.min(N - 1, Math.max(0, Math.floor(frac * N)));
+        const targetSemi = notes[sliceIdx];
         return {
-            cv: (totalSemi + diff) / 12.0,
-            inSemi: absSemi
+            cv: oct + (targetSemi / 12.0),
+            sliceIdx,
+            targetSemi
         };
     }
 
@@ -79,10 +106,12 @@ export class ScaleProcessor extends AudioWorkletProcessor {
             if (useExternal) {
                 const q = this.quantize(cvIn[i]);
                 this.heldCv = q.cv;
-                this.inputSemi = q.inSemi;
+                this.sliceIdx = q.sliceIdx;
+                this.targetSemi = q.targetSemi;
             } else {
                 this.heldCv = this.manualCv;
-                this.inputSemi = -1;
+                this.sliceIdx = -1;
+                this.targetSemi = -1;
             }
             this.heldGate = this.manualGate;
 
@@ -95,7 +124,8 @@ export class ScaleProcessor extends AudioWorkletProcessor {
             this.sampleCount = 0;
             this.port.postMessage({
                 type: 'STATE',
-                inputSemi: this.inputSemi,
+                sliceIdx: this.sliceIdx,
+                targetSemi: this.targetSemi,
                 cv: this.heldCv,
                 isPatched: this.isPatched
             });
