@@ -20,12 +20,9 @@ const renderQuantizeMapHTML = (root, mask) => {
         const absSemi = ((s % 12) + 12) % 12;
         const name = NOTES[absSemi];
         const isBlack = name.includes('#');
-        const rel = ((absSemi - root) % 12 + 12) % 12;
-        const isScale = (mask[rel] ?? 1) === 1;
 
-        const bgCls = isScale
-            ? (isBlack ? 'bg-[hsl(48,65%,22%)]' : 'bg-[hsl(48,80%,28%)]')
-            : 'bg-slate-950/80';
+        // 白鍵・黒鍵セマンティクス（黒い穴にならないよう淡黄色/通常スロット色）
+        const bgCls = isBlack ? 'bg-[hsl(48,65%,22%)]' : 'bg-[hsl(48,80%,28%)]';
         return `<div class="flex-1 h-full select-none relative transition-colors border-r border-slate-800/60 ${bgCls}" data-quant-ext="${s}" title="${name}"></div>`;
     }).join('');
 
@@ -45,12 +42,8 @@ const renderQuantizeMapHTML = (root, mask) => {
         const absSemi = ((s % 12) + 12) % 12;
         const name = NOTES[absSemi];
         const isBlack = name.includes('#');
-        const rel = ((absSemi - root) % 12 + 12) % 12;
-        const isScale = (mask[rel] ?? 1) === 1;
 
-        const bgCls = isScale
-            ? (isBlack ? 'bg-[hsl(48,65%,22%)]' : 'bg-[hsl(48,80%,28%)]')
-            : 'bg-slate-950/80';
+        const bgCls = isBlack ? 'bg-[hsl(48,65%,22%)]' : 'bg-[hsl(48,80%,28%)]';
         const borderR = (idx === 0) ? 'border-r border-slate-800/60' : '';
         return `<div class="flex-1 h-full select-none relative transition-colors ${borderR} ${bgCls}" data-quant-ext="${s}" title="${name}"></div>`;
     }).join('');
@@ -159,6 +152,15 @@ export const KEY = {
         modal.querySelectorAll('[data-quant-slice]').forEach(el => {
             const idx = parseInt(el.getAttribute('data-quant-slice'), 10);
             const isMatch = (isPatched && sliceIdx >= 0 && idx === sliceIdx);
+            el.classList.toggle('!bg-cyan-400', isMatch);
+            el.classList.toggle('shadow-[0_0_8px_rgba(34,211,238,0.8)]', isMatch);
+            el.classList.toggle('ring-1', isMatch);
+            el.classList.toggle('ring-cyan-200', isMatch);
+        });
+
+        modal.querySelectorAll('[data-quant-ext]').forEach(el => {
+            const ext = parseInt(el.getAttribute('data-quant-ext'), 10);
+            const isMatch = (isPatched && data.extKey !== null && data.extKey !== undefined && ext === data.extKey);
             el.classList.toggle('!bg-cyan-400', isMatch);
             el.classList.toggle('shadow-[0_0_8px_rgba(34,211,238,0.8)]', isMatch);
             el.classList.toggle('ring-1', isMatch);

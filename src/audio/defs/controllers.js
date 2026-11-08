@@ -48,7 +48,7 @@ export const KEY = {
             gateOut.connect(eng.silentSink);
         }
 
-        let liveData = { cv: initCv, gate: 0, sliceIdx: -1, isPatched };
+        let liveData = { cv: initCv, gate: 0, sliceIdx: -1, extKey: null, isPatched };
         w.port.onmessage = (e) => {
             if (e.data.type === 'STATE') {
                 liveData = e.data;

@@ -13,6 +13,7 @@ export class ScaleProcessor extends AudioWorkletProcessor {
         this.heldCv = 1.0;
         this.heldGate = 0.0;
         this.sliceIdx = -1;
+        this.extKey = null;
         this.targetSemi = -1;
         this.sampleCount = 0;
 
@@ -86,9 +87,25 @@ export class ScaleProcessor extends AudioWorkletProcessor {
         if (frac >= 1) frac = 0.999999;
         const sliceIdx = Math.min(N - 1, Math.max(0, Math.floor(frac * N)));
         const targetSemi = notes[sliceIdx];
+        const outCv = oct + (targetSemi / 12.0);
+
+        // 表示用スライス判定:
+        // 1Vを超えたとき（または0V未満の範囲外）は巻き戻して表示せず、マッピング範囲外として表示なし (-1)
+        let displaySlice = -1;
+        let displayExt = null;
+
+        if (inCv >= 0.0 && inCv < 1.0) {
+            displaySlice = sliceIdx;
+        } else if (inCv >= -2.0 / 12.0 && inCv < 0.0) {
+            displayExt = Math.floor(inCv * 12.0); // -2 または -1
+        } else if (inCv >= 1.0 && inCv < 14.0 / 12.0) {
+            displayExt = Math.floor(inCv * 12.0); // 12 または 13
+        }
+
         return {
-            cv: oct + (targetSemi / 12.0),
-            sliceIdx,
+            cv: outCv,
+            sliceIdx: displaySlice,
+            extKey: displayExt,
             targetSemi
         };
     }
@@ -107,10 +124,12 @@ export class ScaleProcessor extends AudioWorkletProcessor {
                 const q = this.quantize(cvIn[i]);
                 this.heldCv = q.cv;
                 this.sliceIdx = q.sliceIdx;
+                this.extKey = q.extKey;
                 this.targetSemi = q.targetSemi;
             } else {
                 this.heldCv = this.manualCv;
                 this.sliceIdx = -1;
+                this.extKey = null;
                 this.targetSemi = -1;
             }
             this.heldGate = this.manualGate;
@@ -125,6 +144,7 @@ export class ScaleProcessor extends AudioWorkletProcessor {
             this.port.postMessage({
                 type: 'STATE',
                 sliceIdx: this.sliceIdx,
+                extKey: this.extKey,
                 targetSemi: this.targetSemi,
                 cv: this.heldCv,
                 isPatched: this.isPatched
