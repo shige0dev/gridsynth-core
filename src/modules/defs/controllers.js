@@ -145,10 +145,41 @@ export const KEY = {
 
         if (!modal) return;
 
-        // 2. Modal header quantize map highlight (DOM換算方式: 選択オクターブ範囲内でのみ均等割スライスを点灯)
+        // 2. モーダル内音名表示（数値は即時更新）
+        const noteDisp = modal.querySelector('#key-active-note');
+        if (noteDisp) {
+            if (isPatched && data.cv !== undefined) {
+                noteDisp.textContent = UIHelpers.cvToNoteName(data.cv);
+            }
+        }
+
+        const inCv = data.inCv;
+
+        // 3. CV IN オクターブ自動ジャンプ (同一オクターブなら維持、異なるオクターブは150msデバウンスで追従)
+        if (isPatched && inCv !== null && inCv !== undefined) {
+            const inOct = Math.max(1, Math.min(6, Math.floor(inCv) + 1));
+            if (inOct !== (m?.octave ?? 3)) {
+                const now = performance.now();
+                if (!m._lastOctJump || (now - m._lastOctJump >= 150)) {
+                    m.octave = inOct;
+                    m._lastOctJump = now;
+
+                    const octD = modal.querySelector('#key-oct-disp');
+                    if (octD) octD.textContent = m.octave;
+
+                    const titleEl = modal.querySelector('#key-quant-title');
+                    if (titleEl) {
+                        const curRoot = m.root ?? 0;
+                        const scaleKey = m.scale || 'CHROMATIC';
+                        titleEl.textContent = `${NOTES[curRoot]}${m.octave} ${scaleKey}`;
+                    }
+                }
+            }
+        }
+
+        // 4. Modal header quantize map highlight (DOM換算方式: 選択オクターブ範囲内でのみ均等割スライスを点灯)
         const curOct = m?.octave ?? 3;
         const vBase = curOct - 1.0;
-        const inCv = data.inCv;
 
         const mask = m?.mask || (m?.scale ? SCALE_PRESETS[m.scale] : null) || SCALE_PRESETS['CHROMATIC'];
         const scaleNotes = getScaleNotesInOctave(m?.root ?? 0, mask);
@@ -166,7 +197,7 @@ export const KEY = {
             el.classList.toggle('ring-cyan-200', isMatch);
         });
 
-        // 3. 入力CV実際値のホワイトニードル（実測値インジケーター）
+        // 5. 入力CV実際値のホワイトニードル（実測値インジケーター）
         const needleEl = modal.querySelector('#key-quant-needle');
         if (needleEl) {
             if (isPatched && inCv !== null && inCv !== undefined && inCv >= vBase - (2.0 / 12.0) && inCv <= vBase + (14.0 / 12.0)) {
@@ -176,13 +207,6 @@ export const KEY = {
                 needleEl.style.opacity = '1';
             } else {
                 needleEl.style.opacity = '0';
-            }
-        }
-
-        const noteDisp = modal.querySelector('#key-active-note');
-        if (noteDisp) {
-            if (isPatched && data.cv !== undefined) {
-                noteDisp.textContent = UIHelpers.cvToNoteName(data.cv);
             }
         }
     },
@@ -229,7 +253,7 @@ export const KEY = {
                 <div class="w-[331px] bg-slate-950/90 p-1.5 rounded-lg border border-slate-800 flex flex-col gap-1 shrink-0">
                     <div class="flex items-center justify-between text-[7px] font-bold text-slate-400 tracking-wider">
                         <span>CV IN &rarr; QUANTIZE MAP</span>
-                        <span class="text-amber-400 font-mono text-[7px]">${NOTES[curRoot]}${curOct} ${scaleKey}</span>
+                        <span class="text-amber-400 font-mono text-[7px]" id="key-quant-title">${NOTES[curRoot]}${curOct} ${scaleKey}</span>
                     </div>
                     <div class="relative flex items-center w-full h-[10px] bg-slate-900/90 rounded-[1px] border border-slate-700/60 overflow-hidden" id="key-quant-strip">
                         ${renderQuantizeMapHTML(curRoot, curOct, mask)}
