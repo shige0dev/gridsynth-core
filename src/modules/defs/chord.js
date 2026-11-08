@@ -124,14 +124,12 @@ export const CHORD = {
             heightCls: 'h-7',
             gapCls: 'gap-px',
             containerCls: 'w-[54px]',
+            top: info.label,
             theme: 'cv'
         });
 
         return `
             <div class="relative flex items-center justify-center w-full h-full pointer-events-none select-none">
-                <!-- 上部: コード名（SEQ/SPK/KEYと同一の配置ルール top-[8px]） -->
-                <span class="absolute top-[8px] left-1/2 -translate-x-1/2 text-[7.5px] font-mono font-bold text-amber-400 truncate tracking-tight text-center max-w-[64px] leading-none">${info.label}</span>
-                <!-- 中央: 標準 renderPanelBars (h-7 / 28px) -->
                 ${barsHTML}
             </div>`;
     },

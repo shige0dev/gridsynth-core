@@ -546,7 +546,17 @@ export const UIHelpers = {
 
         if (options.noWrapper) return barsHTML;
         const containerCls = options.containerCls || '';
-        return `<div class="flex items-end justify-center ${gapCls} ${containerCls}">${barsHTML}</div>`;
+        const topHtml = options.top
+            ? `<span class="${options.topCls || ''} absolute bottom-full mb-[2px] left-1/2 -translate-x-1/2 text-[7.5px] font-mono font-bold text-amber-400 truncate tracking-tight text-center max-w-[64px] leading-none pointer-events-none select-none">${options.top}</span>`
+            : '';
+        const bottomHtml = (options.bottom !== undefined && options.bottom !== null && options.bottom !== '')
+            ? `<span class="${options.bottomCls || ''} absolute top-full mt-[2px] left-1/2 -translate-x-1/2 text-[7.5px] font-mono font-bold text-cyan-300 truncate tracking-tight text-center max-w-[64px] leading-none pointer-events-none select-none"${options.bottomAttrs ? ` ${options.bottomAttrs}` : ''}>${options.bottom}</span>`
+            : '';
+        return `<div class="relative flex items-end justify-center ${gapCls} ${containerCls}">
+            ${topHtml}
+            ${barsHTML}
+            ${bottomHtml}
+        </div>`;
     },
 
     /**
