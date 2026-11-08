@@ -37,18 +37,18 @@ export const SCALE = {
         return `
             <div class="flex flex-col items-center justify-center w-full h-full pointer-events-none leading-none gap-1">
                 <!-- ルート音 ＋ スケール名 -->
-                <div class="flex items-center justify-center w-[50px] px-0.5 pointer-events-none text-center">
+                <div class="flex items-center justify-center w-[59px] px-0.5 pointer-events-none text-center">
                     <span class="text-[8px] font-mono font-bold text-amber-400 truncate tracking-tight">${rootName} ${scaleName}</span>
                 </div>
-                <!-- 12本バー：C〜B固定。ルート音変更で通過音の黄色位置がシフト -->
-                <div class="flex items-center justify-between w-[50px] h-6 gap-[1.5px] p-0 pointer-events-none">
+                <!-- 12本バー：C〜B固定。すべて同一幅(4px)・同一間隔(1px) -->
+                <div class="flex items-center justify-center h-6 gap-[1px] p-0 pointer-events-none">
                     ${Array.from({ length: 12 }, (_, semi) => {
                         const rel = (semi - root + 12) % 12;
                         const isMasked = (relMask[rel] ?? 1) === 1;
                         const barBg = isMasked
                             ? 'bg-gradient-to-t from-amber-500 via-amber-400 to-yellow-300 shadow-[0_0_3px_rgba(251,191,36,0.6)]'
-                            : 'bg-slate-900/90 border border-slate-800/60';
-                        return `<div data-scale-bar="${semi}" class="scale-bar-item flex-1 h-full rounded-[1px] relative ${barBg}"></div>`;
+                            : 'bg-slate-800/40';
+                        return `<div data-scale-bar="${semi}" class="scale-bar-item w-[4px] h-full rounded-[0.5px] relative shrink-0 ${barBg}"></div>`;
                     }).join('')}
                 </div>
             </div>`;

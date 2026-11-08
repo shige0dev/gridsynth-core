@@ -22,24 +22,24 @@ const renderChordSlotsHTML = (chordKey) => {
         const hasOver = overSlots.has(s);
 
         if (hasBase && hasOver) {
-            // Split: upper half red, lower half yellow
+            // Split: left half yellow, right half red
             bars += `
-                <div class="flex-1 h-full flex flex-col rounded-[1px] overflow-hidden bg-slate-900 border border-slate-800/60 shrink-0">
-                    <div class="h-1/2 w-full bg-red-500 shadow-[0_0_4px_rgba(239,68,68,0.7)]"></div>
-                    <div class="h-1/2 w-full bg-yellow-400 shadow-[0_0_4px_rgba(250,204,21,0.7)]"></div>
+                <div class="w-[4px] h-full flex flex-row rounded-[0.5px] overflow-hidden shrink-0">
+                    <div class="w-1/2 h-full bg-yellow-400 shadow-[0_0_3px_rgba(250,204,21,0.6)]"></div>
+                    <div class="w-1/2 h-full bg-red-500 shadow-[0_0_3px_rgba(239,68,68,0.6)]"></div>
                 </div>`;
         } else if (hasBase) {
             // Base layer only: solid yellow
             bars += `
-                <div class="flex-1 h-full rounded-[1px] overflow-hidden bg-yellow-400 shadow-[0_0_4px_rgba(250,204,21,0.7)] border border-yellow-300/40 shrink-0"></div>`;
+                <div class="w-[4px] h-full rounded-[0.5px] bg-yellow-400 shadow-[0_0_3px_rgba(250,204,21,0.6)] shrink-0"></div>`;
         } else if (hasOver) {
             // Over layer only: solid red
             bars += `
-                <div class="flex-1 h-full rounded-[1px] overflow-hidden bg-red-500 shadow-[0_0_4px_rgba(239,68,68,0.7)] border border-red-400/40 shrink-0"></div>`;
+                <div class="w-[4px] h-full rounded-[0.5px] bg-red-500 shadow-[0_0_3px_rgba(239,68,68,0.6)] shrink-0"></div>`;
         } else {
             // Off: dark
             bars += `
-                <div class="flex-1 h-full rounded-[1px] bg-slate-800/35 border border-slate-800/30 opacity-40 shrink-0"></div>`;
+                <div class="w-[4px] h-full rounded-[0.5px] bg-slate-800/40 shrink-0"></div>`;
         }
     }
     return bars;
@@ -73,10 +73,11 @@ const renderChordModalBarsHTML = (chordKey) => {
             : 'text-slate-600';
 
         if (hasBase && hasOver) {
+            // Split: left half yellow, right half red
             barContent = `
-                <div class="w-full h-full flex flex-col rounded-t-sm overflow-hidden border border-amber-300/80">
-                    <div class="h-1/2 w-full bg-gradient-to-t from-red-600 via-red-500 to-rose-400 shadow-[0_0_6px_rgba(239,68,68,0.5)]"></div>
-                    <div class="h-1/2 w-full bg-gradient-to-t from-amber-600 via-amber-400 to-yellow-200 shadow-[0_0_6px_rgba(253,224,71,0.5)]"></div>
+                <div class="w-full h-full flex flex-row rounded-t-sm overflow-hidden border border-amber-300/80">
+                    <div class="w-1/2 h-full bg-gradient-to-t from-amber-600 via-amber-400 to-yellow-200 shadow-[0_0_6px_rgba(253,224,71,0.5)]"></div>
+                    <div class="w-1/2 h-full bg-gradient-to-t from-red-600 via-red-500 to-rose-400 shadow-[0_0_6px_rgba(239,68,68,0.5)]"></div>
                 </div>`;
         } else if (hasBase) {
             barContent = `
@@ -121,10 +122,11 @@ export const CHORD = {
         const slotsHTML = renderChordSlotsHTML(chordKey);
         return `
             <div class="flex flex-col items-center justify-center w-full h-full pointer-events-none leading-none gap-1">
-                <div class="flex items-center justify-center w-[50px] px-0.5 pointer-events-none text-center">
+                <div class="flex items-center justify-center w-[59px] px-0.5 pointer-events-none text-center">
                     <span class="text-[8px] font-mono font-bold text-amber-400 truncate tracking-tight">${info.label}</span>
                 </div>
-                <div class="flex items-center justify-between w-[50px] h-6 gap-[1.5px] p-0 pointer-events-none">
+                <!-- 12本バー：すべて同一幅(4px)・同一間隔(1px) -->
+                <div class="flex items-center justify-center h-6 gap-[1px] p-0 pointer-events-none">
                     ${slotsHTML}
                 </div>
             </div>`;
@@ -133,16 +135,23 @@ export const CHORD = {
         const curChord = m.chord || 'min';
         const curInfo = CHORD_SPECS[curChord] || CHORD_SPECS['min'];
         const isRootPatched = ctx.patched?.has('cv_in');
-        const curRoot = m.rootMidi ?? 48;
-        const rootName = UIHelpers.cvToNoteName((curRoot - 24) / 12.0);
+        const rootSemi = ((m.rootMidi ?? 48) - 48 + 120) % 12;
 
         return `
             <div class="flex flex-col gap-2 p-1 select-none">
-                <!-- Top Row: Root & Chord Selector (SCALEと同一デザイン) -->
+                <!-- Top Row: Root & Chord Selector (SCALEと同一表示) -->
                 <div class="flex items-center justify-between gap-1.5 bg-slate-950/70 p-1.5 rounded-lg border border-slate-800">
                     <div class="flex items-center gap-1">
                         <span class="text-[8px] font-bold text-slate-400 uppercase tracking-tight">ROOT:</span>
-                        <span class="text-[9.5px] font-mono font-bold text-amber-300 px-1 py-0.5">${isRootPatched ? 'EXT (CV IN)' : rootName}</span>
+                        ${isRootPatched ? `
+                            <span class="text-[9.5px] font-mono font-bold text-amber-300 px-1 py-0.5">EXT (CV)</span>
+                        ` : `
+                            <select id="chord-root-sel" class="bg-slate-900 border border-slate-700 text-amber-300 font-mono font-bold text-[9.5px] rounded px-1.5 py-0.5 cursor-pointer outline-none hover:border-amber-500">
+                                ${NOTES.map((name, idx) => `
+                                    <option value="${idx}" ${idx === rootSemi ? 'selected' : ''}>${name}</option>
+                                `).join('')}
+                            </select>
+                        `}
                     </div>
 
                     <div class="flex items-center gap-1 flex-1 justify-end min-w-0">
@@ -155,7 +164,7 @@ export const CHORD = {
                     </div>
                 </div>
 
-                <!-- 12-Bar Chord Intervals Display (SCALEと同一デザイン) -->
+                <!-- 12-Bar Chord Intervals Display (SCALEと同一表示) -->
                 <div class="flex flex-col gap-1 bg-slate-950/80 p-2 rounded-xl border border-slate-800">
                     <div class="flex items-center justify-between text-[7.5px] font-bold text-slate-400 tracking-wider">
                         <span>12-SEMITONE CHORD INTERVALS</span>
@@ -166,15 +175,22 @@ export const CHORD = {
                         ${renderChordModalBarsHTML(curChord)}
                     </div>
                 </div>
-
-                <!-- Unpatched Root Note Slider -->
-                ${!isRootPatched ? `
-                <div class="flex items-center justify-around py-1 bg-slate-950/60 p-1 rounded-xl border border-slate-800/80 gap-1">
-                    ${UIHelpers.createVSliderHTML('chord-root-slider', 'ROOT NOTE', 24, 72, 1, curRoot, 'note', 'purple', false, rootName)}
-                </div>` : ''}
             </div>`;
     },
     bindEvents: (m, ctx, cb) => {
+        // Root Selector
+        const rootSel = document.getElementById('chord-root-sel');
+        if (rootSel) {
+            rootSel.addEventListener('change', (e) => {
+                const rootSemi = parseInt(e.target.value, 10);
+                m.rootMidi = 48 + rootSemi;
+                ctx.reRenderModal?.();
+                ctx.reRenderCell?.();
+                cb();
+            });
+        }
+
+        // Chord Preset Selector
         const chordSel = document.getElementById('chord-preset-sel');
         if (chordSel) {
             chordSel.addEventListener('change', (e) => {
@@ -183,12 +199,6 @@ export const CHORD = {
                 ctx.reRenderCell?.();
                 cb();
             });
-        }
-        if (!ctx.patched?.has('cv_in')) {
-            UIHelpers.bindSlider('chord-root-slider', v => UIHelpers.cvToNoteName((Math.round(v) - 24) / 12.0), v => {
-                m.rootMidi = Math.round(v);
-                cb();
-            }, 1, 24, 72);
         }
     }
 };
