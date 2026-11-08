@@ -222,7 +222,7 @@ export const KEY = {
         return `
             <div class="space-y-2 flex flex-col items-center select-none w-full p-1">
                 <!-- Top Row: Octave, Root, Scale -->
-                <div class="w-[331px] flex items-center justify-between gap-1 bg-slate-950/70 p-1.5 rounded-lg border border-slate-800 shrink-0">
+                <div class="w-[332px] flex items-center justify-between gap-1 bg-slate-950/70 p-1.5 rounded-lg border border-slate-800 shrink-0">
                     <div class="flex items-center gap-1">
                         <span class="text-[8px] text-slate-400 uppercase font-semibold">OCT:</span>
                         <button id="key-oct-down" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold active:bg-slate-700">−</button>
@@ -252,7 +252,7 @@ export const KEY = {
                 </div>
 
                 <!-- クオンタイズマッピングルーラー（細い線でクオンタイズ吸着範囲を区分） -->
-                <div class="w-[331px] bg-slate-950/90 p-1.5 rounded-lg border border-slate-800 flex flex-col gap-1 shrink-0">
+                <div class="w-[332px] bg-slate-950/90 p-1.5 rounded-lg border border-slate-800 flex flex-col gap-1 shrink-0">
                     <div class="flex items-center justify-between text-[7px] font-bold text-slate-400 tracking-wider">
                         <span>CV IN &rarr; QUANTIZE MAP</span>
                         <span class="text-amber-400 font-mono text-[7px]" id="key-quant-title">${NOTES[curRoot]}${curOct} ${scaleKey}</span>
@@ -265,7 +265,8 @@ export const KEY = {
                 </div>
 
                 <!-- VOLCAスタイル 16本 角のあるスクエアバー (-2 .. 13) -->
-                <div class="w-[331px] h-28 bg-slate-950 p-1.5 rounded-xl border border-slate-800 flex justify-between gap-[2px] select-none touch-none shrink-0" id="volca-key-box">
+                <!-- 各キーw-[18px]×16本 = 288px + gap-[2px]×15 = 30px -> 内寸ちょうど318px (全キー・全間隔完全均等) -->
+                <div class="w-[332px] h-28 bg-slate-950 p-1.5 rounded-xl border border-slate-800 flex flex-row gap-[2px] select-none touch-none shrink-0" id="volca-key-box">
                     ${KEYS_16.map(k => {
                         const rel = ((k.absSemi - curRoot) % 12 + 12) % 12;
                         const isMasked = (mask[rel] ?? 1) === 1;
@@ -280,13 +281,13 @@ export const KEY = {
                             textCls = k.isBlack ? 'text-[hsl(48,60%,25%)] font-bold' : 'text-yellow-950 font-black';
                         } else {
                             barBg = k.isBlack
-                                ? 'bg-slate-900/70 border border-slate-800/60'
-                                : 'bg-slate-800/80 border border-slate-700/60';
+                                ? 'bg-slate-900/90 border border-slate-700/60'
+                                : 'bg-slate-800/90 border border-slate-700/60';
                             textCls = 'text-slate-500 font-bold';
                         }
 
                         return `
-                            <div class="volca-key-item flex-1 h-full rounded-none flex flex-col justify-end items-center pb-1.5 cursor-pointer select-none transition-all duration-75 relative overflow-hidden ${barBg}" data-key-semi="${k.s}" title="${k.name}">
+                            <div class="volca-key-item w-[18px] shrink-0 h-full rounded-none flex flex-col justify-end items-center pb-1.5 cursor-pointer select-none transition-all duration-75 relative overflow-hidden ${barBg}" data-key-semi="${k.s}" title="${k.name}">
                                 <div class="absolute inset-0 bg-white opacity-0 active:opacity-25 pointer-events-none"></div>
                                 <span class="text-[7.5px] font-mono pointer-events-none ${textCls}">${k.name}</span>
                             </div>`;
