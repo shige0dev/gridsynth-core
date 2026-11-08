@@ -2,8 +2,18 @@ import { UIHelpers } from '../../ui/helpers.js?v=354';
 import { NOTES, SCALE_PRESETS, SCALE_KEYS, snapToScale, parseKeyNoteToCv } from '../../core/musical.js?v=367';
 export { parseKeyNoteToCv };
 
+// 16 Keys: 前2セミトーン (A#, B) + 12半音 (C〜B) + 後2セミトーン (C, C#) = -2 .. 13
+export const KEYS_16 = Array.from({ length: 16 }, (_, i) => {
+    const s = i - 2; // -2 .. 13
+    const absSemi = ((s % 12) + 12) % 12;
+    const name = NOTES[absSemi];
+    const isBlack = name.includes('#');
+    return { s, absSemi, name, isBlack };
+});
+
 export const KEY = {
     color: 'sky',
+    KEYS_16,
     defaults: () => ({
         type: 'KEY',
         octave: 3,
@@ -41,29 +51,28 @@ export const KEY = {
         return `
             <div class="flex flex-col items-center justify-center w-full h-full pointer-events-none leading-none gap-1">
                 <!-- スケール表示 ＆ ノート名（入力するまでは非表示） -->
-                <div class="flex items-center justify-between w-[59px] px-0.5 pointer-events-none text-center">
+                <div class="flex items-center justify-between w-[63px] px-0.5 pointer-events-none text-center">
                     <span class="text-[7.5px] font-mono font-bold text-amber-400 truncate tracking-tight">${rootName} ${scaleName}</span>
                     <span class="text-[7.5px] font-mono font-bold text-cyan-300 ml-1 key-live-cell-note">${curNote}</span>
                 </div>
-                <!-- 12本 VOLCAスタイル タッチバー（C〜B固定） -->
+                <!-- 16本 VOLCAスタイル タッチバー（-2〜13: A#〜C#） -->
                 <div class="flex items-center justify-center h-6 gap-[1px] p-0 pointer-events-none">
-                    ${NOTES.map((n, semi) => {
-                        const rel = (semi - root + 12) % 12;
+                    ${KEYS_16.map(k => {
+                        const rel = ((k.absSemi - root) % 12 + 12) % 12;
                         const isMasked = (mask[rel] ?? 1) === 1;
-                        const isBlack = n.includes('#');
 
-                        // 色相は同一の黄色(Hue 48deg)。黒鍵は色相を変えず彩度のみ少し落とす (96% -> 60%)
+                        // 色相は同一の黄色(Hue 48deg)。黒鍵は色相を変えず彩度のみ少し落とす
                         let barBg = '';
                         if (isMasked) {
-                            barBg = isBlack
-                                ? 'bg-[hsl(48,60%,50%)] shadow-[0_0_3px_rgba(200,175,50,0.5)]'
-                                : 'bg-yellow-400 shadow-[0_0_3px_rgba(250,204,21,0.6)]';
+                            barBg = k.isBlack
+                                ? 'bg-[hsl(48,60%,50%)] shadow-[0_0_2px_rgba(200,175,50,0.5)]'
+                                : 'bg-yellow-400 shadow-[0_0_2px_rgba(250,204,21,0.6)]';
                         } else {
-                            barBg = isBlack
+                            barBg = k.isBlack
                                 ? 'bg-slate-900/90 border border-slate-800/80'
                                 : 'bg-slate-700/50';
                         }
-                        return `<div data-key-bar="${semi}" class="w-[4px] h-full rounded-[0.5px] relative shrink-0 ${barBg}"></div>`;
+                        return `<div data-key-bar="${k.s}" class="w-[3px] h-full rounded-[0.5px] relative shrink-0 ${barBg}"></div>`;
                     }).join('')}
                 </div>
             </div>`;
@@ -75,7 +84,8 @@ export const KEY = {
         // パネル上のバーのハイライト（未入力時は消灯）
         cell.querySelectorAll('[data-key-bar]').forEach(b => {
             const barSemi = parseInt(b.getAttribute('data-key-bar'), 10);
-            b.classList.toggle('key-active-bar', isAct && barSemi === semi);
+            const abs = ((barSemi % 12) + 12) % 12;
+            b.classList.toggle('key-active-bar', isAct && abs === semi);
         });
 
         // パネル上のノート名表示
@@ -89,7 +99,8 @@ export const KEY = {
         if (modal) {
             modal.querySelectorAll('[data-modal-key-bar]').forEach(b => {
                 const barSemi = parseInt(b.getAttribute('data-modal-key-bar'), 10);
-                const isThisAct = isAct && (barSemi === semi);
+                const abs = ((barSemi % 12) + 12) % 12;
+                const isThisAct = isAct && (abs === semi);
                 b.classList.toggle('ring-2', isThisAct);
                 b.classList.toggle('ring-cyan-300', isThisAct);
                 b.classList.toggle('shadow-[0_0_8px_#67e8f9]', isThisAct);
@@ -143,32 +154,31 @@ export const KEY = {
                     <span class="text-[9.5px] font-mono font-bold text-cyan-300 min-w-[28px] text-right" id="key-active-note">${curNote}</span>
                 </div>
 
-                <!-- VOLCAスタイル 12本 フラット・タッチバー -->
-                <div class="w-[331px] h-28 bg-slate-950 p-1.5 rounded-xl border border-slate-800 flex justify-between gap-1 select-none touch-none shrink-0" id="volca-key-box">
-                    ${NOTES.map((n, semi) => {
-                        const rel = (semi - curRoot + 12) % 12;
+                <!-- VOLCAスタイル 16本 フラット・タッチバー (-2 .. 13) -->
+                <div class="w-[331px] h-28 bg-slate-950 p-1.5 rounded-xl border border-slate-800 flex justify-between gap-[2px] select-none touch-none shrink-0" id="volca-key-box">
+                    ${KEYS_16.map(k => {
+                        const rel = ((k.absSemi - curRoot) % 12 + 12) % 12;
                         const isMasked = (mask[rel] ?? 1) === 1;
-                        const isBlack = n.includes('#');
 
                         // 色相は同一の黄色(Hue 48deg)。黒鍵は色相を変えず彩度のみ少し落とす
                         let barBg = '';
                         let textCls = '';
                         if (isMasked) {
-                            barBg = isBlack
+                            barBg = k.isBlack
                                 ? 'bg-gradient-to-t from-[hsl(48,50%,40%)] via-[hsl(48,60%,50%)] to-[hsl(48,55%,68%)] border border-[hsl(48,55%,55%)] shadow-[0_0_6px_rgba(200,175,50,0.35)]'
                                 : 'bg-gradient-to-t from-yellow-500 via-yellow-400 to-amber-200 border border-yellow-300 shadow-[0_0_6px_rgba(253,224,71,0.4)]';
                             textCls = 'text-yellow-950 font-black';
                         } else {
-                            barBg = isBlack
+                            barBg = k.isBlack
                                 ? 'bg-slate-900/95 border border-slate-800'
                                 : 'bg-slate-800/80 border border-slate-700/60';
                             textCls = 'text-slate-500 font-bold';
                         }
 
                         return `
-                            <div class="volca-key-item flex-1 h-full rounded-md flex flex-col justify-end items-center pb-1.5 cursor-pointer select-none transition-all duration-75 relative overflow-hidden ${barBg}" data-key-semi="${semi}" data-modal-key-bar="${semi}" title="${n}">
+                            <div class="volca-key-item flex-1 h-full rounded-md flex flex-col justify-end items-center pb-1.5 cursor-pointer select-none transition-all duration-75 relative overflow-hidden ${barBg}" data-key-semi="${k.s}" data-modal-key-bar="${k.s}" title="${k.name}">
                                 <div class="absolute inset-0 bg-white opacity-0 active:opacity-20 pointer-events-none"></div>
-                                <span class="text-[8.5px] font-mono pointer-events-none ${textCls}">${n}</span>
+                                <span class="text-[7.5px] font-mono pointer-events-none ${textCls}">${k.name}</span>
                             </div>`;
                     }).join('')}
                 </div>
@@ -219,16 +229,25 @@ export const KEY = {
             cb();
         });
 
-        // Touch & Slide Interaction on VOLCA Ribbon Bar
+        // Touch & Slide Interaction on VOLCA 16 Ribbon Bar
         const box = rootEl.querySelector('#volca-key-box');
         if (!box) return;
 
         const playSemi = (rawSemi, isDown) => {
             const oct = m.octave ?? 3;
             const mask = m.mask || SCALE_PRESETS[m.scale] || SCALE_PRESETS['CHROMATIC'];
-            const snappedSemi = snapToScale(rawSemi, m.root ?? 0, mask);
+            const absSemi = ((rawSemi % 12) + 12) % 12;
+            const snappedAbsSemi = snapToScale(absSemi, m.root ?? 0, mask);
+            
+            // Nearest snapped offset
+            let diff = snappedAbsSemi - absSemi;
+            if (diff > 6) diff -= 12;
+            if (diff < -6) diff += 12;
+            const snappedSemi = rawSemi + diff;
+
             const midi = (oct + 1) * 12 + snappedSemi;
-            const name = `${NOTES[snappedSemi]}${oct}`;
+            const octDisplay = Math.floor(midi / 12) - 1;
+            const name = `${NOTES[snappedAbsSemi]}${octDisplay}`;
 
             if (isDown) {
                 m.lastNote = name;
