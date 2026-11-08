@@ -1,50 +1,6 @@
 import { UIHelpers } from '../../ui/helpers.js';
 import { CHORD_SPECS, CHORD_KEYS, NOTES } from '../../core/musical.js';
 
-const renderChordSlotsHTML = (chordKey) => {
-    const info = CHORD_SPECS[chordKey] || CHORD_SPECS['min'];
-    const intervals = info.intervals || [0, 3, 7, 12];
-    const baseSlots = new Set();
-    const overSlots = new Set();
-
-    intervals.forEach(semi => {
-        const slot = ((semi % 12) + 12) % 12;
-        if (semi < 12) {
-            baseSlots.add(slot);
-        } else {
-            overSlots.add(slot);
-        }
-    });
-
-    let bars = '';
-    for (let s = 0; s < 12; s++) {
-        const hasBase = baseSlots.has(s);
-        const hasOver = overSlots.has(s);
-
-        if (hasBase && hasOver) {
-            // Split: left half yellow, right half red
-            bars += `
-                <div class="w-[4px] h-full flex flex-row rounded-[0.5px] overflow-hidden shrink-0">
-                    <div class="w-1/2 h-full bg-yellow-400 shadow-[0_0_3px_rgba(250,204,21,0.6)]"></div>
-                    <div class="w-1/2 h-full bg-red-500 shadow-[0_0_3px_rgba(239,68,68,0.6)]"></div>
-                </div>`;
-        } else if (hasBase) {
-            // Base layer only: solid yellow
-            bars += `
-                <div class="w-[4px] h-full rounded-[0.5px] bg-yellow-400 shadow-[0_0_3px_rgba(250,204,21,0.6)] shrink-0"></div>`;
-        } else if (hasOver) {
-            // Over layer only: solid red
-            bars += `
-                <div class="w-[4px] h-full rounded-[0.5px] bg-red-500 shadow-[0_0_3px_rgba(239,68,68,0.6)] shrink-0"></div>`;
-        } else {
-            // Off: dark
-            bars += `
-                <div class="w-[4px] h-full rounded-[0.5px] bg-slate-800/40 shrink-0"></div>`;
-        }
-    }
-    return bars;
-};
-
 const renderChordModalBarsHTML = (chordKey) => {
     const info = CHORD_SPECS[chordKey] || CHORD_SPECS['min'];
     const intervals = info.intervals || [0, 3, 7, 12];
@@ -119,16 +75,64 @@ export const CHORD = {
     renderGrid: (m) => {
         const chordKey = m.chord || 'min';
         const info = CHORD_SPECS[chordKey] || CHORD_SPECS['min'];
-        const slotsHTML = renderChordSlotsHTML(chordKey);
+        const intervals = info.intervals || [0, 3, 7, 12];
+        const baseSlots = new Set();
+        const overSlots = new Set();
+
+        intervals.forEach(semi => {
+            const slot = ((semi % 12) + 12) % 12;
+            if (semi < 12) {
+                baseSlots.add(slot);
+            } else {
+                overSlots.add(slot);
+            }
+        });
+
+        // 12 semitones matching standardized UIHelpers.renderPanelBars (h-7, 28px)
+        const barItems = Array.from({ length: 12 }, (_, s) => {
+            const hasBase = baseSlots.has(s);
+            const hasOver = overSlots.has(s);
+            const isOn = hasBase || hasOver;
+
+            let color = '';
+            let innerCls = '';
+            if (hasBase && hasOver) {
+                // Split: left half yellow, right half red
+                color = 'bg-[linear-gradient(to_right,#facc15_50%,#ef4444_50%)]';
+                innerCls = 'shadow-[0_0_2px_rgba(250,204,21,0.5)]';
+            } else if (hasBase) {
+                color = 'bg-yellow-400';
+                innerCls = 'shadow-[0_0_2px_rgba(250,204,21,0.6)]';
+            } else if (hasOver) {
+                color = 'bg-red-500';
+                innerCls = 'shadow-[0_0_2px_rgba(239,68,68,0.6)]';
+            } else {
+                color = 'bg-transparent';
+            }
+
+            return {
+                pct: isOn ? 100 : 0,
+                color,
+                width: 'w-[3px]',
+                innerCls,
+                outerCls: isOn ? '' : 'opacity-40',
+                attrs: `data-chord-bar="${s}"`
+            };
+        });
+
+        const barsHTML = UIHelpers.renderPanelBars(barItems, {
+            heightCls: 'h-7',
+            gapCls: 'gap-px',
+            containerCls: 'w-[54px]',
+            theme: 'cv'
+        });
+
         return `
-            <div class="flex flex-col items-center justify-center w-full h-full pointer-events-none leading-none gap-1">
-                <div class="flex items-center justify-center w-[59px] px-0.5 pointer-events-none text-center">
-                    <span class="text-[8px] font-mono font-bold text-amber-400 truncate tracking-tight">${info.label}</span>
-                </div>
-                <!-- 12本バー：すべて同一幅(4px)・同一間隔(1px) -->
-                <div class="flex items-center justify-center h-6 gap-[1px] p-0 pointer-events-none">
-                    ${slotsHTML}
-                </div>
+            <div class="relative flex items-center justify-center w-full h-full pointer-events-none select-none">
+                <!-- 上部: コード名（SEQ/SPK/KEYと同一の配置ルール top-[8px]） -->
+                <span class="absolute top-[8px] left-1/2 -translate-x-1/2 text-[7.5px] font-mono font-bold text-amber-400 truncate tracking-tight text-center max-w-[64px] leading-none">${info.label}</span>
+                <!-- 中央: 標準 renderPanelBars (h-7 / 28px) -->
+                ${barsHTML}
             </div>`;
     },
     renderModal: (m, ctx) => {

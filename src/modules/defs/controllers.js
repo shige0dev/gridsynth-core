@@ -117,17 +117,30 @@ export const KEY = {
                 <!-- 中央: 標準 renderPanelBars (h-7 / 28px) -->
                 ${barsHTML}
                 <!-- 下部: 現在音（バーのすぐ下、SPK等と同一の配置ルール） -->
-                <span class="key-live-cell-note absolute bottom-[10px] left-1/2 -translate-x-1/2 text-[7.5px] font-mono font-bold text-cyan-300 leading-none">${curNote || ''}</span>
+                <span class="key-live-cell-note absolute bottom-[10px] left-1/2 -translate-x-1/2 text-[7.5px] font-mono font-bold text-cyan-300 leading-none" data-manual-note="${curNote}">${curNote || ''}</span>
             </div>`;
     },
     updateLive: (cell, data, isP, modal) => {
-        if (!modal || !data) return;
+        if (!data) return;
         const inSemi = data.inputSemi ?? -1;
+        const isPatched = Boolean(data.isPatched);
 
-        // モーダル上部のクオンタイズマップの入力ハイライト
+        // 1. Grid cell note display (バーの下の現在音)
+        const cellNoteEl = cell?.querySelector('.key-live-cell-note');
+        if (cellNoteEl) {
+            if (isPatched && inSemi >= 0 && data.cv !== undefined) {
+                cellNoteEl.textContent = UIHelpers.cvToNoteName(data.cv);
+            } else if (!isPatched) {
+                cellNoteEl.textContent = cellNoteEl.dataset.manualNote || '';
+            }
+        }
+
+        if (!modal) return;
+
+        // 2. Modal header quantize map highlight (外部CV入力時)
         modal.querySelectorAll('[data-quant-semi]').forEach(el => {
             const semi = parseInt(el.getAttribute('data-quant-semi'), 10);
-            const isMatch = (inSemi >= 0 && semi === inSemi);
+            const isMatch = (isPatched && inSemi >= 0 && semi === inSemi);
             el.classList.toggle('!bg-cyan-500/40', isMatch);
             el.classList.toggle('!text-cyan-200', isMatch);
             el.classList.toggle('ring-1', isMatch);
@@ -135,8 +148,10 @@ export const KEY = {
         });
 
         const noteDisp = modal.querySelector('#key-active-note');
-        if (noteDisp && inSemi >= 0 && data.cv !== undefined) {
-            noteDisp.textContent = UIHelpers.cvToNoteName(data.cv);
+        if (noteDisp) {
+            if (isPatched && inSemi >= 0 && data.cv !== undefined) {
+                noteDisp.textContent = UIHelpers.cvToNoteName(data.cv);
+            }
         }
     },
     renderModal: (m) => {

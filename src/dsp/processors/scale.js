@@ -55,11 +55,13 @@ export class ScaleProcessor extends AudioWorkletProcessor {
 
     quantize(inCv) {
         const totalSemi = Math.round(inCv * 12);
-        const oct = Math.floor(totalSemi / 12);
         const absSemi = ((totalSemi % 12) + 12) % 12;
         const snapped = this.snapSemi(absSemi);
+        let diff = snapped - absSemi;
+        if (diff > 6) diff -= 12;
+        else if (diff < -6) diff += 12;
         return {
-            cv: oct + (snapped / 12.0),
+            cv: (totalSemi + diff) / 12.0,
             inSemi: absSemi
         };
     }
@@ -94,7 +96,8 @@ export class ScaleProcessor extends AudioWorkletProcessor {
             this.port.postMessage({
                 type: 'STATE',
                 inputSemi: this.inputSemi,
-                cv: this.heldCv
+                cv: this.heldCv,
+                isPatched: this.isPatched
             });
         }
 

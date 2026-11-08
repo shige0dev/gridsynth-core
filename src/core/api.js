@@ -135,6 +135,10 @@ export function initExternalAPI(ui, synth) {
                 ui.connections = ui.pagesData[p].connections;
                 ui.renderCables();
             }
+            const mSrc = (p === ui.currentPageId ? ui.modules[from.moduleId] : ui.pagesData[p]?.modules?.[from.moduleId]);
+            const mDst = (p === ui.currentPageId ? ui.modules[to.moduleId] : ui.pagesData[p]?.modules?.[to.moduleId]);
+            if (mSrc) synth.updateModule(`${p}/${from.moduleId}`, mSrc, ui.getPatchState(from.moduleId, p));
+            if (mDst) synth.updateModule(`${p}/${to.moduleId}`, mDst, ui.getPatchState(to.moduleId, p));
             return { success: true, page: p, connection: cObj };
         },
 
@@ -148,6 +152,10 @@ export function initExternalAPI(ui, synth) {
                 ui.connections = ui.pagesData[p].connections;
                 ui.renderCables();
             }
+            const mSrc = (p === ui.currentPageId ? ui.modules[from.moduleId] : ui.pagesData[p]?.modules?.[from.moduleId]);
+            const mDst = (p === ui.currentPageId ? ui.modules[to.moduleId] : ui.pagesData[p]?.modules?.[to.moduleId]);
+            if (mSrc) synth.updateModule(`${p}/${from.moduleId}`, mSrc, ui.getPatchState(from.moduleId, p));
+            if (mDst) synth.updateModule(`${p}/${to.moduleId}`, mDst, ui.getPatchState(to.moduleId, p));
             return { success: true, page: p, connection: cObj };
         },
 

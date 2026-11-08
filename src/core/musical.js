@@ -59,10 +59,12 @@ export const snapToScale = (absSemi, root = 0, mask = [1, 1, 1, 1, 1, 1, 1, 1, 1
 
 export const quantizeCvToScale = (inCv, root = 0, mask = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]) => {
     const totalSemi = Math.round(inCv * 12);
-    const oct = Math.floor(totalSemi / 12);
     const absSemi = ((totalSemi % 12) + 12) % 12;
     const snappedSemi = snapToScale(absSemi, root, mask);
-    return oct + (snappedSemi / 12.0);
+    let diff = snappedSemi - absSemi;
+    if (diff > 6) diff -= 12;
+    else if (diff < -6) diff += 12;
+    return (totalSemi + diff) / 12.0;
 };
 
 export const midiToNoteName = (midi) => {

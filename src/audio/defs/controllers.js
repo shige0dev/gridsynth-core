@@ -1,4 +1,4 @@
-import { parseKeyNoteToCv } from '../../core/musical.js?v=367';
+import { parseKeyNoteToCv, SCALE_PRESETS } from '../../core/musical.js?v=367';
 
 function resolveKeyCv(d) {
     if (!d) return 1.0;
@@ -48,7 +48,7 @@ export const KEY = {
             gateOut.connect(eng.silentSink);
         }
 
-        let liveData = { cv: initCv, gate: 0 };
+        let liveData = { cv: initCv, gate: 0, inputSemi: -1, isPatched };
         w.port.onmessage = (e) => {
             if (e.data.type === 'STATE') {
                 liveData = e.data;
@@ -67,7 +67,7 @@ export const KEY = {
             inst.nodes.w.port.postMessage({
                 type: 'SET_CONFIG',
                 root: d.root ?? 0,
-                mask: d.mask,
+                mask: d.mask || (d.scale ? SCALE_PRESETS[d.scale] : undefined),
                 isPatched: Boolean(patch?.has('cv_in'))
             });
         }
