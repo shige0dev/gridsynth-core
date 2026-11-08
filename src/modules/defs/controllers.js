@@ -118,12 +118,14 @@ export const KEY = {
 
         return `
             <div class="relative flex items-center justify-center w-full h-full pointer-events-none select-none">
-                <!-- 単一の標準スロット枠(w-[50px] h-7, p-0 で内部48pxに3pxキー16本が完全均等配置) -->
-                <div class="relative w-[50px] h-7 rounded-sm p-0 flex flex-row border border-slate-600 bg-slate-950/40 panel-bar-slot overflow-hidden">
+                <!-- 単一の標準スロット枠(w-[50px] h-7) -->
+                <div class="relative w-[50px] h-7 flex items-center justify-center">
                     <!-- 上部: スケール名（バー上端から直近2px） -->
                     <span class="absolute bottom-full mb-[2px] left-1/2 -translate-x-1/2 text-[7.5px] font-mono font-bold text-amber-400 truncate tracking-tight text-center max-w-[64px] leading-none pointer-events-none select-none">${rootName} ${scaleName}</span>
-                    <!-- 隙間なし16キー矩形 (各3px完全均等) -->
-                    ${keysHTML}
+                    <!-- 隙間なし16キー矩形 (各3px完全均等、枠内のみオーバーフロー非表示) -->
+                    <div class="w-full h-full rounded-sm p-0 flex flex-row border border-slate-600 bg-slate-950/40 panel-bar-slot overflow-hidden">
+                        ${keysHTML}
+                    </div>
                     <!-- 下部: 現在音（バー下端から直近2px） -->
                     <span class="key-live-cell-note absolute top-full mt-[2px] left-1/2 -translate-x-1/2 text-[7.5px] font-mono font-bold text-cyan-300 truncate tracking-tight text-center max-w-[64px] leading-none pointer-events-none select-none" data-manual-note="${curNote}">${curNote || ''}</span>
                 </div>
