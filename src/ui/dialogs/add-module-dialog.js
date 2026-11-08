@@ -260,3 +260,4 @@ export function openAddModal(slotIdx, modalManager, ui) {
         renderContent();
     });
 }
+

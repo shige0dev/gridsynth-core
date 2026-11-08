@@ -158,3 +158,4 @@ export function openNumpadPrompt(title, init, min = -10.0, max = 10.0) {
         window.addEventListener('keydown', onKeyDown);
     });
 }
+

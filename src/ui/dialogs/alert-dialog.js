@@ -145,3 +145,4 @@ export function openCustomAlert(title, message, details = [], options = {}, ui =
         window.addEventListener('keydown', keyHandler);
     });
 }
+

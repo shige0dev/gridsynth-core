@@ -52,3 +52,4 @@ export const SH = {
         inst.nodes.w.port.postMessage({ type: 'SET_CONFIG', hasExternalSig, polarity: d.polarity || 'unipolar' });
     }
 };
+

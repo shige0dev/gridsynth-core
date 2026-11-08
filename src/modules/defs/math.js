@@ -143,3 +143,4 @@ export const MATH2 = {
     ], ['A', 'B']),
     bindEvents: (m, ctx, cb) => bindMathEventsUI(m, ctx, cb, ['A', 'B'])
 };
+

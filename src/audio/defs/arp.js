@@ -21,9 +21,14 @@ export const ARP = {
         in4.connect(w, 0, 4);
 
         const outSig = ctx.createGain();
+        const outGate = ctx.createGain();
 
+        inGate.connect(outGate);
         w.connect(outSig, 0, 0);
-        if (eng?.silentSink) outSig.connect(eng.silentSink);
+        if (eng?.silentSink) {
+            outSig.connect(eng.silentSink);
+            outGate.connect(eng.silentSink);
+        }
 
         const activeInputs = [1, 2, 3, 4]
             .filter(i => patch?.has?.(`cv_in${i}`) || patch?.has?.(`in_${i}`) || patch?.has?.(`in${i}`))
@@ -45,7 +50,7 @@ export const ARP = {
         };
 
         const instObj = {
-            nodes: { w, inGate, in1, in2, in3, in4, outSig },
+            nodes: { w, inGate, in1, in2, in3, in4, outSig, outGate },
             inputs: {
                 gate_in: inGate,
                 cv_in1: in1,
@@ -64,7 +69,8 @@ export const ARP = {
             },
             outputs: {
                 cv_out: outSig,
-                out: outSig
+                out: outSig,
+                gate_out: outGate
             },
             activeInputs,
             resetStep: () => {

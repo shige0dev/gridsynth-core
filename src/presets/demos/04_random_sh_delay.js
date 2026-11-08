@@ -9,9 +9,8 @@ export const preset04 = {
         "2": "VCO1",
         "3": "VCF1",
         "4": "SPK1",
-        "6": "SCALE1",
-        "8": "DELAY1",
-        "11": "KEY1"
+        "6": "KEY1",
+        "8": "DELAY1"
       },
       "modules": {
         "CLK1": {
@@ -50,17 +49,6 @@ export const preset04 = {
         "KEY1": {
           "type": "KEY",
           "octave": 3,
-          "lastNote": "C3",
-          "currentMidi": 60
-        },
-        "DELAY1": {
-          "type": "DELAY",
-          "delayTime": 0.38,
-          "feedback": 0.58,
-          "mix": 0.38
-        },
-        "SCALE1": {
-          "type": "SCALE",
           "root": 0,
           "scale": "CUSTOM",
           "mask": [
@@ -76,7 +64,16 @@ export const preset04 = {
             1,
             0,
             1
-          ]
+          ],
+          "lastNote": "C3",
+          "currentMidi": 60,
+          "cv": 2.0
+        },
+        "DELAY1": {
+          "type": "DELAY",
+          "delayTime": 0.38,
+          "feedback": 0.58,
+          "mix": 0.38
         }
       },
       "connections": [
@@ -132,11 +129,11 @@ export const preset04 = {
         },
         {
           "from": {
-            "moduleId": "SCALE1",
+            "moduleId": "SH1",
             "port": "cv_out"
           },
           "to": {
-            "moduleId": "VCO1",
+            "moduleId": "KEY1",
             "port": "cv_in"
           }
         },
@@ -147,16 +144,6 @@ export const preset04 = {
           },
           "to": {
             "moduleId": "VCO1",
-            "port": "cv_in"
-          }
-        },
-        {
-          "from": {
-            "moduleId": "SH1",
-            "port": "cv_out"
-          },
-          "to": {
-            "moduleId": "SCALE1",
             "port": "cv_in"
           }
         }
