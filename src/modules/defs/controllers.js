@@ -50,14 +50,14 @@ export const KEY = {
     }),
     WHITE_KEYS: [{n:'B',s:-1},{n:'C',s:0},{n:'D',s:2},{n:'E',s:4},{n:'F',s:5},{n:'G',s:7},{n:'A',s:9},{n:'B',s:11},{n:'C',s:12},{n:'D',s:14}],
     BLACK_KEYS: [
-        { s: -2, l: 0, w: 13, extraBorder: 'border-b border-r border-slate-400 border-l-0 border-t-0' },
-        { s: 1, l: 53, w: 18, extraBorder: 'border border-slate-400 border-t-0' },
-        { s: 3, l: 93, w: 18, extraBorder: 'border border-slate-400 border-t-0' },
-        { s: 6, l: 151, w: 18, extraBorder: 'border border-slate-400 border-t-0' },
-        { s: 8, l: 189, w: 18, extraBorder: 'border border-slate-400 border-t-0' },
-        { s: 10, l: 226, w: 18, extraBorder: 'border border-slate-400 border-t-0' },
-        { s: 13, l: 284, w: 18, extraBorder: 'border border-slate-400 border-t-0' },
-        { s: 15, l: 324, r: 0, extraBorder: 'border-b border-l border-slate-400 border-r-0 border-t-0' }
+        { s: -2, l: 0, w: 14, extraBorder: 'border-b border-r border-slate-400 border-l-0 border-t-0' },
+        { s: 1, l: 53, w: 19, extraBorder: 'border border-slate-400 border-t-0' },
+        { s: 3, l: 92, w: 19, extraBorder: 'border border-slate-400 border-t-0' },
+        { s: 6, l: 150, w: 19, extraBorder: 'border border-slate-400 border-t-0' },
+        { s: 8, l: 188, w: 19, extraBorder: 'border border-slate-400 border-t-0' },
+        { s: 10, l: 226, w: 19, extraBorder: 'border border-slate-400 border-t-0' },
+        { s: 13, l: 284, w: 19, extraBorder: 'border border-slate-400 border-t-0' },
+        { s: 15, l: 323, r: 0, extraBorder: 'border-b border-l border-slate-400 border-r-0 border-t-0' }
     ],
     renderGrid: (m) => `<div class="flex items-center justify-center w-full h-full pointer-events-none text-cyan-400"><span class="text-[15px] font-mono font-bold text-white tracking-tight">${m.lastNote || 'C2'}</span></div>`,
     renderModal: (m) => {
