@@ -39,8 +39,6 @@ const renderQuantizeMapHTML = (root, octave, mask) => {
         const scaleIdx = ((k % N) + N) % N;
         const semi = scaleNotes[scaleIdx];
         const absSemi = ((semi % 12) + 12) % 12;
-        const isBlack = NOTES[absSemi].includes('#');
-        const bgCls = isBlack ? 'bg-[hsl(48,65%,22%)]' : 'bg-[hsl(48,80%,28%)]';
 
         // 境界線判定:
         // k = -1 の右端は v = 0.0 (Cの左側) -> 太い琥珀色ラインを強く表示
@@ -57,7 +55,7 @@ const renderQuantizeMapHTML = (root, octave, mask) => {
         const noteName = `${NOTES[absSemi]}${noteOct}`;
 
         slices.push(
-            `<div class="h-full relative ${borderR} ${bgCls} shrink-0" style="width: ${widthPct}%;" data-quant-slice="${k}" title="${noteName}"></div>`
+            `<div class="h-full relative ${borderR} bg-slate-900/80 shrink-0" style="width: ${widthPct}%;" data-quant-slice="${k}" title="${noteName}"></div>`
         );
     }
 
