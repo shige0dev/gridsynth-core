@@ -23,7 +23,6 @@ export const KEY = {
 
         w.port.postMessage({
             type: 'SET_CONFIG',
-            octave: d.octave ?? 3,
             root: d.root ?? 0,
             mask: d.mask || [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
             isPatched
@@ -49,7 +48,7 @@ export const KEY = {
             gateOut.connect(eng.silentSink);
         }
 
-        let liveData = { cv: initCv, gate: 0, sliceIdx: null, isPatched };
+        let liveData = { cv: initCv, inCv: null, gate: 0, isPatched };
         w.port.onmessage = (e) => {
             if (e.data.type === 'STATE') {
                 liveData = e.data;
@@ -67,7 +66,6 @@ export const KEY = {
         if (inst?.nodes?.w) {
             inst.nodes.w.port.postMessage({
                 type: 'SET_CONFIG',
-                octave: d.octave ?? 3,
                 root: d.root ?? 0,
                 mask: d.mask || (d.scale ? SCALE_PRESETS[d.scale] : undefined),
                 isPatched: Boolean(patch?.has('cv_in'))

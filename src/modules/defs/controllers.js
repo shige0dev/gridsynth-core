@@ -131,9 +131,8 @@ export const KEY = {
                 </div>
             </div>`;
     },
-    updateLive: (cell, data, isP, modal) => {
+    updateLive: (cell, data, isP, modal, m) => {
         if (!data) return;
-        const sliceIdx = data.sliceIdx ?? -1;
         const isPatched = Boolean(data.isPatched);
 
         // 1. Grid cell note display (バーの下の現在音)
@@ -148,10 +147,21 @@ export const KEY = {
 
         if (!modal) return;
 
-        // 2. Modal header quantize map highlight (外部CV入力時：表示域内であればオクターブ外でもCV感知で均等割スライスを点灯)
+        // 2. Modal header quantize map highlight (DOM換算方式: 選択オクターブ範囲内でのみ均等割スライスを点灯)
+        const curOct = m?.octave ?? 3;
+        const vBase = curOct - 1.0;
+        const inCv = data.inCv;
+
+        const mask = m?.mask || (m?.scale ? SCALE_PRESETS[m.scale] : null) || SCALE_PRESETS['CHROMATIC'];
+        const scaleNotes = getScaleNotesInOctave(m?.root ?? 0, mask);
+        const N = scaleNotes.length;
+
+        const inRange = (isPatched && N > 0 && inCv !== null && inCv !== undefined && inCv >= vBase - (2.0 / 12.0) && inCv < vBase + (14.0 / 12.0));
+        const activeSlice = inRange ? Math.floor((inCv - vBase) * N) : null;
+
         modal.querySelectorAll('[data-quant-slice]').forEach(el => {
             const idx = parseInt(el.getAttribute('data-quant-slice'), 10);
-            const isMatch = (isPatched && data.sliceIdx !== null && data.sliceIdx !== undefined && idx === data.sliceIdx);
+            const isMatch = (activeSlice !== null && idx === activeSlice);
             el.classList.toggle('!bg-cyan-400', isMatch);
             el.classList.toggle('shadow-[0_0_8px_rgba(34,211,238,0.8)]', isMatch);
             el.classList.toggle('ring-1', isMatch);

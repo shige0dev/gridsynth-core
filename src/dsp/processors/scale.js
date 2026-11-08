@@ -2,7 +2,6 @@ export class ScaleProcessor extends AudioWorkletProcessor {
     constructor() {
         super();
         this.root = 0; // 0: C, 1: C#, ..., 11: B
-        this.octave = 3;
         this.mask = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]; // default: CHROMATIC
         this.scaleNotes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
         this.isPatched = false;
@@ -13,8 +12,7 @@ export class ScaleProcessor extends AudioWorkletProcessor {
 
         this.heldCv = 1.0;
         this.heldGate = 0.0;
-        this.sliceIdx = null;
-        this.targetSemi = -1;
+        this.rawInCv = null;
         this.sampleCount = 0;
 
         this.updateScaleNotes();
@@ -38,9 +36,6 @@ export class ScaleProcessor extends AudioWorkletProcessor {
                 }
                 if (changed) {
                     this.updateScaleNotes();
-                }
-                if (d.octave !== undefined) {
-                    this.octave = Number(d.octave);
                 }
                 if (d.isPatched !== undefined) {
                     this.isPatched = Boolean(d.isPatched);
@@ -88,25 +83,8 @@ export class ScaleProcessor extends AudioWorkletProcessor {
         let frac = inCv - oct;
         if (frac < 0) frac = 0;
         if (frac >= 1) frac = 0.999999;
-        const sliceIdx = Math.min(N - 1, Math.max(0, Math.floor(frac * N)));
-        const targetSemi = notes[sliceIdx];
-        const outCv = oct + (targetSemi / 12.0);
-
-        // 表示用スライス判定:
-        // 現在選択されているオクターブ（OCT 1なら0〜1V、OCT 2なら1〜2V、OCT 3なら2〜3V...）
-        // 表示域 [vBase - 2/12, vBase + 14/12) 内であれば該当スライスをハイライト
-        // 範囲外であれば null (表示なし)
-        const vBase = (this.octave ?? 3) - 1.0;
-        let displaySlice = null;
-        if (inCv >= vBase - (2.0 / 12.0) && inCv < vBase + (14.0 / 12.0)) {
-            displaySlice = Math.floor((inCv - vBase) * N);
-        }
-
-        return {
-            cv: outCv,
-            sliceIdx: displaySlice,
-            targetSemi
-        };
+        const normIdx = Math.min(N - 1, Math.max(0, Math.floor(frac * N)));
+        return oct + (notes[normIdx] / 12.0);
     }
 
     process(ins, outs) {
@@ -120,15 +98,10 @@ export class ScaleProcessor extends AudioWorkletProcessor {
 
         for (let i = 0; i < len; i++) {
             if (useExternal) {
-                const q = this.quantize(cvIn[i]);
-                this.heldCv = q.cv;
-                this.sliceIdx = q.sliceIdx;
-                this.targetSemi = q.targetSemi;
+                this.heldCv = this.quantize(cvIn[i]);
                 this.rawInCv = cvIn[i];
             } else {
                 this.heldCv = this.manualCv;
-                this.sliceIdx = null;
-                this.targetSemi = -1;
                 this.rawInCv = null;
             }
             this.heldGate = this.manualGate;
@@ -142,8 +115,6 @@ export class ScaleProcessor extends AudioWorkletProcessor {
             this.sampleCount = 0;
             this.port.postMessage({
                 type: 'STATE',
-                sliceIdx: this.sliceIdx,
-                targetSemi: this.targetSemi,
                 cv: this.heldCv,
                 inCv: this.rawInCv,
                 isPatched: this.isPatched
