@@ -1,5 +1,5 @@
 import { UIHelpers } from '../../ui/helpers.js';
-import { CHORD_SPECS, CHORD_KEYS } from '../../core/musical.js';
+import { CHORD_SPECS, CHORD_KEYS, NOTES } from '../../core/musical.js';
 
 const renderChordSlotsHTML = (chordKey) => {
     const info = CHORD_SPECS[chordKey] || CHORD_SPECS['min'];
@@ -22,20 +22,20 @@ const renderChordSlotsHTML = (chordKey) => {
         const hasOver = overSlots.has(s);
 
         if (hasBase && hasOver) {
-            // Split: upper half amber, lower half cyan
+            // Split: upper half red, lower half yellow
             bars += `
                 <div class="flex-1 h-full flex flex-col rounded-[1px] overflow-hidden bg-slate-900 border border-slate-800/60 shrink-0">
-                    <div class="h-1/2 w-full bg-amber-400 shadow-[0_0_4px_rgba(251,191,36,0.7)]"></div>
-                    <div class="h-1/2 w-full bg-cyan-400 shadow-[0_0_4px_rgba(34,211,238,0.7)]"></div>
+                    <div class="h-1/2 w-full bg-red-500 shadow-[0_0_4px_rgba(239,68,68,0.7)]"></div>
+                    <div class="h-1/2 w-full bg-yellow-400 shadow-[0_0_4px_rgba(250,204,21,0.7)]"></div>
                 </div>`;
         } else if (hasBase) {
-            // Base layer only: solid cyan
+            // Base layer only: solid yellow
             bars += `
-                <div class="flex-1 h-full rounded-[1px] overflow-hidden bg-cyan-400 shadow-[0_0_4px_rgba(34,211,238,0.7)] border border-cyan-300/40 shrink-0"></div>`;
+                <div class="flex-1 h-full rounded-[1px] overflow-hidden bg-yellow-400 shadow-[0_0_4px_rgba(250,204,21,0.7)] border border-yellow-300/40 shrink-0"></div>`;
         } else if (hasOver) {
-            // Over layer only: solid amber
+            // Over layer only: solid red
             bars += `
-                <div class="flex-1 h-full rounded-[1px] overflow-hidden bg-amber-400 shadow-[0_0_4px_rgba(251,191,36,0.7)] border border-amber-300/40 shrink-0"></div>`;
+                <div class="flex-1 h-full rounded-[1px] overflow-hidden bg-red-500 shadow-[0_0_4px_rgba(239,68,68,0.7)] border border-red-400/40 shrink-0"></div>`;
         } else {
             // Off: dark
             bars += `
@@ -45,13 +45,67 @@ const renderChordSlotsHTML = (chordKey) => {
     return bars;
 };
 
+const renderChordModalBarsHTML = (chordKey) => {
+    const info = CHORD_SPECS[chordKey] || CHORD_SPECS['min'];
+    const intervals = info.intervals || [0, 3, 7, 12];
+    const baseSlots = new Set();
+    const overSlots = new Set();
+
+    intervals.forEach(semi => {
+        const slot = ((semi % 12) + 12) % 12;
+        if (semi < 12) {
+            baseSlots.add(slot);
+        } else {
+            overSlots.add(slot);
+        }
+    });
+
+    return NOTES.map((n, semi) => {
+        const hasBase = baseSlots.has(semi);
+        const hasOver = overSlots.has(semi);
+        const isOn = hasBase || hasOver;
+        const isBlack = n.includes('#');
+
+        let barContent = '';
+        const barHeight = isOn ? 'h-full' : 'h-3';
+        const textCls = isOn
+            ? (semi === 0 ? 'text-amber-300 font-black underline' : (isBlack ? 'text-amber-300/90' : 'text-yellow-200'))
+            : 'text-slate-600';
+
+        if (hasBase && hasOver) {
+            barContent = `
+                <div class="w-full h-full flex flex-col rounded-t-sm overflow-hidden border border-amber-300/80">
+                    <div class="h-1/2 w-full bg-gradient-to-t from-red-600 via-red-500 to-rose-400 shadow-[0_0_6px_rgba(239,68,68,0.5)]"></div>
+                    <div class="h-1/2 w-full bg-gradient-to-t from-amber-600 via-amber-400 to-yellow-200 shadow-[0_0_6px_rgba(253,224,71,0.5)]"></div>
+                </div>`;
+        } else if (hasBase) {
+            barContent = `
+                <div class="w-full h-full rounded-t-sm border border-yellow-300 bg-gradient-to-t from-amber-600 via-amber-400 to-yellow-200 shadow-[0_0_6px_rgba(253,224,71,0.5)]"></div>`;
+        } else if (hasOver) {
+            barContent = `
+                <div class="w-full h-full rounded-t-sm border border-red-400 bg-gradient-to-t from-red-600 via-red-500 to-rose-400 shadow-[0_0_6px_rgba(239,68,68,0.5)]"></div>`;
+        } else {
+            barContent = `
+                <div class="w-full h-full rounded-t-sm border border-slate-800 bg-slate-900"></div>`;
+        }
+
+        return `
+            <div class="flex-1 flex flex-col items-center justify-end h-full">
+                <div class="w-full ${barHeight} flex items-center justify-center relative transition-all duration-75">
+                    ${barContent}
+                </div>
+                <span class="text-[8px] font-mono font-bold mt-1 ${textCls}">${n}</span>
+            </div>`;
+    }).join('');
+};
+
 export const CHORD = {
     color: 'purple',
     CHORD_SPECS,
     defaults: () => ({ type: 'CHORD', chord: 'min', rootMidi: 48 }),
     ports: () => ({
         in: [
-            { port: 'cv_in', pin: 4, label: 'IN', signal: 'cv', color: 'bg-yellow-400' }
+            { port: 'cv_in', pin: 5, label: 'IN', signal: 'cv', color: 'bg-yellow-400' }
         ],
         out: [
             { port: 'cv_out1', pin: 10, label: 'V1', signal: 'cv', color: 'bg-yellow-400' },
@@ -66,63 +120,70 @@ export const CHORD = {
         const info = CHORD_SPECS[chordKey] || CHORD_SPECS['min'];
         const slotsHTML = renderChordSlotsHTML(chordKey);
         return `
-            <div class="flex flex-col items-center justify-between w-full h-full py-1.5 px-2 select-none pointer-events-none text-purple-300 leading-none">
-                <div class="flex flex-col items-center gap-0.5 w-full">
-                    <span class="text-[7.5px] font-bold uppercase tracking-wider text-slate-400">CHORD</span>
-                    <span class="text-[10px] font-mono font-bold text-cyan-300 truncate max-w-full text-center">${info.label}</span>
+            <div class="flex flex-col items-center justify-center w-full h-full pointer-events-none leading-none gap-1">
+                <div class="flex items-center justify-center w-[50px] px-0.5 pointer-events-none text-center">
+                    <span class="text-[8px] font-mono font-bold text-amber-400 truncate tracking-tight">${info.label}</span>
                 </div>
-                <div class="w-full flex items-center justify-center px-0.5">
-                    <div class="w-full h-7 flex items-center gap-[1.5px] p-0.5 bg-slate-950/80 rounded border border-slate-800/90 shadow-inner">
-                        ${slotsHTML}
-                    </div>
-                </div>
-                <div class="flex items-center justify-center gap-2 text-[7px] font-mono text-slate-500">
-                    <span class="flex items-center gap-0.5"><span class="w-1.5 h-1.5 rounded-full bg-cyan-400 inline-block"></span>0-11</span>
-                    <span class="flex items-center gap-0.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block"></span>+12</span>
+                <div class="flex items-center justify-between w-[50px] h-6 gap-[1.5px] p-0 pointer-events-none">
+                    ${slotsHTML}
                 </div>
             </div>`;
     },
     renderModal: (m, ctx) => {
         const curChord = m.chord || 'min';
+        const curInfo = CHORD_SPECS[curChord] || CHORD_SPECS['min'];
         const isRootPatched = ctx.patched?.has('cv_in');
         const curRoot = m.rootMidi ?? 48;
         const rootName = UIHelpers.cvToNoteName((curRoot - 24) / 12.0);
 
         return `
-            <div class="space-y-2 select-none">
-                <div class="flex items-center justify-between pb-1 border-b border-slate-800">
-                    <span class="text-[8px] text-slate-400 font-semibold uppercase">ROOT NOTE (1V/OCT BASE)</span>
-                    <span class="text-[9px] font-mono font-bold text-yellow-300">${isRootPatched ? 'EXT CV (PATCHED)' : rootName}</span>
-                </div>
-                <div class="flex items-center justify-around py-1 bg-slate-950/60 p-1 rounded-xl border border-slate-800/80 gap-1 ${isRootPatched ? 'opacity-30 pointer-events-none' : ''}">
-                    ${UIHelpers.createVSliderHTML('chord-root-slider', 'ROOT', 24, 72, 1, curRoot, 'note', 'purple', isRootPatched, rootName)}
-                </div>
-                <div>
-                    <div class="flex items-center justify-between mb-1">
-                        <label class="block text-[8px] text-slate-400 uppercase tracking-wider font-semibold">CHORD SELECT (16 TYPES)</label>
-                        <span class="text-[8px] font-mono text-cyan-300 font-bold">${(CHORD_SPECS[curChord] || CHORD_SPECS['min']).label}</span>
+            <div class="flex flex-col gap-2 p-1 select-none">
+                <!-- Top Row: Root & Chord Selector (SCALEと同一デザイン) -->
+                <div class="flex items-center justify-between gap-1.5 bg-slate-950/70 p-1.5 rounded-lg border border-slate-800">
+                    <div class="flex items-center gap-1">
+                        <span class="text-[8px] font-bold text-slate-400 uppercase tracking-tight">ROOT:</span>
+                        <span class="text-[9.5px] font-mono font-bold text-amber-300 px-1 py-0.5">${isRootPatched ? 'EXT (CV IN)' : rootName}</span>
                     </div>
-                    <div class="grid grid-cols-4 gap-1">
-                        ${CHORD_KEYS.map(key => {
-                            const c = CHORD_SPECS[key];
-                            const isSel = curChord === key;
-                            return `
-                                <button class="chord-type-btn py-1.5 px-1 rounded flex flex-col items-center justify-center border transition-all ${isSel ? 'bg-purple-600 text-white border-purple-400 shadow-sm shadow-purple-500/50' : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'}" data-val="${key}">
-                                    <span class="text-[8.5px] font-bold pointer-events-none">${c.label}</span>
-                                    <span class="text-[6.5px] font-mono ${isSel ? 'text-purple-200' : 'text-slate-500'} pointer-events-none">[${c.intervals.join(',')}]</span>
-                                </button>`;
-                        }).join('')}
+
+                    <div class="flex items-center gap-1 flex-1 justify-end min-w-0">
+                        <span class="text-[8px] font-bold text-slate-400 uppercase tracking-tight">CHORD:</span>
+                        <select id="chord-preset-sel" class="bg-slate-900 border border-slate-700 text-yellow-300 font-mono font-bold text-[9px] rounded px-1.5 py-0.5 cursor-pointer outline-none hover:border-yellow-500 truncate max-w-[130px]">
+                            ${CHORD_KEYS.map(k => `
+                                <option value="${k}" ${k === curChord ? 'selected' : ''}>${CHORD_SPECS[k].label}</option>
+                            `).join('')}
+                        </select>
                     </div>
                 </div>
+
+                <!-- 12-Bar Chord Intervals Display (SCALEと同一デザイン) -->
+                <div class="flex flex-col gap-1 bg-slate-950/80 p-2 rounded-xl border border-slate-800">
+                    <div class="flex items-center justify-between text-[7.5px] font-bold text-slate-400 tracking-wider">
+                        <span>12-SEMITONE CHORD INTERVALS</span>
+                        <span class="text-amber-400 font-mono">${curInfo.intervals.length} VOICES</span>
+                    </div>
+
+                    <div class="flex items-end justify-between gap-1 h-16 pt-1 pb-0.5">
+                        ${renderChordModalBarsHTML(curChord)}
+                    </div>
+                </div>
+
+                <!-- Unpatched Root Note Slider -->
+                ${!isRootPatched ? `
+                <div class="flex items-center justify-around py-1 bg-slate-950/60 p-1 rounded-xl border border-slate-800/80 gap-1">
+                    ${UIHelpers.createVSliderHTML('chord-root-slider', 'ROOT NOTE', 24, 72, 1, curRoot, 'note', 'purple', false, rootName)}
+                </div>` : ''}
             </div>`;
     },
     bindEvents: (m, ctx, cb) => {
-        UIHelpers.bindButtonGroup('.chord-type-btn', 'bg-purple-600 text-white border-purple-400 shadow-sm shadow-purple-500/50', 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800', val => {
-            m.chord = val;
-            ctx.reRenderModal?.();
-            ctx.reRenderCell?.();
-            cb();
-        });
+        const chordSel = document.getElementById('chord-preset-sel');
+        if (chordSel) {
+            chordSel.addEventListener('change', (e) => {
+                m.chord = e.target.value;
+                ctx.reRenderModal?.();
+                ctx.reRenderCell?.();
+                cb();
+            });
+        }
         if (!ctx.patched?.has('cv_in')) {
             UIHelpers.bindSlider('chord-root-slider', v => UIHelpers.cvToNoteName((Math.round(v) - 24) / 12.0), v => {
                 m.rootMidi = Math.round(v);
