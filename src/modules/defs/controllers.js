@@ -46,16 +46,16 @@ const renderQuantizeMapHTML = (root, octave, mask) => {
         // その他のスライス境界は細い区切り線
         let borderR = '';
         if (k === -1 || k === N - 1) {
-            borderR = 'border-r-2 border-amber-400 shadow-[0_0_4px_rgba(251,191,36,0.8)] z-10';
+            borderR = 'border-r-2 border-zinc-400 shadow-[0_0_4px_rgba(255,255,255,0.3)] z-10';
         } else if (k !== kMax) {
-            borderR = 'border-r border-slate-700/60';
+            borderR = 'border-r border-zinc-800/80';
         }
 
         const noteOct = Math.floor(vBase + (k / N)) + 1;
         const noteName = `${NOTES[absSemi]}${noteOct}`;
 
         slices.push(
-            `<div class="h-full relative ${borderR} bg-slate-900/80 shrink-0" style="width: ${widthPct}%;" data-quant-slice="${k}" title="${noteName}"></div>`
+            `<div class="h-full relative ${borderR} bg-zinc-900/80 shrink-0" style="width: ${widthPct}%;" data-quant-slice="${k}" title="${noteName}"></div>`
         );
     }
 
@@ -107,8 +107,8 @@ export const KEY = {
 
             let bg = '';
             if (isMasked) {
-                // 色相・彩度は同一(Hue 48deg, Sat 90%+)。黒鍵は明度を上げて淡く表現
-                bg = k.isBlack ? 'bg-[hsl(48,90%,72%)]' : 'bg-yellow-400';
+                // 無彩色（グレー／ダークグレーのグラデーション）
+                bg = k.isBlack ? 'bg-gradient-to-t from-zinc-700 to-zinc-600' : 'bg-gradient-to-t from-zinc-500 to-zinc-400';
             } else {
                 bg = 'bg-transparent';
             }
@@ -123,11 +123,11 @@ export const KEY = {
                     <!-- 上部: スケール名（バー上端から直近2px） -->
                     <span class="absolute bottom-full mb-[2px] left-1/2 -translate-x-1/2 text-[7.5px] font-mono font-bold text-amber-400 truncate tracking-tight text-center max-w-[64px] leading-none pointer-events-none select-none">${rootName} ${scaleName}</span>
                     <!-- 隙間なし16キー矩形 (各3px完全均等、枠内のみオーバーフロー非表示) -->
-                    <div class="w-full h-full rounded-sm p-0 flex flex-row border border-slate-600 bg-slate-950/40 panel-bar-slot overflow-hidden">
+                    <div class="w-full h-full rounded-sm p-0 flex flex-row border border-zinc-600 bg-zinc-950/50 panel-bar-slot overflow-hidden">
                         ${keysHTML}
                     </div>
-                    <!-- 下部: 現在音（バー下端から直近2px） -->
-                    <span class="key-live-cell-note absolute top-full mt-[2px] left-1/2 -translate-x-1/2 text-[7.5px] font-mono font-bold text-cyan-300 truncate tracking-tight text-center max-w-[64px] leading-none pointer-events-none select-none" data-manual-note="${curNote}">${curNote || ''}</span>
+                    <!-- 下部: 現在音（バー下端から直近2px、音名文字は白） -->
+                    <span class="key-live-cell-note absolute top-full mt-[2px] left-1/2 -translate-x-1/2 text-[7.5px] font-mono font-bold text-white truncate tracking-tight text-center max-w-[64px] leading-none pointer-events-none select-none" data-manual-note="${curNote}">${curNote || ''}</span>
                 </div>
             </div>`;
     },
@@ -222,17 +222,17 @@ export const KEY = {
         return `
             <div class="space-y-2 flex flex-col items-center select-none w-full p-1">
                 <!-- Top Row: Octave, Root, Scale -->
-                <div class="w-[332px] flex items-center justify-between gap-1 bg-slate-950/70 p-1.5 rounded-lg border border-slate-800 shrink-0">
+                <div class="w-[332px] flex items-center justify-between gap-1 bg-zinc-950/80 p-1.5 rounded-lg border border-zinc-800 shrink-0">
                     <div class="flex items-center gap-1">
-                        <span class="text-[8px] text-slate-400 uppercase font-semibold">OCT:</span>
-                        <button id="key-oct-down" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold active:bg-slate-700">−</button>
-                        <span id="key-oct-disp" class="w-4 text-center text-[10px] font-mono font-bold text-cyan-300">${curOct}</span>
-                        <button id="key-oct-up" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold active:bg-slate-700">＋</button>
+                        <span class="text-[8px] text-zinc-400 uppercase font-semibold">OCT:</span>
+                        <button id="key-oct-down" class="w-4 h-4 rounded bg-zinc-800 text-zinc-200 text-[10px] font-bold active:bg-zinc-700">－</button>
+                        <span id="key-oct-disp" class="w-4 text-center text-[10px] font-mono font-bold text-white">${curOct}</span>
+                        <button id="key-oct-up" class="w-4 h-4 rounded bg-zinc-800 text-zinc-200 text-[10px] font-bold active:bg-zinc-700">＋</button>
                     </div>
 
                     <div class="flex items-center gap-1">
-                        <span class="text-[8px] font-bold text-slate-400 uppercase tracking-tight">ROOT:</span>
-                        <select id="key-root-sel" class="bg-slate-900 border border-slate-700 text-amber-300 font-mono font-bold text-[9px] rounded px-1 py-0.5 cursor-pointer outline-none hover:border-amber-500">
+                        <span class="text-[8px] font-bold text-zinc-400 uppercase tracking-tight">ROOT:</span>
+                        <select id="key-root-sel" class="bg-zinc-900 border border-zinc-700 text-zinc-200 font-mono font-bold text-[9px] rounded px-1 py-0.5 cursor-pointer outline-none hover:border-zinc-500">
                             ${NOTES.map((name, idx) => `
                                 <option value="${idx}" ${idx === curRoot ? 'selected' : ''}>${name}</option>
                             `).join('')}
@@ -240,24 +240,24 @@ export const KEY = {
                     </div>
 
                     <div class="flex items-center gap-1 flex-1 justify-end min-w-0">
-                        <span class="text-[8px] font-bold text-slate-400 uppercase tracking-tight">SCALE:</span>
-                        <select id="key-scale-sel" class="bg-slate-900 border border-slate-700 text-yellow-300 font-mono font-bold text-[9px] rounded px-1.5 py-0.5 cursor-pointer outline-none hover:border-yellow-500 truncate max-w-[110px]">
+                        <span class="text-[8px] font-bold text-zinc-400 uppercase tracking-tight">SCALE:</span>
+                        <select id="key-scale-sel" class="bg-zinc-900 border border-zinc-700 text-zinc-200 font-mono font-bold text-[9px] rounded px-1.5 py-0.5 cursor-pointer outline-none hover:border-zinc-500 truncate max-w-[110px]">
                             ${SCALE_KEYS.map(k => `
                                 <option value="${k}" ${k === scaleKey ? 'selected' : ''}>${k}</option>
                             `).join('')}
                         </select>
                     </div>
 
-                    <span class="text-[9.5px] font-mono font-bold text-cyan-300 min-w-[28px] text-right" id="key-active-note">${curNote}</span>
+                    <span class="text-[9.5px] font-mono font-bold text-white min-w-[28px] text-right" id="key-active-note">${curNote}</span>
                 </div>
 
                 <!-- クオンタイズマッピングルーラー（細い線でクオンタイズ吸着範囲を区分） -->
-                <div class="w-[332px] bg-slate-950/90 p-1.5 rounded-lg border border-slate-800 flex flex-col gap-1 shrink-0">
-                    <div class="flex items-center justify-between text-[7px] font-bold text-slate-400 tracking-wider">
+                <div class="w-[332px] bg-zinc-950/90 p-1.5 rounded-lg border border-zinc-800 flex flex-col gap-1 shrink-0">
+                    <div class="flex items-center justify-between text-[7px] font-bold text-zinc-400 tracking-wider">
                         <span>CV IN &rarr; QUANTIZE MAP</span>
-                        <span class="text-amber-400 font-mono text-[7px]" id="key-quant-title">${NOTES[curRoot]}${curOct} ${scaleKey}</span>
+                        <span class="text-zinc-300 font-mono text-[7px]" id="key-quant-title">${NOTES[curRoot]}${curOct} ${scaleKey}</span>
                     </div>
-                    <div class="relative flex items-center w-full h-[10px] bg-slate-900/90 rounded-[1px] border border-slate-700/60 overflow-hidden" id="key-quant-strip">
+                    <div class="relative flex items-center w-full h-[10px] bg-zinc-900/90 rounded-[1px] border border-zinc-700/60 overflow-hidden" id="key-quant-strip">
                         ${renderQuantizeMapHTML(curRoot, curOct, mask)}
                         <!-- 入力CV実際値を示すホワイトライン（ニードル） -->
                         <div id="key-quant-needle" class="absolute top-0 bottom-0 w-[1.5px] bg-white shadow-[0_0_6px_rgba(255,255,255,0.9)] z-20 pointer-events-none opacity-0 -translate-x-1/2"></div>
@@ -266,24 +266,24 @@ export const KEY = {
 
                 <!-- VOLCAスタイル 16本 角のあるスクエアバー (-2 .. 13) -->
                 <!-- 各キーw-[18px]×16本 = 288px + gap-[2px]×15 = 30px -> 内寸ちょうど318px (全キー・全間隔完全均等) -->
-                <div class="w-[332px] h-28 bg-slate-950 p-1.5 rounded-xl border border-slate-800 flex flex-row gap-[2px] select-none touch-none shrink-0" id="volca-key-box">
+                <div class="w-[332px] h-28 bg-zinc-950 p-1.5 rounded-xl border border-zinc-800 flex flex-row gap-[2px] select-none touch-none shrink-0" id="volca-key-box">
                     ${KEYS_16.map(k => {
                         const rel = ((k.absSemi - curRoot) % 12 + 12) % 12;
                         const isMasked = (mask[rel] ?? 1) === 1;
 
-                        // 色相・彩度は同一(Hue 48deg, Sat 90%+)。黒鍵は彩度を落とすのでなく明度を上げて淡く表現
+                        // 無彩色グレーとダークグレーのグラデーション表現。音名文字は白
                         let barBg = '';
                         let textCls = '';
                         if (isMasked) {
                             barBg = k.isBlack
-                                ? 'bg-gradient-to-t from-[hsl(48,85%,62%)] via-[hsl(48,90%,74%)] to-[hsl(48,95%,86%)] border border-[hsl(48,85%,78%)] shadow-[0_0_6px_rgba(254,240,138,0.4)]'
-                                : 'bg-gradient-to-t from-yellow-500 via-yellow-400 to-amber-200 border border-yellow-300 shadow-[0_0_6px_rgba(253,224,71,0.4)]';
-                            textCls = k.isBlack ? 'text-[hsl(48,60%,25%)] font-bold' : 'text-yellow-950 font-black';
+                                ? 'bg-gradient-to-t from-zinc-800 via-zinc-700 to-zinc-600 border border-zinc-600/80 shadow-[0_0_4px_rgba(82,82,91,0.25)]'
+                                : 'bg-gradient-to-t from-zinc-600 via-zinc-500 to-zinc-400 border border-zinc-400/80 shadow-[0_0_4px_rgba(161,161,170,0.25)]';
+                            textCls = 'text-white font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]';
                         } else {
                             barBg = k.isBlack
-                                ? 'bg-slate-900/90 border border-slate-700/60'
-                                : 'bg-slate-800/90 border border-slate-700/60';
-                            textCls = 'text-slate-500 font-bold';
+                                ? 'bg-zinc-950/90 border border-zinc-900/80'
+                                : 'bg-zinc-900/90 border border-zinc-800/80';
+                            textCls = 'text-zinc-600 font-medium';
                         }
 
                         return `
