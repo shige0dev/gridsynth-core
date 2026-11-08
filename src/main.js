@@ -1,4 +1,4 @@
-export const APP_VERSION = 'v1.0.0657';
+export const APP_VERSION = 'v1.0.0658';
 
 import { SynthEngine } from './audio/engine.js?v=622';
 import { UIController } from './ui/controller.js?v=622';

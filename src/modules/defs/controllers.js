@@ -14,54 +14,48 @@ export const KEYS_16 = Array.from({ length: 16 }, (_, i) => {
 const renderQuantizeMapHTML = (root, mask) => {
     const scaleNotes = getScaleNotesInOctave(root, mask);
     const N = scaleNotes.length;
+    if (N === 0) return '';
 
-    // 1. 左側外郭: 2キー (-2 = A#, -1 = B) を等ピッチ(flex-1ずつ)で配置
-    const leftKeys = [-2, -1].map(s => {
-        const absSemi = ((s % 12) + 12) % 12;
-        const name = NOTES[absSemi];
-        const isBlack = name.includes('#');
+    // ルーラー表示範囲: 下の16鍵盤(-2 .. +13半音)に対応する -2/12V 〜 +14/12V (全16/12V幅)
+    const vMin = -2.0 / 12.0;
+    const vMax = 14.0 / 12.0;
+    const totalV = vMax - vMin; // 16 / 12
 
-        // 白鍵・黒鍵セマンティクス（黒い穴にならないよう淡黄色/通常スロット色）
+    // 各スライスは幅 1/N V。オクターブ外も全く同じピッチ幅 1/N V で分割線を延長描画
+    const kMin = Math.floor(vMin * N);
+    const kMax = Math.ceil(vMax * N) - 1;
+
+    const slices = [];
+    for (let k = kMin; k <= kMax; k++) {
+        const v1 = Math.max(vMin, k / N);
+        const v2 = Math.min(vMax, (k + 1) / N);
+        if (v2 <= v1) continue;
+
+        const widthPct = ((v2 - v1) / totalV) * 100;
+
+        const scaleIdx = ((k % N) + N) % N;
+        const semi = scaleNotes[scaleIdx];
+        const absSemi = ((semi % 12) + 12) % 12;
+        const isBlack = NOTES[absSemi].includes('#');
         const bgCls = isBlack ? 'bg-[hsl(48,65%,22%)]' : 'bg-[hsl(48,80%,28%)]';
-        return `<div class="flex-1 h-full select-none relative transition-colors border-r border-slate-800/60 ${bgCls}" data-quant-ext="${s}" title="${name}"></div>`;
-    }).join('');
 
-    // 2. 中央1オクターブ (C〜B): スケール構成音数Nで均等割スライス (両側に太線境界)
-    const centerSlices = scaleNotes.map((semi, sliceIdx) => {
-        const name = NOTES[semi];
-        const isBlack = name.includes('#');
-        const isLast = (sliceIdx === N - 1);
-        const borderR = isLast ? '' : 'border-r border-amber-400/40';
+        // 境界線判定:
+        // k = -1 の右端は v = 0.0 (Cの左側) -> 太い琥珀色ラインを強く表示
+        // k = N - 1 の右端は v = 1.0 (オクターブ上Cの左側) -> 太い琥珀色ラインを強く表示
+        // その他のスライス境界は細い区切り線
+        let borderR = '';
+        if (k === -1 || k === N - 1) {
+            borderR = 'border-r-2 border-amber-400 shadow-[0_0_4px_rgba(251,191,36,0.8)] z-10';
+        } else if (k !== kMax) {
+            borderR = 'border-r border-slate-700/60';
+        }
 
-        const bgCls = isBlack ? 'bg-[hsl(48,65%,22%)]' : 'bg-[hsl(48,80%,28%)]';
-        return `<div class="flex-1 h-full select-none relative transition-colors ${borderR} ${bgCls}" data-quant-slice="${sliceIdx}" title="${name} (${Math.round(100 / N)}% slice)"></div>`;
-    }).join('');
+        slices.push(
+            `<div class="h-full relative transition-colors ${borderR} ${bgCls} shrink-0" style="width: ${widthPct}%;" data-quant-slice="${k}" title="${NOTES[absSemi]}"></div>`
+        );
+    }
 
-    // 3. 右側外郭: 2キー (+12 = C, +13 = C#) を等ピッチ(flex-1ずつ)で配置
-    const rightKeys = [12, 13].map((s, idx) => {
-        const absSemi = ((s % 12) + 12) % 12;
-        const name = NOTES[absSemi];
-        const isBlack = name.includes('#');
-
-        const bgCls = isBlack ? 'bg-[hsl(48,65%,22%)]' : 'bg-[hsl(48,80%,28%)]';
-        const borderR = (idx === 0) ? 'border-r border-slate-800/60' : '';
-        return `<div class="flex-1 h-full select-none relative transition-colors ${borderR} ${bgCls}" data-quant-ext="${s}" title="${name}"></div>`;
-    }).join('');
-
-    return `
-        <!-- 左側2音 (A#, B): 等ピッチ。右端「Cの左」に太い琥珀色ライン -->
-        <div class="flex-[2] h-full flex flex-row border-r-2 border-amber-400 shadow-[1px_0_4px_rgba(251,191,36,0.6)] z-10">
-            ${leftKeys}
-        </div>
-        <!-- 中央1オクターブ (C〜B): N等分スライス。右端「オクターブ上のCの左」に太い琥珀色ライン -->
-        <div class="flex-[12] h-full flex flex-row border-r-2 border-amber-400 shadow-[1px_0_4px_rgba(251,191,36,0.6)] z-10">
-            ${centerSlices}
-        </div>
-        <!-- 右側2音 (C, C#): 等ピッチ -->
-        <div class="flex-[2] h-full flex flex-row">
-            ${rightKeys}
-        </div>
-    `;
+    return slices.join('');
 };
 
 export const KEY = {
@@ -148,19 +142,10 @@ export const KEY = {
 
         if (!modal) return;
 
-        // 2. Modal header quantize map highlight (外部CV入力時：均等割スライスのリアルタイム点灯)
+        // 2. Modal header quantize map highlight (外部CV入力時：表示域内であればオクターブ外でもCV感知で均等割スライスを点灯)
         modal.querySelectorAll('[data-quant-slice]').forEach(el => {
             const idx = parseInt(el.getAttribute('data-quant-slice'), 10);
-            const isMatch = (isPatched && sliceIdx >= 0 && idx === sliceIdx);
-            el.classList.toggle('!bg-cyan-400', isMatch);
-            el.classList.toggle('shadow-[0_0_8px_rgba(34,211,238,0.8)]', isMatch);
-            el.classList.toggle('ring-1', isMatch);
-            el.classList.toggle('ring-cyan-200', isMatch);
-        });
-
-        modal.querySelectorAll('[data-quant-ext]').forEach(el => {
-            const ext = parseInt(el.getAttribute('data-quant-ext'), 10);
-            const isMatch = (isPatched && data.extKey !== null && data.extKey !== undefined && ext === data.extKey);
+            const isMatch = (isPatched && data.sliceIdx !== null && data.sliceIdx !== undefined && idx === data.sliceIdx);
             el.classList.toggle('!bg-cyan-400', isMatch);
             el.classList.toggle('shadow-[0_0_8px_rgba(34,211,238,0.8)]', isMatch);
             el.classList.toggle('ring-1', isMatch);
@@ -219,7 +204,7 @@ export const KEY = {
                         <span>CV IN &rarr; QUANTIZE MAP</span>
                         <span class="text-amber-400 font-mono text-[7px]">${NOTES[curRoot]} ${scaleKey}</span>
                     </div>
-                    <div class="flex items-center w-full h-7 bg-slate-900/90 rounded border border-slate-700/60 overflow-hidden" id="key-quant-strip">
+                    <div class="flex items-center w-full h-[4px] bg-slate-900/90 rounded-[1px] border border-slate-700/60 overflow-hidden" id="key-quant-strip">
                         ${renderQuantizeMapHTML(curRoot, mask)}
                     </div>
                 </div>
@@ -336,11 +321,6 @@ export const KEY = {
                 el.classList.toggle('!bg-cyan-400', isPressed);
                 el.classList.toggle('!text-black', isPressed);
                 el.classList.toggle('shadow-[0_0_12px_#22d3ee]', isPressed);
-            }
-            const extEl = rootEl.querySelector(`[data-quant-ext="${semi}"]`);
-            if (extEl) {
-                extEl.classList.toggle('!bg-cyan-400', isPressed);
-                extEl.classList.toggle('shadow-[0_0_8px_rgba(34,211,238,0.8)]', isPressed);
             }
         };
 
