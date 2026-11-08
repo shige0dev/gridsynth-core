@@ -111,7 +111,7 @@ export class ScaleProcessor extends AudioWorkletProcessor {
             this.sampleCount++;
         }
 
-        if (this.sampleCount >= 1470) {
+        if (this.sampleCount >= 256) {
             this.sampleCount = 0;
             this.port.postMessage({
                 type: 'STATE',

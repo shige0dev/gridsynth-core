@@ -57,7 +57,7 @@ const renderQuantizeMapHTML = (root, octave, mask) => {
         const noteName = `${NOTES[absSemi]}${noteOct}`;
 
         slices.push(
-            `<div class="h-full relative transition-colors ${borderR} ${bgCls} shrink-0" style="width: ${widthPct}%;" data-quant-slice="${k}" title="${noteName}"></div>`
+            `<div class="h-full relative ${borderR} ${bgCls} shrink-0" style="width: ${widthPct}%;" data-quant-slice="${k}" title="${noteName}"></div>`
         );
     }
 
@@ -168,6 +168,19 @@ export const KEY = {
             el.classList.toggle('ring-cyan-200', isMatch);
         });
 
+        // 3. 入力CV実際値のホワイトニードル（実測値インジケーター）
+        const needleEl = modal.querySelector('#key-quant-needle');
+        if (needleEl) {
+            if (isPatched && inCv !== null && inCv !== undefined && inCv >= vBase - (2.0 / 12.0) && inCv <= vBase + (14.0 / 12.0)) {
+                const vRel = inCv - vBase;
+                const pct = ((12 * vRel + 2) / 16) * 100;
+                needleEl.style.left = `${pct}%`;
+                needleEl.style.opacity = '1';
+            } else {
+                needleEl.style.opacity = '0';
+            }
+        }
+
         const noteDisp = modal.querySelector('#key-active-note');
         if (noteDisp) {
             if (isPatched && data.cv !== undefined) {
@@ -220,8 +233,10 @@ export const KEY = {
                         <span>CV IN &rarr; QUANTIZE MAP</span>
                         <span class="text-amber-400 font-mono text-[7px]">${NOTES[curRoot]}${curOct} ${scaleKey}</span>
                     </div>
-                    <div class="flex items-center w-full h-[4px] bg-slate-900/90 rounded-[1px] border border-slate-700/60 overflow-hidden" id="key-quant-strip">
+                    <div class="relative flex items-center w-full h-[10px] bg-slate-900/90 rounded-[1px] border border-slate-700/60 overflow-hidden" id="key-quant-strip">
                         ${renderQuantizeMapHTML(curRoot, curOct, mask)}
+                        <!-- 入力CV実際値を示すホワイトライン（ニードル） -->
+                        <div id="key-quant-needle" class="absolute top-0 bottom-0 w-[1.5px] bg-white shadow-[0_0_6px_rgba(255,255,255,0.9)] z-20 pointer-events-none opacity-0 -translate-x-1/2"></div>
                     </div>
                 </div>
 
