@@ -176,7 +176,7 @@ export const KEY = {
                         }
 
                         return `
-                            <div class="volca-key-item flex-1 h-full rounded-md flex flex-col justify-end items-center pb-1.5 cursor-pointer select-none transition-all duration-75 relative overflow-hidden ${barBg}" data-key-semi="${k.s}" data-modal-key-bar="${k.s}" title="${k.name}">
+                            <div class="volca-key-item flex-1 h-full rounded-none flex flex-col justify-end items-center pb-1.5 cursor-pointer select-none transition-all duration-75 relative overflow-hidden ${barBg}" data-key-semi="${k.s}" data-modal-key-bar="${k.s}" title="${k.name}">
                                 <div class="absolute inset-0 bg-white opacity-0 active:opacity-20 pointer-events-none"></div>
                                 <span class="text-[7.5px] font-mono pointer-events-none ${textCls}">${k.name}</span>
                             </div>`;

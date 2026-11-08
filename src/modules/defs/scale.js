@@ -117,7 +117,7 @@ export const SCALE = {
                                 : 'text-slate-600';
                             return `
                                 <div class="flex-1 flex flex-col items-center justify-end h-full cursor-pointer group" data-note-toggle="${semi}" title="${n}">
-                                    <div data-modal-bar="${semi}" class="w-full ${barHeight} rounded-t-sm border ${barBg} transition-all duration-75 flex items-center justify-center relative overflow-hidden">
+                                    <div data-modal-bar="${semi}" class="w-full ${barHeight} rounded-none border ${barBg} transition-all duration-75 flex items-center justify-center relative overflow-hidden">
                                         <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
                                     </div>
                                     <span class="text-[8px] font-mono font-bold mt-1 ${textCls}">${n}</span>

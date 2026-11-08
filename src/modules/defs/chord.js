@@ -75,19 +75,19 @@ const renderChordModalBarsHTML = (chordKey) => {
         if (hasBase && hasOver) {
             // Split: left half yellow, right half red
             barContent = `
-                <div class="w-full h-full flex flex-row rounded-t-sm overflow-hidden border border-amber-300/80">
+                <div class="w-full h-full flex flex-row rounded-none overflow-hidden border border-amber-300/80">
                     <div class="w-1/2 h-full bg-gradient-to-t from-amber-600 via-amber-400 to-yellow-200 shadow-[0_0_6px_rgba(253,224,71,0.5)]"></div>
                     <div class="w-1/2 h-full bg-gradient-to-t from-red-600 via-red-500 to-rose-400 shadow-[0_0_6px_rgba(239,68,68,0.5)]"></div>
                 </div>`;
         } else if (hasBase) {
             barContent = `
-                <div class="w-full h-full rounded-t-sm border border-yellow-300 bg-gradient-to-t from-amber-600 via-amber-400 to-yellow-200 shadow-[0_0_6px_rgba(253,224,71,0.5)]"></div>`;
+                <div class="w-full h-full rounded-none border border-yellow-300 bg-gradient-to-t from-amber-600 via-amber-400 to-yellow-200 shadow-[0_0_6px_rgba(253,224,71,0.5)]"></div>`;
         } else if (hasOver) {
             barContent = `
-                <div class="w-full h-full rounded-t-sm border border-red-400 bg-gradient-to-t from-red-600 via-red-500 to-rose-400 shadow-[0_0_6px_rgba(239,68,68,0.5)]"></div>`;
+                <div class="w-full h-full rounded-none border border-red-400 bg-gradient-to-t from-red-600 via-red-500 to-rose-400 shadow-[0_0_6px_rgba(239,68,68,0.5)]"></div>`;
         } else {
             barContent = `
-                <div class="w-full h-full rounded-t-sm border border-slate-800 bg-slate-900"></div>`;
+                <div class="w-full h-full rounded-none border border-slate-800 bg-slate-900"></div>`;
         }
 
         return `
