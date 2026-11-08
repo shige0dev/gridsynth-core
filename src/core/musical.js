@@ -31,6 +31,40 @@ export const CHORD_KEYS = [
 export const CHORD_TYPES = CHORD_SPECS;
 export const CHORD_ORDER = CHORD_KEYS;
 
+export const SCALE_PRESETS = {
+    'CHROMATIC': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    'MAJOR':     [1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1],
+    'MINOR':     [1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0],
+    'PENT.MAJ':  [1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0],
+    'PENT.MIN':  [1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0],
+    'DORIAN':    [1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0],
+    'PHRYGIAN':  [1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0],
+    'BLUES':     [1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0],
+    'HARM.MIN':  [1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1]
+};
+
+export const SCALE_KEYS = Object.keys(SCALE_PRESETS);
+
+export const snapToScale = (absSemi, root = 0, mask = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]) => {
+    const rel = ((absSemi - root) % 12 + 12) % 12;
+    if ((mask[rel] ?? 1) === 1) return absSemi;
+    for (let dist = 1; dist <= 6; dist++) {
+        const downRel = (rel - dist + 12) % 12;
+        if (mask[downRel] === 1) return (root + downRel) % 12;
+        const upRel = (rel + dist) % 12;
+        if (mask[upRel] === 1) return (root + upRel) % 12;
+    }
+    return absSemi;
+};
+
+export const quantizeCvToScale = (inCv, root = 0, mask = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]) => {
+    const totalSemi = Math.round(inCv * 12);
+    const oct = Math.floor(totalSemi / 12);
+    const absSemi = ((totalSemi % 12) + 12) % 12;
+    const snappedSemi = snapToScale(absSemi, root, mask);
+    return oct + (snappedSemi / 12.0);
+};
+
 export const midiToNoteName = (midi) => {
     const m = Math.round(midi);
     const n = NOTES[((m % 12) + 12) % 12];

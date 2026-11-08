@@ -1,16 +1,5 @@
-export const SCALE_PRESETS = {
-    'CHROMATIC': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    'MAJOR':     [1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1],
-    'MINOR':     [1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0],
-    'PENT.MAJ':  [1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0],
-    'PENT.MIN':  [1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0],
-    'DORIAN':    [1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0],
-    'PHRYGIAN':  [1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0],
-    'BLUES':     [1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0],
-    'HARM.MIN':  [1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1]
-};
-
-const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+import { SCALE_PRESETS, NOTES as NOTE_NAMES } from '../../core/musical.js';
+export { SCALE_PRESETS };
 
 export const SCALE = {
     color: 'amber',

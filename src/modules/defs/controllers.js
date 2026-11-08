@@ -1,180 +1,298 @@
 import { UIHelpers } from '../../ui/helpers.js?v=354';
-import { parseKeyNoteToCv } from '../../core/musical.js?v=367';
+import { NOTES, SCALE_PRESETS, SCALE_KEYS, snapToScale, parseKeyNoteToCv } from '../../core/musical.js?v=367';
 export { parseKeyNoteToCv };
 
 export const KEY = {
     color: 'sky',
-    defaults: () => ({ type: 'KEY', octave: 2, lastNote: 'C2', currentMidi: 36, cv: 1.0 }),
+    defaults: () => ({
+        type: 'KEY',
+        octave: 3,
+        root: 0,
+        scale: 'CHROMATIC',
+        mask: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        lastNote: 'C3',
+        currentMidi: 48,
+        cv: 2.0
+    }),
     onNormalize: (m) => {
-        const savedOct = (typeof m.octave === 'number' && m.octave >= 1 && m.octave <= 7) ? m.octave : null;
-        if (m.cv !== undefined) {
-            m.cv = Number(m.cv);
-            m.currentMidi = Math.round(m.cv * 12) + 24;
-            m.octave = savedOct ?? (Math.floor(m.currentMidi / 12) - 1);
-            m.lastNote = m.lastNote || (UIHelpers.cvToNoteName ? UIHelpers.cvToNoteName(m.cv) : `C${m.octave}`);
-        } else if (m.initialCv !== undefined) {
-            m.cv = Number(m.initialCv);
-            m.currentMidi = Math.round(m.cv * 12) + 24;
-            m.octave = savedOct ?? (Math.floor(m.currentMidi / 12) - 1);
-            m.lastNote = m.lastNote || (UIHelpers.cvToNoteName ? UIHelpers.cvToNoteName(m.cv) : `C${m.octave}`);
-        } else if (m.note !== undefined) {
-            m.cv = parseKeyNoteToCv(m.note);
-            m.currentMidi = Math.round(m.cv * 12) + 24;
-            m.octave = savedOct ?? (Math.floor(m.currentMidi / 12) - 1);
-            m.lastNote = m.note;
-        } else if (m.lastNote !== undefined) {
-            m.cv = parseKeyNoteToCv(m.lastNote);
-            m.currentMidi = Math.round(m.cv * 12) + 24;
-            m.octave = savedOct ?? (Math.floor(m.currentMidi / 12) - 1);
-        } else if (m.currentMidi !== undefined) {
-            m.cv = (m.currentMidi - 24) / 12.0;
-            m.octave = savedOct ?? (Math.floor(m.currentMidi / 12) - 1);
-            m.lastNote = UIHelpers.cvToNoteName ? UIHelpers.cvToNoteName(m.cv) : `C${m.octave}`;
-        } else if (m.octave !== undefined) {
-            m.currentMidi = (m.octave + 1) * 12;
+        if (m.octave === undefined) m.octave = 3;
+        if (m.root === undefined) m.root = 0;
+        if (m.scale === undefined) m.scale = 'CHROMATIC';
+        if (!Array.isArray(m.mask) || m.mask.length !== 12) {
+            m.mask = SCALE_PRESETS[m.scale] || [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+        }
+        if (m.currentMidi === undefined) {
+            m.currentMidi = (m.octave + 1) * 12 + m.root;
             m.cv = (m.currentMidi - 24) / 12.0;
             m.lastNote = `C${m.octave}`;
-        } else {
-            m.octave = 2;
-            m.currentMidi = 36;
-            m.lastNote = 'C2';
-            m.cv = 1.0;
         }
     },
     ports: () => ({
-        in: [],
+        in: [
+            { port: 'cv_in', pin: 5, label: 'IN', signal: 'cv', color: 'bg-yellow-400' }
+        ],
         out: [
-            { port: 'gate_out', pin: 10, color: 'bg-orange-500' },
-            { port: 'cv_out', pin: 11, color: 'bg-yellow-400' }
+            { port: 'gate_out', pin: 10, label: 'G', signal: 'gate', color: 'bg-orange-500' },
+            { port: 'cv_out', pin: 11, label: 'CV', signal: 'cv', color: 'bg-yellow-400' }
         ]
     }),
-    WHITE_KEYS: [{n:'B',s:-1},{n:'C',s:0},{n:'D',s:2},{n:'E',s:4},{n:'F',s:5},{n:'G',s:7},{n:'A',s:9},{n:'B',s:11},{n:'C',s:12},{n:'D',s:14}],
-    BLACK_KEYS: [
-        { s: -2, l: 0, w: 14, extraBorder: 'border-b border-r border-slate-400 border-l-0 border-t-0' },
-        { s: 1, l: 53, w: 19, extraBorder: 'border border-slate-400 border-t-0' },
-        { s: 3, l: 92, w: 19, extraBorder: 'border border-slate-400 border-t-0' },
-        { s: 6, l: 150, w: 19, extraBorder: 'border border-slate-400 border-t-0' },
-        { s: 8, l: 188, w: 19, extraBorder: 'border border-slate-400 border-t-0' },
-        { s: 10, l: 226, w: 19, extraBorder: 'border border-slate-400 border-t-0' },
-        { s: 13, l: 284, w: 19, extraBorder: 'border border-slate-400 border-t-0' },
-        { s: 15, l: 323, r: 0, extraBorder: 'border-b border-l border-slate-400 border-r-0 border-t-0' }
-    ],
-    renderGrid: (m) => `<div class="flex items-center justify-center w-full h-full pointer-events-none text-cyan-400"><span class="text-[15px] font-mono font-bold text-white tracking-tight">${m.lastNote || 'C2'}</span></div>`,
-    renderModal: (m) => {
-        const W = KEY.WHITE_KEYS, B = KEY.BLACK_KEYS;
-        const curOct = m.octave ?? 2;
-        const curNote = m.lastNote || `C${curOct}`;
+    renderGrid: (m) => {
+        const root = m.root ?? 0;
+        const rootName = NOTES[root] || 'C';
+        const scaleName = m.scale || 'CHROMATIC';
+        const mask = Array.isArray(m.mask) ? m.mask : (SCALE_PRESETS[scaleName] || SCALE_PRESETS['CHROMATIC']);
+        const curNote = m.lastNote || `C${m.octave ?? 3}`;
+
         return `
-            <div class="space-y-2 flex flex-col items-center select-none w-full">
-                <div class="w-[331px] flex items-center justify-between pb-1 border-b border-slate-800 shrink-0" id="key-oct-row">
-                    <div class="flex items-center gap-1.5"><span class="text-[8px] text-slate-400 uppercase font-semibold">OCTAVE</span>
-                    <button id="key-oct-down" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold">−</button>
-                    <span id="key-oct-disp" class="w-5 text-center text-[10px] font-mono font-bold text-cyan-300">${curOct}</span>
-                    <button id="key-oct-up" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold">＋</button></div>
-                    <span class="text-[9px] font-mono font-bold text-sky-300" id="key-active-note">${curNote}</span>
+            <div class="flex flex-col items-center justify-center w-full h-full pointer-events-none leading-none gap-1">
+                <!-- スケール表示 -->
+                <div class="flex items-center justify-between w-[59px] px-0.5 pointer-events-none text-center">
+                    <span class="text-[7.5px] font-mono font-bold text-amber-400 truncate tracking-tight">${rootName} ${scaleName}</span>
+                    <span class="text-[7.5px] font-mono font-bold text-cyan-300 ml-1">${curNote}</span>
                 </div>
-                <div class="relative h-28 bg-slate-950 border border-slate-400 flex select-none touch-none overflow-hidden w-[331px] shrink-0 box-border mx-auto" id="kb-box">
-                    ${W.map((k, idx) => `<div class="key-white ${idx < 9 ? 'w-[33px] border-r border-slate-400' : 'w-[32px] flex-1'} shrink-0 bg-slate-950 flex flex-col justify-end items-center pb-1 cursor-pointer select-none transition-colors" data-semi="${k.s}"><span class="text-[7.5px] font-bold text-slate-400 pointer-events-none">${k.n}</span></div>`).join('')}
-                    <div class="absolute inset-0 pointer-events-none w-full h-full">
-                        <!-- Accidentals: Y=16px for full accidentals + edge accidentals aligned to white key top edges without duplicate borders -->
-                        ${B.map(bk => `<div class="key-black absolute h-16 bg-slate-950 ${bk.extraBorder} pointer-events-auto cursor-pointer select-none transition-colors" style="left:${bk.l}px;${bk.w !== undefined ? `width:${bk.w}px;` : ''}${bk.r !== undefined ? `right:${bk.r}px;` : ''}" data-semi="${bk.s}"></div>`).join('')}
+                <!-- 12本 VOLCAスタイル タッチバー（C〜B固定） -->
+                <div class="flex items-center justify-center h-6 gap-[1px] p-0 pointer-events-none">
+                    ${NOTES.map((n, semi) => {
+                        const rel = (semi - root + 12) % 12;
+                        const isMasked = (mask[rel] ?? 1) === 1;
+                        const isBlack = n.includes('#');
+
+                        let barBg = '';
+                        if (isMasked) {
+                            barBg = isBlack
+                                ? 'bg-amber-500 shadow-[0_0_3px_rgba(245,158,11,0.6)]'
+                                : 'bg-yellow-400 shadow-[0_0_3px_rgba(250,204,21,0.6)]';
+                        } else {
+                            barBg = isBlack
+                                ? 'bg-slate-900/90 border border-slate-800/80'
+                                : 'bg-slate-700/50';
+                        }
+                        return `<div data-key-bar="${semi}" class="w-[4px] h-full rounded-[0.5px] relative shrink-0 ${barBg}"></div>`;
+                    }).join('')}
+                </div>
+            </div>`;
+    },
+    updateLive: (cell, data, isP, modal) => {
+        const semi = data?.activeSemi ?? -1;
+        cell.querySelectorAll('[data-key-bar]').forEach(b => {
+            const barSemi = parseInt(b.getAttribute('data-key-bar'), 10);
+            b.classList.toggle('key-active-bar', barSemi === semi);
+        });
+        if (modal) {
+            modal.querySelectorAll('[data-modal-key-bar]').forEach(b => {
+                const barSemi = parseInt(b.getAttribute('data-modal-key-bar'), 10);
+                const isAct = (barSemi === semi);
+                b.classList.toggle('ring-2', isAct);
+                b.classList.toggle('ring-cyan-300', isAct);
+                b.classList.toggle('shadow-[0_0_8px_#67e8f9]', isAct);
+            });
+            const noteDisp = modal.querySelector('#key-active-note');
+            if (noteDisp && data?.cv !== undefined) {
+                noteDisp.textContent = UIHelpers.cvToNoteName(data.cv);
+            }
+        }
+    },
+    renderModal: (m) => {
+        const curOct = m.octave ?? 3;
+        const curRoot = m.root ?? 0;
+        const scaleKey = m.scale || 'CHROMATIC';
+        const mask = Array.isArray(m.mask) ? m.mask : (SCALE_PRESETS[scaleKey] || SCALE_PRESETS['CHROMATIC']);
+        const curNote = m.lastNote || `C${curOct}`;
+
+        return `
+            <div class="space-y-2 flex flex-col items-center select-none w-full p-1">
+                <!-- Top Row: Octave, Root, Scale (SCALEモジュール準拠) -->
+                <div class="w-[331px] flex items-center justify-between gap-1 bg-slate-950/70 p-1.5 rounded-lg border border-slate-800 shrink-0">
+                    <div class="flex items-center gap-1">
+                        <span class="text-[8px] text-slate-400 uppercase font-semibold">OCT:</span>
+                        <button id="key-oct-down" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold active:bg-slate-700">−</button>
+                        <span id="key-oct-disp" class="w-4 text-center text-[10px] font-mono font-bold text-cyan-300">${curOct}</span>
+                        <button id="key-oct-up" class="w-4 h-4 rounded bg-slate-800 text-[10px] font-bold active:bg-slate-700">＋</button>
                     </div>
+
+                    <div class="flex items-center gap-1">
+                        <span class="text-[8px] font-bold text-slate-400 uppercase tracking-tight">ROOT:</span>
+                        <select id="key-root-sel" class="bg-slate-900 border border-slate-700 text-amber-300 font-mono font-bold text-[9px] rounded px-1 py-0.5 cursor-pointer outline-none hover:border-amber-500">
+                            ${NOTES.map((name, idx) => `
+                                <option value="${idx}" ${idx === curRoot ? 'selected' : ''}>${name}</option>
+                            `).join('')}
+                        </select>
+                    </div>
+
+                    <div class="flex items-center gap-1 flex-1 justify-end min-w-0">
+                        <span class="text-[8px] font-bold text-slate-400 uppercase tracking-tight">SCALE:</span>
+                        <select id="key-scale-sel" class="bg-slate-900 border border-slate-700 text-yellow-300 font-mono font-bold text-[9px] rounded px-1.5 py-0.5 cursor-pointer outline-none hover:border-yellow-500 truncate max-w-[110px]">
+                            ${SCALE_KEYS.map(k => `
+                                <option value="${k}" ${k === scaleKey ? 'selected' : ''}>${k}</option>
+                            `).join('')}
+                        </select>
+                    </div>
+
+                    <span class="text-[9.5px] font-mono font-bold text-cyan-300 min-w-[28px] text-right" id="key-active-note">${curNote}</span>
+                </div>
+
+                <!-- VOLCAスタイル 12本 フラット・タッチバー -->
+                <div class="w-[331px] h-28 bg-slate-950 p-1.5 rounded-xl border border-slate-800 flex justify-between gap-1 select-none touch-none shrink-0" id="volca-key-box">
+                    ${NOTES.map((n, semi) => {
+                        const rel = (semi - curRoot + 12) % 12;
+                        const isMasked = (mask[rel] ?? 1) === 1;
+                        const isBlack = n.includes('#');
+
+                        let barBg = '';
+                        let textCls = '';
+                        if (isMasked) {
+                            barBg = isBlack
+                                ? 'bg-gradient-to-t from-amber-600 via-amber-500 to-amber-300 border border-amber-400/80 shadow-[0_0_6px_rgba(245,158,11,0.4)]'
+                                : 'bg-gradient-to-t from-yellow-500 via-yellow-400 to-amber-200 border border-yellow-300 shadow-[0_0_6px_rgba(253,224,71,0.4)]';
+                            textCls = 'text-black font-black';
+                        } else {
+                            barBg = isBlack
+                                ? 'bg-slate-900/95 border border-slate-800'
+                                : 'bg-slate-800/80 border border-slate-700/60';
+                            textCls = 'text-slate-500 font-bold';
+                        }
+
+                        return `
+                            <div class="volca-key-item flex-1 h-full rounded-md flex flex-col justify-end items-center pb-1.5 cursor-pointer select-none transition-all duration-75 relative overflow-hidden ${barBg}" data-key-semi="${semi}" data-modal-key-bar="${semi}" title="${n}">
+                                <div class="absolute inset-0 bg-white opacity-0 active:opacity-20 pointer-events-none"></div>
+                                <span class="text-[8.5px] font-mono pointer-events-none ${textCls}">${n}</span>
+                            </div>`;
+                    }).join('')}
                 </div>
             </div>`;
     },
     bindEvents: (m, ctx, cb) => {
-        const root = ctx?.getDialogElement ? (ctx.getDialogElement() || document) : document;
-        const octD = root.querySelector('#key-oct-disp'), nD = root.querySelector('#key-active-note');
-        root.querySelector('#key-oct-down')?.addEventListener('click', () => {
-            if ((m.octave ?? 2) > 1) {
-                m.octave = (m.octave ?? 2) - 1;
+        const rootEl = ctx?.getDialogElement ? (ctx.getDialogElement() || document) : document;
+        const octD = rootEl.querySelector('#key-oct-disp');
+        const nD = rootEl.querySelector('#key-active-note');
+
+        // Octave Up / Down
+        rootEl.querySelector('#key-oct-down')?.addEventListener('click', () => {
+            if ((m.octave ?? 3) > 1) {
+                m.octave = (m.octave ?? 3) - 1;
                 if (octD) octD.textContent = m.octave;
+                ctx.reRenderModal?.();
+                ctx.reRenderCell?.();
+                cb();
             }
         });
-        root.querySelector('#key-oct-up')?.addEventListener('click', () => {
-            if ((m.octave ?? 2) < 7) {
-                m.octave = (m.octave ?? 2) + 1;
+        rootEl.querySelector('#key-oct-up')?.addEventListener('click', () => {
+            if ((m.octave ?? 3) < 6) {
+                m.octave = (m.octave ?? 3) + 1;
                 if (octD) octD.textContent = m.octave;
+                ctx.reRenderModal?.();
+                ctx.reRenderCell?.();
+                cb();
             }
         });
-        const play = (s, isDown) => {
-            const oct = m.octave ?? 2;
-            const midi = (oct + 1) * 12 + s;
-            const name = `${UIHelpers.NOTES[((s%12)+12)%12]}${Math.floor(midi/12)-1}`;
+
+        // Root Selector
+        rootEl.querySelector('#key-root-sel')?.addEventListener('change', (e) => {
+            m.root = parseInt(e.target.value, 10);
+            ctx.reRenderModal?.();
+            ctx.reRenderCell?.();
+            cb();
+        });
+
+        // Scale Selector
+        rootEl.querySelector('#key-scale-sel')?.addEventListener('change', (e) => {
+            const k = e.target.value;
+            m.scale = k;
+            if (SCALE_PRESETS[k]) {
+                m.mask = [...SCALE_PRESETS[k]];
+            }
+            ctx.reRenderModal?.();
+            ctx.reRenderCell?.();
+            cb();
+        });
+
+        // Touch & Slide Interaction on VOLCA Ribbon Bar
+        const box = rootEl.querySelector('#volca-key-box');
+        if (!box) return;
+
+        const playSemi = (rawSemi, isDown) => {
+            const oct = m.octave ?? 3;
+            const mask = m.mask || SCALE_PRESETS[m.scale] || SCALE_PRESETS['CHROMATIC'];
+            // Snap to nearest scale note
+            const snappedSemi = snapToScale(rawSemi, m.root ?? 0, mask);
+            const midi = (oct + 1) * 12 + snappedSemi;
+            const name = `${NOTES[snappedSemi]}${oct}`;
+
             m.lastNote = name;
             m.currentMidi = midi;
             m.cv = (midi - 24) / 12.0;
+
             if (nD && isDown) nD.textContent = name;
             ctx.sendKeyNote?.(midi, isDown);
             if (isDown) cb();
         };
-        const kb = root.querySelector('#kb-box');
-        const setKeyHighlight = (semi, isPressed) => {
-            if (semi === null || semi === undefined || isNaN(semi) || !kb) return;
-            const elements = kb.querySelectorAll(`[data-semi="${semi}"]`);
-            elements.forEach(el => {
+
+        const setHighlight = (semi, isPressed) => {
+            if (semi === null || semi === undefined || isNaN(semi)) return;
+            const el = box.querySelector(`[data-key-semi="${semi}"]`);
+            if (el) {
                 el.classList.toggle('!bg-cyan-400', isPressed);
                 el.classList.toggle('!text-black', isPressed);
-            });
+                el.classList.toggle('shadow-[0_0_12px_#22d3ee]', isPressed);
+            }
         };
-        if (kb) {
-            let activeSemi = null;
-            let activePointerId = null;
 
-            const getSemiFromPoint = (x, y) => {
-                const el = document.elementFromPoint(x, y);
-                const k = (el && kb.contains(el)) ? el.closest('[data-semi]') : null;
-                return (k && k.dataset.semi !== undefined) ? parseInt(k.dataset.semi, 10) : null;
-            };
+        let activeSemi = null;
+        let activePointerId = null;
 
-            kb.onpointerdown = (e) => {
-                const semi = getSemiFromPoint(e.clientX, e.clientY);
-                if (semi === null || isNaN(semi)) return;
+        const getSemiFromPoint = (x, y) => {
+            const el = document.elementFromPoint(x, y);
+            const k = (el && box.contains(el)) ? el.closest('[data-key-semi]') : null;
+            return (k && k.dataset.keySemi !== undefined) ? parseInt(k.dataset.keySemi, 10) : null;
+        };
+
+        box.onpointerdown = (e) => {
+            const semi = getSemiFromPoint(e.clientX, e.clientY);
+            if (semi === null || isNaN(semi)) return;
+            if (activeSemi !== null) {
+                setHighlight(activeSemi, false);
+                playSemi(activeSemi, false);
+            }
+            activePointerId = e.pointerId;
+            activeSemi = semi;
+            try { box.setPointerCapture(e.pointerId); } catch(err){}
+            setHighlight(semi, true);
+            playSemi(semi, true);
+        };
+
+        box.onpointermove = (e) => {
+            if (activePointerId === null || e.pointerId !== activePointerId) return;
+            const semi = getSemiFromPoint(e.clientX, e.clientY);
+            if (semi !== activeSemi) {
                 if (activeSemi !== null) {
-                    setKeyHighlight(activeSemi, false);
-                    play(activeSemi, false);
+                    setHighlight(activeSemi, false);
+                    playSemi(activeSemi, false);
                 }
-                activePointerId = e.pointerId;
+                if (semi !== null && !isNaN(semi)) {
+                    setHighlight(semi, true);
+                    playSemi(semi, true);
+                }
                 activeSemi = semi;
-                try { kb.setPointerCapture(e.pointerId); } catch(err){}
-                setKeyHighlight(semi, true);
-                play(semi, true);
-            };
+            }
+        };
 
-            kb.onpointermove = (e) => {
-                if (activePointerId === null || e.pointerId !== activePointerId) return;
-                const semi = getSemiFromPoint(e.clientX, e.clientY);
-                if (semi !== activeSemi) {
-                    if (activeSemi !== null) {
-                        setKeyHighlight(activeSemi, false);
-                        play(activeSemi, false);
-                    }
-                    if (semi !== null && !isNaN(semi)) {
-                        setKeyHighlight(semi, true);
-                        play(semi, true);
-                    }
-                    activeSemi = semi;
+        const stop = (e) => {
+            if (activePointerId !== null && e && e.pointerId !== activePointerId) return;
+            if (activeSemi !== null) {
+                setHighlight(activeSemi, false);
+                playSemi(activeSemi, false);
+                activeSemi = null;
+            }
+            activePointerId = null;
+            try {
+                if (e && box.hasPointerCapture?.(e.pointerId)) {
+                    box.releasePointerCapture(e.pointerId);
                 }
-            };
+            } catch(err){}
+        };
 
-            const stop = (e) => {
-                if (activePointerId !== null && e && e.pointerId !== activePointerId) return;
-                if (activeSemi !== null) {
-                    setKeyHighlight(activeSemi, false);
-                    play(activeSemi, false);
-                    activeSemi = null;
-                }
-                activePointerId = null;
-                try {
-                    if (e && kb.hasPointerCapture?.(e.pointerId)) {
-                        kb.releasePointerCapture(e.pointerId);
-                    }
-                } catch(err){}
-            };
-
-            kb.onpointerup = stop;
-            kb.onpointercancel = stop;
-        }
+        box.onpointerup = stop;
+        box.onpointercancel = stop;
     }
 };
 

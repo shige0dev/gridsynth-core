@@ -30,7 +30,7 @@ export class SynthEngine {
 
             if (this.ctx.audioWorklet) {
                 try {
-                    const workletUrl = new URL('../dsp/worklet-processors.js?v=621', import.meta.url).href;
+                    const workletUrl = new URL('../dsp/worklet-processors.js?v=644', import.meta.url).href;
                     await this.ctx.audioWorklet.addModule(workletUrl);
                     this.audioWorkletReady = true;
                 } catch (e) {
@@ -205,9 +205,13 @@ export class SynthEngine {
             case 'NOTE_OFF': {
                 const isDown = event.isDown ?? (event.type !== 'NOTE_OFF');
                 const midi = event.midi ?? 60;
-                if (inst.type === 'KEY' && inst.nodes?.p && inst.nodes?.g && this.ctx) {
-                    inst.nodes.p.offset.setTargetAtTime((midi - 24) / 12.0, this.ctx.currentTime, 0.005);
-                    inst.nodes.g.offset.setTargetAtTime(isDown ? 1.0 : 0.0, this.ctx.currentTime, 0.005);
+                if (inst.type === 'KEY') {
+                    if (inst.nodes?.w) {
+                        inst.nodes.w.port.postMessage({ type: 'NOTE', midi, isDown });
+                    } else if (inst.nodes?.p && inst.nodes?.g && this.ctx) {
+                        inst.nodes.p.offset.setTargetAtTime((midi - 24) / 12.0, this.ctx.currentTime, 0.005);
+                        inst.nodes.g.offset.setTargetAtTime(isDown ? 1.0 : 0.0, this.ctx.currentTime, 0.005);
+                    }
                 }
                 break;
             }

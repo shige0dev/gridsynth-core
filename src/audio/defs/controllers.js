@@ -12,19 +12,60 @@ function resolveKeyCv(d) {
 }
 
 export const KEY = {
-    create: (ctx, d) => {
-        const p = ctx.createConstantSource(), g = ctx.createConstantSource();
+    create: (ctx, d, patch, eng) => {
         const initCv = resolveKeyCv(d);
-        p.offset.value = initCv;
-        p.start();
-        g.offset.value = 0.0;
-        g.start();
-        return { nodes: { p, g }, inputs: {}, outputs: { cv_out: p, gate_out: g } };
+        const w = new AudioWorkletNode(ctx, 'scale-processor', {
+            numberOfInputs: 1,
+            numberOfOutputs: 2
+        });
+
+        w.port.postMessage({
+            type: 'SET_CONFIG',
+            root: d.root ?? 0,
+            mask: d.mask || [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        });
+
+        const initMidi = d.currentMidi ?? (Math.round(initCv * 12) + 24);
+        w.port.postMessage({
+            type: 'NOTE',
+            midi: initMidi,
+            isDown: false
+        });
+
+        const cvIn = ctx.createGain();
+        const cvOut = ctx.createGain();
+        const gateOut = ctx.createGain();
+
+        cvIn.connect(w, 0, 0);
+        w.connect(cvOut, 0, 0);
+        w.connect(gateOut, 1, 0);
+
+        if (eng?.silentSink) {
+            cvOut.connect(eng.silentSink);
+            gateOut.connect(eng.silentSink);
+        }
+
+        let liveData = { activeSemi: -1, cv: initCv, gate: 0 };
+        w.port.onmessage = (e) => {
+            if (e.data.type === 'STATE') {
+                liveData = e.data;
+            }
+        };
+
+        return {
+            nodes: { w, cvIn, cvOut, gateOut },
+            inputs: { cv_in: cvIn },
+            outputs: { cv_out: cvOut, gate_out: gateOut },
+            read: () => liveData
+        };
     },
     update: (ctx, inst, d) => {
-        if (inst?.nodes?.p && ctx) {
-            const cv = resolveKeyCv(d);
-            inst.nodes.p.offset.setTargetAtTime(cv, ctx.currentTime, 0.005);
+        if (inst?.nodes?.w) {
+            inst.nodes.w.port.postMessage({
+                type: 'SET_CONFIG',
+                root: d.root ?? 0,
+                mask: d.mask
+            });
         }
     }
 };
@@ -32,4 +73,3 @@ export const KEY = {
 export const controllerAudioDefs = {
     KEY
 };
-
