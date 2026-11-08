@@ -1,7 +1,7 @@
 # GridSynth プログラミング・UI設計ガイドライン
 ## Programming & UI Design Guidelines
 
-本ドキュメントは、GridSynthの開発における設計思想、パネル表示・モジュール実装の統一規格、コード合理化および今後の開発方針をまとめた公式ガイドラインです。  
+本ドキュメントは、GridSynthの開発における設計思想、疎結合アーキテクチャ、シャーシ端子ピン配置、パネル表示・モジュール実装の統一規格、コード合理化および今後の開発方針をまとめた公式ガイドラインです。  
 **「毎回オリジナル（アドホックな独自実装）を作らず、確立された共通ルールと部品を徹底して再利用する」** ことを最重要原則とします。
 
 ---
@@ -21,104 +21,135 @@
 
 ---
 
-## 2. パネル（グリッドセル内）表示規格
+## 2. アーキテクチャと疎結合コンセプト (Decoupled 3-Tier Architecture)
 
-### 2.1 バーメーター・インジケータ規格 (`UIHelpers.renderPanelBars`)
-パネル中央にバー表示を持つモジュール（`SEQ8`, `SEQ16`, `KEY`, `CHORD`, `ADSR`, `AR`, `RF`, `ARP`, `DIST4`, `MIX`, `SPK`, `TILT`, `VAL` 等）は、以下の規格に完全準拠します。
-
-* **高さ（標準規格）**: `h-7` (28px)。
-  - *例外*: 上下2段組の `SEQ16` のみ、セル内に収めるため `h-6` (24px) × 2段（間隔 `gap-0.5`）。
-* **スロット枠（共通ベゼル）**:
-  - `rounded-sm p-[1px] border border-slate-600 bg-slate-950/40 panel-bar-slot relative flex flex-col justify-end`
-* **バーの形状**:
-  - 丸角（ラウンドコーナー）は禁止。シャープで過度のある矩形（`rounded-none` または `rounded-xs`）を使用する。
-* **多鍵盤・密なステップの表示ルール（例: KEYモジュール）**:
-  - 16個の個別スロットを並べると幅58pxを超えてピンに干渉するため禁止。
-  - **単一の標準枠（`w-[50px] h-7`）** を配置し、その中に枠線・装飾・隙間のない（`gap-0`）矩形ストリップとして描画する。
-
-### 2.2 上下文字ラベルの配置とタイポグラフィ規格
-バー表示の上下に文字を配置する場合、**バー表示の境界から直近 2px** の距離に配置します。
+GridSynthは、保守性と拡張性を最大化するため**3つの独立したレイヤー**に厳格に分離して設計・実装します。
 
 ```
-     ┌───────────────────────────────────┐
-     │  Top Label (text-amber-400)       │  ← バー上端から 2px 上 (bottom-full mb-[2px])
-     ├───────────────────────────────────┤
-     │  [   Panel Bar Display (h-7)   ]  │  ← 標準高さ 28px (中央配置)
-     ├───────────────────────────────────┤
-     │  Bottom Text (text-cyan-300)      │  ← バー下端から 2px 下 (top-full mt-[2px])
-     └───────────────────────────────────┘
+┌────────────────────────────────────────────────────────┐
+│ 第3層: 独自UIモジュール (Composite)                     │
+│   例: FMx3, SEQ8, SEQ16, MARKOV, KEY, PAT, CHORD       │
+│   → 無理に共通化しない。独自の配置・操作感を持つ。        │
+│   → ただし「部品（第1層）」だけを借りて組み立てる (合成) │
+├────────────────────────────────────────────────────────┤
+│ 第2層: 標準スキーマ駆動モジュール (Schema-Driven)       │
+│   例: VCO, VCF, VCA, MIX, DELAY, CVDELAY, REVERB, LFO  │
+│   → パラメータ定義 (min, max, step) の宣言だけで自動生成 │
+│   → コード量は10〜30行で極小・バグの余地ゼロ             │
+├────────────────────────────────────────────────────────┤
+│ 第1層: 最小共通部品 (Primitives)                       │
+│   例: スライダ (48px), bindScrubber, 端子ポート, バー    │
+│   → ポリシーを持たない「ただの素材」なので誰でも安全共有 │
+└────────────────────────────────────────────────────────┘
 ```
 
-* **配置方法**:
-  - セル固定座標（`top-[8px]` や `bottom-[10px]`）の直書きは禁止。
-  - `UIHelpers.renderPanelBars` のオプション `top` / `bottom` を使用し、バーコンテナ相対で自動配置する。
+### 2.1 UI / Audio / DSP の3層完全分離
+1. **UI定義 (`src/modules/defs/`)**:
+   - DOM生成 (`renderGrid`, `renderModal`)、UIイベント（`bindEvents`）、およびリアルタイム表示更新（`updateLive`）のみを担当。
+   - Web Audio の `AudioContext` や `AudioNode` インスタンスを直接参照・保持してはならない。
+2. **Audio定義 (`src/audio/defs/`)**:
+   - Web Audio ノードグラフの生成（`create`）、パラメータ更新（`update`）、およびノード破棄（`destroy`）のみを担当。
+   - UIのDOM要素を直接操作してはならない。
+3. **DSP Worklet (`src/dsp/processors/`)**:
+   - サンプル単位の純粋なシグナル・ピッチ・演算処理のみを担当。
+4. **通信の疎結合化**:
+   - UIとDSPは、プレーンオブジェクト（`SET_CONFIG`, `NOTE`, `STATE`）による非同期メッセージ通信（`postMessage`）のみで結合する。
+
+---
+
+## 3. シャーシ端子ピン配置規格 (Chassis Pin Layout)
+
+モジュールグリッドセル外周に配置される14本の端子ピン（PIN1〜PIN14）の物理配置および推奨役割です。各ピンは **14px center-to-center ピッチ**、外枠からマージン2pxで配置されます。
+
+```
+       PIN1 (58px) ───┐               ┌─── PIN14 (58px)
+       PIN2 (44px) ───┤               ├─── PIN13 (44px)
+[左辺] PIN3 (30px) ───┤ [中央表示領域] ├─── PIN12 (30px) [右辺]
+       PIN4 (16px) ───┘  (幅50px以内) └─── PIN11 (16px)
+                      ┌───────────────┐
+                      │ 5   6 7 8 9 10│ [底辺]
+                      └───────────────┘
+```
+
+| 辺 | ピン番号 | 物理座標 (from bottom) | 標準的用途 / 優先割り当て |
+| :--- | :--- | :--- | :--- |
+| **左辺 (Left)** | **PIN1** | 58px (上段) | 補助入力 (AUX IN / SYNC IN) |
+| | **PIN2** | 44px (中上) | 変調入力 3 (MOD3 / FM) |
+| | **PIN3** | 30px (中下) | 変調入力 2 (MOD2 / PWM) |
+| | **PIN4** | 16px (下段) | 変調入力 1 (MOD1 / LEVEL CV) |
+| **底辺 (Bottom)** | **PIN5** | 左下角 | **最頻出 CV入力 (1V/Oct IN, MAIN CV IN)** |
+| | **PIN6** | 左下寄り | トリガー/クロック入力 (CLK IN, TRIG IN) |
+| | **PIN7** | 中央左 | 補助入力 / リンク入力 |
+| | **PIN8** | 中央右 | 補助出力 / リンク出力 |
+| | **PIN9** | 右下寄り | サブ出力 / 反転出力 |
+| | **PIN10** | 右下角 | **最頻出 Gate出力 / MAIN OUT (V1)** |
+| **右辺 (Right)** | **PIN11** | 16px (下段) | **最頻出 CV出力 / メイン信号出力 (CV OUT / OUT1)** |
+| | **PIN12** | 30px (中下) | 第2出力 (OUT2 / V2) |
+| | **PIN13** | 44px (中上) | 第3出力 (OUT3 / V3) |
+| | **PIN14** | 58px (上段) | 第4出力 / 補助出力 (OUT4 / V4) |
+
+* **干渉防止境界**: 中央のバー表示やCanvasは幅50px以内とし、左辺（x=2〜10px）および右辺（x=62〜70px）の端子ピン領域に侵入させてはならない。
+
+---
+
+## 4. モジュール結線・シグナル結合ルール (Patching & Signal Coupling)
+
+### 4.1 ポート定義フォーマット
+```javascript
+ports: (m) => ({
+    in: [
+        { port: 'cv_in', pin: 5, label: 'IN', signal: 'cv', color: 'bg-yellow-400' }
+    ],
+    out: [
+        { port: 'gate_out', pin: 10, label: 'G', signal: 'gate', color: 'bg-orange-500' },
+        { port: 'cv_out', pin: 11, label: 'CV', signal: 'cv', color: 'bg-yellow-400' }
+    ]
+})
+```
+
+### 4.2 シグナル種別とカラー規格
+* **CV (コントロール電圧)**: `signal: 'cv'`, `color: 'bg-yellow-400'` (ピッチ, V/Oct, パラメータ変調)
+* **Gate / Trigger**: `signal: 'gate'`, `color: 'bg-orange-500'` または `'bg-red-500'` (オン/オフ, クロック)
+* **Audio (オーディオ音声)**: `signal: 'audio'`, `color: 'bg-blue-500'` (オシレータ音声, フィルタ出力)
+
+### 4.3 結線ステートの追跡と反映
+* ケーブルの接続・切断が発生すると、`cableManager` は即座に `synth.updateModule(id, moduleData, patchState)` を呼び出す。
+* `patchState` は現在結線されている入力ポート名の `Set`（例: `patchState.has('cv_in')`）。
+* オーディオ側はこれを受け取り、Worklet へ `isPatched` を通知して動作モードを切り替える（未結線 = ディゼーブル、結線 = リアルタイム処理）。
+
+---
+
+## 5. パネル（グリッドセル内）表示規格
+
+### 5.1 バーメーター・インジケータ規格 (`UIHelpers.renderPanelBars`)
+* **高さ（標準規格）**: `h-7` (28px)。（例外: `SEQ16` のみ `h-6` × 2段）。
+* **スロット枠（共通ベゼル）**: `rounded-sm p-[1px] border border-slate-600 bg-slate-950/40 panel-bar-slot relative flex flex-col justify-end`。
+* **バーの形状**: 丸角（ラウンドコーナー）は禁止。シャープな角（`rounded-none` / `rounded-xs`）。
+* **多鍵盤・密なステップ（KEY等）**:
+  - 個別枠×16本は禁止。**単一の標準枠（`w-[50px] h-7`）** 内に枠線・隙間のない（`gap-0`）矩形ストリップを描画する。
+
+### 5.2 上下文字ラベルの配置とタイポグラフィ規格
+* **配置**: バー表示の境界から **直近 2px**（上部: `bottom-full mb-[2px]`, 下部: `top-full mt-[2px]`）。
 * **フォント規格**:
   ```css
   text-[7.5px] font-mono font-bold leading-none tracking-tight text-center max-w-[64px] truncate pointer-events-none select-none
   ```
-* **色使いの統一ルール**:
-  - **上部（機能名・スケール・コード名など）**: `text-amber-400`（黄色／アンバー系）
-  - **下部（現在音名・音量・数値など）**: `text-cyan-300`（シアン系）
+* **色使いの統一**:
+  - **上部（機能名・スケール・コード名など）**: `text-amber-400`
+  - **下部（現在音名・音量・数値など）**: `text-cyan-300`
 
-### 2.3 カラーパレットとセマンティクス
-
-| 対象 | スタイル | 説明 |
-| :--- | :--- | :--- |
-| **CV信号バー** | `bg-gradient-to-t from-amber-600 to-yellow-400` | 電圧・ピッチ・エンベロープ値 (`theme: 'cv'`) |
-| **オーディオ信号バー** | `bg-gradient-to-t from-blue-600 to-cyan-400` | 音声レベル・波形 (`theme: 'audio'`) |
-| **白鍵（スケール内）** | `bg-yellow-400` | 鮮やかな黄色 |
-| **黒鍵（スケール内）** | `bg-[hsl(48,90%,72%)]` | **彩度ではなく明度を上げて淡く表現**（黒く落とさない） |
-| **無効 / オフ** | `bg-transparent` または `opacity-30` / `opacity-40` | スロット背景を透過 |
-| **重なり音（ベース＋テンション）** | `bg-[linear-gradient(to_right,#facc15_50%,#ef4444_50%)]` | 左右50%水平分割グラデーション |
+### 5.3 カラーパレットとセマンティクス
+* **CV信号**: `bg-gradient-to-t from-amber-600 to-yellow-400`
+* **オーディオ信号**: `bg-gradient-to-t from-blue-600 to-cyan-400`
+* **白鍵（スケール内）**: `bg-yellow-400`
+* **黒鍵（スケール内）**: **彩度ではなく明度を上げて淡く表現** (`bg-[hsl(48,90%,72%)]`)。
+* **重複音（ベース＋テンション）**: `bg-[linear-gradient(to_right,#facc15_50%,#ef4444_50%)]`（左右50%分割）。
 
 ---
 
-## 3. モーダル・ダイアログ設計規格
+## 6. 音声・DSP処理 (Web Audio Worklet) 規格
 
-1. **共通スライダ規格**:
-   - 縦型スライダは必ず規格サイズ **高さ 48px × 幅 14px**（`.native-vslider`）を使用。
-   - `UIHelpers.createVSliderHTML` および `UIHelpers.bindSlider` を使用し、数値スクラバー操作（`bindScrubber`）と同期させる。
-2. **ボタングループ & セレクタ**:
-   - 背景: `bg-slate-900 border border-slate-700`
-   - ホバー / アクティブ: `hover:border-amber-500` / `ring-1 ring-amber-400`
-   - 文字: `font-mono font-bold text-[9px]` または `text-[9.5px]`
-3. **クオンタイズ・スケールマップ**:
-   - 12半音ストリップ表示（`renderQuantizeMapHTML`）を使用。
-   - スナップ先が切り替わる境界に細い区分線（`border-r-2 border-amber-400/90`）を配置し、視覚的に音程グループを認知できるようにする。
-
----
-
-## 4. 音声・DSP処理 (Web Audio Worklet) 規格
-
-1. **1V/Oct 標準の徹底**:
-   - `0.0V` = C1 (MIDI 24)
-   - `1.0V` = C2 (MIDI 36)
-   - `2.0V` = C3 (MIDI 48)
-   - 計算式: `midi = Math.round(cv * 12) + 24` / `cv = (midi - 24) / 12.0`
-2. **オクターブ境界またぎ時の `diff` 補正**:
-   - 単純に `absSemi = totalSemi % 12` だけをクオンタイズして `Math.floor(totalSemi / 12)` と足し合わせると、BからCへ上向きスナップした際に1オクターブ下に逆戻りする重大バグが発生する。
-   - 必ず `diff = snappedSemi - absSemi` を算出し、`diff > 6` で `-12`、`diff < -6` で `+12` して `totalSemi + diff` で計算すること。
-3. **動的パッチング検出（結線ステートハンドリング）**:
-   - `isPatched = Boolean(patch?.has('cv_in'))` を Worklet に必ず通知する。
-   - `!isPatched` の場合、外部入力バッファは無視し、手動入力値（`this.manualCv`）を出力する。
-   - ケーブル接続・切断時には即座に Worklet へ `SET_CONFIG` メッセージを送り、ステートを同期させる。
-4. **キャッシュバスティングの運用**:
-   - Worklet ファイル更新時は、`src/dsp/worklet-processors.js` 内のインポートクエリおよび `src/audio/engine.js` 内の `workletUrl` クエリ（`?v=XXX`）を同時にインクリメントする。
-
----
-
-## 5. 新規モジュール・機能追加時のチェックリスト
-
-実装前に以下の項目を順に確認してください。
-
-- [ ] **Q1. パネル表示にバーを使うか？**
-  - YES ➔ 必ず `UIHelpers.renderPanelBars` を使用し、高さは `h-7` に統一する。
-  - YES ➔ 上下文字ラベルは `options.top` / `options.bottom` を通じてバー直近2pxに配置する。
-  - YES ➔ コンテナ幅は `w-[50px]` 以内に収め、端子ピンと干渉しないことを確認する。
-- [ ] **Q2. パラメータ操作系はスライダか？**
-  - YES ➔ 第2層のスキーマ（`schema`）または第1層の部品（`createVSliderHTML` / `.native-vslider`）を使用する。
-- [ ] **Q3. CV入力を持つか？**
-  - YES ➔ 未結線時のフォールバック値が保証され、トリガー漏れ（常にGate=1）が起きないか確認する。
-  - YES ➔ ケーブル脱着時に `updateModule` 経由で結線状態がDSPノードへ即時反映されるか確認する。
-- [ ] **Q4. バージョン更新を実施したか？**
-  - `src/main.js`, `index.html`, `src/audio/engine.js`, `src/dsp/worklet-processors.js` の4箇所のバージョン番号を一致させて更新する。
+1. **1V/Oct 標準**: `0.0V` = C1 (MIDI 24), `1.0V` = C2 (36), `2.0V` = C3 (48)。
+2. **オクターブ境界またぎ時の `diff` 補正**: `diff = snappedSemi - absSemi`、`diff > 6 ? -12 : diff < -6 ? +12` でラップアラウンド時の逆戻りバグを防止。
+3. **未結線時のディゼーブルとゲート漏れ根絶**: `!isPatched` 時は外部入力を無視し、キータッチ時以外は Gate 0.0 を厳守。
+4. **バージョン同期**: `src/main.js`, `index.html`, `src/audio/engine.js`, `src/dsp/worklet-processors.js` の4箇所を同時更新。
