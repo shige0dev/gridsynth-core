@@ -15,19 +15,60 @@ const renderQuantizeMapHTML = (root, mask) => {
     const scaleNotes = getScaleNotesInOctave(root, mask);
     const N = scaleNotes.length;
 
-    return scaleNotes.map((semi, sliceIdx) => {
+    // 1. 左側外郭: 2キー (-2 = A#, -1 = B) を等ピッチ(flex-1ずつ)で配置
+    const leftKeys = [-2, -1].map(s => {
+        const absSemi = ((s % 12) + 12) % 12;
+        const name = NOTES[absSemi];
+        const isBlack = name.includes('#');
+        const rel = ((absSemi - root) % 12 + 12) % 12;
+        const isScale = (mask[rel] ?? 1) === 1;
+
+        const bgCls = isScale
+            ? (isBlack ? 'bg-[hsl(48,65%,22%)]' : 'bg-[hsl(48,80%,28%)]')
+            : 'bg-slate-950/80';
+        return `<div class="flex-1 h-full select-none relative transition-colors border-r border-slate-800/60 ${bgCls}" data-quant-ext="${s}" title="${name}"></div>`;
+    }).join('');
+
+    // 2. 中央1オクターブ (C〜B): スケール構成音数Nで均等割スライス (両側に太線境界)
+    const centerSlices = scaleNotes.map((semi, sliceIdx) => {
         const name = NOTES[semi];
         const isBlack = name.includes('#');
         const isLast = (sliceIdx === N - 1);
-        const borderR = isLast ? '' : 'border-r border-amber-400/50';
+        const borderR = isLast ? '' : 'border-r border-amber-400/40';
 
-        // 白鍵・黒鍵セマンティクス（黒鍵は明度を上げて淡く表現）
-        const bgCls = isBlack
-            ? 'bg-[hsl(48,65%,22%)]'
-            : 'bg-[hsl(48,80%,28%)]';
-
+        const bgCls = isBlack ? 'bg-[hsl(48,65%,22%)]' : 'bg-[hsl(48,80%,28%)]';
         return `<div class="flex-1 h-full select-none relative transition-colors ${borderR} ${bgCls}" data-quant-slice="${sliceIdx}" title="${name} (${Math.round(100 / N)}% slice)"></div>`;
     }).join('');
+
+    // 3. 右側外郭: 2キー (+12 = C, +13 = C#) を等ピッチ(flex-1ずつ)で配置
+    const rightKeys = [12, 13].map((s, idx) => {
+        const absSemi = ((s % 12) + 12) % 12;
+        const name = NOTES[absSemi];
+        const isBlack = name.includes('#');
+        const rel = ((absSemi - root) % 12 + 12) % 12;
+        const isScale = (mask[rel] ?? 1) === 1;
+
+        const bgCls = isScale
+            ? (isBlack ? 'bg-[hsl(48,65%,22%)]' : 'bg-[hsl(48,80%,28%)]')
+            : 'bg-slate-950/80';
+        const borderR = (idx === 0) ? 'border-r border-slate-800/60' : '';
+        return `<div class="flex-1 h-full select-none relative transition-colors ${borderR} ${bgCls}" data-quant-ext="${s}" title="${name}"></div>`;
+    }).join('');
+
+    return `
+        <!-- 左側2音 (A#, B): 等ピッチ。右端「Cの左」に太い琥珀色ライン -->
+        <div class="flex-[2] h-full flex flex-row border-r-2 border-amber-400 shadow-[1px_0_4px_rgba(251,191,36,0.6)] z-10">
+            ${leftKeys}
+        </div>
+        <!-- 中央1オクターブ (C〜B): N等分スライス。右端「オクターブ上のCの左」に太い琥珀色ライン -->
+        <div class="flex-[12] h-full flex flex-row border-r-2 border-amber-400 shadow-[1px_0_4px_rgba(251,191,36,0.6)] z-10">
+            ${centerSlices}
+        </div>
+        <!-- 右側2音 (C, C#): 等ピッチ -->
+        <div class="flex-[2] h-full flex flex-row">
+            ${rightKeys}
+        </div>
+    `;
 };
 
 export const KEY = {
@@ -293,6 +334,11 @@ export const KEY = {
                 el.classList.toggle('!bg-cyan-400', isPressed);
                 el.classList.toggle('!text-black', isPressed);
                 el.classList.toggle('shadow-[0_0_12px_#22d3ee]', isPressed);
+            }
+            const extEl = rootEl.querySelector(`[data-quant-ext="${semi}"]`);
+            if (extEl) {
+                extEl.classList.toggle('!bg-cyan-400', isPressed);
+                extEl.classList.toggle('shadow-[0_0_8px_rgba(34,211,238,0.8)]', isPressed);
             }
         };
 
