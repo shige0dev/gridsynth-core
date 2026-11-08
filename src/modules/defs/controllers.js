@@ -57,7 +57,7 @@ export const KEY = {
         { s: 8, l: 190, w: 16, extraBorder: 'border border-slate-400 border-t-0' },
         { s: 10, l: 227, w: 16, extraBorder: 'border border-slate-400 border-t-0' },
         { s: 13, l: 286, w: 16, extraBorder: 'border border-slate-400 border-t-0' },
-        { s: 15, l: 324, w: 5, extraBorder: 'border-b border-l border-slate-400 border-r-0 border-t-0' }
+        { s: 15, l: 324, r: 0, extraBorder: 'border-b border-l border-slate-400 border-r-0 border-t-0' }
     ],
     renderGrid: (m) => `<div class="flex items-center justify-center w-full h-full pointer-events-none text-cyan-400"><span class="text-[15px] font-mono font-bold text-white tracking-tight">${m.lastNote || 'C2'}</span></div>`,
     renderModal: (m) => {
@@ -74,10 +74,10 @@ export const KEY = {
                     <span class="text-[9px] font-mono font-bold text-sky-300" id="key-active-note">${curNote}</span>
                 </div>
                 <div class="relative h-28 bg-slate-950 border border-slate-400 flex select-none touch-none overflow-hidden w-[331px] shrink-0 box-border mx-auto" id="kb-box">
-                    ${W.map((k, idx) => `<div class="key-white ${idx < 9 ? 'w-[33px] border-r border-slate-400' : 'w-[32px]'} shrink-0 bg-slate-950 flex flex-col justify-end items-center pb-1 cursor-pointer select-none transition-colors" data-semi="${k.s}"><span class="text-[7.5px] font-bold text-slate-400 pointer-events-none">${k.n}</span></div>`).join('')}
-                    <div class="absolute inset-0 pointer-events-none w-[329px] h-full">
+                    ${W.map((k, idx) => `<div class="key-white ${idx < 9 ? 'w-[33px] border-r border-slate-400' : 'w-[32px] flex-1'} shrink-0 bg-slate-950 flex flex-col justify-end items-center pb-1 cursor-pointer select-none transition-colors" data-semi="${k.s}"><span class="text-[7.5px] font-bold text-slate-400 pointer-events-none">${k.n}</span></div>`).join('')}
+                    <div class="absolute inset-0 pointer-events-none w-full h-full">
                         <!-- Accidentals: Y=16px for full accidentals + edge accidentals aligned to white key top edges without duplicate borders -->
-                        ${B.map(bk => `<div class="key-black absolute h-16 bg-slate-950 ${bk.extraBorder} pointer-events-auto cursor-pointer select-none transition-colors" style="left:${bk.l}px;width:${bk.w}px;" data-semi="${bk.s}"></div>`).join('')}
+                        ${B.map(bk => `<div class="key-black absolute h-16 bg-slate-950 ${bk.extraBorder} pointer-events-auto cursor-pointer select-none transition-colors" style="left:${bk.l}px;${bk.w !== undefined ? `width:${bk.w}px;` : ''}${bk.r !== undefined ? `right:${bk.r}px;` : ''}" data-semi="${bk.s}"></div>`).join('')}
                     </div>
                 </div>
             </div>`;
