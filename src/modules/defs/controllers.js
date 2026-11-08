@@ -48,36 +48,44 @@ export const KEY = {
         const mask = Array.isArray(m.mask) ? m.mask : (SCALE_PRESETS[scaleName] || SCALE_PRESETS['CHROMATIC']);
         const curNote = m.lastNote || '';
 
-        return `
-            <div class="flex flex-col items-center justify-between w-full h-full py-1.5 px-1 select-none pointer-events-none leading-none">
-                <!-- 上段: スケール表示（全幅中央配置で文字が消えない） -->
-                <div class="flex items-center justify-center w-full px-0.5 text-center">
-                    <span class="text-[8px] font-mono font-bold text-amber-400 truncate tracking-tight">${rootName} ${scaleName}</span>
-                </div>
-                <!-- 中段: 16本 VOLCAスタイル タッチバー（C〜B前後2音拡張） -->
-                <div class="flex items-center justify-center h-6 gap-[1px] p-0">
-                    ${KEYS_16.map(k => {
-                        const rel = ((k.absSemi - root) % 12 + 12) % 12;
-                        const isMasked = (mask[rel] ?? 1) === 1;
+        // 標準 renderPanelBars (h-7, 28px) ルールに完全準拠
+        const barItems = KEYS_16.map(k => {
+            const rel = ((k.absSemi - root) % 12 + 12) % 12;
+            const isMasked = (mask[rel] ?? 1) === 1;
 
-                        // 色相・彩度は同一(Hue 48deg, Sat 90%+)。黒鍵は彩度を落とすのでなく明度を上げて淡く表現
-                        let barBg = '';
-                        if (isMasked) {
-                            barBg = k.isBlack
-                                ? 'bg-[hsl(48,90%,72%)] shadow-[0_0_2px_rgba(254,240,138,0.5)]'
-                                : 'bg-yellow-400 shadow-[0_0_2px_rgba(250,204,21,0.6)]';
-                        } else {
-                            barBg = k.isBlack
-                                ? 'bg-slate-800/40 border border-slate-700/30'
-                                : 'bg-slate-700/50';
-                        }
-                        return `<div class="w-[3px] h-full rounded-[0.5px] relative shrink-0 ${barBg}"></div>`;
-                    }).join('')}
-                </div>
-                <!-- 下段: 現在音（バーの下に配置） -->
-                <div class="flex items-center justify-center w-full px-0.5 text-center h-[9px]">
-                    <span class="text-[8px] font-mono font-bold text-cyan-300 key-live-cell-note">${curNote}</span>
-                </div>
+            let color = '';
+            if (isMasked) {
+                // 色相・彩度は同一(Hue 48deg, Sat 90%+)。黒鍵は明度を上げて淡く表現
+                color = k.isBlack ? 'bg-[hsl(48,90%,72%)]' : 'bg-yellow-400';
+            } else {
+                color = 'bg-transparent';
+            }
+
+            return {
+                pct: isMasked ? 100 : 0,
+                color,
+                width: 'w-[2.5px]',
+                innerCls: isMasked ? (k.isBlack ? 'shadow-[0_0_2px_rgba(254,240,138,0.5)]' : 'shadow-[0_0_2px_rgba(250,204,21,0.6)]') : '',
+                outerCls: isMasked ? '' : (k.isBlack ? 'opacity-30' : 'opacity-40'),
+                attrs: `data-key-bar="${k.s}"`
+            };
+        });
+
+        const barsHTML = UIHelpers.renderPanelBars(barItems, {
+            heightCls: 'h-7',
+            gapCls: 'gap-px',
+            containerCls: 'w-[58px]',
+            theme: 'cv'
+        });
+
+        return `
+            <div class="relative flex items-center justify-center w-full h-full pointer-events-none select-none">
+                <!-- 上部: スケール名（バーのすぐ上） -->
+                <span class="absolute top-[8px] left-1/2 -translate-x-1/2 text-[7.5px] font-mono font-bold text-amber-400 truncate tracking-tight text-center max-w-[64px] leading-none">${rootName} ${scaleName}</span>
+                <!-- 中央: 標準 renderPanelBars (h-7 / 28px) -->
+                ${barsHTML}
+                <!-- 下部: 現在音（バーのすぐ下、SPK等と同一の配置ルール） -->
+                <span class="key-live-cell-note absolute bottom-[10px] left-1/2 -translate-x-1/2 text-[7.5px] font-mono font-bold text-cyan-300 leading-none">${curNote || ''}</span>
             </div>`;
     },
     // 動的な選定キーの枠線・オクターブハイライトは不要（完全削除）
