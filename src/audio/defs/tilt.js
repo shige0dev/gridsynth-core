@@ -141,6 +141,4 @@ export const TILT = {
     }
 };
 
-export const SENSOR = TILT;
-export const SNS = TILT;
-export const tiltAudioDefs = { TILT, SENSOR, SNS };
+export const tiltAudioDefs = { TILT };

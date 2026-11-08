@@ -28,9 +28,6 @@ export const CHORD_KEYS = [
     'm9', '9th', 'dim7', 'aug'
 ];
 
-export const CHORD_TYPES = CHORD_SPECS;
-export const CHORD_ORDER = CHORD_KEYS;
-
 export const SCALE_PRESETS = {
     'CHROMATIC': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     'MAJOR':     [1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1],

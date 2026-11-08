@@ -13,6 +13,154 @@ import {
     moveTokenNode
 } from '../../core/pat-tokens.js';
 
+function handleModifierGesture(e, modChip, m, sync) {
+    e.preventDefault();
+    e.stopPropagation();
+    const pId = modChip.dataset.pid, modType = modChip.dataset.mod;
+    const startY = e.clientY, initVal = parseInt(modChip.dataset.val, 10) || 2;
+    let moved = false;
+    const onM = (me) => {
+        const diff = Math.trunc((startY - me.clientY) / 10);
+        if (Math.abs(diff) >= 1) {
+            moved = true;
+            walkTokens(m._tokens, n => {
+                if (n.id === pId) {
+                    const target = initVal + diff;
+                    if (target < 2) delete n[modType];
+                    else n[modType] = Math.min(32, target);
+                }
+                return n;
+            });
+            sync(false);
+        }
+    };
+    const onU = () => {
+        window.removeEventListener('pointermove', onM);
+        window.removeEventListener('pointerup', onU);
+        if (!moved) {
+            walkTokens(m._tokens, n => { if (n.id === pId) delete n[modType]; return n; });
+            sync(false);
+        }
+    };
+    window.addEventListener('pointermove', onM);
+    window.addEventListener('pointerup', onU);
+}
+
+function handleTokenGesture(e, tokEl, strip, m, selectedIds, sync, renderTokens) {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = tokEl.dataset.id;
+    const startX = e.clientX, startY = e.clientY;
+    let isDrag = false, isSwipe = false, lastStep = 0, targetEl = null, dropPos = 'after';
+    let longPressed = false;
+
+    const timer = setTimeout(() => {
+        longPressed = true;
+        if (!selectedIds.has(id)) selectedIds.add(id);
+        renderTokens();
+    }, 350);
+
+    const clearLine = () => strip.querySelectorAll('.pat-tok').forEach(el => el.classList.remove('border-l-2', 'border-r-2', 'border-white', 'ring-2', 'ring-white', 'bg-white/10'));
+
+    const onMove = (me) => {
+        const dx = me.clientX - startX, dy = startY - me.clientY;
+        if (!isSwipe && Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) {
+            clearTimeout(timer);
+            isDrag = true;
+            tokEl.style.transform = `translateX(${dx}px) scale(1.05)`;
+            tokEl.style.pointerEvents = 'none';
+            const elBelow = document.elementFromPoint(me.clientX, me.clientY);
+            tokEl.style.pointerEvents = '';
+            const target = elBelow?.closest?.('.pat-tok');
+            clearLine();
+            if (target && target !== tokEl && !tokEl.contains(target)) {
+                targetEl = target;
+                const rect = target.getBoundingClientRect();
+                const relX = (me.clientX - rect.left) / rect.width;
+                dropPos = relX < 0.5 ? 'before' : 'after';
+                target.classList.add(dropPos === 'before' ? 'border-l-2' : 'border-r-2', 'border-white');
+            } else targetEl = null;
+            return;
+        }
+        if (!isDrag && Math.abs(dy) >= 6) {
+            clearTimeout(timer);
+            isSwipe = true;
+            if (!selectedIds.has(id)) { selectedIds.clear(); selectedIds.add(id); renderTokens(); }
+            const step = Math.trunc(dy / 8);
+            if (step !== lastStep) {
+                const delta = step - lastStep;
+                walkTokens(m._tokens, n => {
+                    if (selectedIds.has(n.id) && n.type === 'note') n.val = midiNumToNote(noteToMidiNum(n.val) + delta);
+                    return n;
+                });
+                lastStep = step;
+                sync(false);
+            }
+        }
+    };
+
+    const onUp = () => {
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+        clearTimeout(timer);
+        tokEl.style.transform = '';
+        clearLine();
+        if (targetEl && targetEl.dataset.id !== id) {
+            m._tokens = moveTokenNode(m._tokens, id, targetEl.dataset.id, dropPos);
+            selectedIds.clear();
+            selectedIds.add(id);
+            sync(false);
+            return;
+        }
+        if (!isDrag && !isSwipe) {
+            if (longPressed) return;
+            if (selectedIds.size > 0) {
+                if (selectedIds.has(id)) selectedIds.delete(id);
+                else selectedIds.add(id);
+            } else {
+                selectedIds.add(id);
+            }
+            renderTokens();
+        }
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+}
+
+function handleAddPitchSwipe(e, m, addPitchDisp, sync, selectedIds, strip) {
+    e.preventDefault();
+    const startY = e.clientY;
+    let moved = false, lastStep = 0;
+    const onM = (me) => {
+        const step = Math.trunc((startY - me.clientY) / 8);
+        if (Math.abs(step) >= 1) {
+            moved = true;
+            if (step !== lastStep) {
+                m._addPitch = midiNumToNote(noteToMidiNum(m._addPitch || 'c2') + (step - lastStep));
+                if (addPitchDisp) addPitchDisp.textContent = m._addPitch.toUpperCase();
+                lastStep = step;
+            }
+        }
+    };
+    const onU = () => {
+        window.removeEventListener('pointermove', onM);
+        window.removeEventListener('pointerup', onU);
+        if (!moved) {
+            const sel = findTokens(m._tokens, n => selectedIds.has(n.id));
+            const p = (m._addPitch || 'c2').toLowerCase();
+            if (sel.length) sel.forEach(n => { n.type = 'note'; n.val = p; });
+            else {
+                m._tokens.push({ id: genId(), type: 'note', val: p });
+                selectedIds.clear();
+                if (strip) strip.scrollLeft = strip.scrollWidth;
+            }
+            sync(false);
+        }
+    };
+    window.addEventListener('pointermove', onM);
+    window.addEventListener('pointerup', onU);
+}
+
 export const PAT = {
     color: 'sky',
     defaults: () => {
@@ -280,142 +428,19 @@ export const PAT = {
         strip?.addEventListener('pointerdown', (e) => {
             const modChip = e.target.closest('.pat-mod');
             if (modChip) {
-                e.preventDefault(); e.stopPropagation();
-                const pId = modChip.dataset.pid, modType = modChip.dataset.mod;
-                const startY = e.clientY, initVal = parseInt(modChip.dataset.val, 10) || 2;
-                let moved = false;
-                const onM = (me) => {
-                    const diff = Math.trunc((startY - me.clientY) / 10);
-                    if (Math.abs(diff) >= 1) {
-                        moved = true;
-                        walkTokens(m._tokens, n => {
-                            if (n.id === pId) {
-                                const target = initVal + diff;
-                                if (target < 2) delete n[modType];
-                                else n[modType] = Math.min(32, target);
-                            }
-                            return n;
-                        });
-                        sync(false);
-                    }
-                };
-                const onU = () => {
-                    window.removeEventListener('pointermove', onM); window.removeEventListener('pointerup', onU);
-                    if (!moved) { walkTokens(m._tokens, n => { if (n.id === pId) delete n[modType]; return n; }); sync(false); }
-                };
-                window.addEventListener('pointermove', onM); window.addEventListener('pointerup', onU);
+                handleModifierGesture(e, modChip, m, sync);
                 return;
             }
 
             const tokEl = e.target.closest('.pat-tok');
-            if (!tokEl) return;
-            e.preventDefault(); e.stopPropagation();
-            const id = tokEl.dataset.id;
-            const startX = e.clientX, startY = e.clientY;
-            let isDrag = false, isSwipe = false, lastStep = 0, targetEl = null, dropPos = 'after';
-            let longPressed = false;
-
-            const timer = setTimeout(() => {
-                longPressed = true;
-                if (!selectedIds.has(id)) {
-                    selectedIds.add(id);
-                }
-                renderTokens();
-            }, 350);
-
-            const clearLine = () => strip.querySelectorAll('.pat-tok').forEach(el => el.classList.remove('border-l-2', 'border-r-2', 'border-white', 'ring-2', 'ring-white', 'bg-white/10'));
-
-            const onMove = (me) => {
-                const dx = me.clientX - startX, dy = startY - me.clientY;
-                if (!isSwipe && Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) {
-                    clearTimeout(timer); isDrag = true;
-                    tokEl.style.transform = `translateX(${dx}px) scale(1.05)`;
-                    tokEl.style.pointerEvents = 'none';
-                    const elBelow = document.elementFromPoint(me.clientX, me.clientY);
-                    tokEl.style.pointerEvents = '';
-                    const target = elBelow?.closest?.('.pat-tok');
-                    clearLine();
-                    if (target && target !== tokEl && !tokEl.contains(target)) {
-                        targetEl = target;
-                        const rect = target.getBoundingClientRect();
-                        const relX = (me.clientX - rect.left) / rect.width;
-                        dropPos = relX < 0.5 ? 'before' : 'after';
-                        target.classList.add(dropPos === 'before' ? 'border-l-2' : 'border-r-2', 'border-white');
-                    } else targetEl = null;
-                    return;
-                }
-                if (!isDrag && Math.abs(dy) >= 6) {
-                    clearTimeout(timer); isSwipe = true;
-                    if (!selectedIds.has(id)) { selectedIds.clear(); selectedIds.add(id); renderTokens(); }
-                    const step = Math.trunc(dy / 8);
-                    if (step !== lastStep) {
-                        const delta = step - lastStep;
-                        walkTokens(m._tokens, n => {
-                            if (selectedIds.has(n.id) && n.type === 'note') n.val = midiNumToNote(noteToMidiNum(n.val) + delta);
-                            return n;
-                        });
-                        lastStep = step;
-                        sync(false);
-                    }
-                }
-            };
-
-            const onUp = () => {
-                window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp);
-                clearTimeout(timer); tokEl.style.transform = ''; clearLine();
-                if (targetEl && targetEl.dataset.id !== id) {
-                    m._tokens = moveTokenNode(m._tokens, id, targetEl.dataset.id, dropPos);
-                    selectedIds.clear(); selectedIds.add(id);
-                    sync(false); return;
-                }
-                if (!isDrag && !isSwipe) {
-                    if (longPressed) {
-                        // Handled by timer
-                        return;
-                    }
-                    if (selectedIds.size > 0) {
-                        // In selection mode: tapping toggles/adds token to selection
-                        if (selectedIds.has(id)) {
-                            selectedIds.delete(id);
-                        } else {
-                            selectedIds.add(id);
-                        }
-                    } else {
-                        // Single tap when not in selection mode: select this single token
-                        selectedIds.add(id);
-                    }
-                    renderTokens();
-                }
-            };
-            window.addEventListener('pointermove', onMove); window.addEventListener('pointerup', onUp);
+            if (tokEl) {
+                handleTokenGesture(e, tokEl, strip, m, selectedIds, sync, renderTokens);
+            }
         });
 
         // Add Note & Rest
-        let boxStartY = 0, boxMoved = false, boxLast = 0;
         root.querySelector(`#pat-add-note-${uid}`)?.addEventListener('pointerdown', (e) => {
-            e.preventDefault(); boxStartY = e.clientY; boxMoved = false; boxLast = 0;
-            const onM = (me) => {
-                const step = Math.trunc((boxStartY - me.clientY) / 8);
-                if (Math.abs(step) >= 1) {
-                    boxMoved = true;
-                    if (step !== boxLast) {
-                        m._addPitch = midiNumToNote(noteToMidiNum(m._addPitch || 'c2') + (step - boxLast));
-                        if (addPitchDisp) addPitchDisp.textContent = m._addPitch.toUpperCase();
-                        boxLast = step;
-                    }
-                }
-            };
-            const onU = () => {
-                window.removeEventListener('pointermove', onM); window.removeEventListener('pointerup', onU);
-                if (!boxMoved) {
-                    const sel = findTokens(m._tokens, n => selectedIds.has(n.id));
-                    const p = (m._addPitch || 'c2').toLowerCase();
-                    if (sel.length) sel.forEach(n => { n.type = 'note'; n.val = p; });
-                    else { m._tokens.push({ id: genId(), type: 'note', val: p }); selectedIds.clear(); if (strip) strip.scrollLeft = strip.scrollWidth; }
-                    sync(false);
-                }
-            };
-            window.addEventListener('pointermove', onM); window.addEventListener('pointerup', onU);
+            handleAddPitchSwipe(e, m, addPitchDisp, sync, selectedIds, strip);
         });
 
         root.querySelector(`#pat-add-rest-${uid}`)?.addEventListener('click', () => {

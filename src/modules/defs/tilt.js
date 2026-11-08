@@ -23,19 +23,19 @@ export const TILT = {
         ${UIHelpers.renderPanelBars([
             {
                 pct: 50,
-                innerCls: 'tilt-bar-x sensor-bar-x transition-all duration-75',
+                innerCls: 'tilt-bar-x transition-all duration-75',
                 width: 'w-2.5',
                 color: 'bg-gradient-to-t from-teal-500 to-cyan-300'
             },
             {
                 pct: 50,
-                innerCls: 'tilt-bar-y sensor-bar-y transition-all duration-75',
+                innerCls: 'tilt-bar-y transition-all duration-75',
                 width: 'w-2.5',
                 color: 'bg-gradient-to-t from-teal-500 to-cyan-300'
             },
             {
                 pct: 50,
-                innerCls: 'tilt-bar-z sensor-bar-z transition-all duration-75',
+                innerCls: 'tilt-bar-z transition-all duration-75',
                 width: 'w-2.5',
                 color: 'bg-gradient-to-t from-teal-500 to-cyan-300'
             }
@@ -143,7 +143,7 @@ export const TILT = {
 
             const vals = { x, y, z };
             ['x', 'y', 'z'].forEach(ax => {
-                const valEl = targetModal.querySelector(`#tilt-modal-val-${ax}`) || targetModal.querySelector(`#sensor-modal-val-${ax}`);
+                const valEl = targetModal.querySelector(`#tilt-modal-val-${ax}`);
                 if (valEl) {
                     const v = vals[ax];
                     valEl.textContent = (v >= 0 ? '+' : '') + v.toFixed(2);
@@ -153,6 +153,4 @@ export const TILT = {
     }
 };
 
-export const SENSOR = TILT;
-export const SNS = TILT;
-export const tiltDefs = { TILT, SENSOR, SNS };
+export const tiltDefs = { TILT };
