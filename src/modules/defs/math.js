@@ -1,8 +1,13 @@
 // src/modules/defs/math.js
 
+const fmt = (v) => {
+    const n = Number(v);
+    if (isNaN(n)) return '+0.00';
+    return (n >= 0 ? '+' : '') + n.toFixed(2);
+};
+
 const renderMathModalUI = (m, ctx, modeGroups, valKeys) => {
     const curMode = m.mode || modeGroups[0].modes[0];
-    const fmt = v => (v >= 0 ? '+' : '') + Number(v || 0).toFixed(2);
     return `
         <div class="space-y-1.5 p-0.5">
             ${modeGroups.map(g => `
@@ -74,7 +79,7 @@ const bindMathEventsUI = (m, ctx, cb, valKeys) => {
             cb();
         };
 
-        const stopHold = () => {
+        const stopHold = (e) => {
             if (holdTimer) {
                 clearTimeout(holdTimer);
                 holdTimer = null;
@@ -83,21 +88,31 @@ const bindMathEventsUI = (m, ctx, cb, valKeys) => {
                 clearInterval(repeatTimer);
                 repeatTimer = null;
             }
+            if (e && btn.hasPointerCapture && btn.hasPointerCapture(e.pointerId)) {
+                try { btn.releasePointerCapture(e.pointerId); } catch (_) {}
+            }
         };
 
         btn.addEventListener('pointerdown', (e) => {
             if (e.button !== 0) return; // Primary button only
             e.stopPropagation();
+            if (btn.setPointerCapture) {
+                try { btn.setPointerCapture(e.pointerId); } catch (_) {}
+            }
             stopHold();
             step();
             holdTimer = setTimeout(() => {
                 repeatTimer = setInterval(step, 60);
-            }, 320);
+            }, 300);
         });
 
         btn.addEventListener('pointerup', stopHold);
         btn.addEventListener('pointercancel', stopHold);
-        btn.addEventListener('pointerleave', stopHold);
+        btn.addEventListener('pointerleave', (e) => {
+            if (!btn.hasPointerCapture || !btn.hasPointerCapture(e.pointerId)) {
+                stopHold(e);
+            }
+        });
         btn.addEventListener('contextmenu', (e) => e.preventDefault());
     });
 
