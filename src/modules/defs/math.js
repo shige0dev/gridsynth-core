@@ -153,7 +153,7 @@ const updateMathLiveUI = (cell, data) => {
 
 export const MATH1 = {
     color: 'purple',
-    MODES: ['ABS', 'FLOOR', 'CEIL', 'ROUND', 'INT', 'NOT', 'SIN', 'COS', 'TAN', 'LOG', 'EXP'],
+    MODES: ['ABS', 'FLOOR', 'CEIL', 'ROUND', 'INT', 'NOT', 'SIN', 'COS', 'TAN'],
     defaults: () => ({ type: 'MATH1', mode: 'ABS', valA: 0.0 }),
     ports: () => ({
         in: [{ port: 'cv_in_a', pin: 5, color: 'bg-yellow-400' }],
@@ -163,7 +163,7 @@ export const MATH1 = {
     updateLive: updateMathLiveUI,
     renderModal: (m, ctx) => renderMathModalUI(m, ctx, [
         { label: 'Basic Math (A)', cols: 3, modes: ['ABS', 'FLOOR', 'CEIL', 'ROUND', 'INT', 'NOT'] },
-        { label: 'Trig & Exp (A)', cols: 5, modes: ['SIN', 'COS', 'TAN', 'LOG', 'EXP'] }
+        { label: 'Trigonometry (A)', cols: 3, modes: ['SIN', 'COS', 'TAN'] }
     ], ['A']),
     bindEvents: (m, ctx, cb) => bindMathEventsUI(m, ctx, cb, ['A'])
 };
