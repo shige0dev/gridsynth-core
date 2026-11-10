@@ -141,6 +141,10 @@ export const MATH1 = {
     color: 'purple',
     MODES: ['ABS', 'FLOOR', 'CEIL', 'ROUND', 'INT', 'NOT', 'SIN', 'COS', 'TAN'],
     defaults: () => ({ type: 'MATH1', mode: 'ABS', valA: 0.0 }),
+    onNormalize: (m) => {
+        if (!m.mode || !MATH1.MODES.includes(m.mode)) m.mode = 'ABS';
+        if (m.valA === undefined) m.valA = 0.0;
+    },
     ports: () => ({
         in: [{ port: 'cv_in_a', pin: 5, color: 'bg-yellow-400' }],
         out: [{ port: 'cv_out', pin: 10, color: 'bg-yellow-400' }]
@@ -160,6 +164,11 @@ export const MATH2 = {
     COMPARISON_MODES: ['<', '<=', '==', '>=', '>'],
     LOGIC_MODES: ['AND', 'OR', 'NAND', 'NOR', 'XOR'],
     defaults: () => ({ type: 'MATH2', mode: 'ADD', valA: 0.0, valB: 1.0 }),
+    onNormalize: (m) => {
+        if (!m.mode) m.mode = 'ADD';
+        if (m.valA === undefined) m.valA = 0.0;
+        if (m.valB === undefined) m.valB = 1.0;
+    },
     ports: () => ({
         in: [
             { port: 'cv_in_a', pin: 5, color: 'bg-yellow-400' },

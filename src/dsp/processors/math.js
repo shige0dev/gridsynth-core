@@ -1,7 +1,7 @@
 export class MathProcessor extends AudioWorkletProcessor {
     constructor() {
         super();
-        this.mode = 'ADD';
+        this.mode = 'ABS';
         this.valA = 0.0;
         this.valB = 1.0;
         this.hasA = false;
