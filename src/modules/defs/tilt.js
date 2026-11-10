@@ -1,9 +1,9 @@
 import { UIHelpers } from '../../ui/helpers.js';
 
-export const TILT = {
+export const GSENSOR = {
     color: 'teal',
     defaults: () => ({
-        type: 'TILT',
+        type: 'GSENSOR',
         smooth: 0.7,
         tareX: 0,
         tareY: 0,
@@ -48,7 +48,7 @@ export const TILT = {
         return `
             <div class="flex flex-col gap-2.5 p-1 select-none text-[9px] w-[164px] mx-auto">
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800">
-                    <span class="text-[8px] font-mono font-bold text-teal-300 tracking-wider">3-AXIS TILT</span>
+                    <span class="text-[8px] font-mono font-bold text-teal-300 tracking-wider">3-AXIS G-SENSOR</span>
                     <span id="tilt-modal-status" class="px-1.5 py-0.2 rounded text-[6.5px] font-mono font-bold bg-slate-900 text-slate-500 border border-slate-800">NO SENSOR</span>
                 </div>
 
@@ -153,4 +153,5 @@ export const TILT = {
     }
 };
 
-export const tiltDefs = { TILT };
+export const TILT = GSENSOR;
+export const tiltDefs = { GSENSOR, TILT };

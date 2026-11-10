@@ -47,7 +47,9 @@ export const MODAL_WIDTHS = {
 
     // IO & Monitoring
     SPK: 'w-[185px]',
-    SUB: 'w-[240px]'
+    SUB: 'w-[240px]',
+    GSENSOR: 'w-[180px]',
+    TILT: 'w-[180px]'
 };
 
 import { DockManager, DOCK_TITLES } from './dock-manager.js?v=618';

@@ -8,7 +8,7 @@ const G = 9.80665;
 
 function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
 
-export const TILT = {
+export const GSENSOR = {
     create: (ctx, d, patch, eng) => {
         const makeAxis = () => {
             const src = ctx.createConstantSource();
@@ -141,4 +141,5 @@ export const TILT = {
     }
 };
 
-export const tiltAudioDefs = { TILT };
+export const TILT = GSENSOR;
+export const tiltAudioDefs = { GSENSOR, TILT };
