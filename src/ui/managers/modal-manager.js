@@ -12,7 +12,7 @@ export const MODAL_WIDTHS = {
 
     // Sequencing & Arpeggiation
     DIST4: 'w-[230px]',
-    ARP: 'w-[230px]',
+    SLCT4: 'w-[230px]',
     CHORD: 'w-[240px]',
     MARKOV: 'w-[260px]',
 

@@ -15,7 +15,7 @@ import { subDefs } from './defs/sub.js?v=351';
 import { controllerDefs } from './defs/controllers.js?v=616';
 import { seqDefs } from './defs/seq.js?v=616';
 import { chordDefs } from './defs/chord.js?v=641';
-import { arpDefs } from './defs/arp.js?v=610';
+import { slct4Defs } from './defs/slct4.js?v=677';
 import { dist4Defs } from './defs/dist4.js?v=470';
 import { patDefs } from './defs/pat.js?v=564';
 import { markovDefs } from './defs/markov.js?v=460';
@@ -43,7 +43,7 @@ export const MODULE_REGISTRY = {
     ...controllerDefs,
     ...seqDefs,
     ...chordDefs,
-    ...arpDefs,
+    ...slct4Defs,
     ...dist4Defs,
     ...patDefs,
     ...markovDefs,

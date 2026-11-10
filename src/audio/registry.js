@@ -15,7 +15,7 @@ import { subAudioDefs } from './defs/sub.js?v=459';
 import { controllerAudioDefs } from './defs/controllers.js?v=459';
 import { seqAudioDefs } from './defs/seq.js?v=459';
 import { chordAudioDefs } from './defs/chord.js?v=641';
-import { arpAudioDefs } from './defs/arp.js?v=609';
+import { slct4AudioDefs } from './defs/slct4.js?v=677';
 import { dist4AudioDefs } from './defs/dist4.js?v=470';
 import { patAudioDefs } from './defs/pat.js?v=563';
 import { markovAudioDefs } from './defs/markov.js?v=459';
@@ -43,7 +43,7 @@ export const AUDIO_REGISTRY = {
     ...controllerAudioDefs,
     ...seqAudioDefs,
     ...chordAudioDefs,
-    ...arpAudioDefs,
+    ...slct4AudioDefs,
     ...dist4AudioDefs,
     ...patAudioDefs,
     ...markovAudioDefs,

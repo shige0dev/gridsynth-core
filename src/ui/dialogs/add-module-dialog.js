@@ -37,7 +37,7 @@ export function openAddModal(slotIdx, modalManager, ui) {
                     name: 'TRIGGER',
                     sub: 'トリガ (クロック・シーケンサー)',
                     color: 'rose',
-                    types: ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'MARKOV', 'DIST4', 'ARP', 'KEY', 'PAD']
+                    types: ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'MARKOV', 'DIST4', 'SLCT4', 'KEY', 'PAD']
                 },
                 {
                     name: 'CV',

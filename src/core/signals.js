@@ -76,14 +76,9 @@ export const getPortSignalType = (portName = '', modId = '') => {
     if (p.includes('trans')) {
         return SIGNAL_TYPES.TRANS;
     }
-    if (m.startsWith('DIST4') || m.startsWith('MATRIX')) {
-        if (p.includes('gate')) return SIGNAL_TYPES.GATE_SEQ;
-        if (p.includes('cv') || p.startsWith('out')) return SIGNAL_TYPES.CV;
-    }
-    if (m.startsWith('ARP')) {
-        if (p.includes('clk')) return SIGNAL_TYPES.CLOCK;
-        if (p.includes('gate')) return SIGNAL_TYPES.GATE_SEQ;
-        if (p === 'out' || p.includes('cv') || p.startsWith('in_')) return SIGNAL_TYPES.CV;
+    if (m.startsWith('SLCT4') || m.startsWith('DIST4') || m.startsWith('MATRIX')) {
+        if (p.includes('gate') || p.includes('clk')) return SIGNAL_TYPES.GATE_SEQ;
+        if (p.includes('cv') || p.startsWith('out') || p.startsWith('in_')) return SIGNAL_TYPES.CV;
     }
 
     if (p.includes('power') || p.includes('run')) {

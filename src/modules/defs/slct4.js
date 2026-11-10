@@ -1,8 +1,8 @@
 import { UIHelpers } from '../../ui/helpers.js';
 
-export const ARP = {
+export const SLCT4 = {
     color: 'purple',
-    defaults: () => ({ type: 'ARP', mode: 'up' }),
+    defaults: () => ({ type: 'SLCT4', mode: 'up' }),
     ports: (m, ctx) => ({
         in: [
             { port: 'gate_in', pin: 1, color: 'bg-red-500' },
@@ -24,9 +24,9 @@ export const ARP = {
                 const isP = patched.has(`cv_in${idx}`) || patched.has(`in_${idx}`) || patched.has(`in${idx}`);
                 return {
                     pct: isP ? 100 : 0,
-                    innerCls: `arp-bar-${idx - 1} ${!isP ? 'opacity-20' : ''}`,
+                    innerCls: `slct4-bar-${idx - 1} ${!isP ? 'opacity-20' : ''}`,
                     outerCls: !isP ? 'opacity-25' : '',
-                    attrs: `data-arp-bar="${idx - 1}"`,
+                    attrs: `data-slct4-bar="${idx - 1}"`,
                     width: 'w-2',
                     theme: 'cv'
                 };
@@ -65,14 +65,14 @@ export const ARP = {
                     <label class="block text-[8px] text-slate-400 uppercase tracking-wider font-semibold mb-1">Sequence Mode</label>
                     <div class="grid grid-cols-4 gap-1">
                         ${modes.map(md => `
-                            <button class="arp-mode-btn py-1 rounded text-[8px] font-bold border transition-all ${curMode === md.val ? 'bg-purple-600 text-white border-purple-400 shadow-sm shadow-purple-500/50' : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'}" data-val="${md.val}">${md.label}</button>
+                            <button class="slct4-mode-btn py-1 rounded text-[8px] font-bold border transition-all ${curMode === md.val ? 'bg-purple-600 text-white border-purple-400 shadow-sm shadow-purple-500/50' : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'}" data-val="${md.val}">${md.label}</button>
                         `).join('')}
                     </div>
                 </div>
             </div>`;
     },
     bindEvents: (m, ctx, cb) => {
-        UIHelpers.bindButtonGroup('.arp-mode-btn', 'bg-purple-600 text-white border-purple-400 shadow-sm shadow-purple-500/50', 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800', val => {
+        UIHelpers.bindButtonGroup('.slct4-mode-btn', 'bg-purple-600 text-white border-purple-400 shadow-sm shadow-purple-500/50', 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800', val => {
             m.mode = val;
             ctx.reRenderModal();
             cb();
@@ -82,12 +82,11 @@ export const ARP = {
         if (!data) return;
         const ch = data.activeChannel; // 0..3
         const activeInputs = data.activeInputs || [];
-        cell?.querySelectorAll('[data-arp-bar]').forEach((slot) => {
-            const idx = parseInt(slot.dataset.arpBar, 10);
+        cell?.querySelectorAll('[data-slct4-bar]').forEach((slot) => {
+            const idx = parseInt(slot.dataset.slct4Bar, 10);
             const isConnected = activeInputs.includes(idx);
             const isAct = (idx === ch) && isConnected && isPlaying;
             slot.classList.toggle('bar-active', isAct);
-            // opacity-25 などを除去してアクティブ時に確実に表示
             slot.classList.toggle('opacity-25', !isConnected);
             const inner = slot.firstElementChild;
             if (inner) inner.classList.toggle('opacity-20', !isConnected);
@@ -95,6 +94,6 @@ export const ARP = {
     }
 };
 
-export const arpDefs = {
-    ARP
+export const slct4Defs = {
+    SLCT4
 };

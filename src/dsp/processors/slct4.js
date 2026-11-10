@@ -1,6 +1,6 @@
 import { getSR } from './common.js';
 
-export class ArpProcessor extends AudioWorkletProcessor {
+export class Slct4Processor extends AudioWorkletProcessor {
     constructor() {
         super();
         this.mode = 'up';
@@ -132,5 +132,4 @@ export class ArpProcessor extends AudioWorkletProcessor {
     }
 }
 
-registerProcessor('arp-processor', ArpProcessor);
-
+registerProcessor('slct4-processor', Slct4Processor);

@@ -1,8 +1,8 @@
 import { AudioHelpers } from '../helpers.js';
 
-export const ARP = {
+export const SLCT4 = {
     create: (ctx, d, patch, eng) => {
-        const w = new AudioWorkletNode(ctx, 'arp-processor', {
+        const w = new AudioWorkletNode(ctx, 'slct4-processor', {
             numberOfInputs: 5,
             numberOfOutputs: 1,
             outputChannelCount: [1]
@@ -57,7 +57,7 @@ export const ARP = {
                 cv_in2: in2,
                 cv_in3: in3,
                 cv_in4: in4,
-                // Backward compatibility aliases
+                // Direct port aliases
                 in_1: in1,
                 in_2: in2,
                 in_3: in3,
@@ -98,6 +98,6 @@ export const ARP = {
     }
 };
 
-export const arpAudioDefs = {
-    ARP
+export const slct4AudioDefs = {
+    SLCT4
 };

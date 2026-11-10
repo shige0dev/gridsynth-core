@@ -6,7 +6,7 @@ export const preset12 = {
       "slots": {
         "0": "CLK1",
         "1": "CHORD1",
-        "2": "ARP1",
+        "2": "SLCT4_1",
         "3": "SCOPE1",
         "4": "SPK1",
         "5": "CLK2",
@@ -51,8 +51,8 @@ export const preset12 = {
           "chord": "m7",
           "rootMidi": 48
         },
-        "ARP1": {
-          "type": "ARP",
+        "SLCT4_1": {
+          "type": "SLCT4",
           "mode": "updown"
         },
         "DIST4_1": {
@@ -112,16 +112,16 @@ export const preset12 = {
         }
       },
       "connections": [
-        "CLK1:gate_out > ARP1:gate_in",
+        "CLK1:gate_out > SLCT4_1:gate_in",
         "CLK1:gate_out > DIST4_1:gate_in",
         "CLK2:gate_out > SEQ8_1:gate_in",
         "SEQ8_1:cv_out > CHORD1:cv_in",
-        "CHORD1:cv_out1 > ARP1:cv_in1",
-        "CHORD1:cv_out2 > ARP1:cv_in2",
-        "CHORD1:cv_out3 > ARP1:cv_in3",
-        "CHORD1:cv_out4 > ARP1:cv_in4",
-        "ARP1:cv_out > VCO1:cv_in",
-        "ARP1:gate_out > ADSR1:gate_in",
+        "CHORD1:cv_out1 > SLCT4_1:cv_in1",
+        "CHORD1:cv_out2 > SLCT4_1:cv_in2",
+        "CHORD1:cv_out3 > SLCT4_1:cv_in3",
+        "CHORD1:cv_out4 > SLCT4_1:cv_in4",
+        "SLCT4_1:cv_out > VCO1:cv_in",
+        "SLCT4_1:gate_out > ADSR1:gate_in",
         "DIST4_1:cv_out1 > VCF1:cv_in",
         "VCO1:wave_out > VCF1:wave_in",
         "ADSR1:cv_out > VCF1:cv_in",
