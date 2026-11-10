@@ -36,16 +36,21 @@ const renderMathModalUI = (m, ctx, modeGroups, valKeys) => {
                         <div class="bg-slate-950/80 p-1.5 rounded-lg border border-purple-500/50 shadow-sm select-none space-y-1">
                             <div class="flex items-center justify-between gap-1">
                                 <span class="text-[8px] font-bold text-purple-300 font-mono shrink-0 whitespace-nowrap">VAL ${k}</span>
-                                <button id="math-val-${port}-btn" class="px-1.5 py-0.5 rounded bg-slate-900 hover:bg-purple-950/90 border border-purple-500/60 hover:border-purple-400 text-cyan-300 hover:text-cyan-100 font-mono text-[9.5px] font-bold shadow-sm transition active:scale-95 flex items-center gap-1 cursor-pointer shrink-0 whitespace-nowrap" title="タップして数値キーパッド入力">
-                                    <span class="text-[7.5px] text-purple-400 shrink-0">⌨</span>
+                                <div class="px-1.5 py-0.5 rounded bg-slate-900 border border-purple-500/60 text-cyan-300 font-mono text-[9.5px] font-bold shadow-sm shrink-0 whitespace-nowrap">
                                     <span id="math-val-${port}-disp" class="tabular-nums font-mono">${fmt(val)}</span>
-                                </button>
+                                </div>
                             </div>
-                            <div class="grid grid-cols-4 gap-0.5">
-                                <button class="math-step-btn h-4 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/80 text-[6.5px] font-mono font-bold transition active:scale-95 cursor-pointer touch-none select-none" data-key="${k}" data-delta="-1">-1</button>
-                                <button class="math-step-btn h-4 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/80 text-[6.5px] font-mono font-bold transition active:scale-95 cursor-pointer touch-none select-none" data-key="${k}" data-delta="-0.1">-0.1</button>
-                                <button class="math-step-btn h-4 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/80 text-[6.5px] font-mono font-bold transition active:scale-95 cursor-pointer touch-none select-none" data-key="${k}" data-delta="0.1">+0.1</button>
-                                <button class="math-step-btn h-4 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/80 text-[6.5px] font-mono font-bold transition active:scale-95 cursor-pointer touch-none select-none" data-key="${k}" data-delta="1">+1</button>
+                            <div class="space-y-0.5">
+                                <div class="grid grid-cols-3 gap-0.5">
+                                    <button class="math-step-btn h-4 rounded bg-slate-900 hover:bg-slate-800 text-rose-300 border border-slate-700/80 text-[6.5px] font-mono font-bold transition active:scale-95 cursor-pointer touch-none select-none" data-key="${k}" data-delta="-1">-1</button>
+                                    <button class="math-step-btn h-4 rounded bg-slate-900 hover:bg-slate-800 text-rose-300 border border-slate-700/80 text-[6.5px] font-mono font-bold transition active:scale-95 cursor-pointer touch-none select-none" data-key="${k}" data-delta="-0.1">-0.1</button>
+                                    <button class="math-step-btn h-4 rounded bg-slate-900 hover:bg-slate-800 text-rose-300 border border-slate-700/80 text-[6.5px] font-mono font-bold transition active:scale-95 cursor-pointer touch-none select-none" data-key="${k}" data-delta="-0.01">-0.01</button>
+                                </div>
+                                <div class="grid grid-cols-3 gap-0.5">
+                                    <button class="math-step-btn h-4 rounded bg-slate-900 hover:bg-slate-800 text-cyan-300 border border-slate-700/80 text-[6.5px] font-mono font-bold transition active:scale-95 cursor-pointer touch-none select-none" data-key="${k}" data-delta="1">+1</button>
+                                    <button class="math-step-btn h-4 rounded bg-slate-900 hover:bg-slate-800 text-cyan-300 border border-slate-700/80 text-[6.5px] font-mono font-bold transition active:scale-95 cursor-pointer touch-none select-none" data-key="${k}" data-delta="0.1">+0.1</button>
+                                    <button class="math-step-btn h-4 rounded bg-slate-900 hover:bg-slate-800 text-cyan-300 border border-slate-700/80 text-[6.5px] font-mono font-bold transition active:scale-95 cursor-pointer touch-none select-none" data-key="${k}" data-delta="0.01">+0.01</button>
+                                </div>
                             </div>
                         </div>`;
                 }).join('')}
@@ -114,25 +119,6 @@ const bindMathEventsUI = (m, ctx, cb, valKeys) => {
             }
         });
         btn.addEventListener('contextmenu', (e) => e.preventDefault());
-    });
-
-    // Tap to open on-screen Numpad
-    valKeys.forEach(k => {
-        const port = k.toLowerCase();
-        const btn = document.getElementById(`math-val-${port}-btn`);
-        if (!btn) return;
-        btn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const cur = Number(m[`val${k}`] ?? (k === 'B' ? 1.0 : 0.0));
-            const numpadFn = ctx.numpad || ctx.prompt;
-            const res = await numpadFn(`CONSTANT ${k}`, cur, -100.0, 100.0);
-            if (res !== null && res !== '' && !isNaN(Number(res))) {
-                const num = parseFloat(res);
-                m[`val${k}`] = Math.max(-100.0, Math.min(100.0, Math.round(num * 100) / 100));
-                ctx.reRenderModal();
-                cb();
-            }
-        });
     });
 };
 
