@@ -105,11 +105,12 @@ export class MarkovProcessor extends AudioWorkletProcessor {
                                 // 1. TRANS_OUT 0 (内部自己結線ノーマライズ: 自己留まり)
                                 acc += w0;
                                 if (r < acc) {
-                                    // 外部ポートへは出力せず、内部で自身が継続（次拍もアクティブ保持）
-                                    this.clockCount++;
+                                    // 外部ポートへは出力せず、内部で自身が継続（カウンタ優先: 再びholdClocks拍保持）
+                                    this.clockCount = 1;
                                     this.trigOutCh = -1;
-                                    const rem = Math.max(1, this.holdClocks - this.clockCount + 1);
-                                    this.port.postMessage({ type: 'STATE_CHANGED', state: 1, remaining: rem, clockCount: this.clockCount });
+                                    this.shotActive = true;
+                                    const rem = Math.max(1, this.holdClocks);
+                                    this.port.postMessage({ type: 'STATE_CHANGED', state: 1, remaining: rem, clockCount: 1 });
                                 } else {
                                     // 2. 外部端子 trans_out1 〜 trans_out3 への射出
                                     let chosen = -1;
@@ -131,10 +132,12 @@ export class MarkovProcessor extends AudioWorkletProcessor {
                                     }
                                 }
                             } else {
-                                // フェイルセーフ: すべて0なら100%自己保持
-                                this.clockCount++;
-                                const rem = Math.max(1, this.holdClocks - this.clockCount + 1);
-                                this.port.postMessage({ type: 'STATE_CHANGED', state: 1, remaining: rem, clockCount: this.clockCount });
+                                // フェイルセーフ: すべて0なら100%自己保持（カウンタを1にリセットして再周回）
+                                this.clockCount = 1;
+                                this.trigOutCh = -1;
+                                this.shotActive = true;
+                                const rem = Math.max(1, this.holdClocks);
+                                this.port.postMessage({ type: 'STATE_CHANGED', state: 1, remaining: rem, clockCount: 1 });
                             }
                         } else {
                             // holdClocks 満了前は滞在クロック数を加算

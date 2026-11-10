@@ -66,6 +66,21 @@ export class MathProcessor extends AudioWorkletProcessor {
                 case 'NOT':
                     v = a > 0.5 ? 0.0 : 1.0;
                     break;
+                case 'SIN':
+                    v = Math.sin(a);
+                    break;
+                case 'COS':
+                    v = Math.cos(a);
+                    break;
+                case 'TAN':
+                    v = Math.tan(a);
+                    break;
+                case 'LOG':
+                    v = a > 0 ? Math.log(a) : 0;
+                    break;
+                case 'EXP':
+                    v = Math.exp(Math.min(50, a));
+                    break;
                 case 'AND':
                     v = (a > 0.5 && b > 0.5) ? 1.0 : 0.0;
                     break;

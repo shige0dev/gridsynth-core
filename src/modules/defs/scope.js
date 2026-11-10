@@ -32,32 +32,45 @@ const drawScopeCanvas = (ctx2d, w, h, data, m, isModal = false) => {
     UIHelpers.drawGraticule(ctx2d, w, h, { isModal, cols: 10, rows: 8 });
 
     const vR = m.vRange || 2.0;
-    const b1 = data?.buf1, trg = data?.trigBuf;
+    const b1 = data?.buf1;
     if (!b1) return;
     const len = b1.length;
+    const isExtTrig = Boolean(data?.hasTrig);
+    const trg = isExtTrig ? (data?.trigBuf || b1) : b1;
 
     // Trigger offset search (auto trigger on rising zero-crossing or pulse edge)
     let startIdx = 0;
-    if ((m.trigMode || 'auto') === 'auto' && trg) {
-        let minVal = 0, maxVal = 0;
-        const searchLimit = Math.min(trg.length - 2, 256);
-        for (let i = 0; i < searchLimit; i++) {
+    const isAuto = (m.trigMode || 'auto') === 'auto';
+    if (isAuto && trg && len > 128) {
+        const searchLimit = Math.min(128, len - 256);
+        let minVal = trg[0], maxVal = trg[0];
+        for (let i = 1; i < searchLimit + 64; i++) {
             if (trg[i] < minVal) minVal = trg[i];
             if (trg[i] > maxVal) maxVal = trg[i];
         }
-        const thresh = (minVal >= -0.05 && maxVal > 0.2) ? (minVal + maxVal) * 0.5 : 0;
-        for (let i = 0; i < searchLimit; i++) {
-            if (trg[i] < thresh && trg[i + 1] >= thresh) { startIdx = i; break; }
+        const span = maxVal - minVal;
+        if (span > 0.05) {
+            // Determine threshold:
+            // If zero-crossing exists within the range, use 0.0; otherwise midpoint
+            const thresh = (minVal < -0.02 && maxVal > 0.02) ? 0.0 : (minVal + maxVal) * 0.5;
+            for (let i = 0; i < searchLimit; i++) {
+                if (trg[i] < thresh && trg[i + 1] >= thresh) {
+                    startIdx = i;
+                    break;
+                }
+            }
         }
     }
-    const drawPts = len - startIdx;
-    const sW = w / Math.max(1, drawPts - 1);
+
+    // Fixed display points: 384 points (invariant horizontal timebase, prevents stretching on trigger shift)
+    const displayPts = Math.min(384, len - startIdx);
+    const sW = w / Math.max(1, displayPts - 1);
 
     // Single-trace waveform (Cyan)
     ctx2d.lineWidth = isModal ? 1.8 : 1.4;
     ctx2d.strokeStyle = '#22d3ee';
     ctx2d.beginPath();
-    for (let i = 0; i < drawPts; i++) {
+    for (let i = 0; i < displayPts; i++) {
         const idx = startIdx + i;
         const y = Math.max(1, Math.min(h - 1, (h / 2) - ((b1[idx] / vR) * (h * 0.44))));
         i === 0 ? ctx2d.moveTo(i * sW, y) : ctx2d.lineTo(i * sW, y);
@@ -77,7 +90,7 @@ export const SCOPE = {
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
     T_STEPS: [0.001, 0.005, 0.01, 0.02, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
-    V_STEPS: [0.5, 1.0, 2.0, 5.0, 10.0],
+    V_STEPS: [0.5, 1.0, 2.0, 5.0, 10.0, 20.0],
     formatTime: (v) => v < 1 ? `${Math.round(v * 1000)}ms` : `${v.toFixed(1)}s`,
     renderGrid: (m) => `
         <div class="absolute inset-0.5 bg-slate-950 rounded-sm border border-slate-800/90 overflow-hidden z-0 pointer-events-none scope-grid-container" style="opacity: ${m?.opacity ?? 0.8};">
@@ -102,7 +115,7 @@ export const SCOPE = {
                         <div class="flex items-center gap-1">
                             <span class="text-[8px] text-slate-400 font-bold uppercase tracking-tight">V/DIV:</span>
                             <button id="scope-v-down" class="h-4 w-4 rounded bg-slate-800 border border-slate-700 text-slate-200 text-[10px] font-bold flex items-center justify-center leading-none active:bg-slate-700">−</button>
-                            <span id="scope-v-disp" class="font-mono text-[9px] font-bold text-cyan-300 w-8 text-center">${curV.toFixed(1)}V</span>
+                            <span id="scope-v-disp" class="font-mono text-[9px] font-bold text-cyan-300 min-w-[36px] text-center">${curV.toFixed(1)}V</span>
                             <button id="scope-v-up" class="h-4 w-4 rounded bg-slate-800 border border-slate-700 text-slate-200 text-[10px] font-bold flex items-center justify-center leading-none active:bg-slate-700">＋</button>
                         </div>
                         <div class="flex items-center gap-1">

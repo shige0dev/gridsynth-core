@@ -65,7 +65,7 @@ const bindMathEventsUI = (m, ctx, cb, valKeys) => {
             const delta = parseFloat(btn.dataset.delta);
             if (!k || isNaN(delta)) return;
             const cur = Number(m[`val${k}`] ?? (k === 'B' ? 1.0 : 0.0));
-            const clamped = Math.max(-10.0, Math.min(10.0, Math.round((cur + delta) * 100) / 100));
+            const clamped = Math.max(-100.0, Math.min(100.0, Math.round((cur + delta) * 100) / 100));
             m[`val${k}`] = clamped;
             ctx.reRenderModal();
             cb();
@@ -81,10 +81,10 @@ const bindMathEventsUI = (m, ctx, cb, valKeys) => {
             e.stopPropagation();
             const cur = Number(m[`val${k}`] ?? (k === 'B' ? 1.0 : 0.0));
             const numpadFn = ctx.numpad || ctx.prompt;
-            const res = await numpadFn(`CONSTANT ${k}`, cur, -10.0, 10.0);
+            const res = await numpadFn(`CONSTANT ${k}`, cur, -100.0, 100.0);
             if (res !== null && res !== '' && !isNaN(Number(res))) {
                 const num = parseFloat(res);
-                m[`val${k}`] = Math.max(-10.0, Math.min(10.0, Math.round(num * 100) / 100));
+                m[`val${k}`] = Math.max(-100.0, Math.min(100.0, Math.round(num * 100) / 100));
                 ctx.reRenderModal();
                 cb();
             }
@@ -109,7 +109,7 @@ const updateMathLiveUI = (cell, data) => {
 
 export const MATH1 = {
     color: 'purple',
-    MODES: ['ABS', 'FLOOR', 'CEIL', 'ROUND', 'INT', 'NOT'],
+    MODES: ['ABS', 'FLOOR', 'CEIL', 'ROUND', 'INT', 'NOT', 'SIN', 'COS', 'TAN', 'LOG', 'EXP'],
     defaults: () => ({ type: 'MATH1', mode: 'ABS', valA: 0.0 }),
     ports: () => ({
         in: [{ port: 'cv_in_a', pin: 5, color: 'bg-yellow-400' }],
@@ -117,7 +117,10 @@ export const MATH1 = {
     }),
     renderGrid: renderMathGridUI,
     updateLive: updateMathLiveUI,
-    renderModal: (m, ctx) => renderMathModalUI(m, ctx, [{ label: 'Functions (A)', cols: 3, modes: MATH1.MODES }], ['A']),
+    renderModal: (m, ctx) => renderMathModalUI(m, ctx, [
+        { label: 'Basic Math (A)', cols: 3, modes: ['ABS', 'FLOOR', 'CEIL', 'ROUND', 'INT', 'NOT'] },
+        { label: 'Trig & Exp (A)', cols: 5, modes: ['SIN', 'COS', 'TAN', 'LOG', 'EXP'] }
+    ], ['A']),
     bindEvents: (m, ctx, cb) => bindMathEventsUI(m, ctx, cb, ['A'])
 };
 

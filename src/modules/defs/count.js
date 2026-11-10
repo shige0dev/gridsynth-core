@@ -22,25 +22,15 @@ export const COUNT = {
     renderGrid: (m) => {
         const curMax = parseInt(m.max, 10) || 16;
         return `
-            <div class="h-full flex flex-col justify-between py-1 select-none pointer-events-none">
-                <div class="flex items-center justify-between px-1.5 pt-0.5">
-                    <span class="text-[7px] font-mono text-emerald-400/80 font-bold tracking-tight">COUNTER</span>
-                    <span class="text-[6.5px] font-mono text-slate-500 font-bold">RATIO</span>
-                </div>
-                <div class="flex flex-col items-center justify-center my-auto w-full px-1">
-                    <div class="inline-flex flex-col items-center justify-center font-mono font-black text-emerald-300">
-                        <div id="count-val-${m.id}" class="text-[14px] leading-tight drop-shadow-[0_0_6px_rgba(52,211,153,0.4)]">
-                            0
-                        </div>
-                        <div class="w-full min-w-[20px] h-[1.5px] bg-emerald-400/80 my-0.5 rounded-full"></div>
-                        <div id="count-denom-${m.id}" class="text-[14px] leading-tight drop-shadow-[0_0_6px_rgba(52,211,153,0.4)]">
-                            ${curMax}
-                        </div>
+            <div class="h-full flex flex-col items-center justify-center select-none pointer-events-none w-full px-1">
+                <div class="inline-flex flex-col items-center justify-center font-mono font-black text-emerald-300">
+                    <div class="count-val text-[14px] leading-tight drop-shadow-[0_0_6px_rgba(52,211,153,0.4)]">
+                        0
                     </div>
-                </div>
-                <div class="flex items-center justify-between px-1.5 pb-0.5 text-[6.5px] font-mono text-slate-500">
-                    <span>CLK</span>
-                    <span>CARRY</span>
+                    <div class="w-full min-w-[20px] h-[1.5px] bg-emerald-400/80 my-0.5 rounded-full"></div>
+                    <div class="count-denom text-[14px] leading-tight drop-shadow-[0_0_6px_rgba(52,211,153,0.4)]">
+                        ${curMax}
+                    </div>
                 </div>
             </div>
         `;
@@ -50,12 +40,12 @@ export const COUNT = {
         const curCount = data?.count ?? 0;
         const curMax = data?.max ?? (parseInt(m.max, 10) || 16);
 
-        const countEl = cell?.querySelector(`#count-val-${m.id}`) || document.getElementById(`count-val-${m.id}`);
+        const countEl = cell?.querySelector('.count-val');
         if (countEl && countEl.textContent.trim() !== String(curCount)) {
             countEl.textContent = String(curCount);
         }
 
-        const denomEl = cell?.querySelector(`#count-denom-${m.id}`) || document.getElementById(`count-denom-${m.id}`);
+        const denomEl = cell?.querySelector('.count-denom');
         if (denomEl && denomEl.textContent.trim() !== String(curMax)) {
             denomEl.textContent = String(curMax);
         }

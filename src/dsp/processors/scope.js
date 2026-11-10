@@ -15,12 +15,14 @@ export class ScopeProcessor extends AudioWorkletProcessor {
         this.min2 = 0;
         this.max2 = 0;
         this.postCounter = 0;
+        this.hasTrig = false;
 
         this.port.onmessage = e => {
             if (e.data.type === 'SET_CONFIG') {
                 const timeSpan = Math.max(0.0005, Math.min(10.0, e.data.timeSpan || 0.1));
                 const sr = getSR();
                 this.decimation = Math.max(1, Math.round((timeSpan * sr) / this.bufLen));
+                if (e.data.hasTrig !== undefined) this.hasTrig = Boolean(e.data.hasTrig);
             }
         };
     }
@@ -34,7 +36,7 @@ export class ScopeProcessor extends AudioWorkletProcessor {
         for (let i = 0; i < len; i++) {
             const s1 = in1 ? in1[i] : 0;
             const s2 = in2 ? in2[i] : 0;
-            const tr = trig ? trig[i] : s1;
+            const tr = (this.hasTrig && trig) ? trig[i] : s1;
 
             if (this.sampleCounter === 0) {
                 this.min1 = s1;
