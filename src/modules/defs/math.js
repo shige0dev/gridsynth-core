@@ -153,7 +153,7 @@ export const MATH1 = {
     updateLive: updateMathLiveUI,
     renderModal: (m, ctx) => renderMathModalUI(m, ctx, [
         { label: 'Basic Math (A)', cols: 3, modes: ['ABS', 'FLOOR', 'CEIL', 'ROUND', 'INT', 'NOT'] },
-        { label: 'Trigonometry (A)', cols: 3, modes: ['SIN', 'COS', 'TAN'] }
+        { label: 'Trigonometry (A × π/2)', cols: 3, modes: ['SIN', 'COS', 'TAN'] }
     ], ['A']),
     bindEvents: (m, ctx, cb) => bindMathEventsUI(m, ctx, cb, ['A'])
 };
