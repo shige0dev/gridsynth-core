@@ -29,18 +29,18 @@ const renderMathModalUI = (m, ctx, modeGroups, valKeys) => {
                     }
                     return `
                         <div class="bg-slate-950/80 p-1.5 rounded-lg border border-purple-500/50 shadow-sm select-none space-y-1">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[8px] font-bold text-purple-300 font-mono">VAL ${k}</span>
-                                <button id="math-val-${port}-btn" class="px-2 py-0.5 rounded bg-slate-900 hover:bg-purple-950/90 border border-purple-500/60 hover:border-purple-400 text-cyan-300 hover:text-cyan-100 font-mono text-[10px] font-bold shadow-sm transition active:scale-95 flex items-center gap-1 cursor-pointer" title="タップして数値キーパッド入力">
-                                    <span class="text-[7.5px] text-purple-400">⌨</span>
-                                    <span id="math-val-${port}-disp">${fmt(val)}</span>
+                            <div class="flex items-center justify-between gap-1">
+                                <span class="text-[8px] font-bold text-purple-300 font-mono shrink-0 whitespace-nowrap">VAL ${k}</span>
+                                <button id="math-val-${port}-btn" class="px-1.5 py-0.5 rounded bg-slate-900 hover:bg-purple-950/90 border border-purple-500/60 hover:border-purple-400 text-cyan-300 hover:text-cyan-100 font-mono text-[9.5px] font-bold shadow-sm transition active:scale-95 flex items-center gap-1 cursor-pointer shrink-0 whitespace-nowrap" title="タップして数値キーパッド入力">
+                                    <span class="text-[7.5px] text-purple-400 shrink-0">⌨</span>
+                                    <span id="math-val-${port}-disp" class="tabular-nums font-mono">${fmt(val)}</span>
                                 </button>
                             </div>
                             <div class="grid grid-cols-4 gap-0.5">
-                                <button class="math-step-btn h-4 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/80 text-[6.5px] font-mono font-bold transition active:scale-95" data-key="${k}" data-delta="-1">-1</button>
-                                <button class="math-step-btn h-4 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/80 text-[6.5px] font-mono font-bold transition active:scale-95" data-key="${k}" data-delta="-0.1">-0.1</button>
-                                <button class="math-step-btn h-4 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/80 text-[6.5px] font-mono font-bold transition active:scale-95" data-key="${k}" data-delta="0.1">+0.1</button>
-                                <button class="math-step-btn h-4 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/80 text-[6.5px] font-mono font-bold transition active:scale-95" data-key="${k}" data-delta="1">+1</button>
+                                <button class="math-step-btn h-4 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/80 text-[6.5px] font-mono font-bold transition active:scale-95 cursor-pointer touch-none select-none" data-key="${k}" data-delta="-1">-1</button>
+                                <button class="math-step-btn h-4 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/80 text-[6.5px] font-mono font-bold transition active:scale-95 cursor-pointer touch-none select-none" data-key="${k}" data-delta="-0.1">-0.1</button>
+                                <button class="math-step-btn h-4 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/80 text-[6.5px] font-mono font-bold transition active:scale-95 cursor-pointer touch-none select-none" data-key="${k}" data-delta="0.1">+0.1</button>
+                                <button class="math-step-btn h-4 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/80 text-[6.5px] font-mono font-bold transition active:scale-95 cursor-pointer touch-none select-none" data-key="${k}" data-delta="1">+1</button>
                             </div>
                         </div>`;
                 }).join('')}
@@ -57,19 +57,48 @@ const bindMathEventsUI = (m, ctx, cb, valKeys) => {
         });
     });
 
-    // Quick Step Buttons (-1, -0.1, +0.1, +1)
+    // Quick Step Buttons (-1, -0.1, +0.1, +1) with Hold-to-repeat
     document.querySelectorAll('.math-step-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
+        let holdTimer = null;
+        let repeatTimer = null;
+
+        const step = () => {
             const k = btn.dataset.key;
             const delta = parseFloat(btn.dataset.delta);
             if (!k || isNaN(delta)) return;
             const cur = Number(m[`val${k}`] ?? (k === 'B' ? 1.0 : 0.0));
             const clamped = Math.max(-100.0, Math.min(100.0, Math.round((cur + delta) * 100) / 100));
             m[`val${k}`] = clamped;
-            ctx.reRenderModal();
+            const disp = document.getElementById(`math-val-${k.toLowerCase()}-disp`);
+            if (disp) disp.textContent = fmt(clamped);
             cb();
+        };
+
+        const stopHold = () => {
+            if (holdTimer) {
+                clearTimeout(holdTimer);
+                holdTimer = null;
+            }
+            if (repeatTimer) {
+                clearInterval(repeatTimer);
+                repeatTimer = null;
+            }
+        };
+
+        btn.addEventListener('pointerdown', (e) => {
+            if (e.button !== 0) return; // Primary button only
+            e.stopPropagation();
+            stopHold();
+            step();
+            holdTimer = setTimeout(() => {
+                repeatTimer = setInterval(step, 60);
+            }, 320);
         });
+
+        btn.addEventListener('pointerup', stopHold);
+        btn.addEventListener('pointercancel', stopHold);
+        btn.addEventListener('pointerleave', stopHold);
+        btn.addEventListener('contextmenu', (e) => e.preventDefault());
     });
 
     // Tap to open on-screen Numpad

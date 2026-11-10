@@ -17,8 +17,8 @@ export const MODAL_WIDTHS = {
     MARKOV: 'w-[260px]',
 
     // Logic & Math
-    MATH1: 'w-[220px]',
-    MATH2: 'w-[230px]',
+    MATH1: 'w-[230px]',
+    MATH2: 'w-[260px]',
     SH: 'w-[200px]',
     CLK: 'w-[200px]',
     COUNT: 'w-[200px]',

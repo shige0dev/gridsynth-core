@@ -35,7 +35,7 @@ export function openNumpadPrompt(title, init, min = -10.0, max = 10.0) {
             backdrop.onclick = null;
             if (okBtn) okBtn.onclick = null;
             if (cancelBtn) cancelBtn.onclick = null;
-            md.querySelectorAll('.numpad-key, .numpad-preset-btn').forEach(btn => {
+            md.querySelectorAll('.numpad-key').forEach(btn => {
                 btn.onclick = null;
             });
             res(val);
@@ -120,15 +120,6 @@ export function openNumpadPrompt(title, init, min = -10.0, max = 10.0) {
             };
         });
 
-        // Preset buttons
-        md.querySelectorAll('.numpad-preset-btn').forEach(btn => {
-            btn.onclick = (e) => {
-                e.stopPropagation();
-                buf = btn.dataset.val || '0';
-                fresh = true;
-                updateDisp();
-            };
-        });
 
         if (okBtn) okBtn.onclick = handleConfirm;
         if (cancelBtn) cancelBtn.onclick = () => finish(null);
