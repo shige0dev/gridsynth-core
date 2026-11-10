@@ -603,7 +603,6 @@ export function exportPatch(pagesData, bpm = 120, cols = 4, rows = 32) {
 
     return {
         bpm: bpm || 120,
-        grid: { cols, rows },
         pages: exportPages
     };
 }

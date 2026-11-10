@@ -410,7 +410,8 @@ export class InteractionManager {
                     this.ui.openSettingsModal(mId);
                     return;
                 }
-                if (this.ui.modules[mId]?.type === 'THROUGH') {
+                const mType = this.ui.modules[mId]?.type;
+                if (mType === 'SWITCH' || mType === 'THROUGH') {
                     this.ui.saveHistory();
                     this.ui.modules[mId].state = !(this.ui.modules[mId].state !== false);
                     this.ui.synth.updateModule(`${this.ui.currentPageId}/${mId}`, this.ui.modules[mId], this.ui.getPatchState(mId));

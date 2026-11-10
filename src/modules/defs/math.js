@@ -58,7 +58,7 @@ const renderMathModalUI = (m, ctx, modeGroups, valKeys) => {
         </div>`;
 };
 
-const bindMathEventsUI = (m, ctx, cb, valKeys) => {
+const bindMathEventsUI = (m, ctx, cb) => {
     document.querySelectorAll('.math-mode-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             m.mode = e.currentTarget.dataset.mode;
@@ -155,7 +155,7 @@ export const MATH1 = {
         { label: 'Basic Math (A)', cols: 3, modes: ['ABS', 'FLOOR', 'CEIL', 'ROUND', 'INT', 'NOT'] },
         { label: 'Trigonometry (A × π/2)', cols: 3, modes: ['SIN', 'COS', 'TAN'] }
     ], ['A']),
-    bindEvents: (m, ctx, cb) => bindMathEventsUI(m, ctx, cb, ['A'])
+    bindEvents: (m, ctx, cb) => bindMathEventsUI(m, ctx, cb)
 };
 
 export const MATH2 = {
@@ -183,6 +183,6 @@ export const MATH2 = {
         { label: 'Comparison (A vs B)', cols: 5, modes: MATH2.COMPARISON_MODES },
         { label: 'Logic (A, B > 0.5)', cols: 5, modes: MATH2.LOGIC_MODES }
     ], ['A', 'B']),
-    bindEvents: (m, ctx, cb) => bindMathEventsUI(m, ctx, cb, ['A', 'B'])
+    bindEvents: (m, ctx, cb) => bindMathEventsUI(m, ctx, cb)
 };
 

@@ -120,7 +120,7 @@ export const TILT = {
         if (cell) {
             const vals = { x, y, z };
             ['x', 'y', 'z'].forEach(ax => {
-                const bar = cell.querySelector(`.tilt-bar-${ax}`) || cell.querySelector(`.sensor-bar-${ax}`);
+                const bar = cell.querySelector(`.tilt-bar-${ax}`);
                 if (!bar) return;
                 const v = Math.max(-1, Math.min(1, vals[ax]));
                 const pct = Math.max(0, Math.min(100, Math.round(((v + 1) / 2) * 100)));
@@ -130,7 +130,7 @@ export const TILT = {
 
         // Update target modal if open
         if (targetModal) {
-            const statusEl = targetModal.querySelector('#tilt-modal-status') || targetModal.querySelector('#sensor-modal-status');
+            const statusEl = targetModal.querySelector('#tilt-modal-status');
             if (statusEl) {
                 if (active) {
                     statusEl.textContent = 'ACTIVE';

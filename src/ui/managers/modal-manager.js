@@ -22,6 +22,7 @@ export const MODAL_WIDTHS = {
     SH: 'w-[200px]',
     CLK: 'w-[200px]',
     COUNT: 'w-[200px]',
+    SWITCH: 'w-[170px]',
     THROUGH: 'w-[170px]',
 
     // Sound Generation & Processing

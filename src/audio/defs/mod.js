@@ -6,17 +6,18 @@
 
 export { LFO } from './lfo.js';
 export { CLK } from './clk.js';
-export { THROUGH, SH } from './sh.js';
+export { SWITCH, THROUGH, SH } from './sh.js';
 export { MATH1, MATH2 } from './math.js';
 
 import { LFO } from './lfo.js';
 import { CLK } from './clk.js';
-import { THROUGH, SH } from './sh.js';
+import { SWITCH, THROUGH, SH } from './sh.js';
 import { MATH1, MATH2 } from './math.js';
 
 export const modAudioDefs = {
     LFO,
     CLK,
+    SWITCH,
     THROUGH,
     MATH1,
     MATH2,

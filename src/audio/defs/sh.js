@@ -1,7 +1,7 @@
 // src/audio/defs/sh.js
 import { AudioHelpers } from '../helpers.js';
 
-export const THROUGH = {
+export const SWITCH = {
     create: (ctx, d) => {
         const g = ctx.createGain();
         g.gain.value = d.state !== false ? 1.0 : 0.0;
@@ -13,6 +13,7 @@ export const THROUGH = {
     },
     update: (ctx, inst, d) => AudioHelpers.set(inst.nodes.g.gain, d.state !== false ? 1.0 : 0.0, ctx, 0.003)
 };
+export const THROUGH = SWITCH;
 
 export const SH = {
     create: (ctx, d, patch) => {
