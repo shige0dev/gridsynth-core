@@ -38,10 +38,16 @@ export const DISPLAY = {
 
                 if (srcType === 'RENDER') {
                     // Reached Root RENDER
-                    if (srcInst?.getSharedCanvas) {
+                    if (srcInst?.getSharedCanvas && !rootCanvas) {
                         rootCanvas = srcInst.getSharedCanvas();
                     }
                     break;
+                } else if (srcType === 'VFX') {
+                    // Intermediate VFX processor: grab processed canvas, continue tracing upstream
+                    if (srcInst?.getSharedCanvas && !rootCanvas) {
+                        rootCanvas = srcInst.getSharedCanvas();
+                    }
+                    curId = connSrc;
                 } else if (srcType === 'DISPLAY') {
                     // Intermediate DISPLAY in daisy-chain
                     hop++;
