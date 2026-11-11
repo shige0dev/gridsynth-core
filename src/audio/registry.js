@@ -33,7 +33,6 @@ import { geoAudioDefs } from './defs/geo.js?v=679';
 import { rotateAudioDefs } from './defs/rotate.js?v=689';
 import { renderAudioDefs } from './defs/render.js?v=691';
 import { displayAudioDefs } from './defs/display.js?v=691';
-import { videoAudioDefs } from './defs/video.js?v=689';
 
 export const AUDIO_REGISTRY = {
     ...vcoAudioDefs,
@@ -65,8 +64,7 @@ export const AUDIO_REGISTRY = {
     ...geoAudioDefs,
     ...rotateAudioDefs,
     ...renderAudioDefs,
-    ...displayAudioDefs,
-    ...videoAudioDefs
+    ...displayAudioDefs
 };
 
 export default AUDIO_REGISTRY;

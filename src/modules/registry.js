@@ -33,7 +33,6 @@ import { geoDefs } from './defs/geo.js?v=679';
 import { rotateDefs } from './defs/rotate.js?v=689';
 import { renderDefs } from './defs/render.js?v=691';
 import { displayDefs } from './defs/display.js?v=691';
-import { videoDefs } from './defs/video.js?v=689';
 
 export const MODULE_REGISTRY = {
     ...vcoDefs,
@@ -65,8 +64,7 @@ export const MODULE_REGISTRY = {
     ...geoDefs,
     ...rotateDefs,
     ...renderDefs,
-    ...displayDefs,
-    ...videoDefs
+    ...displayDefs
 };
 
 export { ADSR_CURVES };

@@ -63,7 +63,8 @@ export const RENDER = {
                 color: 0xffffff,
                 wireframe: true,
                 roughness: 0.2,
-                metalness: 0.5
+                metalness: 0.5,
+                side: THREE.DoubleSide
             });
             mesh = new THREE.Mesh(geom, mat);
             mesh.visible = false;

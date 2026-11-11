@@ -18,7 +18,7 @@ export const DISPLAY = {
             { port: 'video_in', pin: 5, color: 'bg-emerald-500', label: 'VID' }
         ],
         out: [
-            { port: 'video_out', pin: 11, color: 'bg-emerald-500', label: 'VID' }
+            { port: 'video_out', pin: 10, color: 'bg-emerald-500', label: 'VID' }
         ]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),

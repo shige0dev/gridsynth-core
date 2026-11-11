@@ -56,7 +56,7 @@ export const ROTATE = {
             // Fallback search across engine modules
             let fallbackPacket = null;
             Object.values(eng.modules).forEach(mInst => {
-                if (mInst.data?.id !== d.id && mInst.getGeometryPacket && mInst.data?.type !== 'VIDEO') {
+                if (mInst.data?.id !== d.id && mInst.getGeometryPacket && mInst.data?.type !== 'DISPLAY') {
                     if (!fallbackPacket) fallbackPacket = mInst.getGeometryPacket();
                 }
             });

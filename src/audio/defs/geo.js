@@ -1,21 +1,37 @@
 // src/audio/defs/geo.js
 // Audio/Engine-side representation for OBJECT
-// Outputs pure 1:1 white geometry packets (Torus or Cube)
+// Outputs pure 1:1 white geometry packets (Torus, Cube, Plane, Sphere, Cylinder)
 
 export const OBJECT = {
     create: (ctx, d, patch, eng) => {
-        let torusGeom = null;
-        let cubeGeom = null;
+        const geometries = {};
 
         const getGeom = (shape) => {
             if (typeof THREE === 'undefined') return null;
-            if (shape === 'cube') {
-                if (!cubeGeom) cubeGeom = new THREE.BoxGeometry(1.6, 1.6, 1.6);
-                return cubeGeom;
-            } else {
-                if (!torusGeom) torusGeom = new THREE.TorusGeometry(1.2, 0.45, 16, 32);
-                return torusGeom;
+            if (!geometries[shape]) {
+                switch (shape) {
+                    case 'cube':
+                        geometries[shape] = new THREE.BoxGeometry(1.6, 1.6, 1.6);
+                        break;
+                    case 'plane':
+                        // 平面 (2.0 x 2.0, 両面可視ワイヤーフレーム)
+                        geometries[shape] = new THREE.PlaneGeometry(2.0, 2.0, 8, 8);
+                        break;
+                    case 'sphere':
+                        // 球 (半径1.2, 分割数24)
+                        geometries[shape] = new THREE.SphereGeometry(1.2, 24, 24);
+                        break;
+                    case 'cylinder':
+                        // 円筒 (上径0.9, 下径0.9, 高さ1.8, 分割数24)
+                        geometries[shape] = new THREE.CylinderGeometry(0.9, 0.9, 1.8, 24);
+                        break;
+                    case 'torus':
+                    default:
+                        geometries[shape] = new THREE.TorusGeometry(1.2, 0.45, 16, 32);
+                        break;
+                }
             }
+            return geometries[shape];
         };
 
         return {
@@ -40,8 +56,9 @@ export const OBJECT = {
             },
             read: () => ({ shape: d.shape || 'torus' }),
             destroy: () => {
-                if (torusGeom) { torusGeom.dispose(); torusGeom = null; }
-                if (cubeGeom) { cubeGeom.dispose(); cubeGeom = null; }
+                Object.values(geometries).forEach(g => {
+                    try { g.dispose(); } catch (_) {}
+                });
             }
         };
     },
