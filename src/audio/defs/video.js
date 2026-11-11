@@ -5,22 +5,22 @@
 export const VIDEO = {
     create: (ctx, d, patch, eng) => {
         let patchState = patch || null;
-        // CV inputs for cv_x, cv_y, cv_w, cv_h
+        // CV inputs for cv_x, cv_y, cv_size, cv_fov
         const gX = ctx.createGain();
         const gY = ctx.createGain();
-        const gW = ctx.createGain();
-        const gH = ctx.createGain();
+        const gSize = ctx.createGain();
+        const gFov = ctx.createGain();
 
         const anX = ctx.createAnalyser(); anX.fftSize = 32; gX.connect(anX);
         const anY = ctx.createAnalyser(); anY.fftSize = 32; gY.connect(anY);
-        const anW = ctx.createAnalyser(); anW.fftSize = 32; gW.connect(anW);
-        const anH = ctx.createAnalyser(); anH.fftSize = 32; gH.connect(anH);
+        const anSize = ctx.createAnalyser(); anSize.fftSize = 32; gSize.connect(anSize);
+        const anFov = ctx.createAnalyser(); anFov.fftSize = 32; gFov.connect(anFov);
 
         if (eng?.silentSink) {
             gX.connect(eng.silentSink);
             gY.connect(eng.silentSink);
-            gW.connect(eng.silentSink);
-            gH.connect(eng.silentSink);
+            gSize.connect(eng.silentSink);
+            gFov.connect(eng.silentSink);
         }
 
         const buf = new Float32Array(32);
@@ -55,9 +55,9 @@ export const VIDEO = {
 
             scene = new THREE.Scene();
             // 1:1 Aspect ratio (aspect = 1.0)
-            camera = new THREE.PerspectiveCamera(45, 1.0, 0.1, 100);
-            camera.position.set(0, 0, 5);
-            camera.lookAt(0, 0, 0);
+            camera = new THREE.PerspectiveCamera(d.fov ?? 45, 1.0, 0.1, 100);
+            camera.position.set(d.camX ?? 0, d.camY ?? 0, d.camZ ?? 5);
+            camera.lookAt(d.targetX ?? 0, d.targetY ?? 0, d.targetZ ?? 0);
 
             // Lighting (Neutral bright white)
             const ambient = new THREE.AmbientLight(0xffffff, 0.7);
@@ -66,7 +66,7 @@ export const VIDEO = {
             dirLight.position.set(3, 4, 5);
             scene.add(dirLight);
 
-            // Default wireframe Torus mesh (White)
+            // Wireframe Torus mesh (White)
             const geom = new THREE.TorusGeometry(1.2, 0.45, 16, 32);
             const mat = new THREE.MeshStandardMaterial({
                 color: 0xffffff,
@@ -75,18 +75,19 @@ export const VIDEO = {
                 metalness: 0.5
             });
             mesh = new THREE.Mesh(geom, mat);
+            mesh.visible = false;
             scene.add(mesh);
         };
 
         initThree();
 
         return {
-            nodes: { gX, gY, gW, gH, anX, anY, anW, anH },
+            nodes: { gX, gY, gSize, gFov, anX, anY, anSize, anFov },
             inputs: {
                 cv_x: gX,
                 cv_y: gY,
-                cv_w: gW,
-                cv_h: gH,
+                cv_size: gSize,
+                cv_fov: gFov,
                 geo_in: null,
                 video_in: null
             },
@@ -105,13 +106,12 @@ export const VIDEO = {
             read: () => {
                 const cvX = readCv(anX, 0);
                 const cvY = readCv(anY, 0);
-                const cvW = readCv(anW, 0);
-                const cvH = readCv(anH, 0);
+                const cvSize = readCv(anSize, 0);
+                const cvFov = readCv(anFov, 0);
 
                 const cropX = Math.max(0, Math.min(0.9, (d.cropX ?? 0) + cvX));
                 const cropY = Math.max(0, Math.min(0.9, (d.cropY ?? 0) + cvY));
-                const cropW = Math.max(0.1, Math.min(1.0 - cropX, (d.cropW ?? 1.0) + cvW));
-                const cropH = Math.max(0.1, Math.min(1.0 - cropY, (d.cropH ?? 1.0) + cvH));
+                const cropSize = Math.max(0.1, Math.min(1.0 - Math.max(cropX, cropY), (d.cropSize ?? 1.0) + cvSize));
 
                 // If linked, do NOT render 3D! Just return shared root canvas
                 if (d._isLinked && d._linkedRootId && eng?.modules) {
@@ -119,7 +119,7 @@ export const VIDEO = {
                     const shared = rootMod?.getSharedCanvas?.();
                     return {
                         canvas: shared,
-                        crop: { x: cropX, y: cropY, w: cropW, h: cropH },
+                        crop: { x: cropX, y: cropY, size: cropSize, w: cropSize, h: cropSize },
                         isLinked: true
                     };
                 }
@@ -129,12 +129,45 @@ export const VIDEO = {
                     const isGeoPatched = patchState?.has('geo_in') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('geo_in') : false);
                     let geoPacket = null;
                     if (isGeoPatched && eng?.modules) {
-                        // Look for the specific connected OBJECT instance or fallback to first OBJECT
-                        Object.values(eng.modules).forEach(mInst => {
-                            if (mInst.data?.type === 'OBJECT' && mInst.getGeometryPacket) {
-                                geoPacket = mInst.getGeometryPacket();
+                        // Check connections to find exactly which OBJECT is patched to geo_in
+                        const pageId = d.pageId || (window.__GS_APP__?.currentPageId ?? '0');
+                        const conns = window.__GS_APP__?.connections || window.__GS_APP__?.pagesData?.[pageId]?.connections || [];
+                        let connectedSourceId = null;
+                        conns.forEach(c => {
+                            const connObj = typeof c === 'string' ? (c.includes('>') ? { from: { moduleId: c.split('>')[0].split(':')[0].trim(), port: c.split('>')[0].split(':')[1].trim() }, to: { moduleId: c.split('>')[1].split(':')[0].trim(), port: c.split('>')[1].split(':')[1].trim() } } : null) : c;
+                            if (connObj && connObj.to?.moduleId === d.id && connObj.to?.port === 'geo_in') {
+                                connectedSourceId = connObj.from?.moduleId;
                             }
                         });
+
+                        if (connectedSourceId) {
+                            const srcMod = eng.modules[`${pageId}/${connectedSourceId}`] || eng.modules[connectedSourceId];
+                            if (srcMod?.getGeometryPacket) {
+                                geoPacket = srcMod.getGeometryPacket();
+                            }
+                        }
+
+                        // Fallback if not resolved via conns list
+                        if (!geoPacket) {
+                            Object.values(eng.modules).forEach(mInst => {
+                                if (mInst.data?.type === 'OBJECT' && mInst.getGeometryPacket) {
+                                    geoPacket = mInst.getGeometryPacket();
+                                }
+                            });
+                        }
+                    }
+
+                    // Apply Camera, Target, FOV & Roll parameters
+                    const fov = Math.max(10, Math.min(120, (d.fov ?? 45) + cvFov * 10));
+                    if (camera.fov !== fov) {
+                        camera.fov = fov;
+                        camera.updateProjectionMatrix();
+                    }
+                    camera.position.set(d.camX ?? 0, d.camY ?? 0, d.camZ ?? 5);
+                    camera.up.set(0, 1, 0);
+                    camera.lookAt(d.targetX ?? 0, d.targetY ?? 0, d.targetZ ?? 0);
+                    if (d.camRoll) {
+                        camera.rotateZ((d.camRoll * Math.PI) / 180);
                     }
 
                     if (isGeoPatched && geoPacket && geoPacket.geometry) {
@@ -159,7 +192,7 @@ export const VIDEO = {
 
                 return {
                     canvas: renderCanvas,
-                    crop: { x: cropX, y: cropY, w: cropW, h: cropH },
+                    crop: { x: cropX, y: cropY, size: cropSize, w: cropSize, h: cropSize },
                     isLinked: false
                 };
             },

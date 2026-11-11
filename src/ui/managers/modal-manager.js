@@ -51,7 +51,7 @@ export const MODAL_WIDTHS = {
     GSENSOR: 'w-[180px]',
     TILT: 'w-[180px]',
     OBJECT: 'w-[190px]',
-    VIDEO: 'w-[200px]'
+    VIDEO: 'w-[220px]'
 };
 
 import { DockManager, DOCK_TITLES } from './dock-manager.js?v=618';
