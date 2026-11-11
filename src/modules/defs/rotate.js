@@ -21,7 +21,7 @@ export const ROTATE = {
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
     renderGrid: (m) => {
         const axis = (m.axis || 'x').toUpperCase();
-        const rad = Number(m.angle ?? m.rotX ?? 0.0);
+        const rad = Number(m.angle ?? 0.0);
         const deg = Math.round((rad * 180) / Math.PI);
         return `
         <div class="flex flex-col items-center justify-center leading-none gap-0.5 pointer-events-none select-none text-purple-400">
@@ -33,7 +33,7 @@ export const ROTATE = {
     renderModal: (m, ctx) => {
         const isCvPatched = Boolean(ctx?.patched?.has('cv_in') || ctx?.patched?.has('cv_x'));
         const curAxis = m.axis || 'x';
-        const rad = Number(m.angle ?? m.rotX ?? 0.0);
+        const rad = Number(m.angle ?? 0.0);
         const deg = Math.round((rad * 180) / Math.PI);
         return `
         <div class="flex flex-col gap-2 p-1.5 bg-slate-900 text-slate-200 select-none w-full">
@@ -98,7 +98,6 @@ export const ROTATE = {
             slider.addEventListener('input', (e) => {
                 const val = parseFloat(e.target.value);
                 m.angle = val;
-                m.rotX = val;
                 updateDisp(val);
                 onChange?.();
             });
@@ -117,7 +116,6 @@ export const ROTATE = {
             btn.addEventListener('click', (e) => {
                 const val = parseFloat(e.currentTarget.dataset.rot);
                 m.angle = val;
-                m.rotX = val;
                 if (slider) slider.value = val;
                 updateDisp(val);
                 onChange?.();
@@ -130,7 +128,7 @@ export const ROTATE = {
         const radEl = cell.querySelector('[data-rot-rad]');
         const degEl = cell.querySelector('[data-rot-deg]');
         const curAxis = (data.axis || m.axis || 'x').toUpperCase();
-        const curRad = Number(data.angle ?? m.angle ?? m.rotX ?? 0);
+        const curRad = Number(data.angle ?? m.angle ?? 0);
         const curDeg = Math.round((curRad * 180) / Math.PI);
 
         if (axisEl) {

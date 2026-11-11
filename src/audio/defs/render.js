@@ -6,7 +6,7 @@ export const RENDER = {
     create: (ctx, d, patch, eng) => {
         let patchState = patch || null;
 
-        // CV input for fov (PIN1)
+        // CV input for fov (PIN4)
         const gFov = ctx.createGain();
         const anFov = ctx.createAnalyser();
         anFov.fftSize = 32;
@@ -168,8 +168,12 @@ export const RENDER = {
                 patchState = p;
             },
             destroy: () => {
+                if (mesh) {
+                    try { mesh.geometry?.dispose(); } catch (_) {}
+                    try { mesh.material?.dispose(); } catch (_) {}
+                }
                 if (renderer) {
-                    renderer.dispose();
+                    try { renderer.dispose(); } catch (_) {}
                     renderer = null;
                 }
                 try { gFov.disconnect(); } catch (e) {}

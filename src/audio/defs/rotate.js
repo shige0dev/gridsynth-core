@@ -82,7 +82,7 @@ export const ROTATE = {
                     // 1.0V = 2*PI radians (360 degrees)
                     angle = cvVal * (2 * Math.PI);
                 } else {
-                    angle = Number(d.angle ?? d.rotX ?? 0.0);
+                    angle = Number(d.angle ?? 0.0);
                 }
 
                 const axis = (d.axis || 'x').toLowerCase();
@@ -111,7 +111,7 @@ export const ROTATE = {
                     const cvVal = readCv(anIn, 0);
                     angle = cvVal * (2 * Math.PI);
                 } else {
-                    angle = Number(d.angle ?? d.rotX ?? 0.0);
+                    angle = Number(d.angle ?? 0.0);
                 }
 
                 return {

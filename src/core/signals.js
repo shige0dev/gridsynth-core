@@ -89,7 +89,7 @@ export const getPortSignalType = (portName = '', modId = '') => {
             return SIGNAL_TYPES.GEOMETRY;
         }
     }
-    if (p.includes('video') || m.startsWith('VIDEO') || m.startsWith('RENDER') || m.startsWith('DISPLAY')) {
+    if (p.includes('video') || m.startsWith('RENDER') || m.startsWith('DISPLAY')) {
         if (!p.includes('cv') && !p.includes('rot') && !p.includes('scale') && !p.includes('fov') && !p.includes('div') && !p.includes('obj')) {
             return SIGNAL_TYPES.VIDEO;
         }

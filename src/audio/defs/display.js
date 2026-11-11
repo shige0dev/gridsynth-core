@@ -62,14 +62,8 @@ export const DISPLAY = {
                 }
             }
 
-            // 3. Fallback: Find RENDER module
-            let fallbackCanvas = null;
-            Object.values(eng.modules).forEach(mInst => {
-                if (mInst.data?.type === 'RENDER' && mInst.getSharedCanvas) {
-                    fallbackCanvas = mInst.getSharedCanvas();
-                }
-            });
-            return fallbackCanvas;
+            // Strictly require connection to video_in (no unpatched fallback)
+            return null;
         };
 
         return {
