@@ -26,10 +26,8 @@ export const RENDER = {
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
     renderGrid: () => `
-        <div class="flex flex-col items-center justify-center leading-none gap-1 pointer-events-none select-none text-emerald-400">
-            <span class="text-[8px] font-bold text-amber-400/90 tracking-tight">3D RENDER</span>
-            <span class="text-[12px] font-mono font-extrabold text-emerald-300 tracking-wider">BUFFER</span>
-            <span class="text-[7.5px] font-mono text-cyan-300 font-bold">1:1 OUT</span>
+        <div class="absolute inset-[1px] bg-black overflow-hidden z-0 pointer-events-none select-none">
+            <canvas class="render-panel-canvas w-full h-full block" width="100" height="100"></canvas>
         </div>`,
     renderModal: (m) => `
         <div class="flex flex-col gap-2 p-1.5 bg-slate-900 text-slate-200 select-none w-full">
@@ -116,7 +114,20 @@ export const RENDER = {
         if (!cell || !data) return;
         const srcCanvas = data.canvas;
 
-        // Render to modal preview canvas if open (1:1 square)
+        // 1. Render to cell canvas (Display 3D buffer on module panel)
+        const cvs = cell.querySelector('.render-panel-canvas');
+        if (cvs) {
+            const ctx = cvs.getContext('2d');
+            ctx.clearRect(0, 0, cvs.width, cvs.height);
+            if (srcCanvas) {
+                ctx.drawImage(srcCanvas, 0, 0, srcCanvas.width, srcCanvas.height, 0, 0, cvs.width, cvs.height);
+            } else {
+                ctx.fillStyle = '#020617';
+                ctx.fillRect(0, 0, cvs.width, cvs.height);
+            }
+        }
+
+        // 2. Render to modal preview canvas if open (1:1 square)
         if (modal) {
             const mCvs = modal.querySelector('.render-modal-canvas');
             if (mCvs && srcCanvas) {

@@ -186,7 +186,7 @@ export class UIController {
                     <div class="absolute top-[2px] left-0 right-0 px-1 flex justify-center items-center pointer-events-none z-20">
                         <span class="w-full text-center font-bold text-[7.5px] tracking-tight text-white truncate select-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">${displayName}</span>
                     </div>`;
-            } else if (m.type === 'PAD' || m.type === 'SCOPE' || m.type === 'LISS' || m.type === 'SPEC' || m.type === 'DISPLAY') {
+            } else if (m.type === 'PAD' || m.type === 'SCOPE' || m.type === 'LISS' || m.type === 'SPEC' || m.type === 'DISPLAY' || m.type === 'RENDER') {
                 const displayName = m.name || m.type;
                 const hideInPerf = this.isPerformanceMode ? 'hidden' : '';
                 titleHTML = `

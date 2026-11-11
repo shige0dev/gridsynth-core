@@ -26,9 +26,8 @@ export const DISPLAY = {
     renderGrid: (m, ctx) => `
         <div class="absolute inset-[1px] bg-black overflow-hidden z-0 pointer-events-none select-none">
             <canvas class="display-panel-canvas w-full h-full block" width="100" height="100"></canvas>
-            <div class="absolute bottom-0.5 left-0.5 bg-slate-950/85 px-1 py-0.5 rounded-xs border border-slate-800 flex items-center gap-1 text-[7px] font-mono leading-none pointer-events-none drop-shadow-md">
+            <div class="absolute bottom-0.5 left-0.5 bg-slate-950/85 px-1 py-0.5 rounded-xs border border-slate-800 flex items-center text-[7px] font-mono leading-none pointer-events-none drop-shadow-md">
                 <span class="disp-panel-div text-emerald-400 font-bold">${m.divN ?? 1}x${m.divN ?? 1}</span>
-                <span class="disp-panel-tile text-cyan-300 font-semibold">[1,1]</span>
             </div>
         </div>`,
     // Modal: N x N Division selector + X/Y 0-1 Tile Selector + Live Highlight Viewfinder
@@ -36,8 +35,6 @@ export const DISPLAY = {
         const divN = Math.max(1, Math.min(4, Math.round(m.divN ?? 1)));
         const posX = Number(m.tileX ?? 0.0);
         const posY = Number(m.tileY ?? 0.0);
-        const col = Math.min(divN - 1, Math.max(0, Math.floor(posX * divN)));
-        const row = Math.min(divN - 1, Math.max(0, Math.floor(posY * divN)));
 
         const isCvX = Boolean(ctx?.patched?.has('cv_x'));
         const isCvY = Boolean(ctx?.patched?.has('cv_y'));
@@ -56,9 +53,7 @@ export const DISPLAY = {
                     <span class="font-bold text-emerald-400">N x N DIVISION (バッファ分割数)</span>
                     <div class="flex items-center gap-1.5">
                         <span id="disp-div-disp" class="font-bold text-cyan-300 text-[10.5px] px-2 py-0.5 bg-slate-950 rounded border border-slate-800">${divN} x ${divN}</span>
-                        <span id="disp-active-badge" class="text-[8.5px] font-mono font-bold text-emerald-300 bg-emerald-950 px-1.5 py-0.5 rounded border border-emerald-600/50 shrink-0">
-                            TILE (${col + 1}, ${row + 1})${isCvDiv ? ' [CV]' : ''}
-                        </span>
+                        ${isCvDiv ? `<span id="disp-active-badge" class="text-[8.5px] font-mono font-bold text-emerald-300 bg-emerald-950 px-1.5 py-0.5 rounded border border-emerald-600/50 shrink-0">[CV]</span>` : `<span id="disp-active-badge" class="hidden"></span>`}
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
@@ -183,14 +178,10 @@ export const DISPLAY = {
             }
         }
 
-        // Panel Status Overlay (NxN and Tile position)
+        // Panel Status Overlay (NxN division)
         const panelDiv = cell.querySelector('.disp-panel-div');
         if (panelDiv) {
             panelDiv.textContent = `${divN}x${divN}${data.isCvDiv ? '*' : ''}`;
-        }
-        const panelTile = cell.querySelector('.disp-panel-tile');
-        if (panelTile) {
-            panelTile.textContent = `[${col + 1},${row + 1}]`;
         }
 
         // 2. Render to modal preview canvas with N x N grid and emerald highlight box (Full-Width High-Res 400x400)
@@ -257,10 +248,16 @@ export const DISPLAY = {
                 mCtx.beginPath(); mCtx.moveTo(rx + rw - tick, ry + rh); mCtx.lineTo(rx + rw); mCtx.lineTo(rx + rw, ry + rh - tick); mCtx.stroke();
             }
 
-            // Update badge in modal
+            // Update CV badge in modal
             const badge = modal.querySelector('#disp-active-badge');
             if (badge) {
-                badge.textContent = `TILE (${col + 1}, ${row + 1})${data.isCvDiv ? ' [CV]' : ''}`;
+                if (data.isCvDiv) {
+                    badge.textContent = '[CV]';
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.textContent = '';
+                    badge.classList.add('hidden');
+                }
             }
 
             // Sync division display in modal if CV driven
