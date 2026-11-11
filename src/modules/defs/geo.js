@@ -19,13 +19,13 @@ export const OBJECT = {
         const shapeName = (m?.shape || 'torus').toUpperCase();
         return `
         <div class="flex flex-col items-center justify-center w-full h-full pointer-events-none relative">
-            <div class="relative w-[50px] h-7 border border-purple-500/50 bg-slate-950 p-[1px] flex items-center justify-center shadow-inner overflow-hidden">
-                <canvas class="geo-panel-canvas w-full h-full block" width="50" height="28"></canvas>
+            <div class="relative w-[50px] h-7 border border-purple-500/60 bg-slate-950 p-[1px] flex items-center justify-center shadow-inner overflow-hidden rounded-xs">
+                <span class="text-[10px] font-mono font-extrabold tracking-wider text-purple-200 uppercase">${shapeName}</span>
                 <div class="absolute bottom-full mb-[2px] inset-x-0 flex items-center justify-center pointer-events-none">
-                    <span class="text-[7.5px] font-mono font-bold leading-none tracking-tight text-amber-400 text-center max-w-[64px]">${shapeName}</span>
+                    <span class="text-[7.5px] font-mono font-bold leading-none tracking-tight text-amber-400 text-center max-w-[64px]">OBJECT</span>
                 </div>
                 <div class="absolute top-full mt-[2px] inset-x-0 flex items-center justify-center pointer-events-none">
-                    <span class="text-[7.5px] font-mono font-bold leading-none tracking-tight text-cyan-300 text-center max-w-[64px]">OBJECT</span>
+                    <span class="text-[7.5px] font-mono font-bold leading-none tracking-tight text-cyan-300 text-center max-w-[64px]">${shapeName}</span>
                 </div>
             </div>
         </div>`;
@@ -46,7 +46,7 @@ export const OBJECT = {
                 </div>
             </div>
             <div class="text-[8px] font-mono text-slate-400 bg-slate-950 p-1.5 rounded border border-slate-800">
-                OUTPUT: Default White (1:1 scale) Geometry Packet via GEO OUT (PIN11).
+                OUTPUT: 1:1 Scale White Geometry via GEO OUT (PIN11).
             </div>
         </div>`;
     },
@@ -62,46 +62,7 @@ export const OBJECT = {
         });
     },
     updateLive: (cell, data, isPlaying, modal, m) => {
-        if (!cell) return;
-        const cvs = cell.querySelector('.geo-panel-canvas');
-        if (cvs) {
-            const ctx = cvs.getContext('2d');
-            const w = cvs.width, h = cvs.height;
-            ctx.clearRect(0, 0, w, h);
-
-            ctx.save();
-            ctx.translate(w / 2, h / 2);
-            ctx.strokeStyle = '#ffffff'; // Base White wireframe
-            ctx.lineWidth = 1.0;
-
-            const shape = m?.shape || 'torus';
-            if (shape === 'cube') {
-                const s = 7;
-                ctx.beginPath();
-                ctx.moveTo(0, -s); ctx.lineTo(s * 1.2, -s * 0.4); ctx.lineTo(0, s * 0.3); ctx.lineTo(-s * 1.2, -s * 0.4); ctx.closePath();
-                ctx.moveTo(0, s * 0.3); ctx.lineTo(0, s * 1.2); ctx.lineTo(s * 1.2, s * 0.5); ctx.lineTo(s * 1.2, -s * 0.4);
-                ctx.moveTo(0, s * 1.2); ctx.lineTo(-s * 1.2, s * 0.5); ctx.lineTo(-s * 1.2, -s * 0.4);
-                ctx.stroke();
-            } else {
-                const R = 8, r = 3.5;
-                for (let i = 0; i < 6; i++) {
-                    const theta = (i / 6) * Math.PI * 2;
-                    ctx.beginPath();
-                    for (let j = 0; j <= 8; j++) {
-                        const phi = (j / 8) * Math.PI * 2;
-                        const x = (R + r * Math.cos(phi)) * Math.cos(theta);
-                        const y = r * Math.sin(phi);
-                        const z = (R + r * Math.cos(phi)) * Math.sin(theta);
-                        const projX = x;
-                        const projY = y * 0.8 - z * 0.5;
-                        if (j === 0) ctx.moveTo(projX, projY);
-                        else ctx.lineTo(projX, projY);
-                    }
-                    ctx.stroke();
-                }
-            }
-            ctx.restore();
-        }
+        // Simple shape name sync if updated
     }
 };
 

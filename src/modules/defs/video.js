@@ -35,7 +35,6 @@ export const VIDEO = {
 
         const chassisHTML = UIHelpers.renderChassisPorts(renderP, { in: otherIn, out: otherOut });
 
-        // VIDEO IN top-left, VIDEO OUT top-right matching WAVE module standard
         const vInHTML = videoIn ? `
             <div class="absolute left-[3px] top-[3px] flex items-center pointer-events-auto z-10" title="VIDEO IN (BUFFER LINK)">
                 ${renderP([videoIn])}
@@ -48,32 +47,31 @@ export const VIDEO = {
 
         return `${chassisHTML}${vInHTML}${vOutHTML}`;
     },
+    // Cell grid: Full-slot display matching SCOPE and PAD dimensions
     renderGrid: (m, ctx) => {
         const isLinked = Boolean(ctx?.patched?.has('video_in') || m._isLinked);
         return `
-        <div class="flex flex-col items-center justify-center w-full h-full pointer-events-none relative">
-            <div class="relative w-[50px] h-7 border border-purple-500/50 bg-slate-950 p-[1px] flex items-center justify-center shadow-inner overflow-hidden">
-                <canvas class="video-panel-canvas w-full h-full block" width="50" height="28"></canvas>
-                ${isLinked ? '<div class="absolute -top-2.5 inset-x-0 flex items-center justify-center pointer-events-none"><span class="text-[6.5px] font-mono font-bold tracking-wider text-purple-300 leading-none">LINKED</span></div>' : ''}
-                <div class="absolute bottom-full mb-[2px] inset-x-0 flex items-center justify-center pointer-events-none">
-                    <span class="text-[7.5px] font-mono font-bold leading-none tracking-tight text-amber-400 text-center max-w-[64px]">${isLinked ? 'BUFFER' : 'RENDER'}</span>
-                </div>
-                <div class="absolute top-full mt-[2px] inset-x-0 flex items-center justify-center pointer-events-none">
-                    <span data-video-disp class="text-[7.5px] font-mono font-bold leading-none tracking-tight text-cyan-300 text-center max-w-[64px]">VIEWPORT</span>
-                </div>
+        <div class="absolute inset-0.5 bg-black rounded-sm border border-purple-500/40 overflow-hidden z-0 pointer-events-none select-none">
+            <canvas class="video-panel-canvas w-full h-full block" width="100" height="100"></canvas>
+            ${isLinked ? '<div class="absolute top-0.5 left-1 pointer-events-none"><span class="text-[6.5px] font-mono font-bold tracking-wider text-purple-300 leading-none">LINKED</span></div>' : ''}
+            <div class="absolute bottom-0.5 right-1 pointer-events-none">
+                <span data-video-disp class="text-[6.5px] font-mono font-bold leading-none tracking-tight text-cyan-300">1:1</span>
             </div>
         </div>`;
     },
-    renderModal: (m) => `
-        <div class="flex flex-col gap-3 p-2 bg-slate-900 text-slate-200 select-none">
-            <div class="flex items-center justify-between border-b border-slate-700/80 pb-1.5">
-                <span class="text-xs font-mono font-bold text-purple-400">3D VIDEO VIEWPORT</span>
-                <span class="text-[10px] font-mono text-slate-400">${m._isLinked ? 'LINKED VIEWER' : 'MASTER RENDERER'}</span>
+    // Modal: Standard width matching SCOPE / PAD controls
+    renderModal: (m) => {
+        const isLinked = Boolean(m._isLinked);
+        return `
+        <div class="flex flex-col gap-2 p-1 bg-slate-900 text-slate-200 select-none w-full">
+            <div class="flex items-center justify-between border-b border-slate-700/80 pb-1">
+                <span class="text-xs font-mono font-bold text-purple-400">3D DISPLAY</span>
+                <span class="text-[9px] font-mono text-slate-400">${isLinked ? 'LINKED VIEWER' : 'MASTER RENDERER'}</span>
             </div>
-            <div class="flex justify-center bg-slate-950 border border-slate-800 rounded p-1">
+            <div class="flex justify-center bg-black border border-slate-800 rounded p-1">
                 <canvas class="video-modal-canvas w-[120px] h-[120px] block rounded bg-black" width="120" height="120"></canvas>
             </div>
-            <div class="grid grid-cols-2 gap-2 text-[10px] font-mono">
+            <div class="grid grid-cols-2 gap-2 text-[9.5px] font-mono">
                 <div class="flex flex-col gap-0.5">
                     <div class="flex justify-between text-slate-400">
                         <span>CROP X</span><span id="video-val-x">${(m.cropX ?? 0).toFixed(2)}</span>
@@ -99,8 +97,8 @@ export const VIDEO = {
                     <input type="range" id="video-slide-h" min="0.1" max="1.0" step="0.01" value="${m.cropH ?? 1.0}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer">
                 </div>
             </div>
-        </div>
-    `,
+        </div>`;
+    },
     bindEvents: (m, ctx, onChange) => {
         const root = ctx?.getDialogElement ? (ctx.getDialogElement() || document) : document;
         const bindSlider = (id, prop, dispId) => {
@@ -125,7 +123,7 @@ export const VIDEO = {
         const srcCanvas = data.canvas;
         const crop = data.crop || { x: 0, y: 0, w: 1, h: 1 };
 
-        // Render to cell canvas (Maintain 1:1 aspect ratio centered in 50x28 slot)
+        // Render to cell canvas (Square 1:1 display fill)
         const cvs = cell.querySelector('.video-panel-canvas');
         if (cvs) {
             const ctx = cvs.getContext('2d');
@@ -135,19 +133,14 @@ export const VIDEO = {
                 const sy = Math.max(0, Math.min(srcCanvas.height - 1, crop.y * srcCanvas.height));
                 const sw = Math.max(1, Math.min(srcCanvas.width - sx, crop.w * srcCanvas.width));
                 const sh = Math.max(1, Math.min(srcCanvas.height - sy, crop.h * srcCanvas.height));
-
-                // 1:1 Aspect Fit to 50x28 (destination height is 28, destination width is 28, centered)
-                const targetDim = Math.min(cvs.width, cvs.height); // 28px
-                const dx = (cvs.width - targetDim) / 2; // Center horizontally
-                const dy = (cvs.height - targetDim) / 2; // Center vertically
-                ctx.drawImage(srcCanvas, sx, sy, sw, sh, dx, dy, targetDim, targetDim);
+                ctx.drawImage(srcCanvas, sx, sy, sw, sh, 0, 0, cvs.width, cvs.height);
             } else {
-                ctx.fillStyle = '#0f172a';
+                ctx.fillStyle = '#020617';
                 ctx.fillRect(0, 0, cvs.width, cvs.height);
             }
         }
 
-        // Render to modal canvas if open (1:1 Aspect Fit to 100x100)
+        // Render to modal canvas if open
         if (modal) {
             const mCvs = modal.querySelector('.video-modal-canvas');
             if (mCvs && srcCanvas) {
@@ -157,17 +150,13 @@ export const VIDEO = {
                 const sy = Math.max(0, Math.min(srcCanvas.height - 1, crop.y * srcCanvas.height));
                 const sw = Math.max(1, Math.min(srcCanvas.width - sx, crop.w * srcCanvas.width));
                 const sh = Math.max(1, Math.min(srcCanvas.height - sy, crop.h * srcCanvas.height));
-
-                const targetDim = Math.min(mCvs.width, mCvs.height); // 100px
-                const dx = (mCvs.width - targetDim) / 2;
-                const dy = (mCvs.height - targetDim) / 2;
-                mCtx.drawImage(srcCanvas, sx, sy, sw, sh, dx, dy, targetDim, targetDim);
+                mCtx.drawImage(srcCanvas, sx, sy, sw, sh, 0, 0, mCvs.width, mCvs.height);
             }
         }
 
         const disp = cell.querySelector('[data-video-disp]');
         if (disp) {
-            disp.textContent = `${crop.w.toFixed(1)}x${crop.h.toFixed(1)} @${crop.x.toFixed(1)},${crop.y.toFixed(1)}`;
+            disp.textContent = `${crop.w.toFixed(1)}x${crop.h.toFixed(1)}`;
         }
     }
 };
