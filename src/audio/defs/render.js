@@ -25,7 +25,8 @@ export const RENDER = {
             return isNaN(avg) ? def : avg;
         };
 
-        // Three.js Scene Setup (1:1 Square 200x200 Buffer)
+        // Three.js Scene Setup (High-Res 800x800 Buffer for clear 4x4 division)
+        const BUFFER_SIZE = 800;
         let renderer = null;
         let scene = null;
         let camera = null;
@@ -35,15 +36,15 @@ export const RENDER = {
         const initThree = () => {
             if (typeof THREE === 'undefined') return;
             renderCanvas = document.createElement('canvas');
-            renderCanvas.width = 200;
-            renderCanvas.height = 200;
+            renderCanvas.width = BUFFER_SIZE;
+            renderCanvas.height = BUFFER_SIZE;
 
             renderer = new THREE.WebGLRenderer({
                 canvas: renderCanvas,
                 antialias: true,
                 alpha: true
             });
-            renderer.setSize(200, 200, false);
+            renderer.setSize(BUFFER_SIZE, BUFFER_SIZE, false);
 
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(d.fov ?? 45, 1.0, 0.1, 100);

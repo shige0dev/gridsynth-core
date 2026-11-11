@@ -24,7 +24,7 @@ export const DISPLAY = {
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
     // Cell grid: Full-slot display matching SCOPE / PAD (stealth text-slate-700 header via controller.js)
     renderGrid: (m, ctx) => `
-        <div class="absolute inset-[2px] bg-black overflow-hidden z-0 pointer-events-none select-none">
+        <div class="absolute inset-[1px] bg-black overflow-hidden z-0 pointer-events-none select-none">
             <canvas class="display-panel-canvas w-full h-full block" width="100" height="100"></canvas>
             <div class="absolute bottom-0.5 left-0.5 bg-slate-950/85 px-1 py-0.5 rounded-xs border border-slate-800 flex items-center gap-1 text-[7px] font-mono leading-none pointer-events-none drop-shadow-md">
                 <span class="disp-panel-div text-emerald-400 font-bold">${m.divN ?? 1}x${m.divN ?? 1}</span>
@@ -45,23 +45,29 @@ export const DISPLAY = {
 
         return `
         <div class="flex flex-col gap-2 p-1.5 bg-slate-900 text-slate-200 select-none w-full">
-            <!-- Viewfinder Preview with N x N Grid and Highlight -->
-            <div class="flex justify-center items-center bg-black border border-slate-800 rounded p-1 w-[128px] h-[128px] mx-auto overflow-hidden">
-                <canvas class="display-modal-canvas block rounded bg-black" width="120" height="120"></canvas>
+            <!-- Viewfinder Preview with N x N Grid and Highlight (Full Width 1:1 Square) -->
+            <div class="relative w-full aspect-square bg-black border border-slate-800 rounded overflow-hidden flex items-center justify-center mx-auto">
+                <canvas class="display-modal-canvas w-full h-full block bg-black" width="400" height="400"></canvas>
             </div>
 
-            <!-- Section 1: NxN Division Selector -->
-            <div class="flex items-center gap-2 border-t border-slate-800 pt-1.5 px-0.5">
-                <span class="text-[9.5px] font-mono font-bold text-emerald-400 shrink-0">NxN:</span>
-                <div class="flex gap-1 flex-1">
-                    <button data-div="1" class="disp-div-btn flex-1 py-1 rounded text-[10px] font-mono font-bold border transition ${divN === 1 ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">1</button>
-                    <button data-div="2" class="disp-div-btn flex-1 py-1 rounded text-[10px] font-mono font-bold border transition ${divN === 2 ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">2</button>
-                    <button data-div="3" class="disp-div-btn flex-1 py-1 rounded text-[10px] font-mono font-bold border transition ${divN === 3 ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">3</button>
-                    <button data-div="4" class="disp-div-btn flex-1 py-1 rounded text-[10px] font-mono font-bold border transition ${divN === 4 ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">4</button>
+            <!-- Section 1: NxN Division Numerical Selector (数値選定) -->
+            <div class="flex flex-col gap-1 border-t border-slate-800 pt-1.5 px-0.5">
+                <div class="flex justify-between items-center text-[9px] font-mono">
+                    <span class="font-bold text-emerald-400">N x N DIVISION (バッファ分割数)</span>
+                    <div class="flex items-center gap-1.5">
+                        <span id="disp-div-disp" class="font-bold text-cyan-300 text-[10.5px] px-2 py-0.5 bg-slate-950 rounded border border-slate-800">${divN} x ${divN}</span>
+                        <span id="disp-active-badge" class="text-[8.5px] font-mono font-bold text-emerald-300 bg-emerald-950 px-1.5 py-0.5 rounded border border-emerald-600/50 shrink-0">
+                            TILE (${col + 1}, ${row + 1})${isCvDiv ? ' [CV]' : ''}
+                        </span>
+                    </div>
                 </div>
-                <span id="disp-active-badge" class="text-[8.5px] font-mono font-bold text-emerald-300 bg-emerald-950 px-1 py-0.5 rounded border border-emerald-600/50 shrink-0">
-                    TILE (${col + 1}, ${row + 1})${isCvDiv ? ' [CV]' : ''}
-                </span>
+                <div class="flex items-center gap-2">
+                    <input type="range" id="disp-slide-div" min="1" max="4" step="1" value="${divN}" class="flex-1 h-1.5 bg-slate-700 rounded appearance-none cursor-pointer accent-emerald-500" ${isCvDiv ? 'disabled' : ''}>
+                    <div class="flex items-center gap-1">
+                        <button id="disp-btn-div-dec" class="w-6 h-5 rounded bg-slate-800 hover:bg-slate-700 active:bg-emerald-600 border border-slate-700 text-slate-200 text-xs font-bold font-mono flex items-center justify-center transition leading-none select-none ${isCvDiv ? 'opacity-35 pointer-events-none' : ''}">-</button>
+                        <button id="disp-btn-div-inc" class="w-6 h-5 rounded bg-slate-800 hover:bg-slate-700 active:bg-emerald-600 border border-slate-700 text-slate-200 text-xs font-bold font-mono flex items-center justify-center transition leading-none select-none ${isCvDiv ? 'opacity-35 pointer-events-none' : ''}">+</button>
+                    </div>
+                </div>
             </div>
 
             <!-- Section 2: Tile Selection Coordinates (X, Y in 0..1) -->
@@ -112,14 +118,39 @@ export const DISPLAY = {
             });
         }
 
-        root.querySelectorAll('.disp-div-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const n = parseInt(e.currentTarget.dataset.div, 10);
+        const slideDiv = root.querySelector('#disp-slide-div');
+        const divDisp = root.querySelector('#disp-div-disp');
+
+        if (slideDiv) {
+            slideDiv.addEventListener('input', (e) => {
+                const n = parseInt(e.target.value, 10);
                 m.divN = n;
+                if (divDisp) divDisp.textContent = `${n} x ${n}`;
+                onChange?.();
+            });
+        }
+
+        const btnDec = root.querySelector('#disp-btn-div-dec');
+        if (btnDec) {
+            btnDec.addEventListener('click', () => {
+                m.divN = Math.max(1, (m.divN ?? 1) - 1);
+                if (slideDiv) slideDiv.value = m.divN;
+                if (divDisp) divDisp.textContent = `${m.divN} x ${m.divN}`;
                 ctx.reRenderModal?.();
                 onChange?.();
             });
-        });
+        }
+
+        const btnInc = root.querySelector('#disp-btn-div-inc');
+        if (btnInc) {
+            btnInc.addEventListener('click', () => {
+                m.divN = Math.min(4, (m.divN ?? 1) + 1);
+                if (slideDiv) slideDiv.value = m.divN;
+                if (divDisp) divDisp.textContent = `${m.divN} x ${m.divN}`;
+                ctx.reRenderModal?.();
+                onChange?.();
+            });
+        }
     },
     updateLive: (cell, data, isPlaying, modal, m) => {
         if (!cell || !data) return;
@@ -162,19 +193,11 @@ export const DISPLAY = {
             panelTile.textContent = `[${col + 1},${row + 1}]`;
         }
 
-        // 2. Render to modal preview canvas with N x N grid and emerald highlight box
+        // 2. Render to modal preview canvas with N x N grid and emerald highlight box (Full-Width High-Res 400x400)
         if (modal) {
             const mCvs = modal.querySelector('.display-modal-canvas');
             if (mCvs && srcCanvas) {
-                const aspect = srcCanvas.width / srcCanvas.height;
-                let mw = 120, mh = 120;
-                if (aspect >= 1) {
-                    mw = 120;
-                    mh = Math.max(20, Math.round(120 / aspect));
-                } else {
-                    mh = 120;
-                    mw = Math.max(20, Math.round(120 * aspect));
-                }
+                const mw = 400, mh = 400;
                 if (mCvs.width !== mw || mCvs.height !== mh) {
                     mCvs.width = mw;
                     mCvs.height = mh;
@@ -186,9 +209,9 @@ export const DISPLAY = {
                 mCtx.drawImage(srcCanvas, 0, 0, srcCanvas.width, srcCanvas.height, 0, 0, mw, mh);
 
                 // Draw N x N division grid lines
-                mCtx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
-                mCtx.lineWidth = 1.0;
-                mCtx.setLineDash([2, 2]);
+                mCtx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+                mCtx.lineWidth = 1.5;
+                mCtx.setLineDash([4, 4]);
 
                 const cellMw = mw / divN;
                 const cellMh = mh / divN;
@@ -213,7 +236,7 @@ export const DISPLAY = {
                 const rw = cellMw;
                 const rh = cellMh;
 
-                mCtx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+                mCtx.fillStyle = 'rgba(0, 0, 0, 0.5)';
                 mCtx.fillRect(0, 0, mw, ry); // top
                 mCtx.fillRect(0, ry + rh, mw, mh - (ry + rh)); // bottom
                 mCtx.fillRect(0, ry, rx, rh); // left
@@ -221,17 +244,17 @@ export const DISPLAY = {
 
                 // Highlight bounding box on selected tile (Emerald)
                 mCtx.strokeStyle = '#10b981';
-                mCtx.lineWidth = 2.0;
+                mCtx.lineWidth = 2.5;
                 mCtx.strokeRect(rx, ry, rw, rh);
 
                 // Corner ticks
-                const tick = 4;
+                const tick = 8;
                 mCtx.strokeStyle = '#a7f3d0';
-                mCtx.lineWidth = 2.0;
+                mCtx.lineWidth = 3.0;
                 mCtx.beginPath(); mCtx.moveTo(rx, ry + tick); mCtx.lineTo(rx, ry); mCtx.lineTo(rx + tick, ry); mCtx.stroke();
                 mCtx.beginPath(); mCtx.moveTo(rx + rw - tick, ry); mCtx.lineTo(rx + rw); mCtx.lineTo(rx + rw, ry + tick); mCtx.stroke();
                 mCtx.beginPath(); mCtx.moveTo(rx, ry + rh - tick); mCtx.lineTo(rx, ry + rh); mCtx.lineTo(rx + tick, ry + rh); mCtx.stroke();
-                mCtx.beginPath(); mCtx.moveTo(rx + rw - tick, ry + rh); mCtx.lineTo(rx + rw, ry + rh); mCtx.lineTo(rx + rw, ry + rh - tick); mCtx.stroke();
+                mCtx.beginPath(); mCtx.moveTo(rx + rw - tick, ry + rh); mCtx.lineTo(rx + rw); mCtx.lineTo(rx + rw, ry + rh - tick); mCtx.stroke();
             }
 
             // Update badge in modal
@@ -240,15 +263,15 @@ export const DISPLAY = {
                 badge.textContent = `TILE (${col + 1}, ${row + 1})${data.isCvDiv ? ' [CV]' : ''}`;
             }
 
-            // Sync division buttons highlight in modal if CV driven
-            modal.querySelectorAll('.disp-div-btn').forEach(btn => {
-                const btnDiv = parseInt(btn.dataset.div, 10);
-                if (btnDiv === divN) {
-                    btn.className = 'disp-div-btn flex-1 py-1 rounded text-[10px] font-mono font-bold border transition bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/50';
-                } else {
-                    btn.className = 'disp-div-btn flex-1 py-1 rounded text-[10px] font-mono font-bold border transition bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700';
-                }
-            });
+            // Sync division display in modal if CV driven
+            const divDisp = modal.querySelector('#disp-div-disp');
+            if (divDisp && data.isCvDiv) {
+                divDisp.textContent = `${divN} x ${divN}`;
+            }
+            const slideDiv = modal.querySelector('#disp-slide-div');
+            if (slideDiv && data.isCvDiv) {
+                slideDiv.value = divN;
+            }
 
             const valXDisp = modal.querySelector('#disp-val-x');
             const valYDisp = modal.querySelector('#disp-val-y');

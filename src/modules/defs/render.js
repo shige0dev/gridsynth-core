@@ -33,9 +33,9 @@ export const RENDER = {
         </div>`,
     renderModal: (m) => `
         <div class="flex flex-col gap-2 p-1.5 bg-slate-900 text-slate-200 select-none w-full">
-            <!-- Viewfinder Preview Container (1:1 Square) -->
-            <div class="flex justify-center items-center bg-black border border-slate-800 rounded p-1 w-[128px] h-[128px] mx-auto overflow-hidden">
-                <canvas class="render-modal-canvas block rounded bg-black" width="120" height="120"></canvas>
+            <!-- Viewfinder Preview Container (Full Width 1:1 Square) -->
+            <div class="relative w-full aspect-square bg-black border border-slate-800 rounded overflow-hidden flex items-center justify-center mx-auto">
+                <canvas class="render-modal-canvas w-full h-full block bg-black" width="400" height="400"></canvas>
             </div>
 
             <!-- Section 1: Camera Position & Optics (カメラ位置・画角・回転角) -->

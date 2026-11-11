@@ -93,7 +93,7 @@ export const SCOPE = {
     V_STEPS: [0.5, 1.0, 2.0, 5.0, 10.0, 20.0],
     formatTime: (v) => v < 1 ? `${Math.round(v * 1000)}ms` : `${v.toFixed(1)}s`,
     renderGrid: (m) => `
-        <div class="absolute inset-[2px] bg-slate-950 overflow-hidden z-0 pointer-events-none scope-grid-container" style="opacity: ${m?.opacity ?? 0.8};">
+        <div class="absolute inset-[1px] bg-slate-950 overflow-hidden z-0 pointer-events-none scope-grid-container" style="opacity: ${m?.opacity ?? 0.8};">
             <canvas class="scope-canvas w-full h-full block" width="100" height="100"></canvas>
         </div>`,
     updateLive: (cell, data, isP, modal, m) => {
@@ -196,7 +196,7 @@ export const LISS = {
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
     V_STEPS: [0.5, 1.0, 2.0, 5.0, 10.0],
     renderGrid: (m) => `
-        <div class="absolute inset-[2px] bg-slate-950 overflow-hidden z-0 pointer-events-none liss-grid-container" style="opacity: ${m?.opacity ?? 0.8};">
+        <div class="absolute inset-[1px] bg-slate-950 overflow-hidden z-0 pointer-events-none liss-grid-container" style="opacity: ${m?.opacity ?? 0.8};">
             <canvas class="liss-canvas w-full h-full block" width="100" height="100"></canvas>
         </div>`,
     updateLive: (cell, data, isP, modal, m) => {
@@ -386,7 +386,7 @@ export const SPEC = {
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
     renderGrid: () => `
-        <div class="absolute inset-[2px] bg-slate-950 overflow-hidden z-0 pointer-events-none">
+        <div class="absolute inset-[1px] bg-slate-950 overflow-hidden z-0 pointer-events-none">
             <canvas class="spec-canvas w-full h-full block" width="120" height="120"></canvas>
         </div>`,
     updateLive: (cell, data, isP, modal, m) => {
