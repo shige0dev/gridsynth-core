@@ -53,14 +53,8 @@ export const ROTATE = {
                 }
             }
 
-            // Fallback search across engine modules
-            let fallbackPacket = null;
-            Object.values(eng.modules).forEach(mInst => {
-                if (mInst.data?.id !== d.id && mInst.getGeometryPacket && mInst.data?.type !== 'DISPLAY') {
-                    if (!fallbackPacket) fallbackPacket = mInst.getGeometryPacket();
-                }
-            });
-            return fallbackPacket;
+            // Strictly require connection to obj_in / geo_in (no unpatched fallback)
+            return null;
         };
 
         return {

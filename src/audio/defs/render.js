@@ -58,8 +58,8 @@ export const RENDER = {
             dirLight.position.set(3, 4, 5);
             scene.add(dirLight);
 
-            // Wireframe mesh (White)
-            const geom = new THREE.TorusGeometry(1.2, 0.45, 16, 32);
+            // Wireframe mesh (White) - starts with empty BufferGeometry
+            const geom = new THREE.BufferGeometry();
             const mat = new THREE.MeshStandardMaterial({
                 color: 0xffffff,
                 wireframe: true,
@@ -119,14 +119,7 @@ export const RENDER = {
                             }
                         }
 
-                        // Fallback search across engine modules
-                        if (!geoPacket) {
-                            Object.values(eng.modules).forEach(mInst => {
-                                if (mInst.data?.id !== d.id && mInst.getGeometryPacket) {
-                                    geoPacket = mInst.getGeometryPacket();
-                                }
-                            });
-                        }
+                        // Strictly require connection to obj_in / geo_in (no unpatched fallback)
                     }
 
                     // Apply Camera, Target, FOV & Roll parameters
@@ -149,13 +142,8 @@ export const RENDER = {
                         mesh.rotation.set(...geoPacket.transform.rotation);
                         mesh.scale.set(...geoPacket.transform.scale);
                         mesh.visible = true;
-                    } else if (isGeoPatched) {
-                        // Patched but geometry not ready yet
-                        mesh.rotation.x += 0.01;
-                        mesh.rotation.y += 0.015;
-                        mesh.visible = true;
                     } else {
-                        // NOT PATCHED to anything: do NOT display arbitrary objects
+                        // NOT PATCHED or no geometry: strictly invisible (no default shape or auto-spin)
                         mesh.visible = false;
                     }
 
@@ -164,7 +152,16 @@ export const RENDER = {
 
                 return {
                     canvas: renderCanvas,
-                    isGeoPatched: Boolean(patchState?.has('obj_in') || patchState?.has('geo_in'))
+                    isGeoPatched: Boolean(patchState?.has('obj_in') || patchState?.has('geo_in')),
+                    camX: d.camX ?? 0,
+                    camY: d.camY ?? 0,
+                    camZ: d.camZ ?? 5,
+                    fov: Math.round(camera?.fov ?? d.fov ?? 45),
+                    roll: Math.round(d.camRoll ?? 0),
+                    targetX: d.targetX ?? 0,
+                    targetY: d.targetY ?? 0,
+                    targetZ: d.targetZ ?? 0,
+                    isCvFov: Boolean(patchState?.has('fov_in') || patchState?.has('cv_fov'))
                 };
             },
             updatePatchState: (p) => {

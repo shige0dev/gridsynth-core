@@ -27,7 +27,7 @@ export const DISPLAY = {
         <div class="absolute inset-[1px] bg-black overflow-hidden z-0 pointer-events-none select-none">
             <canvas class="display-panel-canvas w-full h-full block" width="100" height="100"></canvas>
         </div>`,
-    // Modal: N x N Division selector + X/Y 0-1 Tile Selector + Live Highlight Viewfinder
+    // Modal: N x N Division selector (Numeric Only) + X/Y Cartesian Sliders around Viewfinder
     renderModal: (m, ctx) => {
         const divN = Math.max(1, Math.min(4, Math.round(m.divN ?? 1)));
         const posX = Number(m.tileX ?? 0.0);
@@ -39,46 +39,45 @@ export const DISPLAY = {
 
         return `
         <div class="flex flex-col gap-2 p-1.5 bg-slate-900 text-slate-200 select-none w-full">
-            <!-- Viewfinder Preview with N x N Grid and Highlight (Full Width 1:1 Square) -->
-            <div class="relative w-full aspect-square bg-black border border-slate-800 rounded overflow-hidden flex items-center justify-center mx-auto">
-                <canvas class="display-modal-canvas w-full h-full block bg-black" width="400" height="400"></canvas>
+            <!-- Section 1: NxN Division Numerical Selector (数値選定・スライダ不要) -->
+            <div class="flex items-center justify-between border-b border-slate-800 pb-1.5 px-0.5">
+                <span class="text-[9px] font-mono font-bold text-emerald-400">DIV (分割数)</span>
+                <div class="flex items-center gap-1.5">
+                    <span id="disp-div-disp" class="font-bold text-cyan-300 text-[10.5px] px-2 py-0.5 bg-slate-950 rounded border border-slate-800">${divN} x ${divN}</span>
+                    <button id="disp-btn-div-dec" class="w-6 h-5 rounded bg-slate-800 hover:bg-slate-700 active:bg-emerald-600 border border-slate-700 text-slate-200 text-xs font-bold font-mono flex items-center justify-center transition leading-none select-none ${isCvDiv ? 'opacity-35 pointer-events-none' : ''}">-</button>
+                    <button id="disp-btn-div-inc" class="w-6 h-5 rounded bg-slate-800 hover:bg-slate-700 active:bg-emerald-600 border border-slate-700 text-slate-200 text-xs font-bold font-mono flex items-center justify-center transition leading-none select-none ${isCvDiv ? 'opacity-35 pointer-events-none' : ''}">+</button>
+                    ${isCvDiv ? `<span id="disp-active-badge" class="text-[8.5px] font-mono font-bold text-emerald-300 bg-emerald-950 px-1.5 py-0.5 rounded border border-emerald-600/50 shrink-0">[CV]</span>` : `<span id="disp-active-badge" class="hidden"></span>`}
+                </div>
             </div>
 
-            <!-- Section 1: NxN Division Numerical Selector (数値選定) -->
-            <div class="flex flex-col gap-1 border-t border-slate-800 pt-1.5 px-0.5">
-                <div class="flex justify-between items-center text-[9px] font-mono">
-                    <span class="font-bold text-emerald-400">N x N DIVISION (バッファ分割数)</span>
-                    <div class="flex items-center gap-1.5">
-                        <span id="disp-div-disp" class="font-bold text-cyan-300 text-[10.5px] px-2 py-0.5 bg-slate-950 rounded border border-slate-800">${divN} x ${divN}</span>
-                        ${isCvDiv ? `<span id="disp-active-badge" class="text-[8.5px] font-mono font-bold text-emerald-300 bg-emerald-950 px-1.5 py-0.5 rounded border border-emerald-600/50 shrink-0">[CV]</span>` : `<span id="disp-active-badge" class="hidden"></span>`}
-                    </div>
-                </div>
+            <!-- Section 2: Viewfinder Preview + Cartesian Y/X Sliders (近傍配置) -->
+            <div class="flex flex-col items-center gap-1.5 pt-0.5">
+                <!-- Top Row: Y Vertical Slider + Viewfinder Canvas -->
                 <div class="flex items-center gap-2">
-                    <input type="range" id="disp-slide-div" min="1" max="4" step="1" value="${divN}" class="flex-1 h-1.5 bg-slate-700 rounded appearance-none cursor-pointer accent-emerald-500" ${isCvDiv ? 'disabled' : ''}>
-                    <div class="flex items-center gap-1">
-                        <button id="disp-btn-div-dec" class="w-6 h-5 rounded bg-slate-800 hover:bg-slate-700 active:bg-emerald-600 border border-slate-700 text-slate-200 text-xs font-bold font-mono flex items-center justify-center transition leading-none select-none ${isCvDiv ? 'opacity-35 pointer-events-none' : ''}">-</button>
-                        <button id="disp-btn-div-inc" class="w-6 h-5 rounded bg-slate-800 hover:bg-slate-700 active:bg-emerald-600 border border-slate-700 text-slate-200 text-xs font-bold font-mono flex items-center justify-center transition leading-none select-none ${isCvDiv ? 'opacity-35 pointer-events-none' : ''}">+</button>
+                    <!-- Y Vertical Slider Column -->
+                    <div class="flex flex-col items-center gap-0.5 w-6">
+                        <span class="text-[8px] font-mono font-bold text-slate-400">Y</span>
+                        <input type="range" id="disp-slide-y" min="0" max="1" step="0.01" value="${posY}" 
+                               class="cursor-pointer accent-cyan-400 h-[116px] w-3" 
+                               style="writing-mode: vertical-lr;" ${isCvY ? 'disabled' : ''}>
+                        <span id="disp-val-y" class="text-[7.5px] font-mono font-bold text-cyan-300 text-center">${posY.toFixed(2)}${isCvY ? '*' : ''}</span>
+                    </div>
+
+                    <!-- Canvas Box (130x130 Compact Viewfinder) -->
+                    <div class="relative w-[130px] h-[130px] bg-black border border-slate-800 rounded overflow-hidden flex items-center justify-center shrink-0">
+                        <canvas class="display-modal-canvas w-full h-full block bg-black" width="130" height="130"></canvas>
                     </div>
                 </div>
-            </div>
 
-            <!-- Section 2: Tile Selection Coordinates (X, Y in 0..1) -->
-            <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
-                <span class="text-[8.5px] font-mono font-bold text-cyan-400">TILE SELECT (X / Y 入力 0.0〜1.0)</span>
-                <div class="grid grid-cols-2 gap-2 text-[8.5px] font-mono">
-                    <div class="flex flex-col gap-0.5">
-                        <div class="flex justify-between items-center text-slate-400">
-                            <span>POS X (PIN4)</span>
-                            <span id="disp-val-x" class="font-bold text-cyan-300">${posX.toFixed(2)}${isCvX ? ' [CV]' : ''}</span>
-                        </div>
-                        <input type="range" id="disp-slide-x" min="0" max="1" step="0.01" value="${posX}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-cyan-400">
+                <!-- Bottom Row: X Horizontal Slider (Aligned directly under Viewfinder Canvas) -->
+                <div class="flex items-center gap-2">
+                    <div class="w-6 flex justify-end">
+                        <span class="text-[8px] font-mono font-bold text-slate-400">X</span>
                     </div>
-                    <div class="flex flex-col gap-0.5">
-                        <div class="flex justify-between items-center text-slate-400">
-                            <span>POS Y (PIN3)</span>
-                            <span id="disp-val-y" class="font-bold text-cyan-300">${posY.toFixed(2)}${isCvY ? ' [CV]' : ''}</span>
-                        </div>
-                        <input type="range" id="disp-slide-y" min="0" max="1" step="0.01" value="${posY}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-cyan-400">
+                    <div class="w-[130px] flex items-center gap-1">
+                        <input type="range" id="disp-slide-x" min="0" max="1" step="0.01" value="${posX}" 
+                               class="flex-1 h-1.5 bg-slate-700 rounded appearance-none cursor-pointer accent-cyan-400" ${isCvX ? 'disabled' : ''}>
+                        <span id="disp-val-x" class="text-[7.5px] font-mono font-bold text-cyan-300 w-6 text-right shrink-0">${posX.toFixed(2)}${isCvX ? '*' : ''}</span>
                     </div>
                 </div>
             </div>
@@ -110,23 +109,11 @@ export const DISPLAY = {
             });
         }
 
-        const slideDiv = root.querySelector('#disp-slide-div');
         const divDisp = root.querySelector('#disp-div-disp');
-
-        if (slideDiv) {
-            slideDiv.addEventListener('input', (e) => {
-                const n = parseInt(e.target.value, 10);
-                m.divN = n;
-                if (divDisp) divDisp.textContent = `${n} x ${n}`;
-                onChange?.();
-            });
-        }
-
         const btnDec = root.querySelector('#disp-btn-div-dec');
         if (btnDec) {
             btnDec.addEventListener('click', () => {
                 m.divN = Math.max(1, (m.divN ?? 1) - 1);
-                if (slideDiv) slideDiv.value = m.divN;
                 if (divDisp) divDisp.textContent = `${m.divN} x ${m.divN}`;
                 ctx.reRenderModal?.();
                 onChange?.();
@@ -137,7 +124,6 @@ export const DISPLAY = {
         if (btnInc) {
             btnInc.addEventListener('click', () => {
                 m.divN = Math.min(4, (m.divN ?? 1) + 1);
-                if (slideDiv) slideDiv.value = m.divN;
                 if (divDisp) divDisp.textContent = `${m.divN} x ${m.divN}`;
                 ctx.reRenderModal?.();
                 onChange?.();
@@ -191,11 +177,11 @@ export const DISPLAY = {
             }
         }
 
-        // 2. Render to modal preview canvas with N x N grid and emerald highlight box (Full-Width High-Res 400x400)
+        // 2. Render to modal preview canvas with N x N grid and emerald highlight box (130x130 Compact Viewfinder)
         if (modal) {
             const mCvs = modal.querySelector('.display-modal-canvas');
             if (mCvs && srcCanvas) {
-                const mw = 400, mh = 400;
+                const mw = 130, mh = 130;
                 if (mCvs.width !== mw || mCvs.height !== mh) {
                     mCvs.width = mw;
                     mCvs.height = mh;
@@ -207,9 +193,9 @@ export const DISPLAY = {
                 mCtx.drawImage(srcCanvas, 0, 0, srcCanvas.width, srcCanvas.height, 0, 0, mw, mh);
 
                 // Draw N x N division grid lines
-                mCtx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
-                mCtx.lineWidth = 1.5;
-                mCtx.setLineDash([4, 4]);
+                mCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                mCtx.lineWidth = 1.0;
+                mCtx.setLineDash([3, 3]);
 
                 const cellMw = mw / divN;
                 const cellMh = mh / divN;
@@ -242,13 +228,13 @@ export const DISPLAY = {
 
                 // Highlight bounding box on selected tile (Emerald)
                 mCtx.strokeStyle = '#10b981';
-                mCtx.lineWidth = 2.5;
+                mCtx.lineWidth = 2.0;
                 mCtx.strokeRect(rx, ry, rw, rh);
 
                 // Corner ticks
-                const tick = 8;
+                const tick = 5;
                 mCtx.strokeStyle = '#a7f3d0';
-                mCtx.lineWidth = 3.0;
+                mCtx.lineWidth = 2.0;
                 mCtx.beginPath(); mCtx.moveTo(rx, ry + tick); mCtx.lineTo(rx, ry); mCtx.lineTo(rx + tick, ry); mCtx.stroke();
                 mCtx.beginPath(); mCtx.moveTo(rx + rw - tick, ry); mCtx.lineTo(rx + rw); mCtx.lineTo(rx + rw, ry + tick); mCtx.stroke();
                 mCtx.beginPath(); mCtx.moveTo(rx, ry + rh - tick); mCtx.lineTo(rx, ry + rh); mCtx.lineTo(rx + tick, ry + rh); mCtx.stroke();
@@ -259,9 +245,9 @@ export const DISPLAY = {
                     const mCropX = cellMw * (cropX / tileW);
                     const mCropY = cellMh * (cropY / tileH);
                     mCtx.save();
-                    mCtx.strokeStyle = 'rgba(56, 189, 248, 0.8)';
-                    mCtx.lineWidth = 1.5;
-                    mCtx.setLineDash([3, 3]);
+                    mCtx.strokeStyle = 'rgba(56, 189, 248, 0.85)';
+                    mCtx.lineWidth = 1.2;
+                    mCtx.setLineDash([2, 2]);
                     mCtx.strokeRect(rx + mCropX, ry + mCropY, rw - mCropX * 2, rh - mCropY * 2);
                     mCtx.restore();
                 }
@@ -284,18 +270,19 @@ export const DISPLAY = {
             if (divDisp && data.isCvDiv) {
                 divDisp.textContent = `${divN} x ${divN}`;
             }
-            const slideDiv = modal.querySelector('#disp-slide-div');
-            if (slideDiv && data.isCvDiv) {
-                slideDiv.value = divN;
-            }
 
             const valXDisp = modal.querySelector('#disp-val-x');
             const valYDisp = modal.querySelector('#disp-val-y');
-            if (valXDisp && data.isCvX) {
-                valXDisp.textContent = `${(data.posX ?? 0).toFixed(2)} [CV]`;
+            const slideX = modal.querySelector('#disp-slide-x');
+            const slideY = modal.querySelector('#disp-slide-y');
+
+            if (data.isCvX) {
+                if (valXDisp) valXDisp.textContent = `${(data.posX ?? 0).toFixed(2)} [CV]`;
+                if (slideX) slideX.value = data.posX ?? 0;
             }
-            if (valYDisp && data.isCvY) {
-                valYDisp.textContent = `${(data.posY ?? 0).toFixed(2)} [CV]`;
+            if (data.isCvY) {
+                if (valYDisp) valYDisp.textContent = `${(data.posY ?? 0).toFixed(2)} [CV]`;
+                if (slideY) slideY.value = data.posY ?? 0;
             }
         }
     }

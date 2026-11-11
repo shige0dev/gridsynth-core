@@ -30,9 +30,9 @@ import { matrixAudioDefs } from './defs/matrix.js?v=591';
 import { valAudioDefs } from './defs/val.js?v=614';
 import { tiltAudioDefs } from './defs/tilt.js?v=623';
 import { geoAudioDefs } from './defs/geo.js?v=679';
-import { rotateAudioDefs } from './defs/rotate.js?v=689';
-import { renderAudioDefs } from './defs/render.js?v=691';
-import { displayAudioDefs } from './defs/display.js?v=691';
+import { rotateAudioDefs } from './defs/rotate.js?v=699';
+import { renderAudioDefs } from './defs/render.js?v=699';
+import { displayAudioDefs } from './defs/display.js?v=699';
 
 export const AUDIO_REGISTRY = {
     ...vcoAudioDefs,

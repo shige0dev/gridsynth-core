@@ -25,10 +25,37 @@ export const RENDER = {
         ]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
-    renderGrid: () => `
-        <div class="absolute inset-[1px] bg-black overflow-hidden z-0 pointer-events-none select-none">
-            <canvas class="render-panel-canvas w-full h-full block" width="100" height="100"></canvas>
-        </div>`,
+    renderGrid: (m) => {
+        const cx = Number(m.camX ?? 0).toFixed(1);
+        const cy = Number(m.camY ?? 0).toFixed(1);
+        const cz = Number(m.camZ ?? 5).toFixed(1);
+        const fov = Math.round(m.fov ?? 45);
+        const roll = Math.round(m.camRoll ?? 0);
+        const tx = Number(m.targetX ?? 0).toFixed(1);
+        const ty = Number(m.targetY ?? 0).toFixed(1);
+        const tz = Number(m.targetZ ?? 0).toFixed(1);
+        return `
+        <div class="flex flex-col items-center justify-center leading-none gap-1 pointer-events-none select-none font-mono text-center">
+            <div class="flex flex-col items-center gap-0.5">
+                <span class="text-[7px] font-bold text-amber-400">CAM POS</span>
+                <span data-render-cam class="text-[8.5px] font-bold text-emerald-300 tracking-tight">${cx}, ${cy}, ${cz}</span>
+            </div>
+            <div class="flex items-center gap-2 text-[7px]">
+                <div class="flex flex-col items-center">
+                    <span class="text-[6.5px] text-slate-400 font-bold">FOV</span>
+                    <span data-render-fov class="font-bold text-cyan-300">${fov}°</span>
+                </div>
+                <div class="flex flex-col items-center">
+                    <span class="text-[6.5px] text-slate-400 font-bold">ROLL</span>
+                    <span data-render-roll class="font-bold text-cyan-300">${roll}°</span>
+                </div>
+            </div>
+            <div class="flex flex-col items-center gap-0.5">
+                <span class="text-[6.5px] text-slate-400 font-bold">TARGET</span>
+                <span data-render-target class="text-[7.5px] font-medium text-slate-300 tracking-tight">${tx}, ${ty}, ${tz}</span>
+            </div>
+        </div>`;
+    },
     renderModal: (m) => `
         <div class="flex flex-col gap-2 p-1.5 bg-slate-900 text-slate-200 select-none w-full">
             <!-- Viewfinder Preview Container (Full Width 1:1 Square) -->
@@ -110,22 +137,29 @@ export const RENDER = {
         bindSlider('render-slide-tgy', 'targetY', 'render-val-tgy', v => v.toFixed(1));
         bindSlider('render-slide-tgz', 'targetZ', 'render-val-tgz', v => v.toFixed(1));
     },
-    updateLive: (cell, data, isPlaying, modal) => {
+    updateLive: (cell, data, isPlaying, modal, m) => {
         if (!cell || !data) return;
         const srcCanvas = data.canvas;
 
-        // 1. Render to cell canvas (Display 3D buffer on module panel)
-        const cvs = cell.querySelector('.render-panel-canvas');
-        if (cvs) {
-            const ctx = cvs.getContext('2d');
-            ctx.clearRect(0, 0, cvs.width, cvs.height);
-            if (srcCanvas) {
-                ctx.drawImage(srcCanvas, 0, 0, srcCanvas.width, srcCanvas.height, 0, 0, cvs.width, cvs.height);
-            } else {
-                ctx.fillStyle = '#020617';
-                ctx.fillRect(0, 0, cvs.width, cvs.height);
-            }
-        }
+        // 1. Update camera info readout on module cell panel
+        const camEl = cell.querySelector('[data-render-cam]');
+        const fovEl = cell.querySelector('[data-render-fov]');
+        const rollEl = cell.querySelector('[data-render-roll]');
+        const targetEl = cell.querySelector('[data-render-target]');
+
+        const cx = Number(data.camX ?? m?.camX ?? 0).toFixed(1);
+        const cy = Number(data.camY ?? m?.camY ?? 0).toFixed(1);
+        const cz = Number(data.camZ ?? m?.camZ ?? 5).toFixed(1);
+        const fov = Math.round(data.fov ?? m?.fov ?? 45);
+        const roll = Math.round(data.roll ?? m?.camRoll ?? 0);
+        const tx = Number(data.targetX ?? m?.targetX ?? 0).toFixed(1);
+        const ty = Number(data.targetY ?? m?.targetY ?? 0).toFixed(1);
+        const tz = Number(data.targetZ ?? m?.targetZ ?? 0).toFixed(1);
+
+        if (camEl) camEl.textContent = `${cx}, ${cy}, ${cz}`;
+        if (fovEl) fovEl.textContent = `${fov}°${data.isCvFov ? '*' : ''}`;
+        if (rollEl) rollEl.textContent = `${roll}°`;
+        if (targetEl) targetEl.textContent = `${tx}, ${ty}, ${tz}`;
 
         // 2. Render to modal preview canvas if open (1:1 square)
         if (modal) {

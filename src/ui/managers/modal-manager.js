@@ -53,7 +53,7 @@ export const MODAL_WIDTHS = {
     OBJECT: 'w-[190px]',
     ROTATE: 'w-[190px]',
     RENDER: 'w-[calc(100%-16px)]',
-    DISPLAY: 'w-[calc(100%-16px)]'
+    DISPLAY: 'w-[200px]'
 };
 
 import { DockManager, DOCK_TITLES } from './dock-manager.js?v=618';
