@@ -4,6 +4,7 @@
 
 export const VIDEO = {
     create: (ctx, d, patch, eng) => {
+        let patchState = patch || null;
         // CV inputs for cv_x, cv_y, cv_w, cv_h
         const gX = ctx.createGain();
         const gY = ctx.createGain();
@@ -123,12 +124,12 @@ export const VIDEO = {
                     };
                 }
 
-                // Master Renderer mode: Find connected OBJECT
+                // Master Renderer mode: Find connected OBJECT ONLY IF geo_in IS PATCHED
                 if (renderer && scene && camera && mesh) {
-                    // Check if geo_in is patched to an OBJECT module
+                    const isGeoPatched = patchState?.has('geo_in') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('geo_in') : false);
                     let geoPacket = null;
-                    if (eng?.modules) {
-                        // Look for an OBJECT instance
+                    if (isGeoPatched && eng?.modules) {
+                        // Look for the specific connected OBJECT instance or fallback to first OBJECT
                         Object.values(eng.modules).forEach(mInst => {
                             if (mInst.data?.type === 'OBJECT' && mInst.getGeometryPacket) {
                                 geoPacket = mInst.getGeometryPacket();
@@ -136,21 +137,22 @@ export const VIDEO = {
                         });
                     }
 
-                    if (geoPacket && geoPacket.geometry) {
+                    if (isGeoPatched && geoPacket && geoPacket.geometry) {
                         if (mesh.geometry !== geoPacket.geometry) {
                             mesh.geometry = geoPacket.geometry;
                         }
                         mesh.rotation.set(...geoPacket.transform.rotation);
                         mesh.scale.set(...geoPacket.transform.scale);
                         mesh.visible = true;
-                    } else {
-                        // Fallback: render default idle rotating torus
+                    } else if (isGeoPatched) {
+                        // Patched but no geometry ready yet: idle rotating
                         mesh.rotation.x += 0.01;
                         mesh.rotation.y += 0.015;
                         mesh.visible = true;
+                    } else {
+                        // NOT PATCHED to anything: do NOT display arbitrary objects!
+                        mesh.visible = false;
                     }
-
-                    renderer.render(scene, camera);
 
                     renderer.render(scene, camera);
                 }
@@ -161,6 +163,9 @@ export const VIDEO = {
                     isLinked: false
                 };
             },
+            updatePatchState: (p) => {
+                patchState = p;
+            },
             destroy: () => {
                 if (renderer) {
                     renderer.dispose();
@@ -169,8 +174,11 @@ export const VIDEO = {
             }
         };
     },
-    update: (ctx, inst, d) => {
+    update: (ctx, inst, d, patch) => {
         inst.data = d;
+        if (patch !== undefined && inst.updatePatchState) {
+            inst.updatePatchState(patch);
+        }
     }
 };
 
