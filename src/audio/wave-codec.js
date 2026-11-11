@@ -636,6 +636,69 @@ export const WaveCodec = {
         });
 
         return affectedIds;
+    },
+
+    /**
+     * Resolves VIDEO video_out -> video_in chains (both star and daisy-chain topologies)
+     * within a page and propagates the root VIDEO's master framebuffer reference
+     * to all downstream linked VIDEO modules.
+     */
+    syncVideoLinks(pageData, synth = null, pageId = '0') {
+        if (!pageData || !pageData.modules) return [];
+        const mods = pageData.modules;
+        const conns = pageData.connections || [];
+
+        const parentMap = {};
+        conns.forEach(c => {
+            if (!c) return;
+            const fM = typeof c === 'object' ? c.from?.moduleId : c.split('>')[0]?.split(':')[0]?.trim();
+            const fP = typeof c === 'object' ? c.from?.port : c.split('>')[0]?.split(':')[1]?.trim();
+            const tM = typeof c === 'object' ? c.to?.moduleId : c.split('>')[1]?.split(':')[0]?.trim();
+            const tP = typeof c === 'object' ? c.to?.port : c.split('>')[1]?.split(':')[1]?.trim();
+            if (fM && tM && fP === 'video_out' && tP === 'video_in') {
+                if (mods[fM]?.type === 'VIDEO' && mods[tM]?.type === 'VIDEO') {
+                    parentMap[tM] = fM;
+                }
+            }
+        });
+
+        const findRootId = (startId) => {
+            let cur = startId;
+            const visited = new Set([cur]);
+            while (parentMap[cur]) {
+                const next = parentMap[cur];
+                if (visited.has(next)) break;
+                visited.add(next);
+                cur = next;
+            }
+            return cur !== startId ? cur : null;
+        };
+
+        const affectedIds = [];
+        Object.entries(mods).forEach(([mId, m]) => {
+            if (!m || m.type !== 'VIDEO') return;
+            const rootId = findRootId(mId);
+            if (rootId && mods[rootId]) {
+                m._isLinked = true;
+                m._linkedRootId = rootId;
+                if (synth?.modules) {
+                    const inst = synth.modules[`${pageId}/${mId}`] || synth.modules[mId];
+                    if (inst) inst.data = m;
+                }
+                affectedIds.push(mId);
+            } else {
+                const wasLinked = Boolean(m._isLinked);
+                m._isLinked = false;
+                m._linkedRootId = null;
+                if (synth?.modules) {
+                    const inst = synth.modules[`${pageId}/${mId}`] || synth.modules[mId];
+                    if (inst) inst.data = m;
+                }
+                if (wasLinked) affectedIds.push(mId);
+            }
+        });
+
+        return affectedIds;
     }
 };
 

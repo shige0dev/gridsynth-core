@@ -79,8 +79,6 @@ export const LAG = {
     }
 };
 
-export const CVDELAY = LAG;
-
 export const REVERB = {
     create: (ctx, d, patch) => {
         const inp = ctx.createGain(), out = ctx.createGain(), dry = ctx.createGain(), wet = ctx.createGain(), conv = ctx.createConvolver(), damp = ctx.createBiquadFilter(), cvG = ctx.createGain();
@@ -127,6 +125,5 @@ export const REVERB = {
 export const effectsAudioDefs = {
     DELAY,
     LAG,
-    CVDELAY,
     REVERB
 };

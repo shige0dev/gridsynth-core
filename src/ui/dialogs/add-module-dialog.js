@@ -1,5 +1,5 @@
 // src/ui/dialogs/add-module-dialog.js
-import { MODULE_REGISTRY } from '../../modules/registry.js';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=679';
 import { FACTORY_SUBPATCHES } from '../../presets/subpatches.js';
 
 /**
@@ -47,9 +47,9 @@ export function openAddModal(slotIdx, modalManager, ui) {
                 },
                 {
                     name: 'VISUALIZER',
-                    sub: 'ビジュアライザ (波形・スペクトラム)',
+                    sub: 'ビジュアライザ (波形・スペクトラム・3D)',
                     color: 'teal',
-                    types: ['SCOPE', 'LISS', 'SPEC']
+                    types: ['SCOPE', 'LISS', 'SPEC', 'GEO_PRIM', 'VIDEO']
                 }
             ];
 

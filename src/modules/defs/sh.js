@@ -47,7 +47,6 @@ export const SWITCH = {
         });
     }
 };
-export const THROUGH = SWITCH;
 
 export const SH = {
     color: 'fuchsia',

@@ -1,15 +1,15 @@
 import { isSubModule } from '../core/utils.js?v=459';
 import { parsePatch } from '../core/patch.js?v=459';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=619';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=679';
 import { UIHelpers } from './helpers.js?v=619';
 import { PresetManager } from './managers/preset-manager.js?v=459';
-import { ModalManager } from './managers/modal-manager.js?v=618';
-import { CableManager } from './managers/cable-manager.js?v=459';
-import { PageManager } from './managers/page-manager.js?v=459';
-import { InteractionManager } from './managers/interaction-manager.js?v=613';
-import { ToolbarManager } from './managers/toolbar-manager.js?v=459';
+import { ModalManager } from './managers/modal-manager.js?v=679';
+import { CableManager } from './managers/cable-manager.js?v=679';
+import { PageManager } from './managers/page-manager.js?v=679';
+import { InteractionManager } from './managers/interaction-manager.js?v=679';
+import { ToolbarManager } from './managers/toolbar-manager.js?v=679';
 
-export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'LISS', 'SPEC', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'MIX', 'DIST4', 'SLCT4', 'KEY', 'RF', 'AR', 'WAVE', 'PAD', 'COUNT', 'LUT', 'MATRIX', 'TILT', 'GSENSOR'];
+export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'LISS', 'SPEC', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'MIX', 'DIST4', 'SLCT4', 'KEY', 'RF', 'AR', 'WAVE', 'PAD', 'COUNT', 'LUT', 'MATRIX', 'TILT', 'GSENSOR', 'GEO_PRIM', 'VIDEO'];
 
 export class UIController {
     constructor(synth) {

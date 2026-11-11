@@ -40,8 +40,6 @@ export const LAG = {
     }
 };
 
-export const CVDELAY = LAG;
-
 export const REVERB = {
     color: 'violet',
     defaults: () => ({ type: 'REVERB', time: 1.8, damp: 4500, mix: 0.4, cvDepth: 1.0, mode: 'hall' }),
@@ -68,7 +66,6 @@ export const REVERB = {
 export const effectsDefs = {
     DELAY,
     LAG,
-    CVDELAY,
     REVERB
 };
 

@@ -1,5 +1,5 @@
 import { safeClone, parseConn, isSubModule, normalizeSubPort, isPortMatching } from './utils.js?v=459';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=512';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=679';
 import { FACTORY_SUBPATCHES } from '../presets/subpatches.js?v=459';
 import { WaveCodec } from '../audio/wave-codec.js?v=459';
 
@@ -441,7 +441,10 @@ export function parsePatch(patchData, cols = 4, userSubpatches = null, errorSink
         Object.entries(finalSlots).forEach(([slotStr, id]) => {
             const slotIdx = parseInt(slotStr, 10);
             const raw = rawMods[id] || {};
-            const type = raw.type || id.replace(/[0-9]/g, '').toUpperCase();
+            let type = raw.type || id.replace(/[0-9]/g, '').toUpperCase();
+            if (type === 'THROUGH') type = 'SWITCH';
+            if (type === 'TILT') type = 'GSENSOR';
+            if (type === 'CVDELAY') type = 'LAG';
             if (!MODULE_REGISTRY[type] && !isSubModule(type)) {
                 const msg = `モジュール設定エラー: 未知のモジュールタイプ "${type}" (モジュールID: "${id}") を検出したため除去しました。`;
                 console.warn(`[Gridsynth Parse] ${msg}`);
@@ -511,6 +514,7 @@ export function parsePatch(patchData, cols = 4, userSubpatches = null, errorSink
             connections
         };
         WaveCodec.syncWaveLinks(parsedPages[pageId]);
+        WaveCodec.syncVideoLinks(parsedPages[pageId]);
     });
 
     if (!parsedPages["0"]) {
@@ -550,6 +554,7 @@ export function exportPatch(pagesData, bpm = 120, cols = 4, rows = 32) {
 
     Object.entries(pagesData || {}).forEach(([pId, pData]) => {
         WaveCodec.syncWaveLinks(pData);
+        WaveCodec.syncVideoLinks(pData);
         const slots = {};
         const cleanMods = {};
 

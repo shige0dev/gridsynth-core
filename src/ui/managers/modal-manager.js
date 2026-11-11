@@ -1,9 +1,9 @@
 // src/ui/managers/modal-manager.js
 import { MODULE_REGISTRY } from '../../modules/registry.js?v=619';
 import { UIHelpers } from '../helpers.js?v=619';
-import { openAddModal } from '../dialogs/add-module-dialog.js';
-import { openNumpadPrompt } from '../dialogs/numpad-dialog.js';
-import { openCustomAlert } from '../dialogs/alert-dialog.js';
+import { openAddModal } from '../dialogs/add-module-dialog.js?v=679';
+import { openNumpadPrompt } from '../dialogs/numpad-dialog.js?v=679';
+import { openCustomAlert } from '../dialogs/alert-dialog.js?v=679';
 
 export const MODAL_WIDTHS = {
     // Complex Synthesizers
@@ -49,7 +49,9 @@ export const MODAL_WIDTHS = {
     SPK: 'w-[185px]',
     SUB: 'w-[240px]',
     GSENSOR: 'w-[180px]',
-    TILT: 'w-[180px]'
+    TILT: 'w-[180px]',
+    GEO_PRIM: 'w-[210px]',
+    VIDEO: 'w-[230px]'
 };
 
 import { DockManager, DOCK_TITLES } from './dock-manager.js?v=618';

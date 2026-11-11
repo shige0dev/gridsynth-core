@@ -389,6 +389,8 @@ export class CableManager {
         const affectedIds = new Set(baseModuleIds);
         const linkedWaveIds = WaveCodec.syncWaveLinks({ modules: this.ui.modules, connections: this.ui.connections }, this.ui.synth, this.ui.currentPageId);
         linkedWaveIds.forEach(id => affectedIds.add(id));
+        const linkedVideoIds = WaveCodec.syncVideoLinks({ modules: this.ui.modules, connections: this.ui.connections }, this.ui.synth, this.ui.currentPageId);
+        linkedVideoIds.forEach(id => affectedIds.add(id));
         affectedIds.forEach(id => {
             if (this.ui.modules[id]) {
                 this.ui.synth.updateModule(`${this.ui.currentPageId}/${id}`, this.ui.modules[id], this.getPatchState(id));

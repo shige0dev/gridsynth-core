@@ -57,6 +57,13 @@ export const SIGNAL_TYPES = {
         brightStroke: '#f1f5f9', // slate-100
         tailwind: 'bg-slate-300'
     },
+    VIDEO: {
+        id: 'video',
+        label: 'VIDEO',
+        stroke: '#a855f7',       // purple-500
+        brightStroke: '#f3e8ff', // purple-100
+        tailwind: 'bg-purple-500'
+    },
     DEFAULT: {
         id: 'default',
         label: 'SIGNAL',
@@ -70,6 +77,11 @@ export const getPortSignalType = (portName = '', modId = '') => {
     const p = String(portName).toLowerCase();
     const m = String(modId).toUpperCase();
 
+    if (p.includes('video') || p.includes('geo') || m.startsWith('GEO_') || m.startsWith('VIDEO')) {
+        if (!p.includes('cv') && !p.includes('rot') && !p.includes('scale')) {
+            return SIGNAL_TYPES.VIDEO;
+        }
+    }
     if (p.includes('link')) {
         return SIGNAL_TYPES.LINK;
     }
@@ -122,6 +134,7 @@ export const resolveConnectionSignalType = (conn) => {
     const fType = getPortSignalType(fP, fM);
     const tType = getPortSignalType(tP, tM);
 
+    if (fType.id === 'video' || tType.id === 'video') return SIGNAL_TYPES.VIDEO;
     if (fType.id === 'link' || tType.id === 'link') return SIGNAL_TYPES.LINK;
     if (fType.id === 'trans' || tType.id === 'trans') return SIGNAL_TYPES.TRANS;
     if (fType.id === 'clock' || tType.id === 'clock') return SIGNAL_TYPES.CLOCK;

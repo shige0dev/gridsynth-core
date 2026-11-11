@@ -13,7 +13,6 @@ export const SWITCH = {
     },
     update: (ctx, inst, d) => AudioHelpers.set(inst.nodes.g.gain, d.state !== false ? 1.0 : 0.0, ctx, 0.003)
 };
-export const THROUGH = SWITCH;
 
 export const SH = {
     create: (ctx, d, patch) => {

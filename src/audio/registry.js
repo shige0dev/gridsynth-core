@@ -29,6 +29,8 @@ import { lutAudioDefs } from './defs/lut.js?v=573';
 import { matrixAudioDefs } from './defs/matrix.js?v=591';
 import { valAudioDefs } from './defs/val.js?v=614';
 import { tiltAudioDefs } from './defs/tilt.js?v=623';
+import { geoAudioDefs } from './defs/geo.js?v=679';
+import { videoAudioDefs } from './defs/video.js?v=679';
 
 export const AUDIO_REGISTRY = {
     ...vcoAudioDefs,
@@ -56,7 +58,9 @@ export const AUDIO_REGISTRY = {
     ...lutAudioDefs,
     ...matrixAudioDefs,
     ...valAudioDefs,
-    ...tiltAudioDefs
+    ...tiltAudioDefs,
+    ...geoAudioDefs,
+    ...videoAudioDefs
 };
 
 export default AUDIO_REGISTRY;

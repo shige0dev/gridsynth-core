@@ -29,6 +29,8 @@ import { lutDefs } from './defs/lut.js?v=619';
 import { matrixDefs } from './defs/matrix.js?v=619';
 import { valDefs } from './defs/val.js?v=618';
 import { tiltDefs } from './defs/tilt.js?v=623';
+import { geoDefs } from './defs/geo.js?v=679';
+import { videoDefs } from './defs/video.js?v=679';
 
 export const MODULE_REGISTRY = {
     ...vcoDefs,
@@ -56,7 +58,9 @@ export const MODULE_REGISTRY = {
     ...lutDefs,
     ...matrixDefs,
     ...valDefs,
-    ...tiltDefs
+    ...tiltDefs,
+    ...geoDefs,
+    ...videoDefs
 };
 
 export { ADSR_CURVES };
