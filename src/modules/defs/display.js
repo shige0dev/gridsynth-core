@@ -24,9 +24,9 @@ export const DISPLAY = {
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
     // Cell grid: Full-slot display matching SCOPE / PAD (stealth text-slate-700 header via controller.js)
     renderGrid: (m, ctx) => `
-        <div class="absolute inset-0.5 bg-black rounded-sm border border-slate-800/90 overflow-hidden z-0 pointer-events-none select-none">
+        <div class="absolute inset-[2px] bg-black overflow-hidden z-0 pointer-events-none select-none">
             <canvas class="display-panel-canvas w-full h-full block" width="100" height="100"></canvas>
-            <div class="absolute bottom-1 left-1 bg-slate-950/85 px-1 py-0.5 rounded border border-slate-800 flex items-center gap-1 text-[7px] font-mono leading-none pointer-events-none drop-shadow-md">
+            <div class="absolute bottom-0.5 left-0.5 bg-slate-950/85 px-1 py-0.5 rounded-xs border border-slate-800 flex items-center gap-1 text-[7px] font-mono leading-none pointer-events-none drop-shadow-md">
                 <span class="disp-panel-div text-emerald-400 font-bold">${m.divN ?? 1}x${m.divN ?? 1}</span>
                 <span class="disp-panel-tile text-cyan-300 font-semibold">[1,1]</span>
             </div>

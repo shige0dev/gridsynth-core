@@ -188,8 +188,9 @@ export class UIController {
                     </div>`;
             } else if (m.type === 'PAD' || m.type === 'SCOPE' || m.type === 'LISS' || m.type === 'SPEC' || m.type === 'VIDEO' || m.type === 'DISPLAY') {
                 const displayName = m.name || m.type;
+                const hideInPerf = this.isPerformanceMode ? 'hidden' : '';
                 titleHTML = `
-                    <div class="absolute top-[2px] left-[2px] right-[2px] flex justify-center items-center pointer-events-none z-20">
+                    <div class="absolute top-[2px] left-[2px] right-[2px] flex justify-center items-center pointer-events-none z-20 stealth-title ${hideInPerf}">
                         <span class="text-slate-700 font-bold text-[8px] tracking-wider select-none truncate">${displayName}</span>
                     </div>`;
             } else {

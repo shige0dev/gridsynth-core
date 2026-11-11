@@ -790,6 +790,13 @@ export class InteractionManager {
                         } else {
                             this.ui.showToast(`${this.dragGroupOffsets.length}個コピーしました`);
                         }
+                        this.ui.syncGridMap();
+                        this.ui.persistCurrentPage();
+                        // ホバリングコピー時は元のモジュールの選択を維持（複数・連続コピーを容易にする）
+                        const origSelected = this.dragGroupOffsets.map(off => off.id);
+                        this.selectedModuleIds = origSelected;
+                        this.ui.updateAllCells();
+                        this.updateSelectionClasses();
                     } else {
                         this.dragGroupOffsets.forEach(off => {
                             const m = this.ui.modules[off.id];
@@ -797,11 +804,11 @@ export class InteractionManager {
                             m.col = tC + off.dCol;
                         });
                         this.ui.showToast(`${this.dragGroupOffsets.length}個移動しました`);
+                        this.ui.syncGridMap();
+                        this.ui.persistCurrentPage();
+                        this.selectedModuleIds = [];
+                        this.ui.updateAllCells();
                     }
-                    this.ui.syncGridMap();
-                    this.ui.persistCurrentPage();
-                    this.selectedModuleIds = [];
-                    this.ui.updateAllCells();
                 } else {
                     // Dropped outside grid or on invalid slot: always return cleanly to normal mode
                     this.selectedModuleIds = [];

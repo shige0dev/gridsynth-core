@@ -262,6 +262,10 @@ body.is-row-dragging .grid-cell * {
     visibility: hidden !important;
 }
 
+.is-performance-mode .stealth-title {
+    display: none !important;
+}
+
 .is-performance-mode .grid-cell {
     cursor: default !important;
 }

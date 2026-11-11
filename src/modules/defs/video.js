@@ -59,7 +59,7 @@ export const VIDEO = {
     },
     // Cell grid: Full-slot display matching SCOPE (text-slate-700 header via controller.js)
     renderGrid: (m, ctx) => `
-        <div class="absolute inset-0.5 bg-black rounded-sm border border-slate-800/90 overflow-hidden z-0 pointer-events-none select-none">
+        <div class="absolute inset-[2px] bg-black overflow-hidden z-0 pointer-events-none select-none">
             <canvas class="video-panel-canvas w-full h-full block" width="100" height="100"></canvas>
         </div>`,
     // Modal: Buffer Size (W x H) + 3-Variable Crop + Camera Position, Optics & LookAt Target controls
