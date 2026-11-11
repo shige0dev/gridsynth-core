@@ -59,7 +59,7 @@ export const SIGNAL_TYPES = {
     },
     GEOMETRY: {
         id: 'geometry',
-        label: 'GEO',
+        label: 'OBJ',
         stroke: '#a855f7',       // purple-500
         brightStroke: '#f3e8ff', // purple-100
         tailwind: 'bg-purple-500'
@@ -84,13 +84,13 @@ export const getPortSignalType = (portName = '', modId = '') => {
     const p = String(portName).toLowerCase();
     const m = String(modId).toUpperCase();
 
-    if (p.includes('geo') || m.startsWith('OBJECT')) {
-        if (!p.includes('cv') && !p.includes('rot') && !p.includes('scale')) {
+    if (p.includes('geo') || p.includes('obj') || m.startsWith('OBJECT') || m.startsWith('ROTATE')) {
+        if (!p.includes('cv') && !p.includes('rot') && !p.includes('scale') && !p.includes('fov')) {
             return SIGNAL_TYPES.GEOMETRY;
         }
     }
     if (p.includes('video') || m.startsWith('VIDEO') || m.startsWith('RENDER') || m.startsWith('DISPLAY')) {
-        if (!p.includes('cv') && !p.includes('rot') && !p.includes('scale')) {
+        if (!p.includes('cv') && !p.includes('rot') && !p.includes('scale') && !p.includes('fov') && !p.includes('div') && !p.includes('obj')) {
             return SIGNAL_TYPES.VIDEO;
         }
     }
@@ -127,7 +127,7 @@ export const getPortSignalType = (portName = '', modId = '') => {
     if (m.startsWith('FMCORE') && (p === 'mod_in' || p === 'wave_in')) {
         return SIGNAL_TYPES.AUDIO;
     }
-    if (p.includes('cv') || p.includes('pitch') || p === 'a' || p === 'b' || p.startsWith('time') || p.startsWith('fold') || p.includes('attack') || p.includes('release') || p.includes('peak') || (p.startsWith('in') && !p.startsWith('wave'))) {
+    if (p.includes('cv') || p.includes('pitch') || p === 'a' || p === 'b' || p.startsWith('time') || p.startsWith('fold') || p.includes('attack') || p.includes('release') || p.includes('peak') || p.includes('fov') || p.includes('div') || (p.startsWith('in') && !p.startsWith('wave') && !p.startsWith('video') && !p.startsWith('obj'))) {
         return SIGNAL_TYPES.CV;
     }
     if (p.includes('wave') || p.startsWith('out') || p.startsWith('audio') || p.includes('mod_in')) {

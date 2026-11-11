@@ -75,7 +75,9 @@ export const RENDER = {
         return {
             nodes: { gFov, anFov },
             inputs: {
+                obj_in: null,
                 geo_in: null,
+                fov_in: gFov,
                 cv_fov: gFov
             },
             outputs: {
@@ -87,8 +89,9 @@ export const RENDER = {
                 const cvFov = readCv(anFov, 0);
 
                 if (renderer && scene && camera && mesh) {
-                    // Check if geo_in is patched and find connected geometry
-                    const isGeoPatched = patchState?.has('geo_in') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('geo_in') : false);
+                    // Check if obj_in / geo_in is patched and find connected geometry
+                    const isGeoPatched = patchState?.has('obj_in') || patchState?.has('geo_in') ||
+                        (window.__GS_APP__?.getPatchState ? (window.__GS_APP__.getPatchState(d.id)?.has('obj_in') || window.__GS_APP__.getPatchState(d.id)?.has('geo_in')) : false);
                     let geoPacket = null;
 
                     if (isGeoPatched && eng?.modules) {
@@ -102,7 +105,7 @@ export const RENDER = {
                                 to: { moduleId: c.split('>')[1].split(':')[0].trim(), port: c.split('>')[1].split(':')[1].trim() }
                             } : null) : c;
 
-                            if (connObj && connObj.to?.moduleId === d.id && connObj.to?.port === 'geo_in') {
+                            if (connObj && connObj.to?.moduleId === d.id && (connObj.to?.port === 'obj_in' || connObj.to?.port === 'geo_in')) {
                                 connectedSourceId = connObj.from?.moduleId;
                             }
                         });
@@ -159,7 +162,7 @@ export const RENDER = {
 
                 return {
                     canvas: renderCanvas,
-                    isGeoPatched: Boolean(patchState?.has('geo_in'))
+                    isGeoPatched: Boolean(patchState?.has('obj_in') || patchState?.has('geo_in'))
                 };
             },
             updatePatchState: (p) => {

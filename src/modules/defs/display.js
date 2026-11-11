@@ -12,40 +12,24 @@ export const DISPLAY = {
     }),
     ports: () => ({
         in: [
-            { port: 'cv_x', pin: 4, color: 'bg-yellow-400', label: 'X' },
+            { port: 'cv_div', pin: 2, color: 'bg-yellow-400', label: 'DIV' },
             { port: 'cv_y', pin: 3, color: 'bg-yellow-400', label: 'Y' },
-            { port: 'video_in', color: 'bg-emerald-500' }
+            { port: 'cv_x', pin: 4, color: 'bg-yellow-400', label: 'X' },
+            { port: 'video_in', pin: 5, color: 'bg-emerald-500', label: 'VID' }
         ],
         out: [
-            { port: 'video_out', color: 'bg-emerald-500' }
+            { port: 'video_out', pin: 11, color: 'bg-emerald-500', label: 'VID' }
         ]
     }),
-    renderPorts: (m, renderP, ports) => {
-        const inPorts = ports.in || [];
-        const outPorts = ports.out || [];
-        const videoIn = inPorts.find(p => p.port === 'video_in');
-        const videoOut = outPorts.find(p => p.port === 'video_out');
-        const otherIn = inPorts.filter(p => p.port !== 'video_in');
-        const otherOut = outPorts.filter(p => p.port !== 'video_out');
-
-        const chassisHTML = UIHelpers.renderChassisPorts(renderP, { in: otherIn, out: otherOut });
-
-        const vInHTML = videoIn ? `
-            <div class="absolute left-[3px] top-[3px] flex items-center pointer-events-auto z-10" title="VIDEO IN (BUFFER LINK)">
-                ${renderP([videoIn])}
-            </div>` : '';
-
-        const vOutHTML = videoOut ? `
-            <div class="absolute right-[3px] top-[3px] flex items-center pointer-events-auto z-10" title="VIDEO OUT (DAISY CHAIN)">
-                ${renderP([videoOut])}
-            </div>` : '';
-
-        return `${chassisHTML}${vInHTML}${vOutHTML}`;
-    },
+    renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
     // Cell grid: Full-slot display matching SCOPE / PAD (stealth text-slate-700 header via controller.js)
     renderGrid: (m, ctx) => `
         <div class="absolute inset-0.5 bg-black rounded-sm border border-slate-800/90 overflow-hidden z-0 pointer-events-none select-none">
             <canvas class="display-panel-canvas w-full h-full block" width="100" height="100"></canvas>
+            <div class="absolute bottom-1 left-1 bg-slate-950/85 px-1 py-0.5 rounded border border-slate-800 flex items-center gap-1 text-[7px] font-mono leading-none pointer-events-none drop-shadow-md">
+                <span class="disp-panel-div text-emerald-400 font-bold">${m.divN ?? 1}x${m.divN ?? 1}</span>
+                <span class="disp-panel-tile text-cyan-300 font-semibold">[1,1]</span>
+            </div>
         </div>`,
     // Modal: N x N Division selector + X/Y 0-1 Tile Selector + Live Highlight Viewfinder
     renderModal: (m, ctx) => {
@@ -57,33 +41,27 @@ export const DISPLAY = {
 
         const isCvX = Boolean(ctx?.patched?.has('cv_x'));
         const isCvY = Boolean(ctx?.patched?.has('cv_y'));
+        const isCvDiv = Boolean(ctx?.patched?.has('cv_div'));
 
         return `
         <div class="flex flex-col gap-2 p-1.5 bg-slate-900 text-slate-200 select-none w-full">
-            <div class="flex items-center justify-between border-b border-slate-700/80 pb-1">
-                <span class="text-xs font-mono font-bold text-emerald-400">DISPLAY VIEWPORT</span>
-                <span id="disp-active-badge" class="text-[9px] font-mono font-bold text-emerald-300 bg-emerald-950 px-1.5 py-0.5 rounded border border-emerald-600/50">
-                    TILE (${col + 1}, ${row + 1}) / ${divN}x${divN}
-                </span>
-            </div>
-
             <!-- Viewfinder Preview with N x N Grid and Highlight -->
             <div class="flex justify-center items-center bg-black border border-slate-800 rounded p-1 w-[128px] h-[128px] mx-auto overflow-hidden">
                 <canvas class="display-modal-canvas block rounded bg-black" width="120" height="120"></canvas>
             </div>
 
-            <!-- Section 1: N x N Grid Division -->
-            <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
-                <div class="flex items-center justify-between">
-                    <span class="text-[8.5px] font-mono font-bold text-emerald-400">N x N DIVISION (バッファ分割数)</span>
-                    <span id="disp-div-disp" class="text-[9px] font-mono font-bold text-cyan-300">${divN} x ${divN} (${divN * divN} 分割)</span>
+            <!-- Section 1: NxN Division Selector -->
+            <div class="flex items-center gap-2 border-t border-slate-800 pt-1.5 px-0.5">
+                <span class="text-[9.5px] font-mono font-bold text-emerald-400 shrink-0">NxN:</span>
+                <div class="flex gap-1 flex-1">
+                    <button data-div="1" class="disp-div-btn flex-1 py-1 rounded text-[10px] font-mono font-bold border transition ${divN === 1 ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">1</button>
+                    <button data-div="2" class="disp-div-btn flex-1 py-1 rounded text-[10px] font-mono font-bold border transition ${divN === 2 ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">2</button>
+                    <button data-div="3" class="disp-div-btn flex-1 py-1 rounded text-[10px] font-mono font-bold border transition ${divN === 3 ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">3</button>
+                    <button data-div="4" class="disp-div-btn flex-1 py-1 rounded text-[10px] font-mono font-bold border transition ${divN === 4 ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">4</button>
                 </div>
-                <div class="grid grid-cols-4 gap-1 text-[8.5px] font-mono font-bold">
-                    <button data-div="1" class="disp-div-btn py-1 rounded border transition ${divN === 1 ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">1x1</button>
-                    <button data-div="2" class="disp-div-btn py-1 rounded border transition ${divN === 2 ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">2x2</button>
-                    <button data-div="3" class="disp-div-btn py-1 rounded border transition ${divN === 3 ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">3x3</button>
-                    <button data-div="4" class="disp-div-btn py-1 rounded border transition ${divN === 4 ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">4x4</button>
-                </div>
+                <span id="disp-active-badge" class="text-[8.5px] font-mono font-bold text-emerald-300 bg-emerald-950 px-1 py-0.5 rounded border border-emerald-600/50 shrink-0">
+                    TILE (${col + 1}, ${row + 1})${isCvDiv ? ' [CV]' : ''}
+                </span>
             </div>
 
             <!-- Section 2: Tile Selection Coordinates (X, Y in 0..1) -->
@@ -105,10 +83,6 @@ export const DISPLAY = {
                         <input type="range" id="disp-slide-y" min="0" max="1" step="0.01" value="${posY}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-cyan-400">
                     </div>
                 </div>
-            </div>
-
-            <div class="text-[8px] font-mono text-slate-400 bg-slate-950 p-1.5 rounded border border-slate-800/80 leading-normal">
-                左上端子 (VID IN) から入力されたバッファを N x N に等分割し、X / Y 入力 (0.0〜1.0) で指定された領域を切り出して全画面表示します。CV結線時はCV入力値を最優先します。
             </div>
         </div>`;
     },
@@ -176,6 +150,16 @@ export const DISPLAY = {
                 ctx.fillStyle = '#020617';
                 ctx.fillRect(0, 0, cvs.width, cvs.height);
             }
+        }
+
+        // Panel Status Overlay (NxN and Tile position)
+        const panelDiv = cell.querySelector('.disp-panel-div');
+        if (panelDiv) {
+            panelDiv.textContent = `${divN}x${divN}${data.isCvDiv ? '*' : ''}`;
+        }
+        const panelTile = cell.querySelector('.disp-panel-tile');
+        if (panelTile) {
+            panelTile.textContent = `[${col + 1},${row + 1}]`;
         }
 
         // 2. Render to modal preview canvas with N x N grid and emerald highlight box
@@ -253,8 +237,18 @@ export const DISPLAY = {
             // Update badge in modal
             const badge = modal.querySelector('#disp-active-badge');
             if (badge) {
-                badge.textContent = `TILE (${col + 1}, ${row + 1}) / ${divN}x${divN}`;
+                badge.textContent = `TILE (${col + 1}, ${row + 1})${data.isCvDiv ? ' [CV]' : ''}`;
             }
+
+            // Sync division buttons highlight in modal if CV driven
+            modal.querySelectorAll('.disp-div-btn').forEach(btn => {
+                const btnDiv = parseInt(btn.dataset.div, 10);
+                if (btnDiv === divN) {
+                    btn.className = 'disp-div-btn flex-1 py-1 rounded text-[10px] font-mono font-bold border transition bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/50';
+                } else {
+                    btn.className = 'disp-div-btn flex-1 py-1 rounded text-[10px] font-mono font-bold border transition bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700';
+                }
+            });
 
             const valXDisp = modal.querySelector('#disp-val-x');
             const valYDisp = modal.querySelector('#disp-val-y');

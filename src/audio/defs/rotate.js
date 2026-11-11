@@ -27,11 +27,12 @@ export const ROTATE = {
         };
 
         const getSourcePacket = () => {
-            const isGeoPatched = patchState?.has('geo_in') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('geo_in') : false);
-            if (!isGeoPatched || !eng?.modules) return null;
+            const isPatched = patchState?.has('obj_in') || patchState?.has('geo_in') ||
+                (window.__GS_APP__?.getPatchState ? (window.__GS_APP__.getPatchState(d.id)?.has('obj_in') || window.__GS_APP__.getPatchState(d.id)?.has('geo_in')) : false);
+            if (!isPatched || !eng?.modules) return null;
 
             const pageId = d.pageId || (window.__GS_APP__?.currentPageId ?? '0');
-            const conns = window.__GS_APP__?.connections || window.__GS_APP__?.pagesData?.[pageId]?.connections || [];
+            const conns = window.__GS_APP__?.connections || window.__GS_APP__.pagesData?.[pageId]?.connections || [];
             let connectedSourceId = null;
 
             conns.forEach(c => {
@@ -40,7 +41,7 @@ export const ROTATE = {
                     to: { moduleId: c.split('>')[1].split(':')[0].trim(), port: c.split('>')[1].split(':')[1].trim() }
                 } : null) : c;
 
-                if (connObj && connObj.to?.moduleId === d.id && connObj.to?.port === 'geo_in') {
+                if (connObj && connObj.to?.moduleId === d.id && (connObj.to?.port === 'obj_in' || connObj.to?.port === 'geo_in')) {
                     connectedSourceId = connObj.from?.moduleId;
                 }
             });
@@ -67,9 +68,11 @@ export const ROTATE = {
             inputs: {
                 cv_in: gIn,
                 cv_x: gIn,
+                obj_in: null,
                 geo_in: null
             },
             outputs: {
+                obj_out: null,
                 geo_out: null
             },
             data: d,

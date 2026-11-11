@@ -6,16 +6,19 @@ export const DISPLAY = {
     create: (ctx, d, patch, eng) => {
         let patchState = patch || null;
 
-        // CV inputs for cv_x (PIN4) and cv_y (PIN3)
+        // CV inputs for cv_x (PIN4), cv_y (PIN3), and cv_div (PIN2)
         const gX = ctx.createGain();
         const gY = ctx.createGain();
+        const gDiv = ctx.createGain();
 
         const anX = ctx.createAnalyser(); anX.fftSize = 32; gX.connect(anX);
         const anY = ctx.createAnalyser(); anY.fftSize = 32; gY.connect(anY);
+        const anDiv = ctx.createAnalyser(); anDiv.fftSize = 32; gDiv.connect(anDiv);
 
         if (eng?.silentSink) {
             gX.connect(eng.silentSink);
             gY.connect(eng.silentSink);
+            gDiv.connect(eng.silentSink);
         }
 
         const buf = new Float32Array(32);
@@ -70,10 +73,11 @@ export const DISPLAY = {
         };
 
         return {
-            nodes: { gX, gY, anX, anY },
+            nodes: { gX, gY, gDiv, anX, anY, anDiv },
             inputs: {
                 cv_x: gX,
                 cv_y: gY,
+                cv_div: gDiv,
                 video_in: null
             },
             outputs: {
@@ -84,15 +88,22 @@ export const DISPLAY = {
             read: () => {
                 const isCvX = patchState?.has('cv_x') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('cv_x') : false);
                 const isCvY = patchState?.has('cv_y') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('cv_y') : false);
+                const isCvDiv = patchState?.has('cv_div') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('cv_div') : false);
 
                 const cvX = readCv(anX, 0);
                 const cvY = readCv(anY, 0);
+                const cvDiv = readCv(anDiv, 0);
 
                 // Priority: External CV if patched (clamped 0..1), otherwise manual slider
                 const posX = Math.max(0, Math.min(1.0, isCvX ? cvX : Number(d.tileX ?? 0.0)));
                 const posY = Math.max(0, Math.min(1.0, isCvY ? cvY : Number(d.tileY ?? 0.0)));
 
-                const divN = Math.max(1, Math.min(4, Math.round(d.divN ?? 1)));
+                let divN = Math.max(1, Math.min(4, Math.round(d.divN ?? 1)));
+                if (isCvDiv) {
+                    // Map 0.0V..1.0V to 1..4 (0..0.25 -> 1, 0.25..0.5 -> 2, 0.5..0.75 -> 3, 0.75..1.0+ -> 4)
+                    divN = Math.max(1, Math.min(4, Math.floor(cvDiv * 4) + 1));
+                }
+
                 const col = Math.min(divN - 1, Math.max(0, Math.floor(posX * divN)));
                 const row = Math.min(divN - 1, Math.max(0, Math.floor(posY * divN)));
 
@@ -107,6 +118,8 @@ export const DISPLAY = {
                     row,
                     isCvX: Boolean(isCvX),
                     isCvY: Boolean(isCvY),
+                    isCvDiv: Boolean(isCvDiv),
+                    cvDivVal: cvDiv,
                     isLinked: Boolean(sharedCanvas)
                 };
             },
@@ -116,8 +129,10 @@ export const DISPLAY = {
             destroy: () => {
                 try { gX.disconnect(); } catch (e) {}
                 try { gY.disconnect(); } catch (e) {}
+                try { gDiv.disconnect(); } catch (e) {}
                 try { anX.disconnect(); } catch (e) {}
                 try { anY.disconnect(); } catch (e) {}
+                try { anDiv.disconnect(); } catch (e) {}
             }
         };
     },

@@ -11,15 +11,10 @@ export const OBJECT = {
     ports: () => ({
         in: [],
         out: [
-            { port: 'geo_out', pin: 11, color: 'bg-purple-500', label: 'GEO' }
+            { port: 'obj_out', pin: 11, color: 'bg-purple-500', label: 'OBJ' }
         ]
     }),
-    renderPorts: (m, renderP, ports) => {
-        const p = (ports.out || []).find(x => x.port === 'geo_out') || { port: 'geo_out', color: 'bg-purple-500' };
-        return `<div class="absolute right-[3px] bottom-[3px] flex items-center pointer-events-auto z-10" title="GEO OUT">
-            ${renderP([p])}
-        </div>`;
-    },
+    renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
     renderGrid: (m) => {
         const shapeName = (m?.shape || 'torus').toUpperCase();
         return `<div class="flex flex-col items-center justify-center leading-none gap-0.5 pointer-events-none text-purple-400 select-none">
@@ -43,7 +38,7 @@ export const OBJECT = {
                 </div>
             </div>
             <div class="text-[8px] font-mono text-slate-400 bg-slate-950 p-1.5 rounded border border-slate-800">
-                OUTPUT: 1:1 Scale White Geometry via GEO OUT (PIN11).
+                OUTPUT: 1:1 Scale White Geometry via OBJ OUT (PIN11).
             </div>
         </div>`;
     },

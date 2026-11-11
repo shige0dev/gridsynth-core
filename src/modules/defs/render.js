@@ -17,28 +17,14 @@ export const RENDER = {
     }),
     ports: () => ({
         in: [
-            { port: 'geo_in', pin: 5, color: 'bg-purple-500', label: 'GEO' },
-            { port: 'cv_fov', pin: 1, color: 'bg-yellow-400', label: 'FOV' }
+            { port: 'fov_in', pin: 4, color: 'bg-yellow-400', label: 'FOV' },
+            { port: 'obj_in', pin: 5, color: 'bg-purple-500', label: 'OBJ' }
         ],
         out: [
-            { port: 'video_out', color: 'bg-emerald-500', label: 'VID' }
+            { port: 'video_out', pin: 11, color: 'bg-emerald-500', label: 'VID' }
         ]
     }),
-    renderPorts: (m, renderP, ports) => {
-        const inPorts = ports.in || [];
-        const outPorts = ports.out || [];
-        const videoOut = outPorts.find(p => p.port === 'video_out');
-        const otherOut = outPorts.filter(p => p.port !== 'video_out');
-
-        const chassisHTML = UIHelpers.renderChassisPorts(renderP, { in: inPorts, out: otherOut });
-        // Place video_out at top-right corner
-        const vOutHTML = videoOut ? `
-            <div class="absolute right-[3px] top-[3px] flex items-center pointer-events-auto z-10" title="VIDEO OUT (MASTER BUFFER)">
-                ${renderP([videoOut])}
-            </div>` : '';
-
-        return `${chassisHTML}${vOutHTML}`;
-    },
+    renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
     renderGrid: () => `
         <div class="flex flex-col items-center justify-center leading-none gap-1 pointer-events-none select-none text-emerald-400">
             <span class="text-[8px] font-bold text-amber-400/90 tracking-tight">3D RENDER</span>
@@ -47,11 +33,6 @@ export const RENDER = {
         </div>`,
     renderModal: (m) => `
         <div class="flex flex-col gap-2 p-1.5 bg-slate-900 text-slate-200 select-none w-full">
-            <div class="flex items-center justify-between border-b border-slate-700/80 pb-1">
-                <span class="text-xs font-mono font-bold text-emerald-400">3D RENDERER</span>
-                <span class="text-[9px] font-mono text-emerald-300 bg-emerald-950 px-1 rounded border border-emerald-600/50">1:1 MASTER BUFFER</span>
-            </div>
-
             <!-- Viewfinder Preview Container (1:1 Square) -->
             <div class="flex justify-center items-center bg-black border border-slate-800 rounded p-1 w-[128px] h-[128px] mx-auto overflow-hidden">
                 <canvas class="render-modal-canvas block rounded bg-black" width="120" height="120"></canvas>
@@ -103,10 +84,6 @@ export const RENDER = {
                         <input type="range" id="render-slide-tgz" min="-5" max="5" step="0.1" value="${m.targetZ ?? 0}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-emerald-500">
                     </div>
                 </div>
-            </div>
-
-            <div class="text-[8px] font-mono text-slate-400 bg-slate-950 p-1.5 rounded border border-slate-800/80 leading-normal">
-                3Dジオメトリを描画して1:1正方形バッファを生成します。右上端子 (VID OUT) から緑ケーブルで DISPLAY モジュールへ接続してください。
             </div>
         </div>`,
     bindEvents: (m, ctx, onChange) => {

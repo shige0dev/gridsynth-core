@@ -52,8 +52,8 @@ export const MODAL_WIDTHS = {
     TILT: 'w-[180px]',
     OBJECT: 'w-[190px]',
     ROTATE: 'w-[190px]',
-    RENDER: 'w-[220px]',
-    DISPLAY: 'w-[210px]',
+    RENDER: 'w-[calc(100%-16px)]',
+    DISPLAY: 'w-[calc(100%-16px)]',
     VIDEO: 'w-[230px]'
 };
 
@@ -151,7 +151,8 @@ export class ModalManager {
         if (!modal || !content) return;
 
         const isAdd = title === 'ADD MODULE';
-        Object.assign(content.style, isAdd
+        const isFull = isAdd || (widthCls && widthCls.includes('calc(100%'));
+        Object.assign(content.style, isFull
             ? { width: 'calc(100% - 16px)', maxWidth: 'none', left: '8px', right: '8px', margin: '0', bottom: 'auto' }
             : { width: '', maxWidth: '', right: 'auto', bottom: 'auto', margin: '0' }
         );
@@ -170,7 +171,7 @@ export class ModalManager {
             const fR = frame.getBoundingClientRect();
             const pR = content.getBoundingClientRect();
 
-            if (!isAdd) {
+            if (!isFull) {
                 const idealLeft = (cR.left - fR.left) + (cR.width - pR.width) / 2;
                 content.style.left = `${Math.max(6, Math.min(fR.width - pR.width - 6, idealLeft))}px`;
             }

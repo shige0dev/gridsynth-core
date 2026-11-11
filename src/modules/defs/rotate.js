@@ -12,25 +12,13 @@ export const ROTATE = {
     ports: () => ({
         in: [
             { port: 'cv_in', pin: 4, color: 'bg-yellow-400', label: 'CV' },
-            { port: 'geo_in', pin: 5, color: 'bg-purple-500', label: 'GEO' }
+            { port: 'obj_in', pin: 5, color: 'bg-purple-500', label: 'OBJ' }
         ],
         out: [
-            { port: 'geo_out', color: 'bg-purple-500', label: 'GEO' }
+            { port: 'obj_out', pin: 10, color: 'bg-purple-500', label: 'OBJ' }
         ]
     }),
-    renderPorts: (m, renderP, ports) => {
-        const inPorts = ports.in || [];
-        const outPorts = ports.out || [];
-        const geoOut = outPorts.find(p => p.port === 'geo_out') || { port: 'geo_out', color: 'bg-purple-500' };
-        const otherOut = outPorts.filter(p => p.port !== 'geo_out');
-
-        const chassisHTML = UIHelpers.renderChassisPorts(renderP, { in: inPorts, out: otherOut });
-        // Place OUT terminal explicitly at bottom-right corner
-        const geoOutHTML = `<div class="absolute right-[3px] bottom-[3px] flex items-center pointer-events-auto z-10" title="GEO OUT">
-            ${renderP([geoOut])}
-        </div>`;
-        return `${chassisHTML}${geoOutHTML}`;
-    },
+    renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
     renderGrid: (m) => {
         const axis = (m.axis || 'x').toUpperCase();
         const rad = Number(m.angle ?? m.rotX ?? 0.0);
