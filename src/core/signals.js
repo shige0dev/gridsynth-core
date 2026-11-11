@@ -84,7 +84,7 @@ export const getPortSignalType = (portName = '', modId = '') => {
     const p = String(portName).toLowerCase();
     const m = String(modId).toUpperCase();
 
-    if (p.includes('geo') || p.includes('obj') || m.startsWith('OBJECT') || m.startsWith('ROTATE')) {
+    if (p.includes('geo') || p.includes('obj') || m.startsWith('OBJECT') || m.startsWith('ROTATE') || m.startsWith('MOVE')) {
         if (!p.includes('cv') && !p.includes('rot') && !p.includes('scale') && !p.includes('fov')) {
             return SIGNAL_TYPES.GEOMETRY;
         }

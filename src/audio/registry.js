@@ -31,7 +31,8 @@ import { valAudioDefs } from './defs/val.js?v=614';
 import { tiltAudioDefs } from './defs/tilt.js?v=623';
 import { geoAudioDefs } from './defs/geo.js?v=679';
 import { rotateAudioDefs } from './defs/rotate.js?v=699';
-import { renderAudioDefs } from './defs/render.js?v=699';
+import { moveAudioDefs } from './defs/move.js?v=701';
+import { renderAudioDefs } from './defs/render.js?v=701';
 import { displayAudioDefs } from './defs/display.js?v=699';
 
 export const AUDIO_REGISTRY = {
@@ -63,6 +64,7 @@ export const AUDIO_REGISTRY = {
     ...tiltAudioDefs,
     ...geoAudioDefs,
     ...rotateAudioDefs,
+    ...moveAudioDefs,
     ...renderAudioDefs,
     ...displayAudioDefs
 };

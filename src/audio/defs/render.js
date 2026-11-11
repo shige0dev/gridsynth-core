@@ -1,6 +1,7 @@
 // src/audio/defs/render.js
 // Audio / Engine side implementation for RENDER module
-// Generates master 1:1 WebGL offscreen framebuffer from incoming 3D geometry packet (OBJECT / ROTATE)
+// Generates master 1:1 WebGL offscreen framebuffer from incoming 3D geometry packet (OBJECT / ROTATE / MOVE)
+// Supports multi-cable summing on obj_in and hierarchical scene graphs.
 
 export const RENDER = {
     create: (ctx, d, patch, eng) => {
@@ -30,7 +31,8 @@ export const RENDER = {
         let renderer = null;
         let scene = null;
         let camera = null;
-        let mesh = null;
+        let rootGroup = null;
+        let wireframeMaterial = null;
         let renderCanvas = null;
 
         const initThree = () => {
@@ -58,21 +60,92 @@ export const RENDER = {
             dirLight.position.set(3, 4, 5);
             scene.add(dirLight);
 
-            // Wireframe mesh (White) - starts with empty BufferGeometry
-            const geom = new THREE.BufferGeometry();
-            const mat = new THREE.MeshStandardMaterial({
+            // Hierarchical root container and shared wireframe material
+            rootGroup = new THREE.Group();
+            scene.add(rootGroup);
+
+            wireframeMaterial = new THREE.MeshStandardMaterial({
                 color: 0xffffff,
                 wireframe: true,
                 roughness: 0.2,
                 metalness: 0.5,
                 side: THREE.DoubleSide
             });
-            mesh = new THREE.Mesh(geom, mat);
-            mesh.visible = false;
-            scene.add(mesh);
         };
 
         initThree();
+
+        const getSourcePackets = () => {
+            const isPatched = patchState?.has('obj_in') || patchState?.has('geo_in') ||
+                (window.__GS_APP__?.getPatchState ? (window.__GS_APP__.getPatchState(d.id)?.has('obj_in') || window.__GS_APP__.getPatchState(d.id)?.has('geo_in')) : false);
+            if (!isPatched || !eng?.modules) return [];
+
+            const pageId = d.pageId || (window.__GS_APP__?.currentPageId ?? '0');
+            const conns = window.__GS_APP__?.connections || window.__GS_APP__.pagesData?.[pageId]?.connections || [];
+            const connectedSourceIds = [];
+
+            conns.forEach(c => {
+                const connObj = typeof c === 'string' ? (c.includes('>') ? {
+                    from: { moduleId: c.split('>')[0].split(':')[0].trim(), port: c.split('>')[0].split(':')[1].trim() },
+                    to: { moduleId: c.split('>')[1].split(':')[0].trim(), port: c.split('>')[1].split(':')[1].trim() }
+                } : null) : c;
+
+                if (connObj && connObj.to?.moduleId === d.id && (connObj.to?.port === 'obj_in' || connObj.to?.port === 'geo_in')) {
+                    connectedSourceIds.push(connObj.from?.moduleId);
+                }
+            });
+
+            const packets = [];
+            connectedSourceIds.forEach(srcId => {
+                const srcMod = eng.modules[`${pageId}/${srcId}`] || eng.modules[srcId];
+                if (srcMod?.getGeometryPacket) {
+                    const pkt = srcMod.getGeometryPacket();
+                    if (pkt) packets.push(pkt);
+                }
+            });
+
+            return packets;
+        };
+
+        const syncNode = (packet, parentThreeObj, idx) => {
+            if (!packet) return;
+            let node = parentThreeObj.children[idx];
+
+            if (packet.children && packet.children.length > 0) {
+                // Group container
+                if (!node || node.type !== 'Group') {
+                    if (node) parentThreeObj.remove(node);
+                    node = new THREE.Group();
+                    parentThreeObj.add(node);
+                }
+                node.visible = true;
+                node.position.set(...(packet.transform?.position || [0, 0, 0]));
+                node.rotation.set(...(packet.transform?.rotation || [0, 0, 0]));
+                node.scale.set(...(packet.transform?.scale || [1, 1, 1]));
+
+                for (let i = 0; i < packet.children.length; i++) {
+                    syncNode(packet.children[i], node, i);
+                }
+                while (node.children.length > packet.children.length) {
+                    node.remove(node.children[node.children.length - 1]);
+                }
+            } else if (packet.geometry) {
+                // Single Mesh Leaf
+                if (!node || node.type !== 'Mesh') {
+                    if (node) parentThreeObj.remove(node);
+                    node = new THREE.Mesh(packet.geometry, wireframeMaterial);
+                    parentThreeObj.add(node);
+                } else {
+                    if (node.geometry !== packet.geometry) {
+                        node.geometry = packet.geometry;
+                    }
+                }
+                node.visible = true;
+                node.position.set(...(packet.transform?.position || [0, 0, 0]));
+                node.rotation.set(...(packet.transform?.rotation || [0, 0, 0]));
+                node.scale.set(...(packet.transform?.scale || [1, 1, 1]));
+            }
+        };
 
         return {
             nodes: { gFov, anFov },
@@ -90,37 +163,8 @@ export const RENDER = {
             read: () => {
                 const cvFov = readCv(anFov, 0);
 
-                if (renderer && scene && camera && mesh) {
-                    // Check if obj_in / geo_in is patched and find connected geometry
-                    const isGeoPatched = patchState?.has('obj_in') || patchState?.has('geo_in') ||
-                        (window.__GS_APP__?.getPatchState ? (window.__GS_APP__.getPatchState(d.id)?.has('obj_in') || window.__GS_APP__.getPatchState(d.id)?.has('geo_in')) : false);
-                    let geoPacket = null;
-
-                    if (isGeoPatched && eng?.modules) {
-                        const pageId = d.pageId || (window.__GS_APP__?.currentPageId ?? '0');
-                        const conns = window.__GS_APP__?.connections || window.__GS_APP__?.pagesData?.[pageId]?.connections || [];
-                        let connectedSourceId = null;
-
-                        conns.forEach(c => {
-                            const connObj = typeof c === 'string' ? (c.includes('>') ? {
-                                from: { moduleId: c.split('>')[0].split(':')[0].trim(), port: c.split('>')[0].split(':')[1].trim() },
-                                to: { moduleId: c.split('>')[1].split(':')[0].trim(), port: c.split('>')[1].split(':')[1].trim() }
-                            } : null) : c;
-
-                            if (connObj && connObj.to?.moduleId === d.id && (connObj.to?.port === 'obj_in' || connObj.to?.port === 'geo_in')) {
-                                connectedSourceId = connObj.from?.moduleId;
-                            }
-                        });
-
-                        if (connectedSourceId) {
-                            const srcMod = eng.modules[`${pageId}/${connectedSourceId}`] || eng.modules[connectedSourceId];
-                            if (srcMod?.getGeometryPacket) {
-                                geoPacket = srcMod.getGeometryPacket();
-                            }
-                        }
-
-                        // Strictly require connection to obj_in / geo_in (no unpatched fallback)
-                    }
+                if (renderer && scene && camera && rootGroup) {
+                    const incomingPackets = getSourcePackets();
 
                     // Apply Camera, Target, FOV & Roll parameters
                     const fov = Math.max(10, Math.min(120, (d.fov ?? 45) + cvFov * 10));
@@ -135,24 +179,25 @@ export const RENDER = {
                         camera.rotateZ((d.camRoll * Math.PI) / 180);
                     }
 
-                    if (isGeoPatched && geoPacket && geoPacket.geometry) {
-                        if (mesh.geometry !== geoPacket.geometry) {
-                            mesh.geometry = geoPacket.geometry;
+                    if (incomingPackets.length > 0) {
+                        rootGroup.visible = true;
+                        for (let i = 0; i < incomingPackets.length; i++) {
+                            syncNode(incomingPackets[i], rootGroup, i);
                         }
-                        mesh.rotation.set(...geoPacket.transform.rotation);
-                        mesh.scale.set(...geoPacket.transform.scale);
-                        mesh.visible = true;
+                        while (rootGroup.children.length > incomingPackets.length) {
+                            rootGroup.remove(rootGroup.children[rootGroup.children.length - 1]);
+                        }
                     } else {
-                        // NOT PATCHED or no geometry: strictly invisible (no default shape or auto-spin)
-                        mesh.visible = false;
+                        rootGroup.visible = false;
                     }
 
                     renderer.render(scene, camera);
                 }
 
+                const isPatched = Boolean(patchState?.has('obj_in') || patchState?.has('geo_in'));
                 return {
                     canvas: renderCanvas,
-                    isGeoPatched: Boolean(patchState?.has('obj_in') || patchState?.has('geo_in')),
+                    isGeoPatched: isPatched,
                     camX: d.camX ?? 0,
                     camY: d.camY ?? 0,
                     camZ: d.camZ ?? 5,
@@ -168,9 +213,15 @@ export const RENDER = {
                 patchState = p;
             },
             destroy: () => {
-                if (mesh) {
-                    try { mesh.geometry?.dispose(); } catch (_) {}
-                    try { mesh.material?.dispose(); } catch (_) {}
+                if (rootGroup) {
+                    rootGroup.traverse(obj => {
+                        if (obj.isMesh) {
+                            try { obj.geometry?.dispose(); } catch (_) {}
+                        }
+                    });
+                }
+                if (wireframeMaterial) {
+                    try { wireframeMaterial.dispose(); } catch (_) {}
                 }
                 if (renderer) {
                     try { renderer.dispose(); } catch (_) {}
