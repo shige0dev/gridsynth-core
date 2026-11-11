@@ -26,9 +26,6 @@ export const DISPLAY = {
     renderGrid: (m, ctx) => `
         <div class="absolute inset-[1px] bg-black overflow-hidden z-0 pointer-events-none select-none">
             <canvas class="display-panel-canvas w-full h-full block" width="100" height="100"></canvas>
-            <div class="absolute bottom-0.5 left-0.5 bg-slate-950/85 px-1 py-0.5 rounded-xs border border-slate-800 flex items-center text-[7px] font-mono leading-none pointer-events-none drop-shadow-md">
-                <span class="disp-panel-div text-emerald-400 font-bold">${m.divN ?? 1}x${m.divN ?? 1}</span>
-            </div>
         </div>`,
     // Modal: N x N Division selector + X/Y 0-1 Tile Selector + Live Highlight Viewfinder
     renderModal: (m, ctx) => {
@@ -192,12 +189,6 @@ export const DISPLAY = {
                 ctx.fillStyle = '#020617';
                 ctx.fillRect(0, 0, cvs.width, cvs.height);
             }
-        }
-
-        // Panel Status Overlay (NxN division)
-        const panelDiv = cell.querySelector('.disp-panel-div');
-        if (panelDiv) {
-            panelDiv.textContent = `${divN}x${divN}${data.isCvDiv ? '*' : ''}`;
         }
 
         // 2. Render to modal preview canvas with N x N grid and emerald highlight box (Full-Width High-Res 400x400)
