@@ -140,17 +140,47 @@ export const VIDEO = {
             }
         }
 
-        // Render to modal canvas if open
+        // Render to modal canvas if open (Show FULL BUFFER + Crop Overlay Box)
         if (modal) {
             const mCvs = modal.querySelector('.video-modal-canvas');
             if (mCvs && srcCanvas) {
                 const mCtx = mCvs.getContext('2d');
-                mCtx.clearRect(0, 0, mCvs.width, mCvs.height);
-                const sx = Math.max(0, Math.min(srcCanvas.width - 1, crop.x * srcCanvas.width));
-                const sy = Math.max(0, Math.min(srcCanvas.height - 1, crop.y * srcCanvas.height));
-                const sw = Math.max(1, Math.min(srcCanvas.width - sx, crop.w * srcCanvas.width));
-                const sh = Math.max(1, Math.min(srcCanvas.height - sy, crop.h * srcCanvas.height));
-                mCtx.drawImage(srcCanvas, sx, sy, sw, sh, 0, 0, mCvs.width, mCvs.height);
+                const mw = mCvs.width, mh = mCvs.height;
+                mCtx.clearRect(0, 0, mw, mh);
+
+                // 1. Draw entire source buffer (Full View)
+                mCtx.drawImage(srcCanvas, 0, 0, srcCanvas.width, srcCanvas.height, 0, 0, mw, mh);
+
+                // 2. Draw dim overlay over out-of-crop region
+                mCtx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+                const rx = crop.x * mw;
+                const ry = crop.y * mh;
+                const rw = crop.w * mw;
+                const rh = crop.h * mh;
+
+                // Dim areas around the crop rectangle
+                mCtx.fillRect(0, 0, mw, ry); // top
+                mCtx.fillRect(0, ry + rh, mw, mh - (ry + rh)); // bottom
+                mCtx.fillRect(0, ry, rx, rh); // left
+                mCtx.fillRect(rx + rw, ry, mw - (rx + rw), rh); // right
+
+                // 3. Draw Crop Bounding Box (Emerald Green)
+                mCtx.strokeStyle = '#10b981';
+                mCtx.lineWidth = 1.5;
+                mCtx.strokeRect(rx, ry, rw, rh);
+
+                // Corner crosshairs / tick markers
+                const tick = 4;
+                mCtx.strokeStyle = '#a7f3d0';
+                mCtx.lineWidth = 2.0;
+                // Top-left
+                mCtx.beginPath(); mCtx.moveTo(rx, ry + tick); mCtx.lineTo(rx, ry); mCtx.lineTo(rx + tick, ry); mCtx.stroke();
+                // Top-right
+                mCtx.beginPath(); mCtx.moveTo(rx + rw - tick, ry); mCtx.lineTo(rx + rw, ry); mCtx.lineTo(rx + rw, ry + tick); mCtx.stroke();
+                // Bottom-left
+                mCtx.beginPath(); mCtx.moveTo(rx, ry + rh - tick); mCtx.lineTo(rx, ry + rh); mCtx.lineTo(rx + tick, ry + rh); mCtx.stroke();
+                // Bottom-right
+                mCtx.beginPath(); mCtx.moveTo(rx + rw - tick, ry + rh); mCtx.lineTo(rx + rw, ry + rh); mCtx.lineTo(rx + rw, ry + rh - tick); mCtx.stroke();
             }
         }
 
