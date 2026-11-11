@@ -42,20 +42,20 @@ export const VIDEO = {
         const initThree = () => {
             if (typeof THREE === 'undefined') return;
             renderCanvas = document.createElement('canvas');
-            // Strict 1:1 Aspect Ratio (200x200) for un-distorted geometry
-            renderCanvas.width = 200;
-            renderCanvas.height = 200;
+            const bw = Math.max(1, Math.min(4, Math.round(d.bufW ?? 1)));
+            const bh = Math.max(1, Math.min(4, Math.round(d.bufH ?? 1)));
+            renderCanvas.width = bw * 200;
+            renderCanvas.height = bh * 200;
 
             renderer = new THREE.WebGLRenderer({
                 canvas: renderCanvas,
                 antialias: true,
                 alpha: true
             });
-            renderer.setSize(200, 200, false);
+            renderer.setSize(bw * 200, bh * 200, false);
 
             scene = new THREE.Scene();
-            // 1:1 Aspect ratio (aspect = 1.0)
-            camera = new THREE.PerspectiveCamera(d.fov ?? 45, 1.0, 0.1, 100);
+            camera = new THREE.PerspectiveCamera(d.fov ?? 45, bw / bh, 0.1, 100);
             camera.position.set(d.camX ?? 0, d.camY ?? 0, d.camZ ?? 5);
             camera.lookAt(d.targetX ?? 0, d.targetY ?? 0, d.targetZ ?? 0);
 
@@ -104,14 +104,19 @@ export const VIDEO = {
                 return renderCanvas;
             },
             read: () => {
+                const bw = Math.max(1, Math.min(4, Math.round(d.bufW ?? 1)));
+                const bh = Math.max(1, Math.min(4, Math.round(d.bufH ?? 1)));
+                const targetW = bw * 200;
+                const targetH = bh * 200;
+
                 const cvX = readCv(anX, 0);
                 const cvY = readCv(anY, 0);
                 const cvSize = readCv(anSize, 0);
                 const cvFov = readCv(anFov, 0);
 
-                const cropX = Math.max(0, Math.min(0.9, (d.cropX ?? 0) + cvX));
-                const cropY = Math.max(0, Math.min(0.9, (d.cropY ?? 0) + cvY));
-                const cropSize = Math.max(0.1, Math.min(1.0 - Math.max(cropX, cropY), (d.cropSize ?? 1.0) + cvSize));
+                const cropX = Math.max(0, Math.min(1.0, (d.cropX ?? 0) + cvX));
+                const cropY = Math.max(0, Math.min(1.0, (d.cropY ?? 0) + cvY));
+                const cropSize = Math.max(0.1, Math.min(1.0, (d.cropSize ?? 1.0) + cvSize));
 
                 // If linked, do NOT render 3D! Just return shared root canvas
                 if (d._isLinked && d._linkedRootId && eng?.modules) {
@@ -120,12 +125,25 @@ export const VIDEO = {
                     return {
                         canvas: shared,
                         crop: { x: cropX, y: cropY, size: cropSize, w: cropSize, h: cropSize },
+                        bufW: bw,
+                        bufH: bh,
                         isLinked: true
                     };
                 }
 
                 // Master Renderer mode: Find connected OBJECT ONLY IF geo_in IS PATCHED
                 if (renderer && scene && camera && mesh) {
+                    if (renderCanvas.width !== targetW || renderCanvas.height !== targetH) {
+                        renderCanvas.width = targetW;
+                        renderCanvas.height = targetH;
+                        renderer.setSize(targetW, targetH, false);
+                    }
+
+                    const aspect = bw / bh;
+                    if (camera.aspect !== aspect) {
+                        camera.aspect = aspect;
+                        camera.updateProjectionMatrix();
+                    }
                     const isGeoPatched = patchState?.has('geo_in') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('geo_in') : false);
                     let geoPacket = null;
                     if (isGeoPatched && eng?.modules) {
@@ -193,6 +211,8 @@ export const VIDEO = {
                 return {
                     canvas: renderCanvas,
                     crop: { x: cropX, y: cropY, size: cropSize, w: cropSize, h: cropSize },
+                    bufW: bw,
+                    bufH: bh,
                     isLinked: false
                 };
             },

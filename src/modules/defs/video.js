@@ -6,6 +6,8 @@ export const VIDEO = {
     color: 'emerald',
     defaults: () => ({
         type: 'VIDEO',
+        bufW: 1, // Buffer width multiplier (1 to 4)
+        bufH: 1, // Buffer height multiplier (1 to 4)
         cropX: 0.0,
         cropY: 0.0,
         cropSize: 1.0,
@@ -60,40 +62,61 @@ export const VIDEO = {
         <div class="absolute inset-0.5 bg-black rounded-sm border border-slate-800/90 overflow-hidden z-0 pointer-events-none select-none">
             <canvas class="video-panel-canvas w-full h-full block" width="100" height="100"></canvas>
         </div>`,
-    // Modal: 3-Variable Crop (X, Y, SIZE) + Camera Position, Optics & LookAt Target controls
+    // Modal: Buffer Size (W x H) + 3-Variable Crop + Camera Position, Optics & LookAt Target controls
     renderModal: (m) => {
         const isLinked = Boolean(m._isLinked);
+        const bw = Math.max(1, Math.min(4, Math.round(m.bufW ?? 1)));
+        const bh = Math.max(1, Math.min(4, Math.round(m.bufH ?? 1)));
         return `
         <div class="flex flex-col gap-2 p-1 bg-slate-900 text-slate-200 select-none w-full">
             <div class="flex items-center justify-between border-b border-slate-700/80 pb-1">
                 <span class="text-xs font-mono font-bold text-emerald-400">3D DISPLAY & CAMERA</span>
                 <span class="text-[9px] font-mono ${isLinked ? 'text-emerald-300 font-bold bg-emerald-950 px-1 rounded' : 'text-slate-400'}">${isLinked ? 'LINKED VIEWER' : 'MASTER RENDERER'}</span>
             </div>
-            <!-- Viewfinder Preview -->
-            <div class="flex justify-center bg-black border border-slate-800 rounded p-1">
-                <canvas class="video-modal-canvas w-[120px] h-[120px] block rounded bg-black" width="120" height="120"></canvas>
+
+            <!-- Viewfinder Preview Container (Fits wide or tall buffer without distortion) -->
+            <div class="flex justify-center items-center bg-black border border-slate-800 rounded p-1 w-[128px] h-[128px] mx-auto overflow-hidden">
+                <canvas class="video-modal-canvas block rounded bg-black" width="120" height="120"></canvas>
+            </div>
+
+            <!-- Section 1: Buffer Resolution Multiplier (W x H, Max 4x4, Default 1x1) -->
+            <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
+                <div class="flex items-center justify-between">
+                    <span class="text-[8.5px] font-mono font-bold text-emerald-400">BUFFER RESOLUTION (バッファ解像度比)</span>
+                    <span id="video-val-buf" class="text-[9px] font-mono font-bold text-emerald-300 bg-emerald-950 px-1.5 py-0.5 rounded border border-emerald-600/50">${bw}x${bh}</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-[8.5px] font-mono">
+                    <div class="flex flex-col gap-0.5">
+                        <div class="flex justify-between text-slate-400"><span>WIDTH (横 1-4)</span><span id="video-val-bufw">${bw}</span></div>
+                        <input type="range" id="video-slide-bufw" min="1" max="4" step="1" value="${bw}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-emerald-500">
+                    </div>
+                    <div class="flex flex-col gap-0.5">
+                        <div class="flex justify-between text-slate-400"><span>HEIGHT (縦 1-4)</span><span id="video-val-bufh">${bh}</span></div>
+                        <input type="range" id="video-slide-bufh" min="1" max="4" step="1" value="${bh}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-emerald-500">
+                    </div>
+                </div>
             </div>
             
-            <!-- Section 1: 1:1 Square Crop (3 Variables) -->
+            <!-- Section 2: 1:1 Square Crop (3 Variables) -->
             <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
                 <span class="text-[8.5px] font-mono font-bold text-emerald-400">VIEWPORT CROP (1:1 SQUARE)</span>
                 <div class="grid grid-cols-3 gap-1.5 text-[8.5px] font-mono">
                     <div class="flex flex-col gap-0.5">
                         <div class="flex justify-between text-slate-400"><span>X</span><span id="video-val-x">${(m.cropX ?? 0).toFixed(2)}</span></div>
-                        <input type="range" id="video-slide-x" min="0" max="0.9" step="0.01" value="${m.cropX ?? 0}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer">
+                        <input type="range" id="video-slide-x" min="0" max="1.0" step="0.01" value="${m.cropX ?? 0}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-emerald-500">
                     </div>
                     <div class="flex flex-col gap-0.5">
                         <div class="flex justify-between text-slate-400"><span>Y</span><span id="video-val-y">${(m.cropY ?? 0).toFixed(2)}</span></div>
-                        <input type="range" id="video-slide-y" min="0" max="0.9" step="0.01" value="${m.cropY ?? 0}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer">
+                        <input type="range" id="video-slide-y" min="0" max="1.0" step="0.01" value="${m.cropY ?? 0}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-emerald-500">
                     </div>
                     <div class="flex flex-col gap-0.5">
                         <div class="flex justify-between text-slate-400"><span>SIZE</span><span id="video-val-size">${(m.cropSize ?? 1.0).toFixed(2)}</span></div>
-                        <input type="range" id="video-slide-size" min="0.1" max="1.0" step="0.01" value="${m.cropSize ?? 1.0}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer">
+                        <input type="range" id="video-slide-size" min="0.1" max="1.0" step="0.01" value="${m.cropSize ?? 1.0}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-emerald-500">
                     </div>
                 </div>
             </div>
 
-            <!-- Section 2: Camera Position & Optics (カメラ位置・画角・回転角) -->
+            <!-- Section 3: Camera Position & Optics (カメラ位置・画角・回転角) -->
             <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
                 <span class="text-[8.5px] font-mono font-bold text-cyan-400">CAMERA POSITION & OPTICS (カメラ位置・画角・回転角)</span>
                 <div class="grid grid-cols-3 gap-1.5 text-[8.5px] font-mono">
@@ -122,7 +145,7 @@ export const VIDEO = {
                 </div>
             </div>
 
-            <!-- Section 3: LookAt Target (注視点) -->
+            <!-- Section 4: LookAt Target (注視点) -->
             <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
                 <span class="text-[8.5px] font-mono font-bold text-amber-400">LOOKAT TARGET (注視点)</span>
                 <div class="grid grid-cols-3 gap-1.5 text-[8.5px] font-mono">
@@ -155,6 +178,25 @@ export const VIDEO = {
                 onChange?.();
             });
         };
+
+        // Buffer Dimensions (Width x Height, Integers 1-4)
+        const updateBufDisp = () => {
+            const disp = root.querySelector('#video-val-buf');
+            if (disp) disp.textContent = `${m.bufW ?? 1}x${m.bufH ?? 1}`;
+        };
+        bindSlider('video-slide-bufw', 'bufW', 'video-val-bufw', v => {
+            const intVal = Math.max(1, Math.min(4, Math.round(v)));
+            m.bufW = intVal;
+            updateBufDisp();
+            return String(intVal);
+        });
+        bindSlider('video-slide-bufh', 'bufH', 'video-val-bufh', v => {
+            const intVal = Math.max(1, Math.min(4, Math.round(v)));
+            m.bufH = intVal;
+            updateBufDisp();
+            return String(intVal);
+        });
+
         // 3-variable Crop
         bindSlider('video-slide-x', 'cropX', 'video-val-x');
         bindSlider('video-slide-y', 'cropY', 'video-val-y');
@@ -176,7 +218,20 @@ export const VIDEO = {
 
         const srcCanvas = data.canvas;
         const crop = data.crop || { x: 0, y: 0, size: 1.0 };
-        const sz = crop.size ?? crop.w ?? 1.0;
+        const sz = Math.max(0.1, Math.min(1.0, crop.size ?? crop.w ?? 1.0));
+
+        let sx = 0, sy = 0, sw = 100, sh = 100;
+        if (srcCanvas) {
+            const minDim = Math.min(srcCanvas.width, srcCanvas.height);
+            const sizePx = Math.max(10, sz * minDim);
+            const maxStartX = Math.max(0, srcCanvas.width - sizePx);
+            const maxStartY = Math.max(0, srcCanvas.height - sizePx);
+
+            sx = Math.max(0, Math.min(maxStartX, (crop.x ?? 0) * maxStartX));
+            sy = Math.max(0, Math.min(maxStartY, (crop.y ?? 0) * maxStartY));
+            sw = sizePx;
+            sh = sizePx;
+        }
 
         // Render to cell canvas (Square 1:1 display fill)
         const cvs = cell.querySelector('.video-panel-canvas');
@@ -184,10 +239,6 @@ export const VIDEO = {
             const ctx = cvs.getContext('2d');
             ctx.clearRect(0, 0, cvs.width, cvs.height);
             if (srcCanvas) {
-                const sx = Math.max(0, Math.min(srcCanvas.width - 1, crop.x * srcCanvas.width));
-                const sy = Math.max(0, Math.min(srcCanvas.height - 1, crop.y * srcCanvas.height));
-                const sw = Math.max(1, Math.min(srcCanvas.width - sx, sz * srcCanvas.width));
-                const sh = Math.max(1, Math.min(srcCanvas.height - sy, sz * srcCanvas.height));
                 ctx.drawImage(srcCanvas, sx, sy, sw, sh, 0, 0, cvs.width, cvs.height);
             } else {
                 ctx.fillStyle = '#020617';
@@ -199,8 +250,20 @@ export const VIDEO = {
         if (modal) {
             const mCvs = modal.querySelector('.video-modal-canvas');
             if (mCvs && srcCanvas) {
+                const aspect = srcCanvas.width / srcCanvas.height;
+                let mw = 120, mh = 120;
+                if (aspect >= 1) {
+                    mw = 120;
+                    mh = Math.max(20, Math.round(120 / aspect));
+                } else {
+                    mh = 120;
+                    mw = Math.max(20, Math.round(120 * aspect));
+                }
+                if (mCvs.width !== mw || mCvs.height !== mh) {
+                    mCvs.width = mw;
+                    mCvs.height = mh;
+                }
                 const mCtx = mCvs.getContext('2d');
-                const mw = mCvs.width, mh = mCvs.height;
                 mCtx.clearRect(0, 0, mw, mh);
 
                 // 1. Draw entire source buffer (Full View)
@@ -208,20 +271,21 @@ export const VIDEO = {
 
                 // 2. Draw dim overlay over out-of-crop region
                 mCtx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-                const rx = crop.x * mw;
-                const ry = crop.y * mh;
-                const rSize = sz * mw;
+                const rx = (sx / srcCanvas.width) * mw;
+                const ry = (sy / srcCanvas.height) * mh;
+                const rw = (sw / srcCanvas.width) * mw;
+                const rh = (sh / srcCanvas.height) * mh;
 
                 // Dim areas around the crop square
                 mCtx.fillRect(0, 0, mw, ry); // top
-                mCtx.fillRect(0, ry + rSize, mw, mh - (ry + rSize)); // bottom
-                mCtx.fillRect(0, ry, rx, rSize); // left
-                mCtx.fillRect(rx + rSize, ry, mw - (rx + rSize), rSize); // right
+                mCtx.fillRect(0, ry + rh, mw, mh - (ry + rh)); // bottom
+                mCtx.fillRect(0, ry, rx, rh); // left
+                mCtx.fillRect(rx + rw, ry, mw - (rx + rw), rh); // right
 
                 // 3. Draw Square Crop Bounding Box (Emerald Green)
                 mCtx.strokeStyle = '#10b981';
                 mCtx.lineWidth = 1.5;
-                mCtx.strokeRect(rx, ry, rSize, rSize);
+                mCtx.strokeRect(rx, ry, rw, rh);
 
                 // Corner crosshairs / tick markers
                 const tick = 4;
@@ -230,11 +294,11 @@ export const VIDEO = {
                 // Top-left
                 mCtx.beginPath(); mCtx.moveTo(rx, ry + tick); mCtx.lineTo(rx, ry); mCtx.lineTo(rx + tick, ry); mCtx.stroke();
                 // Top-right
-                mCtx.beginPath(); mCtx.moveTo(rx + rSize - tick, ry); mCtx.lineTo(rx + rSize, ry); mCtx.lineTo(rx + rSize, ry + tick); mCtx.stroke();
+                mCtx.beginPath(); mCtx.moveTo(rx + rw - tick, ry); mCtx.lineTo(rx + rw, ry); mCtx.lineTo(rx + rw, ry + tick); mCtx.stroke();
                 // Bottom-left
-                mCtx.beginPath(); mCtx.moveTo(rx, ry + rSize - tick); mCtx.lineTo(rx, ry + rSize); mCtx.lineTo(rx + tick, ry + rSize); mCtx.stroke();
+                mCtx.beginPath(); mCtx.moveTo(rx, ry + rh - tick); mCtx.lineTo(rx, ry + rh); mCtx.lineTo(rx + tick, ry + rh); mCtx.stroke();
                 // Bottom-right
-                mCtx.beginPath(); mCtx.moveTo(rx + rSize - tick, ry + rSize); mCtx.lineTo(rx + rSize, ry + rSize); mCtx.lineTo(rx + rSize, ry + rSize - tick); mCtx.stroke();
+                mCtx.beginPath(); mCtx.moveTo(rx + rw - tick, ry + rh); mCtx.lineTo(rx + rw, ry + rh); mCtx.lineTo(rx + rw, ry + rh - tick); mCtx.stroke();
             }
         }
     }

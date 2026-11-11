@@ -1,20 +1,20 @@
 // src/audio/defs/rotate.js
 // Audio / Engine side implementation for ROTATE module
-// Modifies geometry transform rotation around Z-axis in radians.
+// Modifies geometry transform rotation around selectable X, Y, or Z axis in radians.
 // Driven by manual slider or external CV (PIN4).
 
 export const ROTATE = {
     create: (ctx, d, patch, eng) => {
         let patchState = patch || null;
 
-        // CV input for cv_z (PIN4)
-        const gZ = ctx.createGain();
-        const anZ = ctx.createAnalyser();
-        anZ.fftSize = 32;
-        gZ.connect(anZ);
+        // CV input for cv_in / cv_x (PIN4)
+        const gIn = ctx.createGain();
+        const anIn = ctx.createAnalyser();
+        anIn.fftSize = 32;
+        gIn.connect(anIn);
 
         if (eng?.silentSink) {
-            gZ.connect(eng.silentSink);
+            gIn.connect(eng.silentSink);
         }
 
         const buf = new Float32Array(32);
@@ -63,9 +63,10 @@ export const ROTATE = {
         };
 
         return {
-            nodes: { gZ, anZ },
+            nodes: { gIn, anIn },
             inputs: {
-                cv_z: gZ,
+                cv_in: gIn,
+                cv_x: gIn,
                 geo_in: null
             },
             outputs: {
@@ -77,42 +78,48 @@ export const ROTATE = {
                 if (!sourcePacket) return null;
 
                 // Priority: External CV if patched, otherwise internal slider (radians)
-                const isCvPatched = patchState?.has('cv_z') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('cv_z') : false);
-                let rotZ = 0;
+                const isCvPatched = patchState?.has('cv_in') || patchState?.has('cv_x') || (window.__GS_APP__?.getPatchState ? (window.__GS_APP__.getPatchState(d.id)?.has('cv_in') || window.__GS_APP__.getPatchState(d.id)?.has('cv_x')) : false);
+                let angle = 0;
                 if (isCvPatched) {
-                    const cvVal = readCv(anZ, 0);
+                    const cvVal = readCv(anIn, 0);
                     // 1.0V = 2*PI radians (360 degrees)
-                    rotZ = cvVal * (2 * Math.PI);
+                    angle = cvVal * (2 * Math.PI);
                 } else {
-                    rotZ = Number(d.rotZ ?? 0.0);
+                    angle = Number(d.angle ?? d.rotX ?? 0.0);
                 }
 
-                const prevRot = sourcePacket.transform?.rotation || [0, 0, 0];
+                const axis = (d.axis || 'x').toLowerCase();
+                const axisIdx = axis === 'y' ? 1 : (axis === 'z' ? 2 : 0);
+
+                const prevRot = [...(sourcePacket.transform?.rotation || [0, 0, 0])];
+                prevRot[axisIdx] += angle;
+
                 return {
                     type: 'GEOMETRY',
                     id: d.id,
                     shape: sourcePacket.shape,
                     geometry: sourcePacket.geometry,
                     transform: {
-                        rotation: [prevRot[0], prevRot[1], prevRot[2] + rotZ],
+                        rotation: prevRot,
                         scale: sourcePacket.transform?.scale ? [...sourcePacket.transform.scale] : [1.0, 1.0, 1.0]
                     },
                     color: sourcePacket.color || 0xffffff
                 };
             },
             read: () => {
-                const isCvPatched = patchState?.has('cv_z') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('cv_z') : false);
+                const isCvPatched = patchState?.has('cv_in') || patchState?.has('cv_x') || (window.__GS_APP__?.getPatchState ? (window.__GS_APP__.getPatchState(d.id)?.has('cv_in') || window.__GS_APP__.getPatchState(d.id)?.has('cv_x')) : false);
                 const isGeoPatched = patchState?.has('geo_in') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('geo_in') : false);
-                let rotZ = 0;
+                let angle = 0;
                 if (isCvPatched) {
-                    const cvVal = readCv(anZ, 0);
-                    rotZ = cvVal * (2 * Math.PI);
+                    const cvVal = readCv(anIn, 0);
+                    angle = cvVal * (2 * Math.PI);
                 } else {
-                    rotZ = Number(d.rotZ ?? 0.0);
+                    angle = Number(d.angle ?? d.rotX ?? 0.0);
                 }
 
                 return {
-                    rotZ,
+                    axis: d.axis || 'x',
+                    angle,
                     isCvPatched,
                     isGeoPatched
                 };
@@ -121,8 +128,8 @@ export const ROTATE = {
                 patchState = p;
             },
             destroy: () => {
-                try { gZ.disconnect(); } catch (e) {}
-                try { anZ.disconnect(); } catch (e) {}
+                try { gIn.disconnect(); } catch (e) {}
+                try { anIn.disconnect(); } catch (e) {}
             }
         };
     },

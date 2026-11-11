@@ -52,7 +52,7 @@ export const MODAL_WIDTHS = {
     TILT: 'w-[180px]',
     OBJECT: 'w-[190px]',
     ROTATE: 'w-[190px]',
-    VIDEO: 'w-[220px]'
+    VIDEO: 'w-[230px]'
 };
 
 import { DockManager, DOCK_TITLES } from './dock-manager.js?v=618';

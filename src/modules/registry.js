@@ -30,8 +30,8 @@ import { matrixDefs } from './defs/matrix.js?v=619';
 import { valDefs } from './defs/val.js?v=618';
 import { tiltDefs } from './defs/tilt.js?v=623';
 import { geoDefs } from './defs/geo.js?v=679';
-import { rotateDefs } from './defs/rotate.js?v=688';
-import { videoDefs } from './defs/video.js?v=679';
+import { rotateDefs } from './defs/rotate.js?v=689';
+import { videoDefs } from './defs/video.js?v=689';
 
 export const MODULE_REGISTRY = {
     ...vcoDefs,
