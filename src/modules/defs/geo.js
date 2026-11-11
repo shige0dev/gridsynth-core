@@ -1,42 +1,66 @@
 // src/modules/defs/geo.js
-// GEO_PRIM - 3D Geometry Primitive Generator (Torus)
+// GEO_PRIM - 3D Geometry Primitive Generator (Cube / Torus)
 import { UIHelpers } from '../../ui/helpers.js?v=351';
 
 export const GEO_PRIM = {
     color: 'purple',
     defaults: () => ({
         type: 'GEO_PRIM',
-        shape: 'torus',
-        rotX: 0.0,
-        rotY: 0.0,
-        rotZ: 0.0,
-        scale: 1.0,
-        color: '#a855f7'
+        shape: 'torus' // 'cube' | 'torus'
     }),
     ports: () => ({
-        in: [
-            { port: 'rot_x', pin: 4, color: 'bg-yellow-400', label: 'RX' },
-            { port: 'rot_y', pin: 3, color: 'bg-yellow-400', label: 'RY' },
-            { port: 'rot_z', pin: 2, color: 'bg-yellow-400', label: 'RZ' },
-            { port: 'scale_cv', pin: 1, color: 'bg-yellow-400', label: 'SCL' }
-        ],
+        in: [],
         out: [
             { port: 'geo_out', pin: 11, color: 'bg-purple-500', label: 'GEO' }
         ]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
-    renderGrid: (m) => `
+    renderGrid: (m) => {
+        const shapeName = (m?.shape || 'torus').toUpperCase();
+        return `
         <div class="flex flex-col items-center justify-center w-full h-full pointer-events-none relative">
             <div class="relative w-[50px] h-7 border border-purple-500/50 bg-slate-950 p-[1px] flex items-center justify-center shadow-inner overflow-hidden">
                 <canvas class="geo-panel-canvas w-full h-full block" width="50" height="28"></canvas>
                 <div class="absolute bottom-full mb-[2px] inset-x-0 flex items-center justify-center pointer-events-none">
-                    <span class="text-[7.5px] font-mono font-bold leading-none tracking-tight text-amber-400 text-center max-w-[64px]">TORUS</span>
+                    <span class="text-[7.5px] font-mono font-bold leading-none tracking-tight text-amber-400 text-center max-w-[64px]">${shapeName}</span>
                 </div>
                 <div class="absolute top-full mt-[2px] inset-x-0 flex items-center justify-center pointer-events-none">
-                    <span data-geo-disp class="text-[7.5px] font-mono font-bold leading-none tracking-tight text-cyan-300 text-center max-w-[64px]">3D GEO</span>
+                    <span class="text-[7.5px] font-mono font-bold leading-none tracking-tight text-cyan-300 text-center max-w-[64px]">PRIMITIVE</span>
                 </div>
             </div>
-        </div>`,
+        </div>`;
+    },
+    renderModal: (m) => {
+        const curShape = m.shape || 'torus';
+        return `
+        <div class="flex flex-col gap-3 p-2 bg-slate-900 text-slate-200 select-none">
+            <div class="flex items-center justify-between border-b border-slate-700/80 pb-1.5">
+                <span class="text-xs font-mono font-bold text-purple-400">GEOMETRY PRIMITIVE</span>
+                <span class="text-[10px] font-mono text-slate-400">3D MESH SOURCE</span>
+            </div>
+            <div class="flex flex-col gap-1.5">
+                <span class="text-[9px] font-mono font-bold text-slate-400">SELECT SHAPE</span>
+                <div class="grid grid-cols-2 gap-2">
+                    <button data-shape="torus" class="geo-shape-btn py-1.5 rounded text-[10px] font-mono font-bold border transition ${curShape === 'torus' ? 'bg-purple-600 text-white border-purple-400 shadow-sm shadow-purple-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">TORUS</button>
+                    <button data-shape="cube" class="geo-shape-btn py-1.5 rounded text-[10px] font-mono font-bold border transition ${curShape === 'cube' ? 'bg-purple-600 text-white border-purple-400 shadow-sm shadow-purple-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">CUBE</button>
+                </div>
+            </div>
+            <div class="text-[8px] font-mono text-slate-400 bg-slate-950 p-1.5 rounded border border-slate-800">
+                OUTPUT: Default White (1:1 scale) Geometry Packet via GEO OUT (PIN11).
+            </div>
+        </div>`;
+    },
+    bindEvents: (m, ctx, onChange) => {
+        const root = ctx?.getDialogElement ? (ctx.getDialogElement() || document) : document;
+        root.querySelectorAll('.geo-shape-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const shape = e.currentTarget.dataset.shape;
+                m.shape = shape;
+                ctx.reRenderModal?.();
+                onChange?.();
+            });
+        });
+    },
     updateLive: (cell, data, isPlaying, modal, m) => {
         if (!cell) return;
         const cvs = cell.querySelector('.geo-panel-canvas');
@@ -45,41 +69,41 @@ export const GEO_PRIM = {
             const w = cvs.width, h = cvs.height;
             ctx.clearRect(0, 0, w, h);
 
-            // Simple 2.5D wireframe torus render on 50x28 canvas
-            const rx = (data?.rx ?? m.rotX ?? 0) * Math.PI;
-            const ry = (data?.ry ?? m.rotY ?? 0) * Math.PI;
-            const scl = Math.max(0.2, Math.min(2.0, (data?.scale ?? m.scale ?? 1.0)));
-
             ctx.save();
             ctx.translate(w / 2, h / 2);
-            ctx.strokeStyle = '#c084fc';
+            ctx.strokeStyle = '#ffffff'; // Base White wireframe
             ctx.lineWidth = 1.0;
 
-            const R = 9 * scl;
-            const r = 4 * scl;
-            const segments = 8;
-            for (let i = 0; i < segments; i++) {
-                const theta = (i / segments) * Math.PI * 2 + ry;
-                const cosT = Math.cos(theta), sinT = Math.sin(theta);
+            const shape = m?.shape || 'torus';
+            if (shape === 'cube') {
+                // Wireframe isometric cube
+                const s = 7;
                 ctx.beginPath();
-                for (let j = 0; j <= 12; j++) {
-                    const phi = (j / 12) * Math.PI * 2;
-                    const x = (R + r * Math.cos(phi)) * cosT;
-                    const y = r * Math.sin(phi);
-                    const z = (R + r * Math.cos(phi)) * sinT;
-                    const projX = x;
-                    const projY = y * Math.cos(rx) - z * Math.sin(rx);
-                    if (j === 0) ctx.moveTo(projX, projY);
-                    else ctx.lineTo(projX, projY);
-                }
+                // Front / Top / Side faces
+                ctx.moveTo(0, -s); ctx.lineTo(s * 1.2, -s * 0.4); ctx.lineTo(0, s * 0.3); ctx.lineTo(-s * 1.2, -s * 0.4); ctx.closePath();
+                ctx.moveTo(0, s * 0.3); ctx.lineTo(0, s * 1.2); ctx.lineTo(s * 1.2, s * 0.5); ctx.lineTo(s * 1.2, -s * 0.4);
+                ctx.moveTo(0, s * 1.2); ctx.lineTo(-s * 1.2, s * 0.5); ctx.lineTo(-s * 1.2, -s * 0.4);
                 ctx.stroke();
+            } else {
+                // Wireframe torus preview
+                const R = 8, r = 3.5;
+                for (let i = 0; i < 6; i++) {
+                    const theta = (i / 6) * Math.PI * 2;
+                    ctx.beginPath();
+                    for (let j = 0; j <= 8; j++) {
+                        const phi = (j / 8) * Math.PI * 2;
+                        const x = (R + r * Math.cos(phi)) * Math.cos(theta);
+                        const y = r * Math.sin(phi);
+                        const z = (R + r * Math.cos(phi)) * Math.sin(theta);
+                        const projX = x;
+                        const projY = y * 0.8 - z * 0.5;
+                        if (j === 0) ctx.moveTo(projX, projY);
+                        else ctx.lineTo(projX, projY);
+                    }
+                    ctx.stroke();
+                }
             }
             ctx.restore();
-        }
-
-        const disp = cell.querySelector('[data-geo-disp]');
-        if (disp && data) {
-            disp.textContent = `S:${(data.scale ?? 1.0).toFixed(1)} R:${(data.ry ?? 0.0).toFixed(2)}`;
         }
     }
 };

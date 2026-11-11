@@ -71,7 +71,7 @@ export const VIDEO = {
                 <span class="text-[10px] font-mono text-slate-400">${m._isLinked ? 'LINKED VIEWER' : 'MASTER RENDERER'}</span>
             </div>
             <div class="flex justify-center bg-slate-950 border border-slate-800 rounded p-1">
-                <canvas class="video-modal-canvas w-[180px] h-[100px] block rounded bg-black" width="180" height="100"></canvas>
+                <canvas class="video-modal-canvas w-[120px] h-[120px] block rounded bg-black" width="120" height="120"></canvas>
             </div>
             <div class="grid grid-cols-2 gap-2 text-[10px] font-mono">
                 <div class="flex flex-col gap-0.5">
@@ -125,7 +125,7 @@ export const VIDEO = {
         const srcCanvas = data.canvas;
         const crop = data.crop || { x: 0, y: 0, w: 1, h: 1 };
 
-        // Render to cell canvas
+        // Render to cell canvas (Maintain 1:1 aspect ratio centered in 50x28 slot)
         const cvs = cell.querySelector('.video-panel-canvas');
         if (cvs) {
             const ctx = cvs.getContext('2d');
@@ -135,14 +135,19 @@ export const VIDEO = {
                 const sy = Math.max(0, Math.min(srcCanvas.height - 1, crop.y * srcCanvas.height));
                 const sw = Math.max(1, Math.min(srcCanvas.width - sx, crop.w * srcCanvas.width));
                 const sh = Math.max(1, Math.min(srcCanvas.height - sy, crop.h * srcCanvas.height));
-                ctx.drawImage(srcCanvas, sx, sy, sw, sh, 0, 0, cvs.width, cvs.height);
+
+                // 1:1 Aspect Fit to 50x28 (destination height is 28, destination width is 28, centered)
+                const targetDim = Math.min(cvs.width, cvs.height); // 28px
+                const dx = (cvs.width - targetDim) / 2; // Center horizontally
+                const dy = (cvs.height - targetDim) / 2; // Center vertically
+                ctx.drawImage(srcCanvas, sx, sy, sw, sh, dx, dy, targetDim, targetDim);
             } else {
                 ctx.fillStyle = '#0f172a';
                 ctx.fillRect(0, 0, cvs.width, cvs.height);
             }
         }
 
-        // Render to modal canvas if open
+        // Render to modal canvas if open (1:1 Aspect Fit to 100x100)
         if (modal) {
             const mCvs = modal.querySelector('.video-modal-canvas');
             if (mCvs && srcCanvas) {
@@ -152,7 +157,11 @@ export const VIDEO = {
                 const sy = Math.max(0, Math.min(srcCanvas.height - 1, crop.y * srcCanvas.height));
                 const sw = Math.max(1, Math.min(srcCanvas.width - sx, crop.w * srcCanvas.width));
                 const sh = Math.max(1, Math.min(srcCanvas.height - sy, crop.h * srcCanvas.height));
-                mCtx.drawImage(srcCanvas, sx, sy, sw, sh, 0, 0, mCvs.width, mCvs.height);
+
+                const targetDim = Math.min(mCvs.width, mCvs.height); // 100px
+                const dx = (mCvs.width - targetDim) / 2;
+                const dy = (mCvs.height - targetDim) / 2;
+                mCtx.drawImage(srcCanvas, sx, sy, sw, sh, dx, dy, targetDim, targetDim);
             }
         }
 

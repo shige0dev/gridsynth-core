@@ -41,35 +41,37 @@ export const VIDEO = {
         const initThree = () => {
             if (typeof THREE === 'undefined') return;
             renderCanvas = document.createElement('canvas');
-            renderCanvas.width = 256;
-            renderCanvas.height = 144;
+            // Strict 1:1 Aspect Ratio (200x200) for un-distorted geometry
+            renderCanvas.width = 200;
+            renderCanvas.height = 200;
 
             renderer = new THREE.WebGLRenderer({
                 canvas: renderCanvas,
                 antialias: true,
                 alpha: true
             });
-            renderer.setSize(256, 144, false);
+            renderer.setSize(200, 200, false);
 
             scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(45, 256 / 144, 0.1, 100);
+            // 1:1 Aspect ratio (aspect = 1.0)
+            camera = new THREE.PerspectiveCamera(45, 1.0, 0.1, 100);
             camera.position.set(0, 0, 5);
             camera.lookAt(0, 0, 0);
 
-            // Lighting
-            const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+            // Lighting (Neutral bright white)
+            const ambient = new THREE.AmbientLight(0xffffff, 0.7);
             scene.add(ambient);
-            const dirLight = new THREE.DirectionalLight(0xa855f7, 1.2);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
             dirLight.position.set(3, 4, 5);
             scene.add(dirLight);
 
-            // Default wireframe Torus mesh
+            // Default wireframe Torus mesh (White)
             const geom = new THREE.TorusGeometry(1.2, 0.45, 16, 32);
             const mat = new THREE.MeshStandardMaterial({
-                color: 0xc084fc,
+                color: 0xffffff,
                 wireframe: true,
-                roughness: 0.3,
-                metalness: 0.8
+                roughness: 0.2,
+                metalness: 0.5
             });
             mesh = new THREE.Mesh(geom, mat);
             scene.add(mesh);
