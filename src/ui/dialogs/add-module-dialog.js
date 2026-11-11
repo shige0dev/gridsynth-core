@@ -53,9 +53,9 @@ export function openAddModal(slotIdx, modalManager, ui) {
                 },
                 {
                     name: '3D',
-                    sub: '3Dグラフィックス (オブジェクト・レンダラー)',
+                    sub: '3Dグラフィックス (オブジェクト・レンダラー・ディスプレイ)',
                     color: 'purple',
-                    types: ['OBJECT', 'ROTATE', 'VIDEO']
+                    types: ['OBJECT', 'ROTATE', 'RENDER', 'DISPLAY']
                 }
             ];
 

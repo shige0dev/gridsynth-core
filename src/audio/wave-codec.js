@@ -656,7 +656,11 @@ export const WaveCodec = {
             const tM = typeof c === 'object' ? c.to?.moduleId : c.split('>')[1]?.split(':')[0]?.trim();
             const tP = typeof c === 'object' ? c.to?.port : c.split('>')[1]?.split(':')[1]?.trim();
             if (fM && tM && fP === 'video_out' && tP === 'video_in') {
-                if (mods[fM]?.type === 'VIDEO' && mods[tM]?.type === 'VIDEO') {
+                const srcType = mods[fM]?.type;
+                const dstType = mods[tM]?.type;
+                const isVideoSrc = srcType === 'VIDEO' || srcType === 'RENDER' || srcType === 'DISPLAY';
+                const isVideoDst = dstType === 'VIDEO' || dstType === 'RENDER' || dstType === 'DISPLAY';
+                if (isVideoSrc && isVideoDst) {
                     parentMap[tM] = fM;
                 }
             }
@@ -676,7 +680,7 @@ export const WaveCodec = {
 
         const affectedIds = [];
         Object.entries(mods).forEach(([mId, m]) => {
-            if (!m || m.type !== 'VIDEO') return;
+            if (!m || (m.type !== 'VIDEO' && m.type !== 'RENDER' && m.type !== 'DISPLAY')) return;
             const rootId = findRootId(mId);
             if (rootId && mods[rootId]) {
                 m._isLinked = true;
