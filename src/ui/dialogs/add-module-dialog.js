@@ -43,7 +43,7 @@ export function openAddModal(slotIdx, modalManager, ui) {
                     name: 'CV',
                     sub: 'CV (変調・演算・エンベロープ)',
                     color: 'purple',
-                    types: ['LFO', 'ADSR', 'RF', 'AR', 'CHORD', 'LEVEL', 'MATH1', 'MATH2', 'SH', 'COUNT', 'LUT', 'MATRIX', 'LAG', 'VALUE', 'GSENSOR', 'SWITCH', 'SUB_IO']
+                    types: ['LFO', 'ADSR', 'RF', 'AR', 'CHORD', 'MATH1', 'MATH2', 'SH', 'COUNT', 'LUT', 'MATRIX', 'LAG', 'VALUE', 'GSENSOR', 'SWITCH', 'SUB_IO']
                 },
                 {
                     name: 'VISUALIZER',
