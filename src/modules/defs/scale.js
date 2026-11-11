@@ -46,7 +46,7 @@ export const SCALE = {
             <div class="flex flex-col gap-1">
                 <span class="text-[8px] font-mono font-bold text-slate-400">SELECT SCALE AXIS (拡大軸)</span>
                 <div class="grid grid-cols-4 gap-1">
-                    <button data-axis="all" class="scale-axis-btn py-1 rounded text-[9px] font-mono font-bold border transition ${curAxis === 'all' ? 'bg-purple-600 text-white border-purple-400 shadow-sm shadow-purple-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">ALL 均等</button>
+                    <button data-axis="all" class="scale-axis-btn py-1 rounded text-[9px] font-mono font-bold border transition ${curAxis === 'all' ? 'bg-purple-600 text-white border-purple-400 shadow-sm shadow-purple-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">ALL (均等)</button>
                     <button data-axis="x" class="scale-axis-btn py-1 rounded text-[9px] font-mono font-bold border transition ${curAxis === 'x' ? 'bg-purple-600 text-white border-purple-400 shadow-sm shadow-purple-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">X 軸</button>
                     <button data-axis="y" class="scale-axis-btn py-1 rounded text-[9px] font-mono font-bold border transition ${curAxis === 'y' ? 'bg-purple-600 text-white border-purple-400 shadow-sm shadow-purple-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">Y 軸</button>
                     <button data-axis="z" class="scale-axis-btn py-1 rounded text-[9px] font-mono font-bold border transition ${curAxis === 'z' ? 'bg-purple-600 text-white border-purple-400 shadow-sm shadow-purple-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">Z 軸</button>
@@ -59,34 +59,28 @@ export const SCALE = {
                     <span class="text-slate-300 font-bold">SCALE RATIO</span>
                     <span id="scale-val-disp" class="font-bold text-purple-300">${val.toFixed(2)}x</span>
                 </div>
-                <input type="range" id="scale-slide-val" min="0.0" max="4.0" step="0.05" value="${val}" class="h-1.5 bg-slate-700 rounded appearance-none cursor-pointer accent-purple-500" ${isCvPatched ? 'disabled' : ''}>
-                <div class="flex justify-between text-[7.5px] font-mono text-slate-400">
+                <input type="range" id="scale-slide-ratio" min="0.0" max="4.0" step="0.05" value="${val}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-purple-500 ${isCvPatched ? 'opacity-35 pointer-events-none' : ''}">
+                <div class="flex justify-between text-[7px] font-mono text-slate-400">
                     <span>0.0x</span>
                     <span>1.0x (原寸)</span>
+                    <span>2.0x</span>
+                    <span>3.0x</span>
                     <span>4.0x</span>
                 </div>
             </div>
 
-            <!-- Quick Presets -->
-            <div class="flex flex-col gap-1">
-                <span class="text-[8px] font-mono font-bold text-slate-400">PRESET RATIOS</span>
-                <div class="grid grid-cols-5 gap-1 text-[8.5px] font-mono font-bold">
-                    <button data-scale="0.5" class="scale-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition">0.5x</button>
-                    <button data-scale="1.0" class="scale-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition">1.0x</button>
-                    <button data-scale="1.5" class="scale-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition">1.5x</button>
-                    <button data-scale="2.0" class="scale-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition">2.0x</button>
-                    <button data-scale="3.0" class="scale-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition">3.0x</button>
-                </div>
-            </div>
-
-            <div class="text-[8px] font-mono text-slate-400 bg-slate-950 p-1.5 rounded border border-slate-800/80 leading-normal">
-                CV (PIN4) が結線されると外部CV値に合わせて最上位オブジェクトのローカル軸を中心に拡大・縮小します (1.0V = 2.0x)。複数ケーブルの同時結線（サミング）時は共通のローカル原点から全体が連動して拡大します。
+            <!-- Preset Scales -->
+            <div class="grid grid-cols-4 gap-1 text-[8.5px] font-mono">
+                <button data-scale="0.5" class="scale-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">0.5x</button>
+                <button data-scale="1.0" class="scale-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">1.0x</button>
+                <button data-scale="1.5" class="scale-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">1.5x</button>
+                <button data-scale="2.0" class="scale-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">2.0x</button>
             </div>
         </div>`;
     },
     bindEvents: (m, ctx, onChange) => {
         const root = ctx?.getDialogElement ? (ctx.getDialogElement() || document) : document;
-        const slider = root.querySelector('#scale-slide-val');
+        const slider = root.querySelector('#scale-slide-ratio');
         const disp = root.querySelector('#scale-val-disp');
 
         const updateDisp = (val) => {
@@ -126,16 +120,15 @@ export const SCALE = {
         const axisEl = cell.querySelector('[data-scale-axis]');
         const valEl = cell.querySelector('[data-scale-val]');
         const curAxis = (data.axis || m.axis || 'all').toUpperCase();
-        const curVal = Number(data.scale ?? m.scale ?? 1.0);
+        const curScale = Number(data.scale ?? m.scale ?? 1.0);
 
         if (axisEl) {
             axisEl.textContent = `SCALE ${curAxis}`;
         }
         if (valEl) {
-            valEl.textContent = `${curVal.toFixed(2)}x`;
+            valEl.textContent = `${curScale.toFixed(2)}x`;
         }
 
-        // If modal open, update live readout
         if (modal) {
             const badge = modal.querySelector('#scale-status-badge');
             if (badge) {
@@ -150,10 +143,8 @@ export const SCALE = {
             if (data.isCvPatched) {
                 const disp = modal.querySelector('#scale-val-disp');
                 if (disp) {
-                    disp.textContent = `${curVal.toFixed(2)}x [CV]`;
+                    disp.textContent = `${curScale.toFixed(2)}x [CV]`;
                 }
-                const slider = modal.querySelector('#scale-slide-val');
-                if (slider) slider.value = curVal;
             }
         }
     }

@@ -60,28 +60,23 @@ export const MOVE = {
                     <span class="text-slate-300 font-bold">POSITION OFFSET</span>
                     <span id="move-val-disp" class="font-bold text-purple-300">${sign}${val.toFixed(2)}</span>
                 </div>
-                <input type="range" id="move-slide-offset" min="-5.0" max="5.0" step="0.05" value="${val}" class="h-1.5 bg-slate-700 rounded appearance-none cursor-pointer accent-purple-500" ${isCvPatched ? 'disabled' : ''}>
-                <div class="flex justify-between text-[7.5px] font-mono text-slate-400">
+                <input type="range" id="move-slide-offset" min="-5.0" max="5.0" step="0.05" value="${val}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-purple-500 ${isCvPatched ? 'opacity-35 pointer-events-none' : ''}">
+                <div class="flex justify-between text-[7px] font-mono text-slate-400">
                     <span>-5.0</span>
+                    <span>-2.5</span>
                     <span>0.0</span>
+                    <span>+2.5</span>
                     <span>+5.0</span>
                 </div>
             </div>
 
-            <!-- Quick Presets -->
-            <div class="flex flex-col gap-1">
-                <span class="text-[8px] font-mono font-bold text-slate-400">PRESET OFFSETS</span>
-                <div class="grid grid-cols-5 gap-1 text-[8.5px] font-mono font-bold">
-                    <button data-pos="-2.0" class="move-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition">-2.0</button>
-                    <button data-pos="-1.0" class="move-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition">-1.0</button>
-                    <button data-pos="0.0" class="move-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition">0.0</button>
-                    <button data-pos="1.0" class="move-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition">+1.0</button>
-                    <button data-pos="2.0" class="move-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition">+2.0</button>
-                </div>
-            </div>
-
-            <div class="text-[8px] font-mono text-slate-400 bg-slate-950 p-1.5 rounded border border-slate-800/80 leading-normal">
-                CV (PIN4) が結線されると外部CV値を優先して選択軸の位置をオフセットします (1.0V = 2.0 units)。複数ケーブルの同時結線（サミング）に対応しており、複数入力時は自動でコンテナ化してまとめて移動します。
+            <!-- Preset Offsets -->
+            <div class="grid grid-cols-5 gap-1 text-[8.5px] font-mono">
+                <button data-offset="-2.0" class="move-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">-2.0</button>
+                <button data-offset="-1.0" class="move-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">-1.0</button>
+                <button data-offset="0.0" class="move-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">0.0</button>
+                <button data-offset="1.0" class="move-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">+1.0</button>
+                <button data-offset="2.0" class="move-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">+2.0</button>
             </div>
         </div>`;
     },
@@ -115,7 +110,7 @@ export const MOVE = {
 
         root.querySelectorAll('.move-preset-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const val = parseFloat(e.currentTarget.dataset.pos);
+                const val = parseFloat(e.currentTarget.dataset.offset);
                 m.offset = val;
                 if (slider) slider.value = val;
                 updateDisp(val);
@@ -128,17 +123,16 @@ export const MOVE = {
         const axisEl = cell.querySelector('[data-move-axis]');
         const valEl = cell.querySelector('[data-move-val]');
         const curAxis = (data.axis || m.axis || 'x').toUpperCase();
-        const curVal = Number(data.offset ?? m.offset ?? 0);
-        const sign = curVal > 0 ? '+' : '';
+        const curOffset = Number(data.offset ?? m.offset ?? 0);
+        const sign = curOffset > 0 ? '+' : '';
 
         if (axisEl) {
             axisEl.textContent = `MOVE ${curAxis}`;
         }
         if (valEl) {
-            valEl.textContent = `${sign}${curVal.toFixed(2)}`;
+            valEl.textContent = `${sign}${curOffset.toFixed(2)}`;
         }
 
-        // If modal open, update live readout
         if (modal) {
             const badge = modal.querySelector('#move-status-badge');
             if (badge) {
@@ -153,10 +147,8 @@ export const MOVE = {
             if (data.isCvPatched) {
                 const disp = modal.querySelector('#move-val-disp');
                 if (disp) {
-                    disp.textContent = `${sign}${curVal.toFixed(2)} [CV]`;
+                    disp.textContent = `${sign}${curOffset.toFixed(2)} [CV]`;
                 }
-                const slider = modal.querySelector('#move-slide-offset');
-                if (slider) slider.value = curVal;
             }
         }
     }

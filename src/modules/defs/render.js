@@ -2,6 +2,14 @@
 // RENDER - 3D Graphics Renderer & Framebuffer Generator (1:1 Square Master Buffer)
 import { UIHelpers } from '../../ui/helpers.js?v=351';
 
+export const STYLE_OVERRIDES = [
+    { id: 'auto', label: 'AUTO' },
+    { id: 'wire', label: 'WIRE' },
+    { id: 'solid', label: 'SOLID' },
+    { id: 'normal', label: 'NORMAL' },
+    { id: 'toon', label: 'TOON' }
+];
+
 export const RENDER = {
     color: 'emerald',
     defaults: () => ({
@@ -13,7 +21,8 @@ export const RENDER = {
         targetY: 0.0,
         targetZ: 0.0,
         fov: 45.0,
-        camRoll: 0.0
+        camRoll: 0.0,
+        materialOverride: 'auto' // 'auto' | 'wire' | 'solid' | 'normal' | 'toon'
     }),
     ports: () => ({
         in: [
@@ -34,20 +43,22 @@ export const RENDER = {
         const tx = Number(m.targetX ?? 0).toFixed(1);
         const ty = Number(m.targetY ?? 0).toFixed(1);
         const tz = Number(m.targetZ ?? 0).toFixed(1);
+        const style = (m.materialOverride || 'auto').toUpperCase();
+
         return `
-        <div class="flex flex-col items-center justify-center leading-none gap-1 pointer-events-none select-none font-mono text-center">
+        <div class="flex flex-col items-center justify-center leading-none gap-0.5 pointer-events-none select-none font-mono text-center">
             <div class="flex flex-col items-center gap-0.5">
                 <span class="text-[7px] font-bold text-amber-400">CAM POS</span>
                 <span data-render-cam class="text-[8.5px] font-bold text-emerald-300 tracking-tight">${cx}, ${cy}, ${cz}</span>
             </div>
-            <div class="flex items-center gap-2 text-[7px]">
+            <div class="flex items-center gap-1.5 text-[7px]">
                 <div class="flex flex-col items-center">
                     <span class="text-[6.5px] text-slate-400 font-bold">FOV</span>
                     <span data-render-fov class="font-bold text-cyan-300">${fov}°</span>
                 </div>
                 <div class="flex flex-col items-center">
-                    <span class="text-[6.5px] text-slate-400 font-bold">ROLL</span>
-                    <span data-render-roll class="font-bold text-cyan-300">${roll}°</span>
+                    <span class="text-[6.5px] text-slate-400 font-bold">STYLE</span>
+                    <span class="font-bold text-purple-300">${style}</span>
                 </div>
             </div>
             <div class="flex flex-col items-center gap-0.5">
@@ -56,16 +67,32 @@ export const RENDER = {
             </div>
         </div>`;
     },
-    renderModal: (m) => `
+    renderModal: (m) => {
+        const curOverride = m.materialOverride || 'auto';
+
+        return `
         <div class="flex flex-col gap-2 p-1.5 bg-slate-900 text-slate-200 select-none w-full">
             <!-- Viewfinder Preview Container (Full Width 1:1 Square) -->
             <div class="relative w-full aspect-square bg-black border border-slate-800 rounded overflow-hidden flex items-center justify-center mx-auto">
                 <canvas class="render-modal-canvas w-full h-full block bg-black" width="400" height="400"></canvas>
             </div>
 
-            <!-- Section 1: Camera Position & Optics (カメラ位置・画角・回転角) -->
+            <!-- Section 1: Material Style Override -->
             <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
-                <span class="text-[8.5px] font-mono font-bold text-cyan-400">CAMERA POSITION & OPTICS (カメラ位置・画角・回転角)</span>
+                <div class="flex items-center justify-between">
+                    <span class="text-[8px] font-mono font-bold text-purple-400 uppercase tracking-wider">STYLE OVERRIDE (マテリアル一括上書き)</span>
+                    <span class="text-[7.5px] font-mono text-slate-400">${curOverride === 'auto' ? 'OBJ SPECIFIC' : 'FORCED'}</span>
+                </div>
+                <div class="grid grid-cols-5 gap-1">
+                    ${STYLE_OVERRIDES.map(s => `
+                        <button data-override="${s.id}" class="render-override-btn py-1 rounded text-[8px] font-mono font-bold border transition ${curOverride === s.id ? 'bg-purple-600 text-white border-purple-400 shadow-sm shadow-purple-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">${s.label}</button>
+                    `).join('')}
+                </div>
+            </div>
+
+            <!-- Section 2: Camera Position & Optics -->
+            <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
+                <span class="text-[8px] font-mono font-bold text-cyan-400 uppercase tracking-wider">CAMERA POSITION & OPTICS</span>
                 <div class="grid grid-cols-3 gap-1.5 text-[8.5px] font-mono">
                     <div class="flex flex-col gap-0.5">
                         <div class="flex justify-between text-slate-400"><span>CAM X</span><span id="render-val-camx">${(m.camX ?? 0).toFixed(1)}</span></div>
@@ -80,21 +107,21 @@ export const RENDER = {
                         <input type="range" id="render-slide-camz" min="1.0" max="20.0" step="0.2" value="${m.camZ ?? 5}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-emerald-500">
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-2 text-[8.5px] font-mono mt-0.5">
+                <div class="grid grid-cols-2 gap-1.5 text-[8.5px] font-mono pt-0.5">
                     <div class="flex flex-col gap-0.5">
-                        <div class="flex justify-between text-slate-400"><span>FOV (画角)</span><span id="render-val-fov">${Math.round(m.fov ?? 45)}°</span></div>
-                        <input type="range" id="render-slide-fov" min="15" max="120" step="1" value="${m.fov ?? 45}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-emerald-500">
+                        <div class="flex justify-between text-slate-400"><span>FOV (視野角)</span><span id="render-val-fov">${Math.round(m.fov ?? 45)}°</span></div>
+                        <input type="range" id="render-slide-fov" min="15" max="110" step="1" value="${m.fov ?? 45}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-cyan-500">
                     </div>
                     <div class="flex flex-col gap-0.5">
                         <div class="flex justify-between text-slate-400"><span>ROLL (回転角)</span><span id="render-val-roll">${Math.round(m.camRoll ?? 0)}°</span></div>
-                        <input type="range" id="render-slide-roll" min="-180" max="180" step="1" value="${m.camRoll ?? 0}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-emerald-500">
+                        <input type="range" id="render-slide-roll" min="-180" max="180" step="5" value="${m.camRoll ?? 0}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-cyan-500">
                     </div>
                 </div>
             </div>
 
-            <!-- Section 2: LookAt Target (注視点) -->
+            <!-- Section 3: LookAt Target -->
             <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
-                <span class="text-[8.5px] font-mono font-bold text-amber-400">LOOKAT TARGET (注視点)</span>
+                <span class="text-[8px] font-mono font-bold text-amber-400 uppercase tracking-wider">LOOKAT TARGET (注視点)</span>
                 <div class="grid grid-cols-3 gap-1.5 text-[8.5px] font-mono">
                     <div class="flex flex-col gap-0.5">
                         <div class="flex justify-between text-slate-400"><span>AIM X</span><span id="render-val-tgx">${(m.targetX ?? 0).toFixed(1)}</span></div>
@@ -110,9 +137,20 @@ export const RENDER = {
                     </div>
                 </div>
             </div>
-        </div>`,
+        </div>`;
+    },
     bindEvents: (m, ctx, onChange) => {
         const root = ctx?.getDialogElement ? (ctx.getDialogElement() || document) : document;
+
+        // Override Buttons
+        root.querySelectorAll('.render-override-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                m.materialOverride = e.currentTarget.dataset.override;
+                ctx.reRenderModal?.();
+                onChange?.();
+            });
+        });
+
         const bindSlider = (id, prop, dispId, fmt = (v) => v.toFixed(2)) => {
             const input = root.querySelector('#' + id);
             const disp = root.querySelector('#' + dispId);
@@ -129,10 +167,10 @@ export const RENDER = {
         bindSlider('render-slide-camx', 'camX', 'render-val-camx', v => v.toFixed(1));
         bindSlider('render-slide-camy', 'camY', 'render-val-camy', v => v.toFixed(1));
         bindSlider('render-slide-camz', 'camZ', 'render-val-camz', v => v.toFixed(1));
-        // Optics (画角・回転角)
+        // Optics
         bindSlider('render-slide-fov', 'fov', 'render-val-fov', v => `${Math.round(v)}°`);
         bindSlider('render-slide-roll', 'camRoll', 'render-val-roll', v => `${Math.round(v)}°`);
-        // LookAt Target (注視点)
+        // LookAt Target
         bindSlider('render-slide-tgx', 'targetX', 'render-val-tgx', v => v.toFixed(1));
         bindSlider('render-slide-tgy', 'targetY', 'render-val-tgy', v => v.toFixed(1));
         bindSlider('render-slide-tgz', 'targetZ', 'render-val-tgz', v => v.toFixed(1));

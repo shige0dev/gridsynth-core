@@ -89,10 +89,8 @@ export const getPortSignalType = (portName = '', modId = '') => {
             return SIGNAL_TYPES.GEOMETRY;
         }
     }
-    if (p.includes('video') || m.startsWith('RENDER') || m.startsWith('DISPLAY')) {
-        if (!p.includes('cv') && !p.includes('rot') && !p.includes('scale') && !p.includes('fov') && !p.includes('div') && !p.includes('obj')) {
-            return SIGNAL_TYPES.VIDEO;
-        }
+    if (p.includes('video')) {
+        return SIGNAL_TYPES.VIDEO;
     }
     if (p.includes('link')) {
         return SIGNAL_TYPES.LINK;
@@ -127,7 +125,7 @@ export const getPortSignalType = (portName = '', modId = '') => {
     if (m.startsWith('FMCORE') && (p === 'mod_in' || p === 'wave_in')) {
         return SIGNAL_TYPES.AUDIO;
     }
-    if (p.includes('cv') || p.includes('pitch') || p === 'a' || p === 'b' || p.startsWith('time') || p.startsWith('fold') || p.includes('attack') || p.includes('release') || p.includes('peak') || p.includes('fov') || p.includes('div') || (p.startsWith('in') && !p.startsWith('wave') && !p.startsWith('video') && !p.startsWith('obj'))) {
+    if (p.includes('cv') || p.includes('pitch') || p === 'a' || p === 'b' || p.startsWith('time') || p.startsWith('fold') || p.includes('attack') || p.includes('release') || p.includes('peak') || p.includes('fov') || (p.startsWith('in') && !p.startsWith('wave') && !p.startsWith('video') && !p.startsWith('obj'))) {
         return SIGNAL_TYPES.CV;
     }
     if (p.includes('wave') || p.startsWith('out') || p.startsWith('audio') || p.includes('mod_in')) {

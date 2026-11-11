@@ -54,39 +54,33 @@ export const ROTATE = {
                 </div>
             </div>
 
-            <!-- Angle Slider (Radian) -->
+            <!-- Angle Slider -->
             <div class="flex flex-col gap-1 bg-slate-950/60 p-1.5 rounded border border-slate-800">
                 <div class="flex justify-between items-center text-[9px] font-mono">
-                    <span class="text-slate-300 font-bold">ROTATION ANGLE</span>
+                    <span class="text-slate-300 font-bold">MANUAL ANGLE</span>
                     <span id="rotate-val-disp" class="font-bold text-purple-300">${rad.toFixed(2)} rad (${deg}°)</span>
                 </div>
-                <input type="range" id="rotate-slide-angle" min="-6.28" max="6.28" step="0.01" value="${rad}" class="h-1.5 bg-slate-700 rounded appearance-none cursor-pointer accent-purple-500">
-                <div class="flex justify-between text-[7.5px] font-mono text-slate-400">
-                    <span>-2π (-6.28)</span>
+                <input type="range" id="rotate-slide-rad" min="0" max="6.283" step="0.02" value="${rad}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-purple-500 ${isCvPatched ? 'opacity-35 pointer-events-none' : ''}">
+                <div class="flex justify-between text-[7px] font-mono text-slate-400">
                     <span>0</span>
-                    <span>+2π (+6.28)</span>
+                    <span>π/2 (90°)</span>
+                    <span>π (180°)</span>
+                    <span>2π (360°)</span>
                 </div>
             </div>
 
-            <!-- Quick Presets -->
-            <div class="flex flex-col gap-1">
-                <span class="text-[8px] font-mono font-bold text-slate-400">PRESET ANGLES</span>
-                <div class="grid grid-cols-4 gap-1 text-[8.5px] font-mono font-bold">
-                    <button data-rot="0" class="rotate-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition">0°</button>
-                    <button data-rot="1.57" class="rotate-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition">π/2 (90°)</button>
-                    <button data-rot="3.14" class="rotate-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition">π (180°)</button>
-                    <button data-rot="4.71" class="rotate-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition">3π/2 (270°)</button>
-                </div>
-            </div>
-
-            <div class="text-[8px] font-mono text-slate-400 bg-slate-950 p-1.5 rounded border border-slate-800/80 leading-normal">
-                CV (PIN4) が結線されると外部CV値を優先して選択軸の回転角を決定します (1.0V = 2π rad)。未結線時は上記スライダの回転角（ラジアン）を保持します。出力は右下コーナーから送出されます。
+            <!-- Angle Presets -->
+            <div class="grid grid-cols-4 gap-1 text-[8.5px] font-mono">
+                <button data-rot="0.0" class="rotate-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">0°</button>
+                <button data-rot="1.5708" class="rotate-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">90°</button>
+                <button data-rot="3.1416" class="rotate-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">180°</button>
+                <button data-rot="4.7124" class="rotate-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">270°</button>
             </div>
         </div>`;
     },
     bindEvents: (m, ctx, onChange) => {
         const root = ctx?.getDialogElement ? (ctx.getDialogElement() || document) : document;
-        const slider = root.querySelector('#rotate-slide-angle');
+        const slider = root.querySelector('#rotate-slide-rad');
         const disp = root.querySelector('#rotate-val-disp');
 
         const updateDisp = (val) => {
@@ -141,7 +135,6 @@ export const ROTATE = {
             degEl.textContent = `${curDeg}°${data.isCvPatched ? ' (CV)' : ''}`;
         }
 
-        // If modal open, update live readout
         if (modal) {
             const badge = modal.querySelector('#rotate-status-badge');
             if (badge) {

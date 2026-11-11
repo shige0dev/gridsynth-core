@@ -1,7 +1,7 @@
 // src/audio/defs/render.js
 // Audio / Engine side implementation for RENDER module
-// Generates master 1:1 WebGL offscreen framebuffer from incoming 3D geometry packet (OBJECT / ROTATE / MOVE)
-// Supports multi-cable summing on obj_in and hierarchical scene graphs.
+// Generates master 1:1 WebGL offscreen framebuffer from incoming 3D geometry packet (OBJECT / ROTATE / MOVE / SCALE)
+// Supports multi-cable summing, hierarchical scene graphs, and material style overriding.
 
 export const RENDER = {
     create: (ctx, d, patch, eng) => {
@@ -26,14 +26,57 @@ export const RENDER = {
             return isNaN(avg) ? def : avg;
         };
 
-        // Three.js Scene Setup (High-Res 800x800 Buffer for clear 4x4 division)
+        // Three.js Scene Setup (800x800 Buffer)
         const BUFFER_SIZE = 800;
         let renderer = null;
         let scene = null;
         let camera = null;
         let rootGroup = null;
-        let wireframeMaterial = null;
         let renderCanvas = null;
+
+        // Material Cache (Key: `${style}_${colorHex}`)
+        const materialCache = new Map();
+
+        const getMaterial = (style, colorHex) => {
+            if (typeof THREE === 'undefined') return null;
+            const key = `${style}_${colorHex}`;
+            if (!materialCache.has(key)) {
+                let mat;
+                switch (style) {
+                    case 'solid':
+                        mat = new THREE.MeshStandardMaterial({
+                            color: colorHex,
+                            roughness: 0.3,
+                            metalness: 0.4,
+                            side: THREE.DoubleSide
+                        });
+                        break;
+                    case 'normal':
+                        mat = new THREE.MeshNormalMaterial({
+                            side: THREE.DoubleSide
+                        });
+                        break;
+                    case 'toon':
+                        mat = new THREE.MeshToonMaterial({
+                            color: colorHex,
+                            side: THREE.DoubleSide
+                        });
+                        break;
+                    case 'wire':
+                    default:
+                        mat = new THREE.MeshStandardMaterial({
+                            color: colorHex,
+                            wireframe: true,
+                            roughness: 0.2,
+                            metalness: 0.5,
+                            side: THREE.DoubleSide
+                        });
+                        break;
+                }
+                materialCache.set(key, mat);
+            }
+            return materialCache.get(key);
+        };
 
         const initThree = () => {
             if (typeof THREE === 'undefined') return;
@@ -55,24 +98,15 @@ export const RENDER = {
             camera.position.set(d.camX ?? 0, d.camY ?? 0, d.camZ ?? 5);
             camera.lookAt(d.targetX ?? 0, d.targetY ?? 0, d.targetZ ?? 0);
 
-            // Lighting (Neutral bright white)
-            const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+            // Lighting (Neutral bright white ambient + directional)
+            const ambient = new THREE.AmbientLight(0xffffff, 0.8);
             scene.add(ambient);
-            const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
-            dirLight.position.set(3, 4, 5);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            dirLight.position.set(4, 5, 6);
             scene.add(dirLight);
 
-            // Hierarchical root container and shared wireframe material
             rootGroup = new THREE.Group();
             scene.add(rootGroup);
-
-            wireframeMaterial = new THREE.MeshStandardMaterial({
-                color: 0xffffff,
-                wireframe: true,
-                roughness: 0.2,
-                metalness: 0.5,
-                side: THREE.DoubleSide
-            });
         };
 
         initThree();
@@ -125,21 +159,29 @@ export const RENDER = {
                 node.rotation.set(...(packet.transform?.rotation || [0, 0, 0]));
                 node.scale.set(...(packet.transform?.scale || [1, 1, 1]));
 
-                for (let i = 0; i < packet.children.length; i++) {
-                    syncNode(packet.children[i], node, i);
+                for (let cIdx = 0; cIdx < packet.children.length; cIdx++) {
+                    syncNode(packet.children[cIdx], node, cIdx);
                 }
                 while (node.children.length > packet.children.length) {
                     node.remove(node.children[node.children.length - 1]);
                 }
-            } else if (packet.geometry) {
-                // Single Mesh Leaf
+            } else {
+                // Leaf mesh
+                const override = d.materialOverride || 'auto';
+                const effectiveStyle = (override !== 'auto') ? override : (packet.materialStyle || 'wire');
+                const effectiveColor = packet.color || 0xffffff;
+                const mat = getMaterial(effectiveStyle, effectiveColor);
+
                 if (!node || node.type !== 'Mesh') {
                     if (node) parentThreeObj.remove(node);
-                    node = new THREE.Mesh(packet.geometry, wireframeMaterial);
+                    node = new THREE.Mesh(packet.geometry, mat);
                     parentThreeObj.add(node);
                 } else {
                     if (node.geometry !== packet.geometry) {
                         node.geometry = packet.geometry;
+                    }
+                    if (node.material !== mat) {
+                        node.material = mat;
                     }
                 }
                 node.visible = true;
@@ -152,7 +194,7 @@ export const RENDER = {
         let lastRenderTime = 0;
         const renderFrame = () => {
             const now = (typeof performance !== 'undefined') ? performance.now() : Date.now();
-            if (now - lastRenderTime < 4) return; // Already rendered in current frame
+            if (now - lastRenderTime < 4) return;
             lastRenderTime = now;
 
             if (renderer && scene && camera && rootGroup) {
@@ -219,6 +261,7 @@ export const RENDER = {
                     targetX: d.targetX ?? 0,
                     targetY: d.targetY ?? 0,
                     targetZ: d.targetZ ?? 0,
+                    materialOverride: d.materialOverride || 'auto',
                     isCvFov: Boolean(patchState?.has('fov_in') || patchState?.has('cv_fov'))
                 };
             },
@@ -233,9 +276,10 @@ export const RENDER = {
                         }
                     });
                 }
-                if (wireframeMaterial) {
-                    try { wireframeMaterial.dispose(); } catch (_) {}
-                }
+                materialCache.forEach(mat => {
+                    try { mat.dispose(); } catch (_) {}
+                });
+                materialCache.clear();
                 if (renderer) {
                     try { renderer.dispose(); } catch (_) {}
                     renderer = null;

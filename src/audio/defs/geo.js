@@ -1,6 +1,6 @@
 // src/audio/defs/geo.js
 // Audio/Engine-side representation for OBJECT
-// Outputs pure 1:1 white geometry packets (Torus, Cube, Plane, Sphere, Cylinder)
+// Outputs 1:1 geometry packets with Material & Color styling
 
 export const OBJECT = {
     create: (ctx, d, patch, eng) => {
@@ -14,15 +14,12 @@ export const OBJECT = {
                         geometries[shape] = new THREE.BoxGeometry(1.6, 1.6, 1.6);
                         break;
                     case 'plane':
-                        // 平面 (2.0 x 2.0, 両面可視ワイヤーフレーム)
                         geometries[shape] = new THREE.PlaneGeometry(2.0, 2.0, 8, 8);
                         break;
                     case 'sphere':
-                        // 球 (半径1.2, 分割数24)
                         geometries[shape] = new THREE.SphereGeometry(1.2, 24, 24);
                         break;
                     case 'cylinder':
-                        // 円筒 (上径0.9, 下径0.9, 高さ1.8, 分割数24)
                         geometries[shape] = new THREE.CylinderGeometry(0.9, 0.9, 1.8, 24);
                         break;
                     case 'torus':
@@ -32,6 +29,12 @@ export const OBJECT = {
                 }
             }
             return geometries[shape];
+        };
+
+        const parseColor = (col) => {
+            if (!col) return 0xffffff;
+            if (typeof col === 'number') return col;
+            return parseInt(String(col).replace('#', ''), 16) || 0xffffff;
         };
 
         return {
@@ -52,10 +55,15 @@ export const OBJECT = {
                         rotation: [0, 0, 0],
                         scale: [1.0, 1.0, 1.0]
                     },
-                    color: 0xffffff // Base White
+                    materialStyle: d.material || 'wire',
+                    color: parseColor(d.color)
                 };
             },
-            read: () => ({ shape: d.shape || 'torus' }),
+            read: () => ({
+                shape: d.shape || 'torus',
+                material: d.material || 'wire',
+                color: d.color || '#ffffff'
+            }),
             destroy: () => {
                 Object.values(geometries).forEach(g => {
                     try { g.dispose(); } catch (_) {}
