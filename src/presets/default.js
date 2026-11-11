@@ -11,6 +11,7 @@ import { preset11 } from './demos/11_fmcore_2op_demo.js?v=459';
 import { preset12 } from './demos/12_chord_arpeggio.js?v=459';
 import { preset13 } from './demos/13_wave_chop.js?v=459';
 import { preset14 } from './demos/14_16_pad_drumkit.js?v=459';
+import { preset15 } from './demos/15_3d_video_wall.js?v=710';
 
 export const getDefaultPresets = () => ({
     '01_DELAY_TECHNO': preset01,
@@ -25,5 +26,6 @@ export const getDefaultPresets = () => ({
     '11_FMCORE_2OP_DEMO': preset11,
     '12_CHORD_ARPEGGIO': preset12,
     '13_WAVE_CHOP': preset13,
-    '14_16_PAD_DRUMKIT': preset14
+    '14_16_PAD_DRUMKIT': preset14,
+    '15_3D_VIDEO_WALL': preset15
 });
