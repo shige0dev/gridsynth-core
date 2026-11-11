@@ -113,7 +113,9 @@ export const DISPLAY = {
         const sSubW = tileW - (cropX * 2);
         const sSubH = tileH - (cropY * 2);
 
-        // Render to Grid Cell
+        // Render to Grid Cell (Solid black clear first to prevent 1-frame ghosting)
+        pCtx.fillStyle = '#000000';
+        pCtx.fillRect(0, 0, pCvs.width, pCvs.height);
         pCtx.drawImage(srcCvs, sx, sy, sSubW, sSubH, 0, 0, pCvs.width, pCvs.height);
 
         // Update Modal if open
@@ -139,7 +141,9 @@ export const DISPLAY = {
                 const mw = mCvs.width;
                 const mh = mCvs.height;
 
-                // 1. Full root image
+                // 1. Full root image (Solid black clear first)
+                mCtx.fillStyle = '#000000';
+                mCtx.fillRect(0, 0, mw, mh);
                 mCtx.drawImage(srcCvs, 0, 0, sw, sh, 0, 0, mw, mh);
 
                 // 2. Division grid lines

@@ -44,9 +44,11 @@ export const RENDER = {
             renderer = new THREE.WebGLRenderer({
                 canvas: renderCanvas,
                 antialias: true,
-                alpha: true
+                alpha: true,
+                preserveDrawingBuffer: true
             });
             renderer.setSize(BUFFER_SIZE, BUFFER_SIZE, false);
+            renderer.setClearColor(0x000000, 0.0);
 
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(d.fov ?? 45, 1.0, 0.1, 100);
@@ -147,6 +149,45 @@ export const RENDER = {
             }
         };
 
+        let lastRenderTime = 0;
+        const renderFrame = () => {
+            const now = (typeof performance !== 'undefined') ? performance.now() : Date.now();
+            if (now - lastRenderTime < 4) return; // Already rendered in current frame
+            lastRenderTime = now;
+
+            if (renderer && scene && camera && rootGroup) {
+                const cvFov = readCv(anFov, 0);
+                const incomingPackets = getSourcePackets();
+
+                // Apply Camera, Target, FOV & Roll parameters
+                const fov = Math.max(10, Math.min(120, (d.fov ?? 45) + cvFov * 10));
+                if (camera.fov !== fov) {
+                    camera.fov = fov;
+                    camera.updateProjectionMatrix();
+                }
+                camera.position.set(d.camX ?? 0, d.camY ?? 0, d.camZ ?? 5);
+                camera.up.set(0, 1, 0);
+                camera.lookAt(d.targetX ?? 0, d.targetY ?? 0, d.targetZ ?? 0);
+                if (d.camRoll) {
+                    camera.rotateZ((d.camRoll * Math.PI) / 180);
+                }
+
+                if (incomingPackets.length > 0) {
+                    rootGroup.visible = true;
+                    for (let i = 0; i < incomingPackets.length; i++) {
+                        syncNode(incomingPackets[i], rootGroup, i);
+                    }
+                    while (rootGroup.children.length > incomingPackets.length) {
+                        rootGroup.remove(rootGroup.children[rootGroup.children.length - 1]);
+                    }
+                } else {
+                    rootGroup.visible = false;
+                }
+
+                renderer.render(scene, camera);
+            }
+        };
+
         return {
             nodes: { gFov, anFov },
             inputs: {
@@ -159,40 +200,12 @@ export const RENDER = {
                 video_out: null
             },
             data: d,
-            getSharedCanvas: () => renderCanvas,
+            getSharedCanvas: () => {
+                renderFrame();
+                return renderCanvas;
+            },
             read: () => {
-                const cvFov = readCv(anFov, 0);
-
-                if (renderer && scene && camera && rootGroup) {
-                    const incomingPackets = getSourcePackets();
-
-                    // Apply Camera, Target, FOV & Roll parameters
-                    const fov = Math.max(10, Math.min(120, (d.fov ?? 45) + cvFov * 10));
-                    if (camera.fov !== fov) {
-                        camera.fov = fov;
-                        camera.updateProjectionMatrix();
-                    }
-                    camera.position.set(d.camX ?? 0, d.camY ?? 0, d.camZ ?? 5);
-                    camera.up.set(0, 1, 0);
-                    camera.lookAt(d.targetX ?? 0, d.targetY ?? 0, d.targetZ ?? 0);
-                    if (d.camRoll) {
-                        camera.rotateZ((d.camRoll * Math.PI) / 180);
-                    }
-
-                    if (incomingPackets.length > 0) {
-                        rootGroup.visible = true;
-                        for (let i = 0; i < incomingPackets.length; i++) {
-                            syncNode(incomingPackets[i], rootGroup, i);
-                        }
-                        while (rootGroup.children.length > incomingPackets.length) {
-                            rootGroup.remove(rootGroup.children[rootGroup.children.length - 1]);
-                        }
-                    } else {
-                        rootGroup.visible = false;
-                    }
-
-                    renderer.render(scene, camera);
-                }
+                renderFrame();
 
                 const isPatched = Boolean(patchState?.has('obj_in') || patchState?.has('geo_in'));
                 return {
