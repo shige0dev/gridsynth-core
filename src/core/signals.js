@@ -67,9 +67,9 @@ export const SIGNAL_TYPES = {
     VIDEO: {
         id: 'video',
         label: 'VIDEO',
-        stroke: '#10b981',       // emerald-500 (Green)
-        brightStroke: '#a7f3d0', // emerald-200
-        tailwind: 'bg-emerald-500'
+        stroke: '#065f46',       // emerald-800 (Deep Dark Green)
+        brightStroke: '#059669', // emerald-600
+        tailwind: 'bg-emerald-800'
     },
     DEFAULT: {
         id: 'default',

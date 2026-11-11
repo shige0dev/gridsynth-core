@@ -10,10 +10,10 @@ export const DISPLAY = {
     }),
     ports: () => ({
         in: [
-            { port: 'video_in', pin: 5, color: 'bg-emerald-500', label: 'VID' }
+            { port: 'video_in', pin: 5, color: 'bg-emerald-800', label: 'VID' }
         ],
         out: [
-            { port: 'video_out', pin: 10, color: 'bg-emerald-500', label: 'VID' }
+            { port: 'video_out', pin: 10, color: 'bg-emerald-800', label: 'VID' }
         ]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
