@@ -3,7 +3,7 @@
 import { UIHelpers } from '../../ui/helpers.js?v=351';
 
 export const VIDEO = {
-    color: 'purple',
+    color: 'emerald',
     defaults: () => ({
         type: 'VIDEO',
         cropX: 0.0,
@@ -19,10 +19,10 @@ export const VIDEO = {
             { port: 'cv_w', pin: 2, color: 'bg-yellow-400', label: 'W' },
             { port: 'cv_h', pin: 1, color: 'bg-yellow-400', label: 'H' },
             { port: 'geo_in', pin: 5, color: 'bg-purple-500', label: 'GEO' },
-            { port: 'video_in', color: 'bg-purple-500' }
+            { port: 'video_in', color: 'bg-emerald-500' }
         ],
         out: [
-            { port: 'video_out', color: 'bg-purple-500' }
+            { port: 'video_out', color: 'bg-emerald-500' }
         ]
     }),
     renderPorts: (m, renderP, ports) => {
@@ -51,11 +51,11 @@ export const VIDEO = {
     renderGrid: (m, ctx) => {
         const isLinked = Boolean(ctx?.patched?.has('video_in') || m._isLinked);
         return `
-        <div class="absolute inset-0.5 bg-black rounded-sm border border-purple-500/40 overflow-hidden z-0 pointer-events-none select-none">
+        <div class="absolute inset-0.5 bg-black rounded-sm border border-emerald-500/40 overflow-hidden z-0 pointer-events-none select-none">
             <canvas class="video-panel-canvas w-full h-full block" width="100" height="100"></canvas>
-            ${isLinked ? '<div class="absolute top-0.5 left-1 pointer-events-none"><span class="text-[6.5px] font-mono font-bold tracking-wider text-purple-300 leading-none">LINKED</span></div>' : ''}
+            ${isLinked ? '<div class="absolute top-0.5 left-1 pointer-events-none"><span class="text-[6.5px] font-mono font-bold tracking-wider text-emerald-300 leading-none">LINKED</span></div>' : ''}
             <div class="absolute bottom-0.5 right-1 pointer-events-none">
-                <span data-video-disp class="text-[6.5px] font-mono font-bold leading-none tracking-tight text-cyan-300">1:1</span>
+                <span data-video-disp class="text-[6.5px] font-mono font-bold leading-none tracking-tight text-emerald-300">1:1</span>
             </div>
         </div>`;
     },
@@ -65,7 +65,7 @@ export const VIDEO = {
         return `
         <div class="flex flex-col gap-2 p-1 bg-slate-900 text-slate-200 select-none w-full">
             <div class="flex items-center justify-between border-b border-slate-700/80 pb-1">
-                <span class="text-xs font-mono font-bold text-purple-400">3D DISPLAY</span>
+                <span class="text-xs font-mono font-bold text-emerald-400">3D DISPLAY</span>
                 <span class="text-[9px] font-mono text-slate-400">${isLinked ? 'LINKED VIEWER' : 'MASTER RENDERER'}</span>
             </div>
             <div class="flex justify-center bg-black border border-slate-800 rounded p-1">

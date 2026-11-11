@@ -14,7 +14,12 @@ export const OBJECT = {
             { port: 'geo_out', pin: 11, color: 'bg-purple-500', label: 'GEO' }
         ]
     }),
-    renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
+    renderPorts: (m, renderP, ports) => {
+        const p = (ports.out || []).find(x => x.port === 'geo_out') || { port: 'geo_out', color: 'bg-purple-500' };
+        return `<div class="absolute right-[3px] bottom-[3px] flex items-center pointer-events-auto z-10" title="GEO OUT">
+            ${renderP([p])}
+        </div>`;
+    },
     renderGrid: (m) => {
         const shapeName = (m?.shape || 'torus').toUpperCase();
         return `
