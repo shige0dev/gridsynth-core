@@ -30,6 +30,7 @@ import { matrixAudioDefs } from './defs/matrix.js?v=591';
 import { valAudioDefs } from './defs/val.js?v=614';
 import { tiltAudioDefs } from './defs/tilt.js?v=623';
 import { geoAudioDefs } from './defs/geo.js?v=679';
+import { rotateAudioDefs } from './defs/rotate.js?v=688';
 import { videoAudioDefs } from './defs/video.js?v=679';
 
 export const AUDIO_REGISTRY = {
@@ -60,6 +61,7 @@ export const AUDIO_REGISTRY = {
     ...valAudioDefs,
     ...tiltAudioDefs,
     ...geoAudioDefs,
+    ...rotateAudioDefs,
     ...videoAudioDefs
 };
 

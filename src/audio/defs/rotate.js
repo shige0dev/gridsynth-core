@@ -1,0 +1,140 @@
+// src/audio/defs/rotate.js
+// Audio / Engine side implementation for ROTATE module
+// Modifies geometry transform rotation around Z-axis in radians.
+// Driven by manual slider or external CV (PIN4).
+
+export const ROTATE = {
+    create: (ctx, d, patch, eng) => {
+        let patchState = patch || null;
+
+        // CV input for cv_z (PIN4)
+        const gZ = ctx.createGain();
+        const anZ = ctx.createAnalyser();
+        anZ.fftSize = 32;
+        gZ.connect(anZ);
+
+        if (eng?.silentSink) {
+            gZ.connect(eng.silentSink);
+        }
+
+        const buf = new Float32Array(32);
+        const readCv = (an, def = 0) => {
+            an.getFloatTimeDomainData(buf);
+            let sum = 0;
+            for (let i = 0; i < 32; i++) sum += buf[i];
+            const avg = sum / 32;
+            return isNaN(avg) ? def : avg;
+        };
+
+        const getSourcePacket = () => {
+            const isGeoPatched = patchState?.has('geo_in') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('geo_in') : false);
+            if (!isGeoPatched || !eng?.modules) return null;
+
+            const pageId = d.pageId || (window.__GS_APP__?.currentPageId ?? '0');
+            const conns = window.__GS_APP__?.connections || window.__GS_APP__?.pagesData?.[pageId]?.connections || [];
+            let connectedSourceId = null;
+
+            conns.forEach(c => {
+                const connObj = typeof c === 'string' ? (c.includes('>') ? {
+                    from: { moduleId: c.split('>')[0].split(':')[0].trim(), port: c.split('>')[0].split(':')[1].trim() },
+                    to: { moduleId: c.split('>')[1].split(':')[0].trim(), port: c.split('>')[1].split(':')[1].trim() }
+                } : null) : c;
+
+                if (connObj && connObj.to?.moduleId === d.id && connObj.to?.port === 'geo_in') {
+                    connectedSourceId = connObj.from?.moduleId;
+                }
+            });
+
+            if (connectedSourceId) {
+                const srcMod = eng.modules[`${pageId}/${connectedSourceId}`] || eng.modules[connectedSourceId];
+                if (srcMod?.getGeometryPacket) {
+                    return srcMod.getGeometryPacket();
+                }
+            }
+
+            // Fallback search across engine modules
+            let fallbackPacket = null;
+            Object.values(eng.modules).forEach(mInst => {
+                if (mInst.data?.id !== d.id && mInst.getGeometryPacket && mInst.data?.type !== 'VIDEO') {
+                    if (!fallbackPacket) fallbackPacket = mInst.getGeometryPacket();
+                }
+            });
+            return fallbackPacket;
+        };
+
+        return {
+            nodes: { gZ, anZ },
+            inputs: {
+                cv_z: gZ,
+                geo_in: null
+            },
+            outputs: {
+                geo_out: null
+            },
+            data: d,
+            getGeometryPacket: () => {
+                const sourcePacket = getSourcePacket();
+                if (!sourcePacket) return null;
+
+                // Priority: External CV if patched, otherwise internal slider (radians)
+                const isCvPatched = patchState?.has('cv_z') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('cv_z') : false);
+                let rotZ = 0;
+                if (isCvPatched) {
+                    const cvVal = readCv(anZ, 0);
+                    // 1.0V = 2*PI radians (360 degrees)
+                    rotZ = cvVal * (2 * Math.PI);
+                } else {
+                    rotZ = Number(d.rotZ ?? 0.0);
+                }
+
+                const prevRot = sourcePacket.transform?.rotation || [0, 0, 0];
+                return {
+                    type: 'GEOMETRY',
+                    id: d.id,
+                    shape: sourcePacket.shape,
+                    geometry: sourcePacket.geometry,
+                    transform: {
+                        rotation: [prevRot[0], prevRot[1], prevRot[2] + rotZ],
+                        scale: sourcePacket.transform?.scale ? [...sourcePacket.transform.scale] : [1.0, 1.0, 1.0]
+                    },
+                    color: sourcePacket.color || 0xffffff
+                };
+            },
+            read: () => {
+                const isCvPatched = patchState?.has('cv_z') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('cv_z') : false);
+                const isGeoPatched = patchState?.has('geo_in') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('geo_in') : false);
+                let rotZ = 0;
+                if (isCvPatched) {
+                    const cvVal = readCv(anZ, 0);
+                    rotZ = cvVal * (2 * Math.PI);
+                } else {
+                    rotZ = Number(d.rotZ ?? 0.0);
+                }
+
+                return {
+                    rotZ,
+                    isCvPatched,
+                    isGeoPatched
+                };
+            },
+            updatePatchState: (p) => {
+                patchState = p;
+            },
+            destroy: () => {
+                try { gZ.disconnect(); } catch (e) {}
+                try { anZ.disconnect(); } catch (e) {}
+            }
+        };
+    },
+    update: (ctx, inst, d, patch) => {
+        inst.data = d;
+        if (patch !== undefined && inst.updatePatchState) {
+            inst.updatePatchState(patch);
+        }
+    }
+};
+
+export const rotateAudioDefs = {
+    ROTATE
+};
+export default rotateAudioDefs;

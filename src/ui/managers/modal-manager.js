@@ -51,6 +51,7 @@ export const MODAL_WIDTHS = {
     GSENSOR: 'w-[180px]',
     TILT: 'w-[180px]',
     OBJECT: 'w-[190px]',
+    ROTATE: 'w-[190px]',
     VIDEO: 'w-[220px]'
 };
 

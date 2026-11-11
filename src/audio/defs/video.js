@@ -150,7 +150,7 @@ export const VIDEO = {
                         // Fallback if not resolved via conns list
                         if (!geoPacket) {
                             Object.values(eng.modules).forEach(mInst => {
-                                if (mInst.data?.type === 'OBJECT' && mInst.getGeometryPacket) {
+                                if (mInst.data?.id !== d.id && mInst.getGeometryPacket) {
                                     geoPacket = mInst.getGeometryPacket();
                                 }
                             });
