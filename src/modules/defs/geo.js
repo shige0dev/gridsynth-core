@@ -22,17 +22,9 @@ export const OBJECT = {
     },
     renderGrid: (m) => {
         const shapeName = (m?.shape || 'torus').toUpperCase();
-        return `
-        <div class="flex flex-col items-center justify-center w-full h-full pointer-events-none relative">
-            <div class="relative w-[50px] h-7 border border-purple-500/60 bg-slate-950 p-[1px] flex items-center justify-center shadow-inner overflow-hidden rounded-xs">
-                <span class="text-[10px] font-mono font-extrabold tracking-wider text-purple-200 uppercase">${shapeName}</span>
-                <div class="absolute bottom-full mb-[2px] inset-x-0 flex items-center justify-center pointer-events-none">
-                    <span class="text-[7.5px] font-mono font-bold leading-none tracking-tight text-amber-400 text-center max-w-[64px]">OBJECT</span>
-                </div>
-                <div class="absolute top-full mt-[2px] inset-x-0 flex items-center justify-center pointer-events-none">
-                    <span class="text-[7.5px] font-mono font-bold leading-none tracking-tight text-cyan-300 text-center max-w-[64px]">${shapeName}</span>
-                </div>
-            </div>
+        return `<div class="flex flex-col items-center justify-center leading-none gap-0.5 pointer-events-none text-purple-400 select-none">
+            <span class="text-[8px] font-bold text-amber-400/90 tracking-tight">OBJECT</span>
+            <span class="text-[14px] font-mono font-extrabold text-purple-300 tracking-wider">${shapeName}</span>
         </div>`;
     },
     renderModal: (m) => {

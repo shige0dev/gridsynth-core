@@ -47,9 +47,15 @@ export function openAddModal(slotIdx, modalManager, ui) {
                 },
                 {
                     name: 'VISUALIZER',
-                    sub: 'ビジュアライザ (波形・スペクトラム・3D)',
+                    sub: 'ビジュアライザ (波形・スペクトラム)',
                     color: 'teal',
-                    types: ['SCOPE', 'LISS', 'SPEC', 'OBJECT', 'VIDEO']
+                    types: ['SCOPE', 'LISS', 'SPEC']
+                },
+                {
+                    name: '3D',
+                    sub: '3Dグラフィックス (オブジェクト・レンダラー)',
+                    color: 'purple',
+                    types: ['OBJECT', 'VIDEO']
                 }
             ];
 
