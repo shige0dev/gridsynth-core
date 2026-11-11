@@ -53,6 +53,7 @@ export const MODAL_WIDTHS = {
     OBJECT: 'w-[190px]',
     ROTATE: 'w-[190px]',
     MOVE: 'w-[190px]',
+    SCALE: 'w-[190px]',
     RENDER: 'w-[calc(100%-16px)]',
     DISPLAY: 'w-[200px]'
 };
