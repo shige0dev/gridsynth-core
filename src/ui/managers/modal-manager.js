@@ -52,7 +52,7 @@ export const MODAL_WIDTHS = {
     TILT: 'w-[180px]',
     OBJECT: 'w-[190px]',
     ROTATE: 'w-[190px]',
-    RENDER: 'w-[230px]',
+    RENDER: 'w-[220px]',
     DISPLAY: 'w-[210px]',
     VIDEO: 'w-[230px]'
 };

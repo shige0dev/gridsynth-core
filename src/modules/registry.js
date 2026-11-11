@@ -31,8 +31,8 @@ import { valDefs } from './defs/val.js?v=618';
 import { tiltDefs } from './defs/tilt.js?v=623';
 import { geoDefs } from './defs/geo.js?v=679';
 import { rotateDefs } from './defs/rotate.js?v=689';
-import { renderDefs } from './defs/render.js?v=690';
-import { displayDefs } from './defs/display.js?v=690';
+import { renderDefs } from './defs/render.js?v=691';
+import { displayDefs } from './defs/display.js?v=691';
 import { videoDefs } from './defs/video.js?v=689';
 
 export const MODULE_REGISTRY = {

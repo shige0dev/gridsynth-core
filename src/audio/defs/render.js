@@ -1,6 +1,6 @@
 // src/audio/defs/render.js
 // Audio / Engine side implementation for RENDER module
-// Generates master WebGL offscreen framebuffer from incoming 3D geometry packet (OBJECT / ROTATE)
+// Generates master 1:1 WebGL offscreen framebuffer from incoming 3D geometry packet (OBJECT / ROTATE)
 
 export const RENDER = {
     create: (ctx, d, patch, eng) => {
@@ -25,7 +25,7 @@ export const RENDER = {
             return isNaN(avg) ? def : avg;
         };
 
-        // Three.js Scene Setup
+        // Three.js Scene Setup (1:1 Square 200x200 Buffer)
         let renderer = null;
         let scene = null;
         let camera = null;
@@ -35,20 +35,18 @@ export const RENDER = {
         const initThree = () => {
             if (typeof THREE === 'undefined') return;
             renderCanvas = document.createElement('canvas');
-            const bw = Math.max(1, Math.min(4, Math.round(d.bufW ?? 1)));
-            const bh = Math.max(1, Math.min(4, Math.round(d.bufH ?? 1)));
-            renderCanvas.width = bw * 200;
-            renderCanvas.height = bh * 200;
+            renderCanvas.width = 200;
+            renderCanvas.height = 200;
 
             renderer = new THREE.WebGLRenderer({
                 canvas: renderCanvas,
                 antialias: true,
                 alpha: true
             });
-            renderer.setSize(bw * 200, bh * 200, false);
+            renderer.setSize(200, 200, false);
 
             scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(d.fov ?? 45, bw / bh, 0.1, 100);
+            camera = new THREE.PerspectiveCamera(d.fov ?? 45, 1.0, 0.1, 100);
             camera.position.set(d.camX ?? 0, d.camY ?? 0, d.camZ ?? 5);
             camera.lookAt(d.targetX ?? 0, d.targetY ?? 0, d.targetZ ?? 0);
 
@@ -86,27 +84,9 @@ export const RENDER = {
             data: d,
             getSharedCanvas: () => renderCanvas,
             read: () => {
-                const bw = Math.max(1, Math.min(4, Math.round(d.bufW ?? 1)));
-                const bh = Math.max(1, Math.min(4, Math.round(d.bufH ?? 1)));
-                const targetW = bw * 200;
-                const targetH = bh * 200;
-
                 const cvFov = readCv(anFov, 0);
 
                 if (renderer && scene && camera && mesh) {
-                    // Update canvas and renderer size if buffer dimensions changed
-                    if (renderCanvas.width !== targetW || renderCanvas.height !== targetH) {
-                        renderCanvas.width = targetW;
-                        renderCanvas.height = targetH;
-                        renderer.setSize(targetW, targetH, false);
-                    }
-
-                    const aspect = bw / bh;
-                    if (camera.aspect !== aspect) {
-                        camera.aspect = aspect;
-                        camera.updateProjectionMatrix();
-                    }
-
                     // Check if geo_in is patched and find connected geometry
                     const isGeoPatched = patchState?.has('geo_in') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('geo_in') : false);
                     let geoPacket = null;
@@ -179,8 +159,6 @@ export const RENDER = {
 
                 return {
                     canvas: renderCanvas,
-                    bufW: bw,
-                    bufH: bh,
                     isGeoPatched: Boolean(patchState?.has('geo_in'))
                 };
             },
