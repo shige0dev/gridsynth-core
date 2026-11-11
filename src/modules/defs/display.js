@@ -156,13 +156,29 @@ export const DISPLAY = {
         const row = Math.min(divN - 1, Math.max(0, data.row ?? 0));
 
         let sx = 0, sy = 0, sw = 100, sh = 100;
+        let cropX = 0, cropY = 0;
+        let tileW = 100, tileH = 100;
         if (srcCanvas) {
-            const tileW = srcCanvas.width / divN;
-            const tileH = srcCanvas.height / divN;
-            sx = col * tileW;
-            sy = row * tileH;
-            sw = tileW;
-            sh = tileH;
+            tileW = srcCanvas.width / divN;
+            tileH = srcCanvas.height / divN;
+            if (divN > 1) {
+                // Geometric bezel compensation:
+                // Grid cell pitch P = cellW (82px) + gap (6px) = 88px.
+                // Visible display canvas W = cellW - 2px (inset 1px) = 80px.
+                // Inactive bezel gap D = P - W = 8px.
+                // Margin crop ratio per border = (P - W) / (2 * P) = 8 / 176 ~= 0.04545 (4.545%).
+                const cellW = cell.clientWidth || 82;
+                const gap = 6;
+                const pitch = cellW + gap;
+                const dispW = (cell.querySelector('.display-panel-canvas')?.clientWidth || (cellW - 2)) || 80;
+                const marginRatio = pitch > dispW ? (pitch - dispW) / (2 * pitch) : (8 / (2 * 88));
+                cropX = tileW * marginRatio;
+                cropY = tileH * marginRatio;
+            }
+            sx = col * tileW + cropX;
+            sy = row * tileH + cropY;
+            sw = tileW - (cropX * 2);
+            sh = tileH - (cropY * 2);
         }
 
         // 1. Render to cell canvas (Display the selected tile)
@@ -246,6 +262,18 @@ export const DISPLAY = {
                 mCtx.beginPath(); mCtx.moveTo(rx + rw - tick, ry); mCtx.lineTo(rx + rw); mCtx.lineTo(rx + rw, ry + tick); mCtx.stroke();
                 mCtx.beginPath(); mCtx.moveTo(rx, ry + rh - tick); mCtx.lineTo(rx, ry + rh); mCtx.lineTo(rx + tick, ry + rh); mCtx.stroke();
                 mCtx.beginPath(); mCtx.moveTo(rx + rw - tick, ry + rh); mCtx.lineTo(rx + rw); mCtx.lineTo(rx + rw, ry + rh - tick); mCtx.stroke();
+
+                // Bezel compensation active viewport indicator (dashed sky-blue rectangle)
+                if (divN > 1 && cropX > 0 && tileW > 0) {
+                    const mCropX = cellMw * (cropX / tileW);
+                    const mCropY = cellMh * (cropY / tileH);
+                    mCtx.save();
+                    mCtx.strokeStyle = 'rgba(56, 189, 248, 0.8)';
+                    mCtx.lineWidth = 1.5;
+                    mCtx.setLineDash([3, 3]);
+                    mCtx.strokeRect(rx + mCropX, ry + mCropY, rw - mCropX * 2, rh - mCropY * 2);
+                    mCtx.restore();
+                }
             }
 
             // Update CV badge in modal

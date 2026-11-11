@@ -32,7 +32,7 @@ import { tiltDefs } from './defs/tilt.js?v=623';
 import { geoDefs } from './defs/geo.js?v=679';
 import { rotateDefs } from './defs/rotate.js?v=689';
 import { renderDefs } from './defs/render.js?v=691';
-import { displayDefs } from './defs/display.js?v=691';
+import { displayDefs } from './defs/display.js?v=697';
 
 export const MODULE_REGISTRY = {
     ...vcoDefs,
