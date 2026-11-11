@@ -77,7 +77,7 @@ export const getPortSignalType = (portName = '', modId = '') => {
     const p = String(portName).toLowerCase();
     const m = String(modId).toUpperCase();
 
-    if (p.includes('video') || p.includes('geo') || m.startsWith('GEO_') || m.startsWith('VIDEO')) {
+    if (p.includes('video') || p.includes('geo') || m.startsWith('OBJECT') || m.startsWith('VIDEO')) {
         if (!p.includes('cv') && !p.includes('rot') && !p.includes('scale')) {
             return SIGNAL_TYPES.VIDEO;
         }

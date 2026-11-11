@@ -50,7 +50,7 @@ export const MODAL_WIDTHS = {
     SUB: 'w-[240px]',
     GSENSOR: 'w-[180px]',
     TILT: 'w-[180px]',
-    GEO_PRIM: 'w-[210px]',
+    OBJECT: 'w-[210px]',
     VIDEO: 'w-[230px]'
 };
 

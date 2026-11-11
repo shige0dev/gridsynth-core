@@ -1,8 +1,8 @@
 // src/audio/defs/geo.js
-// Audio/Engine-side representation for GEO_PRIM
+// Audio/Engine-side representation for OBJECT
 // Outputs pure 1:1 white geometry packets (Torus or Cube)
 
-export const GEO_PRIM = {
+export const OBJECT = {
     create: (ctx, d, patch, eng) => {
         let torusGeom = null;
         let cubeGeom = null;
@@ -51,6 +51,6 @@ export const GEO_PRIM = {
 };
 
 export const geoAudioDefs = {
-    GEO_PRIM
+    OBJECT
 };
 export default geoAudioDefs;

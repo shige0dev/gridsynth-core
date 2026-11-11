@@ -1,11 +1,11 @@
 // src/modules/defs/geo.js
-// GEO_PRIM - 3D Geometry Primitive Generator (Cube / Torus)
+// OBJECT - 3D Geometry Object Generator (Cube / Torus)
 import { UIHelpers } from '../../ui/helpers.js?v=351';
 
-export const GEO_PRIM = {
+export const OBJECT = {
     color: 'purple',
     defaults: () => ({
-        type: 'GEO_PRIM',
+        type: 'OBJECT',
         shape: 'torus' // 'cube' | 'torus'
     }),
     ports: () => ({
@@ -25,7 +25,7 @@ export const GEO_PRIM = {
                     <span class="text-[7.5px] font-mono font-bold leading-none tracking-tight text-amber-400 text-center max-w-[64px]">${shapeName}</span>
                 </div>
                 <div class="absolute top-full mt-[2px] inset-x-0 flex items-center justify-center pointer-events-none">
-                    <span class="text-[7.5px] font-mono font-bold leading-none tracking-tight text-cyan-300 text-center max-w-[64px]">PRIMITIVE</span>
+                    <span class="text-[7.5px] font-mono font-bold leading-none tracking-tight text-cyan-300 text-center max-w-[64px]">OBJECT</span>
                 </div>
             </div>
         </div>`;
@@ -35,8 +35,8 @@ export const GEO_PRIM = {
         return `
         <div class="flex flex-col gap-3 p-2 bg-slate-900 text-slate-200 select-none">
             <div class="flex items-center justify-between border-b border-slate-700/80 pb-1.5">
-                <span class="text-xs font-mono font-bold text-purple-400">GEOMETRY PRIMITIVE</span>
-                <span class="text-[10px] font-mono text-slate-400">3D MESH SOURCE</span>
+                <span class="text-xs font-mono font-bold text-purple-400">3D OBJECT</span>
+                <span class="text-[10px] font-mono text-slate-400">MESH GENERATOR</span>
             </div>
             <div class="flex flex-col gap-1.5">
                 <span class="text-[9px] font-mono font-bold text-slate-400">SELECT SHAPE</span>
@@ -76,16 +76,13 @@ export const GEO_PRIM = {
 
             const shape = m?.shape || 'torus';
             if (shape === 'cube') {
-                // Wireframe isometric cube
                 const s = 7;
                 ctx.beginPath();
-                // Front / Top / Side faces
                 ctx.moveTo(0, -s); ctx.lineTo(s * 1.2, -s * 0.4); ctx.lineTo(0, s * 0.3); ctx.lineTo(-s * 1.2, -s * 0.4); ctx.closePath();
                 ctx.moveTo(0, s * 0.3); ctx.lineTo(0, s * 1.2); ctx.lineTo(s * 1.2, s * 0.5); ctx.lineTo(s * 1.2, -s * 0.4);
                 ctx.moveTo(0, s * 1.2); ctx.lineTo(-s * 1.2, s * 0.5); ctx.lineTo(-s * 1.2, -s * 0.4);
                 ctx.stroke();
             } else {
-                // Wireframe torus preview
                 const R = 8, r = 3.5;
                 for (let i = 0; i < 6; i++) {
                     const theta = (i / 6) * Math.PI * 2;
@@ -109,6 +106,6 @@ export const GEO_PRIM = {
 };
 
 export const geoDefs = {
-    GEO_PRIM
+    OBJECT
 };
 export default geoDefs;

@@ -123,14 +123,14 @@ export const VIDEO = {
                     };
                 }
 
-                // Master Renderer mode: Find connected GEO_PRIM
+                // Master Renderer mode: Find connected OBJECT
                 if (renderer && scene && camera && mesh) {
-                    // Check if geo_in is patched to a GEO_PRIM module
+                    // Check if geo_in is patched to an OBJECT module
                     let geoPacket = null;
                     if (eng?.modules) {
-                        // Look for a GEO_PRIM instance
+                        // Look for an OBJECT instance
                         Object.values(eng.modules).forEach(mInst => {
-                            if (mInst.data?.type === 'GEO_PRIM' && mInst.getGeometryPacket) {
+                            if (mInst.data?.type === 'OBJECT' && mInst.getGeometryPacket) {
                                 geoPacket = mInst.getGeometryPacket();
                             }
                         });

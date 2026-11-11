@@ -49,7 +49,7 @@ export function openAddModal(slotIdx, modalManager, ui) {
                     name: 'VISUALIZER',
                     sub: 'ビジュアライザ (波形・スペクトラム・3D)',
                     color: 'teal',
-                    types: ['SCOPE', 'LISS', 'SPEC', 'GEO_PRIM', 'VIDEO']
+                    types: ['SCOPE', 'LISS', 'SPEC', 'OBJECT', 'VIDEO']
                 }
             ];
 

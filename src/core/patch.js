@@ -442,6 +442,7 @@ export function parsePatch(patchData, cols = 4, userSubpatches = null, errorSink
             const slotIdx = parseInt(slotStr, 10);
             const raw = rawMods[id] || {};
             let type = raw.type || id.replace(/[0-9]/g, '').toUpperCase();
+            if (type === 'GEO_PRIM') type = 'OBJECT';
             if (type === 'THROUGH') type = 'SWITCH';
             if (type === 'TILT') type = 'GSENSOR';
             if (type === 'CVDELAY') type = 'LAG';
