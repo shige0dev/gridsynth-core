@@ -2,19 +2,24 @@
 // OBJECT - 3D Geometry Object Generator with Material & Color styling
 import { UIHelpers } from '../../ui/helpers.js?v=351';
 
-export const PRIMITIVES = [
+export const BASIC_SHAPES = [
     { id: 'torus', label: 'TORUS' },
     { id: 'cube', label: 'CUBE' },
     { id: 'plane', label: 'PLANE' },
     { id: 'sphere', label: 'SPHERE' },
     { id: 'cylinder', label: 'CYLINDER' },
-    { id: 'tetra', label: 'TETRA' },
-    { id: 'octa', label: 'OCTA' },
-    { id: 'dodeca', label: 'DODECA' },
-    { id: 'icosa', label: 'ICOSA' },
     { id: 'cone', label: 'CONE' },
     { id: 'capsule', label: 'CAPSULE' }
 ];
+
+export const POLYHEDRA_SHAPES = [
+    { id: 'tetra', label: 'TETRA' },
+    { id: 'octa', label: 'OCTA' },
+    { id: 'dodeca', label: 'DODECA' },
+    { id: 'icosa', label: 'ICOSA' }
+];
+
+export const PRIMITIVES = [...BASIC_SHAPES, ...POLYHEDRA_SHAPES];
 
 export const MESH_DETAILS = [
     { id: 'low', label: 'LOW' },
@@ -58,8 +63,9 @@ export const OBJECT = {
         const shapeName = (m?.shape || 'torus').toUpperCase();
         const matName = (m?.material || 'wire').toUpperCase();
         const detName = (m?.detail || 'mid').toUpperCase();
+        const isPoly = ['tetra', 'octa', 'dodeca', 'icosa'].includes(m?.shape);
         return `<div class="flex flex-col items-center justify-center w-full h-full pointer-events-none select-none text-center">
-            <span class="text-[11px] font-mono font-extrabold text-purple-300 tracking-wider">${shapeName}</span>
+            <span class="text-[11px] font-mono font-extrabold ${isPoly ? 'text-amber-300' : 'text-purple-300'} tracking-wider">${shapeName}</span>
             <span class="text-[7px] font-mono font-bold text-slate-400 uppercase tracking-tight">[${matName}:${detName}]</span>
         </div>`;
     },
@@ -76,12 +82,25 @@ export const OBJECT = {
                 <span class="text-[9px] font-mono text-purple-300 bg-purple-950 px-1.5 py-0.5 rounded border border-purple-600/50">PRIMITIVE MESH</span>
             </div>
 
-            <!-- Section 1: Shape Selector (11 primitives) -->
+            <!-- Section 1A: Basic / Standard Shapes (7 Shapes) -->
             <div class="flex flex-col gap-1">
-                <span class="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-wider">PRIMITIVE SHAPE (多面体・幾何学)</span>
+                <span class="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-wider">STANDARD SHAPES (基本幾何・曲面)</span>
                 <div class="grid grid-cols-4 gap-1">
-                    ${PRIMITIVES.map(p => `
-                        <button data-shape="${p.id}" class="geo-shape-btn py-1 rounded text-[8px] font-mono font-bold border transition ${curShape === p.id ? 'bg-purple-600 text-white border-purple-400 shadow-sm shadow-purple-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">${p.label}</button>
+                    ${BASIC_SHAPES.map(p => `
+                        <button data-shape="${p.id}" class="geo-shape-btn py-1 rounded text-[8px] font-mono font-bold border transition ${curShape === p.id ? 'bg-purple-600 text-white border-purple-400 shadow-sm shadow-purple-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-750'}">${p.label}</button>
+                    `).join('')}
+                </div>
+            </div>
+
+            <!-- Section 1B: Polyhedra (Platonic Solids - 4 Shapes) -->
+            <div class="flex flex-col gap-1 border-t border-slate-800/80 pt-1">
+                <div class="flex items-center justify-between">
+                    <span class="text-[8px] font-mono font-bold text-amber-400 uppercase tracking-wider">POLYHEDRA (プラトン正多面体)</span>
+                    <span class="text-[7px] font-mono text-amber-300/80">FLAT TESSELLATION</span>
+                </div>
+                <div class="grid grid-cols-4 gap-1">
+                    ${POLYHEDRA_SHAPES.map(p => `
+                        <button data-shape="${p.id}" class="geo-shape-btn py-1 rounded text-[8px] font-mono font-bold border transition ${curShape === p.id ? 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/50 ring-1 ring-amber-400/40' : 'bg-slate-800 text-amber-200/90 border-slate-700 hover:bg-slate-750'}">${p.label}</button>
                     `).join('')}
                 </div>
             </div>

@@ -6,6 +6,77 @@ export const OBJECT = {
     create: (ctx, d, patch, eng) => {
         const geometries = {};
 
+        // Planar subdivision helper for polyhedra: subdivides flat faces without projecting to sphere
+        const subdividePlanar = (baseGeom, levels = 0) => {
+            if (levels <= 0) return baseGeom;
+            const nonIndexed = baseGeom.index ? baseGeom.toNonIndexed() : baseGeom.clone();
+            const pos = nonIndexed.attributes.position.array;
+            let triangles = [];
+            for (let i = 0; i < pos.length; i += 9) {
+                triangles.push([
+                    pos[i], pos[i + 1], pos[i + 2],
+                    pos[i + 3], pos[i + 4], pos[i + 5],
+                    pos[i + 6], pos[i + 7], pos[i + 8]
+                ]);
+            }
+            for (let l = 0; l < levels; l++) {
+                const next = [];
+                for (let t = 0; t < triangles.length; t++) {
+                    const tr = triangles[t];
+                    const ax = tr[0], ay = tr[1], az = tr[2];
+                    const bx = tr[3], by = tr[4], bz = tr[5];
+                    const cx = tr[6], cy = tr[7], cz = tr[8];
+
+                    const mabx = (ax + bx) * 0.5, maby = (ay + by) * 0.5, mabz = (az + bz) * 0.5;
+                    const mbcx = (bx + cx) * 0.5, mbcy = (by + cy) * 0.5, mbcz = (bz + cz) * 0.5;
+                    const mcax = (cx + ax) * 0.5, mcay = (cy + ay) * 0.5, mcaz = (cz + az) * 0.5;
+
+                    next.push([ax, ay, az, mabx, maby, mabz, mcax, mcay, mcaz]);
+                    next.push([mabx, maby, mabz, bx, by, bz, mbcx, mbcy, mbcz]);
+                    next.push([mcax, mcay, mcaz, mbcx, mbcy, mbcz, cx, cy, cz]);
+                    next.push([mabx, maby, mabz, mbcx, mbcy, mbcz, mcax, mcay, mcaz]);
+                }
+                triangles = next;
+            }
+            const outPos = new Float32Array(triangles.length * 9);
+            for (let t = 0; t < triangles.length; t++) {
+                const tr = triangles[t];
+                for (let k = 0; k < 9; k++) {
+                    outPos[t * 9 + k] = tr[k];
+                }
+            }
+            const geom = new THREE.BufferGeometry();
+            geom.setAttribute('position', new THREE.BufferAttribute(outPos, 3));
+            geom.computeVertexNormals();
+            return geom;
+        };
+
+        // True Capsule geometry with spherical endcaps for Three.js (compatible across all r-versions)
+        const createCapsule = (radius = 0.55, length = 0.9, capSegs = 8, bodySegs = 4, radSegs = 16) => {
+            const points = [];
+            const halfLen = length * 0.5;
+            // Top hemisphere: pole down to equator
+            for (let i = 0; i <= capSegs; i++) {
+                const phi = (Math.PI * 0.5) * (i / capSegs);
+                points.push(new THREE.Vector2(radius * Math.sin(phi), halfLen + radius * Math.cos(phi)));
+            }
+            // Cylinder body intermediate segments
+            if (bodySegs > 1) {
+                for (let i = 1; i < bodySegs; i++) {
+                    const y = halfLen - (length * i / bodySegs);
+                    points.push(new THREE.Vector2(radius, y));
+                }
+            }
+            // Bottom hemisphere: equator down to bottom pole
+            for (let i = 0; i <= capSegs; i++) {
+                const phi = (Math.PI * 0.5) * (i / capSegs);
+                points.push(new THREE.Vector2(radius * Math.cos(phi), -halfLen - radius * Math.sin(phi)));
+            }
+            const geom = new THREE.LatheGeometry(points, radSegs);
+            geom.computeVertexNormals();
+            return geom;
+        };
+
         const getGeom = (shape, detail = 'mid') => {
             if (typeof THREE === 'undefined') return null;
             const key = `${shape}_${detail}`;
@@ -30,35 +101,41 @@ export const OBJECT = {
                         const cSegs = isLow ? 8 : (isHigh ? 32 : 16);
                         geometries[key] = new THREE.CylinderGeometry(0.9, 0.9, 1.8, cSegs);
                         break;
-                    case 'tetra':
-                        const tDetail = isLow ? 0 : (isHigh ? 2 : 1);
-                        geometries[key] = new THREE.TetrahedronGeometry(1.3, tDetail);
+                    case 'tetra': {
+                        const levels = isLow ? 0 : (isHigh ? 2 : 1);
+                        const base = new THREE.TetrahedronGeometry(1.3, 0);
+                        geometries[key] = subdividePlanar(base, levels);
                         break;
-                    case 'octa':
-                        const oDetail = isLow ? 0 : (isHigh ? 2 : 1);
-                        geometries[key] = new THREE.OctahedronGeometry(1.3, oDetail);
+                    }
+                    case 'octa': {
+                        const levels = isLow ? 0 : (isHigh ? 2 : 1);
+                        const base = new THREE.OctahedronGeometry(1.3, 0);
+                        geometries[key] = subdividePlanar(base, levels);
                         break;
-                    case 'dodeca':
-                        const dDetail = isLow ? 0 : (isHigh ? 2 : 1);
-                        geometries[key] = new THREE.DodecahedronGeometry(1.3, dDetail);
+                    }
+                    case 'dodeca': {
+                        const levels = isLow ? 0 : (isHigh ? 2 : 1);
+                        const base = new THREE.DodecahedronGeometry(1.3, 0);
+                        geometries[key] = subdividePlanar(base, levels);
                         break;
-                    case 'icosa':
-                        const iDetail = isLow ? 0 : (isHigh ? 2 : 1);
-                        geometries[key] = new THREE.IcosahedronGeometry(1.3, iDetail);
+                    }
+                    case 'icosa': {
+                        const levels = isLow ? 0 : (isHigh ? 2 : 1);
+                        const base = new THREE.IcosahedronGeometry(1.3, 0);
+                        geometries[key] = subdividePlanar(base, levels);
                         break;
+                    }
                     case 'cone':
                         const coneSegs = isLow ? 6 : (isHigh ? 32 : 16);
                         geometries[key] = new THREE.ConeGeometry(1.0, 1.8, coneSegs);
                         break;
-                    case 'capsule':
-                        if (typeof THREE.CapsuleGeometry !== 'undefined') {
-                            const capSegs = isLow ? [4, 8] : (isHigh ? [8, 24] : [6, 16]);
-                            geometries[key] = new THREE.CapsuleGeometry(0.65, 0.9, capSegs[0], capSegs[1]);
-                        } else {
-                            const cSegs2 = isLow ? 8 : (isHigh ? 32 : 16);
-                            geometries[key] = new THREE.CylinderGeometry(0.7, 0.7, 1.8, cSegs2);
-                        }
+                    case 'capsule': {
+                        const capSegs = isLow ? 4 : (isHigh ? 14 : 8);
+                        const bodySegs = isLow ? 1 : (isHigh ? 8 : 4);
+                        const radSegs = isLow ? 8 : (isHigh ? 32 : 16);
+                        geometries[key] = createCapsule(0.55, 0.9, capSegs, bodySegs, radSegs);
                         break;
+                    }
                     case 'torus':
                     default:
                         const tSegs = isLow ? [6, 12] : (isHigh ? [24, 48] : [12, 24]);
