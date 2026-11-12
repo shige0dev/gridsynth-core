@@ -192,16 +192,10 @@ export const VMIX = {
                         return;
                     }
 
-                    // 9. Alpha / Transparency (Dual-buffer opacity & transparency composite)
+                    // 9. Alpha / Transparency (Channel 1 transparency increases over Channel 2 background)
                     if (uMode == 9) {
-                        float effA = clamp(2.0 * (1.0 - m), 0.0, 1.0) * clamp(colA.a, 0.0, 1.0);
-                        float effB = clamp(2.0 * m, 0.0, 1.0) * clamp(colB.a, 0.0, 1.0);
-
-                        // Dual-buffer transparency overlap
-                        vec3 rgb = colA.rgb * effA * (1.0 - effB * 0.5) + colB.rgb * effB * (1.0 - effA * 0.5);
-                        float aOut = max(effA, effB);
-
-                        gl_FragColor = vec4(rgb, clamp(aOut, 0.0, 1.0));
+                        float aA = clamp(colA.a, 0.0, 1.0) * (1.0 - m);
+                        gl_FragColor = vec4(mix(colB.rgb, colA.rgb, aA), 1.0);
                         return;
                     }
 
