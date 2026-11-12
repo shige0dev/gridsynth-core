@@ -25,7 +25,7 @@ export const VERTEX = {
             { port: 'obj_in', pin: 5, color: 'bg-purple-500', label: 'OBJ' }
         ],
         out: [
-            { port: 'obj_out', pin: 11, color: 'bg-purple-500', label: 'OBJ' }
+            { port: 'obj_out', pin: 10, color: 'bg-purple-500', label: 'OBJ' }
         ]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
@@ -35,7 +35,7 @@ export const VERTEX = {
         const pct = Math.round(depth * 100);
         return `
         <div class="flex flex-col items-center justify-between w-full h-full py-1 pointer-events-none select-none text-center">
-            <span class="text-[8px] font-mono font-bold text-purple-400 uppercase tracking-tight">VTX : ${mode}</span>
+            <span data-vtx-mode class="text-[8px] font-mono font-bold text-purple-400 uppercase tracking-tight">${mode}</span>
             <div class="flex flex-col items-center gap-0.5 leading-none">
                 <span data-vtx-depth class="text-[12px] font-mono font-extrabold text-cyan-300">${pct}%</span>
                 <span class="text-[7px] font-mono text-purple-300">DISPLACEMENT</span>
@@ -153,10 +153,13 @@ export const VERTEX = {
     updateLive: (cell, data, isPlaying, modal, m) => {
         if (!cell || !data) return;
         const depthEl = cell.querySelector('[data-vtx-depth]');
-        const curDepth = Number(data.depth ?? m.depth ?? 0.35);
+        const modeEl = cell.querySelector('[data-vtx-mode]');
+        const curDepth = Number(data.depth ?? m?.depth ?? 0.35);
+        const curMode = (data.mode || m?.mode || 'wave').toUpperCase();
         const pct = Math.round(curDepth * 100);
 
         if (depthEl) depthEl.textContent = `${pct}%`;
+        if (modeEl) modeEl.textContent = curMode;
 
         if (modal) {
             const badge = modal.querySelector('#vtx-status-badge');

@@ -12,12 +12,12 @@ export const SCATTER = {
     }),
     ports: () => ({
         in: [
-            { port: 'base_in', pin: 1, color: 'bg-purple-500', label: 'BASE' },
-            { port: 'child_in', pin: 2, color: 'bg-purple-500', label: 'CHILD' },
-            { port: 'cv_in', pin: 5, color: 'bg-yellow-400', label: 'CV' }
+            { port: 'cv_in', pin: 4, color: 'bg-yellow-400', label: 'CV' },
+            { port: 'base_in', pin: 5, color: 'bg-purple-500', label: 'BASE' },
+            { port: 'child_in', pin: 6, color: 'bg-purple-500', label: 'CHLD' }
         ],
         out: [
-            { port: 'obj_out', pin: 11, color: 'bg-purple-500', label: 'OBJ' }
+            { port: 'obj_out', pin: 10, color: 'bg-purple-500', label: 'OBJ' }
         ]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
@@ -27,16 +27,15 @@ export const SCATTER = {
         const showBase = m?.showBase !== false;
         const alignNorm = m?.alignNormal !== false;
         return `
-        <div class="flex flex-col items-center justify-between w-full h-full py-1 pointer-events-none select-none text-center">
-            <span class="text-[8px] font-mono font-bold text-purple-400 uppercase tracking-tight">SCATTER</span>
+        <div class="flex flex-col items-center justify-center gap-1 w-full h-full pointer-events-none select-none text-center">
             <div class="flex flex-col items-center gap-0.5 leading-none">
-                <span data-scatter-scale class="text-[12px] font-mono font-extrabold text-cyan-300">${pct}%</span>
-                <span class="text-[7px] font-mono text-purple-300">CHILD SCALE</span>
+                <span data-scatter-scale class="text-[13px] font-mono font-extrabold text-cyan-300">${pct}%</span>
+                <span class="text-[7.5px] font-mono font-bold text-amber-400 uppercase tracking-tight">CHILD SCALE</span>
             </div>
-            <div class="flex items-center gap-1 text-[6.5px] font-mono font-bold">
+            <div class="flex items-center gap-1 text-[7px] font-mono font-bold">
                 <span class="${showBase ? 'text-emerald-400' : 'text-slate-500'}">BASE:${showBase ? 'ON' : 'OFF'}</span>
                 <span class="text-slate-600">|</span>
-                <span class="${alignNorm ? 'text-amber-400' : 'text-slate-500'}">NORM:${alignNorm ? 'ON' : 'OFF'}</span>
+                <span class="${alignNorm ? 'text-cyan-400' : 'text-slate-500'}">NORM:${alignNorm ? 'ON' : 'OFF'}</span>
             </div>
         </div>`;
     },
