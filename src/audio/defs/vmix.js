@@ -45,7 +45,8 @@ export const VMIX = {
             slide_v: 5,
             blackout: 6,
             whiteout: 7,
-            mosaic: 8
+            mosaic: 8,
+            alpha: 9
         };
 
         const initGPU = () => {
@@ -165,19 +166,26 @@ export const VMIX = {
                         return;
                     }
 
-                    // 8. Mosaic Block Swap (Fine mosaic tiles swapping between V1 and V2)
+                    // 8. Mosaic Block Swap (High-resolution buffers swapping via fine mosaic blocks)
                     if (uMode == 8) {
                         float blocks = 40.0;
                         vec2 bCoord = floor(uv * blocks);
-                        vec2 mUv = (bCoord + 0.5) / blocks;
                         float rnd = fract(sin(dot(bCoord, vec2(127.1, 311.7))) * 43758.5453123);
+                        float swap = smoothstep(rnd - 0.015, rnd + 0.015, m);
+                        gl_FragColor = mix(colA, colB, swap);
+                        return;
+                    }
 
-                        float mosaicAmt = smoothstep(0.0, 0.12, m) * (1.0 - smoothstep(0.88, 1.0, m));
-                        vec4 sampleA = mix(colA, texture2D(tTexA, mUv), mosaicAmt);
-                        vec4 sampleB = mix(colB, texture2D(tTexB, mUv), mosaicAmt);
+                    // 9. Alpha / Transparency (Dual-buffer opacity & transparency composite)
+                    if (uMode == 9) {
+                        float effA = clamp(2.0 * (1.0 - m), 0.0, 1.0) * clamp(colA.a, 0.0, 1.0);
+                        float effB = clamp(2.0 * m, 0.0, 1.0) * clamp(colB.a, 0.0, 1.0);
 
-                        float swap = smoothstep(rnd - 0.02, rnd + 0.02, m);
-                        gl_FragColor = mix(sampleA, sampleB, swap);
+                        // Dual-buffer transparency overlap
+                        vec3 rgb = colA.rgb * effA * (1.0 - effB * 0.5) + colB.rgb * effB * (1.0 - effA * 0.5);
+                        float aOut = max(effA, effB);
+
+                        gl_FragColor = vec4(rgb, clamp(aOut, 0.0, 1.0));
                         return;
                     }
 
