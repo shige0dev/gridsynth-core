@@ -40,7 +40,8 @@ export const VFX = {
             mosaic: 1,
             crt: 2,
             invert: 3,
-            rgb: 4
+            rgb: 4,
+            glitch: 5
         };
 
         const initGPU = () => {
@@ -72,6 +73,7 @@ export const VFX = {
                 uniform sampler2D tDiffuse;
                 uniform int uMode;
                 uniform float uAmount;
+                uniform float uTime;
                 uniform vec2 uResolution;
                 varying vec2 vUv;
 
@@ -122,6 +124,22 @@ export const VFX = {
                         return;
                     }
 
+                    if (uMode == 5) {
+                        // Glitch (Horizontal slice tearing, scanline jitter, RGB displacement)
+                        float t = uTime * 14.0;
+                        float sliceBand = step(0.80, sin(uv.y * 28.0 + t * 2.5));
+                        float microSlice = sin(uv.y * 130.0 + t * 6.0);
+                        
+                        float shift = (microSlice * 0.03 * sliceBand + sin(uv.y * 12.0 + t) * 0.008) * uAmount;
+                        float rgbOffset = 0.018 * uAmount * sliceBand;
+
+                        float r = texture2D(tDiffuse, uv + vec2(shift + rgbOffset, 0.0)).r;
+                        float g = texture2D(tDiffuse, uv + vec2(shift, 0.0)).g;
+                        float b = texture2D(tDiffuse, uv + vec2(shift - rgbOffset, 0.0)).b;
+                        gl_FragColor = vec4(r, g, b, 1.0);
+                        return;
+                    }
+
                     gl_FragColor = texture2D(tDiffuse, uv);
                 }
             `;
@@ -138,6 +156,7 @@ export const VFX = {
                     tDiffuse: { value: inputTexture },
                     uMode: { value: 1 },
                     uAmount: { value: 0.7 },
+                    uTime: { value: 0.0 },
                     uResolution: { value: new THREE.Vector2(BUFFER_SIZE, BUFFER_SIZE) }
                 },
                 vertexShader: vertShader,
@@ -207,6 +226,7 @@ export const VFX = {
             const modeId = MODE_MAP[d.mode || 'mosaic'] ?? 1;
             shaderMaterial.uniforms.uMode.value = modeId;
             shaderMaterial.uniforms.uAmount.value = effAmt;
+            shaderMaterial.uniforms.uTime.value = now * 0.001;
 
             // 100% GPU Render
             renderer.render(scene, camera);

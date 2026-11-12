@@ -12,8 +12,7 @@ export const VMIX_MODES = [
     { id: 'slide_u', label: 'SLIDE U' },
     { id: 'slide_d', label: 'SLIDE D' },
     { id: 'wipe', label: 'WIPE' },
-    { id: 'zoom', label: 'ZOOM' },
-    { id: 'glitch', label: 'GLITCH' }
+    { id: 'zoom', label: 'ZOOM' }
 ];
 
 export const VMIX = {
@@ -69,10 +68,10 @@ export const VMIX = {
                 </span>
             </div>
 
-            <!-- Transition Mode Selector -->
+            <!-- Transition Mode Selector (10 modes) -->
             <div class="flex flex-col gap-1">
                 <span class="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-wider">TRANSITION EFFECT (合成モード)</span>
-                <div class="grid grid-cols-4 gap-1">
+                <div class="grid grid-cols-5 gap-1">
                     ${VMIX_MODES.map(mod => `
                         <button data-mode="${mod.id}" class="vmix-mode-btn py-1 rounded text-[8px] font-mono font-bold border transition ${curMode === mod.id ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">${mod.label}</button>
                     `).join('')}

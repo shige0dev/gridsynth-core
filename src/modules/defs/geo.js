@@ -8,8 +8,7 @@ export const BASIC_SHAPES = [
     { id: 'plane', label: 'PLANE' },
     { id: 'sphere', label: 'SPHERE' },
     { id: 'cylinder', label: 'CYLINDER' },
-    { id: 'cone', label: 'CONE' },
-    { id: 'capsule', label: 'CAPSULE' }
+    { id: 'cone', label: 'CONE' }
 ];
 
 export const POLYHEDRA_SHAPES = [
@@ -82,10 +81,10 @@ export const OBJECT = {
                 <span class="text-[9px] font-mono text-purple-300 bg-purple-950 px-1.5 py-0.5 rounded border border-purple-600/50">PRIMITIVE MESH</span>
             </div>
 
-            <!-- Section 1A: Basic / Standard Shapes (7 Shapes) -->
+            <!-- Section 1A: Basic / Standard Shapes (6 Shapes) -->
             <div class="flex flex-col gap-1">
                 <span class="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-wider">STANDARD SHAPES (基本幾何・曲面)</span>
-                <div class="grid grid-cols-4 gap-1">
+                <div class="grid grid-cols-3 gap-1">
                     ${BASIC_SHAPES.map(p => `
                         <button data-shape="${p.id}" class="geo-shape-btn py-1 rounded text-[8px] font-mono font-bold border transition ${curShape === p.id ? 'bg-purple-600 text-white border-purple-400 shadow-sm shadow-purple-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-750'}">${p.label}</button>
                     `).join('')}

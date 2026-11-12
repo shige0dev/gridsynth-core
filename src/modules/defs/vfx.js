@@ -7,7 +7,8 @@ export const VFX_MODES = [
     { id: 'mosaic', label: 'MOSAIC' },
     { id: 'crt', label: 'CRT' },
     { id: 'invert', label: 'INVERT' },
-    { id: 'rgb', label: 'RGB SPLIT' }
+    { id: 'rgb', label: 'RGB SPLIT' },
+    { id: 'glitch', label: 'GLITCH' }
 ];
 
 export const VFX = {

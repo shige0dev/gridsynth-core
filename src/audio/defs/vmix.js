@@ -47,8 +47,7 @@ export const VMIX = {
             slide_u: 7,
             slide_d: 8,
             wipe: 9,
-            zoom: 10,
-            glitch: 11
+            zoom: 10
         };
 
         const initGPU = () => {
@@ -198,17 +197,6 @@ export const VMIX = {
                         vec4 zA = texture2D(tTexA, uvA);
                         vec4 zB = texture2D(tTexB, uvB);
                         gl_FragColor = mix(zA, zB, m);
-                        return;
-                    }
-
-                    // 11. Glitch Wipe
-                    if (uMode == 11) {
-                        float noise = sin(uv.y * 120.0 + m * 50.0) * 0.03 * sin(m * 3.14159);
-                        vec2 gUvA = uv + vec2(noise, 0.0);
-                        vec2 gUvB = uv - vec2(noise, 0.0);
-                        vec4 gA = texture2D(tTexA, gUvA);
-                        vec4 gB = texture2D(tTexB, gUvB);
-                        gl_FragColor = mix(gA, gB, step(uv.x + noise, m));
                         return;
                     }
 

@@ -51,32 +51,6 @@ export const OBJECT = {
             return geom;
         };
 
-        // True Capsule geometry with spherical endcaps for Three.js (compatible across all r-versions)
-        const createCapsule = (radius = 0.55, length = 0.9, capSegs = 8, bodySegs = 4, radSegs = 16) => {
-            const points = [];
-            const halfLen = length * 0.5;
-            // Top hemisphere: pole down to equator
-            for (let i = 0; i <= capSegs; i++) {
-                const phi = (Math.PI * 0.5) * (i / capSegs);
-                points.push(new THREE.Vector2(radius * Math.sin(phi), halfLen + radius * Math.cos(phi)));
-            }
-            // Cylinder body intermediate segments
-            if (bodySegs > 1) {
-                for (let i = 1; i < bodySegs; i++) {
-                    const y = halfLen - (length * i / bodySegs);
-                    points.push(new THREE.Vector2(radius, y));
-                }
-            }
-            // Bottom hemisphere: equator down to bottom pole
-            for (let i = 0; i <= capSegs; i++) {
-                const phi = (Math.PI * 0.5) * (i / capSegs);
-                points.push(new THREE.Vector2(radius * Math.cos(phi), -halfLen - radius * Math.sin(phi)));
-            }
-            const geom = new THREE.LatheGeometry(points, radSegs);
-            geom.computeVertexNormals();
-            return geom;
-        };
-
         const getGeom = (shape, detail = 'mid') => {
             if (typeof THREE === 'undefined') return null;
             const key = `${shape}_${detail}`;
@@ -129,13 +103,6 @@ export const OBJECT = {
                         const coneSegs = isLow ? 6 : (isHigh ? 32 : 16);
                         geometries[key] = new THREE.ConeGeometry(1.0, 1.8, coneSegs);
                         break;
-                    case 'capsule': {
-                        const capSegs = isLow ? 4 : (isHigh ? 14 : 8);
-                        const bodySegs = isLow ? 1 : (isHigh ? 8 : 4);
-                        const radSegs = isLow ? 8 : (isHigh ? 32 : 16);
-                        geometries[key] = createCapsule(0.55, 0.9, capSegs, bodySegs, radSegs);
-                        break;
-                    }
                     case 'torus':
                     default:
                         const tSegs = isLow ? [6, 12] : (isHigh ? [24, 48] : [12, 24]);
