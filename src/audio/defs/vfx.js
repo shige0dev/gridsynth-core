@@ -34,9 +34,12 @@ export const VFX = {
         let inputTexture = null;
         let vfxCanvas = null;
         let lastBoundSource = null;
-        let feedbackCanvas = null;
-        let feedbackCtx = null;
-        let feedbackTexture = null;
+        let rtA = null;
+        let rtB = null;
+        let rtCurr = null;
+        let rtPrev = null;
+        let copyScene = null;
+        let copyMat = null;
         let lastMode = null;
 
         const MODE_MAP = {
@@ -55,16 +58,25 @@ export const VFX = {
             vfxCanvas.width = BUFFER_SIZE;
             vfxCanvas.height = BUFFER_SIZE;
 
-            feedbackCanvas = document.createElement('canvas');
-            feedbackCanvas.width = BUFFER_SIZE;
-            feedbackCanvas.height = BUFFER_SIZE;
-            feedbackCtx = feedbackCanvas.getContext('2d');
-            feedbackCtx.fillStyle = '#000000';
-            feedbackCtx.fillRect(0, 0, BUFFER_SIZE, BUFFER_SIZE);
+            rtA = new THREE.WebGLRenderTarget(BUFFER_SIZE, BUFFER_SIZE, {
+                minFilter: THREE.LinearFilter,
+                magFilter: THREE.LinearFilter,
+                depthBuffer: false,
+                stencilBuffer: false
+            });
+            rtB = new THREE.WebGLRenderTarget(BUFFER_SIZE, BUFFER_SIZE, {
+                minFilter: THREE.LinearFilter,
+                magFilter: THREE.LinearFilter,
+                depthBuffer: false,
+                stencilBuffer: false
+            });
+            rtCurr = rtA;
+            rtPrev = rtB;
 
-            feedbackTexture = new THREE.CanvasTexture(feedbackCanvas);
-            feedbackTexture.minFilter = THREE.LinearFilter;
-            feedbackTexture.magFilter = THREE.LinearFilter;
+            copyScene = new THREE.Scene();
+            copyMat = new THREE.MeshBasicMaterial({ map: null, depthTest: false, depthWrite: false });
+            const copyGeo = new THREE.PlaneGeometry(2, 2);
+            copyScene.add(new THREE.Mesh(copyGeo, copyMat));
 
             renderer = new THREE.WebGLRenderer({
                 canvas: vfxCanvas,
@@ -184,7 +196,7 @@ export const VFX = {
             shaderMaterial = new THREE.ShaderMaterial({
                 uniforms: {
                     tDiffuse: { value: inputTexture },
-                    tFeedback: { value: feedbackTexture },
+                    tFeedback: { value: rtPrev.texture },
                     uMode: { value: 1 },
                     uAmount: { value: 0.7 },
                     uTime: { value: 0.0 },
@@ -260,17 +272,35 @@ export const VFX = {
             shaderMaterial.uniforms.uTime.value = now * 0.001;
 
             if (d.mode === 'trail') {
-                feedbackCtx.drawImage(vfxCanvas, 0, 0);
-                feedbackTexture.needsUpdate = true;
-            } else if (lastMode === 'trail') {
-                feedbackCtx.fillStyle = '#000000';
-                feedbackCtx.fillRect(0, 0, BUFFER_SIZE, BUFFER_SIZE);
-                feedbackTexture.needsUpdate = true;
+                // 1. Bind previous GPU frame directly from VRAM (Zero-copy)
+                shaderMaterial.uniforms.tFeedback.value = rtPrev.texture;
+
+                // 2. Render blended frame into current GPU RenderTarget
+                renderer.setRenderTarget(rtCurr);
+                renderer.render(scene, camera);
+
+                // 3. Fast blit to output canvas entirely on GPU
+                renderer.setRenderTarget(null);
+                copyMat.map = rtCurr.texture;
+                renderer.render(copyScene, camera);
+
+                // 4. Ping-Pong swap pointers (0ms pointer swap)
+                const tmp = rtCurr;
+                rtCurr = rtPrev;
+                rtPrev = tmp;
+            } else {
+                if (lastMode === 'trail') {
+                    // Clear GPU render targets on mode exit
+                    renderer.setRenderTarget(rtPrev);
+                    renderer.clear();
+                    renderer.setRenderTarget(rtCurr);
+                    renderer.clear();
+                }
+                // Direct single-pass render to output canvas
+                renderer.setRenderTarget(null);
+                renderer.render(scene, camera);
             }
             lastMode = d.mode;
-
-            // 100% GPU Render
-            renderer.render(scene, camera);
         };
 
         return {
