@@ -155,17 +155,17 @@ export const VFX = {
                     }
 
                     if (uMode == 5) {
-                        // Blur (Golden-angle spiral bokeh that smoothly melts into pure liquid wash)
-                        float radius = pow(clamp(uAmount, 0.0, 1.0), 1.5) * 0.16;
+                        // Blur (Golden-angle spiral bokeh that smoothly melts into pure liquid wash, max radius 0.32)
+                        float radius = pow(clamp(uAmount, 0.0, 1.0), 1.5) * 0.32;
                         vec4 sum = texture2D(tDiffuse, uv) * 2.5;
                         float totalW = 2.5;
 
-                        for (int i = 1; i <= 28; i++) {
+                        for (int i = 1; i <= 32; i++) {
                             float fi = float(i);
-                            float r = sqrt(fi / 28.0) * radius;
+                            float r = sqrt(fi / 32.0) * radius;
                             float theta = fi * 2.39996323; // Golden angle
                             vec2 offset = vec2(cos(theta), sin(theta)) * r;
-                            float w = 1.0 - (r / (radius + 0.0001)) * 0.4;
+                            float w = 1.0 - (r / (radius + 0.0001)) * 0.35;
                             sum += texture2D(tDiffuse, uv + offset) * w;
                             totalW += w;
                         }
