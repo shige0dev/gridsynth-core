@@ -6,7 +6,7 @@ export const VMIX = {
     create: (ctx, d, patch, eng) => {
         let patchState = patch || null;
 
-        // CV input for transition mix modulation (PIN5)
+        // CV input for transition mix modulation (PIN4)
         const gCv = ctx.createGain();
         const anCv = ctx.createAnalyser();
         anCv.fftSize = 32;

@@ -21,12 +21,12 @@ export const VMIX = {
     }),
     ports: () => ({
         in: [
-            { port: 'video_in1', pin: 1, color: 'bg-emerald-800', label: 'V1' },
-            { port: 'video_in2', pin: 2, color: 'bg-emerald-800', label: 'V2' },
-            { port: 'cv_in', pin: 5, color: 'bg-yellow-400', label: 'CV' }
+            { port: 'cv_in', pin: 4, color: 'bg-yellow-400', label: 'CV' },
+            { port: 'video_in1', pin: 5, color: 'bg-emerald-800', label: 'V1' },
+            { port: 'video_in2', pin: 6, color: 'bg-emerald-800', label: 'V2' }
         ],
         out: [
-            { port: 'video_out', pin: 11, color: 'bg-emerald-800', label: 'V' }
+            { port: 'video_out', pin: 10, color: 'bg-emerald-800', label: 'VID' }
         ]
     }),
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
