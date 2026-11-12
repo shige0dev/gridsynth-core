@@ -84,8 +84,8 @@ export const VFX = {
                     }
 
                     if (uMode == 1) {
-                        // Mosaic / Pixelate (GPU UV Quantization)
-                        float blocks = mix(800.0, 14.0, uAmount);
+                        // Mosaic / Pixelate (1.0 = 16x16 coarse pixel blocks)
+                        float blocks = mix(800.0, 16.0, pow(clamp(uAmount, 0.0, 1.0), 2.0));
                         vec2 mUv = floor(uv * blocks) / blocks;
                         gl_FragColor = texture2D(tDiffuse, mUv);
                         return;

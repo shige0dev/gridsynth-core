@@ -42,8 +42,8 @@ export const DISPLAY = {
                         rootCanvas = srcInst.getSharedCanvas();
                     }
                     break;
-                } else if (srcType === 'VFX') {
-                    // Intermediate VFX processor: grab processed canvas, continue tracing upstream
+                } else if (srcType === 'VFX' || srcType === 'VMIX') {
+                    // Intermediate VFX / VMIX processor: grab processed canvas, continue tracing upstream
                     if (srcInst?.getSharedCanvas && !rootCanvas) {
                         rootCanvas = srcInst.getSharedCanvas();
                     }

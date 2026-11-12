@@ -74,14 +74,9 @@ export const ROTATE = {
 
                 // Priority: External CV if patched, otherwise internal slider (radians)
                 const isCvPatched = patchState?.has('cv_in') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('cv_in') : false);
-                let angle = 0;
-                if (isCvPatched) {
-                    const cvVal = readCv(anIn, 0);
-                    // 1.0V = 2*PI radians (360 degrees)
-                    angle = cvVal * (2 * Math.PI);
-                } else {
-                    angle = Number(d.angle ?? 0.0);
-                }
+                // 1.0 = 2*PI radians (1 full turn / 360 degrees)
+                const turn = isCvPatched ? readCv(anIn, 0) : Number(d.angle ?? 0.0);
+                const angle = turn * (2 * Math.PI);
 
                 const axis = (d.axis || 'x').toLowerCase();
                 const axisIdx = axis === 'y' ? 1 : (axis === 'z' ? 2 : 0);

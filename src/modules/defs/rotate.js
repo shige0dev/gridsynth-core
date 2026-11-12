@@ -21,26 +21,26 @@ export const ROTATE = {
     renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
     renderGrid: (m) => {
         const axis = (m.axis || 'x').toUpperCase();
-        const rad = Number(m.angle ?? 0.0);
-        const deg = Math.round((rad * 180) / Math.PI);
+        const turn = Number(m.angle ?? 0.0);
+        const deg = Math.round(turn * 360);
         return `
         <div class="flex flex-col items-center justify-center leading-none gap-0.5 pointer-events-none select-none text-purple-400">
             <span data-rot-axis class="text-[8px] font-bold text-amber-400/90 tracking-tight">ROTATE ${axis}</span>
-            <span data-rot-rad class="text-[12.5px] font-mono font-extrabold text-purple-300 tracking-tight">${rad.toFixed(2)}<span class="text-[7.5px] ml-0.5 text-purple-400/80">rad</span></span>
+            <span data-rot-rad class="text-[12px] font-mono font-extrabold text-purple-300 tracking-tight">${turn.toFixed(2)}<span class="text-[7.5px] ml-0.5 text-purple-400/80">turn</span></span>
             <span data-rot-deg class="text-[7.5px] font-mono text-cyan-300 font-bold">${deg}°</span>
         </div>`;
     },
     renderModal: (m, ctx) => {
         const isCvPatched = Boolean(ctx?.patched?.has('cv_in') || ctx?.patched?.has('cv_x'));
         const curAxis = m.axis || 'x';
-        const rad = Number(m.angle ?? 0.0);
-        const deg = Math.round((rad * 180) / Math.PI);
+        const turn = Number(m.angle ?? 0.0);
+        const deg = Math.round(turn * 360);
         return `
         <div class="flex flex-col gap-2 p-1.5 bg-slate-900 text-slate-200 select-none w-full">
             <div class="flex items-center justify-between border-b border-slate-700/80 pb-1">
                 <span class="text-xs font-mono font-bold text-purple-400">3D ROTATE</span>
                 <span id="rotate-status-badge" class="text-[8.5px] font-mono font-bold ${isCvPatched ? 'text-amber-300 bg-amber-950 px-1 rounded border border-amber-600/50' : 'text-slate-400'}">
-                    ${isCvPatched ? 'CV OVERRIDE' : 'MANUAL RAD'}
+                    ${isCvPatched ? 'CV OVERRIDE' : 'MANUAL (1.0 = 2π)'}
                 </span>
             </div>
 
@@ -54,27 +54,28 @@ export const ROTATE = {
                 </div>
             </div>
 
-            <!-- Angle Slider -->
+            <!-- Angle Slider (0.00 to 1.00 turns) -->
             <div class="flex flex-col gap-1 bg-slate-950/60 p-1.5 rounded border border-slate-800">
                 <div class="flex justify-between items-center text-[9px] font-mono">
-                    <span class="text-slate-300 font-bold">MANUAL ANGLE</span>
-                    <span id="rotate-val-disp" class="font-bold text-purple-300">${rad.toFixed(2)} rad (${deg}°)</span>
+                    <span class="text-slate-300 font-bold">MANUAL ANGLE (1.0 = 360°)</span>
+                    <span id="rotate-val-disp" class="font-bold text-purple-300">${turn.toFixed(2)} turn (${deg}°)</span>
                 </div>
-                <input type="range" id="rotate-slide-rad" min="0" max="6.283" step="0.02" value="${rad}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-purple-500 ${isCvPatched ? 'opacity-35 pointer-events-none' : ''}">
+                <input type="range" id="rotate-slide-rad" min="0" max="1" step="0.005" value="${turn}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-purple-500 ${isCvPatched ? 'opacity-35 pointer-events-none' : ''}">
                 <div class="flex justify-between text-[7px] font-mono text-slate-400">
-                    <span>0</span>
-                    <span>π/2 (90°)</span>
-                    <span>π (180°)</span>
-                    <span>2π (360°)</span>
+                    <span>0 (0°)</span>
+                    <span>0.25 (90°)</span>
+                    <span>0.5 (180°)</span>
+                    <span>0.75 (270°)</span>
+                    <span>1.0 (360°)</span>
                 </div>
             </div>
 
             <!-- Angle Presets -->
             <div class="grid grid-cols-4 gap-1 text-[8.5px] font-mono">
-                <button data-rot="0.0" class="rotate-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">0°</button>
-                <button data-rot="1.5708" class="rotate-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">90°</button>
-                <button data-rot="3.1416" class="rotate-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">180°</button>
-                <button data-rot="4.7124" class="rotate-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">270°</button>
+                <button data-rot="0.0" class="rotate-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">0° (0.0)</button>
+                <button data-rot="0.25" class="rotate-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">90° (0.25)</button>
+                <button data-rot="0.5" class="rotate-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">180° (0.5)</button>
+                <button data-rot="0.75" class="rotate-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">270° (0.75)</button>
             </div>
         </div>`;
     },
@@ -84,8 +85,8 @@ export const ROTATE = {
         const disp = root.querySelector('#rotate-val-disp');
 
         const updateDisp = (val) => {
-            const deg = Math.round((val * 180) / Math.PI);
-            if (disp) disp.textContent = `${val.toFixed(2)} rad (${deg}°)`;
+            const deg = Math.round(val * 360);
+            if (disp) disp.textContent = `${val.toFixed(2)} turn (${deg}°)`;
         };
 
         if (slider) {
@@ -122,14 +123,14 @@ export const ROTATE = {
         const radEl = cell.querySelector('[data-rot-rad]');
         const degEl = cell.querySelector('[data-rot-deg]');
         const curAxis = (data.axis || m.axis || 'x').toUpperCase();
-        const curRad = Number(data.angle ?? m.angle ?? 0);
-        const curDeg = Math.round((curRad * 180) / Math.PI);
+        const curTurn = Number(data.angle ?? m.angle ?? 0);
+        const curDeg = Math.round(curTurn * 360);
 
         if (axisEl) {
             axisEl.textContent = `ROTATE ${curAxis}`;
         }
         if (radEl) {
-            radEl.innerHTML = `${curRad.toFixed(2)}<span class="text-[7.5px] ml-0.5 text-purple-400/80">rad</span>`;
+            radEl.innerHTML = `${curTurn.toFixed(2)}<span class="text-[7.5px] ml-0.5 text-purple-400/80">turn</span>`;
         }
         if (degEl) {
             degEl.textContent = `${curDeg}°${data.isCvPatched ? ' (CV)' : ''}`;
@@ -143,13 +144,13 @@ export const ROTATE = {
                     badge.textContent = 'CV OVERRIDE';
                 } else {
                     badge.className = 'text-[8.5px] font-mono text-slate-400';
-                    badge.textContent = 'MANUAL RAD';
+                    badge.textContent = 'MANUAL (1.0 = 2π)';
                 }
             }
             if (data.isCvPatched) {
                 const disp = modal.querySelector('#rotate-val-disp');
                 if (disp) {
-                    disp.textContent = `${curRad.toFixed(2)} rad (${curDeg}°) [CV]`;
+                    disp.textContent = `${curTurn.toFixed(2)} turn (${curDeg}°) [CV]`;
                 }
             }
         }

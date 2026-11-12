@@ -543,13 +543,74 @@ export class PresetManager {
         const c = document.getElementById('preset-list-container');
         if (!c) return;
         c.innerHTML = '';
+        c.className = 'flex-1 overflow-y-auto overscroll-contain pr-1 min-h-0 mb-2 space-y-1 touch-pan-y';
+
+        // 1. DEMO Patches (First at head of list, 1-line style)
+        this.DEMO_KEYS.forEach(k => {
+            const isActive = (k === this.currentPresetKey);
+            const pData = this.presets[k];
+            const bpm = pData?.bpm || 120;
+
+            const item = document.createElement('div');
+            item.className = `flex items-center justify-between py-1.5 px-2 rounded border cursor-pointer text-xs transition select-none ${
+                isActive
+                    ? 'bg-amber-950/70 border-amber-500 text-amber-200 font-bold shadow-sm shadow-amber-950/50 ring-1 ring-amber-500/40'
+                    : 'bg-slate-800/50 border-slate-700/50 hover:bg-slate-750 hover:border-slate-600 text-slate-300'
+            }`;
+            item.innerHTML = `
+                <div class="flex items-center gap-1.5 min-w-0">
+                    <span class="text-[7.5px] font-mono px-1 py-0.2 rounded font-bold uppercase ${
+                        isActive ? 'bg-amber-500/30 text-amber-300' : 'bg-slate-900/80 text-amber-400/80 border border-amber-600/30'
+                    } shrink-0">DEMO</span>
+                    <span class="truncate">${k}</span>
+                </div>
+                <div class="flex items-center gap-1 shrink-0">
+                    <span class="text-[7.5px] font-mono text-slate-400">${bpm} BPM</span>
+                    ${isActive ? '<span class="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block animate-pulse ml-0.5"></span>' : ''}
+                </div>
+            `;
+            item.onclick = () => {
+                this.currentPresetKey = k;
+                this.loadActivePreset();
+                document.getElementById('preset-manager-modal')?.classList.add('hidden');
+                this.ui.showToast(`プリセット「${k}」を展開しました`);
+            };
+            if (isActive) item.setAttribute('data-active-preset', 'true');
+            c.appendChild(item);
+        });
+
+        // 2. User-saved Patches (Follows after DEMO patches, 1-line style)
         const userKeys = this.presetOrder.filter(k => !this.DEMO_KEYS.includes(k));
         userKeys.forEach(k => {
+            const isActive = (k === this.currentPresetKey);
+            const pData = this.presets[k];
+            const bpm = pData?.bpm || 120;
+
             const item = document.createElement('div');
-            item.className = `flex items-center justify-between py-1 px-2 mb-1 rounded border ${k === this.currentPresetKey ? 'bg-cyan-950/60 border-cyan-500 text-cyan-200 font-bold' : 'bg-slate-800/60 border-slate-700/60 text-slate-300'} cursor-pointer text-xs`;
-            item.innerHTML = `<span class="truncate">${k}</span><div class="flex items-center gap-1 shrink-0"><button class="rename-p text-violet-400 hover:text-white px-1">✎</button><button class="copy-p text-amber-400 hover:text-white px-1">📋</button><button class="del-p text-rose-400 hover:text-white px-1">✕</button></div>`;
+            item.className = `flex items-center justify-between py-1.5 px-2 rounded border cursor-pointer text-xs transition select-none ${
+                isActive
+                    ? 'bg-cyan-950/70 border-cyan-500 text-cyan-200 font-bold shadow-sm shadow-cyan-950/50 ring-1 ring-cyan-500/40'
+                    : 'bg-slate-800/50 border-slate-700/50 hover:bg-slate-750 hover:border-slate-600 text-slate-300'
+            }`;
+            item.innerHTML = `
+                <div class="flex items-center gap-1.5 min-w-0">
+                    <span class="text-[7.5px] font-mono px-1 py-0.2 rounded font-bold uppercase ${
+                        isActive ? 'bg-cyan-500/30 text-cyan-300' : 'bg-slate-900/80 text-cyan-400/80 border border-cyan-600/30'
+                    } shrink-0">USER</span>
+                    <span class="truncate">${k}</span>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <span class="text-[7.5px] font-mono text-slate-400">${bpm} BPM</span>
+                    <div class="flex items-center gap-0.5 shrink-0">
+                        <button class="rename-p text-violet-400 hover:text-white px-1 py-0.5 rounded hover:bg-slate-700" title="名前変更">✎</button>
+                        <button class="copy-p text-amber-400 hover:text-white px-1 py-0.5 rounded hover:bg-slate-700" title="複製">📋</button>
+                        <button class="del-p text-rose-400 hover:text-white px-1 py-0.5 rounded hover:bg-slate-700" title="削除">✕</button>
+                    </div>
+                </div>
+            `;
             item.addEventListener('click', async (e) => {
                 if (e.target.classList.contains('del-p')) {
+                    e.stopPropagation();
                     delete this.presets[k];
                     this.presetOrder = this.presetOrder.filter(x => x !== k);
                     this.savePresetsDB();
@@ -557,6 +618,7 @@ export class PresetManager {
                     return;
                 }
                 if (e.target.classList.contains('copy-p')) {
+                    e.stopPropagation();
                     const nK = `${k}_COPY`;
                     this.presets[nK] = safeClone(this.presets[k]);
                     this.presetOrder.unshift(nK);
@@ -565,6 +627,7 @@ export class PresetManager {
                     return;
                 }
                 if (e.target.classList.contains('rename-p')) {
+                    e.stopPropagation();
                     const ren = await this.ui.openCustomPrompt('RENAME', k);
                     if (ren && ren !== k) {
                         this.presets[ren] = this.presets[k];
@@ -580,32 +643,19 @@ export class PresetManager {
                 this.currentPresetKey = k;
                 this.loadActivePreset();
                 document.getElementById('preset-manager-modal')?.classList.add('hidden');
+                this.ui.showToast(`プリセット「${k}」を展開しました`);
             });
+            if (isActive) item.setAttribute('data-active-preset', 'true');
             c.appendChild(item);
         });
 
-        const dHeader = document.createElement('div');
-        dHeader.className = 'flex items-center justify-between px-2 py-1 mt-2 text-[9px] font-bold text-slate-400 uppercase tracking-wider bg-slate-800/40 rounded cursor-pointer';
-        dHeader.innerHTML = `<span>DEMO PATCHES</span><span>${this.demoAccordionOpen ? '▲' : '▼'}</span>`;
-        dHeader.onclick = () => {
-            this.demoAccordionOpen = !this.demoAccordionOpen;
-            this.renderPresetList();
-        };
-        c.appendChild(dHeader);
-
-        if (this.demoAccordionOpen) {
-            this.DEMO_KEYS.forEach(k => {
-                const item = document.createElement('div');
-                item.className = `flex items-center justify-between py-1 px-2 my-1 rounded border ${k === this.currentPresetKey ? 'bg-amber-950/60 border-amber-500 text-amber-200 font-bold' : 'bg-slate-800/40 border-slate-700/40 text-slate-400'} cursor-pointer text-xs`;
-                item.innerHTML = `<span>${k}</span>`;
-                item.onclick = () => {
-                    this.currentPresetKey = k;
-                    this.loadActivePreset();
-                    document.getElementById('preset-manager-modal')?.classList.add('hidden');
-                };
-                c.appendChild(item);
-            });
-        }
+        // Auto-scroll active item into view
+        requestAnimationFrame(() => {
+            const activeEl = c.querySelector('[data-active-preset="true"]');
+            if (activeEl) {
+                activeEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+        });
     }
 
     bindPresetEvents() {

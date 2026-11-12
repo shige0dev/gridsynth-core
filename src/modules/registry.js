@@ -35,6 +35,7 @@ import { moveDefs } from './defs/move.js?v=701';
 import { scaleDefs } from './defs/scale.js?v=702';
 import { renderDefs } from './defs/render.js?v=699';
 import { vfxDefs } from './defs/vfx.js?v=709';
+import { vmixDefs } from './defs/vmix.js?v=713';
 import { displayDefs } from './defs/display.js?v=699';
 
 export const MODULE_REGISTRY = {
@@ -70,6 +71,7 @@ export const MODULE_REGISTRY = {
     ...scaleDefs,
     ...renderDefs,
     ...vfxDefs,
+    ...vmixDefs,
     ...displayDefs
 };
 
