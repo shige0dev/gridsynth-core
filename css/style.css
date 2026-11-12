@@ -592,25 +592,3 @@ body.is-row-dragging .grid-cell * {
 .is-power-off .dock-dialog .modal-canvas-4x1 {
     opacity: 0 !important;
 }
-
-/* Preset Carousel & Swipe Navigation */
-.preset-carousel-track {
-    display: flex;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    touch-action: pan-x pan-y;
-}
-.preset-carousel-track::-webkit-scrollbar {
-    display: none;
-}
-.preset-carousel-page {
-    flex: 0 0 100%;
-    width: 100%;
-    min-width: 100%;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
-    box-sizing: border-box;
-}

@@ -57,9 +57,6 @@ export class PresetManager {
         }
 
         this.currentPresetKey = this.presets['01_DELAY_TECHNO'] ? '01_DELAY_TECHNO' : (this.presetOrder[0] || Object.keys(this.presets)[0]);
-        this.activePresetTab = 'demo';
-        this.currentCarouselPage = 0;
-        this.PAGE_SIZE = 8;
     }
 
     getUserSubpatches() {
@@ -542,380 +539,83 @@ export class PresetManager {
         });
     }
 
-    selectNextPreset(direction = 1) {
-        const allKeys = this.presetOrder.filter(k => this.presets[k]);
-        if (allKeys.length === 0) return;
-        let idx = allKeys.indexOf(this.currentPresetKey);
-        if (idx === -1) idx = 0;
-        let nextIdx = (idx + direction + allKeys.length) % allKeys.length;
-        const nextKey = allKeys[nextIdx];
-        this.currentPresetKey = nextKey;
-        this.loadActivePreset();
-        this.ui.showToast(`PRESET [${nextIdx + 1}/${allKeys.length}]: ${nextKey}`);
-    }
-
     renderPresetList() {
         const c = document.getElementById('preset-list-container');
         if (!c) return;
         c.innerHTML = '';
-
         const userKeys = this.presetOrder.filter(k => !this.DEMO_KEYS.includes(k));
-        const isDemo = (this.activePresetTab === 'demo');
-        const keys = isDemo ? this.DEMO_KEYS : userKeys;
-        const totalPages = Math.max(1, Math.ceil(keys.length / this.PAGE_SIZE));
-
-        // If active preset is in current keys, default to its page
-        const activeIdx = keys.indexOf(this.currentPresetKey);
-        if (activeIdx !== -1) {
-            this.currentCarouselPage = Math.floor(activeIdx / this.PAGE_SIZE);
-        } else if (this.currentCarouselPage >= totalPages) {
-            this.currentCarouselPage = 0;
-        }
-
-        // 1. Tab Bar & Close Button
-        const headerEl = document.createElement('div');
-        headerEl.className = 'flex items-center justify-between gap-1 mb-2 px-0.5 shrink-0';
-        headerEl.innerHTML = `
-            <div class="flex items-center gap-1 bg-slate-950/80 p-0.5 rounded-lg border border-slate-800">
-                <button id="preset-tab-demos" class="px-2 py-1 text-[8.5px] font-bold rounded-md transition flex items-center gap-1 cursor-pointer ${isDemo ? 'bg-cyan-950/90 text-cyan-300 border border-cyan-500/60 shadow-sm' : 'text-slate-400 hover:text-slate-200 border border-transparent'}">
-                    <i data-lucide="sparkles" class="w-2.5 h-2.5 pointer-events-none"></i>
-                    <span>DEMOS</span>
-                    <span class="text-[7px] px-1 py-0.2 rounded-full ${isDemo ? 'bg-cyan-900/80 text-cyan-200' : 'bg-slate-800 text-slate-400'}">${this.DEMO_KEYS.length}</span>
-                </button>
-                <button id="preset-tab-user" class="px-2 py-1 text-[8.5px] font-bold rounded-md transition flex items-center gap-1 cursor-pointer ${!isDemo ? 'bg-emerald-950/90 text-emerald-300 border border-emerald-500/60 shadow-sm' : 'text-slate-400 hover:text-slate-200 border border-transparent'}">
-                    <i data-lucide="user" class="w-2.5 h-2.5 pointer-events-none"></i>
-                    <span>SAVED</span>
-                    <span class="text-[7px] px-1 py-0.2 rounded-full ${!isDemo ? 'bg-emerald-900/80 text-emerald-200' : 'bg-slate-800 text-slate-400'}">${userKeys.length}</span>
-                </button>
-            </div>
-            <button id="close-preset-modal-btn" class="w-5 h-5 flex items-center justify-center text-slate-400 hover:text-white bg-slate-800/80 rounded transition text-[11px] cursor-pointer" title="閉じる">✕</button>
-        `;
-        c.appendChild(headerEl);
-
-        // Tab click events
-        headerEl.querySelector('#preset-tab-demos')?.addEventListener('click', () => {
-            if (this.activePresetTab !== 'demo') {
-                this.activePresetTab = 'demo';
-                this.currentCarouselPage = 0;
-                this.renderPresetList();
-                if (typeof lucide !== 'undefined') lucide.createIcons();
-            }
-        });
-        headerEl.querySelector('#preset-tab-user')?.addEventListener('click', () => {
-            if (this.activePresetTab !== 'user') {
-                this.activePresetTab = 'user';
-                this.currentCarouselPage = 0;
-                this.renderPresetList();
-                if (typeof lucide !== 'undefined') lucide.createIcons();
-            }
-        });
-        headerEl.querySelector('#close-preset-modal-btn')?.addEventListener('click', () => {
-            document.getElementById('preset-manager-modal')?.classList.add('hidden');
-        });
-
-        // 2. Carousel Track Viewport
-        const viewportEl = document.createElement('div');
-        viewportEl.className = 'preset-carousel-viewport relative w-full overflow-hidden flex-1 min-h-0 select-none flex flex-col justify-center';
-        
-        const trackEl = document.createElement('div');
-        trackEl.id = 'preset-carousel-track';
-        trackEl.className = 'preset-carousel-track w-full flex-1';
-
-        if (keys.length === 0) {
-            const emptySlide = document.createElement('div');
-            emptySlide.className = 'preset-carousel-page w-full shrink-0 flex flex-col items-center justify-center p-6 text-center text-slate-500 font-mono text-[9px] gap-1.5';
-            emptySlide.innerHTML = `
-                <i data-lucide="archive-x" class="w-7 h-7 text-slate-600"></i>
-                <span class="font-bold text-slate-400">保存されたパッチはありません</span>
-                <span class="text-[7.5px] text-slate-500">下の「SAVE AS」ボタンで現在のパッチを保存できます</span>
-            `;
-            trackEl.appendChild(emptySlide);
-        } else {
-            for (let p = 0; p < totalPages; p++) {
-                const pageEl = document.createElement('div');
-                pageEl.className = 'preset-carousel-page w-full shrink-0 p-0.5 box-border';
-                const gridEl = document.createElement('div');
-                gridEl.className = 'grid grid-cols-2 gap-1.5 w-full';
-
-                const pageKeys = keys.slice(p * this.PAGE_SIZE, (p + 1) * this.PAGE_SIZE);
-                pageKeys.forEach(k => {
-                    const isActive = (k === this.currentPresetKey);
-                    const pData = this.presets[k];
-                    const bpm = pData?.bpm || 120;
-
-                    let badgeText = isDemo ? `DEMO ${k.slice(0, 2)}` : 'USER';
-                    let displayName = isDemo ? k.replace(/^[0-9]{2}_/, '').replace(/_/g, ' ') : k;
-
-                    const card = document.createElement('div');
-                    card.className = `preset-card relative p-1.5 rounded-lg border cursor-pointer transition select-none flex flex-col justify-between h-[44px] ${
-                        isActive
-                            ? 'bg-cyan-950/80 border-cyan-400 text-cyan-200 ring-1 ring-cyan-500/50 shadow-md shadow-cyan-950/60'
-                            : 'bg-slate-800/60 border-slate-700/60 hover:bg-slate-750 hover:border-slate-500 text-slate-300'
-                    }`;
-
-                    const userActionsHtml = !isDemo ? `
-                        <div class="flex items-center gap-1 shrink-0 ml-1">
-                            <button class="rename-p text-[8px] text-violet-400 hover:text-white px-0.5 rounded hover:bg-slate-700" title="名前変更">✎</button>
-                            <button class="copy-p text-[8px] text-amber-400 hover:text-white px-0.5 rounded hover:bg-slate-700" title="複製">📋</button>
-                            <button class="del-p text-[8px] text-rose-400 hover:text-white px-0.5 rounded hover:bg-slate-700" title="削除">✕</button>
-                        </div>
-                    ` : '';
-
-                    card.innerHTML = `
-                        <div class="flex items-center justify-between gap-1 w-full pointer-events-none">
-                            <span class="text-[6.5px] font-mono px-1 py-0.2 rounded font-bold uppercase tracking-tight ${
-                                isActive ? 'bg-cyan-500/30 text-cyan-300' : 'bg-slate-900/60 text-slate-400'
-                            }">${badgeText}</span>
-                            <div class="flex items-center gap-1">
-                                ${isActive ? '<span class="text-[6.5px] font-mono font-bold text-cyan-300 flex items-center gap-0.5"><span class="w-1.5 h-1.5 rounded-full bg-cyan-400 inline-block animate-pulse"></span>ACTIVE</span>' : ''}
-                                <span class="text-[6.5px] font-mono text-slate-400">${bpm} BPM</span>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between w-full mt-0.5">
-                            <span class="text-[9px] font-bold truncate leading-tight ${isActive ? 'text-cyan-200' : 'text-slate-200'}">${displayName}</span>
-                            ${userActionsHtml}
-                        </div>
-                    `;
-
-                    card.addEventListener('click', async (e) => {
-                        if (e.target.classList.contains('del-p')) {
-                            e.stopPropagation();
-                            delete this.presets[k];
-                            this.presetOrder = this.presetOrder.filter(x => x !== k);
-                            this.savePresetsDB();
-                            this.renderPresetList();
-                            if (typeof lucide !== 'undefined') lucide.createIcons();
-                            return;
-                        }
-                        if (e.target.classList.contains('copy-p')) {
-                            e.stopPropagation();
-                            const nK = `${k}_COPY`;
-                            this.presets[nK] = safeClone(this.presets[k]);
-                            this.presetOrder.unshift(nK);
-                            this.savePresetsDB();
-                            this.renderPresetList();
-                            if (typeof lucide !== 'undefined') lucide.createIcons();
-                            return;
-                        }
-                        if (e.target.classList.contains('rename-p')) {
-                            e.stopPropagation();
-                            const ren = await this.ui.openCustomPrompt('RENAME', k);
-                            if (ren && ren !== k) {
-                                this.presets[ren] = this.presets[k];
-                                delete this.presets[k];
-                                const idx = this.presetOrder.indexOf(k);
-                                if (idx !== -1) this.presetOrder[idx] = ren;
-                                if (this.currentPresetKey === k) this.currentPresetKey = ren;
-                                this.savePresetsDB();
-                                this.renderPresetList();
-                                if (typeof lucide !== 'undefined') lucide.createIcons();
-                            }
-                            return;
-                        }
-
-                        this.currentPresetKey = k;
-                        this.loadActivePreset();
-                        document.getElementById('preset-manager-modal')?.classList.add('hidden');
-                        this.ui.showToast(`プリセット「${k}」を展開しました`);
-                    });
-
-                    gridEl.appendChild(card);
-                });
-
-                pageEl.appendChild(gridEl);
-                trackEl.appendChild(pageEl);
-            }
-        }
-
-        viewportEl.appendChild(trackEl);
-        c.appendChild(viewportEl);
-
-        // 3. Pagination Controls Bar (chevrons, dots, indicator, swipe hint)
-        const navEl = document.createElement('div');
-        navEl.className = 'flex items-center justify-between pt-1.5 pb-0.5 px-1 border-t border-slate-800/80 shrink-0 text-slate-400';
-        
-        let dotsHtml = '';
-        for (let i = 0; i < totalPages; i++) {
-            dotsHtml += `<button data-page="${i}" class="preset-dot h-1.5 rounded-full transition-all cursor-pointer ${
-                i === this.currentCarouselPage ? 'w-3.5 bg-cyan-400 shadow-sm shadow-cyan-400/50' : 'w-1.5 bg-slate-700 hover:bg-slate-500'
-            }"></button>`;
-        }
-
-        navEl.innerHTML = `
-            <button id="preset-page-prev-btn" class="w-6 h-5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded flex items-center justify-center transition border border-slate-700/60 cursor-pointer disabled:opacity-20 disabled:pointer-events-none text-xs font-mono font-bold" ${this.currentCarouselPage === 0 ? 'disabled' : ''}>‹</button>
-            <div class="flex items-center gap-2">
-                <div id="preset-carousel-dots" class="flex items-center gap-1">${dotsHtml}</div>
-                <span id="preset-page-disp" class="text-[8px] font-mono font-bold text-slate-400 min-w-[28px] text-center">${this.currentCarouselPage + 1}/${totalPages}</span>
-            </div>
-            <button id="preset-page-next-btn" class="w-6 h-5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded flex items-center justify-center transition border border-slate-700/60 cursor-pointer disabled:opacity-20 disabled:pointer-events-none text-xs font-mono font-bold" ${this.currentCarouselPage >= totalPages - 1 ? 'disabled' : ''}>›</button>
-        `;
-        c.appendChild(navEl);
-
-        const hintEl = document.createElement('div');
-        hintEl.className = 'text-[7.5px] font-mono text-slate-500 text-center pb-0.5 select-none pointer-events-none';
-        hintEl.textContent = '‹ 左右スワイプでページ切替 ›';
-        c.appendChild(hintEl);
-
-        // Update UI indicator function
-        const updateIndicators = (pageIdx) => {
-            this.currentCarouselPage = pageIdx;
-            const disp = navEl.querySelector('#preset-page-disp');
-            if (disp) disp.textContent = `${pageIdx + 1}/${totalPages}`;
-
-            const prevBtn = navEl.querySelector('#preset-page-prev-btn');
-            const nextBtn = navEl.querySelector('#preset-page-next-btn');
-            if (prevBtn) prevBtn.disabled = (pageIdx <= 0);
-            if (nextBtn) nextBtn.disabled = (pageIdx >= totalPages - 1);
-
-            navEl.querySelectorAll('.preset-dot').forEach((dot, idx) => {
-                if (idx === pageIdx) {
-                    dot.className = 'preset-dot h-1.5 rounded-full transition-all cursor-pointer w-3.5 bg-cyan-400 shadow-sm shadow-cyan-400/50';
-                } else {
-                    dot.className = 'preset-dot h-1.5 rounded-full transition-all cursor-pointer w-1.5 bg-slate-700 hover:bg-slate-500';
+        userKeys.forEach(k => {
+            const item = document.createElement('div');
+            item.className = `flex items-center justify-between py-1 px-2 mb-1 rounded border ${k === this.currentPresetKey ? 'bg-cyan-950/60 border-cyan-500 text-cyan-200 font-bold' : 'bg-slate-800/60 border-slate-700/60 text-slate-300'} cursor-pointer text-xs`;
+            item.innerHTML = `<span class="truncate">${k}</span><div class="flex items-center gap-1 shrink-0"><button class="rename-p text-violet-400 hover:text-white px-1">✎</button><button class="copy-p text-amber-400 hover:text-white px-1">📋</button><button class="del-p text-rose-400 hover:text-white px-1">✕</button></div>`;
+            item.addEventListener('click', async (e) => {
+                if (e.target.classList.contains('del-p')) {
+                    delete this.presets[k];
+                    this.presetOrder = this.presetOrder.filter(x => x !== k);
+                    this.savePresetsDB();
+                    this.renderPresetList();
+                    return;
                 }
+                if (e.target.classList.contains('copy-p')) {
+                    const nK = `${k}_COPY`;
+                    this.presets[nK] = safeClone(this.presets[k]);
+                    this.presetOrder.unshift(nK);
+                    this.savePresetsDB();
+                    this.renderPresetList();
+                    return;
+                }
+                if (e.target.classList.contains('rename-p')) {
+                    const ren = await this.ui.openCustomPrompt('RENAME', k);
+                    if (ren && ren !== k) {
+                        this.presets[ren] = this.presets[k];
+                        delete this.presets[k];
+                        const idx = this.presetOrder.indexOf(k);
+                        if (idx !== -1) this.presetOrder[idx] = ren;
+                        if (this.currentPresetKey === k) this.currentPresetKey = ren;
+                        this.savePresetsDB();
+                        this.renderPresetList();
+                    }
+                    return;
+                }
+                this.currentPresetKey = k;
+                this.loadActivePreset();
+                document.getElementById('preset-manager-modal')?.classList.add('hidden');
             });
+            c.appendChild(item);
+        });
+
+        const dHeader = document.createElement('div');
+        dHeader.className = 'flex items-center justify-between px-2 py-1 mt-2 text-[9px] font-bold text-slate-400 uppercase tracking-wider bg-slate-800/40 rounded cursor-pointer';
+        dHeader.innerHTML = `<span>DEMO PATCHES</span><span>${this.demoAccordionOpen ? '▲' : '▼'}</span>`;
+        dHeader.onclick = () => {
+            this.demoAccordionOpen = !this.demoAccordionOpen;
+            this.renderPresetList();
         };
+        c.appendChild(dHeader);
 
-        // Scroll listener on track
-        let scrollTimer = null;
-        trackEl.addEventListener('scroll', () => {
-            if (scrollTimer) cancelAnimationFrame(scrollTimer);
-            scrollTimer = requestAnimationFrame(() => {
-                const width = trackEl.clientWidth || 1;
-                const page = Math.round(trackEl.scrollLeft / width);
-                if (page !== this.currentCarouselPage && page >= 0 && page < totalPages) {
-                    updateIndicators(page);
-                }
+        if (this.demoAccordionOpen) {
+            this.DEMO_KEYS.forEach(k => {
+                const item = document.createElement('div');
+                item.className = `flex items-center justify-between py-1 px-2 my-1 rounded border ${k === this.currentPresetKey ? 'bg-amber-950/60 border-amber-500 text-amber-200 font-bold' : 'bg-slate-800/40 border-slate-700/40 text-slate-400'} cursor-pointer text-xs`;
+                item.innerHTML = `<span>${k}</span>`;
+                item.onclick = () => {
+                    this.currentPresetKey = k;
+                    this.loadActivePreset();
+                    document.getElementById('preset-manager-modal')?.classList.add('hidden');
+                };
+                c.appendChild(item);
             });
-        }, { passive: true });
-
-        // Prev & Next Buttons
-        navEl.querySelector('#preset-page-prev-btn')?.addEventListener('click', () => {
-            const width = trackEl.clientWidth || 1;
-            const target = Math.max(0, this.currentCarouselPage - 1);
-            trackEl.scrollTo({ left: target * width, behavior: 'smooth' });
-        });
-
-        navEl.querySelector('#preset-page-next-btn')?.addEventListener('click', () => {
-            const width = trackEl.clientWidth || 1;
-            const target = Math.min(totalPages - 1, this.currentCarouselPage + 1);
-            trackEl.scrollTo({ left: target * width, behavior: 'smooth' });
-        });
-
-        // Click on dots
-        navEl.querySelectorAll('.preset-dot').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const page = parseInt(btn.dataset.page, 10);
-                if (!isNaN(page)) {
-                    const width = trackEl.clientWidth || 1;
-                    trackEl.scrollTo({ left: page * width, behavior: 'smooth' });
-                }
-            });
-        });
-
-        // Desktop mouse drag support
-        let isMouseDown = false;
-        let startX = 0;
-        let startScrollLeft = 0;
-        let didDrag = false;
-
-        trackEl.addEventListener('mousedown', (e) => {
-            isMouseDown = true;
-            didDrag = false;
-            startX = e.pageX - trackEl.offsetLeft;
-            startScrollLeft = trackEl.scrollLeft;
-        });
-
-        window.addEventListener('mousemove', (e) => {
-            if (!isMouseDown) return;
-            const x = e.pageX - trackEl.offsetLeft;
-            const walk = (x - startX);
-            if (Math.abs(walk) > 5) {
-                didDrag = true;
-                trackEl.scrollLeft = startScrollLeft - walk;
-            }
-        });
-
-        window.addEventListener('mouseup', () => {
-            if (!isMouseDown) return;
-            isMouseDown = false;
-            if (didDrag) {
-                const width = trackEl.clientWidth || 1;
-                const page = Math.round(trackEl.scrollLeft / width);
-                trackEl.scrollTo({ left: page * width, behavior: 'smooth' });
-            }
-        });
-
-        // Initial scroll position
-        requestAnimationFrame(() => {
-            const width = trackEl.clientWidth || 1;
-            if (this.currentCarouselPage > 0) {
-                trackEl.scrollLeft = this.currentCarouselPage * width;
-            }
-        });
+        }
     }
 
     bindPresetEvents() {
-        const triggerBtn = document.getElementById('preset-trigger-btn');
-        let touchStartX = 0;
-        let touchStartY = 0;
-        let touchStartTime = 0;
-        let didSwipe = false;
-
-        triggerBtn?.addEventListener('touchstart', (e) => {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-            touchStartTime = Date.now();
-            didSwipe = false;
-        }, { passive: true });
-
-        triggerBtn?.addEventListener('touchmove', (e) => {
-            const dx = e.touches[0].clientX - touchStartX;
-            const dy = e.touches[0].clientY - touchStartY;
-            if (Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy)) {
-                didSwipe = true;
-            }
-        }, { passive: true });
-
-        triggerBtn?.addEventListener('touchend', (e) => {
-            if (didSwipe) {
-                const dx = e.changedTouches[0].clientX - touchStartX;
-                const dt = Date.now() - touchStartTime;
-                if (dt < 600 && Math.abs(dx) > 30) {
-                    if (dx < 0) {
-                        this.selectNextPreset(1);
-                    } else {
-                        this.selectNextPreset(-1);
-                    }
-                    e.preventDefault();
-                    setTimeout(() => { didSwipe = false; }, 300);
-                    return;
-                }
-            }
-            didSwipe = false;
-        });
-
-        triggerBtn?.addEventListener('click', (e) => {
-            if (didSwipe) {
-                e.stopPropagation();
-                return;
-            }
+        document.getElementById('preset-trigger-btn')?.addEventListener('click', () => {
             this.renderPresetList();
             document.getElementById('preset-manager-modal')?.classList.remove('hidden');
             if (typeof lucide !== 'undefined') lucide.createIcons();
         });
-
-        document.getElementById('preset-prev-header-btn')?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.selectNextPreset(-1);
-        });
-
-        document.getElementById('preset-next-header-btn')?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.selectNextPreset(1);
-        });
-
         document.getElementById('close-preset-bg')?.addEventListener('click', () => document.getElementById('preset-manager-modal')?.classList.add('hidden'));
+        document.getElementById('close-preset-modal-btn')?.addEventListener('click', () => document.getElementById('preset-manager-modal')?.classList.add('hidden'));
         document.getElementById('preset-new-top-btn')?.addEventListener('click', () => this.createNewPatch());
         document.getElementById('preset-save-top-btn')?.addEventListener('click', () => this.saveCurrentPatch());
         document.getElementById('preset-saveas-top-btn')?.addEventListener('click', async () => {
