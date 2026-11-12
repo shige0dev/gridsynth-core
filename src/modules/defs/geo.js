@@ -77,13 +77,12 @@ export const OBJECT = {
         return `
         <div class="flex flex-col gap-2 p-1.5 bg-slate-900 text-slate-200 select-none w-full">
             <div class="flex items-center justify-between border-b border-slate-700/80 pb-1">
-                <span class="text-xs font-mono font-bold text-purple-400">3D OBJECT</span>
-                <span class="text-[9px] font-mono text-purple-300 bg-purple-950 px-1.5 py-0.5 rounded border border-purple-600/50">PRIMITIVE MESH</span>
+                <span class="text-xs font-mono font-bold text-purple-400">OBJECT</span>
             </div>
 
-            <!-- Section 1A: Basic / Standard Shapes (6 Shapes) -->
+            <!-- Section 1A: Basic Shapes -->
             <div class="flex flex-col gap-1">
-                <span class="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-wider">STANDARD SHAPES (基本幾何・曲面)</span>
+                <span class="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-wider">STANDARD</span>
                 <div class="grid grid-cols-3 gap-1">
                     ${BASIC_SHAPES.map(p => `
                         <button data-shape="${p.id}" class="geo-shape-btn py-1 rounded text-[8px] font-mono font-bold border transition ${curShape === p.id ? 'bg-purple-600 text-white border-purple-400 shadow-sm shadow-purple-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-750'}">${p.label}</button>
@@ -91,12 +90,9 @@ export const OBJECT = {
                 </div>
             </div>
 
-            <!-- Section 1B: Polyhedra (Platonic Solids - 4 Shapes) -->
+            <!-- Section 1B: Polyhedra -->
             <div class="flex flex-col gap-1 border-t border-slate-800/80 pt-1">
-                <div class="flex items-center justify-between">
-                    <span class="text-[8px] font-mono font-bold text-amber-400 uppercase tracking-wider">POLYHEDRA (プラトン正多面体)</span>
-                    <span class="text-[7px] font-mono text-amber-300/80">FLAT TESSELLATION</span>
-                </div>
+                <span class="text-[8px] font-mono font-bold text-amber-400 uppercase tracking-wider">POLYHEDRA</span>
                 <div class="grid grid-cols-4 gap-1">
                     ${POLYHEDRA_SHAPES.map(p => `
                         <button data-shape="${p.id}" class="geo-shape-btn py-1 rounded text-[8px] font-mono font-bold border transition ${curShape === p.id ? 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/50 ring-1 ring-amber-400/40' : 'bg-slate-800 text-amber-200/90 border-slate-700 hover:bg-slate-750'}">${p.label}</button>
@@ -104,9 +100,9 @@ export const OBJECT = {
                 </div>
             </div>
 
-            <!-- Section 2: Mesh Detail (3 Levels: Low / Mid / High) -->
+            <!-- Section 2: Mesh Detail -->
             <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
-                <span class="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-wider">MESH DETAIL (詳細度 3段階)</span>
+                <span class="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-wider">DETAIL</span>
                 <div class="grid grid-cols-3 gap-1">
                     ${MESH_DETAILS.map(d => `
                         <button data-detail="${d.id}" class="geo-detail-btn py-1 rounded text-[8.5px] font-mono font-bold border transition ${curDet === d.id ? 'bg-purple-600 text-white border-purple-400 shadow-sm shadow-purple-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">${d.label}</button>
@@ -114,9 +110,9 @@ export const OBJECT = {
                 </div>
             </div>
 
-            <!-- Section 3: Material Style -->
+            <!-- Section 3: Material -->
             <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
-                <span class="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-wider">MATERIAL STYLE</span>
+                <span class="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-wider">MATERIAL</span>
                 <div class="grid grid-cols-4 gap-1">
                     ${MATERIAL_STYLES.map(ms => `
                         <button data-mat="${ms.id}" class="geo-mat-btn py-1 rounded text-[8px] font-mono font-bold border transition ${curMat === ms.id ? 'bg-purple-600 text-white border-purple-400 shadow-sm shadow-purple-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">${ms.label}</button>
@@ -124,7 +120,7 @@ export const OBJECT = {
                 </div>
             </div>
 
-            <!-- Section 4: Color Palette (Only relevant for Wire, Solid, Toon) -->
+            <!-- Section 4: Color -->
             <div class="flex flex-col gap-1 border-t border-slate-800 pt-1 ${curMat === 'normal' ? 'opacity-30 pointer-events-none' : ''}">
                 <div class="flex items-center justify-between">
                     <span class="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-wider">COLOR</span>

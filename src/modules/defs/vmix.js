@@ -6,6 +6,7 @@ export const VMIX_MODES = [
     { id: 'dissolve', label: 'DISSOLVE' },
     { id: 'blur', label: 'BLUR' },
     { id: 'zoom', label: 'ZOOM' },
+    { id: 'mosaic', label: 'MOSAIC' },
     { id: 'slide_h', label: 'SLIDE H' },
     { id: 'slide_v', label: 'SLIDE V' },
     { id: 'blackout', label: 'BLACKOUT' },
@@ -59,15 +60,15 @@ export const VMIX = {
         return `
         <div class="flex flex-col gap-2 p-1.5 bg-slate-900 text-slate-200 select-none w-full">
             <div class="flex items-center justify-between border-b border-slate-700/80 pb-1">
-                <span class="text-xs font-mono font-bold text-emerald-400">VIDEO MIXER (VMIX)</span>
+                <span class="text-xs font-mono font-bold text-emerald-400">VMIX</span>
                 <span id="vmix-status-badge" class="text-[8.5px] font-mono font-bold ${isCvPatched ? 'text-amber-300 bg-amber-950 px-1 rounded border border-amber-600/50' : 'text-slate-400'}">
                     ${isCvPatched ? 'CV MODULATED' : 'MANUAL MIX'}
                 </span>
             </div>
 
-            <!-- Transition Mode Selector (7 modes) -->
+            <!-- Transition Mode Selector (8 modes) -->
             <div class="flex flex-col gap-1">
-                <span class="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-wider">TRANSITION EFFECT (合成モード)</span>
+                <span class="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-wider">TRANSITION</span>
                 <div class="grid grid-cols-4 gap-1">
                     ${VMIX_MODES.map(mod => `
                         <button data-mode="${mod.id}" class="vmix-mode-btn py-1 rounded text-[7.5px] font-mono font-bold border transition ${curMode === mod.id ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">${mod.label}</button>
