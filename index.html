@@ -55,11 +55,13 @@
             <!-- Camera Punch-Hole Spacer (Gap between BPM and Patch Name) -->
             <div id="camera-hole-spacer" class="w-5 shrink-0 pointer-events-none flex items-center justify-center" aria-hidden="true"></div>
 
-            <div class="flex items-center gap-1 flex-1 min-w-0 justify-end">
-                <button id="preset-trigger-btn" class="w-full max-w-[140px] h-5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-[8px] font-medium rounded-md px-1.5 flex items-center justify-between transition truncate shadow-sm shrink min-w-[50px]">
+            <div class="flex items-center gap-0.5 flex-1 min-w-0 justify-end">
+                <button id="preset-prev-header-btn" class="h-5 w-4 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-400 hover:text-cyan-300 rounded-l flex items-center justify-center transition shadow-sm shrink-0 cursor-pointer text-[10px] font-mono select-none" title="前のプリセット (スワイプ可)">‹</button>
+                <button id="preset-trigger-btn" class="w-full max-w-[125px] h-5 bg-slate-900 hover:bg-slate-800 border-y border-slate-700 text-slate-300 text-[8px] font-medium px-1 flex items-center justify-between transition truncate shadow-sm shrink min-w-[50px] cursor-pointer" title="プリセット一覧 (左右スワイプで前後に切替)">
                     <span id="current-preset-name" class="truncate">DEMO_01</span><i data-lucide="chevron-down" class="w-2.5 h-2.5 text-slate-500 shrink-0 ml-0.5"></i>
                 </button>
-                <button id="undo-btn" class="h-5 w-5 bg-slate-900 text-slate-400 border border-slate-700 rounded-md transition flex items-center justify-center opacity-40 cursor-not-allowed shadow-sm shrink-0" title="UNDO" disabled><i data-lucide="undo-2" class="w-2.5 h-2.5"></i></button>
+                <button id="preset-next-header-btn" class="h-5 w-4 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-400 hover:text-cyan-300 rounded-r flex items-center justify-center transition shadow-sm shrink-0 cursor-pointer text-[10px] font-mono select-none" title="次のプリセット (スワイプ可)">›</button>
+                <button id="undo-btn" class="h-5 w-5 bg-slate-900 text-slate-400 border border-slate-700 rounded-md transition flex items-center justify-center opacity-40 cursor-not-allowed shadow-sm shrink-0 ml-0.5" title="UNDO" disabled><i data-lucide="undo-2" class="w-2.5 h-2.5"></i></button>
             </div>
         </header>
 
@@ -109,7 +111,7 @@
         <div id="preset-manager-modal" class="absolute inset-0 hidden z-50 flex items-start justify-end pt-14 pb-6 px-2">
             <div id="close-preset-bg" class="absolute inset-0 bg-black/40 backdrop-blur-[1px] cursor-pointer"></div>
             <div class="bg-slate-900/95 border border-slate-700/80 rounded-2xl w-[370px] max-w-full p-2.5 shadow-2xl relative z-10 flex flex-col max-h-full backdrop-blur-md">
-                <div id="preset-list-container" class="flex-1 overflow-y-auto pr-0.5 min-h-0 mb-2"></div>
+                <div id="preset-list-container" class="flex-1 overflow-hidden min-h-0 mb-2 flex flex-col"></div>
                 <div class="flex items-center justify-between pt-2 border-t border-slate-800 shrink-0">
                     <div class="flex items-center gap-1 w-full justify-between">
                         <button id="preset-new-top-btn" class="h-6 px-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-md border border-slate-700 text-[8.5px] font-bold flex items-center gap-1 shrink-0"><i data-lucide="plus" class="w-2.5 h-2.5 text-emerald-400"></i>NEW</button>
@@ -260,6 +262,6 @@
         <div id="toast" class="absolute top-[26px] left-1/2 -translate-x-1/2 h-[22px] px-3 bg-slate-950/95 border border-cyan-400 text-cyan-200 rounded-full text-[10px] font-bold shadow-2xl pointer-events-none opacity-0 transition-opacity duration-200 z-[100] whitespace-nowrap ring-1 ring-cyan-500/40 flex items-center justify-center max-w-[calc(100%-40px)] truncate">Message</div>
     </div>
 
-    <script type="module" src="./src/main.js?v=711"></script>
+    <script type="module" src="./src/main.js?v=712"></script>
 </body>
 </html>
