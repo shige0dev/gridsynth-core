@@ -41,8 +41,7 @@ export const VFX = {
             crt: 2,
             invert: 3,
             rgb: 4,
-            glitch: 5,
-            blur: 6
+            blur: 5
         };
 
         const initGPU = () => {
@@ -126,22 +125,6 @@ export const VFX = {
                     }
 
                     if (uMode == 5) {
-                        // Glitch (Horizontal slice tearing, scanline jitter, RGB displacement)
-                        float t = uTime * 14.0;
-                        float sliceBand = step(0.80, sin(uv.y * 28.0 + t * 2.5));
-                        float microSlice = sin(uv.y * 130.0 + t * 6.0);
-                        
-                        float shift = (microSlice * 0.03 * sliceBand + sin(uv.y * 12.0 + t) * 0.008) * uAmount;
-                        float rgbOffset = 0.018 * uAmount * sliceBand;
-
-                        float r = texture2D(tDiffuse, uv + vec2(shift + rgbOffset, 0.0)).r;
-                        float g = texture2D(tDiffuse, uv + vec2(shift, 0.0)).g;
-                        float b = texture2D(tDiffuse, uv + vec2(shift - rgbOffset, 0.0)).b;
-                        gl_FragColor = vec4(r, g, b, 1.0);
-                        return;
-                    }
-
-                    if (uMode == 6) {
                         // Blur (Golden-angle spiral bokeh that smoothly melts into pure liquid wash)
                         float radius = pow(clamp(uAmount, 0.0, 1.0), 1.5) * 0.16;
                         vec4 sum = texture2D(tDiffuse, uv) * 2.5;
