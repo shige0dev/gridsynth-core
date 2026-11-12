@@ -63,7 +63,7 @@ export const VMIX = {
             <div class="flex items-center justify-between border-b border-slate-700/80 pb-1">
                 <span class="text-xs font-mono font-bold text-emerald-400">VMIX</span>
                 <span id="vmix-status-badge" class="text-[8.5px] font-mono font-bold ${isCvPatched ? 'text-amber-300 bg-amber-950 px-1 rounded border border-amber-600/50' : 'text-slate-400'}">
-                    ${isCvPatched ? 'CV MODULATED' : 'MANUAL MIX'}
+                    ${isCvPatched ? 'CV' : 'MANUAL'}
                 </span>
             </div>
 
@@ -77,29 +77,17 @@ export const VMIX = {
                 </div>
             </div>
 
-            <!-- Mix Balance Slider (0.0 to 1.0) -->
+            <!-- Mix Slider -->
             <div class="flex flex-col gap-1.5 bg-slate-950/60 p-2 rounded border border-slate-800">
                 <div class="flex justify-between items-center text-[9px] font-mono">
-                    <span class="text-slate-300 font-bold">SOURCE BALANCE (V1 ◄► V2)</span>
-                    <span id="vmix-mix-disp" class="font-bold text-emerald-300">${pct}% (V1: ${100 - pct}% / V2: ${pct}%)</span>
+                    <span class="text-slate-400 font-bold uppercase tracking-wider">MIX</span>
+                    <span id="vmix-mix-disp" class="font-bold text-emerald-300">${pct}%</span>
                 </div>
                 <input type="range" id="vmix-mix-slider" min="0" max="1" step="0.01" value="${mix}" class="h-1.5 bg-slate-700 rounded appearance-none cursor-pointer accent-emerald-500 ${isCvPatched ? 'opacity-35 pointer-events-none' : ''}">
-                <div class="flex justify-between text-[7px] font-mono text-slate-400">
-                    <span class="text-emerald-400 font-bold">100% V1</span>
-                    <span>75/25</span>
-                    <span class="text-cyan-300 font-bold">50/50</span>
-                    <span>25/75</span>
-                    <span class="text-purple-400 font-bold">100% V2</span>
+                <div class="flex justify-between text-[7.5px] font-mono text-slate-400">
+                    <span>V1</span>
+                    <span>V2</span>
                 </div>
-            </div>
-
-            <!-- Mix Presets -->
-            <div class="grid grid-cols-5 gap-1 text-[8px] font-mono">
-                <button data-mix="0.0" class="vmix-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">V1 (0%)</button>
-                <button data-mix="0.25" class="vmix-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">25%</button>
-                <button data-mix="0.5" class="vmix-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">50/50</button>
-                <button data-mix="0.75" class="vmix-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">75%</button>
-                <button data-mix="1.0" class="vmix-preset-btn py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">V2 (100%)</button>
             </div>
         </div>`;
     },
@@ -110,7 +98,7 @@ export const VMIX = {
 
         const updateDisp = (val) => {
             const pct = Math.round(val * 100);
-            if (disp) disp.textContent = `${pct}% (V1: ${100 - pct}% / V2: ${pct}%)`;
+            if (disp) disp.textContent = `${pct}%`;
         };
 
         if (slider) {
@@ -126,16 +114,6 @@ export const VMIX = {
             btn.addEventListener('click', (e) => {
                 m.mode = e.currentTarget.dataset.mode;
                 ctx.reRenderModal?.();
-                onChange?.();
-            });
-        });
-
-        root.querySelectorAll('.vmix-preset-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const val = parseFloat(e.currentTarget.dataset.mix);
-                m.mix = val;
-                if (slider) slider.value = val;
-                updateDisp(val);
                 onChange?.();
             });
         });
@@ -155,16 +133,16 @@ export const VMIX = {
             if (badge) {
                 if (data.isCvPatched) {
                     badge.className = 'text-[8.5px] font-mono font-bold text-amber-300 bg-amber-950 px-1 rounded border border-amber-600/50';
-                    badge.textContent = 'CV MODULATED';
+                    badge.textContent = 'CV';
                 } else {
                     badge.className = 'text-[8.5px] font-mono text-slate-400';
-                    badge.textContent = 'MANUAL MIX';
+                    badge.textContent = 'MANUAL';
                 }
             }
             if (data.isCvPatched) {
                 const disp = modal.querySelector('#vmix-mix-disp');
                 if (disp) {
-                    disp.textContent = `${pct}% (V1: ${100 - pct}% / V2: ${pct}%) [CV]`;
+                    disp.textContent = `${pct}% [CV]`;
                 }
             }
         }

@@ -82,13 +82,20 @@ export const VMIX = {
                 uniform vec2 uResolution;
                 varying vec2 vUv;
 
-                vec4 sampleBlur(sampler2D tex, vec2 uv, float radius) {
-                    vec4 c = texture2D(tex, uv) * 0.4;
-                    c += texture2D(tex, uv + vec2(radius, radius)) * 0.15;
-                    c += texture2D(tex, uv + vec2(-radius, radius)) * 0.15;
-                    c += texture2D(tex, uv + vec2(radius, -radius)) * 0.15;
-                    c += texture2D(tex, uv + vec2(-radius, -radius)) * 0.15;
-                    return c;
+                vec4 sampleDeepBlur(sampler2D tex, vec2 uv, float radius) {
+                    if (radius <= 0.001) return texture2D(tex, uv);
+                    vec4 sum = texture2D(tex, uv) * 2.5;
+                    float total = 2.5;
+                    for (int i = 1; i <= 24; i++) {
+                        float fi = float(i);
+                        float r = sqrt(fi / 24.0) * radius;
+                        float theta = fi * 2.39996323; // Golden angle
+                        vec2 offset = vec2(cos(theta), sin(theta)) * r;
+                        float w = 1.0 - (r / (radius + 0.0001)) * 0.4;
+                        sum += texture2D(tex, uv + offset) * w;
+                        total += w;
+                    }
+                    return sum / total;
                 }
 
                 void main() {
@@ -113,22 +120,31 @@ export const VMIX = {
                         return;
                     }
 
-                    // 2. Blur Dissolve
+                    // 2. Heavy Liquid Blur Dissolve (Dramatic bokeh melt peaking at mid-transition)
                     if (uMode == 2) {
-                        float blurRad = sin(m * 3.14159265) * 0.02;
-                        vec4 bA = sampleBlur(tTexA, uv, blurRad);
-                        vec4 bB = sampleBlur(tTexB, uv, blurRad);
+                        float blurRad = sin(m * 3.14159265) * 0.16;
+                        vec4 bA = sampleDeepBlur(tTexA, uv, blurRad);
+                        vec4 bB = sampleDeepBlur(tTexB, uv, blurRad);
                         gl_FragColor = mix(bA, bB, m);
                         return;
                     }
 
-                    // 3. Zoom Dissolve
+                    // 3. Zoom / Shrink Dissolve (Dramatically shrinks down to a miniature dot, then expands)
                     if (uMode == 3) {
-                        vec2 uvA = (uv - 0.5) * (1.0 + m * 0.7) + 0.5;
-                        vec2 uvB = (uv - 0.5) * (1.7 - m * 0.7) + 0.5;
-                        vec4 zA = texture2D(tTexA, uvA);
-                        vec4 zB = texture2D(tTexB, uvB);
-                        gl_FragColor = mix(zA, zB, m);
+                        float sA = max(0.015, pow(clamp((0.55 - m) / 0.55, 0.0, 1.0), 2.2));
+                        float sB = max(0.015, pow(clamp((m - 0.45) / 0.55, 0.0, 1.0), 2.2));
+
+                        vec2 uvA = (uv - 0.5) / sA + 0.5;
+                        vec2 uvB = (uv - 0.5) / sB + 0.5;
+
+                        bool inA = (uvA.x >= 0.0 && uvA.x <= 1.0 && uvA.y >= 0.0 && uvA.y <= 1.0) && (m < 0.55);
+                        bool inB = (uvB.x >= 0.0 && uvB.x <= 1.0 && uvB.y >= 0.0 && uvB.y <= 1.0) && (m > 0.45);
+
+                        vec4 zA = inA ? texture2D(tTexA, uvA) : vec4(0.0);
+                        vec4 zB = inB ? texture2D(tTexB, uvB) : vec4(0.0);
+
+                        float blend = smoothstep(0.45, 0.55, m);
+                        gl_FragColor = mix(zA, zB, blend);
                         return;
                     }
 
