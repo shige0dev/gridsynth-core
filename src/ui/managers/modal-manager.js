@@ -56,6 +56,7 @@ export const MODAL_WIDTHS = {
     SCALE: 'w-[190px]',
     RENDER: 'w-[calc(100%-16px)]',
     VFX: 'w-[190px]',
+    VMIX: 'w-[200px]',
     DISPLAY: 'w-[200px]'
 };
 

@@ -6,7 +6,8 @@ export const VMIX_MODES = [
     { id: 'dissolve', label: 'DISSOLVE' },
     { id: 'blur', label: 'BLUR' },
     { id: 'zoom', label: 'ZOOM' },
-    { id: 'wipe', label: 'WIPE' },
+    { id: 'slide_h', label: 'SLIDE H' },
+    { id: 'slide_v', label: 'SLIDE V' },
     { id: 'blackout', label: 'BLACKOUT' },
     { id: 'whiteout', label: 'WHITEOUT' }
 ];
@@ -64,12 +65,12 @@ export const VMIX = {
                 </span>
             </div>
 
-            <!-- Transition Mode Selector (6 modes) -->
+            <!-- Transition Mode Selector (7 modes) -->
             <div class="flex flex-col gap-1">
                 <span class="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-wider">TRANSITION EFFECT (合成モード)</span>
-                <div class="grid grid-cols-3 gap-1">
+                <div class="grid grid-cols-4 gap-1">
                     ${VMIX_MODES.map(mod => `
-                        <button data-mode="${mod.id}" class="vmix-mode-btn py-1 rounded text-[8px] font-mono font-bold border transition ${curMode === mod.id ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">${mod.label}</button>
+                        <button data-mode="${mod.id}" class="vmix-mode-btn py-1 rounded text-[7.5px] font-mono font-bold border transition ${curMode === mod.id ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">${mod.label}</button>
                     `).join('')}
                 </div>
             </div>

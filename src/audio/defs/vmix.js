@@ -41,9 +41,10 @@ export const VMIX = {
             dissolve: 1,
             blur: 2,
             zoom: 3,
-            wipe: 4,
-            blackout: 5,
-            whiteout: 6
+            slide_h: 4,
+            slide_v: 5,
+            blackout: 6,
+            whiteout: 7
         };
 
         const initGPU = () => {
@@ -129,15 +130,22 @@ export const VMIX = {
                         return;
                     }
 
-                    // 4. Wipe (Soft curtain wipe)
+                    // 4. Slide H (Horizontal stationary in-place wipe: reveals V2 over V1)
                     if (uMode == 4) {
-                        float edge = smoothstep(m - 0.02, m + 0.02, uv.x);
+                        float edge = smoothstep(m - 0.003, m + 0.003, uv.x);
                         gl_FragColor = mix(colB, colA, edge);
                         return;
                     }
 
-                    // 5. Blackout
+                    // 5. Slide V (Vertical stationary in-place wipe: reveals V2 over V1)
                     if (uMode == 5) {
+                        float edge = smoothstep((1.0 - m) - 0.003, (1.0 - m) + 0.003, uv.y);
+                        gl_FragColor = mix(colA, colB, edge);
+                        return;
+                    }
+
+                    // 6. Blackout
+                    if (uMode == 6) {
                         if (m < 0.5) {
                             gl_FragColor = vec4(colA.rgb * (1.0 - m * 2.0), colA.a);
                         } else {
@@ -146,8 +154,8 @@ export const VMIX = {
                         return;
                     }
 
-                    // 6. Whiteout
-                    if (uMode == 6) {
+                    // 7. Whiteout
+                    if (uMode == 7) {
                         if (m < 0.5) {
                             gl_FragColor = vec4(mix(colA.rgb, vec3(1.0), m * 2.0), colA.a);
                         } else {
