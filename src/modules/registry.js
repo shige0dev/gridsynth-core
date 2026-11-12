@@ -33,6 +33,8 @@ import { geoDefs } from './defs/geo.js?v=679';
 import { rotateDefs } from './defs/rotate.js?v=689';
 import { moveDefs } from './defs/move.js?v=701';
 import { scaleDefs } from './defs/scale.js?v=702';
+import { vertexDefs } from './defs/vertex.js?v=714';
+import { scatterDefs } from './defs/scatter.js?v=714';
 import { renderDefs } from './defs/render.js?v=699';
 import { vfxDefs } from './defs/vfx.js?v=709';
 import { vmixDefs } from './defs/vmix.js?v=713';
@@ -69,6 +71,8 @@ export const MODULE_REGISTRY = {
     ...rotateDefs,
     ...moveDefs,
     ...scaleDefs,
+    ...vertexDefs,
+    ...scatterDefs,
     ...renderDefs,
     ...vfxDefs,
     ...vmixDefs,

@@ -33,6 +33,8 @@ import { geoAudioDefs } from './defs/geo.js?v=679';
 import { rotateAudioDefs } from './defs/rotate.js?v=699';
 import { moveAudioDefs } from './defs/move.js?v=701';
 import { scaleAudioDefs } from './defs/scale.js?v=702';
+import { vertexAudioDefs } from './defs/vertex.js?v=714';
+import { scatterAudioDefs } from './defs/scatter.js?v=714';
 import { renderAudioDefs } from './defs/render.js?v=701';
 import { vfxAudioDefs } from './defs/vfx.js?v=709';
 import { vmixAudioDefs } from './defs/vmix.js?v=713';
@@ -69,6 +71,8 @@ export const AUDIO_REGISTRY = {
     ...rotateAudioDefs,
     ...moveAudioDefs,
     ...scaleAudioDefs,
+    ...vertexAudioDefs,
+    ...scatterAudioDefs,
     ...renderAudioDefs,
     ...vfxAudioDefs,
     ...vmixAudioDefs,
