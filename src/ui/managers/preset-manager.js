@@ -543,43 +543,9 @@ export class PresetManager {
         const c = document.getElementById('preset-list-container');
         if (!c) return;
         c.innerHTML = '';
-        c.className = 'flex-1 overflow-y-auto overscroll-contain pr-1 min-h-0 mb-2 space-y-1 touch-pan-y';
+        c.className = 'max-h-[336px] overflow-y-auto overscroll-contain pr-1 min-h-0 mb-2 space-y-1 touch-pan-y select-none';
 
-        // 1. DEMO Patches (First at head of list, 1-line style)
-        this.DEMO_KEYS.forEach(k => {
-            const isActive = (k === this.currentPresetKey);
-            const pData = this.presets[k];
-            const bpm = pData?.bpm || 120;
-
-            const item = document.createElement('div');
-            item.className = `flex items-center justify-between py-1.5 px-2 rounded border cursor-pointer text-xs transition select-none ${
-                isActive
-                    ? 'bg-amber-950/70 border-amber-500 text-amber-200 font-bold shadow-sm shadow-amber-950/50 ring-1 ring-amber-500/40'
-                    : 'bg-slate-800/50 border-slate-700/50 hover:bg-slate-750 hover:border-slate-600 text-slate-300'
-            }`;
-            item.innerHTML = `
-                <div class="flex items-center gap-1.5 min-w-0">
-                    <span class="text-[7.5px] font-mono px-1 py-0.2 rounded font-bold uppercase ${
-                        isActive ? 'bg-amber-500/30 text-amber-300' : 'bg-slate-900/80 text-amber-400/80 border border-amber-600/30'
-                    } shrink-0">DEMO</span>
-                    <span class="truncate">${k}</span>
-                </div>
-                <div class="flex items-center gap-1 shrink-0">
-                    <span class="text-[7.5px] font-mono text-slate-400">${bpm} BPM</span>
-                    ${isActive ? '<span class="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block animate-pulse ml-0.5"></span>' : ''}
-                </div>
-            `;
-            item.onclick = () => {
-                this.currentPresetKey = k;
-                this.loadActivePreset();
-                document.getElementById('preset-manager-modal')?.classList.add('hidden');
-                this.ui.showToast(`プリセット「${k}」を展開しました`);
-            };
-            if (isActive) item.setAttribute('data-active-preset', 'true');
-            c.appendChild(item);
-        });
-
-        // 2. User-saved Patches (Follows after DEMO patches, 1-line style)
+        // 1. User-saved Patches (Always displayed first)
         const userKeys = this.presetOrder.filter(k => !this.DEMO_KEYS.includes(k));
         userKeys.forEach(k => {
             const isActive = (k === this.currentPresetKey);
@@ -587,7 +553,7 @@ export class PresetManager {
             const bpm = pData?.bpm || 120;
 
             const item = document.createElement('div');
-            item.className = `flex items-center justify-between py-1.5 px-2 rounded border cursor-pointer text-xs transition select-none ${
+            item.className = `flex items-center justify-between h-[30px] min-h-[30px] px-2 rounded border cursor-pointer text-xs transition select-none ${
                 isActive
                     ? 'bg-cyan-950/70 border-cyan-500 text-cyan-200 font-bold shadow-sm shadow-cyan-950/50 ring-1 ring-cyan-500/40'
                     : 'bg-slate-800/50 border-slate-700/50 hover:bg-slate-750 hover:border-slate-600 text-slate-300'
@@ -648,6 +614,64 @@ export class PresetManager {
             if (isActive) item.setAttribute('data-active-preset', 'true');
             c.appendChild(item);
         });
+
+        // 2. DEMO Patches Accordion Header (Collapsible like before)
+        const dHeader = document.createElement('div');
+        dHeader.className = `flex items-center justify-between h-[30px] min-h-[30px] px-2 rounded border cursor-pointer text-xs transition select-none font-bold ${
+            this.demoAccordionOpen
+                ? 'bg-slate-800 border-amber-500/60 text-amber-300'
+                : 'bg-slate-800/60 border-slate-700/60 hover:bg-slate-750 text-slate-300'
+        }`;
+        dHeader.innerHTML = `
+            <div class="flex items-center gap-1.5 min-w-0">
+                <span class="text-[7.5px] font-mono px-1 py-0.2 rounded font-bold uppercase bg-amber-500/20 text-amber-400 border border-amber-500/40 shrink-0">DEMO</span>
+                <span class="tracking-wide text-[11px]">DEMO PATCHES (${this.DEMO_KEYS.length})</span>
+            </div>
+            <div class="flex items-center gap-1 shrink-0 text-amber-400 font-mono text-[9px]">
+                <span>${this.demoAccordionOpen ? 'FOLD ▲' : 'OPEN ▼'}</span>
+            </div>
+        `;
+        dHeader.onclick = () => {
+            this.demoAccordionOpen = !this.demoAccordionOpen;
+            this.renderPresetList();
+        };
+        c.appendChild(dHeader);
+
+        // 3. Unfolded DEMO Patches Items
+        if (this.demoAccordionOpen) {
+            this.DEMO_KEYS.forEach(k => {
+                const isActive = (k === this.currentPresetKey);
+                const pData = this.presets[k];
+                const bpm = pData?.bpm || 120;
+
+                const item = document.createElement('div');
+                item.className = `flex items-center justify-between h-[30px] min-h-[30px] px-2 rounded border cursor-pointer text-xs transition select-none ${
+                    isActive
+                        ? 'bg-amber-950/70 border-amber-500 text-amber-200 font-bold shadow-sm shadow-amber-950/50 ring-1 ring-amber-500/40'
+                        : 'bg-slate-800/40 border-slate-700/40 hover:bg-slate-750 hover:border-slate-600 text-slate-400 hover:text-slate-200'
+                }`;
+                item.innerHTML = `
+                    <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="text-[7.5px] font-mono px-1 py-0.2 rounded font-bold uppercase ${
+                            isActive ? 'bg-amber-500/30 text-amber-300' : 'bg-slate-900/80 text-amber-400/80 border border-amber-600/30'
+                        } shrink-0">DEMO</span>
+                        <span class="truncate">${k}</span>
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0">
+                        <span class="text-[7.5px] font-mono text-slate-400">${bpm} BPM</span>
+                        ${isActive ? '<span class="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block animate-pulse ml-0.5"></span>' : ''}
+                    </div>
+                `;
+                item.onclick = () => {
+                    this.currentPresetKey = k;
+                    this.loadActivePreset();
+                    document.getElementById('preset-manager-modal')?.classList.add('hidden');
+                    this.ui.showToast(`プリセット「${k}」を展開しました`);
+                };
+                if (isActive) item.setAttribute('data-active-preset', 'true');
+                c.appendChild(item);
+            });
+        }
 
         // Auto-scroll active item into view
         requestAnimationFrame(() => {
