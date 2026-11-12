@@ -18,8 +18,6 @@ export const POLYHEDRA_SHAPES = [
     { id: 'icosa', label: 'ICOSA' }
 ];
 
-export const PRIMITIVES = [...BASIC_SHAPES, ...POLYHEDRA_SHAPES];
-
 export const MESH_DETAILS = [
     { id: 'low', label: 'LOW' },
     { id: 'mid', label: 'MID' },

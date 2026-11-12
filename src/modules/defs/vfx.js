@@ -2,17 +2,6 @@
 // VFX - Video Post-Processing Effects Processor (Mosaic, CRT, Invert, RGB Split, with CV modulation)
 import { UIHelpers } from '../../ui/helpers.js?v=351';
 
-export const VFX_MODES = [
-    { id: 'bypass', label: 'BYPASS' },
-    { id: 'invert', label: 'INVERT' },
-    { id: 'blur', label: 'BLUR' },
-    { id: 'bloom', label: 'BLOOM' },
-    { id: 'mosaic', label: 'MOSAIC' },
-    { id: 'trail', label: 'TRAIL' },
-    { id: 'crt', label: 'CRT' },
-    { id: 'rgb', label: 'RGB SPLIT' }
-];
-
 export const EFFECT_MODES = [
     { id: 'blur', label: 'BLUR' },
     { id: 'bloom', label: 'BLOOM' },

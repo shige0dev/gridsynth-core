@@ -205,7 +205,9 @@ export const VFX = {
                         }
                         glow = (glow / max(totalW, 0.001));
                         vec3 result = src.rgb + glow * (1.2 + uAmount * 2.8);
-                        gl_FragColor = vec4(clamp(result, 0.0, 1.0), src.a);
+                        float glowIntensity = dot(glow, vec3(0.299, 0.587, 0.114)) * (1.2 + uAmount * 2.8);
+                        float outAlpha = clamp(src.a + glowIntensity, 0.0, 1.0);
+                        gl_FragColor = vec4(clamp(result, 0.0, 1.0), outAlpha);
                         return;
                     }
 

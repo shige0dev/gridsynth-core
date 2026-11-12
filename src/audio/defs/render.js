@@ -39,6 +39,7 @@ export const RENDER = {
         let dofScene = null;
         let dofCamera = null;
         let dofMaterial = null;
+        let dofGeo = null;
 
         // Material Cache (Key: `${style}_${colorHex}`)
         const materialCache = new Map();
@@ -125,12 +126,13 @@ export const RENDER = {
             scene.add(rootGroup);
 
             // Hardware DepthTexture Target & Bokeh Spiral Post-Processor
+            const depthTexture = new THREE.DepthTexture();
             dofTarget = new THREE.WebGLRenderTarget(BUFFER_SIZE, BUFFER_SIZE, {
                 minFilter: THREE.LinearFilter,
                 magFilter: THREE.LinearFilter,
-                format: THREE.RGBAFormat,
-                depthTexture: new THREE.DepthTexture()
+                format: THREE.RGBAFormat
             });
+            dofTarget.depthTexture = depthTexture;
 
             dofScene = new THREE.Scene();
             dofCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -174,7 +176,8 @@ export const RENDER = {
                         return;
                     }
 
-                    vec4 sum = centerCol * 2.0;
+                    vec3 colorSum = centerCol.rgb * centerCol.a * 2.0;
+                    float alphaSum = centerCol.a * 2.0;
                     float totalW = 2.0;
 
                     for (int i = 1; i <= 16; i++) {
@@ -188,15 +191,19 @@ export const RENDER = {
                         vec4 sCol = texture2D(tColor, sampleUv);
                         float sZ = getLinearDepth(sDepth);
 
+                        // Depth weighting: background behind z does not bleed over sharp foreground
                         float depthDiff = sZ - z;
-                        float w = (depthDiff < -0.1) ? 0.35 : 1.0;
+                        float w = (depthDiff > 0.1) ? 0.35 : 1.0;
                         w *= (1.0 - (r / (coc + 0.0001)) * 0.3);
 
-                        sum += sCol * w;
+                        colorSum += sCol.rgb * sCol.a * w;
+                        alphaSum += sCol.a * w;
                         totalW += w;
                     }
 
-                    gl_FragColor = sum / totalW;
+                    float outAlpha = alphaSum / totalW;
+                    vec3 outRgb = (alphaSum > 0.001) ? (colorSum / alphaSum) : vec3(0.0);
+                    gl_FragColor = vec4(outRgb, outAlpha);
                 }
             `;
 
@@ -215,7 +222,7 @@ export const RENDER = {
                 depthWrite: false
             });
 
-            const dofGeo = new THREE.PlaneGeometry(2, 2);
+            dofGeo = new THREE.PlaneGeometry(2, 2);
             dofScene.add(new THREE.Mesh(dofGeo, dofMaterial));
         };
 
@@ -408,6 +415,10 @@ export const RENDER = {
                     try { mat.dispose(); } catch (_) {}
                 });
                 materialCache.clear();
+                if (dofGeo) {
+                    try { dofGeo.dispose(); } catch (_) {}
+                    dofGeo = null;
+                }
                 if (dofTarget) {
                     try { dofTarget.dispose(); } catch (_) {}
                     dofTarget = null;
