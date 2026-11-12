@@ -41,7 +41,8 @@ export const VFX = {
             crt: 2,
             invert: 3,
             rgb: 4,
-            glitch: 5
+            glitch: 5,
+            blur: 6
         };
 
         const initGPU = () => {
@@ -137,6 +138,25 @@ export const VFX = {
                         float g = texture2D(tDiffuse, uv + vec2(shift, 0.0)).g;
                         float b = texture2D(tDiffuse, uv + vec2(shift - rgbOffset, 0.0)).b;
                         gl_FragColor = vec4(r, g, b, 1.0);
+                        return;
+                    }
+
+                    if (uMode == 6) {
+                        // Blur (Golden-angle spiral bokeh that smoothly melts into pure liquid wash)
+                        float radius = pow(clamp(uAmount, 0.0, 1.0), 1.5) * 0.16;
+                        vec4 sum = texture2D(tDiffuse, uv) * 2.5;
+                        float totalW = 2.5;
+
+                        for (int i = 1; i <= 28; i++) {
+                            float fi = float(i);
+                            float r = sqrt(fi / 28.0) * radius;
+                            float theta = fi * 2.39996323; // Golden angle
+                            vec2 offset = vec2(cos(theta), sin(theta)) * r;
+                            float w = 1.0 - (r / (radius + 0.0001)) * 0.4;
+                            sum += texture2D(tDiffuse, uv + offset) * w;
+                            totalW += w;
+                        }
+                        gl_FragColor = sum / totalW;
                         return;
                     }
 

@@ -40,14 +40,10 @@ export const VMIX = {
         const MODE_MAP = {
             dissolve: 1,
             blur: 2,
-            blackout: 3,
-            whiteout: 4,
-            slide_l: 5,
-            slide_r: 6,
-            slide_u: 7,
-            slide_d: 8,
-            wipe: 9,
-            zoom: 10
+            zoom: 3,
+            wipe: 4,
+            blackout: 5,
+            whiteout: 6
         };
 
         const initGPU = () => {
@@ -123,8 +119,25 @@ export const VMIX = {
                         return;
                     }
 
-                    // 3. Blackout
+                    // 3. Zoom Dissolve
                     if (uMode == 3) {
+                        vec2 uvA = (uv - 0.5) * (1.0 + m * 0.7) + 0.5;
+                        vec2 uvB = (uv - 0.5) * (1.7 - m * 0.7) + 0.5;
+                        vec4 zA = texture2D(tTexA, uvA);
+                        vec4 zB = texture2D(tTexB, uvB);
+                        gl_FragColor = mix(zA, zB, m);
+                        return;
+                    }
+
+                    // 4. Wipe (Soft curtain wipe)
+                    if (uMode == 4) {
+                        float edge = smoothstep(m - 0.02, m + 0.02, uv.x);
+                        gl_FragColor = mix(colB, colA, edge);
+                        return;
+                    }
+
+                    // 5. Blackout
+                    if (uMode == 5) {
                         if (m < 0.5) {
                             gl_FragColor = vec4(colA.rgb * (1.0 - m * 2.0), colA.a);
                         } else {
@@ -133,70 +146,13 @@ export const VMIX = {
                         return;
                     }
 
-                    // 4. Whiteout
-                    if (uMode == 4) {
+                    // 6. Whiteout
+                    if (uMode == 6) {
                         if (m < 0.5) {
                             gl_FragColor = vec4(mix(colA.rgb, vec3(1.0), m * 2.0), colA.a);
                         } else {
                             gl_FragColor = vec4(mix(vec3(1.0), colB.rgb, (m - 0.5) * 2.0), colB.a);
                         }
-                        return;
-                    }
-
-                    // 5. Slide Left (Push left)
-                    if (uMode == 5) {
-                        if (uv.x < (1.0 - m)) {
-                            gl_FragColor = texture2D(tTexA, uv + vec2(m, 0.0));
-                        } else {
-                            gl_FragColor = texture2D(tTexB, uv - vec2(1.0 - m, 0.0));
-                        }
-                        return;
-                    }
-
-                    // 6. Slide Right (Push right)
-                    if (uMode == 6) {
-                        if (uv.x > m) {
-                            gl_FragColor = texture2D(tTexA, uv - vec2(m, 0.0));
-                        } else {
-                            gl_FragColor = texture2D(tTexB, uv + vec2(1.0 - m, 0.0));
-                        }
-                        return;
-                    }
-
-                    // 7. Slide Up (Push up)
-                    if (uMode == 7) {
-                        if (uv.y < (1.0 - m)) {
-                            gl_FragColor = texture2D(tTexA, uv + vec2(0.0, m));
-                        } else {
-                            gl_FragColor = texture2D(tTexB, uv - vec2(0.0, 1.0 - m));
-                        }
-                        return;
-                    }
-
-                    // 8. Slide Down (Push down)
-                    if (uMode == 8) {
-                        if (uv.y > m) {
-                            gl_FragColor = texture2D(tTexA, uv - vec2(0.0, m));
-                        } else {
-                            gl_FragColor = texture2D(tTexB, uv + vec2(0.0, 1.0 - m));
-                        }
-                        return;
-                    }
-
-                    // 9. Wipe (Soft curtain wipe)
-                    if (uMode == 9) {
-                        float edge = smoothstep(m - 0.02, m + 0.02, uv.x);
-                        gl_FragColor = mix(colB, colA, edge);
-                        return;
-                    }
-
-                    // 10. Zoom Dissolve
-                    if (uMode == 10) {
-                        vec2 uvA = (uv - 0.5) * (1.0 + m * 0.7) + 0.5;
-                        vec2 uvB = (uv - 0.5) * (1.7 - m * 0.7) + 0.5;
-                        vec4 zA = texture2D(tTexA, uvA);
-                        vec4 zB = texture2D(tTexB, uvB);
-                        gl_FragColor = mix(zA, zB, m);
                         return;
                     }
 
