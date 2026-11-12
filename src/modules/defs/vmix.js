@@ -37,19 +37,20 @@ export const VMIX = {
         const mix = Number(m?.mix ?? 0.5);
         const pct = Math.round(mix * 100);
         return `
-        <div class="flex flex-col items-center justify-between w-full h-full py-1 pointer-events-none select-none text-center">
-            <span class="text-[8px] font-mono font-bold text-emerald-400 uppercase tracking-tight">VMIX : ${mode}</span>
-            <div class="flex flex-col items-center gap-0.5 w-full px-1.5">
-                <div class="flex items-center justify-between w-full text-[7px] font-mono text-slate-400 font-bold">
-                    <span>V1</span>
-                    <span data-vmix-pct class="text-cyan-300 font-extrabold text-[9px]">${pct}%</span>
-                    <span>V2</span>
+        <div class="flex items-center justify-center w-full h-full pointer-events-none select-none">
+            <div class="relative w-[50px] h-7 flex items-center justify-center">
+                <!-- Top: Mode name per Rule 4 -->
+                <span data-vmix-mode class="absolute bottom-full mb-[2px] left-1/2 -translate-x-1/2 text-[7.5px] font-mono font-bold text-amber-400 truncate tracking-tight text-center max-w-[54px] leading-none pointer-events-none select-none">${mode}</span>
+
+                <!-- Standardized Panel Bar Slot (Matching sequencer / panel-bar-slot standard) -->
+                <div class="w-full h-full rounded-sm p-[1px] flex flex-row items-center border border-slate-600 bg-slate-950/40 relative panel-bar-slot overflow-hidden">
+                    <div class="absolute left-1/2 top-0 bottom-0 w-[1px] bg-slate-700/60 z-10 pointer-events-none"></div>
+                    <div data-vmix-bar class="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 rounded-xs transition-[width] duration-75" style="width: ${pct}%;"></div>
                 </div>
-                <div class="w-full h-1.5 bg-slate-800 rounded overflow-hidden p-0.2 border border-slate-700/60">
-                    <div data-vmix-bar class="h-full bg-gradient-to-r from-emerald-500 via-cyan-400 to-purple-500 rounded-sm transition-all duration-75" style="width: ${pct}%;"></div>
-                </div>
+
+                <!-- Bottom: Mix % value per Rule 4 -->
+                <span data-vmix-pct class="absolute top-full mt-[2px] left-1/2 -translate-x-1/2 text-[7.5px] font-mono font-bold text-cyan-300 truncate tracking-tight text-center max-w-[54px] leading-none pointer-events-none select-none">${pct}%</span>
             </div>
-            <span class="text-[6.5px] font-mono text-slate-500 uppercase tracking-tight">DUAL GPU BLEND</span>
         </div>`;
     },
     renderModal: (m, ctx) => {
@@ -83,7 +84,7 @@ export const VMIX = {
                     <span class="text-slate-400 font-bold uppercase tracking-wider">MIX</span>
                     <span id="vmix-mix-disp" class="font-bold text-emerald-300">${pct}%</span>
                 </div>
-                <input type="range" id="vmix-mix-slider" min="0" max="1" step="0.01" value="${mix}" class="h-1.5 bg-slate-700 rounded appearance-none cursor-pointer accent-emerald-500 ${isCvPatched ? 'opacity-35 pointer-events-none' : ''}">
+                <input type="range" id="vmix-mix-slider" min="0" max="1" step="0.01" value="${mix}" class="h-1.5 bg-slate-700 rounded appearance-none cursor-pointer accent-emerald-500 ${isCvPatched ? 'no-thumb opacity-30 pointer-events-none' : ''}" ${isCvPatched ? 'disabled' : ''}>
                 <div class="flex justify-between text-[7.5px] font-mono text-slate-400">
                     <span>V1</span>
                     <span>V2</span>
@@ -122,11 +123,14 @@ export const VMIX = {
         if (!cell || !data) return;
         const barEl = cell.querySelector('[data-vmix-bar]');
         const pctEl = cell.querySelector('[data-vmix-pct]');
+        const modeEl = cell.querySelector('[data-vmix-mode]');
         const curMix = Number(data.mix ?? m.mix ?? 0.5);
+        const curMode = (data.mode || m.mode || 'dissolve').toUpperCase();
         const pct = Math.round(curMix * 100);
 
+        if (modeEl) modeEl.textContent = curMode;
         if (barEl) barEl.style.width = `${pct}%`;
-        if (pctEl) pctEl.textContent = `${pct}%`;
+        if (pctEl) pctEl.textContent = `${pct}%${data.isCvPatched ? '*' : ''}`;
 
         if (modal) {
             const badge = modal.querySelector('#vmix-status-badge');
@@ -138,6 +142,14 @@ export const VMIX = {
                     badge.className = 'text-[8.5px] font-mono text-slate-400';
                     badge.textContent = 'MANUAL';
                 }
+            }
+            const slider = modal.querySelector('#vmix-mix-slider');
+            if (slider) {
+                const isDis = Boolean(data.isCvPatched);
+                slider.disabled = isDis;
+                slider.classList.toggle('no-thumb', isDis);
+                slider.classList.toggle('opacity-30', isDis);
+                slider.classList.toggle('pointer-events-none', isDis);
             }
             if (data.isCvPatched) {
                 const disp = modal.querySelector('#vmix-mix-disp');

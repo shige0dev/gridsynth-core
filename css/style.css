@@ -223,6 +223,24 @@ body.is-row-dragging .grid-cell * {
     background: transparent;
 }
 
+/* Range slider with hidden thumb when disabled */
+input[type="range"]:disabled::-webkit-slider-thumb,
+input[type="range"].no-thumb::-webkit-slider-thumb {
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    appearance: none !important;
+    display: none !important;
+}
+input[type="range"]:disabled::-moz-range-thumb,
+input[type="range"].no-thumb::-moz-range-thumb {
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    appearance: none !important;
+    display: none !important;
+}
+
 .grid-cell {
     overflow: visible !important;
     touch-action: none !important;
