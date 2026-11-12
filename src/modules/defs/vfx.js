@@ -6,6 +6,7 @@ export const VFX_MODES = [
     { id: 'bypass', label: 'BYPASS' },
     { id: 'blur', label: 'BLUR' },
     { id: 'mosaic', label: 'MOSAIC' },
+    { id: 'trail', label: 'TRAIL' },
     { id: 'crt', label: 'CRT' },
     { id: 'rgb', label: 'RGB SPLIT' },
     { id: 'invert', label: 'INVERT' }
@@ -54,12 +55,12 @@ export const VFX = {
                 </span>
             </div>
 
-            <!-- Mode Selector (6 modes) -->
+            <!-- Mode Selector (7 modes) -->
             <div class="flex flex-col gap-1">
                 <span class="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-wider">EFFECT MODE</span>
-                <div class="grid grid-cols-3 gap-1">
+                <div class="grid grid-cols-4 gap-1">
                     ${VFX_MODES.map(md => `
-                        <button data-mode="${md.id}" class="vfx-mode-btn py-1 rounded text-[8px] font-mono font-bold border transition ${curMode === md.id ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">${md.label}</button>
+                        <button data-mode="${md.id}" class="vfx-mode-btn py-1 rounded text-[7.5px] font-mono font-bold border transition ${curMode === md.id ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">${md.label}</button>
                     `).join('')}
                 </div>
             </div>

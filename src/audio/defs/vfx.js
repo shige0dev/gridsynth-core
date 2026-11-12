@@ -34,6 +34,10 @@ export const VFX = {
         let inputTexture = null;
         let vfxCanvas = null;
         let lastBoundSource = null;
+        let feedbackCanvas = null;
+        let feedbackCtx = null;
+        let feedbackTexture = null;
+        let lastMode = null;
 
         const MODE_MAP = {
             bypass: 0,
@@ -41,7 +45,8 @@ export const VFX = {
             crt: 2,
             invert: 3,
             rgb: 4,
-            blur: 5
+            blur: 5,
+            trail: 6
         };
 
         const initGPU = () => {
@@ -49,6 +54,17 @@ export const VFX = {
             vfxCanvas = document.createElement('canvas');
             vfxCanvas.width = BUFFER_SIZE;
             vfxCanvas.height = BUFFER_SIZE;
+
+            feedbackCanvas = document.createElement('canvas');
+            feedbackCanvas.width = BUFFER_SIZE;
+            feedbackCanvas.height = BUFFER_SIZE;
+            feedbackCtx = feedbackCanvas.getContext('2d');
+            feedbackCtx.fillStyle = '#000000';
+            feedbackCtx.fillRect(0, 0, BUFFER_SIZE, BUFFER_SIZE);
+
+            feedbackTexture = new THREE.CanvasTexture(feedbackCanvas);
+            feedbackTexture.minFilter = THREE.LinearFilter;
+            feedbackTexture.magFilter = THREE.LinearFilter;
 
             renderer = new THREE.WebGLRenderer({
                 canvas: vfxCanvas,
@@ -71,6 +87,7 @@ export const VFX = {
 
             const fragShader = `
                 uniform sampler2D tDiffuse;
+                uniform sampler2D tFeedback;
                 uniform int uMode;
                 uniform float uAmount;
                 uniform float uTime;
@@ -86,9 +103,10 @@ export const VFX = {
                     }
 
                     if (uMode == 1) {
-                        // Mosaic / Pixelate (1.0 = 16x16 coarse pixel blocks)
-                        float blocks = mix(512.0, 16.0, pow(clamp(uAmount, 0.0, 1.0), 2.0));
-                        vec2 mUv = floor(uv * blocks) / blocks;
+                        // Mosaic / Pixelate (Linear block scaling: 0% = 1px, 100% = 32px / 16x16 screen grid)
+                        float blockSize = mix(1.0, 32.0, clamp(uAmount, 0.0, 1.0));
+                        float blocks = 512.0 / blockSize;
+                        vec2 mUv = (floor(uv * blocks) + 0.5) / blocks;
                         gl_FragColor = texture2D(tDiffuse, mUv);
                         return;
                     }
@@ -143,6 +161,15 @@ export const VFX = {
                         return;
                     }
 
+                    if (uMode == 6) {
+                        // Trail / Afterimage (Luminous motion persistence & ghosting)
+                        vec4 cur = texture2D(tDiffuse, uv);
+                        vec4 prev = texture2D(tFeedback, uv);
+                        float decay = mix(0.50, 0.96, pow(clamp(uAmount, 0.0, 1.0), 0.75));
+                        gl_FragColor = vec4(max(cur.rgb, prev.rgb * decay), 1.0);
+                        return;
+                    }
+
                     gl_FragColor = texture2D(tDiffuse, uv);
                 }
             `;
@@ -157,6 +184,7 @@ export const VFX = {
             shaderMaterial = new THREE.ShaderMaterial({
                 uniforms: {
                     tDiffuse: { value: inputTexture },
+                    tFeedback: { value: feedbackTexture },
                     uMode: { value: 1 },
                     uAmount: { value: 0.7 },
                     uTime: { value: 0.0 },
@@ -230,6 +258,16 @@ export const VFX = {
             shaderMaterial.uniforms.uMode.value = modeId;
             shaderMaterial.uniforms.uAmount.value = effAmt;
             shaderMaterial.uniforms.uTime.value = now * 0.001;
+
+            if (d.mode === 'trail') {
+                feedbackCtx.drawImage(vfxCanvas, 0, 0);
+                feedbackTexture.needsUpdate = true;
+            } else if (lastMode === 'trail') {
+                feedbackCtx.fillStyle = '#000000';
+                feedbackCtx.fillRect(0, 0, BUFFER_SIZE, BUFFER_SIZE);
+                feedbackTexture.needsUpdate = true;
+            }
+            lastMode = d.mode;
 
             // 100% GPU Render
             renderer.render(scene, camera);
