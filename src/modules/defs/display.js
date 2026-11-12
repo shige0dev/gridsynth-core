@@ -116,6 +116,8 @@ export const DISPLAY = {
         // Render to Grid Cell (Solid black clear first to prevent 1-frame ghosting)
         pCtx.fillStyle = '#000000';
         pCtx.fillRect(0, 0, pCvs.width, pCvs.height);
+        pCtx.imageSmoothingEnabled = true;
+        pCtx.imageSmoothingQuality = 'high';
         pCtx.drawImage(srcCvs, sx, sy, sSubW, sSubH, 0, 0, pCvs.width, pCvs.height);
 
         // Update Modal if open

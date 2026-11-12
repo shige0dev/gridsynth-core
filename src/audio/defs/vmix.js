@@ -25,7 +25,7 @@ export const VMIX = {
             return isNaN(avg) ? def : avg;
         };
 
-        const BUFFER_SIZE = 800;
+        const BUFFER_SIZE = 512;
         let vmixCanvas = null;
         let renderer = null;
         let scene = null;

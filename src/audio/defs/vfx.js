@@ -25,7 +25,7 @@ export const VFX = {
             return isNaN(avg) ? def : avg;
         };
 
-        const BUFFER_SIZE = 800;
+        const BUFFER_SIZE = 512;
         let renderer = null;
         let scene = null;
         let camera = null;
@@ -85,7 +85,7 @@ export const VFX = {
 
                     if (uMode == 1) {
                         // Mosaic / Pixelate (1.0 = 16x16 coarse pixel blocks)
-                        float blocks = mix(800.0, 16.0, pow(clamp(uAmount, 0.0, 1.0), 2.0));
+                        float blocks = mix(512.0, 16.0, pow(clamp(uAmount, 0.0, 1.0), 2.0));
                         vec2 mUv = floor(uv * blocks) / blocks;
                         gl_FragColor = texture2D(tDiffuse, mUv);
                         return;
@@ -94,7 +94,7 @@ export const VFX = {
                     if (uMode == 2) {
                         // CRT Scanlines & Vignette
                         vec4 col = texture2D(tDiffuse, uv);
-                        float scanline = sin(uv.y * 800.0 * 0.75) * 0.5 + 0.5;
+                        float scanline = sin(uv.y * 512.0 * 0.75) * 0.5 + 0.5;
                         col.rgb -= scanline * uAmount * 0.35;
 
                         // Vignette

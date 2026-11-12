@@ -26,8 +26,8 @@ export const RENDER = {
             return isNaN(avg) ? def : avg;
         };
 
-        // Three.js Scene Setup (800x800 Buffer)
-        const BUFFER_SIZE = 800;
+        // Three.js Scene Setup (512x512 Buffer - Balanced for 1x1, 2x2, and 4x4)
+        const BUFFER_SIZE = 512;
         let renderer = null;
         let scene = null;
         let camera = null;
