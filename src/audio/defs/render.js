@@ -34,6 +34,12 @@ export const RENDER = {
         let rootGroup = null;
         let renderCanvas = null;
 
+        // Depth of Field (DoF) Bokeh Post-Processing Setup
+        let dofTarget = null;
+        let dofScene = null;
+        let dofCamera = null;
+        let dofMaterial = null;
+
         // Material Cache (Key: `${style}_${colorHex}`)
         const materialCache = new Map();
 
@@ -59,6 +65,16 @@ export const RENDER = {
                     case 'toon':
                         mat = new THREE.MeshToonMaterial({
                             color: colorHex,
+                            side: THREE.DoubleSide
+                        });
+                        break;
+                    case 'neon':
+                        mat = new THREE.MeshStandardMaterial({
+                            color: colorHex,
+                            emissive: colorHex,
+                            emissiveIntensity: 2.2,
+                            roughness: 0.1,
+                            metalness: 0.1,
                             side: THREE.DoubleSide
                         });
                         break;
@@ -107,6 +123,100 @@ export const RENDER = {
 
             rootGroup = new THREE.Group();
             scene.add(rootGroup);
+
+            // Hardware DepthTexture Target & Bokeh Spiral Post-Processor
+            dofTarget = new THREE.WebGLRenderTarget(BUFFER_SIZE, BUFFER_SIZE, {
+                minFilter: THREE.LinearFilter,
+                magFilter: THREE.LinearFilter,
+                format: THREE.RGBAFormat,
+                depthTexture: new THREE.DepthTexture()
+            });
+
+            dofScene = new THREE.Scene();
+            dofCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+            const dofVert = `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = vec4(position.xy, 0.0, 1.0);
+                }
+            `;
+
+            const dofFrag = `
+                uniform sampler2D tColor;
+                uniform sampler2D tDepth;
+                uniform float uFocus;
+                uniform float uAperture;
+                uniform float uNear;
+                uniform float uFar;
+                varying vec2 vUv;
+
+                float getLinearDepth(float depthVal) {
+                    float z_ndc = depthVal * 2.0 - 1.0;
+                    return (2.0 * uNear * uFar) / (uFar + uNear - z_ndc * (uFar - uNear));
+                }
+
+                void main() {
+                    float centerDepth = texture2D(tDepth, vUv).r;
+                    vec4 centerCol = texture2D(tColor, vUv);
+
+                    if (centerDepth >= 0.999 && centerCol.a < 0.001) {
+                        gl_FragColor = centerCol;
+                        return;
+                    }
+
+                    float z = getLinearDepth(centerDepth);
+                    float coc = clamp(abs(z - uFocus) * uAperture * 0.008, 0.0, 0.035);
+
+                    if (coc < 0.0005) {
+                        gl_FragColor = centerCol;
+                        return;
+                    }
+
+                    vec4 sum = centerCol * 2.0;
+                    float totalW = 2.0;
+
+                    for (int i = 1; i <= 16; i++) {
+                        float fi = float(i);
+                        float r = sqrt(fi / 16.0) * coc;
+                        float theta = fi * 2.39996323;
+                        vec2 offset = vec2(cos(theta), sin(theta)) * r;
+                        vec2 sampleUv = clamp(vUv + offset, 0.0, 1.0);
+
+                        float sDepth = texture2D(tDepth, sampleUv).r;
+                        vec4 sCol = texture2D(tColor, sampleUv);
+                        float sZ = getLinearDepth(sDepth);
+
+                        float depthDiff = sZ - z;
+                        float w = (depthDiff < -0.1) ? 0.35 : 1.0;
+                        w *= (1.0 - (r / (coc + 0.0001)) * 0.3);
+
+                        sum += sCol * w;
+                        totalW += w;
+                    }
+
+                    gl_FragColor = sum / totalW;
+                }
+            `;
+
+            dofMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    tColor: { value: dofTarget.texture },
+                    tDepth: { value: dofTarget.depthTexture },
+                    uFocus: { value: 5.0 },
+                    uAperture: { value: 0.0 },
+                    uNear: { value: 0.1 },
+                    uFar: { value: 100.0 }
+                },
+                vertexShader: dofVert,
+                fragmentShader: dofFrag,
+                depthTest: false,
+                depthWrite: false
+            });
+
+            const dofGeo = new THREE.PlaneGeometry(2, 2);
+            dofScene.add(new THREE.Mesh(dofGeo, dofMaterial));
         };
 
         initThree();
@@ -226,7 +336,23 @@ export const RENDER = {
                     rootGroup.visible = false;
                 }
 
-                renderer.render(scene, camera);
+                const bokeh = d.dofBokeh ?? 0.0;
+                if (bokeh > 0.001 && dofTarget && dofMaterial) {
+                    renderer.setRenderTarget(dofTarget);
+                    renderer.clear();
+                    renderer.render(scene, camera);
+
+                    dofMaterial.uniforms.uFocus.value = d.dofFocus ?? 5.0;
+                    dofMaterial.uniforms.uAperture.value = bokeh;
+                    dofMaterial.uniforms.uNear.value = camera.near;
+                    dofMaterial.uniforms.uFar.value = camera.far;
+
+                    renderer.setRenderTarget(null);
+                    renderer.render(dofScene, dofCamera);
+                } else {
+                    renderer.setRenderTarget(null);
+                    renderer.render(scene, camera);
+                }
             }
         };
 
@@ -262,6 +388,8 @@ export const RENDER = {
                     targetY: d.targetY ?? 0,
                     targetZ: d.targetZ ?? 0,
                     materialOverride: d.materialOverride || 'auto',
+                    dofFocus: d.dofFocus ?? 5.0,
+                    dofBokeh: d.dofBokeh ?? 0.0,
                     isCvFov: Boolean(patchState?.has('fov_in') || patchState?.has('cv_fov'))
                 };
             },
@@ -280,6 +408,14 @@ export const RENDER = {
                     try { mat.dispose(); } catch (_) {}
                 });
                 materialCache.clear();
+                if (dofTarget) {
+                    try { dofTarget.dispose(); } catch (_) {}
+                    dofTarget = null;
+                }
+                if (dofMaterial) {
+                    try { dofMaterial.dispose(); } catch (_) {}
+                    dofMaterial = null;
+                }
                 if (renderer) {
                     try { renderer.dispose(); } catch (_) {}
                     renderer = null;

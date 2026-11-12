@@ -49,7 +49,8 @@ export const VFX = {
             invert: 3,
             rgb: 4,
             blur: 5,
-            trail: 6
+            trail: 6,
+            bloom: 7
         };
 
         const initGPU = () => {
@@ -179,6 +180,32 @@ export const VFX = {
                         vec4 prev = texture2D(tFeedback, uv);
                         float decay = mix(0.50, 0.96, pow(clamp(uAmount, 0.0, 1.0), 0.75));
                         gl_FragColor = vec4(max(cur.rgb, prev.rgb * decay), 1.0);
+                        return;
+                    }
+
+                    if (uMode == 7) {
+                        // Bloom / Neon Glow (High-pass luminance extraction + 20-tap dispersion glow)
+                        vec4 src = texture2D(tDiffuse, uv);
+                        vec3 glow = vec3(0.0);
+                        float glowRadius = 0.015 + uAmount * 0.055;
+                        float thresh = mix(0.75, 0.20, clamp(uAmount, 0.0, 1.0));
+                        float totalW = 0.0;
+
+                        for (int i = 1; i <= 20; i++) {
+                            float fi = float(i);
+                            float r = sqrt(fi / 20.0) * glowRadius;
+                            float theta = fi * 2.39996323; // Golden angle
+                            vec2 offset = vec2(cos(theta), sin(theta)) * r;
+                            vec4 smp = texture2D(tDiffuse, uv + offset);
+                            float lum = dot(smp.rgb, vec3(0.299, 0.587, 0.114));
+                            float bright = max(0.0, lum - thresh) / (1.0 - thresh + 0.001);
+                            float w = 1.0 - (r / (glowRadius + 0.0001)) * 0.5;
+                            glow += smp.rgb * bright * w;
+                            totalW += w;
+                        }
+                        glow = (glow / max(totalW, 0.001));
+                        vec3 result = src.rgb + glow * (1.2 + uAmount * 2.8);
+                        gl_FragColor = vec4(clamp(result, 0.0, 1.0), src.a);
                         return;
                     }
 

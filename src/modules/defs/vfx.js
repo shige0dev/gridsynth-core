@@ -4,21 +4,22 @@ import { UIHelpers } from '../../ui/helpers.js?v=351';
 
 export const VFX_MODES = [
     { id: 'bypass', label: 'BYPASS' },
+    { id: 'invert', label: 'INVERT' },
     { id: 'blur', label: 'BLUR' },
+    { id: 'bloom', label: 'BLOOM' },
     { id: 'mosaic', label: 'MOSAIC' },
     { id: 'trail', label: 'TRAIL' },
     { id: 'crt', label: 'CRT' },
-    { id: 'rgb', label: 'RGB SPLIT' },
-    { id: 'invert', label: 'INVERT' }
+    { id: 'rgb', label: 'RGB SPLIT' }
 ];
 
 export const EFFECT_MODES = [
     { id: 'blur', label: 'BLUR' },
+    { id: 'bloom', label: 'BLOOM' },
     { id: 'mosaic', label: 'MOSAIC' },
     { id: 'trail', label: 'TRAIL' },
     { id: 'crt', label: 'CRT' },
-    { id: 'rgb', label: 'RGB SPLIT' },
-    { id: 'invert', label: 'INVERT' }
+    { id: 'rgb', label: 'RGB SPLIT' }
 ];
 
 export const VFX = {
@@ -64,14 +65,15 @@ export const VFX = {
                 </span>
             </div>
 
-            <!-- Mode Selector (Bypass on top, 3x2 effect grid below, common button size) -->
+            <!-- Mode Selector (Bypass & Invert on top, 3x2 creative effect grid below, common button size) -->
             <div class="flex flex-col gap-1">
                 <span class="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-wider">EFFECT MODE</span>
-                <!-- Top Row: BYPASS (Same 3-col grid unit width & height) -->
+                <!-- Top Row: Utilities (BYPASS & INVERT, same 3-col unit width & height) -->
                 <div class="grid grid-cols-3 gap-1">
                     <button data-mode="bypass" class="vfx-mode-btn py-1 rounded text-[7.5px] font-mono font-bold border transition ${curMode === 'bypass' ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">BYPASS</button>
+                    <button data-mode="invert" class="vfx-mode-btn py-1 rounded text-[7.5px] font-mono font-bold border transition ${curMode === 'invert' ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">INVERT</button>
                 </div>
-                <!-- Underneath: 3x2 Grid for 6 Active Effects -->
+                <!-- Underneath: 3x2 Grid for 6 Creative Effects -->
                 <div class="grid grid-cols-3 gap-1">
                     ${EFFECT_MODES.map(md => `
                         <button data-mode="${md.id}" class="vfx-mode-btn py-1 rounded text-[7.5px] font-mono font-bold border transition ${curMode === md.id ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">${md.label}</button>

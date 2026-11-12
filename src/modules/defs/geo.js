@@ -30,7 +30,8 @@ export const MATERIAL_STYLES = [
     { id: 'wire', label: 'WIRE' },
     { id: 'solid', label: 'SOLID' },
     { id: 'normal', label: 'NORMAL' },
-    { id: 'toon', label: 'TOON' }
+    { id: 'toon', label: 'TOON' },
+    { id: 'neon', label: 'NEON' }
 ];
 
 export const PRESET_COLORS = [
@@ -113,7 +114,7 @@ export const OBJECT = {
             <!-- Section 3: Material -->
             <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
                 <span class="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-wider">MATERIAL</span>
-                <div class="grid grid-cols-4 gap-1">
+                <div class="grid grid-cols-5 gap-1">
                     ${MATERIAL_STYLES.map(ms => `
                         <button data-mat="${ms.id}" class="geo-mat-btn py-1 rounded text-[8px] font-mono font-bold border transition ${curMat === ms.id ? 'bg-purple-600 text-white border-purple-400 shadow-sm shadow-purple-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">${ms.label}</button>
                     `).join('')}

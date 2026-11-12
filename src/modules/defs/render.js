@@ -7,7 +7,8 @@ export const STYLE_OVERRIDES = [
     { id: 'wire', label: 'WIRE' },
     { id: 'solid', label: 'SOLID' },
     { id: 'normal', label: 'NORMAL' },
-    { id: 'toon', label: 'TOON' }
+    { id: 'toon', label: 'TOON' },
+    { id: 'neon', label: 'NEON' }
 ];
 
 export const RENDER = {
@@ -22,7 +23,9 @@ export const RENDER = {
         targetZ: 0.0,
         fov: 45.0,
         camRoll: 0.0,
-        materialOverride: 'auto' // 'auto' | 'wire' | 'solid' | 'normal' | 'toon'
+        materialOverride: 'auto', // 'auto' | 'wire' | 'solid' | 'normal' | 'toon' | 'neon'
+        dofFocus: 5.0,
+        dofBokeh: 0.0
     }),
     ports: () => ({
         in: [
@@ -83,7 +86,7 @@ export const RENDER = {
                     <span class="text-[8px] font-mono font-bold text-purple-400 uppercase tracking-wider">STYLE OVERRIDE (マテリアル一括上書き)</span>
                     <span class="text-[7.5px] font-mono text-slate-400">${curOverride === 'auto' ? 'OBJ SPECIFIC' : 'FORCED'}</span>
                 </div>
-                <div class="grid grid-cols-5 gap-1">
+                <div class="grid grid-cols-6 gap-1">
                     ${STYLE_OVERRIDES.map(s => `
                         <button data-override="${s.id}" class="render-override-btn py-1 rounded text-[8px] font-mono font-bold border transition ${curOverride === s.id ? 'bg-purple-600 text-white border-purple-400 shadow-sm shadow-purple-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">${s.label}</button>
                     `).join('')}
@@ -119,7 +122,25 @@ export const RENDER = {
                 </div>
             </div>
 
-            <!-- Section 3: LookAt Target -->
+            <!-- Section 3: Depth of Field (DoF) & Bokeh -->
+            <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
+                <div class="flex items-center justify-between">
+                    <span class="text-[8px] font-mono font-bold text-rose-400 uppercase tracking-wider">DEPTH OF FIELD (被写界深度 / ボケ)</span>
+                    <span id="render-val-bokeh-mode" class="text-[7.5px] font-mono font-bold ${(m.dofBokeh ?? 0) > 0 ? 'text-rose-400' : 'text-slate-500'}">${(m.dofBokeh ?? 0) > 0 ? 'ACTIVE' : 'OFF'}</span>
+                </div>
+                <div class="grid grid-cols-2 gap-1.5 text-[8.5px] font-mono">
+                    <div class="flex flex-col gap-0.5">
+                        <div class="flex justify-between text-slate-400"><span>FOCUS (ピント距離)</span><span id="render-val-focus">${(m.dofFocus ?? 5.0).toFixed(1)}m</span></div>
+                        <input type="range" id="render-slide-focus" min="1.0" max="15.0" step="0.2" value="${m.dofFocus ?? 5.0}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-rose-500">
+                    </div>
+                    <div class="flex flex-col gap-0.5">
+                        <div class="flex justify-between text-slate-400"><span>BOKEH (ボケ強度)</span><span id="render-val-bokeh">${Math.round((m.dofBokeh ?? 0) * 100)}%</span></div>
+                        <input type="range" id="render-slide-bokeh" min="0.0" max="1.0" step="0.02" value="${m.dofBokeh ?? 0}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-rose-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 4: LookAt Target -->
             <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
                 <span class="text-[8px] font-mono font-bold text-amber-400 uppercase tracking-wider">LOOKAT TARGET (注視点)</span>
                 <div class="grid grid-cols-3 gap-1.5 text-[8.5px] font-mono">
@@ -170,6 +191,16 @@ export const RENDER = {
         // Optics
         bindSlider('render-slide-fov', 'fov', 'render-val-fov', v => `${Math.round(v)}°`);
         bindSlider('render-slide-roll', 'camRoll', 'render-val-roll', v => `${Math.round(v)}°`);
+        // Depth of Field
+        bindSlider('render-slide-focus', 'dofFocus', 'render-val-focus', v => `${v.toFixed(1)}m`);
+        bindSlider('render-slide-bokeh', 'dofBokeh', 'render-val-bokeh', v => {
+            const modeEl = root.querySelector('#render-val-bokeh-mode');
+            if (modeEl) {
+                modeEl.textContent = v > 0 ? 'ACTIVE' : 'OFF';
+                modeEl.className = `text-[7.5px] font-mono font-bold ${v > 0 ? 'text-rose-400' : 'text-slate-500'}`;
+            }
+            return `${Math.round(v * 100)}%`;
+        });
         // LookAt Target
         bindSlider('render-slide-tgx', 'targetX', 'render-val-tgx', v => v.toFixed(1));
         bindSlider('render-slide-tgy', 'targetY', 'render-val-tgy', v => v.toFixed(1));
