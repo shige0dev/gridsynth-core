@@ -543,7 +543,7 @@ export class PresetManager {
         const c = document.getElementById('preset-list-container');
         if (!c) return;
         c.innerHTML = '';
-        c.className = 'max-h-[336px] overflow-y-auto overscroll-contain pr-1 min-h-0 mb-2 space-y-1 touch-pan-y select-none';
+        c.className = 'max-h-[336px] overflow-y-auto overscroll-contain no-scrollbar min-h-0 mb-2 space-y-1 touch-pan-y select-none';
 
         // 1. User-saved Patches (Always displayed first)
         const userKeys = this.presetOrder.filter(k => !this.DEMO_KEYS.includes(k));
