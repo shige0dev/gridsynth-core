@@ -230,6 +230,8 @@ export const OBJECT = {
                 if (disp) disp.textContent = m.pointSize.toFixed(1);
                 onChange?.();
             });
+        }
+
         // Glass opacity slider
         const glassSl = root.querySelector('#geo-glass-opacity');
         if (glassSl) {
