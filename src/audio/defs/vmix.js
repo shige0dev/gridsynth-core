@@ -40,7 +40,6 @@ export const VMIX = {
         const MODE_MAP = {
             dissolve: 1,
             blur: 2,
-            zoom: 3,
             slide_h: 4,
             slide_v: 5,
             blackout: 6,
@@ -126,25 +125,6 @@ export const VMIX = {
                         vec4 bA = sampleDeepBlur(tTexA, uv, blurRad);
                         vec4 bB = sampleDeepBlur(tTexB, uv, blurRad);
                         gl_FragColor = mix(bA, bB, m);
-                        return;
-                    }
-
-                    // 3. Zoom / Shrink Dissolve (Dramatically shrinks down to a miniature dot, then expands)
-                    if (uMode == 3) {
-                        float sA = max(0.015, pow(clamp((0.55 - m) / 0.55, 0.0, 1.0), 2.2));
-                        float sB = max(0.015, pow(clamp((m - 0.45) / 0.55, 0.0, 1.0), 2.2));
-
-                        vec2 uvA = (uv - 0.5) / sA + 0.5;
-                        vec2 uvB = (uv - 0.5) / sB + 0.5;
-
-                        bool inA = (uvA.x >= 0.0 && uvA.x <= 1.0 && uvA.y >= 0.0 && uvA.y <= 1.0) && (m < 0.55);
-                        bool inB = (uvB.x >= 0.0 && uvB.x <= 1.0 && uvB.y >= 0.0 && uvB.y <= 1.0) && (m > 0.45);
-
-                        vec4 zA = inA ? texture2D(tTexA, uvA) : vec4(0.0);
-                        vec4 zB = inB ? texture2D(tTexB, uvB) : vec4(0.0);
-
-                        float blend = smoothstep(0.45, 0.55, m);
-                        gl_FragColor = mix(zA, zB, blend);
                         return;
                     }
 

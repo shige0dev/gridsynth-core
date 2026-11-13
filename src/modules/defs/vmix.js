@@ -7,7 +7,6 @@ export const VMIX_MODES = [
     { id: 'alpha', label: 'ALPHA' },
     { id: 'mosaic', label: 'MOSAIC' },
     { id: 'blur', label: 'BLUR' },
-    { id: 'zoom', label: 'ZOOM' },
     { id: 'slide_h', label: 'SLIDE H' },
     { id: 'slide_v', label: 'SLIDE V' },
     { id: 'blackout', label: 'BLACKOUT' },
