@@ -42,10 +42,10 @@ export const VMIX = {
                 <!-- Top: Mode name per Rule 4 -->
                 <span data-vmix-mode class="absolute bottom-full mb-[2px] left-1/2 -translate-x-1/2 text-[7.5px] font-mono font-bold text-amber-400 truncate tracking-tight text-center max-w-[54px] leading-none pointer-events-none select-none">${mode}</span>
 
-                <!-- Standardized Panel Bar Slot (Matching sequencer / panel-bar-slot standard) -->
-                <div class="w-full h-full rounded-sm p-[1px] flex flex-row items-center border border-slate-600 bg-slate-950/40 relative panel-bar-slot overflow-hidden">
-                    <div class="absolute left-1/2 top-0 bottom-0 w-[1px] bg-slate-700/60 z-10 pointer-events-none"></div>
-                    <div data-vmix-bar class="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 rounded-xs transition-[width] duration-75" style="width: ${pct}%;"></div>
+                <!-- Standardized Panel Bar Slot (Thin white needle indicator, no fill) -->
+                <div class="w-full h-full rounded-sm flex flex-row items-center border border-slate-600 bg-slate-950/40 relative panel-bar-slot overflow-hidden">
+                    <div class="absolute left-1/2 top-0 bottom-0 w-[1px] bg-slate-700/60 z-0 pointer-events-none"></div>
+                    <div data-vmix-needle class="absolute top-0 bottom-0 w-[1.5px] -translate-x-1/2 bg-white shadow-[0_0_4px_rgba(255,255,255,0.8)] z-10 pointer-events-none" style="left: ${pct}%;"></div>
                 </div>
 
                 <!-- Bottom: Mix % value per Rule 4 -->
@@ -66,6 +66,11 @@ export const VMIX = {
                 <span id="vmix-status-badge" class="text-[8.5px] font-mono font-bold ${isCvPatched ? 'text-amber-300 bg-amber-950 px-1 rounded border border-amber-600/50' : 'text-slate-400'}">
                     ${isCvPatched ? 'CV' : 'MANUAL'}
                 </span>
+            </div>
+
+            <!-- Live Mix Preview Container (1:1 Square, matching RENDER) -->
+            <div class="relative w-full aspect-square bg-black border border-slate-800 rounded overflow-hidden flex items-center justify-center mx-auto">
+                <canvas class="vmix-modal-canvas w-full h-full block bg-black" width="400" height="400"></canvas>
             </div>
 
             <!-- Transition Mode Selector (9 modes, 3x3) -->
@@ -121,7 +126,7 @@ export const VMIX = {
     },
     updateLive: (cell, data, isPlaying, modal, m) => {
         if (!cell || !data) return;
-        const barEl = cell.querySelector('[data-vmix-bar]');
+        const needleEl = cell.querySelector('[data-vmix-needle]');
         const pctEl = cell.querySelector('[data-vmix-pct]');
         const modeEl = cell.querySelector('[data-vmix-mode]');
         const curMix = Number(data.mix ?? m.mix ?? 0.5);
@@ -129,10 +134,17 @@ export const VMIX = {
         const pct = Math.round(curMix * 100);
 
         if (modeEl) modeEl.textContent = curMode;
-        if (barEl) barEl.style.width = `${pct}%`;
+        if (needleEl) needleEl.style.left = `${pct}%`;
         if (pctEl) pctEl.textContent = `${pct}%${data.isCvPatched ? '*' : ''}`;
 
         if (modal) {
+            const srcCanvas = data.canvas;
+            const mCvs = modal.querySelector('.vmix-modal-canvas');
+            if (mCvs && srcCanvas) {
+                const mCtx = mCvs.getContext('2d');
+                mCtx.clearRect(0, 0, mCvs.width, mCvs.height);
+                mCtx.drawImage(srcCanvas, 0, 0, srcCanvas.width, srcCanvas.height, 0, 0, mCvs.width, mCvs.height);
+            }
             const badge = modal.querySelector('#vmix-status-badge');
             if (badge) {
                 if (data.isCvPatched) {

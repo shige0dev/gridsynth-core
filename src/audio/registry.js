@@ -38,7 +38,7 @@ import { vertexAudioDefs } from './defs/vertex.js?v=714';
 import { scatterAudioDefs } from './defs/scatter.js?v=737';
 import { renderAudioDefs } from './defs/render.js?v=744';
 import { vfxAudioDefs } from './defs/vfx.js?v=709';
-import { vmixAudioDefs } from './defs/vmix.js?v=713';
+import { vmixAudioDefs } from './defs/vmix.js?v=746';
 import { displayAudioDefs } from './defs/display.js?v=699';
 
 export const AUDIO_REGISTRY = {

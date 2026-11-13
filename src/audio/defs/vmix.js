@@ -341,11 +341,13 @@ export const VMIX = {
                 return vmixCanvas;
             },
             read: () => {
+                processFrame();
                 const isCv = Boolean(patchState?.has('cv_in') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('cv_in') : false));
                 return {
                     mix: lastEffectiveMix,
                     isCvPatched: isCv,
-                    mode: d.mode || 'dissolve'
+                    mode: d.mode || 'dissolve',
+                    canvas: vmixCanvas
                 };
             },
             destroy: () => {

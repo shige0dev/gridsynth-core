@@ -38,7 +38,7 @@ import { vertexDefs } from './defs/vertex.js?v=714';
 import { scatterDefs } from './defs/scatter.js?v=714';
 import { renderDefs } from './defs/render.js?v=742';
 import { vfxDefs } from './defs/vfx.js?v=709';
-import { vmixDefs } from './defs/vmix.js?v=713';
+import { vmixDefs } from './defs/vmix.js?v=746';
 import { displayDefs } from './defs/display.js?v=699';
 
 export const MODULE_REGISTRY = {
