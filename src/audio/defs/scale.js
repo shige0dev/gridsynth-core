@@ -79,8 +79,8 @@ export const SCALE = {
                 let scaleFactor = 1.0;
                 if (isCvPatched) {
                     const cvVal = readCv(anIn, 0);
-                    // 1.0V = 2.0x scale (0.5V = 1.0x normal, 0.0V = 0.0x)
-                    scaleFactor = Math.max(0.001, cvVal * 2.0);
+                    // 1.0V = 1.0x scale (direct CV value)
+                    scaleFactor = Math.max(0.001, cvVal);
                 } else {
                     scaleFactor = Math.max(0.001, Number(d.scale ?? 1.0));
                 }
@@ -138,7 +138,7 @@ export const SCALE = {
                 let scaleFactor = 1.0;
                 if (isCvPatched) {
                     const cvVal = readCv(anIn, 0);
-                    scaleFactor = Math.max(0.001, cvVal * 2.0);
+                    scaleFactor = Math.max(0.001, cvVal);
                 } else {
                     scaleFactor = Math.max(0.001, Number(d.scale ?? 1.0));
                 }
