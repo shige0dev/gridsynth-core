@@ -226,6 +226,7 @@ export const SCATTER = {
                         wireWidth: childPkt.wireWidth,
                         pointSize: childPkt.pointSize,
                         glassOpacity: childPkt.glassOpacity,
+                        glow: childPkt.glow,
                         count,
                         matrices,
                         transform: {

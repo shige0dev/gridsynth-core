@@ -43,6 +43,7 @@ export const OBJECT = {
         wireWidth: 1.5,
         pointSize: 3.0,
         glassOpacity: 0.25,
+        glow: 0.0,
         color: '#ffffff',
         detail: 'mid'
     }),
@@ -151,6 +152,15 @@ export const OBJECT = {
                 </div>
                 <input id="geo-color-picker" type="color" value="${curCol}" class="w-full h-6 p-0.5 rounded bg-slate-800 border border-slate-600 cursor-pointer" title="カラーセレクタ">
             </div>
+
+            <!-- Section 5: Neon Glow -->
+            <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
+                <div class="flex items-center justify-between">
+                    <span class="text-[8px] font-mono font-bold text-amber-400 uppercase tracking-wider">NEON GLOW</span>
+                    <span id="geo-glow-val" class="text-[8px] font-mono font-bold text-amber-300">${Number(m.glow ?? 0).toFixed(1)}</span>
+                </div>
+                <input id="geo-glow" type="range" min="0.0" max="3.0" step="0.1" value="${Number(m.glow ?? 0)}" class="w-full accent-amber-400 h-1.5 bg-slate-800 rounded cursor-pointer">
+            </div>
         </div>`;
     },
     bindEvents: (m, ctx, onChange) => {
@@ -194,6 +204,17 @@ export const OBJECT = {
             });
             colPicker.addEventListener('change', () => {
                 ctx.reRenderModal?.();
+            });
+        }
+
+        // Neon glow slider
+        const glowSl = root.querySelector('#geo-glow');
+        if (glowSl) {
+            glowSl.addEventListener('input', (e) => {
+                m.glow = parseFloat(e.target.value);
+                const disp = root.querySelector('#geo-glow-val');
+                if (disp) disp.textContent = m.glow.toFixed(1);
+                onChange?.();
             });
         }
 

@@ -35,13 +35,15 @@ export const RENDER = {
         let rootGroup = null;
         let renderCanvas = null;
 
-        // Selective Bloom Post-Processing Setup (for NEON objects)
+        // HDR Multi-Stage Bloom Post-Processing Setup (supports faces, wireframes & points)
         let baseTarget = null;
-        let bloomTarget = null;
-        let darkMaterial = null;
+        let bloomMips = [];
         let bloomScene = null;
         let bloomCamera = null;
-        let bloomMaterial = null;
+        let bloomQuad = null;
+        let prefilterMat = null;
+        let downsampleMat = null;
+        let compositeMat = null;
         let bloomGeo = null;
 
         // Material Cache (Key: `${style}_${colorHex}`)
@@ -66,20 +68,21 @@ export const RENDER = {
             return pointTexture;
         };
 
-        const getMaterial = (style, colorHex, pointSize = 3.0, wireWidth = 1.5, glassOpacity = 0.25) => {
+        const getMaterial = (style, colorHex, pointSize = 3.0, wireWidth = 1.5, glassOpacity = 0.25, glow = 0.0) => {
             if (typeof THREE === 'undefined') return null;
+            const gVal = Math.max(0, Number(glow) || 0);
             const extraKey = style === 'point'
                 ? `_${Number(pointSize).toFixed(1)}`
                 : (style === 'wire'
                     ? `_${Number(wireWidth).toFixed(1)}`
                     : (style === 'glass' ? `_${Number(glassOpacity).toFixed(2)}` : ''));
-            const key = `${style}_${colorHex}${extraKey}`;
+            const key = `${style}_${colorHex}${extraKey}_g${gVal.toFixed(1)}`;
             if (!materialCache.has(key)) {
                 let mat;
                 switch (style) {
                     case 'point':
                         mat = new THREE.PointsMaterial({
-                            color: colorHex,
+                            color: gVal > 0.01 ? new THREE.Color(colorHex).multiplyScalar(1.0 + gVal * 1.6) : colorHex,
                             size: Math.max(0.015, Number(pointSize) * 0.03),
                             map: getPointTexture(),
                             transparent: true,
@@ -91,6 +94,8 @@ export const RENDER = {
                     case 'solid':
                         mat = new THREE.MeshStandardMaterial({
                             color: colorHex,
+                            emissive: gVal > 0.01 ? colorHex : 0x000000,
+                            emissiveIntensity: gVal > 0.01 ? gVal * 1.6 : 0.0,
                             roughness: 0.3,
                             metalness: 0.4,
                             side: THREE.DoubleSide
@@ -104,6 +109,8 @@ export const RENDER = {
                     case 'toon':
                         mat = new THREE.MeshToonMaterial({
                             color: colorHex,
+                            emissive: gVal > 0.01 ? colorHex : 0x000000,
+                            emissiveIntensity: gVal > 0.01 ? gVal * 1.6 : 0.0,
                             side: THREE.DoubleSide
                         });
                         break;
@@ -111,7 +118,7 @@ export const RENDER = {
                         mat = new THREE.MeshStandardMaterial({
                             color: colorHex,
                             emissive: colorHex,
-                            emissiveIntensity: 2.2,
+                            emissiveIntensity: Math.max(2.0, 2.0 + gVal),
                             roughness: 0.1,
                             metalness: 0.1,
                             side: THREE.DoubleSide
@@ -121,7 +128,8 @@ export const RENDER = {
                         mat = new THREE.ShaderMaterial({
                             uniforms: {
                                 uColor: { value: new THREE.Color(colorHex) },
-                                uOpacity: { value: Math.max(0.05, Math.min(0.85, Number(glassOpacity) || 0.25)) }
+                                uOpacity: { value: Math.max(0.05, Math.min(0.85, Number(glassOpacity) || 0.25)) },
+                                uGlow: { value: gVal }
                             },
                             vertexShader: `
                                 varying vec3 vNormal;
@@ -141,6 +149,7 @@ export const RENDER = {
                             fragmentShader: `
                                 uniform vec3 uColor;
                                 uniform float uOpacity;
+                                uniform float uGlow;
                                 varying vec3 vNormal;
                                 varying vec3 vViewPos;
                                 void main() {
@@ -158,6 +167,7 @@ export const RENDER = {
 
                                     vec3 col = uColor * (uOpacity * 0.75 + fresnel * 0.95 + sheen)
                                              + vec3(1.0) * (spec1 * 0.95 + spec2 * 0.5 + fresnel * 0.35);
+                                    col *= (1.0 + uGlow * 1.4);
                                     float alpha = clamp(uOpacity * 0.45 + fresnel * 0.78 + spec1 * 0.85, 0.04, 0.96);
                                     gl_FragColor = vec4(col, alpha);
                                 }
@@ -172,7 +182,8 @@ export const RENDER = {
                         mat = new THREE.ShaderMaterial({
                             uniforms: {
                                 uColor: { value: new THREE.Color(colorHex) },
-                                uWireWidth: { value: Math.max(0.5, Number(wireWidth) || 1.5) }
+                                uWireWidth: { value: Math.max(0.5, Number(wireWidth) || 1.5) },
+                                uGlow: { value: gVal }
                             },
                             vertexShader: `
                                 attribute vec3 aBarycentric;
@@ -189,6 +200,7 @@ export const RENDER = {
                             fragmentShader: `
                                 uniform vec3 uColor;
                                 uniform float uWireWidth;
+                                uniform float uGlow;
                                 varying vec3 vBarycentric;
                                 void main() {
                                     vec3 d = fwidth(vBarycentric);
@@ -196,7 +208,7 @@ export const RENDER = {
                                     float edgeFactor = min(min(a3.x, a3.y), a3.z);
                                     float alpha = 1.0 - edgeFactor;
                                     if (alpha < 0.02) discard;
-                                    gl_FragColor = vec4(uColor, alpha);
+                                    gl_FragColor = vec4(uColor * (1.0 + uGlow * 1.8), alpha);
                                 }
                             `,
                             extensions: { derivatives: true },
@@ -240,27 +252,22 @@ export const RENDER = {
             rootGroup = new THREE.Group();
             scene.add(rootGroup);
 
-            // Selective Bloom Post-Processor (for NEON objects)
-            baseTarget = new THREE.WebGLRenderTarget(BUFFER_SIZE, BUFFER_SIZE, {
+            // HDR Multi-Stage Bloom Post-Processor (Threshold + 4-stage Downsample + Composite)
+            const useHalfFloat = Boolean(renderer.capabilities?.isWebGL2 || renderer.extensions?.get('EXT_color_buffer_half_float'));
+            const rtOpts = {
                 minFilter: THREE.LinearFilter,
                 magFilter: THREE.LinearFilter,
-                format: THREE.RGBAFormat
-            });
+                format: THREE.RGBAFormat,
+                type: useHalfFloat ? THREE.HalfFloatType : THREE.UnsignedByteType
+            };
 
-            bloomTarget = new THREE.WebGLRenderTarget(256, 256, {
-                minFilter: THREE.LinearFilter,
-                magFilter: THREE.LinearFilter,
-                format: THREE.RGBAFormat
-            });
-            darkMaterial = new THREE.MeshBasicMaterial({
-                color: 0x000000,
-                side: THREE.DoubleSide
-            });
+            baseTarget = new THREE.WebGLRenderTarget(BUFFER_SIZE, BUFFER_SIZE, rtOpts);
+            bloomMips = [256, 128, 64, 32].map(sz => new THREE.WebGLRenderTarget(sz, sz, rtOpts));
 
             bloomScene = new THREE.Scene();
             bloomCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-            const bloomVert = `
+            const quadVert = `
                 varying vec2 vUv;
                 void main() {
                     vUv = uv;
@@ -268,47 +275,95 @@ export const RENDER = {
                 }
             `;
 
-            const bloomFrag = `
-                uniform sampler2D tColor;
-                uniform sampler2D tBloom;
-                varying vec2 vUv;
-
-                void main() {
-                    vec4 baseCol = texture2D(tColor, vUv);
-                    vec3 glow = vec3(0.0);
-                    float glowRadius = 0.045;
-                    float totalW = 0.0;
-                    for (int i = 1; i <= 20; i++) {
-                        float fi = float(i);
-                        float r = sqrt(fi / 20.0) * glowRadius;
-                        float theta = fi * 2.39996323;
-                        vec2 offset = vec2(cos(theta), sin(theta)) * r;
-                        vec4 smp = texture2D(tBloom, clamp(vUv + offset, 0.0, 1.0));
-                        float w = 1.0 - (r / (glowRadius + 0.0001)) * 0.55;
-                        glow += smp.rgb * smp.a * w;
-                        totalW += w;
+            prefilterMat = new THREE.ShaderMaterial({
+                uniforms: {
+                    tColor: { value: baseTarget.texture }
+                },
+                vertexShader: quadVert,
+                fragmentShader: `
+                    uniform sampler2D tColor;
+                    varying vec2 vUv;
+                    void main() {
+                        vec4 c = texture2D(tColor, vUv);
+                        float br = max(c.r, max(c.g, c.b));
+                        float contrib = smoothstep(0.95, 1.25, br);
+                        gl_FragColor = vec4(c.rgb * c.a * contrib, c.a * contrib);
                     }
-                    glow = (glow / max(totalW, 0.001)) * 1.8;
-                    vec3 finalRgb = baseCol.rgb + glow;
-                    float glowLum = dot(glow, vec3(0.299, 0.587, 0.114));
-                    float finalAlpha = clamp(baseCol.a + glowLum, 0.0, 1.0);
-                    gl_FragColor = vec4(clamp(finalRgb, 0.0, 1.0), finalAlpha);
-                }
-            `;
+                `,
+                depthTest: false,
+                depthWrite: false
+            });
 
-            bloomMaterial = new THREE.ShaderMaterial({
+            downsampleMat = new THREE.ShaderMaterial({
+                uniforms: {
+                    tInput: { value: null },
+                    uTexelSize: { value: new THREE.Vector2(1 / 256, 1 / 256) }
+                },
+                vertexShader: quadVert,
+                fragmentShader: `
+                    uniform sampler2D tInput;
+                    uniform vec2 uTexelSize;
+                    varying vec2 vUv;
+                    void main() {
+                        vec2 o = uTexelSize * 1.5;
+                        vec4 s = texture2D(tInput, vUv) * 0.25;
+                        s += texture2D(tInput, clamp(vUv + vec2(-o.x,  0.0), 0.0, 1.0)) * 0.125;
+                        s += texture2D(tInput, clamp(vUv + vec2( o.x,  0.0), 0.0, 1.0)) * 0.125;
+                        s += texture2D(tInput, clamp(vUv + vec2( 0.0, -o.y), 0.0, 1.0)) * 0.125;
+                        s += texture2D(tInput, clamp(vUv + vec2( 0.0,  o.y), 0.0, 1.0)) * 0.125;
+                        s += texture2D(tInput, clamp(vUv + vec2(-o.x, -o.y), 0.0, 1.0)) * 0.0625;
+                        s += texture2D(tInput, clamp(vUv + vec2( o.x, -o.y), 0.0, 1.0)) * 0.0625;
+                        s += texture2D(tInput, clamp(vUv + vec2(-o.x,  o.y), 0.0, 1.0)) * 0.0625;
+                        s += texture2D(tInput, clamp(vUv + vec2( o.x,  o.y), 0.0, 1.0)) * 0.0625;
+                        gl_FragColor = s;
+                    }
+                `,
+                depthTest: false,
+                depthWrite: false
+            });
+
+            compositeMat = new THREE.ShaderMaterial({
                 uniforms: {
                     tColor: { value: baseTarget.texture },
-                    tBloom: { value: bloomTarget.texture }
+                    tMip0: { value: bloomMips[0].texture },
+                    tMip1: { value: bloomMips[1].texture },
+                    tMip2: { value: bloomMips[2].texture },
+                    tMip3: { value: bloomMips[3].texture }
                 },
-                vertexShader: bloomVert,
-                fragmentShader: bloomFrag,
+                vertexShader: quadVert,
+                fragmentShader: `
+                    uniform sampler2D tColor;
+                    uniform sampler2D tMip0;
+                    uniform sampler2D tMip1;
+                    uniform sampler2D tMip2;
+                    uniform sampler2D tMip3;
+                    varying vec2 vUv;
+
+                    vec3 softTone(vec3 x) {
+                        vec3 over = max(x - vec3(0.85), vec3(0.0));
+                        return min(x, vec3(0.85)) + over / (vec3(1.0) + over * 1.15) * 0.15;
+                    }
+
+                    void main() {
+                        vec4 baseCol = texture2D(tColor, vUv);
+                        vec3 bloom = texture2D(tMip0, vUv).rgb * 0.45
+                                   + texture2D(tMip1, vUv).rgb * 0.35
+                                   + texture2D(tMip2, vUv).rgb * 0.25
+                                   + texture2D(tMip3, vUv).rgb * 0.20;
+                        vec3 hdr = baseCol.rgb + bloom * 1.15;
+                        vec3 outRgb = clamp(softTone(hdr), 0.0, 1.0);
+                        float bloomLum = dot(bloom, vec3(0.299, 0.587, 0.114));
+                        float outAlpha = clamp(baseCol.a + bloomLum * 0.85, 0.0, 1.0);
+                        gl_FragColor = vec4(outRgb, outAlpha);
+                    }
+                `,
                 depthTest: false,
                 depthWrite: false
             });
 
             bloomGeo = new THREE.PlaneGeometry(2, 2);
-            bloomScene.add(new THREE.Mesh(bloomGeo, bloomMaterial));
+            bloomQuad = new THREE.Mesh(bloomGeo, compositeMat);
+            bloomScene.add(bloomQuad);
         };
 
         initThree();
@@ -373,7 +428,9 @@ export const RENDER = {
                 let effectiveStyle = (override !== 'auto') ? override : (packet.materialStyle || 'wire');
                 if (effectiveStyle === 'point') effectiveStyle = packet.materialStyle || 'wire';
                 const effectiveColor = packet.color ?? 0xffffff;
-                const mat = getMaterial(effectiveStyle, effectiveColor, packet.pointSize ?? 3.0, packet.wireWidth ?? 1.5, packet.glassOpacity ?? 0.25);
+                const pktGlow = Number(packet.glow ?? 0);
+                const effGlow = (effectiveStyle === 'neon') ? Math.max(2.0, pktGlow + 2.0) : pktGlow;
+                const mat = getMaterial(effectiveStyle, effectiveColor, packet.pointSize ?? 3.0, packet.wireWidth ?? 1.5, packet.glassOpacity ?? 0.25, pktGlow);
 
                 const needsNew = !node || !node.isInstancedMesh || node.geometry !== packet.geometry || node.instanceMatrix.count < packet.count;
                 if (needsNew) {
@@ -390,8 +447,7 @@ export const RENDER = {
                 node.instanceMatrix.array.set(packet.matrices);
                 node.instanceMatrix.needsUpdate = true;
                 node.visible = true;
-                node.userData.isNeon = (effectiveStyle === 'neon');
-                node.userData.isTransparentStyle = (effectiveStyle === 'glass' || effectiveStyle === 'wire');
+                node.userData.hasGlow = (effGlow > 0.01);
                 node.position.set(...(packet.transform?.position || [0, 0, 0]));
                 node.rotation.set(...(packet.transform?.rotation || [0, 0, 0]));
                 node.scale.set(...(packet.transform?.scale || [1, 1, 1]));
@@ -400,8 +456,10 @@ export const RENDER = {
                 const override = d.materialOverride || 'auto';
                 const effectiveStyle = (override !== 'auto') ? override : (packet.materialStyle || 'wire');
                 const effectiveColor = packet.color ?? 0xffffff;
+                const pktGlow = Number(packet.glow ?? 0);
+                const effGlow = (effectiveStyle === 'neon') ? Math.max(2.0, pktGlow + 2.0) : pktGlow;
                 const isPoint = effectiveStyle === 'point';
-                const mat = getMaterial(effectiveStyle, effectiveColor, packet.pointSize ?? 3.0, packet.wireWidth ?? 1.5, packet.glassOpacity ?? 0.25);
+                const mat = getMaterial(effectiveStyle, effectiveColor, packet.pointSize ?? 3.0, packet.wireWidth ?? 1.5, packet.glassOpacity ?? 0.25, pktGlow);
                 const expectedType = isPoint ? 'Points' : 'Mesh';
 
                 if (!node || node.type !== expectedType) {
@@ -419,6 +477,7 @@ export const RENDER = {
                     }
                 }
                 node.visible = true;
+                node.userData.hasGlow = (effGlow > 0.01);
                 node.position.set(...(packet.transform?.position || [0, 0, 0]));
                 node.rotation.set(...(packet.transform?.rotation || [0, 0, 0]));
                 node.scale.set(...(packet.transform?.scale || [1, 1, 1]));
@@ -454,41 +513,41 @@ export const RENDER = {
                 rootGroup.visible = false;
             }
 
-            let hasNeon = false;
+            let hasGlow = false;
             if (rootGroup.visible) {
                 rootGroup.traverse(o => {
-                    if (o.visible && o.userData?.isNeon) hasNeon = true;
+                    if (o.visible && o.userData?.hasGlow) hasGlow = true;
                 });
             }
-            return hasNeon;
+            return hasGlow;
         };
 
-        const renderEyePass = (hasNeon) => {
-            if (hasNeon && baseTarget && bloomTarget && darkMaterial && bloomMaterial) {
+        const renderEyePass = (hasGlow) => {
+            if (hasGlow && baseTarget && bloomMips.length === 4 && bloomQuad && prefilterMat && downsampleMat && compositeMat) {
+                // 1. Single-pass HDR Scene Render
                 renderer.setRenderTarget(baseTarget);
                 renderer.clear();
                 renderer.render(scene, camera);
 
-                const savedState = [];
-                rootGroup.traverse(o => {
-                    if ((o.isMesh || o.isPoints) && o.visible && !o.userData?.isNeon) {
-                        savedState.push({ obj: o, mat: o.material, vis: o.visible });
-                        if (o.isPoints || o.userData?.isTransparentStyle) {
-                            o.visible = false;
-                        } else {
-                            o.material = darkMaterial;
-                        }
-                    }
-                });
-                renderer.setRenderTarget(bloomTarget);
+                // 2. Threshold Prefilter -> Mip 0
+                bloomQuad.material = prefilterMat;
+                renderer.setRenderTarget(bloomMips[0]);
                 renderer.clear();
-                renderer.render(scene, camera);
-                for (let i = 0; i < savedState.length; i++) {
-                    const s = savedState[i];
-                    s.obj.material = s.mat;
-                    s.obj.visible = s.vis;
+                renderer.render(bloomScene, bloomCamera);
+
+                // 3. Multi-Stage Downsampled Gaussian Blur (Mip 0 -> 1 -> 2 -> 3)
+                bloomQuad.material = downsampleMat;
+                for (let i = 1; i < bloomMips.length; i++) {
+                    const prev = bloomMips[i - 1];
+                    downsampleMat.uniforms.tInput.value = prev.texture;
+                    downsampleMat.uniforms.uTexelSize.value.set(1 / prev.width, 1 / prev.height);
+                    renderer.setRenderTarget(bloomMips[i]);
+                    renderer.clear();
+                    renderer.render(bloomScene, bloomCamera);
                 }
 
+                // 4. Composite HDR + Multi-Mip Bloom -> Screen
+                bloomQuad.material = compositeMat;
                 renderer.setRenderTarget(null);
                 renderer.render(bloomScene, bloomCamera);
             } else {
@@ -517,9 +576,9 @@ export const RENDER = {
             renderCanvas.height = targetSize;
             renderer.setSize(targetSize, targetSize, false);
             if (baseTarget) baseTarget.setSize(targetSize, targetSize);
-            if (bloomTarget) {
-                const bSize = Math.min(512, targetSize / 2);
-                bloomTarget.setSize(bSize, bSize);
+            for (let i = 0; i < bloomMips.length; i++) {
+                const sz = Math.max(16, targetSize >> (i + 1));
+                bloomMips[i].setSize(sz, sz);
             }
         };
 
@@ -620,17 +679,21 @@ export const RENDER = {
                     try { baseTarget.dispose(); } catch (_) {}
                     baseTarget = null;
                 }
-                if (bloomTarget) {
-                    try { bloomTarget.dispose(); } catch (_) {}
-                    bloomTarget = null;
+                for (let i = 0; i < bloomMips.length; i++) {
+                    try { bloomMips[i].dispose(); } catch (_) {}
                 }
-                if (darkMaterial) {
-                    try { darkMaterial.dispose(); } catch (_) {}
-                    darkMaterial = null;
+                bloomMips = [];
+                if (prefilterMat) {
+                    try { prefilterMat.dispose(); } catch (_) {}
+                    prefilterMat = null;
                 }
-                if (bloomMaterial) {
-                    try { bloomMaterial.dispose(); } catch (_) {}
-                    bloomMaterial = null;
+                if (downsampleMat) {
+                    try { downsampleMat.dispose(); } catch (_) {}
+                    downsampleMat = null;
+                }
+                if (compositeMat) {
+                    try { compositeMat.dispose(); } catch (_) {}
+                    compositeMat = null;
                 }
                 if (renderer) {
                     try { renderer.dispose(); } catch (_) {}

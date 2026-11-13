@@ -164,6 +164,7 @@ export const OBJECT = {
                     wireWidth: Number(d.wireWidth ?? 1.5),
                     pointSize: Number(d.pointSize ?? 3.0),
                     glassOpacity: Number(d.glassOpacity ?? 0.25),
+                    glow: Number(d.glow ?? 0.0),
                     color: parseColor(d.color)
                 };
             },
@@ -174,6 +175,7 @@ export const OBJECT = {
                 wireWidth: Number(d.wireWidth ?? 1.5),
                 pointSize: Number(d.pointSize ?? 3.0),
                 glassOpacity: Number(d.glassOpacity ?? 0.25),
+                glow: Number(d.glow ?? 0.0),
                 color: d.color || '#ffffff'
             }),
             destroy: () => {
