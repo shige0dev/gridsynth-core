@@ -43,13 +43,44 @@ export const RENDER = {
 
         // Material Cache (Key: `${style}_${colorHex}`)
         const materialCache = new Map();
+        let pointTexture = null;
 
-        const getMaterial = (style, colorHex) => {
+        const getPointTexture = () => {
+            if (pointTexture || typeof document === 'undefined' || typeof THREE === 'undefined') return pointTexture;
+            const c = document.createElement('canvas');
+            c.width = 64;
+            c.height = 64;
+            const g = c.getContext('2d');
+            if (g) {
+                const grad = g.createRadialGradient(32, 32, 2, 32, 32, 30);
+                grad.addColorStop(0.0, 'rgba(255,255,255,1.0)');
+                grad.addColorStop(0.55, 'rgba(255,255,255,0.92)');
+                grad.addColorStop(1.0, 'rgba(255,255,255,0.0)');
+                g.fillStyle = grad;
+                g.fillRect(0, 0, 64, 64);
+            }
+            pointTexture = new THREE.CanvasTexture(c);
+            return pointTexture;
+        };
+
+        const getMaterial = (style, colorHex, pointSize = 3.0) => {
             if (typeof THREE === 'undefined') return null;
-            const key = `${style}_${colorHex}`;
+            const ptKey = style === 'point' ? `_${Number(pointSize).toFixed(1)}` : '';
+            const key = `${style}_${colorHex}${ptKey}`;
             if (!materialCache.has(key)) {
                 let mat;
                 switch (style) {
+                    case 'point':
+                        mat = new THREE.PointsMaterial({
+                            color: colorHex,
+                            size: Math.max(0.015, Number(pointSize) * 0.03),
+                            map: getPointTexture(),
+                            transparent: true,
+                            alphaTest: 0.02,
+                            depthWrite: false,
+                            sizeAttenuation: true
+                        });
+                        break;
                     case 'solid':
                         mat = new THREE.MeshStandardMaterial({
                             color: colorHex,
@@ -283,15 +314,19 @@ export const RENDER = {
                     node.remove(node.children[node.children.length - 1]);
                 }
             } else {
-                // Leaf mesh
+                // Leaf mesh / points
                 const override = d.materialOverride || 'auto';
                 const effectiveStyle = (override !== 'auto') ? override : (packet.materialStyle || 'wire');
                 const effectiveColor = packet.color || 0xffffff;
-                const mat = getMaterial(effectiveStyle, effectiveColor);
+                const isPoint = effectiveStyle === 'point';
+                const mat = getMaterial(effectiveStyle, effectiveColor, packet.pointSize ?? 3.0);
+                const expectedType = isPoint ? 'Points' : 'Mesh';
 
-                if (!node || node.type !== 'Mesh') {
+                if (!node || node.type !== expectedType) {
                     if (node) parentThreeObj.remove(node);
-                    node = new THREE.Mesh(packet.geometry, mat);
+                    node = isPoint
+                        ? new THREE.Points(packet.geometry, mat)
+                        : new THREE.Mesh(packet.geometry, mat);
                     parentThreeObj.add(node);
                 } else {
                     if (node.geometry !== packet.geometry) {
@@ -415,6 +450,10 @@ export const RENDER = {
                     try { mat.dispose(); } catch (_) {}
                 });
                 materialCache.clear();
+                if (pointTexture) {
+                    try { pointTexture.dispose(); } catch (_) {}
+                    pointTexture = null;
+                }
                 if (dofGeo) {
                     try { dofGeo.dispose(); } catch (_) {}
                     dofGeo = null;

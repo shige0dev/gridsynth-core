@@ -29,7 +29,8 @@ export const MATERIAL_STYLES = [
     { id: 'solid', label: 'SOLID' },
     { id: 'normal', label: 'NORMAL' },
     { id: 'toon', label: 'TOON' },
-    { id: 'neon', label: 'NEON' }
+    { id: 'neon', label: 'NEON' },
+    { id: 'point', label: 'POINT' }
 ];
 
 export const PRESET_COLORS = [
@@ -47,6 +48,7 @@ export const OBJECT = {
         type: 'OBJECT',
         shape: 'torus',
         material: 'wire',
+        pointSize: 3.0,
         color: '#ffffff',
         detail: 'mid'
     }),
@@ -112,12 +114,23 @@ export const OBJECT = {
             <!-- Section 3: Material -->
             <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
                 <span class="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-wider">MATERIAL</span>
-                <div class="grid grid-cols-5 gap-1">
+                <div class="grid grid-cols-3 gap-1">
                     ${MATERIAL_STYLES.map(ms => `
                         <button data-mat="${ms.id}" class="geo-mat-btn py-1 rounded text-[8px] font-mono font-bold border transition ${curMat === ms.id ? 'bg-purple-600 text-white border-purple-400 shadow-sm shadow-purple-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">${ms.label}</button>
                     `).join('')}
                 </div>
             </div>
+
+            ${curMat === 'point' ? `
+            <!-- Section 3B: Point Size -->
+            <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
+                <div class="flex items-center justify-between">
+                    <span class="text-[8px] font-mono font-bold text-cyan-400 uppercase tracking-wider">POINT SIZE</span>
+                    <span id="geo-point-size-val" class="text-[8px] font-mono font-bold text-cyan-300">${Number(m.pointSize ?? 3.0).toFixed(1)}</span>
+                </div>
+                <input id="geo-point-size" type="range" min="0.5" max="12.0" step="0.5" value="${Number(m.pointSize ?? 3.0)}" class="w-full accent-purple-500 h-1.5 bg-slate-800 rounded cursor-pointer">
+            </div>
+            ` : ''}
 
             <!-- Section 4: Color -->
             <div class="flex flex-col gap-1 border-t border-slate-800 pt-1 ${curMat === 'normal' ? 'opacity-30 pointer-events-none' : ''}">
@@ -171,6 +184,17 @@ export const OBJECT = {
                 onChange?.();
             });
         });
+
+        // Point size slider
+        const ptSl = root.querySelector('#geo-point-size');
+        if (ptSl) {
+            ptSl.addEventListener('input', (e) => {
+                m.pointSize = parseFloat(e.target.value);
+                const disp = root.querySelector('#geo-point-size-val');
+                if (disp) disp.textContent = m.pointSize.toFixed(1);
+                onChange?.();
+            });
+        }
     },
     updateLive: () => {}
 };

@@ -139,6 +139,7 @@ export const OBJECT = {
                         scale: [1.0, 1.0, 1.0]
                     },
                     materialStyle: d.material || 'wire',
+                    pointSize: Number(d.pointSize ?? 3.0),
                     color: parseColor(d.color)
                 };
             },
@@ -146,6 +147,7 @@ export const OBJECT = {
                 shape: d.shape || 'torus',
                 detail: d.detail || 'mid',
                 material: d.material || 'wire',
+                pointSize: Number(d.pointSize ?? 3.0),
                 color: d.color || '#ffffff'
             }),
             destroy: () => {

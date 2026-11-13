@@ -1,7 +1,7 @@
 // src/ui/managers/modal-manager.js
 import { MODULE_REGISTRY } from '../../modules/registry.js?v=619';
 import { UIHelpers } from '../helpers.js?v=619';
-import { openAddModal } from '../dialogs/add-module-dialog.js?v=679';
+import { openAddModal } from '../dialogs/add-module-dialog.js?v=740';
 import { openNumpadPrompt } from '../dialogs/numpad-dialog.js?v=679';
 import { openCustomAlert } from '../dialogs/alert-dialog.js?v=679';
 

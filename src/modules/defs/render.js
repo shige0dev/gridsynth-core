@@ -8,7 +8,8 @@ export const STYLE_OVERRIDES = [
     { id: 'solid', label: 'SOLID' },
     { id: 'normal', label: 'NORMAL' },
     { id: 'toon', label: 'TOON' },
-    { id: 'neon', label: 'NEON' }
+    { id: 'neon', label: 'NEON' },
+    { id: 'point', label: 'POINT' }
 ];
 
 export const RENDER = {
@@ -86,7 +87,7 @@ export const RENDER = {
                     <span class="text-[8px] font-mono font-bold text-purple-400 uppercase tracking-wider">STYLE OVERRIDE (マテリアル一括上書き)</span>
                     <span class="text-[7.5px] font-mono text-slate-400">${curOverride === 'auto' ? 'OBJ SPECIFIC' : 'FORCED'}</span>
                 </div>
-                <div class="grid grid-cols-6 gap-1">
+                <div class="grid grid-cols-4 gap-1">
                     ${STYLE_OVERRIDES.map(s => `
                         <button data-override="${s.id}" class="render-override-btn py-1 rounded text-[8px] font-mono font-bold border transition ${curOverride === s.id ? 'bg-purple-600 text-white border-purple-400 shadow-sm shadow-purple-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">${s.label}</button>
                     `).join('')}
