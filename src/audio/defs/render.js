@@ -178,11 +178,13 @@ export const RENDER = {
                         });
                         break;
                     case 'wire':
-                    default:
+                    default: {
+                        const baseW = Math.max(0.5, Number(wireWidth) || 1.5);
+                        const wireScale = currentBufferSize > BUFFER_SIZE ? Math.sqrt(currentBufferSize / BUFFER_SIZE) : 1.0;
                         mat = new THREE.ShaderMaterial({
                             uniforms: {
                                 uColor: { value: new THREE.Color(colorHex) },
-                                uWireWidth: { value: Math.max(0.5, Number(wireWidth) || 1.5) },
+                                uWireWidth: { value: baseW * wireScale },
                                 uGlow: { value: gVal }
                             },
                             vertexShader: `
@@ -215,7 +217,9 @@ export const RENDER = {
                             transparent: true,
                             side: THREE.DoubleSide
                         });
+                        mat.userData = { baseWireWidth: baseW };
                         break;
+                    }
                 }
                 materialCache.set(key, mat);
             }
@@ -284,7 +288,15 @@ export const RENDER = {
                     uniform sampler2D tColor;
                     varying vec2 vUv;
                     void main() {
-                        vec4 c = texture2D(tColor, vUv);
+                        // 256px Mip0 の 1 テクセル内 4 象限をサンプルし、高解像度化時の細線・点の取りこぼしを防ぐ
+                        vec2 o = vec2(0.25 / 256.0);
+                        vec4 c0 = texture2D(tColor, clamp(vUv + vec2(-o.x, -o.y), 0.0, 1.0));
+                        vec4 c1 = texture2D(tColor, clamp(vUv + vec2( o.x, -o.y), 0.0, 1.0));
+                        vec4 c2 = texture2D(tColor, clamp(vUv + vec2(-o.x,  o.y), 0.0, 1.0));
+                        vec4 c3 = texture2D(tColor, clamp(vUv + vec2( o.x,  o.y), 0.0, 1.0));
+                        vec4 cAvg = (c0 + c1 + c2 + c3) * 0.25;
+                        vec4 cMax = max(max(c0, c1), max(c2, c3));
+                        vec4 c = mix(cAvg, cMax, 0.35);
                         float br = max(c.r, max(c.g, c.b));
                         float contrib = smoothstep(0.95, 1.25, br);
                         gl_FragColor = vec4(c.rgb * c.a * contrib, c.a * contrib);
@@ -576,10 +588,13 @@ export const RENDER = {
             renderCanvas.height = targetSize;
             renderer.setSize(targetSize, targetSize, false);
             if (baseTarget) baseTarget.setSize(targetSize, targetSize);
-            for (let i = 0; i < bloomMips.length; i++) {
-                const sz = Math.max(16, targetSize >> (i + 1));
-                bloomMips[i].setSize(sz, sz);
-            }
+            // bloomMips は [256, 128, 64, 32] 固定を維持し、高解像度化しても画面に対するブラー半径を一定に保つ
+            const wireScale = targetSize > BUFFER_SIZE ? Math.sqrt(targetSize / BUFFER_SIZE) : 1.0;
+            materialCache.forEach(mat => {
+                if (mat.uniforms?.uWireWidth && mat.userData?.baseWireWidth != null) {
+                    mat.uniforms.uWireWidth.value = mat.userData.baseWireWidth * wireScale;
+                }
+            });
         };
 
         const renderStereo = (leftCtx, rightCtx, eyeSep = 0.8) => {
