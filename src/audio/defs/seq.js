@@ -1,7 +1,5 @@
 import { AudioHelpers } from '../helpers.js';
 
-import { AudioHelpers } from '../helpers.js';
-
 function createSeqAudio(stepCount) {
     return {
         create: (ctx, d, patch, eng) => {
