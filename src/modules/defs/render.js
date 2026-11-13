@@ -205,13 +205,13 @@ export const RENDER = {
                             </div>
                         </div>
 
-                        <!-- Tap-Toggle HUD (IPD + EXIT only) -->
-                        <div id="vr-hud" class="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 px-3 py-1.5 rounded-lg bg-slate-900/85 border border-slate-700 backdrop-blur-sm text-[10px] font-mono text-slate-200 transition-opacity duration-200">
-                            <label class="flex items-center gap-1.5">
+                        <!-- Tap-Toggle HUD (Top-Right, Compact, IPD shifted left + EXIT) -->
+                        <div id="vr-hud" class="absolute top-2 right-2 z-20 flex items-center gap-2 px-2 py-1 rounded bg-slate-900/80 border border-slate-700 backdrop-blur-sm text-[8.5px] font-mono text-slate-200 transition-opacity duration-200">
+                            <label class="flex items-center gap-1">
                                 <span class="text-amber-400 font-bold">IPD</span>
-                                <input id="vr-ipd" type="range" min="-40" max="40" step="2" value="${m.vrIpd ?? 0}" class="w-20 h-1 accent-amber-400 cursor-pointer">
+                                <input id="vr-ipd" type="range" min="-140" max="20" step="2" value="${m.vrIpd ?? 0}" class="w-16 h-1 accent-amber-400 cursor-pointer">
                             </label>
-                            <button id="vr-exit-btn" class="px-2.5 py-0.5 rounded bg-rose-700 hover:bg-rose-600 text-white font-bold border border-rose-500 cursor-pointer">EXIT</button>
+                            <button id="vr-exit-btn" class="px-1.5 py-0.5 rounded bg-rose-700 hover:bg-rose-600 text-white font-bold border border-rose-500 cursor-pointer">EXIT</button>
                         </div>
                     </div>
                 `;
