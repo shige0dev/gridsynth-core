@@ -40,12 +40,16 @@ export const VMIX = {
         const MODE_MAP = {
             dissolve: 1,
             blur: 2,
+            add: 3,
             slide_h: 4,
             slide_v: 5,
             blackout: 6,
             whiteout: 7,
             mosaic: 8,
-            alpha: 9
+            alpha: 9,
+            luma: 10,
+            glitch: 11,
+            burn: 12
         };
 
         const initGPU = () => {
@@ -80,6 +84,21 @@ export const VMIX = {
                 uniform float uMix;
                 uniform vec2 uResolution;
                 varying vec2 vUv;
+
+                float hash21(vec2 p) {
+                    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+                }
+
+                float vnoise(vec2 p) {
+                    vec2 i = floor(p);
+                    vec2 f = fract(p);
+                    vec2 u = f * f * (3.0 - 2.0 * f);
+                    return mix(
+                        mix(hash21(i), hash21(i + vec2(1.0, 0.0)), u.x),
+                        mix(hash21(i + vec2(0.0, 1.0)), hash21(i + vec2(1.0, 1.0)), u.x),
+                        u.y
+                    );
+                }
 
                 vec4 sampleDeepBlur(sampler2D tex, vec2 uv, float radius) {
                     if (radius <= 0.001) return texture2D(tex, uv);
@@ -125,6 +144,15 @@ export const VMIX = {
                         vec4 bA = sampleDeepBlur(tTexA, uv, blurRad);
                         vec4 bB = sampleDeepBlur(tTexB, uv, blurRad);
                         gl_FragColor = mix(bA, bB, m);
+                        return;
+                    }
+
+                    // 3. Add (Additive Crossfader: 0.5 = full V1 + V2)
+                    if (uMode == 3) {
+                        float gainA = clamp(1.0 - max(0.0, (m - 0.5) * 2.0), 0.0, 1.0);
+                        float gainB = clamp(m * 2.0, 0.0, 1.0);
+                        vec3 rgb = clamp(colA.rgb * gainA + colB.rgb * gainB, 0.0, 1.0);
+                        gl_FragColor = vec4(rgb, max(colA.a * gainA, colB.a * gainB));
                         return;
                     }
 
@@ -176,6 +204,50 @@ export const VMIX = {
                     if (uMode == 9) {
                         float aA = clamp(colA.a, 0.0, 1.0) * (1.0 - m);
                         gl_FragColor = vec4(mix(colB.rgb, colA.rgb, aA), 1.0);
+                        return;
+                    }
+
+                    // 10. Luma Key (Overlays bright parts of V2 over V1)
+                    if (uMode == 10) {
+                        float lumB = dot(colB.rgb, vec3(0.299, 0.587, 0.114));
+                        float key = smoothstep(0.05, 0.35, lumB) * clamp(m * 1.35, 0.0, 1.0);
+                        gl_FragColor = mix(colA, colB, key);
+                        return;
+                    }
+
+                    // 11. Glitch (Horizontal slice shift + RGB split transition)
+                    if (uMode == 11) {
+                        float env = sin(m * 3.14159265);
+                        float band = floor(uv.y * 28.0);
+                        float rnd = hash21(vec2(band, floor(m * 24.0)));
+                        float shift = (rnd - 0.5) * 0.18 * env * step(0.45, rnd);
+                        vec2 guv = vec2(fract(uv.x + shift), uv.y);
+                        float rgbOff = 0.015 * env;
+                        vec4 gA = vec4(
+                            texture2D(tTexA, vec2(clamp(guv.x + rgbOff, 0.0, 1.0), guv.y)).r,
+                            texture2D(tTexA, guv).g,
+                            texture2D(tTexA, vec2(clamp(guv.x - rgbOff, 0.0, 1.0), guv.y)).b,
+                            texture2D(tTexA, guv).a
+                        );
+                        vec4 gB = vec4(
+                            texture2D(tTexB, vec2(clamp(guv.x + rgbOff, 0.0, 1.0), guv.y)).r,
+                            texture2D(tTexB, guv).g,
+                            texture2D(tTexB, vec2(clamp(guv.x - rgbOff, 0.0, 1.0), guv.y)).b,
+                            texture2D(tTexB, guv).a
+                        );
+                        float bandSwap = smoothstep(rnd * 0.65, rnd * 0.65 + 0.35, m);
+                        gl_FragColor = mix(gA, gB, bandSwap);
+                        return;
+                    }
+
+                    // 12. Burn (2-octave organic noise dissolve with glowing edge)
+                    if (uMode == 12) {
+                        float n = vnoise(uv * 7.0) * 0.65 + vnoise(uv * 15.0) * 0.35;
+                        float edge = smoothstep(m - 0.06, m + 0.06, n);
+                        float burnRim = smoothstep(0.0, 0.08, abs(n - m));
+                        vec4 base = mix(colB, colA, edge);
+                        vec3 ember = vec3(1.0, 0.45, 0.1) * (1.0 - burnRim) * sin(m * 3.14159265) * 1.4;
+                        gl_FragColor = vec4(clamp(base.rgb + ember, 0.0, 1.0), base.a);
                         return;
                     }
 

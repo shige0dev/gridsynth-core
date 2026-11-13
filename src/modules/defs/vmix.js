@@ -5,8 +5,12 @@ import { UIHelpers } from '../../ui/helpers.js?v=351';
 export const VMIX_MODES = [
     { id: 'dissolve', label: 'DISSOLVE' },
     { id: 'alpha', label: 'ALPHA' },
+    { id: 'add', label: 'ADD' },
+    { id: 'luma', label: 'LUMA' },
     { id: 'mosaic', label: 'MOSAIC' },
     { id: 'blur', label: 'BLUR' },
+    { id: 'glitch', label: 'GLITCH' },
+    { id: 'burn', label: 'BURN' },
     { id: 'slide_h', label: 'SLIDE H' },
     { id: 'slide_v', label: 'SLIDE V' },
     { id: 'blackout', label: 'BLACKOUT' },
