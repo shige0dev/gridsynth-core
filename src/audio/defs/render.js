@@ -34,8 +34,10 @@ export const RENDER = {
         let rootGroup = null;
         let renderCanvas = null;
 
-        // Depth of Field (DoF) Bokeh Post-Processing Setup
+        // Depth of Field (DoF) & Selective Bloom Post-Processing Setup
         let dofTarget = null;
+        let bloomTarget = null;
+        let darkMaterial = null;
         let dofScene = null;
         let dofCamera = null;
         let dofMaterial = null;
@@ -237,6 +239,16 @@ export const RENDER = {
             });
             dofTarget.depthTexture = depthTexture;
 
+            bloomTarget = new THREE.WebGLRenderTarget(256, 256, {
+                minFilter: THREE.LinearFilter,
+                magFilter: THREE.LinearFilter,
+                format: THREE.RGBAFormat
+            });
+            darkMaterial = new THREE.MeshBasicMaterial({
+                color: 0x000000,
+                side: THREE.DoubleSide
+            });
+
             dofScene = new THREE.Scene();
             dofCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
@@ -251,6 +263,8 @@ export const RENDER = {
             const dofFrag = `
                 uniform sampler2D tColor;
                 uniform sampler2D tDepth;
+                uniform sampler2D tBloom;
+                uniform float uHasBloom;
                 uniform float uFocus;
                 uniform float uAperture;
                 uniform float uNear;
@@ -265,54 +279,76 @@ export const RENDER = {
                 void main() {
                     float centerDepth = texture2D(tDepth, vUv).r;
                     vec4 centerCol = texture2D(tColor, vUv);
+                    vec4 baseCol = centerCol;
 
-                    float z = getLinearDepth(centerDepth);
-                    float maxCoc = clamp(uAperture * 0.055, 0.0, 0.055);
-                    bool isBg = (centerDepth >= 0.999 && centerCol.a < 0.01);
-                    float centerCoc = isBg ? maxCoc : clamp(abs(z - uFocus) * uAperture * 0.025, 0.0, 0.055);
+                    if (uAperture > 0.001) {
+                        float z = getLinearDepth(centerDepth);
+                        float maxCoc = clamp(uAperture * 0.055, 0.0, 0.055);
+                        bool isBg = (centerDepth >= 0.999 && centerCol.a < 0.01);
+                        float centerCoc = isBg ? maxCoc : clamp(abs(z - uFocus) * uAperture * 0.025, 0.0, 0.055);
 
-                    if (centerCoc < 0.0005) {
-                        gl_FragColor = centerCol;
+                        if (centerCoc >= 0.0005) {
+                            vec3 colorSum = centerCol.rgb * centerCol.a;
+                            float alphaSum = centerCol.a;
+                            float totalW = 1.0;
+
+                            for (int i = 1; i <= 24; i++) {
+                                float fi = float(i);
+                                float r = sqrt(fi / 24.0) * centerCoc;
+                                float theta = fi * 2.39996323;
+                                vec2 offset = vec2(cos(theta), sin(theta)) * r;
+                                vec2 sampleUv = clamp(vUv + offset, 0.0, 1.0);
+
+                                float sDepth = texture2D(tDepth, sampleUv).r;
+                                vec4 sCol = texture2D(tColor, sampleUv);
+                                float sZ = getLinearDepth(sDepth);
+                                float sCoc = (sDepth >= 0.999 && sCol.a < 0.01)
+                                    ? 0.0
+                                    : clamp(abs(sZ - uFocus) * uAperture * 0.025, 0.0, 0.055);
+
+                                float w = 1.0 - (r / (centerCoc + 0.0001)) * 0.25;
+                                if (isBg) {
+                                    if (sCol.a < 0.01 || sCoc < r * 0.85) {
+                                        w = 0.0;
+                                    }
+                                } else if (sZ > z + 0.1) {
+                                    w *= 0.35;
+                                }
+
+                                colorSum += sCol.rgb * sCol.a * w;
+                                alphaSum += sCol.a * w;
+                                totalW += w;
+                            }
+
+                            float outAlpha = alphaSum / max(totalW, 0.0001);
+                            vec3 outRgb = (alphaSum > 0.001) ? (colorSum / alphaSum) : vec3(0.0);
+                            baseCol = vec4(outRgb, outAlpha);
+                        }
+                    }
+
+                    if (uHasBloom > 0.5) {
+                        vec3 glow = vec3(0.0);
+                        float glowRadius = 0.045;
+                        float totalW = 0.0;
+                        for (int i = 1; i <= 20; i++) {
+                            float fi = float(i);
+                            float r = sqrt(fi / 20.0) * glowRadius;
+                            float theta = fi * 2.39996323;
+                            vec2 offset = vec2(cos(theta), sin(theta)) * r;
+                            vec4 smp = texture2D(tBloom, clamp(vUv + offset, 0.0, 1.0));
+                            float w = 1.0 - (r / (glowRadius + 0.0001)) * 0.55;
+                            glow += smp.rgb * smp.a * w;
+                            totalW += w;
+                        }
+                        glow = (glow / max(totalW, 0.001)) * 1.8;
+                        vec3 finalRgb = baseCol.rgb + glow;
+                        float glowLum = dot(glow, vec3(0.299, 0.587, 0.114));
+                        float finalAlpha = clamp(baseCol.a + glowLum, 0.0, 1.0);
+                        gl_FragColor = vec4(clamp(finalRgb, 0.0, 1.0), finalAlpha);
                         return;
                     }
 
-                    vec3 colorSum = centerCol.rgb * centerCol.a;
-                    float alphaSum = centerCol.a;
-                    float totalW = 1.0;
-
-                    for (int i = 1; i <= 24; i++) {
-                        float fi = float(i);
-                        float r = sqrt(fi / 24.0) * centerCoc;
-                        float theta = fi * 2.39996323;
-                        vec2 offset = vec2(cos(theta), sin(theta)) * r;
-                        vec2 sampleUv = clamp(vUv + offset, 0.0, 1.0);
-
-                        float sDepth = texture2D(tDepth, sampleUv).r;
-                        vec4 sCol = texture2D(tColor, sampleUv);
-                        float sZ = getLinearDepth(sDepth);
-                        float sCoc = (sDepth >= 0.999 && sCol.a < 0.01)
-                            ? 0.0
-                            : clamp(abs(sZ - uFocus) * uAperture * 0.025, 0.0, 0.055);
-
-                        float w = 1.0 - (r / (centerCoc + 0.0001)) * 0.25;
-                        if (isBg) {
-                            // Only out-of-focus foreground bleeds outward into empty background
-                            if (sCol.a < 0.01 || sCoc < r * 0.85) {
-                                w = 0.0;
-                            }
-                        } else if (sZ > z + 0.1) {
-                            // Background behind sharp foreground has reduced bleed
-                            w *= 0.35;
-                        }
-
-                        colorSum += sCol.rgb * sCol.a * w;
-                        alphaSum += sCol.a * w;
-                        totalW += w;
-                    }
-
-                    float outAlpha = alphaSum / max(totalW, 0.0001);
-                    vec3 outRgb = (alphaSum > 0.001) ? (colorSum / alphaSum) : vec3(0.0);
-                    gl_FragColor = vec4(outRgb, outAlpha);
+                    gl_FragColor = baseCol;
                 }
             `;
 
@@ -320,6 +356,8 @@ export const RENDER = {
                 uniforms: {
                     tColor: { value: dofTarget.texture },
                     tDepth: { value: dofTarget.depthTexture },
+                    tBloom: { value: bloomTarget.texture },
+                    uHasBloom: { value: 0.0 },
                     uFocus: { value: 5.0 },
                     uAperture: { value: 0.0 },
                     uNear: { value: 0.1 },
@@ -381,6 +419,8 @@ export const RENDER = {
                     parentThreeObj.add(node);
                 }
                 node.visible = true;
+                node.userData.isNeon = (effectiveStyle === 'neon');
+                node.userData.isTransparentStyle = (effectiveStyle === 'glass' || effectiveStyle === 'wire' || effectiveStyle === 'point');
                 node.position.set(...(packet.transform?.position || [0, 0, 0]));
                 node.rotation.set(...(packet.transform?.rotation || [0, 0, 0]));
                 node.scale.set(...(packet.transform?.scale || [1, 1, 1]));
@@ -415,6 +455,8 @@ export const RENDER = {
                     }
                 }
                 node.visible = true;
+                node.userData.isNeon = (effectiveStyle === 'neon');
+                node.userData.isTransparentStyle = (effectiveStyle === 'glass' || effectiveStyle === 'wire' || effectiveStyle === 'point');
                 node.position.set(...(packet.transform?.position || [0, 0, 0]));
                 node.rotation.set(...(packet.transform?.rotation || [0, 0, 0]));
                 node.scale.set(...(packet.transform?.scale || [1, 1, 1]));
@@ -456,14 +498,44 @@ export const RENDER = {
                     rootGroup.visible = false;
                 }
 
+                let hasNeon = false;
+                if (rootGroup.visible) {
+                    rootGroup.traverse(o => {
+                        if (o.visible && o.userData?.isNeon) hasNeon = true;
+                    });
+                }
+
                 const bokeh = d.dofBokeh ?? 0.0;
-                if (bokeh > 0.001 && dofTarget && dofMaterial) {
+                if ((bokeh > 0.001 || hasNeon) && dofTarget && dofMaterial) {
                     renderer.setRenderTarget(dofTarget);
                     renderer.clear();
                     renderer.render(scene, camera);
 
+                    if (hasNeon && bloomTarget && darkMaterial) {
+                        const savedState = [];
+                        rootGroup.traverse(o => {
+                            if ((o.isMesh || o.isPoints) && o.visible && !o.userData?.isNeon) {
+                                savedState.push({ obj: o, mat: o.material, vis: o.visible });
+                                if (o.isPoints || o.userData?.isTransparentStyle) {
+                                    o.visible = false;
+                                } else {
+                                    o.material = darkMaterial;
+                                }
+                            }
+                        });
+                        renderer.setRenderTarget(bloomTarget);
+                        renderer.clear();
+                        renderer.render(scene, camera);
+                        for (let i = 0; i < savedState.length; i++) {
+                            const s = savedState[i];
+                            s.obj.material = s.mat;
+                            s.obj.visible = s.vis;
+                        }
+                    }
+
                     dofMaterial.uniforms.uFocus.value = d.dofFocus ?? 5.0;
                     dofMaterial.uniforms.uAperture.value = bokeh;
+                    dofMaterial.uniforms.uHasBloom.value = hasNeon ? 1.0 : 0.0;
                     dofMaterial.uniforms.uNear.value = camera.near;
                     dofMaterial.uniforms.uFar.value = camera.far;
 
@@ -539,6 +611,14 @@ export const RENDER = {
                 if (dofTarget) {
                     try { dofTarget.dispose(); } catch (_) {}
                     dofTarget = null;
+                }
+                if (bloomTarget) {
+                    try { bloomTarget.dispose(); } catch (_) {}
+                    bloomTarget = null;
+                }
+                if (darkMaterial) {
+                    try { darkMaterial.dispose(); } catch (_) {}
+                    darkMaterial = null;
                 }
                 if (dofMaterial) {
                     try { dofMaterial.dispose(); } catch (_) {}
