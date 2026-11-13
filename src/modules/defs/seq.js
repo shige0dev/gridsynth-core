@@ -301,21 +301,17 @@ function createSeqModule(maxSteps) {
                 }
             }
         },
-        ports: (m, ctx) => {
-            const patched = ctx?.patched;
-            const isTransOutPatched = patched?.has?.('trans_out');
-            return {
-                in: [
-                    { port: 'gate_in', pin: 5, color: 'bg-red-500', label: 'GATE' },
-                    { port: 'trans_in', pin: 6, color: 'bg-slate-400', label: 'TR-IN' }
-                ],
-                out: [
-                    { port: 'trans_out', pin: 9, color: isTransOutPatched ? 'bg-slate-400' : 'bg-purple-500', label: 'TR-OUT' },
-                    { port: 'gate_out', pin: 10, color: 'bg-red-500', label: 'GATE' },
-                    { port: 'cv_out', pin: 11, color: 'bg-yellow-400', label: 'CV' }
-                ]
-            };
-        },
+        ports: () => ({
+            in: [
+                { port: 'gate_in', pin: 5, color: 'bg-red-500', label: 'GATE' },
+                { port: 'trans_in', pin: 6, color: 'bg-slate-400', label: 'TR-IN' }
+            ],
+            out: [
+                { port: 'trans_out', pin: 9, color: 'bg-slate-400', label: 'TR-OUT' },
+                { port: 'gate_out', pin: 10, color: 'bg-red-500', label: 'GATE' },
+                { port: 'cv_out', pin: 11, color: 'bg-yellow-400', label: 'CV' }
+            ]
+        }),
         renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
         renderGrid: (m) => {
             const steps = m.steps || [];
