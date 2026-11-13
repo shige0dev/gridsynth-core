@@ -197,10 +197,14 @@ export const RENDER = {
                         <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[2px] h-5 bg-white/45 pointer-events-none z-10"></div>
                         <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-[2px] h-5 bg-white/45 pointer-events-none z-10"></div>
 
-                        <!-- Parallel Stereo Canvases (L / R) -->
-                        <div id="vr-pair" class="flex items-center justify-center w-full h-full">
-                            <canvas id="vr-cvs-l" width="512" height="512" class="bg-black shrink-0"></canvas>
-                            <canvas id="vr-cvs-r" width="512" height="512" class="bg-black shrink-0"></canvas>
+                        <!-- Parallel Stereo Canvases (Independent L / R 50% slots so SIZE scales around each eye center) -->
+                        <div id="vr-pair" class="flex items-center w-full h-full">
+                            <div class="w-1/2 h-full flex items-center justify-center overflow-hidden">
+                                <canvas id="vr-cvs-l" width="1024" height="1024" class="bg-black shrink-0"></canvas>
+                            </div>
+                            <div class="w-1/2 h-full flex items-center justify-center overflow-hidden">
+                                <canvas id="vr-cvs-r" width="1024" height="1024" class="bg-black shrink-0"></canvas>
+                            </div>
                         </div>
 
                         <!-- Tap-Toggle HUD -->
@@ -250,7 +254,8 @@ export const RENDER = {
                     cvsL.style.height = `${eyeSize}px`;
                     cvsR.style.width = `${eyeSize}px`;
                     cvsR.style.height = `${eyeSize}px`;
-                    pair.style.gap = `${Math.max(-eyeSize * 0.25, ipd)}px`;
+                    cvsL.style.transform = `translateX(${-ipd * 0.5}px)`;
+                    cvsR.style.transform = `translateX(${ipd * 0.5}px)`;
                 };
 
                 layoutStage();
@@ -306,6 +311,11 @@ export const RENDER = {
                 const closeVr = () => {
                     cancelAnimationFrame(rafId);
                     window.removeEventListener('resize', layoutStage);
+                    const app = window.__GS_APP__;
+                    const synth = window.__GS_SYNTH__;
+                    const pageId = m.pageId || app?.currentPageId || '0';
+                    const inst = synth?.modules?.[`${pageId}/${m.id}`] || synth?.modules?.[m.id];
+                    inst?.setResolution?.(512);
                     try { screen.orientation?.unlock?.(); } catch (_) {}
                     try {
                         if (document.fullscreenElement) {
