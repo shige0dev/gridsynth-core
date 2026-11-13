@@ -84,19 +84,14 @@ export const OBJECT = {
                 <span class="text-xs font-mono font-bold text-purple-400">OBJECT</span>
             </div>
 
-            <!-- Section 1A: Basic Shapes -->
+            <!-- Section 1: Object Shapes -->
             <div class="flex flex-col gap-1">
-                <span class="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-wider">STANDARD</span>
+                <span class="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-wider">SHAPE</span>
                 <div class="grid grid-cols-3 gap-1">
                     ${BASIC_SHAPES.map(p => `
                         <button data-shape="${p.id}" class="geo-shape-btn py-1 rounded text-[8px] font-mono font-bold border transition ${curShape === p.id ? 'bg-purple-600 text-white border-purple-400 shadow-sm shadow-purple-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-750'}">${p.label}</button>
                     `).join('')}
                 </div>
-            </div>
-
-            <!-- Section 1B: Polyhedra -->
-            <div class="flex flex-col gap-1 border-t border-slate-800/80 pt-1">
-                <span class="text-[8px] font-mono font-bold text-amber-400 uppercase tracking-wider">POLYHEDRA</span>
                 <div class="grid grid-cols-4 gap-1">
                     ${POLYHEDRA_SHAPES.map(p => `
                         <button data-shape="${p.id}" class="geo-shape-btn py-1 rounded text-[8px] font-mono font-bold border transition ${curShape === p.id ? 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/50 ring-1 ring-amber-400/40' : 'bg-slate-800 text-amber-200/90 border-slate-700 hover:bg-slate-750'}">${p.label}</button>
