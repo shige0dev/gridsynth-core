@@ -26,7 +26,7 @@ export const RENDER = {
             return isNaN(avg) ? def : avg;
         };
 
-        // Three.js Scene Setup (512x512 Buffer - Balanced for 1x1, 2x2, and 4x4; 1024x1024 in VR Stereo)
+        // Three.js Scene Setup (512x512 Buffer - Balanced for 1x1, 2x2, and 4x4; 2048x2048 in VR Stereo)
         const BUFFER_SIZE = 512;
         let currentBufferSize = BUFFER_SIZE;
         let renderer = null;
@@ -473,19 +473,22 @@ export const RENDER = {
         };
 
         const setResolution = (size) => {
-            const targetSize = (size === 1024) ? 1024 : BUFFER_SIZE;
+            const targetSize = (size === 2048) ? 2048 : BUFFER_SIZE;
             if (!renderer || !renderCanvas || currentBufferSize === targetSize) return;
             currentBufferSize = targetSize;
             renderCanvas.width = targetSize;
             renderCanvas.height = targetSize;
             renderer.setSize(targetSize, targetSize, false);
             if (baseTarget) baseTarget.setSize(targetSize, targetSize);
-            if (bloomTarget) bloomTarget.setSize(targetSize / 2, targetSize / 2);
+            if (bloomTarget) {
+                const bSize = Math.min(512, targetSize / 2);
+                bloomTarget.setSize(bSize, bSize);
+            }
         };
 
         const renderStereo = (leftCtx, rightCtx, eyeSep = 0.6) => {
             if (!renderer || !scene || !camera || !rootGroup || !renderCanvas) return;
-            if (currentBufferSize !== 1024) setResolution(1024);
+            if (currentBufferSize !== 2048) setResolution(2048);
             const hasNeon = prepareScene();
 
             const basePos = new THREE.Vector3(d.camX ?? 0, d.camY ?? 0, d.camZ ?? 5);

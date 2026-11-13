@@ -200,10 +200,10 @@ export const RENDER = {
                         <!-- Parallel Stereo Canvases (Independent L / R 50% slots so SIZE scales around each eye center) -->
                         <div id="vr-pair" class="flex items-center w-full h-full">
                             <div class="w-1/2 h-full flex items-center justify-center overflow-hidden">
-                                <canvas id="vr-cvs-l" width="1024" height="1024" class="bg-black shrink-0"></canvas>
+                                <canvas id="vr-cvs-l" width="2048" height="2048" class="bg-black shrink-0"></canvas>
                             </div>
                             <div class="w-1/2 h-full flex items-center justify-center overflow-hidden">
-                                <canvas id="vr-cvs-r" width="1024" height="1024" class="bg-black shrink-0"></canvas>
+                                <canvas id="vr-cvs-r" width="2048" height="2048" class="bg-black shrink-0"></canvas>
                             </div>
                         </div>
 
