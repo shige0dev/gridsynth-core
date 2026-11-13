@@ -63,11 +63,13 @@ export const RENDER = {
             return pointTexture;
         };
 
-        const getMaterial = (style, colorHex, pointSize = 3.0, wireWidth = 1.5) => {
+        const getMaterial = (style, colorHex, pointSize = 3.0, wireWidth = 1.5, glassOpacity = 0.25) => {
             if (typeof THREE === 'undefined') return null;
             const extraKey = style === 'point'
                 ? `_${Number(pointSize).toFixed(1)}`
-                : (style === 'wire' ? `_${Number(wireWidth).toFixed(1)}` : '');
+                : (style === 'wire'
+                    ? `_${Number(wireWidth).toFixed(1)}`
+                    : (style === 'glass' ? `_${Number(glassOpacity).toFixed(2)}` : ''));
             const key = `${style}_${colorHex}${extraKey}`;
             if (!materialCache.has(key)) {
                 let mat;
@@ -109,6 +111,51 @@ export const RENDER = {
                             emissiveIntensity: 2.2,
                             roughness: 0.1,
                             metalness: 0.1,
+                            side: THREE.DoubleSide
+                        });
+                        break;
+                    case 'glass':
+                        mat = new THREE.ShaderMaterial({
+                            uniforms: {
+                                uColor: { value: new THREE.Color(colorHex) },
+                                uOpacity: { value: Math.max(0.05, Math.min(0.85, Number(glassOpacity) || 0.25)) }
+                            },
+                            vertexShader: `
+                                varying vec3 vNormal;
+                                varying vec3 vViewPos;
+                                void main() {
+                                    vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
+                                    vViewPos = -mvPos.xyz;
+                                    vNormal = normalize(normalMatrix * normal);
+                                    gl_Position = projectionMatrix * mvPos;
+                                }
+                            `,
+                            fragmentShader: `
+                                uniform vec3 uColor;
+                                uniform float uOpacity;
+                                varying vec3 vNormal;
+                                varying vec3 vViewPos;
+                                void main() {
+                                    vec3 V = normalize(vViewPos);
+                                    vec3 N = normalize(vNormal);
+                                    if (!gl_FrontFacing) N = -N;
+                                    float ndotv = clamp(dot(N, V), 0.0, 1.0);
+                                    float fresnel = pow(1.0 - ndotv, 2.4);
+
+                                    vec3 L1 = normalize(vec3(0.5, 0.8, 0.6));
+                                    vec3 L2 = normalize(vec3(-0.6, -0.4, 0.5));
+                                    float spec1 = pow(max(dot(N, normalize(L1 + V)), 0.0), 48.0);
+                                    float spec2 = pow(max(dot(N, normalize(L2 + V)), 0.0), 24.0) * 0.45;
+                                    float sheen = smoothstep(-0.2, 0.9, N.y) * 0.14;
+
+                                    vec3 col = uColor * (uOpacity * 0.75 + fresnel * 0.95 + sheen)
+                                             + vec3(1.0) * (spec1 * 0.95 + spec2 * 0.5 + fresnel * 0.35);
+                                    float alpha = clamp(uOpacity * 0.45 + fresnel * 0.78 + spec1 * 0.85, 0.04, 0.96);
+                                    gl_FragColor = vec4(col, alpha);
+                                }
+                            `,
+                            transparent: true,
+                            depthWrite: false,
                             side: THREE.DoubleSide
                         });
                         break;
@@ -344,7 +391,7 @@ export const RENDER = {
                 const effectiveStyle = (override !== 'auto') ? override : (packet.materialStyle || 'wire');
                 const effectiveColor = packet.color || 0xffffff;
                 const isPoint = effectiveStyle === 'point';
-                const mat = getMaterial(effectiveStyle, effectiveColor, packet.pointSize ?? 3.0, packet.wireWidth ?? 1.5);
+                const mat = getMaterial(effectiveStyle, effectiveColor, packet.pointSize ?? 3.0, packet.wireWidth ?? 1.5, packet.glassOpacity ?? 0.25);
                 const expectedType = isPoint ? 'Points' : 'Mesh';
 
                 if (!node || node.type !== expectedType) {

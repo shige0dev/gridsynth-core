@@ -30,7 +30,8 @@ export const MATERIAL_STYLES = [
     { id: 'normal', label: 'NORMAL' },
     { id: 'toon', label: 'TOON' },
     { id: 'neon', label: 'NEON' },
-    { id: 'point', label: 'POINT' }
+    { id: 'point', label: 'POINT' },
+    { id: 'glass', label: 'GLASS' }
 ];
 
 export const PRESET_COLORS = [
@@ -50,6 +51,7 @@ export const OBJECT = {
         material: 'wire',
         wireWidth: 1.5,
         pointSize: 3.0,
+        glassOpacity: 0.25,
         color: '#ffffff',
         detail: 'mid'
     }),
@@ -115,7 +117,7 @@ export const OBJECT = {
             <!-- Section 3: Material -->
             <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
                 <span class="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-wider">MATERIAL</span>
-                <div class="grid grid-cols-3 gap-1">
+                <div class="grid grid-cols-4 gap-1">
                     ${MATERIAL_STYLES.map(ms => `
                         <button data-mat="${ms.id}" class="geo-mat-btn py-1 rounded text-[8px] font-mono font-bold border transition ${curMat === ms.id ? 'bg-purple-600 text-white border-purple-400 shadow-sm shadow-purple-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">${ms.label}</button>
                     `).join('')}
@@ -141,6 +143,17 @@ export const OBJECT = {
                     <span id="geo-point-size-val" class="text-[8px] font-mono font-bold text-cyan-300">${Number(m.pointSize ?? 3.0).toFixed(1)}</span>
                 </div>
                 <input id="geo-point-size" type="range" min="0.5" max="12.0" step="0.5" value="${Number(m.pointSize ?? 3.0)}" class="w-full accent-purple-500 h-1.5 bg-slate-800 rounded cursor-pointer">
+            </div>
+            ` : ''}
+
+            ${curMat === 'glass' ? `
+            <!-- Section 3D: Glass Opacity -->
+            <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
+                <div class="flex items-center justify-between">
+                    <span class="text-[8px] font-mono font-bold text-cyan-400 uppercase tracking-wider">GLASS DENSITY</span>
+                    <span id="geo-glass-opacity-val" class="text-[8px] font-mono font-bold text-cyan-300">${Math.round(Number(m.glassOpacity ?? 0.25) * 100)}%</span>
+                </div>
+                <input id="geo-glass-opacity" type="range" min="0.05" max="0.85" step="0.05" value="${Number(m.glassOpacity ?? 0.25)}" class="w-full accent-purple-500 h-1.5 bg-slate-800 rounded cursor-pointer">
             </div>
             ` : ''}
 
@@ -215,6 +228,15 @@ export const OBJECT = {
                 m.pointSize = parseFloat(e.target.value);
                 const disp = root.querySelector('#geo-point-size-val');
                 if (disp) disp.textContent = m.pointSize.toFixed(1);
+                onChange?.();
+            });
+        // Glass opacity slider
+        const glassSl = root.querySelector('#geo-glass-opacity');
+        if (glassSl) {
+            glassSl.addEventListener('input', (e) => {
+                m.glassOpacity = parseFloat(e.target.value);
+                const disp = root.querySelector('#geo-glass-opacity-val');
+                if (disp) disp.textContent = `${Math.round(m.glassOpacity * 100)}%`;
                 onChange?.();
             });
         }

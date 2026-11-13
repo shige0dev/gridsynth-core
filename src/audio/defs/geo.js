@@ -162,6 +162,7 @@ export const OBJECT = {
                     materialStyle: d.material || 'wire',
                     wireWidth: Number(d.wireWidth ?? 1.5),
                     pointSize: Number(d.pointSize ?? 3.0),
+                    glassOpacity: Number(d.glassOpacity ?? 0.25),
                     color: parseColor(d.color)
                 };
             },
@@ -171,6 +172,7 @@ export const OBJECT = {
                 material: d.material || 'wire',
                 wireWidth: Number(d.wireWidth ?? 1.5),
                 pointSize: Number(d.pointSize ?? 3.0),
+                glassOpacity: Number(d.glassOpacity ?? 0.25),
                 color: d.color || '#ffffff'
             }),
             destroy: () => {
