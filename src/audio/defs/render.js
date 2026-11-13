@@ -34,14 +34,14 @@ export const RENDER = {
         let rootGroup = null;
         let renderCanvas = null;
 
-        // Depth of Field (DoF) & Selective Bloom Post-Processing Setup
-        let dofTarget = null;
+        // Selective Bloom Post-Processing Setup (for NEON objects)
+        let baseTarget = null;
         let bloomTarget = null;
         let darkMaterial = null;
-        let dofScene = null;
-        let dofCamera = null;
-        let dofMaterial = null;
-        let dofGeo = null;
+        let bloomScene = null;
+        let bloomCamera = null;
+        let bloomMaterial = null;
+        let bloomGeo = null;
 
         // Material Cache (Key: `${style}_${colorHex}`)
         const materialCache = new Map();
@@ -230,14 +230,12 @@ export const RENDER = {
             rootGroup = new THREE.Group();
             scene.add(rootGroup);
 
-            // Hardware DepthTexture Target & Bokeh Spiral Post-Processor
-            const depthTexture = new THREE.DepthTexture();
-            dofTarget = new THREE.WebGLRenderTarget(BUFFER_SIZE, BUFFER_SIZE, {
+            // Selective Bloom Post-Processor (for NEON objects)
+            baseTarget = new THREE.WebGLRenderTarget(BUFFER_SIZE, BUFFER_SIZE, {
                 minFilter: THREE.LinearFilter,
                 magFilter: THREE.LinearFilter,
                 format: THREE.RGBAFormat
             });
-            dofTarget.depthTexture = depthTexture;
 
             bloomTarget = new THREE.WebGLRenderTarget(256, 256, {
                 minFilter: THREE.LinearFilter,
@@ -249,10 +247,10 @@ export const RENDER = {
                 side: THREE.DoubleSide
             });
 
-            dofScene = new THREE.Scene();
-            dofCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+            bloomScene = new THREE.Scene();
+            bloomCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-            const dofVert = `
+            const bloomVert = `
                 varying vec2 vUv;
                 void main() {
                     vUv = uv;
@@ -260,117 +258,47 @@ export const RENDER = {
                 }
             `;
 
-            const dofFrag = `
+            const bloomFrag = `
                 uniform sampler2D tColor;
-                uniform sampler2D tDepth;
                 uniform sampler2D tBloom;
-                uniform float uHasBloom;
-                uniform float uFocus;
-                uniform float uAperture;
-                uniform float uNear;
-                uniform float uFar;
                 varying vec2 vUv;
 
-                float getLinearDepth(float depthVal) {
-                    float z_ndc = depthVal * 2.0 - 1.0;
-                    return (2.0 * uNear * uFar) / (uFar + uNear - z_ndc * (uFar - uNear));
-                }
-
                 void main() {
-                    float centerDepth = texture2D(tDepth, vUv).r;
-                    vec4 centerCol = texture2D(tColor, vUv);
-                    vec4 baseCol = centerCol;
-
-                    if (uAperture > 0.001) {
-                        float z = getLinearDepth(centerDepth);
-                        float maxCoc = clamp(uAperture * 0.055, 0.0, 0.055);
-                        bool isBg = (centerDepth >= 0.999 && centerCol.a < 0.01);
-                        float centerCoc = isBg ? maxCoc : clamp(abs(z - uFocus) * uAperture * 0.025, 0.0, 0.055);
-
-                        if (centerCoc >= 0.0005) {
-                            vec3 colorSum = centerCol.rgb * centerCol.a;
-                            float alphaSum = centerCol.a;
-                            float totalW = 1.0;
-
-                            for (int i = 1; i <= 24; i++) {
-                                float fi = float(i);
-                                float r = sqrt(fi / 24.0) * centerCoc;
-                                float theta = fi * 2.39996323;
-                                vec2 offset = vec2(cos(theta), sin(theta)) * r;
-                                vec2 sampleUv = clamp(vUv + offset, 0.0, 1.0);
-
-                                float sDepth = texture2D(tDepth, sampleUv).r;
-                                vec4 sCol = texture2D(tColor, sampleUv);
-                                float sZ = getLinearDepth(sDepth);
-                                float sCoc = (sDepth >= 0.999 && sCol.a < 0.01)
-                                    ? 0.0
-                                    : clamp(abs(sZ - uFocus) * uAperture * 0.025, 0.0, 0.055);
-
-                                float w = 1.0 - (r / (centerCoc + 0.0001)) * 0.25;
-                                if (isBg) {
-                                    if (sCol.a < 0.01 || sCoc < r * 0.85) {
-                                        w = 0.0;
-                                    }
-                                } else if (sZ > z + 0.1) {
-                                    w *= 0.35;
-                                }
-
-                                colorSum += sCol.rgb * sCol.a * w;
-                                alphaSum += sCol.a * w;
-                                totalW += w;
-                            }
-
-                            float outAlpha = alphaSum / max(totalW, 0.0001);
-                            vec3 outRgb = (alphaSum > 0.001) ? (colorSum / alphaSum) : vec3(0.0);
-                            baseCol = vec4(outRgb, outAlpha);
-                        }
+                    vec4 baseCol = texture2D(tColor, vUv);
+                    vec3 glow = vec3(0.0);
+                    float glowRadius = 0.045;
+                    float totalW = 0.0;
+                    for (int i = 1; i <= 20; i++) {
+                        float fi = float(i);
+                        float r = sqrt(fi / 20.0) * glowRadius;
+                        float theta = fi * 2.39996323;
+                        vec2 offset = vec2(cos(theta), sin(theta)) * r;
+                        vec4 smp = texture2D(tBloom, clamp(vUv + offset, 0.0, 1.0));
+                        float w = 1.0 - (r / (glowRadius + 0.0001)) * 0.55;
+                        glow += smp.rgb * smp.a * w;
+                        totalW += w;
                     }
-
-                    if (uHasBloom > 0.5) {
-                        vec3 glow = vec3(0.0);
-                        float glowRadius = 0.045;
-                        float totalW = 0.0;
-                        for (int i = 1; i <= 20; i++) {
-                            float fi = float(i);
-                            float r = sqrt(fi / 20.0) * glowRadius;
-                            float theta = fi * 2.39996323;
-                            vec2 offset = vec2(cos(theta), sin(theta)) * r;
-                            vec4 smp = texture2D(tBloom, clamp(vUv + offset, 0.0, 1.0));
-                            float w = 1.0 - (r / (glowRadius + 0.0001)) * 0.55;
-                            glow += smp.rgb * smp.a * w;
-                            totalW += w;
-                        }
-                        glow = (glow / max(totalW, 0.001)) * 1.8;
-                        vec3 finalRgb = baseCol.rgb + glow;
-                        float glowLum = dot(glow, vec3(0.299, 0.587, 0.114));
-                        float finalAlpha = clamp(baseCol.a + glowLum, 0.0, 1.0);
-                        gl_FragColor = vec4(clamp(finalRgb, 0.0, 1.0), finalAlpha);
-                        return;
-                    }
-
-                    gl_FragColor = baseCol;
+                    glow = (glow / max(totalW, 0.001)) * 1.8;
+                    vec3 finalRgb = baseCol.rgb + glow;
+                    float glowLum = dot(glow, vec3(0.299, 0.587, 0.114));
+                    float finalAlpha = clamp(baseCol.a + glowLum, 0.0, 1.0);
+                    gl_FragColor = vec4(clamp(finalRgb, 0.0, 1.0), finalAlpha);
                 }
             `;
 
-            dofMaterial = new THREE.ShaderMaterial({
+            bloomMaterial = new THREE.ShaderMaterial({
                 uniforms: {
-                    tColor: { value: dofTarget.texture },
-                    tDepth: { value: dofTarget.depthTexture },
-                    tBloom: { value: bloomTarget.texture },
-                    uHasBloom: { value: 0.0 },
-                    uFocus: { value: 5.0 },
-                    uAperture: { value: 0.0 },
-                    uNear: { value: 0.1 },
-                    uFar: { value: 100.0 }
+                    tColor: { value: baseTarget.texture },
+                    tBloom: { value: bloomTarget.texture }
                 },
-                vertexShader: dofVert,
-                fragmentShader: dofFrag,
+                vertexShader: bloomVert,
+                fragmentShader: bloomFrag,
                 depthTest: false,
                 depthWrite: false
             });
 
-            dofGeo = new THREE.PlaneGeometry(2, 2);
-            dofScene.add(new THREE.Mesh(dofGeo, dofMaterial));
+            bloomGeo = new THREE.PlaneGeometry(2, 2);
+            bloomScene.add(new THREE.Mesh(bloomGeo, bloomMaterial));
         };
 
         initThree();
@@ -419,8 +347,6 @@ export const RENDER = {
                     parentThreeObj.add(node);
                 }
                 node.visible = true;
-                node.userData.isNeon = (effectiveStyle === 'neon');
-                node.userData.isTransparentStyle = (effectiveStyle === 'glass' || effectiveStyle === 'wire' || effectiveStyle === 'point');
                 node.position.set(...(packet.transform?.position || [0, 0, 0]));
                 node.rotation.set(...(packet.transform?.rotation || [0, 0, 0]));
                 node.scale.set(...(packet.transform?.scale || [1, 1, 1]));
@@ -455,8 +381,6 @@ export const RENDER = {
                     }
                 }
                 node.visible = true;
-                node.userData.isNeon = (effectiveStyle === 'neon');
-                node.userData.isTransparentStyle = (effectiveStyle === 'glass' || effectiveStyle === 'wire' || effectiveStyle === 'point');
                 node.position.set(...(packet.transform?.position || [0, 0, 0]));
                 node.rotation.set(...(packet.transform?.rotation || [0, 0, 0]));
                 node.scale.set(...(packet.transform?.scale || [1, 1, 1]));
@@ -505,42 +429,33 @@ export const RENDER = {
                     });
                 }
 
-                const bokeh = d.dofBokeh ?? 0.0;
-                if ((bokeh > 0.001 || hasNeon) && dofTarget && dofMaterial) {
-                    renderer.setRenderTarget(dofTarget);
+                if (hasNeon && baseTarget && bloomTarget && darkMaterial && bloomMaterial) {
+                    renderer.setRenderTarget(baseTarget);
                     renderer.clear();
                     renderer.render(scene, camera);
 
-                    if (hasNeon && bloomTarget && darkMaterial) {
-                        const savedState = [];
-                        rootGroup.traverse(o => {
-                            if ((o.isMesh || o.isPoints) && o.visible && !o.userData?.isNeon) {
-                                savedState.push({ obj: o, mat: o.material, vis: o.visible });
-                                if (o.isPoints || o.userData?.isTransparentStyle) {
-                                    o.visible = false;
-                                } else {
-                                    o.material = darkMaterial;
-                                }
+                    const savedState = [];
+                    rootGroup.traverse(o => {
+                        if ((o.isMesh || o.isPoints) && o.visible && !o.userData?.isNeon) {
+                            savedState.push({ obj: o, mat: o.material, vis: o.visible });
+                            if (o.isPoints || o.userData?.isTransparentStyle) {
+                                o.visible = false;
+                            } else {
+                                o.material = darkMaterial;
                             }
-                        });
-                        renderer.setRenderTarget(bloomTarget);
-                        renderer.clear();
-                        renderer.render(scene, camera);
-                        for (let i = 0; i < savedState.length; i++) {
-                            const s = savedState[i];
-                            s.obj.material = s.mat;
-                            s.obj.visible = s.vis;
                         }
+                    });
+                    renderer.setRenderTarget(bloomTarget);
+                    renderer.clear();
+                    renderer.render(scene, camera);
+                    for (let i = 0; i < savedState.length; i++) {
+                        const s = savedState[i];
+                        s.obj.material = s.mat;
+                        s.obj.visible = s.vis;
                     }
 
-                    dofMaterial.uniforms.uFocus.value = d.dofFocus ?? 5.0;
-                    dofMaterial.uniforms.uAperture.value = bokeh;
-                    dofMaterial.uniforms.uHasBloom.value = hasNeon ? 1.0 : 0.0;
-                    dofMaterial.uniforms.uNear.value = camera.near;
-                    dofMaterial.uniforms.uFar.value = camera.far;
-
                     renderer.setRenderTarget(null);
-                    renderer.render(dofScene, dofCamera);
+                    renderer.render(bloomScene, bloomCamera);
                 } else {
                     renderer.setRenderTarget(null);
                     renderer.render(scene, camera);
@@ -580,8 +495,6 @@ export const RENDER = {
                     targetY: d.targetY ?? 0,
                     targetZ: d.targetZ ?? 0,
                     materialOverride: d.materialOverride || 'auto',
-                    dofFocus: d.dofFocus ?? 5.0,
-                    dofBokeh: d.dofBokeh ?? 0.0,
                     isCvFov: Boolean(patchState?.has('fov_in') || patchState?.has('cv_fov'))
                 };
             },
@@ -604,13 +517,13 @@ export const RENDER = {
                     try { pointTexture.dispose(); } catch (_) {}
                     pointTexture = null;
                 }
-                if (dofGeo) {
-                    try { dofGeo.dispose(); } catch (_) {}
-                    dofGeo = null;
+                if (bloomGeo) {
+                    try { bloomGeo.dispose(); } catch (_) {}
+                    bloomGeo = null;
                 }
-                if (dofTarget) {
-                    try { dofTarget.dispose(); } catch (_) {}
-                    dofTarget = null;
+                if (baseTarget) {
+                    try { baseTarget.dispose(); } catch (_) {}
+                    baseTarget = null;
                 }
                 if (bloomTarget) {
                     try { bloomTarget.dispose(); } catch (_) {}
@@ -620,9 +533,9 @@ export const RENDER = {
                     try { darkMaterial.dispose(); } catch (_) {}
                     darkMaterial = null;
                 }
-                if (dofMaterial) {
-                    try { dofMaterial.dispose(); } catch (_) {}
-                    dofMaterial = null;
+                if (bloomMaterial) {
+                    try { bloomMaterial.dispose(); } catch (_) {}
+                    bloomMaterial = null;
                 }
                 if (renderer) {
                     try { renderer.dispose(); } catch (_) {}
