@@ -26,7 +26,7 @@ export const RENDER = {
         fov: 45.0,
         camRoll: 0.0,
         materialOverride: 'auto', // 'auto' | 'wire' | 'solid' | 'normal' | 'toon' | 'neon'
-        vrSep: 0.30,
+        vrSep: 0.60,
         vrScale: 0.90,
         vrIpd: 0
     }),
@@ -207,7 +207,8 @@ export const RENDER = {
                         <div id="vr-hud" class="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 px-3 py-1.5 rounded-lg bg-slate-900/85 border border-slate-700 backdrop-blur-sm text-[10px] font-mono text-slate-200 transition-opacity duration-200">
                             <label class="flex items-center gap-1.5">
                                 <span class="text-emerald-400 font-bold">DEPTH</span>
-                                <input id="vr-sep" type="range" min="0.0" max="1.0" step="0.02" value="${m.vrSep ?? 0.30}" class="w-16 h-1 accent-emerald-400 cursor-pointer">
+                                <input id="vr-sep" type="range" min="0.0" max="3.0" step="0.05" value="${m.vrSep ?? 0.60}" class="w-16 h-1 accent-emerald-400 cursor-pointer">
+                                <span id="vr-sep-val" class="text-[9px] text-emerald-300 w-6 text-right">${Number(m.vrSep ?? 0.60).toFixed(2)}</span>
                             </label>
                             <label class="flex items-center gap-1.5">
                                 <span class="text-cyan-400 font-bold">SIZE</span>
@@ -273,6 +274,8 @@ export const RENDER = {
 
                 overlay.querySelector('#vr-sep').addEventListener('input', (e) => {
                     m.vrSep = parseFloat(e.target.value);
+                    const vEl = overlay.querySelector('#vr-sep-val');
+                    if (vEl) vEl.textContent = m.vrSep.toFixed(2);
                     onChange?.();
                 });
                 overlay.querySelector('#vr-scale').addEventListener('input', (e) => {
