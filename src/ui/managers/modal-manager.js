@@ -51,10 +51,11 @@ export const MODAL_WIDTHS = {
     GSENSOR: 'w-[180px]',
     TILT: 'w-[180px]',
     OBJECT: 'w-[190px]',
+    PARTICLE: 'w-[190px]',
     ROTATE: 'w-[190px]',
     MOVE: 'w-[190px]',
     SCALE: 'w-[190px]',
-    RENDER: 'w-[calc(100%-16px)]',
+    RENDER: 'w-[200px]',
     VFX: 'w-[190px]',
     VMIX: 'w-[200px]',
     DISPLAY: 'w-[200px]'
