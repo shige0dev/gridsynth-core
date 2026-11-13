@@ -63,10 +63,12 @@ export const RENDER = {
             return pointTexture;
         };
 
-        const getMaterial = (style, colorHex, pointSize = 3.0) => {
+        const getMaterial = (style, colorHex, pointSize = 3.0, wireWidth = 1.5) => {
             if (typeof THREE === 'undefined') return null;
-            const ptKey = style === 'point' ? `_${Number(pointSize).toFixed(1)}` : '';
-            const key = `${style}_${colorHex}${ptKey}`;
+            const extraKey = style === 'point'
+                ? `_${Number(pointSize).toFixed(1)}`
+                : (style === 'wire' ? `_${Number(wireWidth).toFixed(1)}` : '');
+            const key = `${style}_${colorHex}${extraKey}`;
             if (!materialCache.has(key)) {
                 let mat;
                 switch (style) {
@@ -112,11 +114,34 @@ export const RENDER = {
                         break;
                     case 'wire':
                     default:
-                        mat = new THREE.MeshStandardMaterial({
-                            color: colorHex,
-                            wireframe: true,
-                            roughness: 0.2,
-                            metalness: 0.5,
+                        mat = new THREE.ShaderMaterial({
+                            uniforms: {
+                                uColor: { value: new THREE.Color(colorHex) },
+                                uWireWidth: { value: Math.max(0.5, Number(wireWidth) || 1.5) }
+                            },
+                            vertexShader: `
+                                attribute vec3 aBarycentric;
+                                varying vec3 vBarycentric;
+                                void main() {
+                                    vBarycentric = aBarycentric;
+                                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                                }
+                            `,
+                            fragmentShader: `
+                                uniform vec3 uColor;
+                                uniform float uWireWidth;
+                                varying vec3 vBarycentric;
+                                void main() {
+                                    vec3 d = fwidth(vBarycentric);
+                                    vec3 a3 = smoothstep(vec3(0.0), d * uWireWidth, vBarycentric);
+                                    float edgeFactor = min(min(a3.x, a3.y), a3.z);
+                                    float alpha = 1.0 - edgeFactor;
+                                    if (alpha < 0.02) discard;
+                                    gl_FragColor = vec4(uColor, alpha);
+                                }
+                            `,
+                            extensions: { derivatives: true },
+                            transparent: true,
                             side: THREE.DoubleSide
                         });
                         break;
@@ -319,7 +344,7 @@ export const RENDER = {
                 const effectiveStyle = (override !== 'auto') ? override : (packet.materialStyle || 'wire');
                 const effectiveColor = packet.color || 0xffffff;
                 const isPoint = effectiveStyle === 'point';
-                const mat = getMaterial(effectiveStyle, effectiveColor, packet.pointSize ?? 3.0);
+                const mat = getMaterial(effectiveStyle, effectiveColor, packet.pointSize ?? 3.0, packet.wireWidth ?? 1.5);
                 const expectedType = isPoint ? 'Points' : 'Mesh';
 
                 if (!node || node.type !== expectedType) {

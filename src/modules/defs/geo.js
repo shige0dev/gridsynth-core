@@ -48,6 +48,7 @@ export const OBJECT = {
         type: 'OBJECT',
         shape: 'torus',
         material: 'wire',
+        wireWidth: 1.5,
         pointSize: 3.0,
         color: '#ffffff',
         detail: 'mid'
@@ -121,6 +122,17 @@ export const OBJECT = {
                 </div>
             </div>
 
+            ${curMat === 'wire' ? `
+            <!-- Section 3B: Wire Width -->
+            <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
+                <div class="flex items-center justify-between">
+                    <span class="text-[8px] font-mono font-bold text-cyan-400 uppercase tracking-wider">WIRE WIDTH</span>
+                    <span id="geo-wire-width-val" class="text-[8px] font-mono font-bold text-cyan-300">${Number(m.wireWidth ?? 1.5).toFixed(1)} px</span>
+                </div>
+                <input id="geo-wire-width" type="range" min="0.5" max="8.0" step="0.5" value="${Number(m.wireWidth ?? 1.5)}" class="w-full accent-purple-500 h-1.5 bg-slate-800 rounded cursor-pointer">
+            </div>
+            ` : ''}
+
             ${curMat === 'point' ? `
             <!-- Section 3B: Point Size -->
             <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
@@ -184,6 +196,17 @@ export const OBJECT = {
                 onChange?.();
             });
         });
+
+        // Wire width slider
+        const wireSl = root.querySelector('#geo-wire-width');
+        if (wireSl) {
+            wireSl.addEventListener('input', (e) => {
+                m.wireWidth = parseFloat(e.target.value);
+                const disp = root.querySelector('#geo-wire-width-val');
+                if (disp) disp.textContent = `${m.wireWidth.toFixed(1)} px`;
+                onChange?.();
+            });
+        }
 
         // Point size slider
         const ptSl = root.querySelector('#geo-point-size');

@@ -51,6 +51,24 @@ export const OBJECT = {
             return geom;
         };
 
+        const addBarycentric = (srcGeom) => {
+            if (!srcGeom) return srcGeom;
+            const g = srcGeom.index ? srcGeom.toNonIndexed() : srcGeom;
+            if (g !== srcGeom) {
+                try { srcGeom.dispose(); } catch (_) {}
+            }
+            const count = g.attributes?.position?.count || 0;
+            if (count > 0 && !g.attributes.aBarycentric) {
+                const bary = new Float32Array(count * 3);
+                for (let i = 0; i < count; i++) {
+                    const mod = i % 3;
+                    bary[i * 3 + mod] = 1.0;
+                }
+                g.setAttribute('aBarycentric', new THREE.BufferAttribute(bary, 3));
+            }
+            return g;
+        };
+
         const getGeom = (shape, detail = 'mid') => {
             if (typeof THREE === 'undefined') return null;
             const key = `${shape}_${detail}`;
@@ -109,6 +127,9 @@ export const OBJECT = {
                         geometries[key] = new THREE.TorusGeometry(1.2, 0.45, tSegs[0], tSegs[1]);
                         break;
                 }
+                if (geometries[key]) {
+                    geometries[key] = addBarycentric(geometries[key]);
+                }
             }
             return geometries[key];
         };
@@ -139,6 +160,7 @@ export const OBJECT = {
                         scale: [1.0, 1.0, 1.0]
                     },
                     materialStyle: d.material || 'wire',
+                    wireWidth: Number(d.wireWidth ?? 1.5),
                     pointSize: Number(d.pointSize ?? 3.0),
                     color: parseColor(d.color)
                 };
@@ -147,6 +169,7 @@ export const OBJECT = {
                 shape: d.shape || 'torus',
                 detail: d.detail || 'mid',
                 material: d.material || 'wire',
+                wireWidth: Number(d.wireWidth ?? 1.5),
                 pointSize: Number(d.pointSize ?? 3.0),
                 color: d.color || '#ffffff'
             }),
