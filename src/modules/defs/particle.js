@@ -1,7 +1,6 @@
 // src/modules/defs/particle.js
 // PARTICLE - Dedicated 3D Point Cloud / Particle Generator Module
 import { UIHelpers } from '../../ui/helpers.js?v=351';
-import { PRESET_COLORS } from './geo.js?v=740';
 
 export const PARTICLE_DISTS = [
     { id: 'sphere', label: 'SPHERE' },
@@ -132,13 +131,9 @@ export const PARTICLE = {
             <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
                 <div class="flex items-center justify-between">
                     <span class="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-wider">COLOR</span>
-                    <span class="text-[7.5px] font-mono text-slate-400">${curCol}</span>
+                    <span id="pt-col-hex" class="text-[8px] font-mono font-bold text-cyan-300 uppercase">${curCol}</span>
                 </div>
-                <div class="grid grid-cols-6 gap-1">
-                    ${PRESET_COLORS.map(c => `
-                        <button data-col="${c.hex}" class="pt-col-btn h-5 rounded border flex items-center justify-center transition-all ${curCol === c.hex.toLowerCase() ? 'ring-2 ring-purple-400 border-white scale-105' : 'border-slate-700 hover:scale-105'}" style="background-color: ${c.hex};" title="${c.label}"></button>
-                    `).join('')}
-                </div>
+                <input id="pt-color-picker" type="color" value="${curCol}" class="w-full h-6 p-0.5 rounded bg-slate-800 border border-slate-600 cursor-pointer" title="カラーセレクタ">
             </div>
         </div>`;
     },
@@ -163,13 +158,18 @@ export const PARTICLE = {
             });
         });
 
-        root.querySelectorAll('.pt-col-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                m.color = e.currentTarget.dataset.col;
-                ctx.reRenderModal?.();
+        const colPicker = root.querySelector('#pt-color-picker');
+        if (colPicker) {
+            colPicker.addEventListener('input', (e) => {
+                m.color = e.target.value;
+                const hexEl = root.querySelector('#pt-col-hex');
+                if (hexEl) hexEl.textContent = m.color.toLowerCase();
                 onChange?.();
             });
-        });
+            colPicker.addEventListener('change', () => {
+                ctx.reRenderModal?.();
+            });
+        }
 
         const bindRange = (slId, valId, key, fmt) => {
             const sl = root.querySelector(`#${slId}`);
