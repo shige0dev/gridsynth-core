@@ -127,9 +127,14 @@ export const RENDER = {
                                 varying vec3 vNormal;
                                 varying vec3 vViewPos;
                                 void main() {
-                                    vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
+                                    #ifdef USE_INSTANCING
+                                        vec4 mvPos = modelViewMatrix * instanceMatrix * vec4(position, 1.0);
+                                        vNormal = normalize(normalMatrix * mat3(instanceMatrix) * normal);
+                                    #else
+                                        vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
+                                        vNormal = normalize(normalMatrix * normal);
+                                    #endif
                                     vViewPos = -mvPos.xyz;
-                                    vNormal = normalize(normalMatrix * normal);
                                     gl_Position = projectionMatrix * mvPos;
                                 }
                             `,
@@ -174,7 +179,11 @@ export const RENDER = {
                                 varying vec3 vBarycentric;
                                 void main() {
                                     vBarycentric = aBarycentric;
-                                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                                    #ifdef USE_INSTANCING
+                                        gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0);
+                                    #else
+                                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                                    #endif
                                 }
                             `,
                             fragmentShader: `
@@ -358,6 +367,34 @@ export const RENDER = {
                 while (node.children.length > packet.children.length) {
                     node.remove(node.children[node.children.length - 1]);
                 }
+            } else if (packet.type === 'INSTANCED' && packet.matrices && packet.count > 0) {
+                // GPU InstancedMesh container
+                const override = d.materialOverride || 'auto';
+                let effectiveStyle = (override !== 'auto') ? override : (packet.materialStyle || 'wire');
+                if (effectiveStyle === 'point') effectiveStyle = packet.materialStyle || 'wire';
+                const effectiveColor = packet.color ?? 0xffffff;
+                const mat = getMaterial(effectiveStyle, effectiveColor, packet.pointSize ?? 3.0, packet.wireWidth ?? 1.5, packet.glassOpacity ?? 0.25);
+
+                const needsNew = !node || !node.isInstancedMesh || node.geometry !== packet.geometry || node.instanceMatrix.count < packet.count;
+                if (needsNew) {
+                    if (node) parentThreeObj.remove(node);
+                    const cap = Math.max(packet.count, 64);
+                    node = new THREE.InstancedMesh(packet.geometry, mat, cap);
+                    node.frustumCulled = false;
+                    parentThreeObj.add(node);
+                } else if (node.material !== mat) {
+                    node.material = mat;
+                }
+
+                node.count = packet.count;
+                node.instanceMatrix.array.set(packet.matrices);
+                node.instanceMatrix.needsUpdate = true;
+                node.visible = true;
+                node.userData.isNeon = (effectiveStyle === 'neon');
+                node.userData.isTransparentStyle = (effectiveStyle === 'glass' || effectiveStyle === 'wire');
+                node.position.set(...(packet.transform?.position || [0, 0, 0]));
+                node.rotation.set(...(packet.transform?.rotation || [0, 0, 0]));
+                node.scale.set(...(packet.transform?.scale || [1, 1, 1]));
             } else {
                 // Leaf mesh / points
                 const override = d.materialOverride || 'auto';

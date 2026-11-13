@@ -150,6 +150,13 @@ export const SCATTER = {
             };
         };
 
+        const hasThreeGlobal = typeof THREE !== 'undefined';
+        const instPos = hasThreeGlobal ? new THREE.Vector3() : null;
+        const instEuler = hasThreeGlobal ? new THREE.Euler() : null;
+        const instQuat = hasThreeGlobal ? new THREE.Quaternion() : null;
+        const instScale = hasThreeGlobal ? new THREE.Vector3() : null;
+        const instMat = hasThreeGlobal ? new THREE.Matrix4() : null;
+
         return {
             nodes: { gCv, anCv },
             inputs: {
@@ -181,6 +188,64 @@ export const SCATTER = {
                 const effScale = Math.max(0.02, Math.min(2.0, isCv ? (manualScale + cvVal * 0.5) : manualScale));
 
                 const alignNorm = d.alignNormal !== false;
+
+                // Fast GPU InstancedMesh path for single-mesh child objects
+                if (hasThreeGlobal && childPkt.geometry && (!childPkt.children || childPkt.children.length === 0) && childPkt.materialStyle !== 'point') {
+                    const count = vertices.length;
+                    const matrices = new Float32Array(count * 16);
+                    const baseS = childPkt.transform?.scale || [1, 1, 1];
+                    const baseR = childPkt.transform?.rotation || [0, 0, 0];
+                    const sx = baseS[0] * effScale;
+                    const sy = baseS[1] * effScale;
+                    const sz = baseS[2] * effScale;
+                    instScale.set(sx, sy, sz);
+
+                    for (let i = 0; i < count; i++) {
+                        const v = vertices[i];
+                        instPos.set(v.pos[0], v.pos[1], v.pos[2]);
+                        if (alignNorm) {
+                            const nx = v.norm[0];
+                            const ny = v.norm[1];
+                            const nz = v.norm[2];
+                            const pitch = -Math.atan2(ny, Math.sqrt(nx * nx + nz * nz)) + Math.PI / 2;
+                            const yaw = Math.atan2(nx, nz);
+                            instEuler.set(pitch, yaw, 0, 'XYZ');
+                        } else {
+                            instEuler.set(baseR[0], baseR[1], baseR[2], 'XYZ');
+                        }
+                        instQuat.setFromEuler(instEuler);
+                        instMat.compose(instPos, instQuat, instScale);
+                        instMat.toArray(matrices, i * 16);
+                    }
+
+                    const instancedPkt = {
+                        type: 'INSTANCED',
+                        geometry: childPkt.geometry,
+                        materialStyle: childPkt.materialStyle,
+                        color: childPkt.color,
+                        wireWidth: childPkt.wireWidth,
+                        pointSize: childPkt.pointSize,
+                        glassOpacity: childPkt.glassOpacity,
+                        count,
+                        matrices,
+                        transform: {
+                            position: [0, 0, 0],
+                            rotation: [0, 0, 0],
+                            scale: [1.0, 1.0, 1.0]
+                        }
+                    };
+
+                    if (d.showBase !== false) {
+                        return {
+                            type: 'GROUP',
+                            id: d.id,
+                            transform: { position: [0, 0, 0], rotation: [0, 0, 0], scale: [1.0, 1.0, 1.0] },
+                            children: [clonePacket(basePkt), instancedPkt]
+                        };
+                    }
+                    return instancedPkt;
+                }
+
                 const children = [];
 
                 // 1. Optionally include base mesh
