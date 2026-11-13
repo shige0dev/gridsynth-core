@@ -86,7 +86,7 @@ export const PARTICLE = {
                         <span class="text-slate-400 font-bold">COUNT</span>
                         <span id="pt-count-val" class="text-cyan-300 font-bold">${count}</span>
                     </div>
-                    <input id="pt-count-sl" type="range" min="50" max="2000" step="50" value="${count}" class="w-full accent-purple-500 h-1.5 bg-slate-800 rounded cursor-pointer">
+                    <input id="pt-count-sl" type="range" min="1" max="2000" step="1" value="${count}" class="w-full accent-purple-500 h-1.5 bg-slate-800 rounded cursor-pointer">
                 </div>
 
                 <div class="flex flex-col gap-0.5">

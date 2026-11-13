@@ -219,7 +219,7 @@ export const PARTICLE = {
                 const cvVal = cvPatched ? readAnalyser(anCv, 0) : 0;
                 const cvTarget = d.cvTarget || 'spread';
 
-                const count = Math.max(50, Math.min(2000, Math.round(Number(d.count ?? 400))));
+                const count = Math.max(1, Math.min(2000, Math.round(Number(d.count ?? 400))));
                 const dist = d.dist || 'sphere';
                 const baseSpread = Number(d.spread ?? 1.5);
                 const baseSize = Number(d.pointSize ?? 3.0);
