@@ -25,7 +25,8 @@ export const RENDER = {
         targetZ: 0.0,
         fov: 45.0,
         camRoll: 0.0,
-        materialOverride: 'auto' // 'auto' | 'wire' | 'solid' | 'normal' | 'toon' | 'neon'
+        materialOverride: 'auto', // 'auto' | 'wire' | 'solid' | 'normal' | 'toon' | 'neon'
+        vrIpd: 0
     }),
     ports: () => ({
         in: [
@@ -78,6 +79,7 @@ export const RENDER = {
             <!-- Viewfinder Preview Container (Full Width 1:1 Square) -->
             <div class="relative w-full aspect-square bg-black border border-slate-800 rounded overflow-hidden flex items-center justify-center mx-auto">
                 <canvas class="render-modal-canvas w-full h-full block bg-black" width="400" height="400"></canvas>
+                <button id="render-vr-btn" class="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-emerald-950/90 hover:bg-emerald-800 border border-emerald-500/70 text-emerald-300 text-[7.5px] font-mono font-bold tracking-wider shadow cursor-pointer" title="スマホゴーグル用 横全画面ステレオ表示">VR STEREO</button>
             </div>
 
             <!-- Section 1: Material Style Override -->
@@ -177,6 +179,130 @@ export const RENDER = {
         bindSlider('render-slide-tgx', 'targetX', 'render-val-tgx', v => v.toFixed(1));
         bindSlider('render-slide-tgy', 'targetY', 'render-val-tgy', v => v.toFixed(1));
         bindSlider('render-slide-tgz', 'targetZ', 'render-val-tgz', v => v.toFixed(1));
+
+        // VR Stereo Fullscreen Overlay (Smartphone Goggles - Parallel SBS, 2048x2048)
+        const vrBtn = root.querySelector('#render-vr-btn');
+        if (vrBtn) {
+            vrBtn.addEventListener('click', () => {
+                document.getElementById('render-vr-overlay')?.remove();
+
+                const overlay = document.createElement('div');
+                overlay.id = 'render-vr-overlay';
+                overlay.className = 'fixed inset-0 z-[9999] bg-black select-none overflow-hidden flex items-center justify-center';
+                overlay.innerHTML = `
+                    <div id="vr-stage" class="relative flex items-center justify-center overflow-hidden bg-black">
+                        <!-- Short Top & Bottom Center Divider Lines -->
+                        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[2px] h-5 bg-white/45 pointer-events-none z-10"></div>
+                        <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-[2px] h-5 bg-white/45 pointer-events-none z-10"></div>
+
+                        <!-- Parallel Stereo Canvases (Independent L / R 50% slots) -->
+                        <div class="flex items-center w-full h-full">
+                            <div class="w-1/2 h-full flex items-center justify-center overflow-hidden">
+                                <canvas id="vr-cvs-l" width="2048" height="2048" class="bg-black shrink-0"></canvas>
+                            </div>
+                            <div class="w-1/2 h-full flex items-center justify-center overflow-hidden">
+                                <canvas id="vr-cvs-r" width="2048" height="2048" class="bg-black shrink-0"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Tap-Toggle HUD (IPD + EXIT only) -->
+                        <div id="vr-hud" class="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 px-3 py-1.5 rounded-lg bg-slate-900/85 border border-slate-700 backdrop-blur-sm text-[10px] font-mono text-slate-200 transition-opacity duration-200">
+                            <label class="flex items-center gap-1.5">
+                                <span class="text-amber-400 font-bold">IPD</span>
+                                <input id="vr-ipd" type="range" min="-40" max="40" step="2" value="${m.vrIpd ?? 0}" class="w-20 h-1 accent-amber-400 cursor-pointer">
+                            </label>
+                            <button id="vr-exit-btn" class="px-2.5 py-0.5 rounded bg-rose-700 hover:bg-rose-600 text-white font-bold border border-rose-500 cursor-pointer">EXIT</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+
+                const stage = overlay.querySelector('#vr-stage');
+                const cvsL = overlay.querySelector('#vr-cvs-l');
+                const cvsR = overlay.querySelector('#vr-cvs-r');
+                const ctxL = cvsL.getContext('2d');
+                const ctxR = cvsR.getContext('2d');
+                const hud = overlay.querySelector('#vr-hud');
+
+                const layoutStage = () => {
+                    const vw = window.innerWidth;
+                    const vh = window.innerHeight;
+                    const isPortrait = vh > vw;
+                    const sw = isPortrait ? vh : vw;
+                    const sh = isPortrait ? vw : vh;
+
+                    stage.style.width = `${sw}px`;
+                    stage.style.height = `${sh}px`;
+                    stage.style.transform = isPortrait ? 'rotate(90deg)' : 'none';
+
+                    const ipd = Number(m.vrIpd ?? 0);
+                    const eyeSize = Math.floor(Math.min(sh * 0.90, sw * 0.45));
+                    cvsL.style.width = `${eyeSize}px`;
+                    cvsL.style.height = `${eyeSize}px`;
+                    cvsR.style.width = `${eyeSize}px`;
+                    cvsR.style.height = `${eyeSize}px`;
+                    cvsL.style.transform = `translateX(${-ipd * 0.5}px)`;
+                    cvsR.style.transform = `translateX(${ipd * 0.5}px)`;
+                };
+
+                layoutStage();
+                window.addEventListener('resize', layoutStage);
+
+                try {
+                    if (overlay.requestFullscreen) {
+                        overlay.requestFullscreen().then(() => {
+                            try { screen.orientation?.lock?.('landscape')?.catch?.(() => {}); } catch (_) {}
+                        }).catch(() => {});
+                    }
+                } catch (_) {}
+
+                let hudVisible = true;
+                overlay.addEventListener('click', () => {
+                    hudVisible = !hudVisible;
+                    hud.style.opacity = hudVisible ? '1' : '0';
+                    hud.style.pointerEvents = hudVisible ? 'auto' : 'none';
+                });
+                hud.addEventListener('click', (e) => e.stopPropagation());
+
+                overlay.querySelector('#vr-ipd').addEventListener('input', (e) => {
+                    m.vrIpd = parseFloat(e.target.value);
+                    layoutStage();
+                    onChange?.();
+                });
+
+                let rafId = 0;
+                const renderLoop = () => {
+                    if (!document.body.contains(overlay)) return;
+                    const app = window.__GS_APP__;
+                    const synth = window.__GS_SYNTH__;
+                    const pageId = m.pageId || app?.currentPageId || '0';
+                    const inst = synth?.modules?.[`${pageId}/${m.id}`] || synth?.modules?.[m.id];
+                    if (inst?.renderStereo) {
+                        inst.renderStereo(ctxL, ctxR, 0.8);
+                    }
+                    rafId = requestAnimationFrame(renderLoop);
+                };
+                rafId = requestAnimationFrame(renderLoop);
+
+                const closeVr = () => {
+                    cancelAnimationFrame(rafId);
+                    window.removeEventListener('resize', layoutStage);
+                    const app = window.__GS_APP__;
+                    const synth = window.__GS_SYNTH__;
+                    const pageId = m.pageId || app?.currentPageId || '0';
+                    const inst = synth?.modules?.[`${pageId}/${m.id}`] || synth?.modules?.[m.id];
+                    inst?.setResolution?.(512);
+                    try { screen.orientation?.unlock?.(); } catch (_) {}
+                    try {
+                        if (document.fullscreenElement) {
+                            document.exitFullscreen().catch(() => {});
+                        }
+                    } catch (_) {}
+                    overlay.remove();
+                };
+                overlay.querySelector('#vr-exit-btn').addEventListener('click', closeVr);
+            });
+        }
     },
     updateLive: (cell, data, isPlaying, modal, m) => {
         if (!cell || !data) return;
