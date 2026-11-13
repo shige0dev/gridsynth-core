@@ -47,42 +47,83 @@ export const SCATTER = {
             return srcMod?.getGeometryPacket ? srcMod.getGeometryPacket() : null;
         };
 
-        const extractVertices = (geometry, maxVertices = 128) => {
-            if (!geometry || !geometry.attributes || !geometry.attributes.position) return [];
-            const posAttr = geometry.attributes.position;
-            const normAttr = geometry.attributes.normal;
-            const count = posAttr.count;
-
+        const extractAllVertices = (rootPacket) => {
+            if (!rootPacket) return [];
             const unique = [];
             const seen = new Set();
 
-            for (let i = 0; i < count; i++) {
-                const x = posAttr.getX(i);
-                const y = posAttr.getY(i);
-                const z = posAttr.getZ(i);
+            const hasThree = typeof THREE !== 'undefined';
+            const vPos = hasThree ? new THREE.Vector3() : null;
+            const vNorm = hasThree ? new THREE.Vector3() : null;
+            const normalMat = hasThree ? new THREE.Matrix3() : null;
+            const tmpPos = hasThree ? new THREE.Vector3() : null;
+            const tmpEuler = hasThree ? new THREE.Euler() : null;
+            const tmpQuat = hasThree ? new THREE.Quaternion() : null;
+            const tmpScale = hasThree ? new THREE.Vector3() : null;
 
-                // Spatial quantization key to deduplicate identical vertices
-                const key = `${Math.round(x * 100)},${Math.round(y * 100)},${Math.round(z * 100)}`;
-                if (!seen.has(key)) {
-                    seen.add(key);
+            const traverse = (pkt, parentMat) => {
+                if (!pkt) return;
+                let worldMat = parentMat;
 
-                    let nx = 0, ny = 1, nz = 0;
-                    if (normAttr) {
-                        nx = normAttr.getX(i);
-                        ny = normAttr.getY(i);
-                        nz = normAttr.getZ(i);
-                    } else {
-                        const len = Math.sqrt(x * x + y * y + z * z) || 1.0;
-                        nx = x / len;
-                        ny = y / len;
-                        nz = z / len;
+                if (hasThree) {
+                    const t = pkt.transform;
+                    tmpPos.set(...(t?.position || [0, 0, 0]));
+                    tmpEuler.set(...(t?.rotation || [0, 0, 0]), 'XYZ');
+                    tmpQuat.setFromEuler(tmpEuler);
+                    tmpScale.set(...(t?.scale || [1, 1, 1]));
+                    const localMat = new THREE.Matrix4().compose(tmpPos, tmpQuat, tmpScale);
+                    worldMat = parentMat ? parentMat.clone().multiply(localMat) : localMat;
+                }
+
+                if (pkt.geometry?.attributes?.position) {
+                    const posAttr = pkt.geometry.attributes.position;
+                    const normAttr = pkt.geometry.attributes.normal;
+                    const count = posAttr.count;
+                    if (hasThree && worldMat) {
+                        normalMat.getNormalMatrix(worldMat);
                     }
 
-                    unique.push({ pos: [x, y, z], norm: [nx, ny, nz] });
-                    if (unique.length >= maxVertices) break;
-                }
-            }
+                    for (let i = 0; i < count; i++) {
+                        let x = posAttr.getX(i);
+                        let y = posAttr.getY(i);
+                        let z = posAttr.getZ(i);
 
+                        let nx = 0, ny = 1, nz = 0;
+                        if (normAttr) {
+                            nx = normAttr.getX(i);
+                            ny = normAttr.getY(i);
+                            nz = normAttr.getZ(i);
+                        } else {
+                            const len = Math.sqrt(x * x + y * y + z * z) || 1.0;
+                            nx = x / len;
+                            ny = y / len;
+                            nz = z / len;
+                        }
+
+                        if (hasThree && worldMat) {
+                            vPos.set(x, y, z).applyMatrix4(worldMat);
+                            x = vPos.x; y = vPos.y; z = vPos.z;
+                            vNorm.set(nx, ny, nz).applyMatrix3(normalMat).normalize();
+                            nx = vNorm.x; ny = vNorm.y; nz = vNorm.z;
+                        }
+
+                        // Spatial quantization key to deduplicate identical vertices
+                        const key = `${Math.round(x * 100)},${Math.round(y * 100)},${Math.round(z * 100)}`;
+                        if (!seen.has(key)) {
+                            seen.add(key);
+                            unique.push({ pos: [x, y, z], norm: [nx, ny, nz] });
+                        }
+                    }
+                }
+
+                if (pkt.children && pkt.children.length > 0) {
+                    for (let c = 0; c < pkt.children.length; c++) {
+                        traverse(pkt.children[c], worldMat);
+                    }
+                }
+            };
+
+            traverse(rootPacket, null);
             return unique;
         };
 
@@ -130,11 +171,8 @@ export const SCATTER = {
                     return basePkt;
                 }
 
-                // Extract geometry from base packet
-                const geom = basePkt.geometry || (basePkt.children && basePkt.children[0]?.geometry);
-                if (!geom) return basePkt;
-
-                const vertices = extractVertices(geom, 128);
+                // Extract all vertices recursively from all meshes in base packet
+                const vertices = extractAllVertices(basePkt);
                 if (vertices.length === 0) return basePkt;
 
                 const isCv = Boolean(patchState?.has('cv_in') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('cv_in') : false));
