@@ -85,8 +85,8 @@ export const RENDER = {
             <!-- Section 1: Material Style Override -->
             <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
                 <div class="flex items-center justify-between">
-                    <span class="text-[8px] font-mono font-bold text-purple-400 uppercase tracking-wider">STYLE OVERRIDE (マテリアル一括上書き)</span>
-                    <span class="text-[7.5px] font-mono text-slate-400">${curOverride === 'auto' ? 'OBJ SPECIFIC' : 'FORCED'}</span>
+                    <span class="text-[8px] font-mono font-bold text-purple-400 uppercase tracking-wider" title="マテリアル一括上書き">STYLE OVERRIDE</span>
+                    <span class="text-[7.5px] font-mono text-slate-400">${curOverride === 'auto' ? 'AUTO' : 'FORCED'}</span>
                 </div>
                 <div class="grid grid-cols-4 gap-1">
                     ${STYLE_OVERRIDES.map(s => `
@@ -114,11 +114,11 @@ export const RENDER = {
                 </div>
                 <div class="grid grid-cols-2 gap-1.5 text-[8.5px] font-mono pt-0.5">
                     <div class="flex flex-col gap-0.5">
-                        <div class="flex justify-between text-slate-400"><span>FOV (視野角)</span><span id="render-val-fov">${Math.round(m.fov ?? 45)}°</span></div>
+                        <div class="flex justify-between text-slate-400"><span title="視野角">FOV</span><span id="render-val-fov">${Math.round(m.fov ?? 45)}°</span></div>
                         <input type="range" id="render-slide-fov" min="15" max="110" step="1" value="${m.fov ?? 45}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-cyan-500">
                     </div>
                     <div class="flex flex-col gap-0.5">
-                        <div class="flex justify-between text-slate-400"><span>ROLL (回転角)</span><span id="render-val-roll">${Math.round(m.camRoll ?? 0)}°</span></div>
+                        <div class="flex justify-between text-slate-400"><span title="回転角">ROLL</span><span id="render-val-roll">${Math.round(m.camRoll ?? 0)}°</span></div>
                         <input type="range" id="render-slide-roll" min="-180" max="180" step="5" value="${m.camRoll ?? 0}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-cyan-500">
                     </div>
                 </div>
@@ -127,16 +127,16 @@ export const RENDER = {
             <!-- Section 3: Depth of Field (DoF) & Bokeh -->
             <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
                 <div class="flex items-center justify-between">
-                    <span class="text-[8px] font-mono font-bold text-rose-400 uppercase tracking-wider">DEPTH OF FIELD (被写界深度 / ボケ)</span>
+                    <span class="text-[8px] font-mono font-bold text-rose-400 uppercase tracking-wider" title="被写界深度 / ボケ">DOF / BOKEH</span>
                     <span id="render-val-bokeh-mode" class="text-[7.5px] font-mono font-bold ${(m.dofBokeh ?? 0) > 0 ? 'text-rose-400' : 'text-slate-500'}">${(m.dofBokeh ?? 0) > 0 ? 'ACTIVE' : 'OFF'}</span>
                 </div>
                 <div class="grid grid-cols-2 gap-1.5 text-[8.5px] font-mono">
                     <div class="flex flex-col gap-0.5">
-                        <div class="flex justify-between text-slate-400"><span>FOCUS (ピント距離)</span><span id="render-val-focus">${(m.dofFocus ?? 5.0).toFixed(1)}m</span></div>
+                        <div class="flex justify-between text-slate-400"><span title="ピント距離">FOCUS</span><span id="render-val-focus">${(m.dofFocus ?? 5.0).toFixed(1)}m</span></div>
                         <input type="range" id="render-slide-focus" min="1.0" max="15.0" step="0.2" value="${m.dofFocus ?? 5.0}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-rose-500">
                     </div>
                     <div class="flex flex-col gap-0.5">
-                        <div class="flex justify-between text-slate-400"><span>BOKEH (ボケ強度)</span><span id="render-val-bokeh">${Math.round((m.dofBokeh ?? 0) * 100)}%</span></div>
+                        <div class="flex justify-between text-slate-400"><span title="ボケ強度">BOKEH</span><span id="render-val-bokeh">${Math.round((m.dofBokeh ?? 0) * 100)}%</span></div>
                         <input type="range" id="render-slide-bokeh" min="0.0" max="1.0" step="0.02" value="${m.dofBokeh ?? 0}" class="h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-rose-500">
                     </div>
                 </div>
@@ -144,7 +144,7 @@ export const RENDER = {
 
             <!-- Section 4: LookAt Target -->
             <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
-                <span class="text-[8px] font-mono font-bold text-amber-400 uppercase tracking-wider">LOOKAT TARGET (注視点)</span>
+                <span class="text-[8px] font-mono font-bold text-amber-400 uppercase tracking-wider" title="注視点">LOOKAT TARGET</span>
                 <div class="grid grid-cols-3 gap-1.5 text-[8.5px] font-mono">
                     <div class="flex flex-col gap-0.5">
                         <div class="flex justify-between text-slate-400"><span>AIM X</span><span id="render-val-tgx">${(m.targetX ?? 0).toFixed(1)}</span></div>
