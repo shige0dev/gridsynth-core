@@ -26,9 +26,8 @@ export const RENDER = {
             return isNaN(avg) ? def : avg;
         };
 
-        // Three.js Scene Setup (512x512 Buffer - Balanced for 1x1, 2x2, and 4x4; 2048x2048 in VR Stereo)
+        // Three.js Scene Setup (512x512 Buffer - Balanced for 1x1, 2x2, and 4x4)
         const BUFFER_SIZE = 512;
-        let currentBufferSize = BUFFER_SIZE;
         let renderer = null;
         let scene = null;
         let camera = null;
@@ -472,53 +471,6 @@ export const RENDER = {
             }
         };
 
-        const setResolution = (size) => {
-            const targetSize = (size === 2048) ? 2048 : BUFFER_SIZE;
-            if (!renderer || !renderCanvas || currentBufferSize === targetSize) return;
-            currentBufferSize = targetSize;
-            renderCanvas.width = targetSize;
-            renderCanvas.height = targetSize;
-            renderer.setSize(targetSize, targetSize, false);
-            if (baseTarget) baseTarget.setSize(targetSize, targetSize);
-            if (bloomTarget) {
-                const bSize = Math.min(512, targetSize / 2);
-                bloomTarget.setSize(bSize, bSize);
-            }
-        };
-
-        const renderStereo = (leftCtx, rightCtx, eyeSep = 0.6) => {
-            if (!renderer || !scene || !camera || !rootGroup || !renderCanvas) return;
-            if (currentBufferSize !== 2048) setResolution(2048);
-            const hasNeon = prepareScene();
-
-            const basePos = new THREE.Vector3(d.camX ?? 0, d.camY ?? 0, d.camZ ?? 5);
-            const targetVec = new THREE.Vector3(d.targetX ?? 0, d.targetY ?? 0, d.targetZ ?? 0);
-            camera.updateMatrixWorld();
-            const rightVec = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0).normalize();
-            const halfSep = Math.max(0, Number(eyeSep) || 0) * 0.5;
-            const rollRad = d.camRoll ? (d.camRoll * Math.PI) / 180 : 0;
-
-            const drawEye = (offset, outCtx) => {
-                if (!outCtx) return;
-                camera.position.copy(basePos).addScaledVector(rightVec, offset);
-                camera.up.set(0, 1, 0);
-                camera.lookAt(targetVec);
-                if (rollRad) camera.rotateZ(rollRad);
-                renderEyePass(hasNeon);
-                outCtx.clearRect(0, 0, outCtx.canvas.width, outCtx.canvas.height);
-                outCtx.drawImage(renderCanvas, 0, 0, outCtx.canvas.width, outCtx.canvas.height);
-            };
-
-            drawEye(-halfSep, leftCtx);
-            drawEye(+halfSep, rightCtx);
-
-            // Restore center camera
-            camera.position.copy(basePos);
-            camera.up.set(0, 1, 0);
-            camera.lookAt(targetVec);
-            if (rollRad) camera.rotateZ(rollRad);
-        };
-
         return {
             nodes: { gFov, anFov },
             inputs: {
@@ -535,8 +487,6 @@ export const RENDER = {
                 renderFrame();
                 return renderCanvas;
             },
-            renderStereo,
-            setResolution,
             read: () => {
                 renderFrame();
 
