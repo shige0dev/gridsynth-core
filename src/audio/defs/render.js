@@ -389,7 +389,7 @@ export const RENDER = {
                 // Leaf mesh / points
                 const override = d.materialOverride || 'auto';
                 const effectiveStyle = (override !== 'auto') ? override : (packet.materialStyle || 'wire');
-                const effectiveColor = packet.color || 0xffffff;
+                const effectiveColor = packet.color ?? 0xffffff;
                 const isPoint = effectiveStyle === 'point';
                 const mat = getMaterial(effectiveStyle, effectiveColor, packet.pointSize ?? 3.0, packet.wireWidth ?? 1.5, packet.glassOpacity ?? 0.25);
                 const expectedType = isPoint ? 'Points' : 'Mesh';

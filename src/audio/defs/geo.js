@@ -135,9 +135,10 @@ export const OBJECT = {
         };
 
         const parseColor = (col) => {
-            if (!col) return 0xffffff;
+            if (col === null || col === undefined || col === '') return 0xffffff;
             if (typeof col === 'number') return col;
-            return parseInt(String(col).replace('#', ''), 16) || 0xffffff;
+            const n = parseInt(String(col).replace('#', ''), 16);
+            return Number.isNaN(n) ? 0xffffff : n;
         };
 
         return {

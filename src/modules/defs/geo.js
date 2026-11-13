@@ -161,7 +161,14 @@ export const OBJECT = {
             <div class="flex flex-col gap-1 border-t border-slate-800 pt-1 ${curMat === 'normal' ? 'opacity-30 pointer-events-none' : ''}">
                 <div class="flex items-center justify-between">
                     <span class="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-wider">COLOR</span>
-                    <span class="text-[7.5px] font-mono text-slate-400">${curCol}</span>
+                    <div class="flex items-center gap-1.5">
+                        <span id="geo-col-hex" class="text-[7.5px] font-mono text-slate-400">${curCol}</span>
+                        <label class="relative inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-600 cursor-pointer text-[7.5px] font-mono font-bold text-cyan-300" title="カラーピッカーで自由に色を選択">
+                            <span id="geo-col-swatch" class="w-2.5 h-2.5 rounded-xs border border-white/50 inline-block" style="background-color: ${curCol};"></span>
+                            <span>PICK</span>
+                            <input id="geo-color-picker" type="color" value="${curCol}" class="sr-only">
+                        </label>
+                    </div>
                 </div>
                 <div class="grid grid-cols-6 gap-1">
                     ${PRESET_COLORS.map(c => `
@@ -209,6 +216,22 @@ export const OBJECT = {
                 onChange?.();
             });
         });
+
+        // Native color picker
+        const colPicker = root.querySelector('#geo-color-picker');
+        if (colPicker) {
+            colPicker.addEventListener('input', (e) => {
+                m.color = e.target.value;
+                const hexEl = root.querySelector('#geo-col-hex');
+                if (hexEl) hexEl.textContent = m.color.toLowerCase();
+                const swEl = root.querySelector('#geo-col-swatch');
+                if (swEl) swEl.style.backgroundColor = m.color;
+                onChange?.();
+            });
+            colPicker.addEventListener('change', () => {
+                ctx.reRenderModal?.();
+            });
+        }
 
         // Wire width slider
         const wireSl = root.querySelector('#geo-wire-width');
