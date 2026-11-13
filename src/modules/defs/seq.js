@@ -275,6 +275,7 @@ function createSeqModule(maxSteps) {
         defaults: () => ({
             type: typeName,
             quantize: true,
+            initOn: true,
             steps: Array.from({ length: maxSteps }, (_, i) => ({
                 cv: i === 0 ? 0 : 0.25,
                 active: true,
@@ -282,7 +283,13 @@ function createSeqModule(maxSteps) {
                 gate: true
             }))
         }),
+        onClone: (copy) => {
+            copy.initOn = false;
+        },
         onNormalize: (m) => {
+            if (m.initOn === undefined) {
+                m.initOn = true;
+            }
             if (Array.isArray(m.steps)) {
                 if (typeof m.steps[0] === 'number') {
                     m.steps = m.steps.map(cv => ({ cv, active: true, cvActive: true, gate: true }));
@@ -294,13 +301,21 @@ function createSeqModule(maxSteps) {
                 }
             }
         },
-        ports: () => ({
-            in: [{ port: 'gate_in', pin: 5, color: 'bg-red-500' }],
-            out: [
-                { port: 'gate_out', pin: 10, color: 'bg-red-500' },
-                { port: 'cv_out', pin: 11, color: 'bg-yellow-400' }
-            ]
-        }),
+        ports: (m, ctx) => {
+            const patched = ctx?.patched;
+            const isTransOutPatched = patched?.has?.('trans_out');
+            return {
+                in: [
+                    { port: 'gate_in', pin: 5, color: 'bg-red-500', label: 'GATE' },
+                    { port: 'trans_in', pin: 6, color: 'bg-slate-400', label: 'TR-IN' }
+                ],
+                out: [
+                    { port: 'trans_out', pin: 9, color: isTransOutPatched ? 'bg-slate-400' : 'bg-purple-500', label: 'TR-OUT' },
+                    { port: 'gate_out', pin: 10, color: 'bg-red-500', label: 'GATE' },
+                    { port: 'cv_out', pin: 11, color: 'bg-yellow-400', label: 'CV' }
+                ]
+            };
+        },
         renderPorts: (m, renderP, ports) => UIHelpers.renderChassisPorts(renderP, ports),
         renderGrid: (m) => {
             const steps = m.steps || [];
@@ -317,13 +332,14 @@ function createSeqModule(maxSteps) {
         },
         updateLive: (cell, data, isP, modal) => {
             const step = data?.step ?? -1;
+            const isActive = data?.active !== false;
             cell.querySelectorAll('[data-step-bar]').forEach((b, i) => {
                 const stepIdx = parseInt(b.getAttribute('data-step-bar') ?? i, 10);
-                b.classList.toggle('bar-active', isP && stepIdx === step);
+                b.classList.toggle('bar-active', isP && isActive && stepIdx === step);
             });
             modal?.querySelectorAll('[data-step-col]').forEach((col, i) => {
                 const colIdx = parseInt(col.getAttribute('data-step-col') ?? i, 10);
-                const cur = isP && colIdx === step;
+                const cur = isP && isActive && colIdx === step;
                 col.classList.toggle('border-yellow-400', cur);
                 col.classList.toggle('bg-slate-800/90', cur);
                 col.classList.toggle('border-slate-800', !cur);
@@ -331,6 +347,7 @@ function createSeqModule(maxSteps) {
         },
         renderModal: (m) => {
             const steps = m.steps || [];
+            const isInit = m.initOn !== false;
             return `
                 <div id="${prefix}-modal-root" class="${is16 ? 'space-y-1' : 'space-y-1.5'}">
                     <div class="flex items-center justify-between pb-1 border-b border-slate-800">
@@ -344,6 +361,7 @@ function createSeqModule(maxSteps) {
                                 <i data-lucide="download" class="w-2.5 h-2.5 pointer-events-none"></i>
                                 <span>IMP</span>
                             </button>
+                            <button id="${prefix}-init-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors shrink-0 ${isInit ? 'bg-amber-600 text-white border-amber-500' : 'bg-slate-800 text-slate-400 border-slate-700'}">INIT: ${isInit ? 'ON' : 'OFF'}</button>
                             <button id="${prefix}-qlz-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors shrink-0 ${m.quantize !== false ? 'bg-cyan-600 text-white border-cyan-500' : 'bg-slate-800 text-slate-400 border-slate-700'}">QLZ: ${m.quantize !== false ? 'ON' : 'OFF'}</button>
                         </div>
                     </div>
@@ -361,6 +379,12 @@ function createSeqModule(maxSteps) {
             root.querySelector(`#${btnPrefix}-json-export-btn`)?.addEventListener('click', () => openSeqExport(m, ctx, cb, maxSteps));
             root.querySelector(`#${btnPrefix}-json-import-btn`)?.addEventListener('click', () => openSeqImport(m, ctx, cb, maxSteps));
             root.addEventListener('click', (e) => {
+                if (e.target.closest(`#${prefix}-init-btn`)) {
+                    m.initOn = !(m.initOn !== false);
+                    ctx.reRenderModal();
+                    cb();
+                    return;
+                }
                 if (e.target.closest(`#${prefix}-qlz-btn`)) {
                     m.quantize = !(m.quantize !== false);
                     ctx.reRenderModal();
