@@ -387,6 +387,78 @@ export const RENDER = {
             }
         };
 
+        const prepareScene = () => {
+            const cvFov = readCv(anFov, 0);
+            const incomingPackets = getSourcePackets();
+
+            // Apply Camera, Target, FOV & Roll parameters
+            const fov = Math.max(10, Math.min(120, (d.fov ?? 45) + cvFov * 10));
+            if (camera.fov !== fov) {
+                camera.fov = fov;
+                camera.updateProjectionMatrix();
+            }
+            camera.position.set(d.camX ?? 0, d.camY ?? 0, d.camZ ?? 5);
+            camera.up.set(0, 1, 0);
+            camera.lookAt(d.targetX ?? 0, d.targetY ?? 0, d.targetZ ?? 0);
+            if (d.camRoll) {
+                camera.rotateZ((d.camRoll * Math.PI) / 180);
+            }
+
+            if (incomingPackets.length > 0) {
+                rootGroup.visible = true;
+                for (let i = 0; i < incomingPackets.length; i++) {
+                    syncNode(incomingPackets[i], rootGroup, i);
+                }
+                while (rootGroup.children.length > incomingPackets.length) {
+                    rootGroup.remove(rootGroup.children[rootGroup.children.length - 1]);
+                }
+            } else {
+                rootGroup.visible = false;
+            }
+
+            let hasNeon = false;
+            if (rootGroup.visible) {
+                rootGroup.traverse(o => {
+                    if (o.visible && o.userData?.isNeon) hasNeon = true;
+                });
+            }
+            return hasNeon;
+        };
+
+        const renderEyePass = (hasNeon) => {
+            if (hasNeon && baseTarget && bloomTarget && darkMaterial && bloomMaterial) {
+                renderer.setRenderTarget(baseTarget);
+                renderer.clear();
+                renderer.render(scene, camera);
+
+                const savedState = [];
+                rootGroup.traverse(o => {
+                    if ((o.isMesh || o.isPoints) && o.visible && !o.userData?.isNeon) {
+                        savedState.push({ obj: o, mat: o.material, vis: o.visible });
+                        if (o.isPoints || o.userData?.isTransparentStyle) {
+                            o.visible = false;
+                        } else {
+                            o.material = darkMaterial;
+                        }
+                    }
+                });
+                renderer.setRenderTarget(bloomTarget);
+                renderer.clear();
+                renderer.render(scene, camera);
+                for (let i = 0; i < savedState.length; i++) {
+                    const s = savedState[i];
+                    s.obj.material = s.mat;
+                    s.obj.visible = s.vis;
+                }
+
+                renderer.setRenderTarget(null);
+                renderer.render(bloomScene, bloomCamera);
+            } else {
+                renderer.setRenderTarget(null);
+                renderer.render(scene, camera);
+            }
+        };
+
         let lastRenderTime = 0;
         const renderFrame = () => {
             const now = (typeof performance !== 'undefined') ? performance.now() : Date.now();
@@ -394,73 +466,41 @@ export const RENDER = {
             lastRenderTime = now;
 
             if (renderer && scene && camera && rootGroup) {
-                const cvFov = readCv(anFov, 0);
-                const incomingPackets = getSourcePackets();
-
-                // Apply Camera, Target, FOV & Roll parameters
-                const fov = Math.max(10, Math.min(120, (d.fov ?? 45) + cvFov * 10));
-                if (camera.fov !== fov) {
-                    camera.fov = fov;
-                    camera.updateProjectionMatrix();
-                }
-                camera.position.set(d.camX ?? 0, d.camY ?? 0, d.camZ ?? 5);
-                camera.up.set(0, 1, 0);
-                camera.lookAt(d.targetX ?? 0, d.targetY ?? 0, d.targetZ ?? 0);
-                if (d.camRoll) {
-                    camera.rotateZ((d.camRoll * Math.PI) / 180);
-                }
-
-                if (incomingPackets.length > 0) {
-                    rootGroup.visible = true;
-                    for (let i = 0; i < incomingPackets.length; i++) {
-                        syncNode(incomingPackets[i], rootGroup, i);
-                    }
-                    while (rootGroup.children.length > incomingPackets.length) {
-                        rootGroup.remove(rootGroup.children[rootGroup.children.length - 1]);
-                    }
-                } else {
-                    rootGroup.visible = false;
-                }
-
-                let hasNeon = false;
-                if (rootGroup.visible) {
-                    rootGroup.traverse(o => {
-                        if (o.visible && o.userData?.isNeon) hasNeon = true;
-                    });
-                }
-
-                if (hasNeon && baseTarget && bloomTarget && darkMaterial && bloomMaterial) {
-                    renderer.setRenderTarget(baseTarget);
-                    renderer.clear();
-                    renderer.render(scene, camera);
-
-                    const savedState = [];
-                    rootGroup.traverse(o => {
-                        if ((o.isMesh || o.isPoints) && o.visible && !o.userData?.isNeon) {
-                            savedState.push({ obj: o, mat: o.material, vis: o.visible });
-                            if (o.isPoints || o.userData?.isTransparentStyle) {
-                                o.visible = false;
-                            } else {
-                                o.material = darkMaterial;
-                            }
-                        }
-                    });
-                    renderer.setRenderTarget(bloomTarget);
-                    renderer.clear();
-                    renderer.render(scene, camera);
-                    for (let i = 0; i < savedState.length; i++) {
-                        const s = savedState[i];
-                        s.obj.material = s.mat;
-                        s.obj.visible = s.vis;
-                    }
-
-                    renderer.setRenderTarget(null);
-                    renderer.render(bloomScene, bloomCamera);
-                } else {
-                    renderer.setRenderTarget(null);
-                    renderer.render(scene, camera);
-                }
+                const hasNeon = prepareScene();
+                renderEyePass(hasNeon);
             }
+        };
+
+        const renderStereo = (leftCtx, rightCtx, eyeSep = 0.3) => {
+            if (!renderer || !scene || !camera || !rootGroup || !renderCanvas) return;
+            const hasNeon = prepareScene();
+
+            const basePos = new THREE.Vector3(d.camX ?? 0, d.camY ?? 0, d.camZ ?? 5);
+            const targetVec = new THREE.Vector3(d.targetX ?? 0, d.targetY ?? 0, d.targetZ ?? 0);
+            camera.updateMatrixWorld();
+            const rightVec = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0).normalize();
+            const halfSep = Math.max(0, Number(eyeSep) || 0) * 0.5;
+            const rollRad = d.camRoll ? (d.camRoll * Math.PI) / 180 : 0;
+
+            const drawEye = (offset, outCtx) => {
+                if (!outCtx) return;
+                camera.position.copy(basePos).addScaledVector(rightVec, offset);
+                camera.up.set(0, 1, 0);
+                camera.lookAt(targetVec);
+                if (rollRad) camera.rotateZ(rollRad);
+                renderEyePass(hasNeon);
+                outCtx.clearRect(0, 0, outCtx.canvas.width, outCtx.canvas.height);
+                outCtx.drawImage(renderCanvas, 0, 0, outCtx.canvas.width, outCtx.canvas.height);
+            };
+
+            drawEye(-halfSep, leftCtx);
+            drawEye(+halfSep, rightCtx);
+
+            // Restore center camera
+            camera.position.copy(basePos);
+            camera.up.set(0, 1, 0);
+            camera.lookAt(targetVec);
+            if (rollRad) camera.rotateZ(rollRad);
         };
 
         return {
@@ -479,6 +519,7 @@ export const RENDER = {
                 renderFrame();
                 return renderCanvas;
             },
+            renderStereo,
             read: () => {
                 renderFrame();
 

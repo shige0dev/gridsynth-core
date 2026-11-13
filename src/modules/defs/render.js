@@ -25,7 +25,10 @@ export const RENDER = {
         targetZ: 0.0,
         fov: 45.0,
         camRoll: 0.0,
-        materialOverride: 'auto' // 'auto' | 'wire' | 'solid' | 'normal' | 'toon' | 'neon'
+        materialOverride: 'auto', // 'auto' | 'wire' | 'solid' | 'normal' | 'toon' | 'neon'
+        vrSep: 0.30,
+        vrScale: 0.90,
+        vrIpd: 0
     }),
     ports: () => ({
         in: [
@@ -78,6 +81,7 @@ export const RENDER = {
             <!-- Viewfinder Preview Container (Full Width 1:1 Square) -->
             <div class="relative w-full aspect-square bg-black border border-slate-800 rounded overflow-hidden flex items-center justify-center mx-auto">
                 <canvas class="render-modal-canvas w-full h-full block bg-black" width="400" height="400"></canvas>
+                <button id="render-vr-btn" class="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-emerald-950/90 hover:bg-emerald-800 border border-emerald-500/70 text-emerald-300 text-[7.5px] font-mono font-bold tracking-wider shadow cursor-pointer" title="スマホゴーグル用 横全画面ステレオ表示">VR STEREO</button>
             </div>
 
             <!-- Section 1: Material Style Override -->
@@ -177,6 +181,139 @@ export const RENDER = {
         bindSlider('render-slide-tgx', 'targetX', 'render-val-tgx', v => v.toFixed(1));
         bindSlider('render-slide-tgy', 'targetY', 'render-val-tgy', v => v.toFixed(1));
         bindSlider('render-slide-tgz', 'targetZ', 'render-val-tgz', v => v.toFixed(1));
+
+        // VR Stereo Fullscreen Overlay (Smartphone Goggles - Parallel SBS)
+        const vrBtn = root.querySelector('#render-vr-btn');
+        if (vrBtn) {
+            vrBtn.addEventListener('click', () => {
+                document.getElementById('render-vr-overlay')?.remove();
+
+                const overlay = document.createElement('div');
+                overlay.id = 'render-vr-overlay';
+                overlay.className = 'fixed inset-0 z-[9999] bg-black select-none overflow-hidden flex items-center justify-center';
+                overlay.innerHTML = `
+                    <div id="vr-stage" class="relative flex items-center justify-center overflow-hidden bg-black">
+                        <!-- Short Top & Bottom Center Divider Lines -->
+                        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[2px] h-5 bg-white/45 pointer-events-none z-10"></div>
+                        <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-[2px] h-5 bg-white/45 pointer-events-none z-10"></div>
+
+                        <!-- Parallel Stereo Canvases (L / R) -->
+                        <div id="vr-pair" class="flex items-center justify-center w-full h-full">
+                            <canvas id="vr-cvs-l" width="512" height="512" class="bg-black shrink-0"></canvas>
+                            <canvas id="vr-cvs-r" width="512" height="512" class="bg-black shrink-0"></canvas>
+                        </div>
+
+                        <!-- Tap-Toggle HUD -->
+                        <div id="vr-hud" class="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 px-3 py-1.5 rounded-lg bg-slate-900/85 border border-slate-700 backdrop-blur-sm text-[10px] font-mono text-slate-200 transition-opacity duration-200">
+                            <label class="flex items-center gap-1.5">
+                                <span class="text-emerald-400 font-bold">DEPTH</span>
+                                <input id="vr-sep" type="range" min="0.0" max="1.0" step="0.02" value="${m.vrSep ?? 0.30}" class="w-16 h-1 accent-emerald-400 cursor-pointer">
+                            </label>
+                            <label class="flex items-center gap-1.5">
+                                <span class="text-cyan-400 font-bold">SIZE</span>
+                                <input id="vr-scale" type="range" min="0.50" max="1.10" step="0.02" value="${m.vrScale ?? 0.90}" class="w-16 h-1 accent-cyan-400 cursor-pointer">
+                            </label>
+                            <label class="flex items-center gap-1.5">
+                                <span class="text-amber-400 font-bold">IPD</span>
+                                <input id="vr-ipd" type="range" min="-40" max="40" step="2" value="${m.vrIpd ?? 0}" class="w-16 h-1 accent-amber-400 cursor-pointer">
+                            </label>
+                            <button id="vr-exit-btn" class="px-2.5 py-0.5 rounded bg-rose-700 hover:bg-rose-600 text-white font-bold border border-rose-500 cursor-pointer">EXIT</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+
+                const stage = overlay.querySelector('#vr-stage');
+                const pair = overlay.querySelector('#vr-pair');
+                const cvsL = overlay.querySelector('#vr-cvs-l');
+                const cvsR = overlay.querySelector('#vr-cvs-r');
+                const ctxL = cvsL.getContext('2d');
+                const ctxR = cvsR.getContext('2d');
+                const hud = overlay.querySelector('#vr-hud');
+
+                const layoutStage = () => {
+                    const vw = window.innerWidth;
+                    const vh = window.innerHeight;
+                    const isPortrait = vh > vw;
+                    const sw = isPortrait ? vh : vw;
+                    const sh = isPortrait ? vw : vh;
+
+                    stage.style.width = `${sw}px`;
+                    stage.style.height = `${sh}px`;
+                    stage.style.transform = isPortrait ? 'rotate(90deg)' : 'none';
+
+                    const scale = Number(m.vrScale ?? 0.90);
+                    const ipd = Number(m.vrIpd ?? 0);
+                    const eyeSize = Math.floor(Math.min(sh * 0.94, sw * 0.48) * scale);
+                    cvsL.style.width = `${eyeSize}px`;
+                    cvsL.style.height = `${eyeSize}px`;
+                    cvsR.style.width = `${eyeSize}px`;
+                    cvsR.style.height = `${eyeSize}px`;
+                    pair.style.gap = `${Math.max(-eyeSize * 0.25, ipd)}px`;
+                };
+
+                layoutStage();
+                window.addEventListener('resize', layoutStage);
+
+                try {
+                    if (overlay.requestFullscreen) {
+                        overlay.requestFullscreen().then(() => {
+                            try { screen.orientation?.lock?.('landscape')?.catch?.(() => {}); } catch (_) {}
+                        }).catch(() => {});
+                    }
+                } catch (_) {}
+
+                let hudVisible = true;
+                overlay.addEventListener('click', () => {
+                    hudVisible = !hudVisible;
+                    hud.style.opacity = hudVisible ? '1' : '0';
+                    hud.style.pointerEvents = hudVisible ? 'auto' : 'none';
+                });
+                hud.addEventListener('click', (e) => e.stopPropagation());
+
+                overlay.querySelector('#vr-sep').addEventListener('input', (e) => {
+                    m.vrSep = parseFloat(e.target.value);
+                    onChange?.();
+                });
+                overlay.querySelector('#vr-scale').addEventListener('input', (e) => {
+                    m.vrScale = parseFloat(e.target.value);
+                    layoutStage();
+                    onChange?.();
+                });
+                overlay.querySelector('#vr-ipd').addEventListener('input', (e) => {
+                    m.vrIpd = parseFloat(e.target.value);
+                    layoutStage();
+                    onChange?.();
+                });
+
+                let rafId = 0;
+                const renderLoop = () => {
+                    if (!document.body.contains(overlay)) return;
+                    const app = window.__GS_APP__;
+                    const synth = window.__GS_SYNTH__;
+                    const pageId = m.pageId || app?.currentPageId || '0';
+                    const inst = synth?.modules?.[`${pageId}/${m.id}`] || synth?.modules?.[m.id];
+                    if (inst?.renderStereo) {
+                        inst.renderStereo(ctxL, ctxR, m.vrSep ?? 0.30);
+                    }
+                    rafId = requestAnimationFrame(renderLoop);
+                };
+                rafId = requestAnimationFrame(renderLoop);
+
+                const closeVr = () => {
+                    cancelAnimationFrame(rafId);
+                    window.removeEventListener('resize', layoutStage);
+                    try { screen.orientation?.unlock?.(); } catch (_) {}
+                    try {
+                        if (document.fullscreenElement) {
+                            document.exitFullscreen().catch(() => {});
+                        }
+                    } catch (_) {}
+                    overlay.remove();
+                };
+                overlay.querySelector('#vr-exit-btn').addEventListener('click', closeVr);
+            });
+        }
     },
     updateLive: (cell, data, isPlaying, modal, m) => {
         if (!cell || !data) return;
