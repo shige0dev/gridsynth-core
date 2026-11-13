@@ -80,8 +80,8 @@ export const RENDER = {
                             size: Math.max(0.015, Number(pointSize) * 0.03),
                             map: getPointTexture(),
                             transparent: true,
-                            alphaTest: 0.02,
-                            depthWrite: false,
+                            alphaTest: 0.25,
+                            depthWrite: true,
                             sizeAttenuation: true
                         });
                         break;
@@ -266,26 +266,23 @@ export const RENDER = {
                     float centerDepth = texture2D(tDepth, vUv).r;
                     vec4 centerCol = texture2D(tColor, vUv);
 
-                    if (centerDepth >= 0.999 && centerCol.a < 0.001) {
-                        gl_FragColor = centerCol;
-                        return;
-                    }
-
                     float z = getLinearDepth(centerDepth);
-                    float coc = clamp(abs(z - uFocus) * uAperture * 0.008, 0.0, 0.035);
+                    float maxCoc = clamp(uAperture * 0.055, 0.0, 0.055);
+                    bool isBg = (centerDepth >= 0.999 && centerCol.a < 0.01);
+                    float centerCoc = isBg ? maxCoc : clamp(abs(z - uFocus) * uAperture * 0.025, 0.0, 0.055);
 
-                    if (coc < 0.0005) {
+                    if (centerCoc < 0.0005) {
                         gl_FragColor = centerCol;
                         return;
                     }
 
-                    vec3 colorSum = centerCol.rgb * centerCol.a * 2.0;
-                    float alphaSum = centerCol.a * 2.0;
-                    float totalW = 2.0;
+                    vec3 colorSum = centerCol.rgb * centerCol.a;
+                    float alphaSum = centerCol.a;
+                    float totalW = 1.0;
 
-                    for (int i = 1; i <= 16; i++) {
+                    for (int i = 1; i <= 24; i++) {
                         float fi = float(i);
-                        float r = sqrt(fi / 16.0) * coc;
+                        float r = sqrt(fi / 24.0) * centerCoc;
                         float theta = fi * 2.39996323;
                         vec2 offset = vec2(cos(theta), sin(theta)) * r;
                         vec2 sampleUv = clamp(vUv + offset, 0.0, 1.0);
@@ -293,18 +290,27 @@ export const RENDER = {
                         float sDepth = texture2D(tDepth, sampleUv).r;
                         vec4 sCol = texture2D(tColor, sampleUv);
                         float sZ = getLinearDepth(sDepth);
+                        float sCoc = (sDepth >= 0.999 && sCol.a < 0.01)
+                            ? 0.0
+                            : clamp(abs(sZ - uFocus) * uAperture * 0.025, 0.0, 0.055);
 
-                        // Depth weighting: background behind z does not bleed over sharp foreground
-                        float depthDiff = sZ - z;
-                        float w = (depthDiff > 0.1) ? 0.35 : 1.0;
-                        w *= (1.0 - (r / (coc + 0.0001)) * 0.3);
+                        float w = 1.0 - (r / (centerCoc + 0.0001)) * 0.25;
+                        if (isBg) {
+                            // Only out-of-focus foreground bleeds outward into empty background
+                            if (sCol.a < 0.01 || sCoc < r * 0.85) {
+                                w = 0.0;
+                            }
+                        } else if (sZ > z + 0.1) {
+                            // Background behind sharp foreground has reduced bleed
+                            w *= 0.35;
+                        }
 
                         colorSum += sCol.rgb * sCol.a * w;
                         alphaSum += sCol.a * w;
                         totalW += w;
                     }
 
-                    float outAlpha = alphaSum / totalW;
+                    float outAlpha = alphaSum / max(totalW, 0.0001);
                     vec3 outRgb = (alphaSum > 0.001) ? (colorSum / alphaSum) : vec3(0.0);
                     gl_FragColor = vec4(outRgb, outAlpha);
                 }
