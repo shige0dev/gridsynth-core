@@ -31,7 +31,14 @@ export class SeqProcessor extends AudioWorkletProcessor {
                     if (nextKey !== this.keyGatePatched) {
                         this.keyGatePatched = nextKey;
                         this.lastKeyHi = false;
-                        this.resetState(!this.keyGatePatched);
+                        if (this.keyGatePatched) {
+                            // RUN結線時: ゲート待ち状態へ移行してリセット
+                            this.resetState(false);
+                        } else {
+                            // RUN未結線時: 常時スタンバイ（active = true）へ復帰
+                            this.active = true;
+                            this.port.postMessage({ type: 'STEP', step: this.step, active: true });
+                        }
                     }
                 }
             } else if (msg.type === 'SET_CONFIG') {
@@ -101,8 +108,13 @@ export class SeqProcessor extends AudioWorkletProcessor {
             const isHi = clkV > 0.3;
             const isKeyHi = keyV >= 0.4;
 
-            // 1. RUN / KEYGATE_IN control (when patched)
-            if (this.keyGatePatched) {
+            // 1. RUN / KEYGATE_IN control:
+            // - Unpatched: always on standby (active = true), advances on clock.
+            // - Patched: waits for gate; starts on gate rising edge, resets & stops on gate off.
+            if (!this.keyGatePatched) {
+                this.active = true;
+                this.lastKeyHi = false;
+            } else {
                 if (!isKeyHi) {
                     if (this.lastKeyHi || this.active || this.step !== -1) {
                         this.active = false;

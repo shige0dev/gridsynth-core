@@ -34,7 +34,8 @@ function createSeqAudio(stepCount) {
 
             const sendPatch = (p) => {
                 const appPatch = window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id) : null;
-                const keyGatePatched = Boolean(p?.has?.('keygate_in') || appPatch?.has?.('keygate_in'));
+                const targetPatch = p || appPatch;
+                const keyGatePatched = Boolean(targetPatch?.has?.('keygate_in'));
                 w.port.postMessage({ type: 'SET_PATCH', keyGatePatched });
             };
             sendPatch(patch || null);
