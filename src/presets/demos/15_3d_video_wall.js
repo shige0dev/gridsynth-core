@@ -60,7 +60,7 @@ export const preset15 = {
           "fov": 29,
           "camRoll": 0,
           "materialOverride": "auto",
-          "vrIpd": 0,
+          "vrIpd": -80,
           "dofFocus": 15,
           "dofBokeh": 0
         },
