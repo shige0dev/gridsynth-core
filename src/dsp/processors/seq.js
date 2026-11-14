@@ -5,6 +5,7 @@ export class SeqProcessor extends AudioWorkletProcessor {
         super();
         this.step = -1;
         this.lastHi = false;
+        this.lastTrigHi = false;
         this.cv = 0;
         this.gate = 0;
         this.gap = 0;
@@ -56,6 +57,7 @@ export class SeqProcessor extends AudioWorkletProcessor {
                 this.active = (!this.transInPatched) ? true : isInit;
                 this.step = -1;
                 this.lastHi = false;
+                this.lastTrigHi = false;
                 this.gap = 0;
                 this.gate = 0;
                 this.trigOutLeft = 0;
@@ -80,12 +82,13 @@ export class SeqProcessor extends AudioWorkletProcessor {
             const isHi = clkV > 0.3;
             const isTrigHi = trigV >= 0.4;
 
-            // 1. TRANS_IN trigger reservation:
+            // 1. TRANS_IN trigger reservation (rising edge):
             // Evaluated BEFORE clock rising edge so external triggers (e.g. KEY gate + CLK reset) fire on the same beat.
-            // Any >= 0.4V signal while inactive or active arms/extends the sequencer.
-            if (isTrigHi) {
+            // Rising-edge detection prevents a multi-sample gate/pulse from re-arming the sequencer right after it starts.
+            if (isTrigHi && !this.lastTrigHi) {
                 this.armed = true;
             }
+            this.lastTrigHi = isTrigHi;
 
             // 2. Clock falling edge: emit post-transition TRANS_OUT pulse if final step just ended
             if (!isHi && this.lastHi) {
