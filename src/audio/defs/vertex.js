@@ -149,8 +149,8 @@ export const VERTEX = {
                         posArr[idx + 1] = oy * (1.0 + w);
                         posArr[idx + 2] = oz * (1.0 + w);
                     } else if (mode === 'pinch') {
-                        // Taper / Pinch along Y axis
-                        const pinch = 1.0 - Math.cos(oy * 1.8) * 0.6 * effDepth;
+                        // Taper / Pinch along Y axis (with freq & speed modulation)
+                        const pinch = 1.0 - Math.cos(oy * freq * 0.6 + time) * 0.6 * effDepth;
                         posArr[idx] = ox * pinch;
                         posArr[idx + 1] = oy;
                         posArr[idx + 2] = oz * pinch;
