@@ -210,6 +210,7 @@ export const RENDER = {
                             <label class="flex items-center gap-1">
                                 <span class="text-amber-400 font-bold">IPD</span>
                                 <input id="vr-ipd" type="range" min="-140" max="20" step="2" value="${m.vrIpd ?? 0}" class="w-16 h-1 accent-amber-400 cursor-pointer">
+                                <span id="vr-ipd-val" class="text-cyan-300 font-bold w-10 text-right tabular-nums">${m.vrIpd ?? 0}px</span>
                             </label>
                             <button id="vr-exit-btn" class="px-1.5 py-0.5 rounded bg-rose-700 hover:bg-rose-600 text-white font-bold border border-rose-500 cursor-pointer">EXIT</button>
                         </div>
@@ -264,8 +265,10 @@ export const RENDER = {
                 });
                 hud.addEventListener('click', (e) => e.stopPropagation());
 
+                const ipdValEl = overlay.querySelector('#vr-ipd-val');
                 overlay.querySelector('#vr-ipd').addEventListener('input', (e) => {
                     m.vrIpd = parseFloat(e.target.value);
+                    if (ipdValEl) ipdValEl.textContent = `${m.vrIpd}px`;
                     layoutStage();
                     onChange?.();
                 });
