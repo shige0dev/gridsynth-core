@@ -53,6 +53,7 @@ export const MODAL_WIDTHS = {
     OBJECT: 'w-[190px]',
     PATH: 'w-[190px]',
     PARTICLE: 'w-[190px]',
+    WAVE3D: 'w-[calc(100%-16px)]',
     ROTATE: 'w-[190px]',
     MOVE: 'w-[190px]',
     SCALE: 'w-[190px]',

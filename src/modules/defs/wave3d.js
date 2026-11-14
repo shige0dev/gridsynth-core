@@ -99,13 +99,13 @@ export const WAVE3D = {
             </div>
 
             <!-- Sliders -->
-            <div class="flex items-center justify-around py-1 bg-slate-950/60 p-1 rounded-xl border border-slate-800/80 gap-1">
-                ${UIHelpers.createVSliderHTML('w3d-slices', 'SLICES', 16, 64, 4, curSlices, '', 'purple', false, String(curSlices), 1, 'sm')}
-                ${UIHelpers.createVSliderHTML('w3d-cols', 'RES', 24, 96, 8, curCols, '', 'purple', false, String(curCols), 1, 'sm')}
-                ${UIHelpers.createVSliderHTML('w3d-gain', 'GAIN', 0.2, 4.0, 0.05, curGain, 'x', 'cyan', isCvPatched, curGain.toFixed(2), 1, 'sm')}
-                ${UIHelpers.createVSliderHTML('w3d-speed', 'SCROLL', 0.2, 2.0, 0.05, curSpeed, 'x', 'cyan', false, curSpeed.toFixed(2), 1, 'sm')}
-                ${UIHelpers.createVSliderHTML('w3d-tilt', 'TILT', -0.2, 1.2, 0.02, curTilt, '', 'amber', false, curTilt.toFixed(2), 1, 'sm')}
-                ${UIHelpers.createVSliderHTML('w3d-glow', 'GLOW', 0.0, 1.0, 0.05, curGlow, '', 'emerald', false, curGlow.toFixed(2), 1, 'sm')}
+            <div class="flex items-center justify-around py-1.5 bg-slate-950/60 px-2 rounded-xl border border-slate-800/80 gap-2">
+                ${UIHelpers.createVSliderHTML('w3d-slices', 'SLICES', 16, 64, 4, curSlices, '', 'purple', false, String(curSlices))}
+                ${UIHelpers.createVSliderHTML('w3d-cols', 'RES', 24, 96, 8, curCols, '', 'purple', false, String(curCols))}
+                ${UIHelpers.createVSliderHTML('w3d-gain', 'GAIN', 0.2, 4.0, 0.05, curGain, 'x', 'cyan', isCvPatched, curGain.toFixed(2))}
+                ${UIHelpers.createVSliderHTML('w3d-speed', 'SCROLL', 0.2, 2.0, 0.05, curSpeed, 'x', 'cyan', false, curSpeed.toFixed(2))}
+                ${UIHelpers.createVSliderHTML('w3d-tilt', 'TILT', -0.2, 1.2, 0.02, curTilt, '', 'amber', false, curTilt.toFixed(2))}
+                ${UIHelpers.createVSliderHTML('w3d-glow', 'GLOW', 0.0, 1.0, 0.05, curGlow, '', 'emerald', false, curGlow.toFixed(2))}
             </div>
 
             <!-- Color Swatches -->
