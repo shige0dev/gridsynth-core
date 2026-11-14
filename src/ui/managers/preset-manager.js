@@ -1,6 +1,6 @@
 import { safeClone, parseConn } from '../../core/utils.js?v=459';
 import { parsePatch, exportPatch, createDefaultPatchData } from '../../core/patch.js?v=459';
-import { getDefaultPresets } from '../../presets/default.js?v=777';
+import { getDefaultPresets } from '../../presets/default.js?v=807';
 import { JsonIoDialog } from '../json-io-dialog.js?v=459';
 
 export class PresetManager {

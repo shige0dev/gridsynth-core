@@ -1,5 +1,5 @@
 import { preset01 } from './demos/01_delay_techno.js?v=459';
-import { preset02 } from './demos/02_keyboard_lead.js?v=459';
+import { preset02 } from './demos/02_keyboard_lead.js?v=807';
 import { preset03 } from './demos/03_wavefold_ar_fr.js?v=459';
 import { preset04 } from './demos/04_random_sh_delay.js?v=459';
 import { preset05 } from './demos/05_subpatch_multi_groove.js?v=459';
