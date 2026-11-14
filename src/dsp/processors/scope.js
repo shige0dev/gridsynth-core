@@ -19,7 +19,7 @@ export class ScopeProcessor extends AudioWorkletProcessor {
 
         this.port.onmessage = e => {
             if (e.data.type === 'SET_CONFIG') {
-                const timeSpan = Math.max(0.0005, Math.min(10.0, e.data.timeSpan || 0.1));
+                const timeSpan = Math.max(0.0005, Math.min(10.0, e.data.timeSpan || 1.0));
                 const sr = getSR();
                 this.decimation = Math.max(1, Math.round((timeSpan * sr) / this.bufLen));
                 if (e.data.hasTrig !== undefined) this.hasTrig = Boolean(e.data.hasTrig);

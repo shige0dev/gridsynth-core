@@ -40,7 +40,7 @@ const drawScopeCanvas = (ctx2d, w, h, data, m, isModal = false) => {
 
     // Trigger offset search (auto trigger on rising zero-crossing or pulse edge)
     let startIdx = 0;
-    const isAuto = (m.trigMode || 'auto') === 'auto';
+    const isAuto = (m.trigMode || 'free') === 'auto';
     if (isAuto && trg && len > 128) {
         const searchLimit = Math.min(128, len - 256);
         let minVal = trg[0], maxVal = trg[0];
@@ -80,7 +80,7 @@ const drawScopeCanvas = (ctx2d, w, h, data, m, isModal = false) => {
 
 export const SCOPE = {
     color: 'cyan',
-    defaults: () => ({ type: 'SCOPE', timeSpan: 0.1, vRange: 2.0, trigMode: 'auto', opacity: 0.8 }),
+    defaults: () => ({ type: 'SCOPE', timeSpan: 1.0, vRange: 2.0, trigMode: 'free', opacity: 0.8 }),
     ports: () => ({
         in: [
             { port: 'cv_in', pin: 5, color: 'bg-yellow-400' },
@@ -101,9 +101,9 @@ export const SCOPE = {
         renderDualCanvases(cell, modal, '.scope-canvas', '#scope-modal-canvas', (c, w, h, isM) => drawScopeCanvas(c, w, h, data, m, isM));
     },
     renderModal: (m) => {
-        const curT = m.timeSpan || 0.1;
+        const curT = m.timeSpan || 1.0;
         const curV = m.vRange || 2.0;
-        const curTrig = m.trigMode || 'auto';
+        const curTrig = m.trigMode || 'free';
 
         return `
             <div class="space-y-1.5 select-none w-full">
@@ -133,10 +133,10 @@ export const SCOPE = {
     },
     bindEvents: (m, ctx, cb) => {
         const root = ctx?.getDialogElement ? (ctx.getDialogElement() || document) : document;
-        bindStepPair('scope-t-down', 'scope-t-up', SCOPE.T_STEPS, m, 'timeSpan', 0.1, ctx, cb);
+        bindStepPair('scope-t-down', 'scope-t-up', SCOPE.T_STEPS, m, 'timeSpan', 1.0, ctx, cb);
         bindStepPair('scope-v-down', 'scope-v-up', SCOPE.V_STEPS, m, 'vRange', 2.0, ctx, cb);
         root.querySelector('#scope-trig-toggle')?.addEventListener('click', () => {
-            m.trigMode = (m.trigMode || 'auto') === 'auto' ? 'free' : 'auto';
+            m.trigMode = (m.trigMode || 'free') === 'auto' ? 'free' : 'auto';
             ctx.reRenderModal();
             cb();
         });
