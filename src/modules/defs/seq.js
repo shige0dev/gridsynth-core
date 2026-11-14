@@ -225,11 +225,11 @@ export function openSeqImport(m, ctx, cb, maxSteps = 16) {
     });
 }
 
-const renderSeqStepButtons = (idx, isAct, isCvAct, isGateAct, isSeq16 = false) => `
-    <div class="flex flex-col gap-0.5 w-full mt-0.5 shrink-0">
-        <button data-act="gate" data-step="${idx}" class="text-[6.5px] font-bold py-0.5 rounded border transition-colors shrink-0 ${!isAct ? 'bg-slate-950 text-slate-600 border-slate-800' : (isGateAct ? 'bg-sky-950 text-sky-300 border-sky-500/80' : 'bg-slate-950 text-slate-600 border-slate-800')}" title="GATE">GATE</button>
-        <button data-act="cvActive" data-step="${idx}" class="text-[7px] font-bold py-0.5 rounded border transition-colors shrink-0 ${!isAct ? 'bg-slate-950 text-slate-600 border-slate-800' : (isCvAct ? 'bg-cyan-950 text-cyan-300 border-cyan-500/80' : 'bg-slate-950 text-slate-600 border-slate-800')}" title="CV">CV</button>
-        <button data-act="active" data-step="${idx}" class="text-[6.5px] font-bold py-0.5 rounded border transition-colors shrink-0 ${isAct ? 'bg-blue-950 text-blue-300 border-blue-500/80' : 'bg-slate-950 text-slate-500 border-slate-800'}" title="STEP ACTIVE">${isSeq16 ? (idx + 1) : 'STEP'}</button>
+const renderSeqStepButtons = (idx, isAct, isCvAct, isGateAct) => `
+    <div class="grid grid-cols-3 gap-px w-full mt-0.5 shrink-0">
+        <button data-act="gate" data-step="${idx}" class="h-[14px] text-[6px] leading-none font-bold rounded-xs border transition-colors flex items-center justify-center ${!isAct ? 'bg-slate-950 text-slate-600 border-slate-800' : (isGateAct ? 'bg-sky-950 text-sky-300 border-sky-500/80' : 'bg-slate-950 text-slate-600 border-slate-800')}" title="GATE">G</button>
+        <button data-act="cvActive" data-step="${idx}" class="h-[14px] text-[6px] leading-none font-bold rounded-xs border transition-colors flex items-center justify-center ${!isAct ? 'bg-slate-950 text-slate-600 border-slate-800' : (isCvAct ? 'bg-cyan-950 text-cyan-300 border-cyan-500/80' : 'bg-slate-950 text-slate-600 border-slate-800')}" title="CV">C</button>
+        <button data-act="active" data-step="${idx}" class="h-[14px] text-[6px] leading-none font-bold rounded-xs border transition-colors flex items-center justify-center ${isAct ? 'bg-blue-950 text-blue-300 border-blue-500/80' : 'bg-slate-950 text-slate-500 border-slate-800'}" title="STEP ACTIVE">${idx + 1}</button>
     </div>
 `;
 
@@ -262,10 +262,10 @@ function createSeqModule(maxSteps) {
                 return `
                 <div data-step-col="${idx}" class="flex flex-col items-center ${is16 ? 'gap-0.5' : 'gap-1'} flex-1 min-w-[34px] p-1 rounded-lg border shrink-0 ${isAct ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-950/80 border-slate-800/40 opacity-40 grayscale'}">
                     <span id="${prefix}-slider-${idx}-disp" class="text-[${is16 ? '8px' : '8.5px'}] ${isAct ? 'text-cyan-300' : 'text-slate-500'} font-mono font-bold cursor-ns-resize touch-none select-none hover:bg-slate-800/80 ${is16 ? 'px-0.5' : 'px-1'} py-0.5 rounded transition-colors shrink-0" title="上下ドラッグで微調整">${m.quantize !== false ? UIHelpers.cvToNoteName(val) : val.toFixed(2)}</span>
-                    <div class="h-12 min-h-[48px] flex items-center justify-center my-0.5 shrink-0">
-                        <input type="range" data-seq-slider="${idx}" id="${prefix}-slider-${idx}" min="0" max="2.0" step="${m.quantize !== false ? 0.083333 : 0.01}" value="${val}" class="native-vslider-sm ${isAct ? 'accent-blue-500' : 'accent-slate-600'} shrink-0">
+                    <div class="${is16 ? 'h-[76px] min-h-[76px]' : 'h-24 min-h-[96px]'} flex items-center justify-center my-0.5 shrink-0">
+                        <input type="range" data-seq-slider="${idx}" id="${prefix}-slider-${idx}" min="0" max="2.0" step="${m.quantize !== false ? 0.083333 : 0.01}" value="${val}" class="${is16 ? 'native-vslider-sm' : 'native-vslider'} ${isAct ? 'accent-blue-500' : 'accent-slate-600'} shrink-0" ${is16 ? 'style="height: 76px; min-height: 76px;"' : ''}>
                     </div>
-                    ${renderSeqStepButtons(idx, isAct, isCvAct, isGateAct, is16)}
+                    ${renderSeqStepButtons(idx, isAct, isCvAct, isGateAct)}
                 </div>`;
             }).join('')}
         </div>`;
