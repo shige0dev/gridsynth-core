@@ -64,12 +64,7 @@ export class MarkovProcessor extends AudioWorkletProcessor {
             const trigV = inTrig ? inTrig[i] : 0.0;
             const isClkHi = clkV >= 0.5;
 
-            // 1. 他ノードやトリガ/ノイズからの始動予約（1回でも >= 0.4V を受ければ次クロック用にチャージ）
-            if (trigV >= 0.4 && this.state === 0) {
-                this.armed = true;
-            }
-
-            // 2. クロック立ち下がり検知（ショットトリガ・TRANS_OUT消灯のみ。ステート点灯とCVは次クロックまで維持）
+            // 1. クロック立ち下がり検知（ショットトリガ・TRANS_OUT消灯のみ。ステート点灯とCVは次クロックまで維持）
             if (clkV < 0.3 && this.clkActive) {
                 this.clkActive = false;
                 this.shotActive = false;
@@ -81,7 +76,7 @@ export class MarkovProcessor extends AudioWorkletProcessor {
                 }
             }
 
-            // 3. クロック立ち上がり検知と発火（前拍willEndの消灯・予約消費・遷移判定）
+            // 2. クロック立ち上がり検知と発火（前拍willEndの消灯・予約消費・遷移判定）
             const isRising = (isClkHi && !this.clkActive);
             if (isRising) {
                 this.clkActive = true;
@@ -145,6 +140,11 @@ export class MarkovProcessor extends AudioWorkletProcessor {
                         }
                     }
                 }
+            }
+
+            // 3. 他ノードやトリガ/ノイズからの始動予約（クロック立ち上がり後に判定し、今のクロックでは走らず次クロック用にチャージ）
+            if (trigV >= 0.4 && this.state === 0) {
+                this.armed = true;
             }
 
             // 4. 外部トリガ出力（trans_out1..3）: 最終ステートのゲートそのもの（クロックHighの間）を出力

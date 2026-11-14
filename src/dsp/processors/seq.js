@@ -80,20 +80,13 @@ export class SeqProcessor extends AudioWorkletProcessor {
             const isHi = clkV > 0.3;
             const isTrigHi = trigV >= 0.4;
 
-            // 1. TRANS_IN trigger reservation:
-            // Any >= 0.4V signal (both while inactive and while active) arms the sequencer
-            // so it starts or continues into the next cycle at the upcoming clock rising edge.
-            if (isTrigHi) {
-                this.armed = true;
-            }
-
-            // 2. Clock falling edge: clear trigOut (keep active & step lit until next clock rising edge)
+            // 1. Clock falling edge: clear trigOut (keep active & step lit until next clock rising edge)
             if (!isHi && this.lastHi) {
                 this.lastHi = false;
                 this.trigOut = false;
             }
 
-            // 3. Clock rising edge: deactivate if previous step was final, consume reservation, advance step
+            // 2. Clock rising edge: deactivate if previous step was final, consume prior reservation, advance step
             if (isHi && !this.lastHi) {
                 this.lastHi = true;
                 this.trigOut = false;
@@ -160,6 +153,11 @@ export class SeqProcessor extends AudioWorkletProcessor {
                         }
                     }
                 }
+            }
+
+            // 3. TRANS_IN trigger reservation (evaluated AFTER clock rising edge so it arms for the NEXT clock, never firing on the same clock)
+            if (isTrigHi) {
+                this.armed = true;
             }
 
             // 4. Output gate and cv
