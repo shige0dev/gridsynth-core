@@ -1,9 +1,9 @@
 import { isSubModule } from '../core/utils.js?v=459';
 import { parsePatch } from '../core/patch.js?v=459';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=774';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=775';
 import { UIHelpers } from './helpers.js?v=619';
 import { PresetManager } from './managers/preset-manager.js?v=739';
-import { ModalManager } from './managers/modal-manager.js?v=774';
+import { ModalManager } from './managers/modal-manager.js?v=775';
 import { CableManager } from './managers/cable-manager.js?v=679';
 import { PageManager } from './managers/page-manager.js?v=679';
 import { InteractionManager } from './managers/interaction-manager.js?v=679';

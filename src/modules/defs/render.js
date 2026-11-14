@@ -26,7 +26,7 @@ export const RENDER = {
         fov: 45.0,
         camRoll: 0.0,
         materialOverride: 'auto', // 'auto' | 'wire' | 'solid' | 'normal' | 'toon' | 'neon'
-        vrIpd: 0
+        vrIpd: -80
     }),
     ports: () => ({
         in: [
@@ -209,8 +209,8 @@ export const RENDER = {
                         <div id="vr-hud" class="absolute top-2 right-2 z-20 flex items-center gap-2 px-2 py-1 rounded bg-slate-900/80 border border-slate-700 backdrop-blur-sm text-[8.5px] font-mono text-slate-200 transition-opacity duration-200">
                             <label class="flex items-center gap-1">
                                 <span class="text-amber-400 font-bold">IPD</span>
-                                <input id="vr-ipd" type="range" min="-140" max="20" step="2" value="${m.vrIpd ?? 0}" class="w-16 h-1 accent-amber-400 cursor-pointer">
-                                <span id="vr-ipd-val" class="text-cyan-300 font-bold w-10 text-right tabular-nums">${m.vrIpd ?? 0}px</span>
+                                <input id="vr-ipd" type="range" min="-140" max="-40" step="2" value="${Math.max(-140, Math.min(-40, Number(m.vrIpd ?? -80)))}" class="w-16 h-1 accent-amber-400 cursor-pointer">
+                                <span id="vr-ipd-val" class="text-cyan-300 font-bold w-10 text-right tabular-nums">${Math.max(-140, Math.min(-40, Number(m.vrIpd ?? -80)))}px</span>
                             </label>
                             <button id="vr-exit-btn" class="px-1.5 py-0.5 rounded bg-rose-700 hover:bg-rose-600 text-white font-bold border border-rose-500 cursor-pointer">EXIT</button>
                         </div>
@@ -236,7 +236,7 @@ export const RENDER = {
                     stage.style.height = `${sh}px`;
                     stage.style.transform = isPortrait ? 'rotate(90deg)' : 'none';
 
-                    const ipd = Number(m.vrIpd ?? 0);
+                    const ipd = Math.max(-140, Math.min(-40, Number(m.vrIpd ?? -80)));
                     const eyeSize = Math.floor(Math.min(sh * 0.90, sw * 0.45));
                     cvsL.style.width = `${eyeSize}px`;
                     cvsL.style.height = `${eyeSize}px`;
