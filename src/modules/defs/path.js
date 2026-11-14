@@ -37,7 +37,7 @@ export const PATH = {
     }),
     ports: () => ({
         in: [
-            { port: 'cv_in', pin: 4, color: 'bg-yellow-400', label: 'CV' }
+            { port: 'cv_in', pin: 5, color: 'bg-yellow-400', label: 'CV' }
         ],
         out: [
             { port: 'obj_out', pin: 10, color: 'bg-purple-500', label: 'OBJ' }
