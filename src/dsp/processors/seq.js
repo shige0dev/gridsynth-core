@@ -77,33 +77,19 @@ export class SeqProcessor extends AudioWorkletProcessor {
                 this.armed = true;
             }
 
-            // 2. Clock falling edge (EOS): check if final active step just finished
+            // 2. Clock falling edge: if final step just finished (trigOut was active), deactivate sequence
             if (!isHi && this.lastHi) {
                 this.lastHi = false;
-                if (this.active && this.transOutPatched) {
-                    let nextStep = this.step;
-                    let wrapped = false;
-                    for (let a = 0; a < numSteps; a++) {
-                        nextStep = (nextStep + 1) % numSteps;
-                        if (this.step >= 0 && nextStep <= this.step) {
-                            wrapped = true;
-                        }
-                        const st = this.steps[nextStep];
-                        if (st && (typeof st === 'object' ? st.active !== false : true)) {
-                            break;
-                        }
-                    }
-                    if (wrapped) {
-                        this.active = false;
-                        this.step = -1;
-                        this.gate = 0.0;
-                        this.trigOut = true;
-                        this.port.postMessage({ type: 'STEP', step: -1, active: false });
-                    }
+                if (this.trigOut) {
+                    this.trigOut = false;
+                    this.active = false;
+                    this.step = -1;
+                    this.gate = 0.0;
+                    this.port.postMessage({ type: 'STEP', step: -1, active: false });
                 }
             }
 
-            // 3. Clock rising edge: consume reservation and advance step
+            // 3. Clock rising edge: consume reservation, advance step, and arm TRANS_OUT if this is the final step
             if (isHi && !this.lastHi) {
                 this.lastHi = true;
                 this.trigOut = false;
@@ -138,6 +124,25 @@ export class SeqProcessor extends AudioWorkletProcessor {
                             this.gap = minGap;
                             this.port.postMessage({ type: 'STEP', step: this.step, active: true });
                         }
+
+                        // Check if the current step is the last active step in the cycle
+                        if (this.transOutPatched) {
+                            let peekStep = this.step;
+                            let isLast = false;
+                            for (let a = 0; a < numSteps; a++) {
+                                peekStep = (peekStep + 1) % numSteps;
+                                if (peekStep <= this.step) {
+                                    isLast = true;
+                                }
+                                const st = this.steps[peekStep];
+                                if (st && (typeof st === 'object' ? st.active !== false : true)) {
+                                    break;
+                                }
+                            }
+                            if (isLast) {
+                                this.trigOut = true;
+                            }
+                        }
                     }
                 }
             }
@@ -157,7 +162,7 @@ export class SeqProcessor extends AudioWorkletProcessor {
 
             if (cvOut) cvOut[i] = this.cv;
             if (gOut) gOut[i] = this.gate;
-            if (transOut) transOut[i] = (this.trigOut && !isHi) ? 1.0 : 0.0;
+            if (transOut) transOut[i] = (this.trigOut && isHi) ? 1.0 : 0.0;
         }
         return true;
     }
