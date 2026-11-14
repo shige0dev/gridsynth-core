@@ -55,15 +55,16 @@ export const RENDER = {
             return pointTexture;
         };
 
-        const getMaterial = (style, colorHex, pointSize = 3.0, wireWidth = 1.5, glassOpacity = 0.25, glow = 0.0, mirror = 0.0) => {
+        const getMaterial = (style, colorHex, pointSize = 3.0, wireWidth = 1.5, glassOpacity = 0.25, glow = 0.0, mirror = 0.0, refract = 0.5) => {
             if (typeof THREE === 'undefined') return null;
             const gVal = Math.max(0, Number(glow) || 0);
             const mVal = Math.max(0, Math.min(1, Number(mirror) || 0));
+            const rVal = Math.max(0, Math.min(1, Number(refract) || 0));
             const extraKey = style === 'point'
                 ? `_${Number(pointSize).toFixed(1)}`
                 : (style === 'wire'
                     ? `_${Number(wireWidth).toFixed(1)}`
-                    : (style === 'glass' ? `_${Number(glassOpacity).toFixed(2)}` : ''));
+                    : (style === 'glass' ? `_${Number(glassOpacity).toFixed(2)}_r${rVal.toFixed(2)}` : ''));
             const mirKey = (style === 'solid' || style === 'toon' || style === 'normal' || style === 'glass') ? `_m${mVal.toFixed(2)}` : '';
             const key = `${style}_${colorHex}${extraKey}_g${gVal.toFixed(1)}${mirKey}`;
 
@@ -193,6 +194,7 @@ export const RENDER = {
                                 uOpacity: { value: Math.max(0.05, Math.min(0.85, Number(glassOpacity) || 0.25)) },
                                 uGlow: { value: gVal },
                                 uMirror: { value: mVal },
+                                uRefract: { value: rVal },
                                 tRefract: { value: refractTarget ? refractTarget.texture : null },
                                 uResolution: { value: new THREE.Vector2(currentBufferSize, currentBufferSize) }
                             },
@@ -216,6 +218,7 @@ export const RENDER = {
                                 uniform float uOpacity;
                                 uniform float uGlow;
                                 uniform float uMirror;
+                                uniform float uRefract;
                                 uniform sampler2D tRefract;
                                 uniform vec2 uResolution;
                                 varying vec3 vNormal;
@@ -230,17 +233,20 @@ export const RENDER = {
                                     // Screen-space UV of current fragment
                                     vec2 screenUv = gl_FragCoord.xy / max(uResolution, vec2(1.0));
 
-                                    // 1. Chromatic Refraction (IOR dispersion across R/G/B)
-                                    vec2 refractOffset = N.xy * (0.055 + (1.0 - ndotv) * 0.085);
-                                    float r = texture2D(tRefract, clamp(screenUv - refractOffset * 1.14, 0.002, 0.998)).r;
+                                    // 1. Chromatic Refraction controlled by uRefract (0 = no distortion)
+                                    vec2 refractOffset = N.xy * uRefract * (0.09 + (1.0 - ndotv) * 0.16);
+                                    float r = texture2D(tRefract, clamp(screenUv - refractOffset * 1.15, 0.002, 0.998)).r;
                                     float g = texture2D(tRefract, clamp(screenUv - refractOffset * 1.00, 0.002, 0.998)).g;
-                                    float b = texture2D(tRefract, clamp(screenUv - refractOffset * 0.86, 0.002, 0.998)).b;
+                                    float b = texture2D(tRefract, clamp(screenUv - refractOffset * 0.85, 0.002, 0.998)).b;
                                     vec3 refracted = vec3(r, g, b);
 
-                                    // 2. Screen-space Inter-Object Fresnel Reflection
-                                    vec3 R = reflect(-V, N);
-                                    vec2 reflUv = clamp(screenUv + R.xy * 0.18, 0.002, 0.998);
-                                    vec3 reflected = texture2D(tRefract, reflUv).rgb;
+                                    // 2. Screen-space Reflection controlled exclusively by uMirror (0 = no reflection)
+                                    vec3 reflected = vec3(0.0);
+                                    if (uMirror > 0.005) {
+                                        vec3 R = reflect(-V, N);
+                                        vec2 reflUv = clamp(screenUv + R.xy * 0.22, 0.002, 0.998);
+                                        reflected = texture2D(tRefract, reflUv).rgb;
+                                    }
 
                                     // 3. Specular highlights & surface tint
                                     vec3 L1 = normalize(vec3(0.5, 0.8, 0.6));
@@ -250,8 +256,8 @@ export const RENDER = {
                                     float sheen = smoothstep(-0.2, 0.9, N.y) * 0.14;
 
                                     vec3 tint = mix(vec3(1.0), uColor * 1.15, uOpacity * 0.6);
-                                    float transWeight = (1.0 - uMirror * 0.85) * (1.0 - fresnel * 0.35);
-                                    float reflWeight = 0.25 + fresnel * 0.95 + uMirror * 0.95;
+                                    float transWeight = (1.0 - uMirror * 0.85);
+                                    float reflWeight = uMirror * (0.55 + fresnel * 1.15);
                                     vec3 col = refracted * tint * transWeight
                                              + reflected * reflWeight
                                              + uColor * (uOpacity * 0.45 + fresnel * 0.75 + sheen)
@@ -556,7 +562,8 @@ export const RENDER = {
                 const effectiveColor = packet.color ?? 0xffffff;
                 const pktGlow = Number(packet.glow ?? 0);
                 const pktMirror = Number(packet.mirror ?? 0);
-                const mat = getMaterial(effectiveStyle, effectiveColor, packet.pointSize ?? 3.0, packet.wireWidth ?? 1.5, packet.glassOpacity ?? 0.25, pktGlow, pktMirror);
+                const pktRefract = Number(packet.refract ?? 0.5);
+                const mat = getMaterial(effectiveStyle, effectiveColor, packet.pointSize ?? 3.0, packet.wireWidth ?? 1.5, packet.glassOpacity ?? 0.25, pktGlow, pktMirror, pktRefract);
 
                 const needsNew = !node || !node.isInstancedMesh || node.geometry !== packet.geometry || node.instanceMatrix.count < packet.count;
                 if (needsNew) {
@@ -586,10 +593,11 @@ export const RENDER = {
                 const effectiveColor = packet.color ?? 0xffffff;
                 const pktGlow = Number(packet.glow ?? 0);
                 const pktMirror = Number(packet.mirror ?? 0);
+                const pktRefract = Number(packet.refract ?? 0.5);
                 const isPoint = effectiveStyle === 'point';
                 const isLine = Boolean(packet.isLine) && !isPoint;
                 const matStyle = isLine ? 'line' : effectiveStyle;
-                const mat = getMaterial(matStyle, effectiveColor, packet.pointSize ?? 3.0, packet.wireWidth ?? 1.5, packet.glassOpacity ?? 0.25, pktGlow, pktMirror);
+                const mat = getMaterial(matStyle, effectiveColor, packet.pointSize ?? 3.0, packet.wireWidth ?? 1.5, packet.glassOpacity ?? 0.25, pktGlow, pktMirror, pktRefract);
                 const expectedType = isLine ? 'Line' : (isPoint ? 'Points' : 'Mesh');
 
                 if (!node || node.type !== expectedType) {

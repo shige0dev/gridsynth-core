@@ -42,6 +42,7 @@ export const OBJECT = {
         wireWidth: 1.5,
         pointSize: 3.0,
         glassOpacity: 0.25,
+        refract: 0.5,
         glow: 0.0,
         mirror: 0.0,
         color: '#ffffff',
@@ -134,13 +135,18 @@ export const OBJECT = {
             ` : ''}
 
             ${curMat === 'glass' ? `
-            <!-- Section 3D: Glass Opacity -->
+            <!-- Section 3D: Glass Density & Refraction -->
             <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
                 <div class="flex items-center justify-between">
                     <span class="text-[8px] font-mono font-bold text-cyan-400 uppercase tracking-wider">GLASS DENSITY</span>
                     <span id="geo-glass-opacity-val" class="text-[8px] font-mono font-bold text-cyan-300">${Math.round(Number(m.glassOpacity ?? 0.25) * 100)}%</span>
                 </div>
                 <input id="geo-glass-opacity" type="range" min="0.05" max="0.85" step="0.05" value="${Number(m.glassOpacity ?? 0.25)}" class="w-full accent-purple-500 h-1.5 bg-slate-800 rounded cursor-pointer">
+                <div class="flex items-center justify-between mt-1">
+                    <span class="text-[8px] font-mono font-bold text-cyan-400 uppercase tracking-wider">REFRACT</span>
+                    <span id="geo-refract-val" class="text-[8px] font-mono font-bold text-cyan-300">${Math.round(Number(m.refract ?? 0.5) * 100)}%</span>
+                </div>
+                <input id="geo-refract" type="range" min="0.0" max="1.0" step="0.05" value="${Number(m.refract ?? 0.5)}" class="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded cursor-pointer">
             </div>
             ` : ''}
 
@@ -260,13 +266,22 @@ export const OBJECT = {
             });
         }
 
-        // Glass opacity slider
+        // Glass opacity & refract sliders
         const glassSl = root.querySelector('#geo-glass-opacity');
         if (glassSl) {
             glassSl.addEventListener('input', (e) => {
                 m.glassOpacity = parseFloat(e.target.value);
                 const disp = root.querySelector('#geo-glass-opacity-val');
                 if (disp) disp.textContent = `${Math.round(m.glassOpacity * 100)}%`;
+                onChange?.();
+            });
+        }
+        const refractSl = root.querySelector('#geo-refract');
+        if (refractSl) {
+            refractSl.addEventListener('input', (e) => {
+                m.refract = parseFloat(e.target.value);
+                const disp = root.querySelector('#geo-refract-val');
+                if (disp) disp.textContent = `${Math.round(m.refract * 100)}%`;
                 onChange?.();
             });
         }
