@@ -9,6 +9,7 @@ export class SeqProcessor extends AudioWorkletProcessor {
         this.gate = 0;
         this.gap = 0;
         this.trigOut = false;
+        this.armed = false;
 
         this.transOutPatched = false;
         this.transInPatched = false;
@@ -49,6 +50,7 @@ export class SeqProcessor extends AudioWorkletProcessor {
                 this.gap = 0;
                 this.gate = 0;
                 this.trigOut = false;
+                this.armed = false;
                 this.port.postMessage({ type: 'STEP', step: -1, active: this.active });
             }
         };
@@ -66,57 +68,20 @@ export class SeqProcessor extends AudioWorkletProcessor {
             const clkV = gIn ? gIn[i] : 0.0;
             const trigV = inTrig ? inTrig[i] : 0.0;
             const isHi = clkV > 0.3;
-            const isTrigHi = trigV >= 0.5;
+            const isTrigHi = trigV >= 0.4;
 
-            // 1. TRANS_IN trigger reception:
-            // When inactive: wake up and step to first active step immediately on this beat.
-            // When active: trigger locked while running (no retrigger).
+            // 1. TRANS_IN trigger reservation:
+            // Any >= 0.4V signal while inactive charges the sequencer for next clock start.
+            // While active, input is ignored so the sequence completes cleanly in one shot.
             if (isTrigHi && !this.active) {
-                this.active = true;
-                if (isHi) {
-                    this.step = -1;
-                    let found = false;
-                    for (let a = 0; a < numSteps; a++) {
-                        this.step = (this.step + 1) % numSteps;
-                        const st = this.steps[this.step];
-                        if (st && (typeof st === 'object' ? st.active !== false : true)) {
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (found) {
-                        const cur = this.steps[this.step];
-                        if (cur != null) {
-                            if (typeof cur === 'number') {
-                                this.cv = cur;
-                            } else if (cur.cvActive !== false) {
-                                this.cv = cur.cv ?? 0;
-                            }
-                            this.gap = minGap;
-                            this.port.postMessage({ type: 'STEP', step: this.step, active: true });
-                        }
-                    }
-                    this.lastHi = true;
-                } else {
-                    this.step = -1;
-                    this.lastHi = false;
-                    this.port.postMessage({ type: 'STEP', step: -1, active: true });
-                }
-                this.trigOut = false;
+                this.armed = true;
             }
 
-            // 2. Clock falling edge: clear trigOut and allow next clock rising edge
-            if (!isHi) {
+            // 2. Clock falling edge (EOS): check if final active step just finished
+            if (!isHi && this.lastHi) {
                 this.lastHi = false;
-                this.trigOut = false;
-            }
-
-            // 3. Clock rising edge: advance step or transition
-            if (isHi && !this.lastHi) {
-                this.lastHi = true;
-                if (this.active) {
+                if (this.active && this.transOutPatched) {
                     let nextStep = this.step;
-                    let found = false;
                     let wrapped = false;
                     for (let a = 0; a < numSteps; a++) {
                         nextStep = (nextStep + 1) % numSteps;
@@ -125,19 +90,43 @@ export class SeqProcessor extends AudioWorkletProcessor {
                         }
                         const st = this.steps[nextStep];
                         if (st && (typeof st === 'object' ? st.active !== false : true)) {
-                            found = true;
                             break;
                         }
                     }
-
-                    if (wrapped && this.transOutPatched) {
-                        // Sequence finished: transition out to next module
+                    if (wrapped) {
                         this.active = false;
                         this.step = -1;
                         this.gate = 0.0;
                         this.trigOut = true;
                         this.port.postMessage({ type: 'STEP', step: -1, active: false });
-                    } else if (found) {
+                    }
+                }
+            }
+
+            // 3. Clock rising edge: consume reservation and advance step
+            if (isHi && !this.lastHi) {
+                this.lastHi = true;
+                this.trigOut = false;
+
+                if (!this.active && this.armed) {
+                    this.active = true;
+                    this.armed = false;
+                    this.step = -1;
+                }
+
+                if (this.active) {
+                    let nextStep = this.step;
+                    let found = false;
+                    for (let a = 0; a < numSteps; a++) {
+                        nextStep = (nextStep + 1) % numSteps;
+                        const st = this.steps[nextStep];
+                        if (st && (typeof st === 'object' ? st.active !== false : true)) {
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (found) {
                         this.step = nextStep;
                         const cur = this.steps[this.step];
                         if (cur != null) {
@@ -168,7 +157,7 @@ export class SeqProcessor extends AudioWorkletProcessor {
 
             if (cvOut) cvOut[i] = this.cv;
             if (gOut) gOut[i] = this.gate;
-            if (transOut) transOut[i] = (this.trigOut && isHi) ? 1.0 : 0.0;
+            if (transOut) transOut[i] = (this.trigOut && !isHi) ? 1.0 : 0.0;
         }
         return true;
     }

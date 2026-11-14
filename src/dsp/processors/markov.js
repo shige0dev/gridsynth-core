@@ -9,6 +9,7 @@ export class MarkovProcessor extends AudioWorkletProcessor {
         this.holdClocks = 1;
         this.clockCount = 0;
         this.clkActive = false;
+        this.armed = false;
         this.trigOutCh = -1;
         this.shotActive = false;
 
@@ -29,6 +30,7 @@ export class MarkovProcessor extends AudioWorkletProcessor {
             } else if (e.data.type === 'TRIGGER_TOGGLE') {
                 this.state = this.state ? 0 : 1;
                 this.clockCount = 0;
+                this.armed = false;
                 this.trigOutCh = -1;
                 this.clkActive = false;
                 this.shotActive = false;
@@ -36,6 +38,7 @@ export class MarkovProcessor extends AudioWorkletProcessor {
             } else if (e.data.type === 'RESET') {
                 this.state = this.initOn ? 1 : 0;
                 this.clockCount = 0;
+                this.armed = false;
                 this.trigOutCh = -1;
                 this.clkActive = false;
                 this.shotActive = false;
@@ -58,102 +61,91 @@ export class MarkovProcessor extends AudioWorkletProcessor {
             const trigV = inTrig ? inTrig[i] : 0.0;
             const isClkHi = clkV >= 0.5;
 
-            // 1. 他ノードからの遷移トリガー受信（バトン受け口）
-            if (trigV >= 0.5) {
-                if (this.state === 0) {
-                    this.state = 1;
-                    this.clockCount = 1;
-                    this.clkActive = true; // 現在の立ち上がり拍でバトンを受け取ったので同拍での即時遷移を防止
-                    this.shotActive = true; // ノード発行時のワンショットトリガーをこの拍で発火
-                    const rem = Math.max(1, this.holdClocks);
-                    this.port.postMessage({ type: 'STATE_CHANGED', state: 1, remaining: rem, clockCount: 1 });
-                }
+            // 1. 他ノードやトリガ/ノイズからの始動予約（1回でも >= 0.4V を受ければ次クロック用にチャージ）
+            if (trigV >= 0.4 && this.state === 0) {
+                this.armed = true;
             }
 
-            // 2. クロック入力の立ち下がり検知（ロック解除・トリガー消灯）
-            if (clkV < 0.3) {
+            // 2. クロック立ち下がり検知（EOS: End of Step 遷移判定 & 出力）
+            if (clkV < 0.3 && this.clkActive) {
                 this.clkActive = false;
-                this.trigOutCh = -1;
-                this.shotActive = false; // 1拍のクロック終了でワンショットトリガー消灯
-            }
+                this.shotActive = false;
 
-            // 3. クロック立ち上がり検知と状態遷移
-            const isRising = (isClkHi && !this.clkActive);
-            if (isRising) {
-                this.clkActive = true;
+                if (this.state === 1 && this.clockCount >= this.holdClocks) {
+                    const w0 = Math.max(0, this.weights[0] || 0);
+                    const w1 = Math.max(0, this.weights[1] || 0);
+                    const w2 = Math.max(0, this.weights[2] || 0);
+                    const w3 = Math.max(0, this.weights[3] || 0);
+                    const totalW = w0 + w1 + w2 + w3;
 
-                if (this.state === 1) {
-                    if (this.clockCount === 0) {
-                        // 初期起動ノードの第1拍目
-                        this.clockCount = 1;
-                        this.shotActive = true; // 初回発行時のワンショットトリガー発火
-                        const rem = Math.max(1, this.holdClocks);
-                        this.port.postMessage({ type: 'STATE_CHANGED', state: 1, remaining: rem, clockCount: 1 });
-                    } else {
-                        // 最低保持クロック数（holdClocks）に達している場合、4要素の確率遷移を判定
-                        if (this.clockCount >= this.holdClocks) {
-                            const w0 = Math.max(0, this.weights[0] || 0);
-                            const w1 = Math.max(0, this.weights[1] || 0);
-                            const w2 = Math.max(0, this.weights[2] || 0);
-                            const w3 = Math.max(0, this.weights[3] || 0);
-                            const totalW = w0 + w1 + w2 + w3;
-
-                            if (totalW > 0) {
-                                const r = Math.random() * totalW;
-                                let acc = 0;
-
-                                // 1. TRANS_OUT 0 (内部自己結線ノーマライズ: 自己留まり)
-                                acc += w0;
-                                if (r < acc) {
-                                    // 外部ポートへは出力せず、内部で自身が継続（カウンタ優先: 再びholdClocks拍保持）
-                                    this.clockCount = 1;
-                                    this.trigOutCh = -1;
-                                    this.shotActive = true;
-                                    const rem = Math.max(1, this.holdClocks);
-                                    this.port.postMessage({ type: 'STATE_CHANGED', state: 1, remaining: rem, clockCount: 1 });
-                                } else {
-                                    // 2. 外部端子 trans_out1 〜 trans_out3 への射出
-                                    let chosen = -1;
-                                    const extWeights = [w1, w2, w3];
-                                    for (let k = 0; k < 3; k++) {
-                                        acc += extWeights[k];
-                                        if (r < acc) {
-                                            chosen = k;
-                                            break;
-                                        }
-                                    }
-                                    if (chosen !== -1) {
-                                        // 外部ノードへ遷移！
-                                        this.state = 0;
-                                        this.clockCount = 0;
-                                        this.trigOutCh = chosen;
-                                        this.shotActive = false;
-                                        this.port.postMessage({ type: 'STATE_CHANGED', state: 0, remaining: 0, clockCount: 0 });
-                                    }
-                                }
-                            } else {
-                                // フェイルセーフ: すべて0なら100%自己保持（カウンタを1にリセットして再周回）
-                                this.clockCount = 1;
-                                this.trigOutCh = -1;
-                                this.shotActive = true;
-                                const rem = Math.max(1, this.holdClocks);
-                                this.port.postMessage({ type: 'STATE_CHANGED', state: 1, remaining: rem, clockCount: 1 });
-                            }
+                    if (totalW > 0) {
+                        const r = Math.random() * totalW;
+                        let acc = w0;
+                        if (r < acc) {
+                            // 自己継続: 次のクロック立ち上がりで再び clockCount=1 から開始
+                            this.clockCount = 0;
+                            this.trigOutCh = -1;
                         } else {
-                            // holdClocks 満了前は滞在クロック数を加算
-                            this.clockCount++;
-                            const rem = Math.max(1, this.holdClocks - this.clockCount + 1);
-                            this.port.postMessage({ type: 'STATE_CHANGED', state: 1, remaining: rem, clockCount: this.clockCount });
+                            let chosen = -1;
+                            const extWeights = [w1, w2, w3];
+                            for (let k = 0; k < 3; k++) {
+                                acc += extWeights[k];
+                                if (r < acc) {
+                                    chosen = k;
+                                    break;
+                                }
+                            }
+                            if (chosen !== -1) {
+                                // 外部ノードへ遷移（EOS先行パルス出力）
+                                this.state = 0;
+                                this.clockCount = 0;
+                                this.trigOutCh = chosen;
+                                this.port.postMessage({ type: 'STATE_CHANGED', state: 0, remaining: 0, clockCount: 0 });
+                            }
                         }
+                    } else {
+                        // フェイルセーフ: すべて0なら自己継続
+                        this.clockCount = 0;
+                        this.trigOutCh = -1;
                     }
                 }
             }
 
-            // 4. 外部トリガ出力（trans_out1..3）: クロックHighの間、遷移先ポートへパルス出力
+            // 3. クロック立ち上がり検知と発火（予約消費・滞在カウンタ更新）
+            const isRising = (isClkHi && !this.clkActive);
+            if (isRising) {
+                this.clkActive = true;
+                this.trigOutCh = -1; // 前拍EOSのTRANS_OUTをクリア
+
+                if (this.state === 0 && this.armed) {
+                    this.state = 1;
+                    this.armed = false;
+                    this.clockCount = 1;
+                    this.shotActive = true;
+                    const rem = Math.max(1, this.holdClocks);
+                    this.port.postMessage({ type: 'STATE_CHANGED', state: 1, remaining: rem, clockCount: 1 });
+                } else if (this.state === 1) {
+                    if (this.clockCount === 0) {
+                        // 初期起動または自己継続の第1拍目
+                        this.clockCount = 1;
+                        this.shotActive = true;
+                        const rem = Math.max(1, this.holdClocks);
+                        this.port.postMessage({ type: 'STATE_CHANGED', state: 1, remaining: rem, clockCount: 1 });
+                    } else {
+                        // holdClocks 満了前は滞在クロック数を加算
+                        this.clockCount++;
+                        this.shotActive = false;
+                        const rem = Math.max(1, this.holdClocks - this.clockCount + 1);
+                        this.port.postMessage({ type: 'STATE_CHANGED', state: 1, remaining: rem, clockCount: this.clockCount });
+                    }
+                }
+            }
+
+            // 4. 外部トリガ出力（trans_out1..3）: EOS（クロックLowの間）に遷移先ポートへ先行パルス出力
             for (let k = 0; k < 3; k++) {
                 const outCh = outArr[k];
                 if (outCh) {
-                    outCh[i] = (this.trigOutCh === k && isClkHi) ? 1.0 : 0.0;
+                    outCh[i] = (this.trigOutCh === k && !isClkHi) ? 1.0 : 0.0;
                 }
             }
 
