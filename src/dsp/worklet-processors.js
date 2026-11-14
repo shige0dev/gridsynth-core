@@ -1,4 +1,4 @@
-// v1.0.0803
+// v1.0.0804
 import './processors/clock.js?v=621';
 import './processors/seq.js?v=800';
 import './processors/adsr.js';
@@ -8,7 +8,7 @@ import './processors/sh.js?v=462';
 import './processors/fold.js';
 import './processors/cv-delay.js';
 import './processors/scope.js?v=791';
-import './processors/pat.js?v=621';
+import './processors/pat.js?v=804';
 import './processors/markov.js?v=797';
 import './processors/chord.js?v=641';
 import './processors/fm.js?v=459';

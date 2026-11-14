@@ -171,12 +171,16 @@ export const PAT = {
             _tokens: parsePatternToTokens(pattern),
             cycleBeats: 4,
             gateLen: 0.8,
+            keyMode: 'loop',
             presetName: '16-step',
             _addPitch: 'c2'
         };
     },
     ports: () => ({
-        in: [{ port: 'reset_in', pin: 5, color: 'bg-red-500' }],
+        in: [
+            { port: 'reset_in', pin: 5, color: 'bg-red-500' },
+            { port: 'keygate_in', pin: 6, color: 'bg-orange-500', label: 'RUN' }
+        ],
         out: [
             { port: 'gate_out', pin: 10, color: 'bg-red-500' },
             { port: 'cv_out', pin: 11, color: 'bg-yellow-400' }
@@ -237,6 +241,7 @@ export const PAT = {
         const pat = m.pattern || 'c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2';
         const curBar = (m.cycleBeats || 4) / 4;
         const gatePct = Math.round((m.gateLen ?? 0.8) * 100);
+        const keyMode = m.keyMode === 'oneshot' ? 'oneshot' : 'loop';
         const curAddPitch = (m._addPitch || 'c2').toUpperCase();
         if (m._confirmedPattern === undefined) {
             m._confirmedPattern = pat;
@@ -266,6 +271,7 @@ export const PAT = {
                             <input type="range" id="pat-gate-${uid}" min="10" max="95" step="5" value="${gatePct}" class="w-10 h-1 accent-cyan-400 cursor-pointer">
                             <span id="pat-gate-disp-${uid}" class="text-[7.5px] font-mono font-bold text-cyan-300 min-w-[18px] text-right">${gatePct}%</span>
                         </div>
+                        <button id="pat-keymode-${uid}" class="h-5 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors shrink-0 ${keyMode === 'loop' ? 'bg-orange-600 text-white border-orange-500' : 'bg-purple-600 text-white border-purple-500'}" title="RUN / KEYGATE_IN (PIN6) 動作モード切替 (LOOP: ゲートONの間ループ / 1-SHOT: 1周で停止)">RUN: ${keyMode === 'loop' ? 'LOOP' : '1-SHOT'}</button>
                     </div>
                     <div class="flex items-center gap-1 shrink-0">
                         <button id="pat-btn-manual-${uid}" class="h-5 px-1.5 flex items-center gap-0.5 text-[7px] font-bold ${m._showManual ? 'bg-cyan-950 text-cyan-300 border-cyan-500' : 'bg-slate-900 text-slate-400'} rounded border border-slate-700 uppercase">
@@ -537,6 +543,11 @@ export const PAT = {
             if (btn.dataset.pattern) { m._tokens = parsePatternToTokens(btn.dataset.pattern); selectedIds.clear(); sync(false); }
         }));
         root.querySelector(`#pat-bars-${uid}`)?.addEventListener('change', (e) => { m.cycleBeats = (parseFloat(e.target.value) || 1) * 4; cb(); });
+        root.querySelector(`#pat-keymode-${uid}`)?.addEventListener('click', () => {
+            m.keyMode = m.keyMode === 'oneshot' ? 'loop' : 'oneshot';
+            cb();
+            ctx?.reRenderModal?.();
+        });
         root.querySelector(`#pat-gate-${uid}`)?.addEventListener('input', (e) => {
             const v = parseInt(e.target.value, 10);
             m.gateLen = v / 100.0;

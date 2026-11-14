@@ -24,6 +24,10 @@ export class PatProcessor extends AudioWorkletProcessor {
         this.activeIsRest = true;
         this.postCounter = 0;
         this.lastResetTrig = false;
+        this.lastKeyHi = false;
+        this.keyGatePatched = false;
+        this.keyMode = 'loop';
+        this.active = true;
 
         this.port.onmessage = e => {
             if (e.data.type === 'SET_EVENTS') {
@@ -32,6 +36,23 @@ export class PatProcessor extends AudioWorkletProcessor {
                 }
                 if (e.data.cycleBeats) this.cycleBeats = e.data.cycleBeats;
                 if (e.data.gateLen !== undefined) this.gateLen = Math.max(0.05, Math.min(0.98, e.data.gateLen));
+            } else if (e.data.type === 'SET_PATCH') {
+                if (e.data.keyGatePatched !== undefined) {
+                    const nextKey = Boolean(e.data.keyGatePatched);
+                    if (nextKey !== this.keyGatePatched) {
+                        this.keyGatePatched = nextKey;
+                        this.lastKeyHi = false;
+                        if (this.keyGatePatched) {
+                            this.resetPlayhead(false);
+                        } else {
+                            this.active = true;
+                        }
+                    }
+                }
+            } else if (e.data.type === 'SET_CONFIG') {
+                if (e.data.keyMode !== undefined) {
+                    this.keyMode = e.data.keyMode === 'oneshot' ? 'oneshot' : 'loop';
+                }
             } else if (e.data.type === 'SET_STATE') {
                 if (typeof e.data.running === 'boolean') {
                     if (e.data.running && !this.running) {
@@ -39,26 +60,50 @@ export class PatProcessor extends AudioWorkletProcessor {
                         this.cycleCount = 0;
                         this.gap = 0;
                         this.activeIdx = -1;
+                        this.activeTokenId = null;
                         this.activeLabel = '\u2014';
                         this.activeIsRest = true;
                     }
                     this.running = e.data.running;
                 }
             } else if (e.data.type === 'RESET') {
-                this.phase = 0.0;
-                this.cycleCount = 0;
-                this.gap = 0;
-                this.activeIdx = -1;
-                this.activeLabel = '\u2014';
-                this.activeIsRest = true;
+                if (e.data.keyMode !== undefined) {
+                    this.keyMode = e.data.keyMode === 'oneshot' ? 'oneshot' : 'loop';
+                }
                 this.lastResetTrig = false;
+                this.lastKeyHi = false;
+                this.resetPlayhead(!this.keyGatePatched);
             }
         };
+    }
+
+    resetPlayhead(active) {
+        this.active = active;
+        this.phase = 0.0;
+        this.cycleCount = 0;
+        this.gap = 0;
+        this.gate = 0;
+        this.activeIdx = -1;
+        this.activeTokenId = null;
+        this.activeLabel = '\u2014';
+        this.activeIsRest = true;
+        this.port.postMessage({
+            type: 'PLAYHEAD',
+            phase: 0.0,
+            cycleCount: 0,
+            activeIdx: -1,
+            activeTokenId: null,
+            activeLabel: '\u2014',
+            isRest: true,
+            gate: false,
+            powerOn: this.running
+        });
     }
 
     process(ins, outs, params) {
         const cvOut = outs[0]?.[0], gOut = outs[1]?.[0];
         const rstIn = ins[0]?.[0];
+        const keyIn = ins[1]?.[0];
         const len = (cvOut || gOut || []).length || 128;
         const sr = getSR();
         const bpm = params.bpm[0] || 120.0;
@@ -78,7 +123,31 @@ export class PatProcessor extends AudioWorkletProcessor {
             }
             this.lastResetTrig = isRstHi;
 
-            if (!this.running) {
+            // 2. RUN / KEYGATE_IN (PIN6) 制御:
+            // - 未結線: 常時スタンバイ (active = true)
+            // - 結線時: ゲート待ち、立ち上がりで再生開始、ゲートオフで停止 & リセット
+            if (!this.keyGatePatched) {
+                this.active = true;
+                this.lastKeyHi = false;
+            } else {
+                const isKeyHi = (keyIn ? keyIn[i] : 0.0) >= 0.4;
+                if (!isKeyHi) {
+                    if (this.lastKeyHi || this.active || this.phase !== 0.0 || this.gate !== 0) {
+                        this.resetPlayhead(false);
+                    }
+                    this.lastKeyHi = false;
+                } else if (!this.lastKeyHi) {
+                    this.lastKeyHi = true;
+                    this.active = true;
+                    this.phase = 0.0;
+                    this.cycleCount = 0;
+                    this.gap = 0;
+                    this.activeIdx = -1;
+                    this.activeTokenId = null;
+                }
+            }
+
+            if (!this.running || !this.active) {
                 if (cvOut) cvOut[i] = this.cv;
                 if (gOut) gOut[i] = 0;
                 continue;
@@ -89,6 +158,12 @@ export class PatProcessor extends AudioWorkletProcessor {
                 this.phase -= 1.0;
                 this.cycleCount++;
                 this.activeIdx = -1;
+                if (this.keyGatePatched && this.keyMode === 'oneshot' && this.cycleCount >= this.cycles.length) {
+                    this.resetPlayhead(false);
+                    if (cvOut) cvOut[i] = this.cv;
+                    if (gOut) gOut[i] = 0;
+                    continue;
+                }
             }
 
             const curEvents = this.cycles[this.cycleCount % this.cycles.length] || [];
@@ -141,7 +216,7 @@ export class PatProcessor extends AudioWorkletProcessor {
         }
 
         this.postCounter += len;
-        if (this.running && this.postCounter >= 256) {
+        if (this.running && this.active && this.postCounter >= 256) {
             this.postCounter = 0;
             this.port.postMessage({
                 type: 'PLAYHEAD',

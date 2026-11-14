@@ -15,8 +15,9 @@ function getCycles(d) {
 
 export const PAT = {
     create: (ctx, d, patch, eng) => {
+        const keyMode = d.keyMode === 'oneshot' ? 'oneshot' : 'loop';
         const w = new AudioWorkletNode(ctx, 'pat-processor', {
-            numberOfInputs: 1,
+            numberOfInputs: 2,
             numberOfOutputs: 2,
             parameterData: {
                 bpm: eng?.masterBPM || 120
@@ -30,12 +31,26 @@ export const PAT = {
             gateLen: d.gateLen ?? 0.80
         });
         w.port.postMessage({
+            type: 'SET_CONFIG',
+            keyMode
+        });
+        w.port.postMessage({
             type: 'SET_STATE',
             running: eng?.isPlaying || false
         });
 
         const rstIn = ctx.createGain();
-        rstIn.connect(w, 0, 0); // input 0: reset_in
+        const keyGateIn = ctx.createGain();
+        rstIn.connect(w, 0, 0);     // input 0: reset_in (PIN 5)
+        keyGateIn.connect(w, 0, 1); // input 1: keygate_in / RUN (PIN 6)
+
+        const sendPatch = (p) => {
+            const appPatch = window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id) : null;
+            const targetPatch = p || appPatch;
+            const keyGatePatched = Boolean(targetPatch?.has?.('keygate_in'));
+            w.port.postMessage({ type: 'SET_PATCH', keyGatePatched });
+        };
+        sendPatch(patch || null);
 
         const cv = ctx.createGain(), gt = ctx.createGain();
         w.connect(cv, 0, 0);
@@ -61,11 +76,13 @@ export const PAT = {
         };
 
         return {
-            nodes: { w, cv, gt, rstIn },
+            nodes: { w, cv, gt, rstIn, keyGateIn },
             inputs: {
-                reset_in: rstIn
+                reset_in: rstIn,
+                keygate_in: keyGateIn
             },
             outputs: { cv_out: cv, gate_out: gt },
+            updatePatchState: (p) => sendPatch(p),
             resetStep: () => {
                 latestPhase = 0;
                 latestIdx = -1;
@@ -97,6 +114,13 @@ export const PAT = {
             cycleBeats: d.cycleBeats || 4,
             gateLen: d.gateLen ?? 0.80
         });
+        inst.nodes.w.port.postMessage({
+            type: 'SET_CONFIG',
+            keyMode: d.keyMode === 'oneshot' ? 'oneshot' : 'loop'
+        });
+        if (patch !== undefined && inst?.updatePatchState) {
+            inst.updatePatchState(patch);
+        }
     }
 };
 
