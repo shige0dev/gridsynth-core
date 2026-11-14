@@ -215,7 +215,8 @@ export const RENDER = {
                                     float edgeFactor = min(min(a3.x, a3.y), a3.z);
                                     float alpha = 1.0 - edgeFactor;
                                     if (alpha < 0.02) discard;
-                                    gl_FragColor = vec4(uColor * (1.0 + uGlow * 1.8), alpha);
+                                    float coreGlow = 1.0 + uGlow * 1.8 * smoothstep(0.1, 0.85, alpha);
+                                    gl_FragColor = vec4(uColor * coreGlow, alpha);
                                 }
                             `,
                             extensions: { derivatives: true },
@@ -345,7 +346,8 @@ export const RENDER = {
                     tMip0: { value: bloomMips[0].texture },
                     tMip1: { value: bloomMips[1].texture },
                     tMip2: { value: bloomMips[2].texture },
-                    tMip3: { value: bloomMips[3].texture }
+                    tMip3: { value: bloomMips[3].texture },
+                    uTexelSize: { value: new THREE.Vector2(1 / BUFFER_SIZE, 1 / BUFFER_SIZE) }
                 },
                 vertexShader: quadVert,
                 fragmentShader: `
@@ -354,7 +356,52 @@ export const RENDER = {
                     uniform sampler2D tMip1;
                     uniform sampler2D tMip2;
                     uniform sampler2D tMip3;
+                    uniform vec2 uTexelSize;
                     varying vec2 vUv;
+
+                    float fxaaLuma(vec4 c) {
+                        vec3 t = clamp(c.rgb * max(c.a, 0.25), 0.0, 1.0);
+                        return dot(sqrt(t), vec3(0.299, 0.587, 0.114));
+                    }
+
+                    vec4 sampleFxaa(sampler2D tex, vec2 uv, vec2 px) {
+                        vec4 cM  = texture2D(tex, uv);
+                        vec4 cNW = texture2D(tex, clamp(uv + vec2(-px.x, -px.y), 0.0, 1.0));
+                        vec4 cNE = texture2D(tex, clamp(uv + vec2( px.x, -px.y), 0.0, 1.0));
+                        vec4 cSW = texture2D(tex, clamp(uv + vec2(-px.x,  px.y), 0.0, 1.0));
+                        vec4 cSE = texture2D(tex, clamp(uv + vec2( px.x,  px.y), 0.0, 1.0));
+
+                        float lM  = fxaaLuma(cM);
+                        float lNW = fxaaLuma(cNW);
+                        float lNE = fxaaLuma(cNE);
+                        float lSW = fxaaLuma(cSW);
+                        float lSE = fxaaLuma(cSE);
+
+                        float lMin = min(lM, min(min(lNW, lNE), min(lSW, lSE)));
+                        float lMax = max(lM, max(max(lNW, lNE), max(lSW, lSE)));
+                        if (lMax - lMin < max(0.035, lMax * 0.12)) {
+                            return cM;
+                        }
+
+                        vec2 dir = vec2(
+                            -((lNW + lNE) - (lSW + lSE)),
+                             ((lNW + lSW) - (lNE + lSE))
+                        );
+                        float dirReduce = max((lNW + lNE + lSW + lSE) * 0.03125, 0.0078125);
+                        float rcpDirMin = 1.0 / (min(abs(dir.x), abs(dir.y)) + dirReduce);
+                        dir = clamp(dir * rcpDirMin, vec2(-4.0), vec2(4.0)) * px;
+
+                        vec4 cA = 0.5 * (
+                            texture2D(tex, clamp(uv + dir * (1.0 / 3.0 - 0.5), 0.0, 1.0)) +
+                            texture2D(tex, clamp(uv + dir * (2.0 / 3.0 - 0.5), 0.0, 1.0))
+                        );
+                        vec4 cB = cA * 0.5 + 0.25 * (
+                            texture2D(tex, clamp(uv + dir * -0.5, 0.0, 1.0)) +
+                            texture2D(tex, clamp(uv + dir *  0.5, 0.0, 1.0))
+                        );
+                        float lB = fxaaLuma(cB);
+                        return (lB < lMin || lB > lMax) ? cA : cB;
+                    }
 
                     vec3 softTone(vec3 x) {
                         vec3 over = max(x - vec3(0.85), vec3(0.0));
@@ -362,7 +409,7 @@ export const RENDER = {
                     }
 
                     void main() {
-                        vec4 baseCol = texture2D(tColor, vUv);
+                        vec4 baseCol = sampleFxaa(tColor, vUv, uTexelSize);
                         vec3 bloom = texture2D(tMip0, vUv).rgb * 0.45
                                    + texture2D(tMip1, vUv).rgb * 0.35
                                    + texture2D(tMip2, vUv).rgb * 0.25
@@ -595,6 +642,9 @@ export const RENDER = {
             renderCanvas.height = targetSize;
             renderer.setSize(targetSize, targetSize, false);
             if (baseTarget) baseTarget.setSize(targetSize, targetSize);
+            if (compositeMat?.uniforms?.uTexelSize) {
+                compositeMat.uniforms.uTexelSize.value.set(1 / targetSize, 1 / targetSize);
+            }
             // bloomMips は [256, 128, 64, 32] 固定を維持し、高解像度化しても画面に対するブラー半径を一定に保つ
             const wireScale = targetSize > BUFFER_SIZE ? Math.sqrt(targetSize / BUFFER_SIZE) : 1.0;
             materialCache.forEach(mat => {
