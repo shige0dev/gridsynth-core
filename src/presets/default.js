@@ -11,7 +11,7 @@ import { preset11 } from './demos/11_fmcore_2op_demo.js?v=459';
 import { preset12 } from './demos/12_chord_arpeggio.js?v=459';
 import { preset13 } from './demos/13_wave_chop.js?v=459';
 import { preset14 } from './demos/14_16_pad_drumkit.js?v=459';
-import { preset15 } from './demos/15_3d_video_wall.js?v=710';
+import { preset15 } from './demos/15_3d_video_wall.js?v=776';
 
 export const getDefaultPresets = () => ({
     '01_DELAY_TECHNO': preset01,
