@@ -75,7 +75,7 @@ export const MIX = {
         const inputs = {}, nodes = { sumBus, limiter, shaper, an, out };
         for (let c = 1; c <= 4; c++) {
             const inG = ctx.createGain();
-            inG.gain.value = d[`lvl${c}`] ?? 1.0;
+            inG.gain.value = d[`mute${c}`] ? 0 : (d[`lvl${c}`] ?? 1.0);
             inG.connect(sumBus);
             inputs[`wave_in${c}`] = inG;
             inputs[`in${c}`] = inG;
@@ -109,7 +109,10 @@ export const MIX = {
     },
     update: (ctx, inst, d) => {
         for (let c = 1; c <= 4; c++) {
-            if (inst.nodes[`in${c}`] && d[`lvl${c}`] !== undefined) AudioHelpers.set(inst.nodes[`in${c}`].gain, d[`lvl${c}`], ctx);
+            if (inst.nodes[`in${c}`]) {
+                const targetGain = d[`mute${c}`] ? 0 : (d[`lvl${c}`] ?? 1.0);
+                AudioHelpers.set(inst.nodes[`in${c}`].gain, targetGain, ctx);
+            }
         }
     }
 };
