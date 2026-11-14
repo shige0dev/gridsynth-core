@@ -48,6 +48,7 @@ function createSeqAudio(stepCount) {
                 });
             };
             sendPatch(patchState);
+            w.port.postMessage({ type: 'RESET', initOn: isInit });
 
             let st = -1;
             let liveActive = isInit;
