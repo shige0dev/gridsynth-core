@@ -35,10 +35,10 @@ import { particleDefs } from './defs/particle.js?v=757';
 import { rotateDefs } from './defs/rotate.js?v=689';
 import { moveDefs } from './defs/move.js?v=701';
 import { scaleDefs } from './defs/scale.js?v=702';
-import { vertexDefs } from './defs/vertex.js?v=714';
+import { vertexDefs } from './defs/vertex.js?v=773';
 import { scatterDefs } from './defs/scatter.js?v=714';
 import { renderDefs } from './defs/render.js?v=768';
-import { vfxDefs } from './defs/vfx.js?v=770';
+import { vfxDefs } from './defs/vfx.js?v=773';
 import { vmixDefs } from './defs/vmix.js?v=753';
 import { displayDefs } from './defs/display.js?v=699';
 

@@ -44,7 +44,6 @@ export const VFX = {
         const amt = Math.round((m.amount ?? 0.7) * 100);
         return `
         <div class="flex flex-col items-center justify-center leading-none gap-0.5 pointer-events-none select-none text-center">
-            <span class="text-[7.5px] font-bold text-amber-400/90 tracking-tight">VIDEO FX</span>
             <span data-vfx-mode class="text-[12px] font-mono font-extrabold text-emerald-300 tracking-tight">${mode}</span>
             <span data-vfx-amt class="text-[8px] font-mono font-bold text-cyan-300">${amt}%</span>
         </div>`;

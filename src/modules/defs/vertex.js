@@ -34,13 +34,9 @@ export const VERTEX = {
         const depth = Number(m?.depth ?? 0.35);
         const pct = Math.round(depth * 100);
         return `
-        <div class="flex flex-col items-center justify-between w-full h-full py-1 pointer-events-none select-none text-center">
-            <span data-vtx-mode class="text-[8px] font-mono font-bold text-purple-400 uppercase tracking-tight">${mode}</span>
-            <div class="flex flex-col items-center gap-0.5 leading-none">
-                <span data-vtx-depth class="text-[12px] font-mono font-extrabold text-cyan-300">${pct}%</span>
-                <span class="text-[7px] font-mono text-purple-300">DISPLACEMENT</span>
-            </div>
-            <span class="text-[6.5px] font-mono text-slate-500 uppercase tracking-tight">FREQ ${Number(m?.freq ?? 3.0).toFixed(1)}</span>
+        <div class="flex flex-col items-center justify-center leading-none gap-0.5 pointer-events-none select-none text-center">
+            <span data-vtx-mode class="text-[12px] font-mono font-extrabold text-purple-300 tracking-tight">${mode}</span>
+            <span data-vtx-depth class="text-[8px] font-mono font-bold text-cyan-300">${pct}%</span>
         </div>`;
     },
     renderModal: (m, ctx) => {
