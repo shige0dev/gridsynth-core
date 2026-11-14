@@ -32,6 +32,7 @@ import { tiltDefs } from './defs/tilt.js?v=623';
 import { geoDefs } from './defs/geo.js?v=787';
 import { pathDefs } from './defs/path.js?v=787';
 import { particleDefs } from './defs/particle.js?v=757';
+import { wave3dDefs } from './defs/wave3d.js?v=811';
 import { rotateDefs } from './defs/rotate.js?v=779';
 import { moveDefs } from './defs/move.js?v=701';
 import { scaleDefs } from './defs/scale.js?v=702';
@@ -72,6 +73,7 @@ export const MODULE_REGISTRY = {
     ...geoDefs,
     ...pathDefs,
     ...particleDefs,
+    ...wave3dDefs,
     ...rotateDefs,
     ...moveDefs,
     ...scaleDefs,

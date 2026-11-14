@@ -32,6 +32,7 @@ import { tiltAudioDefs } from './defs/tilt.js?v=623';
 import { geoAudioDefs } from './defs/geo.js?v=786';
 import { pathAudioDefs } from './defs/path.js?v=787';
 import { particleAudioDefs } from './defs/particle.js?v=779';
+import { wave3dAudioDefs } from './defs/wave3d.js?v=811';
 import { rotateAudioDefs } from './defs/rotate.js?v=779';
 import { moveAudioDefs } from './defs/move.js?v=779';
 import { scaleAudioDefs } from './defs/scale.js?v=779';
@@ -72,6 +73,7 @@ export const AUDIO_REGISTRY = {
     ...geoAudioDefs,
     ...pathAudioDefs,
     ...particleAudioDefs,
+    ...wave3dAudioDefs,
     ...rotateAudioDefs,
     ...moveAudioDefs,
     ...scaleAudioDefs,
