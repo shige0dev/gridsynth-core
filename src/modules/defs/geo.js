@@ -29,7 +29,6 @@ export const MATERIAL_STYLES = [
     { id: 'solid', label: 'SOLID' },
     { id: 'normal', label: 'NORMAL' },
     { id: 'toon', label: 'TOON' },
-    { id: 'neon', label: 'NEON' },
     { id: 'point', label: 'POINT' },
     { id: 'glass', label: 'GLASS' }
 ];

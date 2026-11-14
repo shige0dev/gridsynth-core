@@ -1,47 +1,17 @@
 // src/audio/defs/path.js
 // Audio/Engine-side representation for PATH (2D Line, Arc/Circle, Polygon & Planar Geometry)
 
+import { AudioHelpers } from '../helpers.js';
+
 export const PATH = {
     create: (ctx, d, patch, eng) => {
         let patchState = patch || null;
 
-        const gCv = ctx.createGain();
-        const anCv = ctx.createAnalyser();
-        anCv.fftSize = 32;
-        gCv.connect(anCv);
-        if (eng?.silentSink) {
-            gCv.connect(eng.silentSink);
-        }
-
-        const buf = new Float32Array(32);
-        const readCv = (an, def = 0) => {
-            an.getFloatTimeDomainData(buf);
-            let sum = 0;
-            for (let i = 0; i < 32; i++) sum += buf[i];
-            const avg = sum / 32;
-            return isNaN(avg) ? def : avg;
-        };
+        const cvReader = AudioHelpers.createCvReader(ctx, eng);
 
         const RADIUS = 1.2;
         let cachedKey = '';
         let cachedGeom = null;
-
-        const addBarycentric = (srcGeom) => {
-            if (!srcGeom) return srcGeom;
-            const g = srcGeom.index ? srcGeom.toNonIndexed() : srcGeom;
-            if (g !== srcGeom) {
-                try { srcGeom.dispose(); } catch (_) {}
-            }
-            const count = g.attributes?.position?.count || 0;
-            if (count > 0 && !g.attributes.aBarycentric) {
-                const bary = new Float32Array(count * 3);
-                for (let i = 0; i < count; i++) {
-                    bary[i * 3 + (i % 3)] = 1.0;
-                }
-                g.setAttribute('aBarycentric', new THREE.BufferAttribute(bary, 3));
-            }
-            return g;
-        };
 
         const buildLineGeom = (shape, points, edgeSubdiv, effArc, effSides) => {
             const posList = [];
@@ -121,24 +91,24 @@ export const PATH = {
         const buildFillGeom = (shape, points, edgeSubdiv, effArc, effSides) => {
             if (shape === 'line') {
                 const segX = Math.max(1, points - 1);
-                return addBarycentric(new THREE.PlaneGeometry(RADIUS * 2, 0.08, segX, 1));
+                return AudioHelpers.addBarycentric(new THREE.PlaneGeometry(RADIUS * 2, 0.08, segX, 1));
             }
             if (shape === 'arc') {
                 const segs = Math.max(3, points);
                 const totalAngle = Math.PI * 2 * Math.max(0.02, Math.min(1.0, effArc));
-                return addBarycentric(new THREE.CircleGeometry(RADIUS, segs, 0, totalAngle));
+                return AudioHelpers.addBarycentric(new THREE.CircleGeometry(RADIUS, segs, 0, totalAngle));
             }
             // poly
             const S = Math.max(2, Math.min(16, Math.round(effSides)));
             if (S === 2) {
-                return addBarycentric(new THREE.PlaneGeometry(RADIUS * 2, 0.08, Math.max(1, edgeSubdiv), 1));
+                return AudioHelpers.addBarycentric(new THREE.PlaneGeometry(RADIUS * 2, 0.08, Math.max(1, edgeSubdiv), 1));
             }
-            return addBarycentric(new THREE.CircleGeometry(RADIUS, S, 0, Math.PI * 2));
+            return AudioHelpers.addBarycentric(new THREE.CircleGeometry(RADIUS, S, 0, Math.PI * 2));
         };
 
         const getEffectiveParams = () => {
-            const isCv = Boolean(patchState?.has('cv_in') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('cv_in') : false));
-            const cvVal = isCv ? Math.max(0, Math.min(1, readCv(anCv, 0))) : 0;
+            const isCv = AudioHelpers.isPortPatched(d, patchState, 'cv_in');
+            const cvVal = isCv ? Math.max(0, Math.min(1, cvReader.read(0))) : 0;
             const effArc = isCv ? Math.max(0.02, cvVal) : Math.max(0.02, Math.min(1.0, Number(d.arc ?? 1.0)));
             const effSides = isCv ? Math.max(2, Math.min(16, Math.round(2 + cvVal * 14))) : Math.max(2, Math.min(16, Math.round(d.sides ?? 6)));
             return { isCv, effArc, effSides };
@@ -185,8 +155,8 @@ export const PATH = {
         };
 
         return {
-            nodes: { gCv, anCv },
-            inputs: { cv_in: gCv },
+            nodes: { gCv: cvReader.input, anCv: cvReader.analyser },
+            inputs: { cv_in: cvReader.input },
             outputs: { obj_out: null },
             data: d,
             getGeometryPacket,
@@ -211,8 +181,8 @@ export const PATH = {
                     try { cachedGeom.dispose(); } catch (_) {}
                     cachedGeom = null;
                 }
-                try { gCv.disconnect(); } catch (_) {}
-                try { anCv.disconnect(); } catch (_) {}
+                try { cvReader.input.disconnect(); } catch (_) {}
+                try { cvReader.analyser.disconnect(); } catch (_) {}
             }
         };
     },

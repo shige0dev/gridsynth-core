@@ -2,28 +2,12 @@
 // Audio / Engine side implementation for VMIX module
 // 100% GPU-native dual-texture video mixer and transition processor using Three.js GLSL shader
 
+import { AudioHelpers } from '../helpers.js';
+
 export const VMIX = {
     create: (ctx, d, patch, eng) => {
         let patchState = patch || null;
-
-        // CV input for transition mix modulation (PIN4)
-        const gCv = ctx.createGain();
-        const anCv = ctx.createAnalyser();
-        anCv.fftSize = 32;
-        gCv.connect(anCv);
-
-        if (eng?.silentSink) {
-            gCv.connect(eng.silentSink);
-        }
-
-        const buf = new Float32Array(32);
-        const readCv = (an, def = 0) => {
-            an.getFloatTimeDomainData(buf);
-            let sum = 0;
-            for (let i = 0; i < 32; i++) sum += buf[i];
-            const avg = sum / 32;
-            return isNaN(avg) ? def : avg;
-        };
+        const cvReader = AudioHelpers.createCvReader(ctx, eng);
 
         const BUFFER_SIZE = 512;
         let vmixCanvas = null;
@@ -283,40 +267,6 @@ export const VMIX = {
 
         initGPU();
 
-        const getSourceCanvases = () => {
-            if (!eng?.modules) return { cvsA: null, cvsB: null };
-            const pageId = d.pageId || (window.__GS_APP__?.currentPageId ?? '0');
-            const conns = window.__GS_APP__?.connections || window.__GS_APP__?.pagesData?.[pageId]?.connections || [];
-
-            let connSrcA = null;
-            let connSrcB = null;
-
-            for (const c of conns) {
-                const toMod = c.to?.moduleId || (typeof c === 'string' && c.split('>')[1]?.split(':')[0]?.trim());
-                const toPort = c.to?.port || (typeof c === 'string' && c.split('>')[1]?.split(':')[1]?.trim());
-                const fromMod = c.from?.moduleId || (typeof c === 'string' && c.split('>')[0]?.split(':')[0]?.trim());
-
-                if (toMod === d.id) {
-                    if (toPort === 'video_in1' || toPort === 'video_in') {
-                        connSrcA = fromMod;
-                    } else if (toPort === 'video_in2') {
-                        connSrcB = fromMod;
-                    }
-                }
-            }
-
-            const getCvs = (srcId) => {
-                if (!srcId) return null;
-                const inst = eng.modules[`${pageId}/${srcId}`] || eng.modules[srcId];
-                return inst?.getSharedCanvas ? inst.getSharedCanvas() : null;
-            };
-
-            return {
-                cvsA: getCvs(connSrcA),
-                cvsB: getCvs(connSrcB)
-            };
-        };
-
         let lastProcessTime = 0;
         let lastEffectiveMix = 0.5;
 
@@ -325,15 +275,16 @@ export const VMIX = {
             if (now - lastProcessTime < 4) return;
             lastProcessTime = now;
 
-            const isCv = Boolean(patchState?.has('cv_in') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('cv_in') : false));
-            const cvVal = isCv ? readCv(anCv, 0) : 0;
+            const isCv = AudioHelpers.isPortPatched(d, patchState, 'cv_in');
+            const cvVal = isCv ? cvReader.read(0) : 0;
             const manualMix = Number(d.mix ?? 0.5);
             const effMix = Math.max(0, Math.min(1.0, isCv ? cvVal : manualMix));
             lastEffectiveMix = effMix;
 
             if (!renderer || !shaderMaterial) return;
 
-            const { cvsA, cvsB } = getSourceCanvases();
+            const cvsA = AudioHelpers.getSourceCanvas(eng, d, ['video_in1', 'video_in']);
+            const cvsB = AudioHelpers.getSourceCanvas(eng, d, ['video_in2']);
 
             // Bind Texture A
             if (cvsA && cvsA !== lastBoundSourceA) {
@@ -378,9 +329,9 @@ export const VMIX = {
         };
 
         return {
-            nodes: { gCv, anCv },
+            nodes: { gCv: cvReader.input, anCv: cvReader.analyser },
             inputs: {
-                cv_in: gCv,
+                cv_in: cvReader.input,
                 video_in1: null,
                 video_in2: null
             },
@@ -394,13 +345,16 @@ export const VMIX = {
             },
             read: () => {
                 processFrame();
-                const isCv = Boolean(patchState?.has('cv_in') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('cv_in') : false));
+                const isCv = AudioHelpers.isPortPatched(d, patchState, 'cv_in');
                 return {
                     mix: lastEffectiveMix,
                     isCvPatched: isCv,
                     mode: d.mode || 'dissolve',
                     canvas: vmixCanvas
                 };
+            },
+            updatePatchState: (p) => {
+                patchState = p;
             },
             destroy: () => {
                 try {
@@ -409,15 +363,17 @@ export const VMIX = {
                     if (shaderMaterial) shaderMaterial.dispose();
                     if (quadMesh?.geometry) quadMesh.geometry.dispose();
                     if (renderer) renderer.dispose();
+                    cvReader.input.disconnect();
+                    cvReader.analyser.disconnect();
                 } catch (_) {}
             }
         };
     },
-    update: (ctx, inst, d) => {
+    update: (ctx, inst, d, patch) => {
         inst.data = d;
-    },
-    updatePatchState: (ctx, inst, patch) => {
-        // Handled dynamically via engine patchState
+        if (patch !== undefined && inst.updatePatchState) {
+            inst.updatePatchState(patch);
+        }
     }
 };
 

@@ -16,7 +16,6 @@ export const PATH_RENDER_MODES = [
 export const PATH_MATERIALS = [
     { id: 'wire', label: 'WIRE' },
     { id: 'solid', label: 'SOLID' },
-    { id: 'neon', label: 'NEON' },
     { id: 'glass', label: 'GLASS' },
     { id: 'point', label: 'POINT' }
 ];

@@ -2,60 +2,15 @@
 // Audio / Engine side implementation for PARTICLE module
 // Generates or samples 3D point clouds with CV & Gate trigger support
 
+import { AudioHelpers } from '../helpers.js';
+
 export const PARTICLE = {
     create: (ctx, d, patch, eng) => {
         let patchState = patch || null;
 
-        // CV input (PIN4)
-        const gCv = ctx.createGain();
-        const anCv = ctx.createAnalyser();
-        anCv.fftSize = 32;
-        gCv.connect(anCv);
-
-        // Gate/Trigger input (PIN6)
-        const gGate = ctx.createGain();
-        const anGate = ctx.createAnalyser();
-        anGate.fftSize = 32;
-        gGate.connect(anGate);
-
-        if (eng?.silentSink) {
-            gCv.connect(eng.silentSink);
-            gGate.connect(eng.silentSink);
-        }
-
-        const buf = new Float32Array(32);
-        const readAnalyser = (an, def = 0) => {
-            an.getFloatTimeDomainData(buf);
-            let sum = 0;
-            for (let i = 0; i < 32; i++) sum += buf[i];
-            const avg = sum / 32;
-            return isNaN(avg) ? def : avg;
-        };
-
-        const isPortPatched = (portName) => Boolean(
-            patchState?.has(portName) ||
-            (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has(portName) : false)
-        );
-
-        const getSourcePacket = (portName) => {
-            if (!eng?.modules) return null;
-            const pageId = d.pageId || (window.__GS_APP__?.currentPageId ?? '0');
-            const conns = window.__GS_APP__?.connections || window.__GS_APP__?.pagesData?.[pageId]?.connections || [];
-
-            let connSrc = null;
-            for (const c of conns) {
-                const toMod = c.to?.moduleId || (typeof c === 'string' && c.split('>')[1]?.split(':')[0]?.trim());
-                const toPort = c.to?.port || (typeof c === 'string' && c.split('>')[1]?.split(':')[1]?.trim());
-                const fromMod = c.from?.moduleId || (typeof c === 'string' && c.split('>')[0]?.split(':')[0]?.trim());
-                if (toMod === d.id && toPort === portName) {
-                    connSrc = fromMod;
-                    break;
-                }
-            }
-            if (!connSrc) return null;
-            const srcMod = eng.modules[`${pageId}/${connSrc}`] || eng.modules[connSrc];
-            return srcMod?.getGeometryPacket ? srcMod.getGeometryPacket() : null;
-        };
+        // CV input (PIN4) & Gate/Trigger input (PIN6)
+        const cvReader = AudioHelpers.createCvReader(ctx, eng);
+        const gateReader = AudioHelpers.createCvReader(ctx, eng);
 
         // Deterministic PRNG (Mulberry32)
         const mulberry32 = (seed) => {
@@ -187,11 +142,11 @@ export const PARTICLE = {
         };
 
         return {
-            nodes: { gCv, anCv, gGate, anGate },
+            nodes: { gCv: cvReader.input, anCv: cvReader.analyser, gGate: gateReader.input, anGate: gateReader.analyser },
             inputs: {
-                cv_in: gCv,
+                cv_in: cvReader.input,
                 obj_in: null,
-                gate_in: gGate
+                gate_in: gateReader.input
             },
             outputs: {
                 obj_out: null
@@ -204,8 +159,8 @@ export const PARTICLE = {
                 if (typeof THREE === 'undefined') return null;
 
                 // Gate trigger rising-edge detection -> re-seed burst
-                if (isPortPatched('gate_in')) {
-                    const gateVal = readAnalyser(anGate, 0);
+                if (AudioHelpers.isPortPatched(d, patchState, 'gate_in')) {
+                    const gateVal = gateReader.read(0);
                     const gateHigh = gateVal > 0.5;
                     if (gateHigh && !prevGateHigh) {
                         seedOffset = (seedOffset + 1) & 0xffff;
@@ -215,8 +170,8 @@ export const PARTICLE = {
                     prevGateHigh = false;
                 }
 
-                const cvPatched = isPortPatched('cv_in');
-                const cvVal = cvPatched ? readAnalyser(anCv, 0) : 0;
+                const cvPatched = AudioHelpers.isPortPatched(d, patchState, 'cv_in');
+                const cvVal = cvPatched ? cvReader.read(0) : 0;
                 const cvTarget = d.cvTarget || 'spread';
 
                 const count = Math.max(1, Math.min(2000, Math.round(Number(d.count ?? 400))));
@@ -236,7 +191,7 @@ export const PARTICLE = {
 
                 ensureBuffers(count, dist);
 
-                const objPkt = isPortPatched('obj_in') ? getSourcePacket('obj_in') : null;
+                const objPkt = AudioHelpers.isPortPatched(d, patchState, 'obj_in') ? AudioHelpers.getSourcePacket(eng, d, ['obj_in']) : null;
                 const objVerts = objPkt ? extractObjVertices(objPkt) : null;
                 const vertCount = objVerts ? Math.floor(objVerts.length / 3) : 0;
 
@@ -293,10 +248,10 @@ export const PARTICLE = {
                     try { geom.dispose(); } catch (_) {}
                     geom = null;
                 }
-                try { gCv.disconnect(); } catch (_) {}
-                try { anCv.disconnect(); } catch (_) {}
-                try { gGate.disconnect(); } catch (_) {}
-                try { anGate.disconnect(); } catch (_) {}
+                try { cvReader.input.disconnect(); } catch (_) {}
+                try { cvReader.analyser.disconnect(); } catch (_) {}
+                try { gateReader.input.disconnect(); } catch (_) {}
+                try { gateReader.analyser.disconnect(); } catch (_) {}
             }
         };
     },

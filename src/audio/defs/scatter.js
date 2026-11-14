@@ -2,50 +2,12 @@
 // Audio / Engine side implementation for SCATTER module
 // Instantiates child 3D objects onto the vertices of a base mesh geometry
 
+import { AudioHelpers } from '../helpers.js';
+
 export const SCATTER = {
     create: (ctx, d, patch, eng) => {
         let patchState = patch || null;
-
-        // CV input for child object scale modulation (PIN5)
-        const gCv = ctx.createGain();
-        const anCv = ctx.createAnalyser();
-        anCv.fftSize = 32;
-        gCv.connect(anCv);
-
-        if (eng?.silentSink) {
-            gCv.connect(eng.silentSink);
-        }
-
-        const buf = new Float32Array(32);
-        const readCv = (an, def = 0) => {
-            an.getFloatTimeDomainData(buf);
-            let sum = 0;
-            for (let i = 0; i < 32; i++) sum += buf[i];
-            const avg = sum / 32;
-            return isNaN(avg) ? def : avg;
-        };
-
-        const getSourcePacket = (portName) => {
-            if (!eng?.modules) return null;
-            const pageId = d.pageId || (window.__GS_APP__?.currentPageId ?? '0');
-            const conns = window.__GS_APP__?.connections || window.__GS_APP__?.pagesData?.[pageId]?.connections || [];
-
-            let connSrc = null;
-            for (const c of conns) {
-                const toMod = c.to?.moduleId || (typeof c === 'string' && c.split('>')[1]?.split(':')[0]?.trim());
-                const toPort = c.to?.port || (typeof c === 'string' && c.split('>')[1]?.split(':')[1]?.trim());
-                const fromMod = c.from?.moduleId || (typeof c === 'string' && c.split('>')[0]?.split(':')[0]?.trim());
-
-                if (toMod === d.id && toPort === portName) {
-                    connSrc = fromMod;
-                    break;
-                }
-            }
-
-            if (!connSrc) return null;
-            const srcMod = eng.modules[`${pageId}/${connSrc}`] || eng.modules[connSrc];
-            return srcMod?.getGeometryPacket ? srcMod.getGeometryPacket() : null;
-        };
+        const cvReader = AudioHelpers.createCvReader(ctx, eng);
 
         const extractAllVertices = (rootPacket) => {
             if (!rootPacket) return [];
@@ -162,17 +124,17 @@ export const SCATTER = {
             inputs: {
                 base_in: null,
                 child_in: null,
-                cv_in: gCv
+                cv_in: cvReader.input
             },
             outputs: {
                 obj_out: null
             },
             data: d,
             getGeometryPacket: () => {
-                const basePkt = getSourcePacket('base_in');
+                const basePkt = AudioHelpers.getSourcePacket(eng, d, ['base_in']);
                 if (!basePkt) return null;
 
-                const childPkt = getSourcePacket('child_in');
+                const childPkt = AudioHelpers.getSourcePacket(eng, d, ['child_in']);
                 if (!childPkt) {
                     // No child attached: passthrough base
                     return basePkt;
@@ -182,8 +144,8 @@ export const SCATTER = {
                 const vertices = extractAllVertices(basePkt);
                 if (vertices.length === 0) return basePkt;
 
-                const isCv = Boolean(patchState?.has('cv_in') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('cv_in') : false));
-                const cvVal = isCv ? readCv(anCv, 0) : 0;
+                const isCv = AudioHelpers.isPortPatched(d, patchState, 'cv_in');
+                const cvVal = isCv ? cvReader.read(0) : 0;
                 const manualScale = Number(d.scale ?? 0.25);
                 const effScale = Math.max(0.02, Math.min(2.0, isCv ? (manualScale + cvVal * 0.5) : manualScale));
 
@@ -291,7 +253,7 @@ export const SCATTER = {
                 };
             },
             read: () => {
-                const isCv = Boolean(patchState?.has('cv_in') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('cv_in') : false));
+                const isCv = AudioHelpers.isPortPatched(d, patchState, 'cv_in');
                 return {
                     scale: Number(d.scale ?? 0.25),
                     isCvPatched: isCv,
@@ -299,11 +261,20 @@ export const SCATTER = {
                     alignNormal: d.alignNormal !== false
                 };
             },
-            destroy: () => {}
+            updatePatchState: (p) => {
+                patchState = p;
+            },
+            destroy: () => {
+                try { cvReader.input.disconnect(); } catch (_) {}
+                try { cvReader.analyser.disconnect(); } catch (_) {}
+            }
         };
     },
-    update: (ctx, inst, d) => {
+    update: (ctx, inst, d, patch) => {
         inst.data = d;
+        if (patch !== undefined && inst.updatePatchState) {
+            inst.updatePatchState(patch);
+        }
     }
 };
 

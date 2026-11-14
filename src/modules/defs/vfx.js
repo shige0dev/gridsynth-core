@@ -4,7 +4,6 @@ import { UIHelpers } from '../../ui/helpers.js?v=351';
 
 export const EFFECT_MODES = [
     { id: 'blur', label: 'BLUR' },
-    { id: 'bloom', label: 'BLOOM' },
     { id: 'mosaic', label: 'MOSAIC' },
     { id: 'invert', label: 'INVERT' },
     { id: 'crt', label: 'CRT' },

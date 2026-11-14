@@ -60,9 +60,7 @@ export const preset15 = {
           "fov": 29,
           "camRoll": 0,
           "materialOverride": "auto",
-          "vrIpd": -80,
-          "dofFocus": 15,
-          "dofBokeh": 0
+          "vrIpd": -80
         },
         "LFO1": {
           "type": "LFO",
@@ -95,99 +93,67 @@ export const preset15 = {
         },
         "DISPLAY13": {
           "type": "DISPLAY",
-          "divN": 3,
-          "tileX": 0,
-          "tileY": 0
+          "divN": 3
         },
         "DISPLAY14": {
           "type": "DISPLAY",
-          "divN": 3,
-          "tileX": 0.44,
-          "tileY": 0
+          "divN": 3
         },
         "DISPLAY15": {
           "type": "DISPLAY",
-          "divN": 3,
-          "tileX": 0.67,
-          "tileY": 0
+          "divN": 3
         },
         "DISPLAY16": {
           "type": "DISPLAY",
-          "divN": 1,
-          "tileX": 1,
-          "tileY": 0
+          "divN": 1
         },
         "DISPLAY5": {
           "type": "DISPLAY",
-          "divN": 3,
-          "tileX": 0,
-          "tileY": 0.35
+          "divN": 3
         },
         "DISPLAY6": {
           "type": "DISPLAY",
-          "divN": 3,
-          "tileX": 0.51,
-          "tileY": 0.55
+          "divN": 3
         },
         "DISPLAY7": {
           "type": "DISPLAY",
-          "divN": 3,
-          "tileX": 0.87,
-          "tileY": 0.46
+          "divN": 3
         },
         "DISPLAY8": {
           "type": "DISPLAY",
-          "divN": 1,
-          "tileX": 1,
-          "tileY": 0.32
+          "divN": 1
         },
         "DISPLAY9": {
           "type": "DISPLAY",
-          "divN": 3,
-          "tileX": 0,
-          "tileY": 0.74
+          "divN": 3
         },
         "DISPLAY10": {
           "type": "DISPLAY",
-          "divN": 3,
-          "tileX": 0.65,
-          "tileY": 0.74
+          "divN": 3
         },
         "DISPLAY11": {
           "type": "DISPLAY",
-          "divN": 2,
-          "tileX": 0.86,
-          "tileY": 0.78
+          "divN": 2
         },
         "DISPLAY12": {
           "type": "DISPLAY",
-          "divN": 2,
-          "tileX": 0.97,
-          "tileY": 0.63
+          "divN": 2
         },
         "DISPLAY1": {
           "type": "DISPLAY",
-          "divN": 1,
-          "tileX": 0,
-          "tileY": 1
+          "divN": 1
         },
         "DISPLAY2": {
           "type": "DISPLAY",
-          "divN": 1,
-          "tileX": 0.37,
-          "tileY": 1
+          "divN": 1
         },
         "DISPLAY3": {
           "type": "DISPLAY",
-          "divN": 2,
-          "tileX": 0.71,
-          "tileY": 1
+          "divN": 2
         },
         "DISPLAY4": {
           "type": "DISPLAY",
-          "divN": 2,
-          "tileX": 1,
-          "tileY": 1
+          "divN": 2
         },
         "OBJECT3": {
           "type": "OBJECT",

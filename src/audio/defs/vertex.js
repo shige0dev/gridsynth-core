@@ -2,50 +2,12 @@
 // Audio / Engine side implementation for VERTEX module
 // Dynamic Procedural Vertex Displacement (Wave, Spike, Twist, Wobble, Pinch)
 
+import { AudioHelpers } from '../helpers.js';
+
 export const VERTEX = {
     create: (ctx, d, patch, eng) => {
         let patchState = patch || null;
-
-        // CV input for depth modulation (PIN4)
-        const gCv = ctx.createGain();
-        const anCv = ctx.createAnalyser();
-        anCv.fftSize = 32;
-        gCv.connect(anCv);
-
-        if (eng?.silentSink) {
-            gCv.connect(eng.silentSink);
-        }
-
-        const buf = new Float32Array(32);
-        const readCv = (an, def = 0) => {
-            an.getFloatTimeDomainData(buf);
-            let sum = 0;
-            for (let i = 0; i < 32; i++) sum += buf[i];
-            const avg = sum / 32;
-            return isNaN(avg) ? def : avg;
-        };
-
-        const getSourcePacket = () => {
-            if (!eng?.modules) return null;
-            const pageId = d.pageId || (window.__GS_APP__?.currentPageId ?? '0');
-            const conns = window.__GS_APP__?.connections || window.__GS_APP__?.pagesData?.[pageId]?.connections || [];
-
-            let connSrc = null;
-            for (const c of conns) {
-                const toMod = c.to?.moduleId || (typeof c === 'string' && c.split('>')[1]?.split(':')[0]?.trim());
-                const toPort = c.to?.port || (typeof c === 'string' && c.split('>')[1]?.split(':')[1]?.trim());
-                const fromMod = c.from?.moduleId || (typeof c === 'string' && c.split('>')[0]?.split(':')[0]?.trim());
-
-                if (toMod === d.id && (toPort === 'obj_in' || toPort === 'geo_in')) {
-                    connSrc = fromMod;
-                    break;
-                }
-            }
-
-            if (!connSrc) return null;
-            const srcMod = eng.modules[`${pageId}/${connSrc}`] || eng.modules[connSrc];
-            return srcMod?.getGeometryPacket ? srcMod.getGeometryPacket() : null;
-        };
+        const cvReader = AudioHelpers.createCvReader(ctx, eng);
 
         let cachedBaseGeom = null;
         let origPositions = null;
@@ -72,9 +34,9 @@ export const VERTEX = {
         };
 
         return {
-            nodes: { gCv, anCv },
+            nodes: { gCv: cvReader.input, anCv: cvReader.analyser },
             inputs: {
-                cv_in: gCv,
+                cv_in: cvReader.input,
                 obj_in: null
             },
             outputs: {
@@ -82,7 +44,7 @@ export const VERTEX = {
             },
             data: d,
             getGeometryPacket: () => {
-                const pkt = getSourcePacket();
+                const pkt = AudioHelpers.getSourcePacket(eng, d, ['obj_in']);
                 if (!pkt) return null;
 
                 const baseGeom = pkt.geometry;
@@ -91,8 +53,8 @@ export const VERTEX = {
                 const geom = updateWorkingGeometry(baseGeom);
                 if (!geom || !origPositions) return pkt;
 
-                const isCv = Boolean(patchState?.has('cv_in') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('cv_in') : false));
-                const cvVal = isCv ? readCv(anCv, 0) : 0;
+                const isCv = AudioHelpers.isPortPatched(d, patchState, 'cv_in');
+                const cvVal = isCv ? cvReader.read(0) : 0;
                 const manualDepth = Number(d.depth ?? 0.35);
                 const effDepth = Math.max(0.0, Math.min(2.0, isCv ? cvVal : manualDepth));
 
@@ -170,7 +132,7 @@ export const VERTEX = {
                 };
             },
             read: () => {
-                const isCv = Boolean(patchState?.has('cv_in') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('cv_in') : false));
+                const isCv = AudioHelpers.isPortPatched(d, patchState, 'cv_in');
                 return {
                     depth: Number(d.depth ?? 0.35),
                     mode: d.mode || 'wave',
@@ -178,16 +140,24 @@ export const VERTEX = {
                     isCvPatched: isCv
                 };
             },
+            updatePatchState: (p) => {
+                patchState = p;
+            },
             destroy: () => {
                 if (workingGeom) {
                     try { workingGeom.dispose(); } catch (_) {}
                     workingGeom = null;
                 }
+                try { cvReader.input.disconnect(); } catch (_) {}
+                try { cvReader.analyser.disconnect(); } catch (_) {}
             }
         };
     },
-    update: (ctx, inst, d) => {
+    update: (ctx, inst, d, patch) => {
         inst.data = d;
+        if (patch !== undefined && inst.updatePatchState) {
+            inst.updatePatchState(patch);
+        }
     }
 };
 

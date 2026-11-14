@@ -4,65 +4,17 @@
 // Supports multi-cable summing on obj_in (groups multiple objects automatically).
 // Driven by manual slider or external CV (PIN4).
 
+import { AudioHelpers } from '../helpers.js';
+
 export const MOVE = {
     create: (ctx, d, patch, eng) => {
         let patchState = patch || null;
-
-        // CV input for cv_in (PIN4)
-        const gIn = ctx.createGain();
-        const anIn = ctx.createAnalyser();
-        anIn.fftSize = 32;
-        gIn.connect(anIn);
-
-        if (eng?.silentSink) {
-            gIn.connect(eng.silentSink);
-        }
-
-        const buf = new Float32Array(32);
-        const readCv = (an, def = 0) => {
-            an.getFloatTimeDomainData(buf);
-            let sum = 0;
-            for (let i = 0; i < 32; i++) sum += buf[i];
-            const avg = sum / 32;
-            return isNaN(avg) ? def : avg;
-        };
-
-        const getSourcePackets = () => {
-            const isPatched = patchState?.has('obj_in') || patchState?.has('geo_in') ||
-                (window.__GS_APP__?.getPatchState ? (window.__GS_APP__.getPatchState(d.id)?.has('obj_in') || window.__GS_APP__.getPatchState(d.id)?.has('geo_in')) : false);
-            if (!isPatched || !eng?.modules) return [];
-
-            const pageId = d.pageId || (window.__GS_APP__?.currentPageId ?? '0');
-            const conns = window.__GS_APP__?.connections || window.__GS_APP__.pagesData?.[pageId]?.connections || [];
-            const connectedSourceIds = [];
-
-            conns.forEach(c => {
-                const connObj = typeof c === 'string' ? (c.includes('>') ? {
-                    from: { moduleId: c.split('>')[0].split(':')[0].trim(), port: c.split('>')[0].split(':')[1].trim() },
-                    to: { moduleId: c.split('>')[1].split(':')[0].trim(), port: c.split('>')[1].split(':')[1].trim() }
-                } : null) : c;
-
-                if (connObj && connObj.to?.moduleId === d.id && (connObj.to?.port === 'obj_in' || connObj.to?.port === 'geo_in')) {
-                    connectedSourceIds.push(connObj.from?.moduleId);
-                }
-            });
-
-            const packets = [];
-            connectedSourceIds.forEach(srcId => {
-                const srcMod = eng.modules[`${pageId}/${srcId}`] || eng.modules[srcId];
-                if (srcMod?.getGeometryPacket) {
-                    const pkt = srcMod.getGeometryPacket();
-                    if (pkt) packets.push(pkt);
-                }
-            });
-
-            return packets;
-        };
+        const cvReader = AudioHelpers.createCvReader(ctx, eng);
 
         return {
-            nodes: { gIn, anIn },
+            nodes: { gIn: cvReader.input, anIn: cvReader.analyser },
             inputs: {
-                cv_in: gIn,
+                cv_in: cvReader.input,
                 obj_in: null
             },
             outputs: {
@@ -70,19 +22,12 @@ export const MOVE = {
             },
             data: d,
             getGeometryPacket: () => {
-                const incoming = getSourcePackets();
+                const incoming = AudioHelpers.getSourcePackets(eng, d, ['obj_in'], patchState, true);
                 if (incoming.length === 0) return null;
 
                 // Priority: External CV if patched, otherwise internal slider
-                const isCvPatched = patchState?.has('cv_in') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('cv_in') : false);
-                let offset = 0;
-                if (isCvPatched) {
-                    const cvVal = readCv(anIn, 0);
-                    // 1.0V = 2.0 units shift
-                    offset = cvVal * 2.0;
-                } else {
-                    offset = Number(d.offset ?? 0.0);
-                }
+                const isCvPatched = AudioHelpers.isPortPatched(d, patchState, 'cv_in');
+                const offset = isCvPatched ? cvReader.read(0) * 2.0 : Number(d.offset ?? 0.0);
 
                 const axis = (d.axis || 'x').toLowerCase();
                 const axisIdx = axis === 'y' ? 1 : (axis === 'z' ? 2 : 0);
@@ -119,15 +64,9 @@ export const MOVE = {
                 };
             },
             read: () => {
-                const isCvPatched = patchState?.has('cv_in') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('cv_in') : false);
-                const isGeoPatched = patchState?.has('obj_in') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('obj_in') : false);
-                let offset = 0;
-                if (isCvPatched) {
-                    const cvVal = readCv(anIn, 0);
-                    offset = cvVal * 2.0;
-                } else {
-                    offset = Number(d.offset ?? 0.0);
-                }
+                const isCvPatched = AudioHelpers.isPortPatched(d, patchState, 'cv_in');
+                const isGeoPatched = AudioHelpers.isPortPatched(d, patchState, 'obj_in');
+                const offset = isCvPatched ? cvReader.read(0) * 2.0 : Number(d.offset ?? 0.0);
 
                 return {
                     axis: d.axis || 'x',
@@ -140,8 +79,8 @@ export const MOVE = {
                 patchState = p;
             },
             destroy: () => {
-                try { gIn.disconnect(); } catch (e) {}
-                try { anIn.disconnect(); } catch (e) {}
+                try { cvReader.input.disconnect(); } catch (e) {}
+                try { cvReader.analyser.disconnect(); } catch (e) {}
             }
         };
     },

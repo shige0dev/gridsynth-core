@@ -2,6 +2,8 @@
 // Audio/Engine-side representation for OBJECT
 // Outputs 1:1 geometry packets with Material & Color styling
 
+import { AudioHelpers } from '../helpers.js';
+
 export const OBJECT = {
     create: (ctx, d, patch, eng) => {
         const geometries = {};
@@ -49,24 +51,6 @@ export const OBJECT = {
             geom.setAttribute('position', new THREE.BufferAttribute(outPos, 3));
             geom.computeVertexNormals();
             return geom;
-        };
-
-        const addBarycentric = (srcGeom) => {
-            if (!srcGeom) return srcGeom;
-            const g = srcGeom.index ? srcGeom.toNonIndexed() : srcGeom;
-            if (g !== srcGeom) {
-                try { srcGeom.dispose(); } catch (_) {}
-            }
-            const count = g.attributes?.position?.count || 0;
-            if (count > 0 && !g.attributes.aBarycentric) {
-                const bary = new Float32Array(count * 3);
-                for (let i = 0; i < count; i++) {
-                    const mod = i % 3;
-                    bary[i * 3 + mod] = 1.0;
-                }
-                g.setAttribute('aBarycentric', new THREE.BufferAttribute(bary, 3));
-            }
-            return g;
         };
 
         const getGeom = (shape, detail = 'mid') => {
@@ -128,7 +112,7 @@ export const OBJECT = {
                         break;
                 }
                 if (geometries[key]) {
-                    geometries[key] = addBarycentric(geometries[key]);
+                    geometries[key] = AudioHelpers.addBarycentric(geometries[key]);
                 }
             }
             return geometries[key];

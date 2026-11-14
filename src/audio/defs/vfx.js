@@ -2,28 +2,14 @@
 // 100% GPU Native Video Post-Processing Effects (Mosaic, CRT, Invert, RGB Split)
 // Driven by Three.js GLSL Fragment Shader for Zero CPU Load & Solid 60fps
 
+import { AudioHelpers } from '../helpers.js';
+
 export const VFX = {
     create: (ctx, d, patch, eng) => {
         let patchState = patch || null;
 
         // CV input for effect depth/intensity (PIN4)
-        const gCv = ctx.createGain();
-        const anCv = ctx.createAnalyser();
-        anCv.fftSize = 32;
-        gCv.connect(anCv);
-
-        if (eng?.silentSink) {
-            gCv.connect(eng.silentSink);
-        }
-
-        const buf = new Float32Array(32);
-        const readCv = (an, def = 0) => {
-            an.getFloatTimeDomainData(buf);
-            let sum = 0;
-            for (let i = 0; i < 32; i++) sum += buf[i];
-            const avg = sum / 32;
-            return isNaN(avg) ? def : avg;
-        };
+        const cvReader = AudioHelpers.createCvReader(ctx, eng);
 
         const BUFFER_SIZE = 512;
         let renderer = null;
@@ -50,8 +36,7 @@ export const VFX = {
             invert: 3,
             rgb: 4,
             blur: 5,
-            trail: 6,
-            bloom: 7
+            trail: 6
         };
 
         const TRAIL_TYPE_MAP = {
@@ -245,32 +230,6 @@ export const VFX = {
                         return;
                     }
 
-                    if (uMode == 7) {
-                        // Bloom / Neon Glow (High-pass luminance extraction + 20-tap dispersion glow)
-                        vec3 src = sampleSrc(uv);
-                        vec3 glow = vec3(0.0);
-                        float glowRadius = 0.015 + uAmount * 0.055;
-                        float thresh = mix(0.75, 0.20, clamp(uAmount, 0.0, 1.0));
-                        float totalW = 0.0;
-
-                        for (int i = 1; i <= 20; i++) {
-                            float fi = float(i);
-                            float r = sqrt(fi / 20.0) * glowRadius;
-                            float theta = fi * 2.39996323; // Golden angle
-                            vec2 offset = vec2(cos(theta), sin(theta)) * r;
-                            vec3 smp = sampleSrc(uv + offset);
-                            float lum = dot(smp, vec3(0.299, 0.587, 0.114));
-                            float bright = max(0.0, lum - thresh) / (1.0 - thresh + 0.001);
-                            float w = 1.0 - (r / (glowRadius + 0.0001)) * 0.5;
-                            glow += smp * bright * w;
-                            totalW += w;
-                        }
-                        glow = (glow / max(totalW, 0.001));
-                        vec3 result = src + glow * (1.2 + uAmount * 2.8);
-                        gl_FragColor = vec4(clamp(result, 0.0, 1.0), 1.0);
-                        return;
-                    }
-
                     gl_FragColor = vec4(sampleSrc(uv), 1.0);
                 }
             `;
@@ -306,26 +265,6 @@ export const VFX = {
 
         initGPU();
 
-        const getSourceCanvas = () => {
-            if (!eng?.modules) return null;
-            const pageId = d.pageId || (window.__GS_APP__?.currentPageId ?? '0');
-            const conns = window.__GS_APP__?.connections || window.__GS_APP__?.pagesData?.[pageId]?.connections || [];
-
-            let connSrc = null;
-            for (const c of conns) {
-                const toMod = c.to?.moduleId || (typeof c === 'string' && c.split('>')[1]?.split(':')[0]?.trim());
-                const toPort = c.to?.port || (typeof c === 'string' && c.split('>')[1]?.split(':')[1]?.trim());
-                if (toMod === d.id && toPort === 'video_in') {
-                    connSrc = c.from?.moduleId || (typeof c === 'string' && c.split('>')[0]?.split(':')[0]?.trim());
-                    break;
-                }
-            }
-
-            if (!connSrc) return null;
-            const srcInst = eng.modules[`${pageId}/${connSrc}`] || eng.modules[connSrc];
-            return srcInst?.getSharedCanvas ? srcInst.getSharedCanvas() : null;
-        };
-
         let lastProcessTime = 0;
         let lastEffectiveAmt = 0.7;
 
@@ -335,15 +274,15 @@ export const VFX = {
             const dt = lastProcessTime > 0 ? Math.min(0.1, (now - lastProcessTime) * 0.001) : (1 / 60);
             lastProcessTime = now;
 
-            const isCv = Boolean(patchState?.has('cv_in') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('cv_in') : false));
-            const cvVal = isCv ? readCv(anCv, 0) : 0;
+            const isCv = AudioHelpers.isPortPatched(d, patchState, 'cv_in');
+            const cvVal = isCv ? cvReader.read(0) : 0;
             const manualAmt = Number(d.amount ?? 0.7);
             const effAmt = Math.max(0, Math.min(1.0, isCv ? cvVal : manualAmt));
             lastEffectiveAmt = effAmt;
 
             if (!renderer || !shaderMaterial) return;
 
-            const srcCanvas = getSourceCanvas();
+            const srcCanvas = AudioHelpers.getSourceCanvas(eng, d, ['video_in']);
             if (!srcCanvas) return;
 
             // Rebind source canvas texture if changed
@@ -408,9 +347,9 @@ export const VFX = {
         };
 
         return {
-            nodes: { gCv, anCv },
+            nodes: { gCv: cvReader.input, anCv: cvReader.analyser },
             inputs: {
-                cv_in: gCv,
+                cv_in: cvReader.input,
                 video_in: null
             },
             outputs: {
@@ -423,7 +362,7 @@ export const VFX = {
             },
             read: () => {
                 processFrame();
-                const isCv = Boolean(patchState?.has('cv_in') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('cv_in') : false));
+                const isCv = AudioHelpers.isPortPatched(d, patchState, 'cv_in');
                 return {
                     canvas: vfxCanvas,
                     mode: d.mode || 'mosaic',
@@ -464,8 +403,8 @@ export const VFX = {
                     try { renderer.dispose(); } catch (_) {}
                     renderer = null;
                 }
-                try { gCv.disconnect(); } catch (_) {}
-                try { anCv.disconnect(); } catch (_) {}
+                try { cvReader.input.disconnect(); } catch (_) {}
+                try { cvReader.analyser.disconnect(); } catch (_) {}
             }
         };
     },

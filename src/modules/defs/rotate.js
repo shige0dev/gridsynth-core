@@ -31,7 +31,7 @@ export const ROTATE = {
         </div>`;
     },
     renderModal: (m, ctx) => {
-        const isCvPatched = Boolean(ctx?.patched?.has('cv_in') || ctx?.patched?.has('cv_x'));
+        const isCvPatched = Boolean(ctx?.patched?.has('cv_in'));
         const curAxis = m.axis || 'x';
         const turn = Number(m.angle ?? 0.0);
         const deg = Math.round(turn * 360);
