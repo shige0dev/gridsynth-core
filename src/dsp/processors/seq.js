@@ -9,6 +9,7 @@ export class SeqProcessor extends AudioWorkletProcessor {
         this.gate = 0;
         this.gap = 0;
         this.trigOut = false;
+        this.willEnd = false;
         this.armed = false;
 
         this.transOutPatched = false;
@@ -50,6 +51,7 @@ export class SeqProcessor extends AudioWorkletProcessor {
                 this.gap = 0;
                 this.gate = 0;
                 this.trigOut = false;
+                this.willEnd = false;
                 this.armed = false;
                 this.port.postMessage({ type: 'STEP', step: -1, active: this.active });
             }
@@ -77,22 +79,26 @@ export class SeqProcessor extends AudioWorkletProcessor {
                 this.armed = true;
             }
 
-            // 2. Clock falling edge: if final step just finished (trigOut was active), deactivate sequence
+            // 2. Clock falling edge: clear trigOut (keep active & step lit until next clock rising edge)
             if (!isHi && this.lastHi) {
                 this.lastHi = false;
-                if (this.trigOut) {
-                    this.trigOut = false;
-                    this.active = false;
-                    this.step = -1;
-                    this.gate = 0.0;
-                    this.port.postMessage({ type: 'STEP', step: -1, active: false });
-                }
+                this.trigOut = false;
             }
 
-            // 3. Clock rising edge: consume reservation, advance step, and arm TRANS_OUT if this is the final step
+            // 3. Clock rising edge: deactivate if previous step was final, consume reservation, advance step
             if (isHi && !this.lastHi) {
                 this.lastHi = true;
                 this.trigOut = false;
+
+                if (this.active && this.willEnd) {
+                    this.willEnd = false;
+                    this.active = false;
+                    this.step = -1;
+                    this.gate = 0.0;
+                    if (!this.armed) {
+                        this.port.postMessage({ type: 'STEP', step: -1, active: false });
+                    }
+                }
 
                 if (!this.active && this.armed) {
                     this.active = true;
@@ -141,6 +147,7 @@ export class SeqProcessor extends AudioWorkletProcessor {
                             }
                             if (isLast) {
                                 this.trigOut = true;
+                                this.willEnd = true;
                             }
                         }
                     }

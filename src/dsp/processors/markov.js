@@ -69,29 +69,32 @@ export class MarkovProcessor extends AudioWorkletProcessor {
                 this.armed = true;
             }
 
-            // 2. クロック立ち下がり検知（最終拍終了時のステート消灯・リセット）
+            // 2. クロック立ち下がり検知（ショットトリガ・TRANS_OUT消灯のみ。ステート点灯とCVは次クロックまで維持）
             if (clkV < 0.3 && this.clkActive) {
                 this.clkActive = false;
                 this.shotActive = false;
+                this.trigOutCh = -1;
+
+                if (this.state === 1 && !this.willEnd && this.clockCount >= this.holdClocks) {
+                    // 自己継続が決定していた拍の終了：次拍で再び clockCount=1 から開始
+                    this.clockCount = 0;
+                }
+            }
+
+            // 3. クロック立ち上がり検知と発火（前拍willEndの消灯・予約消費・遷移判定）
+            const isRising = (isClkHi && !this.clkActive);
+            if (isRising) {
+                this.clkActive = true;
                 this.trigOutCh = -1;
 
                 if (this.state === 1 && this.willEnd) {
                     this.state = 0;
                     this.clockCount = 0;
                     this.willEnd = false;
-                    this.port.postMessage({ type: 'STATE_CHANGED', state: 0, remaining: 0, clockCount: 0 });
-                } else if (this.state === 1 && this.clockCount >= this.holdClocks) {
-                    // 自己継続が決定していた拍の終了：次拍で再び clockCount=1 から開始
-                    this.clockCount = 0;
+                    if (!this.armed) {
+                        this.port.postMessage({ type: 'STATE_CHANGED', state: 0, remaining: 0, clockCount: 0 });
+                    }
                 }
-            }
-
-            // 3. クロック立ち上がり検知と発火（予約消費・最終拍の遷移判定 & TRANS_OUTゲート開始）
-            const isRising = (isClkHi && !this.clkActive);
-            if (isRising) {
-                this.clkActive = true;
-                this.trigOutCh = -1;
-                this.willEnd = false;
 
                 if (this.state === 0 && this.armed) {
                     this.state = 1;
