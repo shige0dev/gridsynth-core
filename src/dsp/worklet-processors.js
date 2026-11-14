@@ -1,6 +1,6 @@
-// v1.0.0796
+// v1.0.0797
 import './processors/clock.js?v=621';
-import './processors/seq.js?v=796';
+import './processors/seq.js?v=797';
 import './processors/adsr.js';
 import './processors/lfo.js?v=621';
 import './processors/math.js?v=691';
@@ -9,7 +9,7 @@ import './processors/fold.js';
 import './processors/cv-delay.js';
 import './processors/scope.js?v=791';
 import './processors/pat.js?v=621';
-import './processors/markov.js?v=793';
+import './processors/markov.js?v=797';
 import './processors/chord.js?v=641';
 import './processors/fm.js?v=459';
 import './processors/fm-core.js';

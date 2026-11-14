@@ -9,8 +9,7 @@ export class SeqProcessor extends AudioWorkletProcessor {
         this.cv = 0;
         this.gate = 0;
         this.gap = 0;
-        this.trigOutLeft = 0;
-        this.willEnd = false;
+        this.trigOut = false;
         this.armed = false;
 
         this.transOutPatched = false;
@@ -66,8 +65,7 @@ export class SeqProcessor extends AudioWorkletProcessor {
                 this.lastTrigHi = false;
                 this.gap = 0;
                 this.gate = 0;
-                this.trigOutLeft = 0;
-                this.willEnd = false;
+                this.trigOut = false;
                 this.armed = false;
                 this.port.postMessage({ type: 'STEP', step: -1, active: this.active });
             }
@@ -87,37 +85,59 @@ export class SeqProcessor extends AudioWorkletProcessor {
             const trigV = inTrig ? inTrig[i] : 0.0;
             const isHi = clkV > 0.3;
             const isTrigHi = trigV >= 0.4;
-
-            // 1. TRANS_IN trigger reservation (rising edge):
-            // Evaluated BEFORE clock rising edge so external triggers (e.g. KEY gate + CLK reset) fire on the same beat.
-            // Rising-edge detection prevents a multi-sample gate/pulse from re-arming the sequencer right after it starts.
-            if (isTrigHi && !this.lastTrigHi) {
-                this.armed = true;
-            }
+            const isTrigRising = isTrigHi && !this.lastTrigHi;
             this.lastTrigHi = isTrigHi;
 
-            // 2. Clock falling edge: emit post-transition TRANS_OUT pulse if final step just ended
-            if (!isHi && this.lastHi) {
-                this.lastHi = false;
-                if (this.willEnd && this.transOutPatched) {
-                    this.trigOutLeft = minGap;
-                }
-            }
-
-            // 3. Clock rising edge: deactivate if previous step was final, consume reservation, advance step
-            if (isHi && !this.lastHi) {
-                this.lastHi = true;
-                this.trigOutLeft = 0;
-
-                if (this.active && this.willEnd) {
-                    this.willEnd = false;
-                    this.active = false;
-                    this.step = -1;
-                    this.gate = 0.0;
-                    if (!this.armed && !isTrigHi) {
-                        this.port.postMessage({ type: 'STEP', step: -1, active: false });
+            // 1. TRANS_IN trigger reception (EOS baton / external gate):
+            // When inactive: if clock is already High, start step 0 immediately on this beat; if clock is Low, arm for next clock.
+            // When active: a new rising edge on TRANS_IN reserves continuation into the next cycle.
+            if (!this.active) {
+                if (isTrigHi) {
+                    if (isHi) {
+                        this.active = true;
+                        this.armed = false;
+                        this.step = -1;
+                        let found = false;
+                        for (let a = 0; a < numSteps; a++) {
+                            this.step = (this.step + 1) % numSteps;
+                            const st = this.steps[this.step];
+                            if (st && (typeof st === 'object' ? st.active !== false : true)) {
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (found) {
+                            const cur = this.steps[this.step];
+                            if (cur != null) {
+                                if (typeof cur === 'number') {
+                                    this.cv = cur;
+                                } else if (cur.cvActive !== false) {
+                                    this.cv = cur.cv ?? 0;
+                                }
+                                this.gap = minGap;
+                                this.port.postMessage({ type: 'STEP', step: this.step, active: true });
+                            }
+                        }
+                        this.lastHi = true;
+                        this.trigOut = false;
+                    } else {
+                        this.armed = true;
                     }
                 }
+            } else if (isTrigRising) {
+                this.armed = true;
+            }
+
+            // 2. Clock falling edge: clear trigOut and allow next clock rising edge
+            if (!isHi) {
+                this.lastHi = false;
+                this.trigOut = false;
+            }
+
+            // 3. Clock rising edge: advance step or emit EOS transition at cycle wrap
+            if (isHi && !this.lastHi) {
+                this.lastHi = true;
+                this.trigOut = false;
 
                 if (!this.active && (this.armed || isTrigHi)) {
                     this.active = true;
@@ -128,8 +148,12 @@ export class SeqProcessor extends AudioWorkletProcessor {
                 if (this.active) {
                     let nextStep = this.step;
                     let found = false;
+                    let wrapped = false;
                     for (let a = 0; a < numSteps; a++) {
                         nextStep = (nextStep + 1) % numSteps;
+                        if (this.step >= 0 && nextStep <= this.step) {
+                            wrapped = true;
+                        }
                         const st = this.steps[nextStep];
                         if (st && (typeof st === 'object' ? st.active !== false : true)) {
                             found = true;
@@ -137,7 +161,24 @@ export class SeqProcessor extends AudioWorkletProcessor {
                         }
                     }
 
-                    if (found) {
+                    const isOneShot = this.transOutPatched || this.transInPatched;
+                    if (wrapped && isOneShot) {
+                        if (this.armed || isTrigHi) {
+                            // Continue to next cycle if re-triggered or while gate is held high
+                            this.armed = false;
+                            if (this.transOutPatched) this.trigOut = true;
+                        } else {
+                            // Sequence finished: transition out (EOS) to next module on this clock edge
+                            this.active = false;
+                            this.step = -1;
+                            this.gate = 0.0;
+                            if (this.transOutPatched) this.trigOut = true;
+                            this.port.postMessage({ type: 'STEP', step: -1, active: false });
+                            found = false;
+                        }
+                    }
+
+                    if (found && this.active) {
                         this.step = nextStep;
                         const cur = this.steps[this.step];
                         if (cur != null) {
@@ -149,31 +190,11 @@ export class SeqProcessor extends AudioWorkletProcessor {
                             this.gap = minGap;
                             this.port.postMessage({ type: 'STEP', step: this.step, active: true });
                         }
-
-                        // Check if the current step is the last active step in the cycle
-                        // One-shot mode is enforced whenever TRANS_OUT or TRANS_IN is patched.
-                        if (this.transOutPatched || this.transInPatched) {
-                            let peekStep = this.step;
-                            let isLast = false;
-                            for (let a = 0; a < numSteps; a++) {
-                                peekStep = (peekStep + 1) % numSteps;
-                                if (peekStep <= this.step) {
-                                    isLast = true;
-                                }
-                                const st = this.steps[peekStep];
-                                if (st && (typeof st === 'object' ? st.active !== false : true)) {
-                                    break;
-                                }
-                            }
-                            if (isLast) {
-                                this.willEnd = true;
-                            }
-                        }
                     }
                 }
             }
 
-            // 4. Output gate and cv
+            // 4. Output gate, cv, and EOS transOut
             const cur = (this.active && this.step >= 0 && this.step < numSteps) ? this.steps[this.step] : null;
             const isGateOn = typeof cur === 'number' ? true : (cur && cur.gate !== false);
             const isActOn = typeof cur === 'number' ? true : (cur && cur.active !== false);
@@ -188,12 +209,7 @@ export class SeqProcessor extends AudioWorkletProcessor {
 
             if (cvOut) cvOut[i] = this.cv;
             if (gOut) gOut[i] = this.gate;
-            if (this.trigOutLeft > 0) {
-                if (transOut) transOut[i] = 1.0;
-                this.trigOutLeft--;
-            } else {
-                if (transOut) transOut[i] = 0.0;
-            }
+            if (transOut) transOut[i] = (this.trigOut && isHi) ? 1.0 : 0.0;
         }
         return true;
     }
