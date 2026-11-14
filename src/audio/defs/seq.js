@@ -1,5 +1,3 @@
-import { AudioHelpers } from '../helpers.js';
-
 function createSeqAudio(stepCount) {
     return {
         create: (ctx, d, patch, eng) => {
@@ -9,54 +7,41 @@ function createSeqAudio(stepCount) {
                 cvActive: true,
                 gate: true
             }));
+            const keyMode = d.keyMode === 'oneshot' ? 'oneshot' : 'loop';
+
             const w = new AudioWorkletNode(ctx, 'seq-processor', {
-                numberOfInputs: 3,
-                numberOfOutputs: 3,
+                numberOfInputs: 2,
+                numberOfOutputs: 2,
                 processorOptions: { steps }
             });
             w.port.postMessage({ type: 'SET_STEPS', steps });
+            w.port.postMessage({ type: 'SET_CONFIG', keyMode });
 
-            const isInit = d.initOn !== false;
-            const keyMode = d.keyMode === 'oneshot' ? 'oneshot' : 'loop';
-            w.port.postMessage({ type: 'SET_INIT', initOn: isInit, keyMode });
+            const cv = ctx.createGain(), gt = ctx.createGain();
+            const gIn = ctx.createGain(), gKeyGateIn = ctx.createGain();
 
-            const cv = ctx.createGain(), gt = ctx.createGain(), gTransOut = ctx.createGain();
-            const gIn = ctx.createGain(), gTransIn = ctx.createGain(), gKeyGateIn = ctx.createGain();
-
-            // Outputs: 0: cv_out (PIN 11), 1: gate_out (PIN 10), 2: trans_out (PIN 9)
+            // Outputs: 0: cv_out (PIN 11), 1: gate_out (PIN 10)
             w.connect(cv, 0, 0);
             w.connect(gt, 1, 0);
-            w.connect(gTransOut, 2, 0);
 
-            // Inputs: 0: gate_in / clk_in (PIN 5), 1: trans_in (PIN 6), 2: keygate_in (PIN 7)
+            // Inputs: 0: gate_in / clk_in (PIN 5), 1: keygate_in / RUN (PIN 6)
             gIn.connect(w, 0, 0);
-            gTransIn.connect(w, 0, 1);
-            gKeyGateIn.connect(w, 0, 2);
+            gKeyGateIn.connect(w, 0, 1);
 
             if (eng?.silentSink) {
                 gt.connect(eng.silentSink);
-                gTransOut.connect(eng.silentSink);
             }
 
-            let patchState = patch || null;
             const sendPatch = (p) => {
-                patchState = p;
                 const appPatch = window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id) : null;
-                const transOutPatched = Boolean(p?.has?.('trans_out') || appPatch?.has?.('trans_out'));
-                const transInPatched = Boolean(p?.has?.('trans_in') || appPatch?.has?.('trans_in'));
                 const keyGatePatched = Boolean(p?.has?.('keygate_in') || appPatch?.has?.('keygate_in'));
-                w.port.postMessage({
-                    type: 'SET_PATCH',
-                    transOutPatched,
-                    transInPatched,
-                    keyGatePatched
-                });
+                w.port.postMessage({ type: 'SET_PATCH', keyGatePatched });
             };
-            sendPatch(patchState);
-            w.port.postMessage({ type: 'RESET', initOn: isInit, keyMode });
+            sendPatch(patch || null);
+            w.port.postMessage({ type: 'RESET', keyMode });
 
             let st = -1;
-            let liveActive = isInit;
+            let liveActive = true;
             w.port.onmessage = e => {
                 if (e.data.type === 'STEP') {
                     st = e.data.step;
@@ -67,24 +52,20 @@ function createSeqAudio(stepCount) {
             };
 
             return {
-                nodes: { w, cv, gt, gTransOut, gIn, gTransIn, gKeyGateIn },
+                nodes: { w, cv, gt, gIn, gKeyGateIn },
                 inputs: {
                     gate_in: gIn,
                     clk_in: gIn,
-                    trans_in: gTransIn,
                     keygate_in: gKeyGateIn
                 },
                 outputs: {
                     cv_out: cv,
-                    gate_out: gt,
-                    trans_out: gTransOut
+                    gate_out: gt
                 },
-                updatePatchState: (p) => {
-                    sendPatch(p);
-                },
+                updatePatchState: (p) => sendPatch(p),
                 resetStep: () => {
                     st = -1;
-                    w.port.postMessage({ type: 'RESET', initOn: d.initOn !== false, keyMode: d.keyMode === 'oneshot' ? 'oneshot' : 'loop' });
+                    w.port.postMessage({ type: 'RESET', keyMode: d.keyMode === 'oneshot' ? 'oneshot' : 'loop' });
                 },
                 read: () => ({
                     step: st,
@@ -92,14 +73,13 @@ function createSeqAudio(stepCount) {
                 })
             };
         },
-        update: (ctx, inst, d, patch, eng) => {
+        update: (ctx, inst, d, patch) => {
             if (d?.steps && inst?.nodes?.w) {
                 inst.nodes.w.port.postMessage({ type: 'SET_STEPS', steps: d.steps });
             }
             if (d && inst?.nodes?.w) {
                 inst.nodes.w.port.postMessage({
-                    type: 'SET_INIT',
-                    initOn: d.initOn !== false,
+                    type: 'SET_CONFIG',
                     keyMode: d.keyMode === 'oneshot' ? 'oneshot' : 'loop'
                 });
             }
