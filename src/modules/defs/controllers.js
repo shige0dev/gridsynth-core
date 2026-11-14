@@ -73,12 +73,14 @@ export const KEY = {
         mask: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         lastNote: '', // 入力するまでは表示なし
         currentMidi: null,
-        cv: 2.0
+        cv: 2.0,
+        legato: false
     }),
     onNormalize: (m) => {
         if (m.octave === undefined) m.octave = 3;
         if (m.root === undefined) m.root = 0;
         if (m.scale === undefined) m.scale = 'CHROMATIC';
+        if (m.legato === undefined) m.legato = false;
         if (!Array.isArray(m.mask) || m.mask.length !== 12) {
             m.mask = SCALE_PRESETS[m.scale] || [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
         }
@@ -218,20 +220,21 @@ export const KEY = {
         const scaleKey = m.scale || 'CHROMATIC';
         const mask = Array.isArray(m.mask) ? m.mask : (SCALE_PRESETS[scaleKey] || SCALE_PRESETS['CHROMATIC']);
         const curNote = m.lastNote || '--';
+        const isLegato = Boolean(m.legato);
 
         return `
             <div class="space-y-2 flex flex-col items-center select-none w-full p-1">
-                <!-- Top Row: Octave, Root, Scale -->
+                <!-- Top Row: Octave, Root, Scale, Legato -->
                 <div class="w-[332px] flex items-center justify-between gap-1 bg-zinc-950/80 p-1.5 rounded-lg border border-zinc-800 shrink-0">
-                    <div class="flex items-center gap-1">
+                    <div class="flex items-center gap-0.5 shrink-0">
                         <span class="text-[8px] text-zinc-400 uppercase font-semibold">OCT:</span>
                         <button id="key-oct-down" class="w-4 h-4 rounded bg-zinc-800 text-zinc-200 text-[10px] font-bold active:bg-zinc-700">－</button>
-                        <span id="key-oct-disp" class="w-4 text-center text-[10px] font-mono font-bold text-white">${curOct}</span>
+                        <span id="key-oct-disp" class="w-3.5 text-center text-[10px] font-mono font-bold text-white">${curOct}</span>
                         <button id="key-oct-up" class="w-4 h-4 rounded bg-zinc-800 text-zinc-200 text-[10px] font-bold active:bg-zinc-700">＋</button>
                     </div>
 
-                    <div class="flex items-center gap-1">
-                        <span class="text-[8px] font-bold text-zinc-400 uppercase tracking-tight">ROOT:</span>
+                    <div class="flex items-center gap-0.5 shrink-0">
+                        <span class="text-[8px] font-bold text-zinc-400 uppercase tracking-tight">R:</span>
                         <select id="key-root-sel" class="bg-zinc-900 border border-zinc-700 text-zinc-200 font-mono font-bold text-[9px] rounded px-1 py-0.5 cursor-pointer outline-none hover:border-zinc-500">
                             ${NOTES.map((name, idx) => `
                                 <option value="${idx}" ${idx === curRoot ? 'selected' : ''}>${name}</option>
@@ -239,16 +242,17 @@ export const KEY = {
                         </select>
                     </div>
 
-                    <div class="flex items-center gap-1 flex-1 justify-end min-w-0">
-                        <span class="text-[8px] font-bold text-zinc-400 uppercase tracking-tight">SCALE:</span>
-                        <select id="key-scale-sel" class="bg-zinc-900 border border-zinc-700 text-zinc-200 font-mono font-bold text-[9px] rounded px-1.5 py-0.5 cursor-pointer outline-none hover:border-zinc-500 truncate max-w-[110px]">
+                    <div class="flex items-center gap-0.5 flex-1 justify-end min-w-0">
+                        <select id="key-scale-sel" class="bg-zinc-900 border border-zinc-700 text-zinc-200 font-mono font-bold text-[9px] rounded px-1 py-0.5 cursor-pointer outline-none hover:border-zinc-500 truncate max-w-[78px]">
                             ${SCALE_KEYS.map(k => `
                                 <option value="${k}" ${k === scaleKey ? 'selected' : ''}>${k}</option>
                             `).join('')}
                         </select>
                     </div>
 
-                    <span class="text-[9.5px] font-mono font-bold text-white min-w-[28px] text-right" id="key-active-note">${curNote}</span>
+                    <button id="key-legato-btn" class="h-4 px-1.5 rounded border text-[7.5px] font-bold leading-none inline-flex items-center justify-center transition-colors shrink-0 ${isLegato ? 'bg-cyan-600 text-white border-cyan-400' : 'bg-zinc-900 text-zinc-400 border-zinc-700 hover:border-zinc-500'}" title="レガートモード (ON: 鍵盤を押したまま次の鍵盤に移ってもゲートを再トリガーせず音程のみ切替)">LEGATO</button>
+
+                    <span class="text-[9.5px] font-mono font-bold text-white min-w-[24px] text-right shrink-0" id="key-active-note">${curNote}</span>
                 </div>
 
                 <!-- クオンタイズマッピングルーラー（細い線でクオンタイズ吸着範囲を区分） -->
@@ -340,11 +344,18 @@ export const KEY = {
             cb();
         });
 
+        // Legato Toggle
+        rootEl.querySelector('#key-legato-btn')?.addEventListener('click', () => {
+            m.legato = !m.legato;
+            ctx.reRenderModal?.();
+            cb();
+        });
+
         // Touch & Slide Interaction on VOLCA 16 Ribbon Bar
         const box = rootEl.querySelector('#volca-key-box');
         if (!box) return;
 
-        const playSemi = (rawSemi, isDown) => {
+        const playSemi = (rawSemi, isDown, forceLegato = false) => {
             const oct = m.octave ?? 3;
             const mask = m.mask || SCALE_PRESETS[m.scale] || SCALE_PRESETS['CHROMATIC'];
             const absSemi = ((rawSemi % 12) + 12) % 12;
@@ -366,7 +377,7 @@ export const KEY = {
                 m.cv = (midi - 24) / 12.0;
                 if (nD) nD.textContent = name;
             }
-            ctx.sendKeyNote?.(midi, isDown);
+            ctx.sendKeyNote?.(midi, isDown, forceLegato || Boolean(m.legato));
             if (isDown) cb();
         };
 
@@ -380,8 +391,14 @@ export const KEY = {
             }
         };
 
-        let activeSemi = null;
-        let activePointerId = null;
+        const activePointers = new Map(); // pointerId -> semi
+
+        const isSemiHeld = (semi) => {
+            for (const s of activePointers.values()) {
+                if (s === semi) return true;
+            }
+            return false;
+        };
 
         const getSemiFromPoint = (x, y) => {
             const el = document.elementFromPoint(x, y);
@@ -392,43 +409,48 @@ export const KEY = {
         box.onpointerdown = (e) => {
             const semi = getSemiFromPoint(e.clientX, e.clientY);
             if (semi === null || isNaN(semi)) return;
-            if (activeSemi !== null) {
-                setHighlight(activeSemi, false);
-                playSemi(activeSemi, false);
-            }
-            activePointerId = e.pointerId;
-            activeSemi = semi;
+            activePointers.set(e.pointerId, semi);
             try { box.setPointerCapture(e.pointerId); } catch(err){}
             setHighlight(semi, true);
             playSemi(semi, true);
         };
 
         box.onpointermove = (e) => {
-            if (activePointerId === null || e.pointerId !== activePointerId) return;
+            if (!activePointers.has(e.pointerId)) return;
+            const prevSemi = activePointers.get(e.pointerId);
             const semi = getSemiFromPoint(e.clientX, e.clientY);
-            if (semi !== activeSemi) {
-                if (activeSemi !== null) {
-                    setHighlight(activeSemi, false);
-                    playSemi(activeSemi, false);
-                }
+            if (semi !== prevSemi) {
                 if (semi !== null && !isNaN(semi)) {
+                    activePointers.set(e.pointerId, semi);
+                    if (prevSemi !== null && !isSemiHeld(prevSemi)) {
+                        setHighlight(prevSemi, false);
+                    }
                     setHighlight(semi, true);
+                    if (!m.legato && activePointers.size === 1 && prevSemi !== null) {
+                        playSemi(prevSemi, false);
+                    }
                     playSemi(semi, true);
                 }
-                activeSemi = semi;
             }
         };
 
         const stop = (e) => {
-            if (activePointerId !== null && e && e.pointerId !== activePointerId) return;
-            if (activeSemi !== null) {
-                setHighlight(activeSemi, false);
-                playSemi(activeSemi, false);
-                activeSemi = null;
+            if (!e || !activePointers.has(e.pointerId)) return;
+            const prevSemi = activePointers.get(e.pointerId);
+            activePointers.delete(e.pointerId);
+            if (prevSemi !== null && !isSemiHeld(prevSemi)) {
+                setHighlight(prevSemi, false);
             }
-            activePointerId = null;
+            if (activePointers.size === 0) {
+                if (prevSemi !== null) playSemi(prevSemi, false);
+            } else {
+                const remaining = Array.from(activePointers.values()).pop();
+                if (remaining !== undefined) {
+                    playSemi(remaining, true, true);
+                }
+            }
             try {
-                if (e && box.hasPointerCapture?.(e.pointerId)) {
+                if (box.hasPointerCapture?.(e.pointerId)) {
                     box.releasePointerCapture(e.pointerId);
                 }
             } catch(err){}

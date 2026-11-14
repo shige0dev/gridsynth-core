@@ -25,7 +25,8 @@ export const KEY = {
             type: 'SET_CONFIG',
             root: d.root ?? 0,
             mask: d.mask || [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            isPatched
+            isPatched,
+            legato: Boolean(d.legato)
         });
 
         const initMidi = d.currentMidi ?? (Math.round(initCv * 12) + 24);
@@ -68,7 +69,8 @@ export const KEY = {
                 type: 'SET_CONFIG',
                 root: d.root ?? 0,
                 mask: d.mask || (d.scale ? SCALE_PRESETS[d.scale] : undefined),
-                isPatched: Boolean(patch?.has('cv_in'))
+                isPatched: Boolean(patch?.has('cv_in')),
+                legato: Boolean(d.legato)
             });
         }
     }

@@ -9,6 +9,9 @@ export class ScaleProcessor extends AudioWorkletProcessor {
         this.manualCv = 1.0; // default C2 (cv=1.0)
         this.manualGate = 0.0;
         this.isManualActive = false;
+        this.legato = false;
+        this.retrigGap = 0;
+        this.lastMidi = null;
 
         this.heldCv = 1.0;
         this.heldGate = 0.0;
@@ -40,16 +43,31 @@ export class ScaleProcessor extends AudioWorkletProcessor {
                 if (d.isPatched !== undefined) {
                     this.isPatched = Boolean(d.isPatched);
                 }
+                if (d.legato !== undefined) {
+                    this.legato = Boolean(d.legato);
+                }
             } else if (d.type === 'NOTE' || d.type === 'NOTE_ON' || d.type === 'NOTE_OFF') {
                 const isDown = d.isDown ?? (d.type !== 'NOTE_OFF');
+                const isLegato = d.legato !== undefined ? Boolean(d.legato) : this.legato;
                 const midi = d.midi ?? 48;
                 const rawSemi = ((midi % 12) + 12) % 12;
                 const snappedSemi = this.snapSemi(rawSemi);
                 const oct = Math.floor(midi / 12) - 1;
                 const cv = (oct - 1) + (snappedSemi / 12.0);
 
+                const wasActive = this.manualGate > 0.5;
                 this.manualCv = cv;
-                this.manualGate = isDown ? 1.0 : 0.0;
+                if (isDown) {
+                    if (wasActive && !isLegato && midi !== this.lastMidi) {
+                        this.retrigGap = Math.max(1, Math.round(0.002 * sampleRate));
+                    }
+                    this.manualGate = 1.0;
+                    this.lastMidi = midi;
+                } else {
+                    this.manualGate = 0.0;
+                    this.retrigGap = 0;
+                    this.lastMidi = null;
+                }
                 this.isManualActive = isDown;
             }
         };
@@ -104,7 +122,12 @@ export class ScaleProcessor extends AudioWorkletProcessor {
                 this.heldCv = this.manualCv;
                 this.rawInCv = null;
             }
-            this.heldGate = this.manualGate;
+            if (this.retrigGap > 0) {
+                this.retrigGap--;
+                this.heldGate = 0.0;
+            } else {
+                this.heldGate = this.manualGate;
+            }
 
             cvOut[i] = this.heldCv;
             if (gateOut) gateOut[i] = this.heldGate;

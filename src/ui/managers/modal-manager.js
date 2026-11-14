@@ -224,7 +224,7 @@ export class ModalManager {
             rebuildModule: () => this.ui.rebuildModule(id),
             removeConnectionsForPort: (p) => this.ui.removeConnectionsForPort(id, p),
             sendControl: (event) => this.ui.synth.sendControlEvent(id, event),
-            sendKeyNote: (midi, isDown) => this.ui.synth.sendControlEvent(id, { type: 'NOTE', midi, isDown }),
+            sendKeyNote: (midi, isDown, legato = false) => this.ui.synth.sendControlEvent(id, { type: 'NOTE', midi, isDown, legato }),
             triggerManualSample: () => this.ui.synth.sendControlEvent(id, { type: 'TRIG' }),
             prompt: (t, init) => this.openCustomPrompt(t, init),
             numpad: (t, init, min, max) => this.openNumpadPrompt(t, init, min, max),
