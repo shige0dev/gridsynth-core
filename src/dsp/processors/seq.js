@@ -73,9 +73,9 @@ export class SeqProcessor extends AudioWorkletProcessor {
             const isTrigHi = trigV >= 0.4;
 
             // 1. TRANS_IN trigger reservation:
-            // Any >= 0.4V signal while inactive charges the sequencer for next clock start.
-            // While active, input is ignored so the sequence completes cleanly in one shot.
-            if (isTrigHi && !this.active) {
+            // Any >= 0.4V signal (both while inactive and while active) arms the sequencer
+            // so it starts or continues into the next cycle at the upcoming clock rising edge.
+            if (isTrigHi) {
                 this.armed = true;
             }
 
