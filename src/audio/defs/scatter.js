@@ -120,7 +120,7 @@ export const SCATTER = {
         const instMat = hasThreeGlobal ? new THREE.Matrix4() : null;
 
         return {
-            nodes: { gCv, anCv },
+            nodes: { gCv: cvReader.input, anCv: cvReader.analyser },
             inputs: {
                 base_in: null,
                 child_in: null,
