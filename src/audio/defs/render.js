@@ -21,8 +21,9 @@ export const RENDER = {
         let rootGroup = null;
         let renderCanvas = null;
 
-        // HDR Multi-Stage Bloom Post-Processing Setup (supports faces, wireframes & points)
+        // HDR Multi-Stage Bloom & Screen-Space Refraction/Reflection Setup
         let baseTarget = null;
+        let refractTarget = null;
         let bloomMips = [];
         let bloomScene = null;
         let bloomCamera = null;
@@ -105,7 +106,9 @@ export const RENDER = {
                             uniforms: {
                                 uColor: { value: new THREE.Color(colorHex) },
                                 uOpacity: { value: Math.max(0.05, Math.min(0.85, Number(glassOpacity) || 0.25)) },
-                                uGlow: { value: gVal }
+                                uGlow: { value: gVal },
+                                tRefract: { value: refractTarget ? refractTarget.texture : null },
+                                uResolution: { value: new THREE.Vector2(currentBufferSize, currentBufferSize) }
                             },
                             vertexShader: `
                                 varying vec3 vNormal;
@@ -126,6 +129,8 @@ export const RENDER = {
                                 uniform vec3 uColor;
                                 uniform float uOpacity;
                                 uniform float uGlow;
+                                uniform sampler2D tRefract;
+                                uniform vec2 uResolution;
                                 varying vec3 vNormal;
                                 varying vec3 vViewPos;
                                 void main() {
@@ -133,18 +138,40 @@ export const RENDER = {
                                     vec3 N = normalize(vNormal);
                                     if (!gl_FrontFacing) N = -N;
                                     float ndotv = clamp(dot(N, V), 0.0, 1.0);
-                                    float fresnel = pow(1.0 - ndotv, 2.4);
+                                    float fresnel = pow(1.0 - ndotv, 2.2);
 
+                                    // Screen-space UV of current fragment
+                                    vec2 screenUv = gl_FragCoord.xy / max(uResolution, vec2(1.0));
+
+                                    // 1. Chromatic Refraction (IOR dispersion across R/G/B)
+                                    vec2 refractOffset = N.xy * (0.055 + (1.0 - ndotv) * 0.085);
+                                    float r = texture2D(tRefract, clamp(screenUv - refractOffset * 1.14, 0.002, 0.998)).r;
+                                    float g = texture2D(tRefract, clamp(screenUv - refractOffset * 1.00, 0.002, 0.998)).g;
+                                    float b = texture2D(tRefract, clamp(screenUv - refractOffset * 0.86, 0.002, 0.998)).b;
+                                    vec3 refracted = vec3(r, g, b);
+
+                                    // 2. Screen-space Inter-Object Fresnel Reflection
+                                    vec3 R = reflect(-V, N);
+                                    vec2 reflUv = clamp(screenUv + R.xy * 0.16, 0.002, 0.998);
+                                    vec3 reflected = texture2D(tRefract, reflUv).rgb;
+
+                                    // 3. Specular highlights & surface tint
                                     vec3 L1 = normalize(vec3(0.5, 0.8, 0.6));
                                     vec3 L2 = normalize(vec3(-0.6, -0.4, 0.5));
                                     float spec1 = pow(max(dot(N, normalize(L1 + V)), 0.0), 48.0);
                                     float spec2 = pow(max(dot(N, normalize(L2 + V)), 0.0), 24.0) * 0.45;
                                     float sheen = smoothstep(-0.2, 0.9, N.y) * 0.14;
 
-                                    vec3 col = uColor * (uOpacity * 0.75 + fresnel * 0.95 + sheen)
-                                             + vec3(1.0) * (spec1 * 0.95 + spec2 * 0.5 + fresnel * 0.35);
+                                    vec3 tint = mix(vec3(1.0), uColor * 1.15, uOpacity * 0.6);
+                                    vec3 col = refracted * tint * (1.0 - fresnel * 0.35)
+                                             + reflected * (0.25 + fresnel * 0.95)
+                                             + uColor * (uOpacity * 0.45 + fresnel * 0.75 + sheen)
+                                             + vec3(1.0) * (spec1 * 0.95 + spec2 * 0.5 + fresnel * 0.30);
                                     col *= (1.0 + uGlow * 1.4);
-                                    float alpha = clamp(uOpacity * 0.45 + fresnel * 0.78 + spec1 * 0.85, 0.04, 0.96);
+
+                                    float bgLuma = max(refracted.r, max(refracted.g, refracted.b));
+                                    float reflLuma = max(reflected.r, max(reflected.g, reflected.b));
+                                    float alpha = clamp(max(uOpacity * 0.45 + fresnel * 0.78 + spec1 * 0.85, max(bgLuma, reflLuma) * 0.95), 0.06, 0.98);
                                     gl_FragColor = vec4(col, alpha);
                                 }
                             `,
@@ -248,6 +275,7 @@ export const RENDER = {
             };
 
             baseTarget = new THREE.WebGLRenderTarget(BUFFER_SIZE, BUFFER_SIZE, rtOpts);
+            refractTarget = new THREE.WebGLRenderTarget(BUFFER_SIZE, BUFFER_SIZE, rtOpts);
             bloomMips = [256, 128, 64, 32].map(sz => new THREE.WebGLRenderTarget(sz, sz, rtOpts));
 
             bloomScene = new THREE.Scene();
@@ -455,6 +483,7 @@ export const RENDER = {
                 node.instanceMatrix.needsUpdate = true;
                 node.visible = true;
                 node.userData.hasGlow = (pktGlow > 0.01);
+                node.userData.isGlass = (matStyle === 'glass');
                 node.position.set(...(packet.transform?.position || [0, 0, 0]));
                 node.rotation.set(...(packet.transform?.rotation || [0, 0, 0]));
                 node.scale.set(...(packet.transform?.scale || [1, 1, 1]));
@@ -486,6 +515,7 @@ export const RENDER = {
                 }
                 node.visible = true;
                 node.userData.hasGlow = (pktGlow > 0.01);
+                node.userData.isGlass = (matStyle === 'glass');
                 node.position.set(...(packet.transform?.position || [0, 0, 0]));
                 node.rotation.set(...(packet.transform?.rotation || [0, 0, 0]));
                 node.scale.set(...(packet.transform?.scale || [1, 1, 1]));
@@ -522,15 +552,37 @@ export const RENDER = {
             }
 
             let hasGlow = false;
+            let hasGlass = false;
             if (rootGroup.visible) {
                 rootGroup.traverse(o => {
                     if (o.visible && o.userData?.hasGlow) hasGlow = true;
+                    if (o.visible && o.userData?.isGlass) hasGlass = true;
                 });
             }
-            return hasGlow;
+            return { hasGlow, hasGlass };
         };
 
-        const renderEyePass = (hasGlow) => {
+        const renderEyePass = (flags) => {
+            const hasGlow = Boolean(flags?.hasGlow);
+            const hasGlass = Boolean(flags?.hasGlass);
+
+            // Pass 0 (Refraction/Reflection Background Capture): render non-glass objects into refractTarget
+            if (hasGlass && refractTarget) {
+                const hiddenGlass = [];
+                rootGroup.traverse(o => {
+                    if (o.visible && o.userData?.isGlass) {
+                        o.visible = false;
+                        hiddenGlass.push(o);
+                    }
+                });
+                renderer.setRenderTarget(refractTarget);
+                renderer.clear();
+                renderer.render(scene, camera);
+                for (let i = 0; i < hiddenGlass.length; i++) {
+                    hiddenGlass[i].visible = true;
+                }
+            }
+
             if (hasGlow && baseTarget && bloomMips.length === 4 && bloomQuad && prefilterMat && downsampleMat && compositeMat) {
                 // 1. Single-pass HDR Scene Render
                 renderer.setRenderTarget(baseTarget);
@@ -571,8 +623,8 @@ export const RENDER = {
             lastRenderTime = now;
 
             if (renderer && scene && camera && rootGroup) {
-                const hasNeon = prepareScene();
-                renderEyePass(hasNeon);
+                const flags = prepareScene();
+                renderEyePass(flags);
             }
         };
 
@@ -584,6 +636,7 @@ export const RENDER = {
             renderCanvas.height = targetSize;
             renderer.setSize(targetSize, targetSize, false);
             if (baseTarget) baseTarget.setSize(targetSize, targetSize);
+            if (refractTarget) refractTarget.setSize(targetSize, targetSize);
             if (compositeMat?.uniforms?.uTexelSize) {
                 compositeMat.uniforms.uTexelSize.value.set(1 / targetSize, 1 / targetSize);
             }
@@ -593,13 +646,16 @@ export const RENDER = {
                 if (mat.uniforms?.uWireWidth && mat.userData?.baseWireWidth != null) {
                     mat.uniforms.uWireWidth.value = mat.userData.baseWireWidth * wireScale;
                 }
+                if (mat.uniforms?.uResolution) {
+                    mat.uniforms.uResolution.value.set(targetSize, targetSize);
+                }
             });
         };
 
         const renderStereo = (leftCtx, rightCtx, eyeSep = 0.8) => {
             if (!renderer || !scene || !camera || !rootGroup || !renderCanvas) return;
             if (currentBufferSize !== 2048) setResolution(2048);
-            const hasNeon = prepareScene();
+            const flags = prepareScene();
 
             const basePos = new THREE.Vector3(d.camX ?? 0, d.camY ?? 0, d.camZ ?? 5);
             const targetVec = new THREE.Vector3(d.targetX ?? 0, d.targetY ?? 0, d.targetZ ?? 0);
@@ -614,7 +670,7 @@ export const RENDER = {
                 camera.up.set(0, 1, 0);
                 camera.lookAt(targetVec);
                 if (rollRad) camera.rotateZ(rollRad);
-                renderEyePass(hasNeon);
+                renderEyePass(flags);
                 outCtx.clearRect(0, 0, outCtx.canvas.width, outCtx.canvas.height);
                 outCtx.drawImage(renderCanvas, 0, 0, outCtx.canvas.width, outCtx.canvas.height);
             };
@@ -690,6 +746,10 @@ export const RENDER = {
                 if (baseTarget) {
                     try { baseTarget.dispose(); } catch (_) {}
                     baseTarget = null;
+                }
+                if (refractTarget) {
+                    try { refractTarget.dispose(); } catch (_) {}
+                    refractTarget = null;
                 }
                 for (let i = 0; i < bloomMips.length; i++) {
                     try { bloomMips[i].dispose(); } catch (_) {}
