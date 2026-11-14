@@ -149,6 +149,7 @@ export const OBJECT = {
                     pointSize: Number(d.pointSize ?? 3.0),
                     glassOpacity: Number(d.glassOpacity ?? 0.25),
                     glow: Number(d.glow ?? 0.0),
+                    mirror: Number(d.mirror ?? 0.0),
                     color: parseColor(d.color)
                 };
             },
@@ -160,6 +161,7 @@ export const OBJECT = {
                 pointSize: Number(d.pointSize ?? 3.0),
                 glassOpacity: Number(d.glassOpacity ?? 0.25),
                 glow: Number(d.glow ?? 0.0),
+                mirror: Number(d.mirror ?? 0.0),
                 color: d.color || '#ffffff'
             }),
             destroy: () => {

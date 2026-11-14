@@ -55,15 +55,94 @@ export const RENDER = {
             return pointTexture;
         };
 
-        const getMaterial = (style, colorHex, pointSize = 3.0, wireWidth = 1.5, glassOpacity = 0.25, glow = 0.0) => {
+        const getMaterial = (style, colorHex, pointSize = 3.0, wireWidth = 1.5, glassOpacity = 0.25, glow = 0.0, mirror = 0.0) => {
             if (typeof THREE === 'undefined') return null;
             const gVal = Math.max(0, Number(glow) || 0);
+            const mVal = Math.max(0, Math.min(1, Number(mirror) || 0));
             const extraKey = style === 'point'
                 ? `_${Number(pointSize).toFixed(1)}`
                 : (style === 'wire'
                     ? `_${Number(wireWidth).toFixed(1)}`
                     : (style === 'glass' ? `_${Number(glassOpacity).toFixed(2)}` : ''));
-            const key = `${style}_${colorHex}${extraKey}_g${gVal.toFixed(1)}`;
+            const mirKey = (style === 'solid' || style === 'toon' || style === 'normal' || style === 'glass') ? `_m${mVal.toFixed(2)}` : '';
+            const key = `${style}_${colorHex}${extraKey}_g${gVal.toFixed(1)}${mirKey}`;
+
+            const createReflectiveSurfaceMat = (baseMode) => new THREE.ShaderMaterial({
+                uniforms: {
+                    uColor: { value: new THREE.Color(colorHex) },
+                    uGlow: { value: gVal },
+                    uMirror: { value: mVal },
+                    uBaseMode: { value: baseMode },
+                    tRefract: { value: refractTarget ? refractTarget.texture : null },
+                    uResolution: { value: new THREE.Vector2(currentBufferSize, currentBufferSize) }
+                },
+                vertexShader: `
+                    varying vec3 vNormal;
+                    varying vec3 vViewPos;
+                    void main() {
+                        #ifdef USE_INSTANCING
+                            vec4 mvPos = modelViewMatrix * instanceMatrix * vec4(position, 1.0);
+                            vNormal = normalize(normalMatrix * mat3(instanceMatrix) * normal);
+                        #else
+                            vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
+                            vNormal = normalize(normalMatrix * normal);
+                        #endif
+                        vViewPos = -mvPos.xyz;
+                        gl_Position = projectionMatrix * mvPos;
+                    }
+                `,
+                fragmentShader: `
+                    uniform vec3 uColor;
+                    uniform float uGlow;
+                    uniform float uMirror;
+                    uniform int uBaseMode;
+                    uniform sampler2D tRefract;
+                    uniform vec2 uResolution;
+                    varying vec3 vNormal;
+                    varying vec3 vViewPos;
+                    void main() {
+                        vec3 V = normalize(vViewPos);
+                        vec3 N = normalize(vNormal);
+                        if (!gl_FrontFacing) N = -N;
+                        float ndotv = clamp(dot(N, V), 0.0, 1.0);
+                        float fresnel = pow(1.0 - ndotv, 2.2);
+
+                        vec3 L = normalize(vec3(0.45, 0.57, 0.68));
+                        float ndotl = max(dot(N, L), 0.0);
+                        vec3 H = normalize(L + V);
+                        float spec = pow(max(dot(N, H), 0.0), mix(24.0, 96.0, uMirror));
+
+                        vec3 baseCol;
+                        if (uBaseMode == 2) {
+                            baseCol = N * 0.5 + 0.5;
+                        } else if (uBaseMode == 1) {
+                            float toonStep = ndotl > 0.45 ? 1.0 : (ndotl > 0.1 ? 0.6 : 0.35);
+                            baseCol = uColor * toonStep;
+                        } else {
+                            baseCol = uColor * (0.38 + ndotl * 0.72) + vec3(spec * 0.35);
+                        }
+
+                        vec2 screenUv = gl_FragCoord.xy / max(uResolution, vec2(1.0));
+                        vec3 R = reflect(-V, N);
+                        vec2 reflUv = clamp(screenUv + R.xy * 0.22, 0.002, 0.998);
+                        vec3 reflObj = texture2D(tRefract, reflUv).rgb;
+
+                        // Chrome mirror finish: reflected scene + crisp metallic rim & specular
+                        vec3 chromeTint = mix(vec3(0.92), uColor, 0.25);
+                        vec3 mirrorCol = reflObj * (0.85 + fresnel * 0.65)
+                                       + chromeTint * (fresnel * 0.28 + 0.04)
+                                       + vec3(spec * 0.95);
+
+                        vec3 finalCol = mix(baseCol, mirrorCol, uMirror);
+                        if (uGlow > 0.01) {
+                            finalCol += uColor * (uGlow * 1.4);
+                        }
+                        gl_FragColor = vec4(finalCol, 1.0);
+                    }
+                `,
+                side: THREE.DoubleSide
+            });
+
             if (!materialCache.has(key)) {
                 let mat;
                 switch (style) {
@@ -79,27 +158,33 @@ export const RENDER = {
                         });
                         break;
                     case 'solid':
-                        mat = new THREE.MeshStandardMaterial({
-                            color: colorHex,
-                            emissive: gVal > 0.01 ? colorHex : 0x000000,
-                            emissiveIntensity: gVal > 0.01 ? gVal * 1.6 : 0.0,
-                            roughness: 0.3,
-                            metalness: 0.4,
-                            side: THREE.DoubleSide
-                        });
+                        mat = mVal > 0.01
+                            ? createReflectiveSurfaceMat(0)
+                            : new THREE.MeshStandardMaterial({
+                                color: colorHex,
+                                emissive: gVal > 0.01 ? colorHex : 0x000000,
+                                emissiveIntensity: gVal > 0.01 ? gVal * 1.6 : 0.0,
+                                roughness: 0.3,
+                                metalness: 0.4,
+                                side: THREE.DoubleSide
+                            });
                         break;
                     case 'normal':
-                        mat = new THREE.MeshNormalMaterial({
-                            side: THREE.DoubleSide
-                        });
+                        mat = mVal > 0.01
+                            ? createReflectiveSurfaceMat(2)
+                            : new THREE.MeshNormalMaterial({
+                                side: THREE.DoubleSide
+                            });
                         break;
                     case 'toon':
-                        mat = new THREE.MeshToonMaterial({
-                            color: colorHex,
-                            emissive: gVal > 0.01 ? colorHex : 0x000000,
-                            emissiveIntensity: gVal > 0.01 ? gVal * 1.6 : 0.0,
-                            side: THREE.DoubleSide
-                        });
+                        mat = mVal > 0.01
+                            ? createReflectiveSurfaceMat(1)
+                            : new THREE.MeshToonMaterial({
+                                color: colorHex,
+                                emissive: gVal > 0.01 ? colorHex : 0x000000,
+                                emissiveIntensity: gVal > 0.01 ? gVal * 1.6 : 0.0,
+                                side: THREE.DoubleSide
+                            });
                         break;
                     case 'glass':
                         mat = new THREE.ShaderMaterial({
@@ -107,6 +192,7 @@ export const RENDER = {
                                 uColor: { value: new THREE.Color(colorHex) },
                                 uOpacity: { value: Math.max(0.05, Math.min(0.85, Number(glassOpacity) || 0.25)) },
                                 uGlow: { value: gVal },
+                                uMirror: { value: mVal },
                                 tRefract: { value: refractTarget ? refractTarget.texture : null },
                                 uResolution: { value: new THREE.Vector2(currentBufferSize, currentBufferSize) }
                             },
@@ -129,6 +215,7 @@ export const RENDER = {
                                 uniform vec3 uColor;
                                 uniform float uOpacity;
                                 uniform float uGlow;
+                                uniform float uMirror;
                                 uniform sampler2D tRefract;
                                 uniform vec2 uResolution;
                                 varying vec3 vNormal;
@@ -152,7 +239,7 @@ export const RENDER = {
 
                                     // 2. Screen-space Inter-Object Fresnel Reflection
                                     vec3 R = reflect(-V, N);
-                                    vec2 reflUv = clamp(screenUv + R.xy * 0.16, 0.002, 0.998);
+                                    vec2 reflUv = clamp(screenUv + R.xy * 0.18, 0.002, 0.998);
                                     vec3 reflected = texture2D(tRefract, reflUv).rgb;
 
                                     // 3. Specular highlights & surface tint
@@ -163,15 +250,18 @@ export const RENDER = {
                                     float sheen = smoothstep(-0.2, 0.9, N.y) * 0.14;
 
                                     vec3 tint = mix(vec3(1.0), uColor * 1.15, uOpacity * 0.6);
-                                    vec3 col = refracted * tint * (1.0 - fresnel * 0.35)
-                                             + reflected * (0.25 + fresnel * 0.95)
+                                    float transWeight = (1.0 - uMirror * 0.85) * (1.0 - fresnel * 0.35);
+                                    float reflWeight = 0.25 + fresnel * 0.95 + uMirror * 0.95;
+                                    vec3 col = refracted * tint * transWeight
+                                             + reflected * reflWeight
                                              + uColor * (uOpacity * 0.45 + fresnel * 0.75 + sheen)
                                              + vec3(1.0) * (spec1 * 0.95 + spec2 * 0.5 + fresnel * 0.30);
                                     col *= (1.0 + uGlow * 1.4);
 
                                     float bgLuma = max(refracted.r, max(refracted.g, refracted.b));
                                     float reflLuma = max(reflected.r, max(reflected.g, reflected.b));
-                                    float alpha = clamp(max(uOpacity * 0.45 + fresnel * 0.78 + spec1 * 0.85, max(bgLuma, reflLuma) * 0.95), 0.06, 0.98);
+                                    float baseAlpha = max(uOpacity * 0.45 + fresnel * 0.78 + spec1 * 0.85, uMirror * 0.92);
+                                    float alpha = clamp(max(baseAlpha, max(bgLuma * (1.0 - uMirror * 0.5), reflLuma) * 0.95), 0.06, 0.98);
                                     gl_FragColor = vec4(col, alpha);
                                 }
                             `,
@@ -465,7 +555,8 @@ export const RENDER = {
                 if (effectiveStyle === 'point') effectiveStyle = packet.materialStyle || 'wire';
                 const effectiveColor = packet.color ?? 0xffffff;
                 const pktGlow = Number(packet.glow ?? 0);
-                const mat = getMaterial(effectiveStyle, effectiveColor, packet.pointSize ?? 3.0, packet.wireWidth ?? 1.5, packet.glassOpacity ?? 0.25, pktGlow);
+                const pktMirror = Number(packet.mirror ?? 0);
+                const mat = getMaterial(effectiveStyle, effectiveColor, packet.pointSize ?? 3.0, packet.wireWidth ?? 1.5, packet.glassOpacity ?? 0.25, pktGlow, pktMirror);
 
                 const needsNew = !node || !node.isInstancedMesh || node.geometry !== packet.geometry || node.instanceMatrix.count < packet.count;
                 if (needsNew) {
@@ -483,7 +574,8 @@ export const RENDER = {
                 node.instanceMatrix.needsUpdate = true;
                 node.visible = true;
                 node.userData.hasGlow = (pktGlow > 0.01);
-                node.userData.isGlass = (matStyle === 'glass');
+                node.userData.isGlass = (effectiveStyle === 'glass');
+                node.userData.isMirror = (pktMirror > 0.01) && (effectiveStyle === 'solid' || effectiveStyle === 'toon' || effectiveStyle === 'normal');
                 node.position.set(...(packet.transform?.position || [0, 0, 0]));
                 node.rotation.set(...(packet.transform?.rotation || [0, 0, 0]));
                 node.scale.set(...(packet.transform?.scale || [1, 1, 1]));
@@ -493,10 +585,11 @@ export const RENDER = {
                 const effectiveStyle = (override !== 'auto') ? override : (packet.materialStyle || 'wire');
                 const effectiveColor = packet.color ?? 0xffffff;
                 const pktGlow = Number(packet.glow ?? 0);
+                const pktMirror = Number(packet.mirror ?? 0);
                 const isPoint = effectiveStyle === 'point';
                 const isLine = Boolean(packet.isLine) && !isPoint;
                 const matStyle = isLine ? 'line' : effectiveStyle;
-                const mat = getMaterial(matStyle, effectiveColor, packet.pointSize ?? 3.0, packet.wireWidth ?? 1.5, packet.glassOpacity ?? 0.25, pktGlow);
+                const mat = getMaterial(matStyle, effectiveColor, packet.pointSize ?? 3.0, packet.wireWidth ?? 1.5, packet.glassOpacity ?? 0.25, pktGlow, pktMirror);
                 const expectedType = isLine ? 'Line' : (isPoint ? 'Points' : 'Mesh');
 
                 if (!node || node.type !== expectedType) {
@@ -516,6 +609,7 @@ export const RENDER = {
                 node.visible = true;
                 node.userData.hasGlow = (pktGlow > 0.01);
                 node.userData.isGlass = (matStyle === 'glass');
+                node.userData.isMirror = (pktMirror > 0.01) && (matStyle === 'solid' || matStyle === 'toon' || matStyle === 'normal');
                 node.position.set(...(packet.transform?.position || [0, 0, 0]));
                 node.rotation.set(...(packet.transform?.rotation || [0, 0, 0]));
                 node.scale.set(...(packet.transform?.scale || [1, 1, 1]));
@@ -553,33 +647,36 @@ export const RENDER = {
 
             let hasGlow = false;
             let hasGlass = false;
+            let hasMirror = false;
             if (rootGroup.visible) {
                 rootGroup.traverse(o => {
                     if (o.visible && o.userData?.hasGlow) hasGlow = true;
                     if (o.visible && o.userData?.isGlass) hasGlass = true;
+                    if (o.visible && o.userData?.isMirror) hasMirror = true;
                 });
             }
-            return { hasGlow, hasGlass };
+            return { hasGlow, hasGlass, hasMirror };
         };
 
         const renderEyePass = (flags) => {
             const hasGlow = Boolean(flags?.hasGlow);
             const hasGlass = Boolean(flags?.hasGlass);
+            const hasMirror = Boolean(flags?.hasMirror);
 
-            // Pass 0 (Refraction/Reflection Background Capture): render non-glass objects into refractTarget
-            if (hasGlass && refractTarget) {
-                const hiddenGlass = [];
+            // Pass 0 (Refraction/Reflection Background Capture): render non-glass/non-mirror objects into refractTarget
+            if ((hasGlass || hasMirror) && refractTarget) {
+                const hiddenRefl = [];
                 rootGroup.traverse(o => {
-                    if (o.visible && o.userData?.isGlass) {
+                    if (o.visible && (o.userData?.isGlass || o.userData?.isMirror)) {
                         o.visible = false;
-                        hiddenGlass.push(o);
+                        hiddenRefl.push(o);
                     }
                 });
                 renderer.setRenderTarget(refractTarget);
                 renderer.clear();
                 renderer.render(scene, camera);
-                for (let i = 0; i < hiddenGlass.length; i++) {
-                    hiddenGlass[i].visible = true;
+                for (let i = 0; i < hiddenRefl.length; i++) {
+                    hiddenRefl[i].visible = true;
                 }
             }
 

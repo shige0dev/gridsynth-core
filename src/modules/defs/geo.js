@@ -43,6 +43,7 @@ export const OBJECT = {
         pointSize: 3.0,
         glassOpacity: 0.25,
         glow: 0.0,
+        mirror: 0.0,
         color: '#ffffff',
         detail: 'mid'
     }),
@@ -160,6 +161,15 @@ export const OBJECT = {
                 </div>
                 <input id="geo-glow" type="range" min="0.0" max="3.0" step="0.1" value="${Number(m.glow ?? 0)}" class="w-full accent-amber-400 h-1.5 bg-slate-800 rounded cursor-pointer">
             </div>
+
+            <!-- Section 6: Mirror Reflection -->
+            <div class="flex flex-col gap-1 border-t border-slate-800 pt-1 ${(curMat === 'wire' || curMat === 'point') ? 'opacity-30 pointer-events-none' : ''}">
+                <div class="flex items-center justify-between">
+                    <span class="text-[8px] font-mono font-bold text-cyan-400 uppercase tracking-wider">MIRROR</span>
+                    <span id="geo-mirror-val" class="text-[8px] font-mono font-bold text-cyan-300">${Math.round(Number(m.mirror ?? 0) * 100)}%</span>
+                </div>
+                <input id="geo-mirror" type="range" min="0.0" max="1.0" step="0.05" value="${Number(m.mirror ?? 0)}" class="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded cursor-pointer">
+            </div>
         </div>`;
     },
     bindEvents: (m, ctx, onChange) => {
@@ -213,6 +223,17 @@ export const OBJECT = {
                 m.glow = parseFloat(e.target.value);
                 const disp = root.querySelector('#geo-glow-val');
                 if (disp) disp.textContent = m.glow.toFixed(1);
+                onChange?.();
+            });
+        }
+
+        // Mirror reflection slider
+        const mirrorSl = root.querySelector('#geo-mirror');
+        if (mirrorSl) {
+            mirrorSl.addEventListener('input', (e) => {
+                m.mirror = parseFloat(e.target.value);
+                const disp = root.querySelector('#geo-mirror-val');
+                if (disp) disp.textContent = `${Math.round(m.mirror * 100)}%`;
                 onChange?.();
             });
         }
