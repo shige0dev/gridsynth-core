@@ -108,12 +108,12 @@ export class SeqProcessor extends AudioWorkletProcessor {
                     this.active = false;
                     this.step = -1;
                     this.gate = 0.0;
-                    if (!this.armed) {
+                    if (!this.armed && !isTrigHi) {
                         this.port.postMessage({ type: 'STEP', step: -1, active: false });
                     }
                 }
 
-                if (!this.active && this.armed) {
+                if (!this.active && (this.armed || isTrigHi)) {
                     this.active = true;
                     this.armed = false;
                     this.step = -1;
