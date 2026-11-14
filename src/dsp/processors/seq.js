@@ -38,18 +38,24 @@ export class SeqProcessor extends AudioWorkletProcessor {
                     this.transOutPatched = Boolean(e.data.transOutPatched);
                 }
                 if (e.data.transInPatched !== undefined) {
-                    this.transInPatched = Boolean(e.data.transInPatched);
-                    if (this.step === -1 && !this.armed) {
-                        this.active = (!this.transInPatched) ? true : (this.initOn !== false);
-                        this.port.postMessage({ type: 'STEP', step: this.step, active: this.active });
+                    const nextIn = Boolean(e.data.transInPatched);
+                    if (nextIn !== this.transInPatched) {
+                        this.transInPatched = nextIn;
+                        if (this.step === -1 && !this.armed) {
+                            this.active = (!this.transInPatched) ? true : (this.initOn !== false);
+                            this.port.postMessage({ type: 'STEP', step: this.step, active: this.active });
+                        }
                     }
                 }
             } else if (e.data.type === 'SET_INIT') {
                 if (e.data.initOn !== undefined) {
-                    this.initOn = Boolean(e.data.initOn);
-                    if (this.step === -1 && !this.armed) {
-                        this.active = (!this.transInPatched) ? true : this.initOn;
-                        this.port.postMessage({ type: 'STEP', step: this.step, active: this.active });
+                    const nextInit = Boolean(e.data.initOn);
+                    if (nextInit !== this.initOn) {
+                        this.initOn = nextInit;
+                        if (this.step === -1 && !this.armed) {
+                            this.active = (!this.transInPatched) ? true : this.initOn;
+                            this.port.postMessage({ type: 'STEP', step: this.step, active: this.active });
+                        }
                     }
                 }
             } else if (e.data.type === 'RESET') {
