@@ -10,26 +10,28 @@ function createSeqAudio(stepCount) {
                 gate: true
             }));
             const w = new AudioWorkletNode(ctx, 'seq-processor', {
-                numberOfInputs: 2,
+                numberOfInputs: 3,
                 numberOfOutputs: 3,
                 processorOptions: { steps }
             });
             w.port.postMessage({ type: 'SET_STEPS', steps });
 
             const isInit = d.initOn !== false;
-            w.port.postMessage({ type: 'SET_INIT', initOn: isInit });
+            const keyMode = d.keyMode === 'oneshot' ? 'oneshot' : 'loop';
+            w.port.postMessage({ type: 'SET_INIT', initOn: isInit, keyMode });
 
             const cv = ctx.createGain(), gt = ctx.createGain(), gTransOut = ctx.createGain();
-            const gIn = ctx.createGain(), gTransIn = ctx.createGain();
+            const gIn = ctx.createGain(), gTransIn = ctx.createGain(), gKeyGateIn = ctx.createGain();
 
             // Outputs: 0: cv_out (PIN 11), 1: gate_out (PIN 10), 2: trans_out (PIN 9)
             w.connect(cv, 0, 0);
             w.connect(gt, 1, 0);
             w.connect(gTransOut, 2, 0);
 
-            // Inputs: 0: gate_in / clk_in (PIN 5), 1: trans_in (PIN 6)
+            // Inputs: 0: gate_in / clk_in (PIN 5), 1: trans_in (PIN 6), 2: keygate_in (PIN 7)
             gIn.connect(w, 0, 0);
             gTransIn.connect(w, 0, 1);
+            gKeyGateIn.connect(w, 0, 2);
 
             if (eng?.silentSink) {
                 gt.connect(eng.silentSink);
@@ -39,16 +41,19 @@ function createSeqAudio(stepCount) {
             let patchState = patch || null;
             const sendPatch = (p) => {
                 patchState = p;
-                const transOutPatched = Boolean(p?.has?.('trans_out') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has?.('trans_out') : false));
-                const transInPatched = Boolean(p?.has?.('trans_in') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has?.('trans_in') : false));
+                const appPatch = window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id) : null;
+                const transOutPatched = Boolean(p?.has?.('trans_out') || appPatch?.has?.('trans_out'));
+                const transInPatched = Boolean(p?.has?.('trans_in') || appPatch?.has?.('trans_in'));
+                const keyGatePatched = Boolean(p?.has?.('keygate_in') || appPatch?.has?.('keygate_in'));
                 w.port.postMessage({
                     type: 'SET_PATCH',
                     transOutPatched,
-                    transInPatched
+                    transInPatched,
+                    keyGatePatched
                 });
             };
             sendPatch(patchState);
-            w.port.postMessage({ type: 'RESET', initOn: isInit });
+            w.port.postMessage({ type: 'RESET', initOn: isInit, keyMode });
 
             let st = -1;
             let liveActive = isInit;
@@ -62,11 +67,12 @@ function createSeqAudio(stepCount) {
             };
 
             return {
-                nodes: { w, cv, gt, gTransOut, gIn, gTransIn },
+                nodes: { w, cv, gt, gTransOut, gIn, gTransIn, gKeyGateIn },
                 inputs: {
                     gate_in: gIn,
                     clk_in: gIn,
-                    trans_in: gTransIn
+                    trans_in: gTransIn,
+                    keygate_in: gKeyGateIn
                 },
                 outputs: {
                     cv_out: cv,
@@ -78,7 +84,7 @@ function createSeqAudio(stepCount) {
                 },
                 resetStep: () => {
                     st = -1;
-                    w.port.postMessage({ type: 'RESET', initOn: d.initOn !== false });
+                    w.port.postMessage({ type: 'RESET', initOn: d.initOn !== false, keyMode: d.keyMode === 'oneshot' ? 'oneshot' : 'loop' });
                 },
                 read: () => ({
                     step: st,
@@ -90,8 +96,12 @@ function createSeqAudio(stepCount) {
             if (d?.steps && inst?.nodes?.w) {
                 inst.nodes.w.port.postMessage({ type: 'SET_STEPS', steps: d.steps });
             }
-            if (d?.initOn !== undefined && inst?.nodes?.w) {
-                inst.nodes.w.port.postMessage({ type: 'SET_INIT', initOn: d.initOn !== false });
+            if (d && inst?.nodes?.w) {
+                inst.nodes.w.port.postMessage({
+                    type: 'SET_INIT',
+                    initOn: d.initOn !== false,
+                    keyMode: d.keyMode === 'oneshot' ? 'oneshot' : 'loop'
+                });
             }
             if (patch !== undefined && inst?.updatePatchState) {
                 inst.updatePatchState(patch);

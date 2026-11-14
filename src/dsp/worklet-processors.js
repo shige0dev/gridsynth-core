@@ -1,6 +1,6 @@
-// v1.0.0797
+// v1.0.0798
 import './processors/clock.js?v=621';
-import './processors/seq.js?v=797';
+import './processors/seq.js?v=798';
 import './processors/adsr.js';
 import './processors/lfo.js?v=621';
 import './processors/math.js?v=691';

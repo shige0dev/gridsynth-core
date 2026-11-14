@@ -276,6 +276,7 @@ function createSeqModule(maxSteps) {
             type: typeName,
             quantize: true,
             initOn: true,
+            keyMode: 'loop',
             steps: Array.from({ length: maxSteps }, (_, i) => ({
                 cv: i === 0 ? 0 : 0.25,
                 active: true,
@@ -289,6 +290,9 @@ function createSeqModule(maxSteps) {
         onNormalize: (m) => {
             if (m.initOn === undefined) {
                 m.initOn = true;
+            }
+            if (!m.keyMode) {
+                m.keyMode = 'loop';
             }
             if (Array.isArray(m.steps)) {
                 if (typeof m.steps[0] === 'number') {
@@ -304,7 +308,8 @@ function createSeqModule(maxSteps) {
         ports: () => ({
             in: [
                 { port: 'gate_in', pin: 5, color: 'bg-red-500', label: 'GATE' },
-                { port: 'trans_in', pin: 6, color: 'bg-slate-400', label: 'TR-IN' }
+                { port: 'trans_in', pin: 6, color: 'bg-slate-400', label: 'TR-IN' },
+                { port: 'keygate_in', pin: 7, color: 'bg-orange-500', label: 'KEY-GT' }
             ],
             out: [
                 { port: 'trans_out', pin: 9, color: 'bg-slate-400', label: 'TR-OUT' },
@@ -344,6 +349,7 @@ function createSeqModule(maxSteps) {
         renderModal: (m) => {
             const steps = m.steps || [];
             const isInit = m.initOn !== false;
+            const keyMode = m.keyMode === 'oneshot' ? 'oneshot' : 'loop';
             return `
                 <div id="${prefix}-modal-root" class="${is16 ? 'space-y-1' : 'space-y-1.5'}">
                     <div class="flex items-center justify-between pb-1 border-b border-slate-800">
@@ -357,6 +363,7 @@ function createSeqModule(maxSteps) {
                                 <i data-lucide="download" class="w-2.5 h-2.5 pointer-events-none"></i>
                                 <span>IMP</span>
                             </button>
+                            <button id="${prefix}-keymode-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors shrink-0 ${keyMode === 'loop' ? 'bg-orange-600 text-white border-orange-500' : 'bg-purple-600 text-white border-purple-500'}" title="KEY-GT (PIN7) 動作モード切替 (LOOP: ゲートONの間ループ / 1-SHOT: 1周で停止)">KEY: ${keyMode === 'loop' ? 'LOOP' : '1-SHOT'}</button>
                             <button id="${prefix}-init-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors shrink-0 ${isInit ? 'bg-amber-600 text-white border-amber-500' : 'bg-slate-800 text-slate-400 border-slate-700'}">INIT: ${isInit ? 'ON' : 'OFF'}</button>
                             <button id="${prefix}-qlz-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors shrink-0 ${m.quantize !== false ? 'bg-cyan-600 text-white border-cyan-500' : 'bg-slate-800 text-slate-400 border-slate-700'}">QLZ: ${m.quantize !== false ? 'ON' : 'OFF'}</button>
                         </div>
@@ -376,6 +383,12 @@ function createSeqModule(maxSteps) {
             root.querySelector(`#${btnPrefix}-json-export-btn`)?.addEventListener('click', () => openSeqExport(m, ctx, cb, maxSteps));
             root.querySelector(`#${btnPrefix}-json-import-btn`)?.addEventListener('click', () => openSeqImport(m, ctx, cb, maxSteps));
             root.addEventListener('click', (e) => {
+                if (e.target.closest(`#${prefix}-keymode-btn`)) {
+                    m.keyMode = m.keyMode === 'oneshot' ? 'loop' : 'oneshot';
+                    ctx.reRenderModal();
+                    cb();
+                    return;
+                }
                 if (e.target.closest(`#${prefix}-init-btn`)) {
                     m.initOn = !(m.initOn !== false);
                     ctx.reRenderModal();
