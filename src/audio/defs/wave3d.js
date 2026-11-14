@@ -9,13 +9,16 @@ export const WAVE3D = {
 
         const waveIn = ctx.createGain();
         const an = ctx.createAnalyser();
-        an.fftSize = 256;
-        an.smoothingTimeConstant = 0.72;
+        an.fftSize = 8192;
+        an.minDecibels = -65;
+        an.maxDecibels = -6;
+        an.smoothingTimeConstant = 0.75;
         waveIn.connect(an);
         if (eng?.silentSink) {
             an.connect(eng.silentSink);
         }
 
+        const sampleRate = ctx.sampleRate || 48000;
         const timeBuf = new Float32Array(an.fftSize);
         const freqBuf = new Uint8Array(an.frequencyBinCount);
         const cvReader = AudioHelpers.createCvReader(ctx, eng);
@@ -85,21 +88,26 @@ export const WAVE3D = {
             const targetOffset = head * cols;
             if (sourceMode === 'spec') {
                 an.getByteFrequencyData(freqBuf);
-                const bins = freqBuf.length;
+                const fftSize = freqBuf.length * 2;
+                const f0 = 55; // Match SPEC module's 55Hz base (logarithmic 5-octave span: 55Hz..1760Hz)
                 for (let c = 0; c < cols; c++) {
                     const u = c / Math.max(1, cols - 1);
-                    // Focus on musical frequency range (0..75% of bins)
-                    const bIdx = Math.min(bins - 1, Math.floor(u * bins * 0.75));
-                    const raw = (freqBuf[bIdx] / 255.0) * gain;
-                    const edge = Math.pow(Math.sin(Math.PI * u), 0.25);
-                    history[targetOffset + c] = raw * edge;
+                    const fCenter = f0 * Math.pow(2, u * 5.0);
+                    const kCenterFloat = (fCenter * fftSize) / sampleRate;
+                    const k0 = Math.max(0, Math.min(freqBuf.length - 1, Math.floor(kCenterFloat)));
+                    const k1 = Math.min(freqBuf.length - 1, k0 + 1);
+                    const frac = kCenterFloat - k0;
+                    const val = (1 - frac) * freqBuf[k0] + frac * freqBuf[k1];
+                    const v = Math.max(0, Math.min(1.0, val / 255.0));
+                    history[targetOffset + c] = Math.pow(v, 1.4) * gain;
                 }
             } else {
                 an.getFloatTimeDomainData(timeBuf);
-                const n = timeBuf.length;
+                const winLen = 1024;
+                const startIdx = Math.max(0, timeBuf.length - winLen);
                 for (let c = 0; c < cols; c++) {
                     const u = c / Math.max(1, cols - 1);
-                    const sIdx = Math.min(n - 1, Math.floor(u * (n - 1)));
+                    const sIdx = Math.min(timeBuf.length - 1, startIdx + Math.floor(u * (winLen - 1)));
                     const raw = timeBuf[sIdx] * gain;
                     const edge = Math.pow(Math.sin(Math.PI * u), 0.35);
                     history[targetOffset + c] = raw * edge;
