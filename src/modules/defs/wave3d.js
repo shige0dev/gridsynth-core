@@ -23,7 +23,6 @@ export const WAVE3D = {
         cols: 64,
         gain: 1.6,
         speed: 1.0,
-        tilt: 0.38,
         glow: 0.75,
         color: '#ffffff'
     }),
@@ -55,7 +54,6 @@ export const WAVE3D = {
         const curCols = Math.round(m.cols ?? 64);
         const curGain = Number(m.gain ?? 1.6);
         const curSpeed = Number(m.speed ?? 1.0);
-        const curTilt = Number(m.tilt ?? 0.38);
         const curGlow = Number(m.glow ?? 0.75);
         const curCol = (m.color || '#ffffff').toLowerCase();
 
@@ -104,7 +102,6 @@ export const WAVE3D = {
                 ${UIHelpers.createVSliderHTML('w3d-cols', 'RES', 24, 96, 8, curCols, '', 'purple', false, String(curCols))}
                 ${UIHelpers.createVSliderHTML('w3d-gain', 'GAIN', 0.2, 4.0, 0.05, curGain, 'x', 'cyan', isCvPatched, curGain.toFixed(2))}
                 ${UIHelpers.createVSliderHTML('w3d-speed', 'SCROLL', 0.2, 2.0, 0.05, curSpeed, 'x', 'cyan', false, curSpeed.toFixed(2))}
-                ${UIHelpers.createVSliderHTML('w3d-tilt', 'TILT', -0.2, 1.2, 0.02, curTilt, '', 'amber', false, curTilt.toFixed(2))}
                 ${UIHelpers.createVSliderHTML('w3d-glow', 'GLOW', 0.0, 1.0, 0.05, curGlow, '', 'emerald', false, curGlow.toFixed(2))}
             </div>
 
@@ -151,7 +148,6 @@ export const WAVE3D = {
         UIHelpers.bindSlider('w3d-cols', v => String(Math.round(v)), v => { m.cols = Math.round(v); cb(); }, 1, 24, 96, root);
         UIHelpers.bindSlider('w3d-gain', v => Number(v).toFixed(2), v => { m.gain = Number(v); cb(); }, 1, 0.2, 4.0, root);
         UIHelpers.bindSlider('w3d-speed', v => Number(v).toFixed(2), v => { m.speed = Number(v); cb(); }, 1, 0.2, 2.0, root);
-        UIHelpers.bindSlider('w3d-tilt', v => Number(v).toFixed(2), v => { m.tilt = Number(v); cb(); }, 1, -0.2, 1.2, root);
         UIHelpers.bindSlider('w3d-glow', v => Number(v).toFixed(2), v => { m.glow = Number(v); cb(); }, 1, 0.0, 1.0, root);
     }
 };

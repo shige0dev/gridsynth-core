@@ -141,7 +141,6 @@ export const WAVE3D = {
                 const effGain = cvPatched
                     ? Math.max(0.05, Number(d.gain ?? 1.6) * (0.2 + Math.max(0, cvReader.read(0))))
                     : Number(d.gain ?? 1.6);
-                const tilt = Number(d.tilt ?? 0.38);
                 const glow = Number(d.glow ?? 0.75);
                 const color = d.color || '#ffffff';
 
@@ -160,8 +159,8 @@ export const WAVE3D = {
                 const depth = 4.8;
                 const zFront = depth * 0.45;
                 const transform = {
-                    position: [0, -0.35, 0],
-                    rotation: [tilt, 0, 0],
+                    position: [0, 0, 0],
+                    rotation: [0, 0, 0],
                     scale: [1, 1, 1]
                 };
 
