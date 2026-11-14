@@ -560,9 +560,6 @@ export class PresetManager {
             }`;
             item.innerHTML = `
                 <div class="flex items-center gap-1.5 min-w-0">
-                    <span class="text-[7.5px] font-mono px-1 py-0.2 rounded font-bold uppercase ${
-                        isActive ? 'bg-cyan-500/30 text-cyan-300' : 'bg-slate-900/80 text-cyan-400/80 border border-cyan-600/30'
-                    } shrink-0">USER</span>
                     <span class="truncate">${k}</span>
                 </div>
                 <div class="flex items-center gap-1.5 shrink-0">
@@ -615,22 +612,10 @@ export class PresetManager {
             c.appendChild(item);
         });
 
-        // 2. DEMO Patches Accordion Header (Collapsible like before)
+        // 2. DEMO Patches Accordion Header (Collapsible)
         const dHeader = document.createElement('div');
-        dHeader.className = `flex items-center justify-between h-[30px] min-h-[30px] px-2 rounded border cursor-pointer text-xs transition select-none font-bold ${
-            this.demoAccordionOpen
-                ? 'bg-slate-800 border-amber-500/60 text-amber-300'
-                : 'bg-slate-800/60 border-slate-700/60 hover:bg-slate-750 text-slate-300'
-        }`;
-        dHeader.innerHTML = `
-            <div class="flex items-center gap-1.5 min-w-0">
-                <span class="text-[7.5px] font-mono px-1 py-0.2 rounded font-bold uppercase bg-amber-500/20 text-amber-400 border border-amber-500/40 shrink-0">DEMO</span>
-                <span class="tracking-wide text-[11px]">DEMO PATCHES (${this.DEMO_KEYS.length})</span>
-            </div>
-            <div class="flex items-center gap-1 shrink-0 text-amber-400 font-mono text-[9px]">
-                <span>${this.demoAccordionOpen ? 'FOLD ▲' : 'OPEN ▼'}</span>
-            </div>
-        `;
+        dHeader.className = 'flex items-center justify-between h-[30px] min-h-[30px] px-2 rounded border cursor-pointer text-xs transition select-none font-bold bg-slate-800/60 border-slate-700/60 hover:bg-slate-750 text-slate-300';
+        dHeader.innerHTML = `<span class="tracking-wide text-[11px]">DEMO</span>`;
         dHeader.onclick = () => {
             this.demoAccordionOpen = !this.demoAccordionOpen;
             this.renderPresetList();
@@ -652,9 +637,6 @@ export class PresetManager {
                 }`;
                 item.innerHTML = `
                     <div class="flex items-center gap-1.5 min-w-0">
-                        <span class="text-[7.5px] font-mono px-1 py-0.2 rounded font-bold uppercase ${
-                            isActive ? 'bg-amber-500/30 text-amber-300' : 'bg-slate-900/80 text-amber-400/80 border border-amber-600/30'
-                        } shrink-0">DEMO</span>
                         <span class="truncate">${k}</span>
                     </div>
                     <div class="flex items-center gap-1 shrink-0">
