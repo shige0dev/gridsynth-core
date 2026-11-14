@@ -133,7 +133,8 @@ export class SeqProcessor extends AudioWorkletProcessor {
                         }
 
                         // Check if the current step is the last active step in the cycle
-                        if (this.transOutPatched) {
+                        // One-shot mode is enforced whenever TRANS_OUT or TRANS_IN is patched.
+                        if (this.transOutPatched || this.transInPatched) {
                             let peekStep = this.step;
                             let isLast = false;
                             for (let a = 0; a < numSteps; a++) {
@@ -147,7 +148,7 @@ export class SeqProcessor extends AudioWorkletProcessor {
                                 }
                             }
                             if (isLast) {
-                                this.trigOut = true;
+                                if (this.transOutPatched) this.trigOut = true;
                                 this.willEnd = true;
                             }
                         }
