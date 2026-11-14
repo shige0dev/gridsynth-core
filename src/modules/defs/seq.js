@@ -1,4 +1,4 @@
-import { UIHelpers } from '../../ui/helpers.js?v=352';
+import { UIHelpers } from '../../ui/helpers.js?v=803';
 import { JsonIoDialog } from '../../ui/json-io-dialog.js?v=352';
 import { parseNoteToCv as parseCommonNoteToCv } from '../../core/musical.js?v=367';
 
@@ -259,11 +259,13 @@ function createSeqModule(maxSteps) {
                 const isAct = typeof st === 'object' ? (st.active !== false) : true;
                 const isCvAct = typeof st === 'object' ? (st.cvActive !== false) : true;
                 const isGateAct = typeof st === 'object' ? (st.gate !== false) : true;
+                const stepVal = m.quantize !== false ? 0.083333 : 0.01;
                 return `
-                <div data-step-col="${idx}" class="flex flex-col items-center ${is16 ? 'gap-0.5' : 'gap-1'} flex-1 min-w-[34px] p-1 rounded-lg border shrink-0 ${isAct ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-950/80 border-slate-800/40 opacity-40 grayscale'}">
-                    <span id="${prefix}-slider-${idx}-disp" class="text-[${is16 ? '8px' : '8.5px'}] ${isAct ? 'text-cyan-300' : 'text-slate-500'} font-mono font-bold cursor-ns-resize touch-none select-none hover:bg-slate-800/80 ${is16 ? 'px-0.5' : 'px-1'} py-0.5 rounded transition-colors shrink-0" title="上下ドラッグで微調整">${m.quantize !== false ? UIHelpers.cvToNoteName(val) : val.toFixed(2)}</span>
-                    <div class="${is16 ? 'h-16 min-h-[64px]' : 'h-20 min-h-[80px]'} flex items-center justify-center my-0.5 shrink-0">
-                        <input type="range" data-seq-slider="${idx}" id="${prefix}-slider-${idx}" min="0" max="2.0" step="${m.quantize !== false ? 0.083333 : 0.01}" value="${val}" class="native-vslider-sm ${isAct ? 'accent-blue-500' : 'accent-slate-600'} shrink-0" style="height: ${is16 ? 64 : 80}px; min-height: ${is16 ? 64 : 80}px;">
+                <div data-step-col="${idx}" class="flex flex-col items-center gap-0 flex-1 min-w-[34px] p-1 rounded-lg border shrink-0 ${isAct ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-950/80 border-slate-800/40 opacity-40 grayscale'}">
+                    <span id="${prefix}-slider-${idx}-disp" class="text-[${is16 ? '8px' : '8.5px'}] ${isAct ? 'text-cyan-300' : 'text-slate-500'} font-mono font-bold cursor-ns-resize touch-none select-none hover:bg-slate-800/80 ${is16 ? 'px-0.5' : 'px-1'} py-0 leading-none rounded transition-colors shrink-0" title="上下ドラッグで微調整">${m.quantize !== false ? UIHelpers.cvToNoteName(val) : val.toFixed(2)}</span>
+                    <div class="relative ${is16 ? 'h-16 min-h-[64px]' : 'h-20 min-h-[80px]'} flex items-center justify-center mb-0.5 shrink-0">
+                        ${UIHelpers.renderVSliderTicks(0, 2.0, stepVal)}
+                        <input type="range" data-seq-slider="${idx}" id="${prefix}-slider-${idx}" min="0" max="2.0" step="${stepVal}" value="${val}" class="relative z-10 native-vslider-sm ${isAct ? 'accent-blue-500' : 'accent-slate-600'} shrink-0" style="height: ${is16 ? 64 : 80}px; min-height: ${is16 ? 64 : 80}px;">
                     </div>
                     ${renderSeqStepButtons(idx, isAct, isCvAct, isGateAct, is16)}
                 </div>`;

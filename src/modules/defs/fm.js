@@ -1,4 +1,4 @@
-import { UIHelpers } from '../../ui/helpers.js?v=351';
+import { UIHelpers } from '../../ui/helpers.js?v=803';
 
 const FM_OPERATORS = [
     { num: 3, key: 'op3', label: 'OP 3', sub: 'MOD 2', color: 'amber', hasWave: true, hasFb: true },
@@ -98,11 +98,12 @@ export const FMx3 = {
                 sVal = Math.pow(norm, 1 / power);
             }
             return `
-                <div class="flex flex-col items-center justify-between h-full min-w-[17px] flex-1 shrink-0">
-                    <span class="text-[6.5px] font-bold text-slate-400 uppercase tracking-tight leading-none shrink-0">${label}</span>
-                    <span id="${id}-disp" class="text-[7.5px] font-mono font-bold text-${accentColor}-300 cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 rounded leading-none py-0.5 shrink-0" title="上下ドラッグで微調整">${formattedDisp}</span>
-                    <div class="h-12 min-h-[48px] flex items-center justify-center my-0.5 shrink-0">
-                        <input type="range" id="${id}" min="${sMin}" max="${sMax}" step="${sStep}" value="${sVal}" class="native-vslider-sm accent-${accentColor}-400 shrink-0">
+                <div class="flex flex-col items-center justify-start gap-0 h-full min-w-[17px] flex-1 shrink-0">
+                    <span class="text-[6.5px] font-bold text-slate-400 uppercase tracking-tight leading-none mb-0.5 shrink-0">${label}</span>
+                    <span id="${id}-disp" class="text-[7.5px] font-mono font-bold text-${accentColor}-300 cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 rounded leading-none py-0 shrink-0" title="上下ドラッグで微調整">${formattedDisp}</span>
+                    <div class="relative h-12 min-h-[48px] flex items-center justify-center shrink-0">
+                        ${UIHelpers.renderVSliderTicks(sMin, sMax, sStep, 'w-[20px]')}
+                        <input type="range" id="${id}" min="${sMin}" max="${sMax}" step="${sStep}" value="${sVal}" class="relative z-10 native-vslider-sm accent-${accentColor}-400 shrink-0">
                     </div>
                 </div>
             `;
@@ -218,9 +219,10 @@ export const FMx3 = {
                             <span class="text-[7px] font-bold text-yellow-400 uppercase tracking-tight text-center leading-tight">ROOT</span>
                             <span class="text-[6px] font-mono text-slate-400 leading-tight">NOTE</span>
                         </div>
-                        <span id="fm-root-slider-disp" class="text-[8.5px] font-mono font-bold text-yellow-300 cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 rounded leading-none py-0.5" title="上下ドラッグで微調整">${isPitchPatched ? 'EXT' : rootName}</span>
-                        <div class="flex items-center justify-center flex-1 my-1">
-                            <input type="range" id="fm-root-slider" min="24" max="72" step="1" value="${rootM}" class="native-vslider accent-yellow-400" ${isPitchPatched ? 'disabled' : ''} style="height: 140px;">
+                        <span id="fm-root-slider-disp" class="text-[8.5px] font-mono font-bold text-yellow-300 cursor-ns-resize touch-none select-none hover:bg-slate-800/80 px-0.5 rounded leading-none py-0" title="上下ドラッグで微調整">${isPitchPatched ? 'EXT' : rootName}</span>
+                        <div class="relative flex items-center justify-center flex-1 mb-0.5">
+                            ${UIHelpers.renderVSliderTicks(24, 72, 1)}
+                            <input type="range" id="fm-root-slider" min="24" max="72" step="1" value="${rootM}" class="relative z-10 native-vslider accent-yellow-400" ${isPitchPatched ? 'disabled' : ''} style="height: 140px;">
                         </div>
                         <span class="text-[6.5px] font-mono text-slate-500 uppercase text-center leading-tight">${isPitchPatched ? 'EXT CV' : '1V/OCT'}</span>
                     </div>

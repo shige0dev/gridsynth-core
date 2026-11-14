@@ -203,6 +203,7 @@ body.is-row-dragging .grid-cell * {
     width: 18px;
     height: 96px;
     min-height: 96px;
+    margin: 0;
     flex-shrink: 0;
     cursor: pointer;
     padding: 0 2px;
@@ -216,6 +217,7 @@ body.is-row-dragging .grid-cell * {
     width: 18px;
     height: 48px;
     min-height: 48px;
+    margin: 0;
     flex-shrink: 0;
     cursor: pointer;
     padding: 0 2px;
