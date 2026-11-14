@@ -149,8 +149,9 @@ export const KEY = {
 
         if (!modal) return;
 
+        const uid = m?.id || 'key';
         // 2. モーダル内音名表示（数値は即時更新）
-        const noteDisp = modal.querySelector('#key-active-note');
+        const noteDisp = modal.querySelector(`#key-active-note-${uid}`) || modal.querySelector('[id^="key-active-note"]');
         if (noteDisp) {
             if (isPatched && data.cv !== undefined) {
                 noteDisp.textContent = UIHelpers.cvToNoteName(data.cv);
@@ -168,10 +169,10 @@ export const KEY = {
                     m.octave = inOct;
                     m._lastOctJump = now;
 
-                    const octD = modal.querySelector('#key-oct-disp');
+                    const octD = modal.querySelector(`#key-oct-disp-${uid}`) || modal.querySelector('[id^="key-oct-disp"]');
                     if (octD) octD.textContent = m.octave;
 
-                    const titleEl = modal.querySelector('#key-quant-title');
+                    const titleEl = modal.querySelector(`#key-quant-title-${uid}`) || modal.querySelector('[id^="key-quant-title"]');
                     if (titleEl) {
                         const curRoot = m.root ?? 0;
                         const scaleKey = m.scale || 'CHROMATIC';
@@ -202,7 +203,7 @@ export const KEY = {
         });
 
         // 5. 入力CV実際値のホワイトニードル（実測値インジケーター）
-        const needleEl = modal.querySelector('#key-quant-needle');
+        const needleEl = modal.querySelector(`#key-quant-needle-${uid}`) || modal.querySelector('[id^="key-quant-needle"]');
         if (needleEl) {
             if (isPatched && inCv !== null && inCv !== undefined && inCv >= vBase - (2.0 / 12.0) && inCv <= vBase + (14.0 / 12.0)) {
                 const vRel = inCv - vBase;
@@ -214,7 +215,8 @@ export const KEY = {
             }
         }
     },
-    renderModal: (m) => {
+    renderModal: (m, ctx) => {
+        const uid = ctx?.id || m?.id || 'key';
         const curOct = m.octave ?? 3;
         const curRoot = m.root ?? 0;
         const scaleKey = m.scale || 'CHROMATIC';
@@ -223,19 +225,19 @@ export const KEY = {
         const isLegato = Boolean(m.legato);
 
         return `
-            <div class="space-y-2 flex flex-col items-center select-none w-full p-1">
+            <div id="key-modal-root-${uid}" class="space-y-2 flex flex-col items-center select-none w-full p-1">
                 <!-- Top Row: Octave, Root, Scale, Legato -->
                 <div class="w-[332px] flex items-center justify-between gap-1 bg-zinc-950/80 p-1.5 rounded-lg border border-zinc-800 shrink-0">
                     <div class="flex items-center gap-0.5 shrink-0">
                         <span class="text-[8px] text-zinc-400 uppercase font-semibold">OCT:</span>
-                        <button id="key-oct-down" class="w-4 h-4 rounded bg-zinc-800 text-zinc-200 text-[10px] font-bold active:bg-zinc-700">－</button>
-                        <span id="key-oct-disp" class="w-3.5 text-center text-[10px] font-mono font-bold text-white">${curOct}</span>
-                        <button id="key-oct-up" class="w-4 h-4 rounded bg-zinc-800 text-zinc-200 text-[10px] font-bold active:bg-zinc-700">＋</button>
+                        <button id="key-oct-down-${uid}" class="w-4 h-4 rounded bg-zinc-800 text-zinc-200 text-[10px] font-bold active:bg-zinc-700">－</button>
+                        <span id="key-oct-disp-${uid}" class="w-3.5 text-center text-[10px] font-mono font-bold text-white">${curOct}</span>
+                        <button id="key-oct-up-${uid}" class="w-4 h-4 rounded bg-zinc-800 text-zinc-200 text-[10px] font-bold active:bg-zinc-700">＋</button>
                     </div>
 
                     <div class="flex items-center gap-0.5 shrink-0">
                         <span class="text-[8px] font-bold text-zinc-400 uppercase tracking-tight">R:</span>
-                        <select id="key-root-sel" class="bg-zinc-900 border border-zinc-700 text-zinc-200 font-mono font-bold text-[9px] rounded px-1 py-0.5 cursor-pointer outline-none hover:border-zinc-500">
+                        <select id="key-root-sel-${uid}" class="bg-zinc-900 border border-zinc-700 text-zinc-200 font-mono font-bold text-[9px] rounded px-1 py-0.5 cursor-pointer outline-none hover:border-zinc-500">
                             ${NOTES.map((name, idx) => `
                                 <option value="${idx}" ${idx === curRoot ? 'selected' : ''}>${name}</option>
                             `).join('')}
@@ -243,34 +245,34 @@ export const KEY = {
                     </div>
 
                     <div class="flex items-center gap-0.5 flex-1 justify-end min-w-0">
-                        <select id="key-scale-sel" class="bg-zinc-900 border border-zinc-700 text-zinc-200 font-mono font-bold text-[9px] rounded px-1 py-0.5 cursor-pointer outline-none hover:border-zinc-500 truncate max-w-[78px]">
+                        <select id="key-scale-sel-${uid}" class="bg-zinc-900 border border-zinc-700 text-zinc-200 font-mono font-bold text-[9px] rounded px-1 py-0.5 cursor-pointer outline-none hover:border-zinc-500 truncate max-w-[78px]">
                             ${SCALE_KEYS.map(k => `
                                 <option value="${k}" ${k === scaleKey ? 'selected' : ''}>${k}</option>
                             `).join('')}
                         </select>
                     </div>
 
-                    <button id="key-legato-btn" class="h-4 px-1.5 rounded border text-[7.5px] font-bold leading-none inline-flex items-center justify-center transition-colors shrink-0 ${isLegato ? 'bg-cyan-600 text-white border-cyan-400' : 'bg-zinc-900 text-zinc-400 border-zinc-700 hover:border-zinc-500'}" title="レガートモード (ON: 鍵盤を押したまま次の鍵盤に移ってもゲートを再トリガーせず音程のみ切替)">LEGATO</button>
+                    <button id="key-legato-btn-${uid}" class="h-4 px-1.5 rounded border text-[7.5px] font-bold leading-none inline-flex items-center justify-center transition-colors shrink-0 ${isLegato ? 'bg-cyan-600 text-white border-cyan-400' : 'bg-zinc-900 text-zinc-400 border-zinc-700 hover:border-zinc-500'}" title="レガートモード (ON: 鍵盤を押したまま次の鍵盤に移ってもゲートを再トリガーせず音程のみ切替)">LEGATO</button>
 
-                    <span class="text-[9.5px] font-mono font-bold text-white min-w-[24px] text-right shrink-0" id="key-active-note">${curNote}</span>
+                    <span class="text-[9.5px] font-mono font-bold text-white min-w-[24px] text-right shrink-0" id="key-active-note-${uid}">${curNote}</span>
                 </div>
 
                 <!-- クオンタイズマッピングルーラー（細い線でクオンタイズ吸着範囲を区分） -->
                 <div class="w-[332px] bg-zinc-950/90 p-1.5 rounded-lg border border-zinc-800 flex flex-col gap-1 shrink-0">
                     <div class="flex items-center justify-between text-[7px] font-bold text-zinc-400 tracking-wider">
                         <span>CV IN &rarr; QUANTIZE MAP</span>
-                        <span class="text-zinc-300 font-mono text-[7px]" id="key-quant-title">${NOTES[curRoot]}${curOct} ${scaleKey}</span>
+                        <span class="text-zinc-300 font-mono text-[7px]" id="key-quant-title-${uid}">${NOTES[curRoot]}${curOct} ${scaleKey}</span>
                     </div>
-                    <div class="relative flex items-center w-full h-[10px] bg-zinc-900/90 rounded-[1px] border border-zinc-700/60 overflow-hidden" id="key-quant-strip">
+                    <div class="relative flex items-center w-full h-[10px] bg-zinc-900/90 rounded-[1px] border border-zinc-700/60 overflow-hidden" id="key-quant-strip-${uid}">
                         ${renderQuantizeMapHTML(curRoot, curOct, mask)}
                         <!-- 入力CV実際値を示すホワイトライン（ニードル） -->
-                        <div id="key-quant-needle" class="absolute top-0 bottom-0 w-[1.5px] bg-white shadow-[0_0_6px_rgba(255,255,255,0.9)] z-20 pointer-events-none opacity-0 -translate-x-1/2"></div>
+                        <div id="key-quant-needle-${uid}" class="absolute top-0 bottom-0 w-[1.5px] bg-white shadow-[0_0_6px_rgba(255,255,255,0.9)] z-20 pointer-events-none opacity-0 -translate-x-1/2"></div>
                     </div>
                 </div>
 
                 <!-- VOLCAスタイル 16本 角のあるスクエアバー (-2 .. 13) -->
                 <!-- 各キーw-[18px]×16本 = 288px + gap-[2px]×15 = 30px -> 内寸ちょうど318px (全キー・全間隔完全均等) -->
-                <div class="w-[332px] h-28 bg-zinc-950 p-1.5 rounded-xl border border-zinc-800 flex flex-row gap-[2px] select-none touch-none shrink-0" id="volca-key-box">
+                <div class="w-[332px] h-28 bg-zinc-950 p-1.5 rounded-xl border border-zinc-800 flex flex-row gap-[2px] select-none touch-none shrink-0" id="volca-key-box-${uid}">
                     ${KEYS_16.map(k => {
                         const rel = ((k.absSemi - curRoot) % 12 + 12) % 12;
                         const isMasked = (mask[rel] ?? 1) === 1;
@@ -300,12 +302,13 @@ export const KEY = {
             </div>`;
     },
     bindEvents: (m, ctx, cb) => {
-        const rootEl = ctx?.getDialogElement ? (ctx.getDialogElement() || document) : document;
-        const octD = rootEl.querySelector('#key-oct-disp');
-        const nD = rootEl.querySelector('#key-active-note');
+        const uid = ctx?.id || m?.id || 'key';
+        const rootEl = document.getElementById(`key-modal-root-${uid}`) || (ctx?.getDialogElement ? (ctx.getDialogElement() || document) : document);
+        const octD = rootEl.querySelector(`#key-oct-disp-${uid}`);
+        const nD = rootEl.querySelector(`#key-active-note-${uid}`);
 
         // Octave Up / Down
-        rootEl.querySelector('#key-oct-down')?.addEventListener('click', () => {
+        rootEl.querySelector(`#key-oct-down-${uid}`)?.addEventListener('click', () => {
             if ((m.octave ?? 3) > 1) {
                 m.octave = (m.octave ?? 3) - 1;
                 if (octD) octD.textContent = m.octave;
@@ -314,7 +317,7 @@ export const KEY = {
                 cb();
             }
         });
-        rootEl.querySelector('#key-oct-up')?.addEventListener('click', () => {
+        rootEl.querySelector(`#key-oct-up-${uid}`)?.addEventListener('click', () => {
             if ((m.octave ?? 3) < 6) {
                 m.octave = (m.octave ?? 3) + 1;
                 if (octD) octD.textContent = m.octave;
@@ -325,7 +328,7 @@ export const KEY = {
         });
 
         // Root Selector
-        rootEl.querySelector('#key-root-sel')?.addEventListener('change', (e) => {
+        rootEl.querySelector(`#key-root-sel-${uid}`)?.addEventListener('change', (e) => {
             m.root = parseInt(e.target.value, 10);
             ctx.reRenderModal?.();
             ctx.reRenderCell?.();
@@ -333,7 +336,7 @@ export const KEY = {
         });
 
         // Scale Selector
-        rootEl.querySelector('#key-scale-sel')?.addEventListener('change', (e) => {
+        rootEl.querySelector(`#key-scale-sel-${uid}`)?.addEventListener('change', (e) => {
             const k = e.target.value;
             m.scale = k;
             if (SCALE_PRESETS[k]) {
@@ -345,14 +348,14 @@ export const KEY = {
         });
 
         // Legato Toggle
-        rootEl.querySelector('#key-legato-btn')?.addEventListener('click', () => {
+        rootEl.querySelector(`#key-legato-btn-${uid}`)?.addEventListener('click', () => {
             m.legato = !m.legato;
             ctx.reRenderModal?.();
             cb();
         });
 
         // Touch & Slide Interaction on VOLCA 16 Ribbon Bar
-        const box = rootEl.querySelector('#volca-key-box');
+        const box = rootEl.querySelector(`#volca-key-box-${uid}`);
         if (!box) return;
 
         const playSemi = (rawSemi, isDown, forceLegato = false) => {

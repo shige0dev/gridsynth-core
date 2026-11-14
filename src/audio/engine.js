@@ -1,4 +1,4 @@
-import { AUDIO_REGISTRY } from './registry.js?v=807';
+import { AUDIO_REGISTRY } from './registry.js?v=808';
 import { AudioHelpers } from './helpers.js?v=779';
 import { parseConn, normalizeSubPort, PORT_ALIASES } from '../core/utils.js?v=459';
 
@@ -207,7 +207,7 @@ export class SynthEngine {
                 const midi = event.midi ?? 60;
                 if (inst.type === 'KEY') {
                     if (inst.nodes?.w) {
-                        inst.nodes.w.port.postMessage({ type: 'NOTE', midi, isDown });
+                        inst.nodes.w.port.postMessage({ type: 'NOTE', midi, isDown, legato: event.legato });
                     } else if (inst.nodes?.p && inst.nodes?.g && this.ctx) {
                         inst.nodes.p.offset.setTargetAtTime((midi - 24) / 12.0, this.ctx.currentTime, 0.005);
                         inst.nodes.g.offset.setTargetAtTime(isDown ? 1.0 : 0.0, this.ctx.currentTime, 0.005);
