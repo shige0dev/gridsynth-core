@@ -112,44 +112,6 @@ export const OBJECT = {
                 </div>
             </div>
 
-            ${curMat === 'wire' ? `
-            <!-- Section 3B: Wire Width -->
-            <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
-                <div class="flex items-center justify-between">
-                    <span class="text-[8px] font-mono font-bold text-cyan-400 uppercase tracking-wider">WIRE WIDTH</span>
-                    <span id="geo-wire-width-val" class="text-[8px] font-mono font-bold text-cyan-300">${Number(m.wireWidth ?? 1.5).toFixed(1)} px</span>
-                </div>
-                <input id="geo-wire-width" type="range" min="0.5" max="8.0" step="0.5" value="${Number(m.wireWidth ?? 1.5)}" class="w-full accent-purple-500 h-1.5 bg-slate-800 rounded cursor-pointer">
-            </div>
-            ` : ''}
-
-            ${curMat === 'point' ? `
-            <!-- Section 3B: Point Size -->
-            <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
-                <div class="flex items-center justify-between">
-                    <span class="text-[8px] font-mono font-bold text-cyan-400 uppercase tracking-wider">POINT SIZE</span>
-                    <span id="geo-point-size-val" class="text-[8px] font-mono font-bold text-cyan-300">${Number(m.pointSize ?? 3.0).toFixed(1)}</span>
-                </div>
-                <input id="geo-point-size" type="range" min="0.5" max="12.0" step="0.5" value="${Number(m.pointSize ?? 3.0)}" class="w-full accent-purple-500 h-1.5 bg-slate-800 rounded cursor-pointer">
-            </div>
-            ` : ''}
-
-            ${curMat === 'glass' ? `
-            <!-- Section 3D: Glass Density & Refraction -->
-            <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
-                <div class="flex items-center justify-between">
-                    <span class="text-[8px] font-mono font-bold text-cyan-400 uppercase tracking-wider">GLASS DENSITY</span>
-                    <span id="geo-glass-opacity-val" class="text-[8px] font-mono font-bold text-cyan-300">${Math.round(Number(m.glassOpacity ?? 0.25) * 100)}%</span>
-                </div>
-                <input id="geo-glass-opacity" type="range" min="0.05" max="0.85" step="0.05" value="${Number(m.glassOpacity ?? 0.25)}" class="w-full accent-purple-500 h-1.5 bg-slate-800 rounded cursor-pointer">
-                <div class="flex items-center justify-between mt-1">
-                    <span class="text-[8px] font-mono font-bold text-cyan-400 uppercase tracking-wider">REFRACT</span>
-                    <span id="geo-refract-val" class="text-[8px] font-mono font-bold text-cyan-300">${Math.round(Number(m.refract ?? 0.5) * 100)}%</span>
-                </div>
-                <input id="geo-refract" type="range" min="0.0" max="1.0" step="0.05" value="${Number(m.refract ?? 0.5)}" class="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded cursor-pointer">
-            </div>
-            ` : ''}
-
             <!-- Section 4: Color -->
             <div class="flex flex-col gap-1 border-t border-slate-800 pt-1 ${curMat === 'normal' ? 'opacity-30 pointer-events-none' : ''}">
                 <div class="flex items-center justify-between">
@@ -176,6 +138,44 @@ export const OBJECT = {
                 </div>
                 <input id="geo-mirror" type="range" min="0.0" max="1.0" step="0.05" value="${Number(m.mirror ?? 0)}" class="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded cursor-pointer">
             </div>
+
+            ${curMat === 'glass' ? `
+            <!-- Section 3D: Glass Refraction & Density -->
+            <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
+                <div class="flex items-center justify-between">
+                    <span class="text-[8px] font-mono font-bold text-cyan-400 uppercase tracking-wider">REFRACT</span>
+                    <span id="geo-refract-val" class="text-[8px] font-mono font-bold text-cyan-300">${Math.round(Number(m.refract ?? 0.5) * 100)}%</span>
+                </div>
+                <input id="geo-refract" type="range" min="0.0" max="1.0" step="0.05" value="${Number(m.refract ?? 0.5)}" class="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded cursor-pointer">
+                <div class="flex items-center justify-between mt-1">
+                    <span class="text-[8px] font-mono font-bold text-cyan-400 uppercase tracking-wider">GLASS DENSITY</span>
+                    <span id="geo-glass-opacity-val" class="text-[8px] font-mono font-bold text-cyan-300">${Math.round(Number(m.glassOpacity ?? 0.25) * 100)}%</span>
+                </div>
+                <input id="geo-glass-opacity" type="range" min="0.05" max="0.85" step="0.05" value="${Number(m.glassOpacity ?? 0.25)}" class="w-full accent-purple-500 h-1.5 bg-slate-800 rounded cursor-pointer">
+            </div>
+            ` : ''}
+
+            ${curMat === 'wire' ? `
+            <!-- Section 3B: Wire Width -->
+            <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
+                <div class="flex items-center justify-between">
+                    <span class="text-[8px] font-mono font-bold text-cyan-400 uppercase tracking-wider">WIRE WIDTH</span>
+                    <span id="geo-wire-width-val" class="text-[8px] font-mono font-bold text-cyan-300">${Number(m.wireWidth ?? 1.5).toFixed(1)} px</span>
+                </div>
+                <input id="geo-wire-width" type="range" min="0.5" max="8.0" step="0.5" value="${Number(m.wireWidth ?? 1.5)}" class="w-full accent-purple-500 h-1.5 bg-slate-800 rounded cursor-pointer">
+            </div>
+            ` : ''}
+
+            ${curMat === 'point' ? `
+            <!-- Section 3B: Point Size -->
+            <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
+                <div class="flex items-center justify-between">
+                    <span class="text-[8px] font-mono font-bold text-cyan-400 uppercase tracking-wider">POINT SIZE</span>
+                    <span id="geo-point-size-val" class="text-[8px] font-mono font-bold text-cyan-300">${Number(m.pointSize ?? 3.0).toFixed(1)}</span>
+                </div>
+                <input id="geo-point-size" type="range" min="0.5" max="12.0" step="0.5" value="${Number(m.pointSize ?? 3.0)}" class="w-full accent-purple-500 h-1.5 bg-slate-800 rounded cursor-pointer">
+            </div>
+            ` : ''}
         </div>`;
     },
     bindEvents: (m, ctx, onChange) => {

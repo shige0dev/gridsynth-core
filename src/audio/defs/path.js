@@ -143,7 +143,9 @@ export const PATH = {
                 materialStyle: renderMode === 'fill' ? (d.material || 'wire') : 'line',
                 wireWidth: 1.5,
                 pointSize: 3.0,
-                glassOpacity: 0.25,
+                glassOpacity: Number(d.glassOpacity ?? 0.25),
+                refract: Number(d.refract ?? 0.5),
+                mirror: Number(d.mirror ?? 0.0),
                 glow: Number(d.glow ?? 0.0),
                 color: new THREE.Color(d.color || '#ffffff').getHex(),
                 transform: {

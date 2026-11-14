@@ -31,6 +31,9 @@ export const PATH = {
         arc: 1.0,
         sides: 6,
         material: 'wire',
+        glassOpacity: 0.25,
+        refract: 0.5,
+        mirror: 0.0,
         glow: 0.0,
         color: '#ffffff'
     }),
@@ -65,6 +68,9 @@ export const PATH = {
         const curArc = Number(m.arc ?? 1.0);
         const curSides = Math.round(m.sides ?? 6);
         const curMat = m.material || 'wire';
+        const curGlassOpacity = Number(m.glassOpacity ?? 0.25);
+        const curRefract = Number(m.refract ?? 0.5);
+        const curMirror = Number(m.mirror ?? 0.0);
         const curGlow = Number(m.glow ?? 0.0);
         const curCol = (m.color || '#ffffff').toLowerCase();
 
@@ -150,17 +156,8 @@ export const PATH = {
             </div>
             ` : ''}
 
-            <!-- Neon Glow -->
-            <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
-                <div class="flex items-center justify-between">
-                    <span class="text-[8px] font-mono font-bold text-amber-400 uppercase tracking-wider">NEON GLOW</span>
-                    <span id="path-glow-val" class="text-[8px] font-mono font-bold text-amber-300">${curGlow.toFixed(1)}</span>
-                </div>
-                <input id="path-glow" type="range" min="0.0" max="3.0" step="0.1" value="${curGlow}" class="w-full h-1 accent-amber-400 cursor-pointer">
-            </div>
-
             <!-- Color -->
-            <div class="flex flex-col gap-1.5 border-t border-slate-800 pt-1">
+            <div class="flex flex-col gap-1.5 border-t border-slate-800 pt-1 ${curRMode === 'fill' && curMat === 'normal' ? 'opacity-30 pointer-events-none' : ''}">
                 <div class="flex items-center justify-between">
                     <span class="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-wider">COLOR</span>
                     <input type="color" id="path-color-picker" value="${curCol}" class="w-6 h-4 bg-transparent border-0 cursor-pointer p-0">
@@ -171,6 +168,40 @@ export const PATH = {
                     `).join('')}
                 </div>
             </div>
+
+            <!-- Neon Glow -->
+            <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
+                <div class="flex items-center justify-between">
+                    <span class="text-[8px] font-mono font-bold text-amber-400 uppercase tracking-wider">NEON GLOW</span>
+                    <span id="path-glow-val" class="text-[8px] font-mono font-bold text-amber-300">${curGlow.toFixed(1)}</span>
+                </div>
+                <input id="path-glow" type="range" min="0.0" max="3.0" step="0.1" value="${curGlow}" class="w-full h-1 accent-amber-400 cursor-pointer">
+            </div>
+
+            <!-- Mirror Reflection -->
+            <div class="flex flex-col gap-1 border-t border-slate-800 pt-1 ${(curRMode !== 'fill' || curMat === 'wire' || curMat === 'point') ? 'opacity-30 pointer-events-none' : ''}">
+                <div class="flex items-center justify-between">
+                    <span class="text-[8px] font-mono font-bold text-cyan-400 uppercase tracking-wider">MIRROR</span>
+                    <span id="path-mirror-val" class="text-[8px] font-mono font-bold text-cyan-300">${Math.round(curMirror * 100)}%</span>
+                </div>
+                <input id="path-mirror" type="range" min="0.0" max="1.0" step="0.05" value="${curMirror}" class="w-full h-1 accent-cyan-400 cursor-pointer">
+            </div>
+
+            ${(curRMode === 'fill' && curMat === 'glass') ? `
+            <!-- Glass Refraction & Density -->
+            <div class="flex flex-col gap-1 border-t border-slate-800 pt-1">
+                <div class="flex items-center justify-between">
+                    <span class="text-[8px] font-mono font-bold text-cyan-400 uppercase tracking-wider">REFRACT</span>
+                    <span id="path-refract-val" class="text-[8px] font-mono font-bold text-cyan-300">${Math.round(curRefract * 100)}%</span>
+                </div>
+                <input id="path-refract" type="range" min="0.0" max="1.0" step="0.05" value="${curRefract}" class="w-full h-1 accent-cyan-400 cursor-pointer">
+                <div class="flex items-center justify-between mt-1">
+                    <span class="text-[8px] font-mono font-bold text-cyan-400 uppercase tracking-wider">GLASS DENSITY</span>
+                    <span id="path-glass-opacity-val" class="text-[8px] font-mono font-bold text-cyan-300">${Math.round(curGlassOpacity * 100)}%</span>
+                </div>
+                <input id="path-glass-opacity" type="range" min="0.05" max="0.85" step="0.05" value="${curGlassOpacity}" class="w-full h-1 accent-purple-500 cursor-pointer">
+            </div>
+            ` : ''}
         </div>`;
     },
 
@@ -247,6 +278,36 @@ export const PATH = {
             glowSlider.addEventListener('input', (e) => {
                 m.glow = parseFloat(e.target.value);
                 if (glowVal) glowVal.textContent = m.glow.toFixed(1);
+                onChange?.();
+            });
+        }
+
+        const mirrorSlider = root.querySelector('#path-mirror');
+        const mirrorVal = root.querySelector('#path-mirror-val');
+        if (mirrorSlider) {
+            mirrorSlider.addEventListener('input', (e) => {
+                m.mirror = parseFloat(e.target.value);
+                if (mirrorVal) mirrorVal.textContent = `${Math.round(m.mirror * 100)}%`;
+                onChange?.();
+            });
+        }
+
+        const refractSlider = root.querySelector('#path-refract');
+        const refractVal = root.querySelector('#path-refract-val');
+        if (refractSlider) {
+            refractSlider.addEventListener('input', (e) => {
+                m.refract = parseFloat(e.target.value);
+                if (refractVal) refractVal.textContent = `${Math.round(m.refract * 100)}%`;
+                onChange?.();
+            });
+        }
+
+        const glassSlider = root.querySelector('#path-glass-opacity');
+        const glassVal = root.querySelector('#path-glass-opacity-val');
+        if (glassSlider) {
+            glassSlider.addEventListener('input', (e) => {
+                m.glassOpacity = parseFloat(e.target.value);
+                if (glassVal) glassVal.textContent = `${Math.round(m.glassOpacity * 100)}%`;
                 onChange?.();
             });
         }
