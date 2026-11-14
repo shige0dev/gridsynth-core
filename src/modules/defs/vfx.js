@@ -6,7 +6,7 @@ export const EFFECT_MODES = [
     { id: 'blur', label: 'BLUR' },
     { id: 'bloom', label: 'BLOOM' },
     { id: 'mosaic', label: 'MOSAIC' },
-    { id: 'trail', label: 'TRAIL' },
+    { id: 'invert', label: 'INVERT' },
     { id: 'crt', label: 'CRT' },
     { id: 'rgb', label: 'RGB SPLIT' }
 ];
@@ -60,38 +60,34 @@ export const VFX = {
         <div class="flex flex-col gap-2 p-1.5 bg-slate-900 text-slate-200 select-none w-full">
             <div class="flex items-center justify-between border-b border-slate-700/80 pb-1">
                 <span class="text-xs font-mono font-bold text-emerald-400">VIDEO FX</span>
-                <span id="vfx-status-badge" class="text-[8.5px] font-mono font-bold ${isCvPatched ? 'text-amber-300 bg-amber-950 px-1 rounded border border-amber-600/50' : 'text-slate-400'}">
-                    ${isCvPatched ? 'CV MODULATED' : 'MANUAL'}
-                </span>
+                <div class="flex items-center gap-1.5">
+                    <button data-mode="bypass" class="vfx-mode-btn px-1.5 py-0.5 rounded text-[7.5px] font-mono font-bold border transition cursor-pointer ${curMode === 'bypass' ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">BYPASS</button>
+                    <span id="vfx-status-badge" class="text-[8px] font-mono font-bold ${isCvPatched ? 'text-amber-300 bg-amber-950 px-1 rounded border border-amber-600/50' : 'text-slate-400'}">
+                        ${isCvPatched ? 'CV MOD' : 'MANUAL'}
+                    </span>
+                </div>
             </div>
 
-            <!-- Mode Selector (Bypass & Invert on top, 3x2 creative effect grid below, common button size) -->
+            <!-- Effect Mode Selector (3x2 grid of 6 standard effects) -->
             <div class="flex flex-col gap-1">
                 <span class="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-wider">EFFECT MODE</span>
-                <!-- Top Row: Utilities (BYPASS & INVERT, same 3-col unit width & height) -->
-                <div class="grid grid-cols-3 gap-1">
-                    <button data-mode="bypass" class="vfx-mode-btn py-1 rounded text-[7.5px] font-mono font-bold border transition ${curMode === 'bypass' ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">BYPASS</button>
-                    <button data-mode="invert" class="vfx-mode-btn py-1 rounded text-[7.5px] font-mono font-bold border transition ${curMode === 'invert' ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">INVERT</button>
-                </div>
-                <!-- Underneath: 3x2 Grid for 6 Creative Effects -->
                 <div class="grid grid-cols-3 gap-1">
                     ${EFFECT_MODES.map(md => `
-                        <button data-mode="${md.id}" class="vfx-mode-btn py-1 rounded text-[7.5px] font-mono font-bold border transition ${curMode === md.id ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">${md.label}</button>
+                        <button data-mode="${md.id}" class="vfx-mode-btn py-1 rounded text-[7.5px] font-mono font-bold border transition cursor-pointer ${curMode === md.id ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm shadow-emerald-500/50' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">${md.label}</button>
                     `).join('')}
                 </div>
             </div>
 
-            ${curMode === 'trail' ? `
-            <!-- Afterimage / Trail Method Selector -->
-            <div class="flex flex-col gap-1 bg-slate-950/60 p-1.5 rounded border border-emerald-900/50">
-                <span class="text-[8px] font-mono font-bold text-amber-400 uppercase tracking-wider">AFTERIMAGE METHOD</span>
+            <!-- Afterimage / Trail Selector (Always visible 3x2 grid) -->
+            <div class="flex flex-col gap-1">
+                <span class="text-[8px] font-mono font-bold text-amber-400 uppercase tracking-wider">AFTERIMAGE (TRAIL)</span>
                 <div class="grid grid-cols-3 gap-1">
-                    ${TRAIL_TYPES.map(tt => `
-                        <button data-trail="${tt.id}" class="vfx-trail-btn py-1 rounded text-[7.5px] font-mono font-bold border transition ${curTrailType === tt.id ? 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/40' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">${tt.label}</button>
-                    `).join('')}
+                    ${TRAIL_TYPES.map(tt => {
+                        const isTrailActive = (curMode === 'trail' && curTrailType === tt.id);
+                        return `<button data-trail="${tt.id}" class="vfx-trail-btn py-1 rounded text-[7.5px] font-mono font-bold border transition cursor-pointer ${isTrailActive ? 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/40' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">${tt.label}</button>`;
+                    }).join('')}
                 </div>
             </div>
-            ` : ''}
 
             <!-- Effect Amount Slider -->
             <div class="flex flex-col gap-1 bg-slate-950/60 p-1.5 rounded border border-slate-800">
@@ -135,6 +131,7 @@ export const VFX = {
 
         root.querySelectorAll('.vfx-trail-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
+                m.mode = 'trail';
                 m.trailType = e.currentTarget.dataset.trail;
                 ctx.reRenderModal?.();
                 onChange?.();
