@@ -41,6 +41,7 @@ export const VFX = {
         let copyScene = null;
         let copyMat = null;
         let lastMode = null;
+        let lastTrailType = null;
 
         const MODE_MAP = {
             bypass: 0,
@@ -53,31 +54,20 @@ export const VFX = {
             bloom: 7
         };
 
+        const TRAIL_TYPE_MAP = {
+            peak: 0,
+            fade: 1,
+            diffuse: 2,
+            zoom: 3,
+            drift: 4,
+            prism: 5
+        };
+
         const initGPU = () => {
             if (typeof THREE === 'undefined') return;
             vfxCanvas = document.createElement('canvas');
             vfxCanvas.width = BUFFER_SIZE;
             vfxCanvas.height = BUFFER_SIZE;
-
-            rtA = new THREE.WebGLRenderTarget(BUFFER_SIZE, BUFFER_SIZE, {
-                minFilter: THREE.LinearFilter,
-                magFilter: THREE.LinearFilter,
-                depthBuffer: false,
-                stencilBuffer: false
-            });
-            rtB = new THREE.WebGLRenderTarget(BUFFER_SIZE, BUFFER_SIZE, {
-                minFilter: THREE.LinearFilter,
-                magFilter: THREE.LinearFilter,
-                depthBuffer: false,
-                stencilBuffer: false
-            });
-            rtCurr = rtA;
-            rtPrev = rtB;
-
-            copyScene = new THREE.Scene();
-            copyMat = new THREE.MeshBasicMaterial({ map: null, depthTest: false, depthWrite: false });
-            const copyGeo = new THREE.PlaneGeometry(2, 2);
-            copyScene.add(new THREE.Mesh(copyGeo, copyMat));
 
             renderer = new THREE.WebGLRenderer({
                 canvas: vfxCanvas,
@@ -86,6 +76,26 @@ export const VFX = {
                 preserveDrawingBuffer: true
             });
             renderer.setSize(BUFFER_SIZE, BUFFER_SIZE, false);
+            renderer.setClearColor(0x000000, 1.0);
+
+            const useHalfFloat = Boolean(renderer.capabilities?.isWebGL2 || renderer.extensions?.get('EXT_color_buffer_half_float'));
+            const rtOpts = {
+                minFilter: THREE.LinearFilter,
+                magFilter: THREE.LinearFilter,
+                type: useHalfFloat ? THREE.HalfFloatType : THREE.UnsignedByteType,
+                depthBuffer: false,
+                stencilBuffer: false
+            };
+
+            rtA = new THREE.WebGLRenderTarget(BUFFER_SIZE, BUFFER_SIZE, rtOpts);
+            rtB = new THREE.WebGLRenderTarget(BUFFER_SIZE, BUFFER_SIZE, rtOpts);
+            rtCurr = rtA;
+            rtPrev = rtB;
+
+            copyScene = new THREE.Scene();
+            copyMat = new THREE.MeshBasicMaterial({ map: null, depthTest: false, depthWrite: false });
+            const copyGeo = new THREE.PlaneGeometry(2, 2);
+            copyScene.add(new THREE.Mesh(copyGeo, copyMat));
 
             scene = new THREE.Scene();
             camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -102,16 +112,23 @@ export const VFX = {
                 uniform sampler2D tDiffuse;
                 uniform sampler2D tFeedback;
                 uniform int uMode;
+                uniform int uTrailType;
                 uniform float uAmount;
                 uniform float uTime;
+                uniform float uDt;
                 uniform vec2 uResolution;
                 varying vec2 vUv;
+
+                vec3 sampleSrc(vec2 p) {
+                    vec4 c = texture2D(tDiffuse, clamp(p, 0.0, 1.0));
+                    return c.rgb * c.a;
+                }
 
                 void main() {
                     vec2 uv = vUv;
 
                     if (uMode == 0 || uAmount <= 0.001) {
-                        gl_FragColor = texture2D(tDiffuse, uv);
+                        gl_FragColor = vec4(sampleSrc(uv), 1.0);
                         return;
                     }
 
@@ -120,37 +137,37 @@ export const VFX = {
                         float blockSize = mix(1.0, 32.0, clamp(uAmount, 0.0, 1.0));
                         float blocks = 512.0 / blockSize;
                         vec2 mUv = (floor(uv * blocks) + 0.5) / blocks;
-                        gl_FragColor = texture2D(tDiffuse, mUv);
+                        gl_FragColor = vec4(sampleSrc(mUv), 1.0);
                         return;
                     }
 
                     if (uMode == 2) {
                         // CRT Scanlines & Vignette
-                        vec4 col = texture2D(tDiffuse, uv);
+                        vec3 col = sampleSrc(uv);
                         float scanline = sin(uv.y * 512.0 * 0.75) * 0.5 + 0.5;
-                        col.rgb -= scanline * uAmount * 0.35;
+                        col -= scanline * uAmount * 0.35;
 
                         // Vignette
                         float dist = distance(uv, vec2(0.5));
-                        col.rgb *= smoothstep(0.8, 0.25 * (1.0 - uAmount * 0.5), dist);
-                        gl_FragColor = col;
+                        col *= smoothstep(0.8, 0.25 * (1.0 - uAmount * 0.5), dist);
+                        gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
                         return;
                     }
 
                     if (uMode == 3) {
                         // Invert
-                        vec4 col = texture2D(tDiffuse, uv);
-                        vec3 inv = vec3(1.0) - col.rgb;
-                        gl_FragColor = vec4(mix(col.rgb, inv, uAmount), col.a);
+                        vec3 col = sampleSrc(uv);
+                        vec3 inv = vec3(1.0) - col;
+                        gl_FragColor = vec4(mix(col, inv, uAmount), 1.0);
                         return;
                     }
 
                     if (uMode == 4) {
                         // Chromatic Aberration / RGB Split
                         float shift = (uAmount * 22.0) / uResolution.x;
-                        float r = texture2D(tDiffuse, uv + vec2(shift, 0.0)).r;
-                        float g = texture2D(tDiffuse, uv).g;
-                        float b = texture2D(tDiffuse, uv - vec2(shift, 0.0)).b;
+                        float r = sampleSrc(uv + vec2(shift, 0.0)).r;
+                        float g = sampleSrc(uv).g;
+                        float b = sampleSrc(uv - vec2(shift, 0.0)).b;
                         gl_FragColor = vec4(r, g, b, 1.0);
                         return;
                     }
@@ -158,7 +175,7 @@ export const VFX = {
                     if (uMode == 5) {
                         // Blur (Golden-angle spiral bokeh that smoothly melts into pure liquid wash, max radius 0.32)
                         float radius = pow(clamp(uAmount, 0.0, 1.0), 1.5) * 0.32;
-                        vec4 sum = texture2D(tDiffuse, uv) * 2.5;
+                        vec3 sum = sampleSrc(uv) * 2.5;
                         float totalW = 2.5;
 
                         for (int i = 1; i <= 32; i++) {
@@ -167,25 +184,70 @@ export const VFX = {
                             float theta = fi * 2.39996323; // Golden angle
                             vec2 offset = vec2(cos(theta), sin(theta)) * r;
                             float w = 1.0 - (r / (radius + 0.0001)) * 0.35;
-                            sum += texture2D(tDiffuse, uv + offset) * w;
+                            sum += sampleSrc(uv + offset) * w;
                             totalW += w;
                         }
-                        gl_FragColor = sum / totalW;
+                        gl_FragColor = vec4(sum / totalW, 1.0);
                         return;
                     }
 
                     if (uMode == 6) {
-                        // Trail / Afterimage (Luminous motion persistence & ghosting)
-                        vec4 cur = texture2D(tDiffuse, uv);
-                        vec4 prev = texture2D(tFeedback, uv);
-                        float decay = mix(0.50, 0.96, pow(clamp(uAmount, 0.0, 1.0), 0.75));
-                        gl_FragColor = vec4(max(cur.rgb, prev.rgb * decay), 1.0);
+                        // Trail / Afterimage (Ping-Pong HalfFloat with dt-normalized decay & 6 styles)
+                        vec3 cur = sampleSrc(uv);
+                        float baseDecay = mix(0.60, 0.992, pow(clamp(uAmount, 0.0, 1.0), 0.75));
+                        float dtFrames = clamp(uDt, 0.001, 0.1) * 60.0;
+                        float decay = pow(baseDecay, dtFrames);
+                        vec3 outRgb = cur;
+
+                        if (uTrailType == 1) {
+                            // FADE: Smooth motion-blur crossfade
+                            vec3 prev = texture2D(tFeedback, uv).rgb * decay;
+                            float curLum = max(cur.r, max(cur.g, cur.b));
+                            outRgb = mix(prev, cur, clamp(curLum * 1.35 + 0.04, 0.0, 1.0));
+                        } else if (uTrailType == 2) {
+                            // DIFFUSE: Soft 5-tap blur decay (smoke/aura trail)
+                            vec2 px = (1.6 / uResolution) * dtFrames;
+                            vec3 prev = texture2D(tFeedback, uv).rgb * 0.40
+                                      + texture2D(tFeedback, clamp(uv + vec2( px.x,  0.0), 0.0, 1.0)).rgb * 0.15
+                                      + texture2D(tFeedback, clamp(uv + vec2(-px.x,  0.0), 0.0, 1.0)).rgb * 0.15
+                                      + texture2D(tFeedback, clamp(uv + vec2( 0.0,  px.y), 0.0, 1.0)).rgb * 0.15
+                                      + texture2D(tFeedback, clamp(uv + vec2( 0.0, -px.y), 0.0, 1.0)).rgb * 0.15;
+                            outRgb = max(cur, prev * decay);
+                        } else if (uTrailType == 3) {
+                            // ZOOM: Radial outward expansion echo
+                            float zoomStep = (0.004 + uAmount * 0.014) * dtFrames;
+                            vec2 zUv = (uv - 0.5) * (1.0 - zoomStep) + 0.5;
+                            vec3 prev = texture2D(tFeedback, clamp(zUv, 0.0, 1.0)).rgb * decay;
+                            outRgb = max(cur, prev);
+                        } else if (uTrailType == 4) {
+                            // DRIFT: Rising heat-haze / flame trail
+                            float rise = (0.002 + uAmount * 0.005) * dtFrames;
+                            float sway = sin(uv.y * 18.0 + uTime * 5.0) * 0.0025 * dtFrames;
+                            vec2 dUv = clamp(uv + vec2(sway, -rise), 0.0, 1.0);
+                            vec3 prev = texture2D(tFeedback, dUv).rgb * decay;
+                            outRgb = max(cur, prev);
+                        } else if (uTrailType == 5) {
+                            // PRISM: Chromatic RGB split & per-channel decay
+                            vec2 shift = vec2(0.0025, 0.0012) * (0.5 + uAmount) * dtFrames;
+                            float pr = texture2D(tFeedback, clamp(uv + shift, 0.0, 1.0)).r * decay;
+                            float pg = texture2D(tFeedback, uv).g * pow(baseDecay * 0.988, dtFrames);
+                            float pb = texture2D(tFeedback, clamp(uv - shift, 0.0, 1.0)).b * pow(baseDecay * 0.975, dtFrames);
+                            outRgb = max(cur, vec3(pr, pg, pb));
+                        } else {
+                            // PEAK (default): Crisp peak-hold luminous trail
+                            vec3 prev = texture2D(tFeedback, uv).rgb * decay;
+                            outRgb = max(cur, prev);
+                        }
+
+                        // Clean floor cutoff to prevent faint ghost residue
+                        outRgb *= step(0.0015, max(outRgb.r, max(outRgb.g, outRgb.b)));
+                        gl_FragColor = vec4(clamp(outRgb, 0.0, 1.0), 1.0);
                         return;
                     }
 
                     if (uMode == 7) {
                         // Bloom / Neon Glow (High-pass luminance extraction + 20-tap dispersion glow)
-                        vec4 src = texture2D(tDiffuse, uv);
+                        vec3 src = sampleSrc(uv);
                         vec3 glow = vec3(0.0);
                         float glowRadius = 0.015 + uAmount * 0.055;
                         float thresh = mix(0.75, 0.20, clamp(uAmount, 0.0, 1.0));
@@ -196,22 +258,20 @@ export const VFX = {
                             float r = sqrt(fi / 20.0) * glowRadius;
                             float theta = fi * 2.39996323; // Golden angle
                             vec2 offset = vec2(cos(theta), sin(theta)) * r;
-                            vec4 smp = texture2D(tDiffuse, uv + offset);
-                            float lum = dot(smp.rgb, vec3(0.299, 0.587, 0.114));
+                            vec3 smp = sampleSrc(uv + offset);
+                            float lum = dot(smp, vec3(0.299, 0.587, 0.114));
                             float bright = max(0.0, lum - thresh) / (1.0 - thresh + 0.001);
                             float w = 1.0 - (r / (glowRadius + 0.0001)) * 0.5;
-                            glow += smp.rgb * bright * w;
+                            glow += smp * bright * w;
                             totalW += w;
                         }
                         glow = (glow / max(totalW, 0.001));
-                        vec3 result = src.rgb + glow * (1.2 + uAmount * 2.8);
-                        float glowIntensity = dot(glow, vec3(0.299, 0.587, 0.114)) * (1.2 + uAmount * 2.8);
-                        float outAlpha = clamp(src.a + glowIntensity, 0.0, 1.0);
-                        gl_FragColor = vec4(clamp(result, 0.0, 1.0), outAlpha);
+                        vec3 result = src + glow * (1.2 + uAmount * 2.8);
+                        gl_FragColor = vec4(clamp(result, 0.0, 1.0), 1.0);
                         return;
                     }
 
-                    gl_FragColor = texture2D(tDiffuse, uv);
+                    gl_FragColor = vec4(sampleSrc(uv), 1.0);
                 }
             `;
 
@@ -227,8 +287,10 @@ export const VFX = {
                     tDiffuse: { value: inputTexture },
                     tFeedback: { value: rtPrev.texture },
                     uMode: { value: 1 },
+                    uTrailType: { value: 0 },
                     uAmount: { value: 0.7 },
                     uTime: { value: 0.0 },
+                    uDt: { value: 1 / 60 },
                     uResolution: { value: new THREE.Vector2(BUFFER_SIZE, BUFFER_SIZE) }
                 },
                 vertexShader: vertShader,
@@ -270,6 +332,7 @@ export const VFX = {
         const processFrame = () => {
             const now = (typeof performance !== 'undefined') ? performance.now() : Date.now();
             if (now - lastProcessTime < 4) return;
+            const dt = lastProcessTime > 0 ? Math.min(0.1, (now - lastProcessTime) * 0.001) : (1 / 60);
             lastProcessTime = now;
 
             const isCv = Boolean(patchState?.has('cv_in') || (window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id)?.has('cv_in') : false));
@@ -296,11 +359,21 @@ export const VFX = {
             }
 
             const modeId = MODE_MAP[d.mode || 'mosaic'] ?? 1;
+            const trailType = d.trailType || 'peak';
             shaderMaterial.uniforms.uMode.value = modeId;
+            shaderMaterial.uniforms.uTrailType.value = TRAIL_TYPE_MAP[trailType] ?? 0;
             shaderMaterial.uniforms.uAmount.value = effAmt;
             shaderMaterial.uniforms.uTime.value = now * 0.001;
+            shaderMaterial.uniforms.uDt.value = dt;
 
             if (d.mode === 'trail') {
+                if (lastMode === 'trail' && lastTrailType !== null && lastTrailType !== trailType) {
+                    renderer.setRenderTarget(rtPrev);
+                    renderer.clear();
+                    renderer.setRenderTarget(rtCurr);
+                    renderer.clear();
+                }
+
                 // 1. Bind previous GPU frame directly from VRAM (Zero-copy)
                 shaderMaterial.uniforms.tFeedback.value = rtPrev.texture;
 
@@ -317,6 +390,7 @@ export const VFX = {
                 const tmp = rtCurr;
                 rtCurr = rtPrev;
                 rtPrev = tmp;
+                lastTrailType = trailType;
             } else {
                 if (lastMode === 'trail') {
                     // Clear GPU render targets on mode exit
@@ -325,6 +399,7 @@ export const VFX = {
                     renderer.setRenderTarget(rtCurr);
                     renderer.clear();
                 }
+                lastTrailType = null;
                 // Direct single-pass render to output canvas
                 renderer.setRenderTarget(null);
                 renderer.render(scene, camera);
@@ -364,6 +439,18 @@ export const VFX = {
                 if (inputTexture) {
                     try { inputTexture.dispose(); } catch (_) {}
                     inputTexture = null;
+                }
+                if (rtA) {
+                    try { rtA.dispose(); } catch (_) {}
+                    rtA = null;
+                }
+                if (rtB) {
+                    try { rtB.dispose(); } catch (_) {}
+                    rtB = null;
+                }
+                if (copyMat) {
+                    try { copyMat.dispose(); } catch (_) {}
+                    copyMat = null;
                 }
                 if (shaderMaterial) {
                     try { shaderMaterial.dispose(); } catch (_) {}

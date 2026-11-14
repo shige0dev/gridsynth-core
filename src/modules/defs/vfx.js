@@ -11,11 +11,21 @@ export const EFFECT_MODES = [
     { id: 'rgb', label: 'RGB SPLIT' }
 ];
 
+export const TRAIL_TYPES = [
+    { id: 'peak', label: 'PEAK' },
+    { id: 'fade', label: 'FADE' },
+    { id: 'diffuse', label: 'DIFFUSE' },
+    { id: 'zoom', label: 'ZOOM' },
+    { id: 'drift', label: 'DRIFT' },
+    { id: 'prism', label: 'PRISM' }
+];
+
 export const VFX = {
     color: 'emerald',
     defaults: () => ({
         type: 'VFX',
         mode: 'mosaic',
+        trailType: 'peak',
         amount: 0.7
     }),
     ports: () => ({
@@ -43,6 +53,7 @@ export const VFX = {
     renderModal: (m, ctx) => {
         const isCvPatched = Boolean(ctx?.patched?.has('cv_in'));
         const curMode = m.mode || 'mosaic';
+        const curTrailType = m.trailType || 'peak';
         const curAmt = Number(m.amount ?? 0.7);
 
         return `
@@ -69,6 +80,18 @@ export const VFX = {
                     `).join('')}
                 </div>
             </div>
+
+            ${curMode === 'trail' ? `
+            <!-- Afterimage / Trail Method Selector -->
+            <div class="flex flex-col gap-1 bg-slate-950/60 p-1.5 rounded border border-emerald-900/50">
+                <span class="text-[8px] font-mono font-bold text-amber-400 uppercase tracking-wider">AFTERIMAGE METHOD</span>
+                <div class="grid grid-cols-3 gap-1">
+                    ${TRAIL_TYPES.map(tt => `
+                        <button data-trail="${tt.id}" class="vfx-trail-btn py-1 rounded text-[7.5px] font-mono font-bold border transition ${curTrailType === tt.id ? 'bg-amber-600 text-white border-amber-400 shadow-sm shadow-amber-500/40' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}">${tt.label}</button>
+                    `).join('')}
+                </div>
+            </div>
+            ` : ''}
 
             <!-- Effect Amount Slider -->
             <div class="flex flex-col gap-1 bg-slate-950/60 p-1.5 rounded border border-slate-800">
@@ -105,6 +128,14 @@ export const VFX = {
         root.querySelectorAll('.vfx-mode-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 m.mode = e.currentTarget.dataset.mode;
+                ctx.reRenderModal?.();
+                onChange?.();
+            });
+        });
+
+        root.querySelectorAll('.vfx-trail-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                m.trailType = e.currentTarget.dataset.trail;
                 ctx.reRenderModal?.();
                 onChange?.();
             });
