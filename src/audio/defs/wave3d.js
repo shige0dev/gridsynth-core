@@ -156,8 +156,8 @@ export const WAVE3D = {
                 }
 
                 const width = 4.8;
-                const depth = 4.8;
-                const zFront = depth * 0.45;
+                const depth = 9.6;
+                const zFront = depth * 0.5;
                 const transform = {
                     position: [0, 0, 0],
                     rotation: [0, 0, 0],
