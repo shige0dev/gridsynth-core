@@ -1,7 +1,7 @@
 // src/ui/managers/modal-manager.js
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=770';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=771';
 import { UIHelpers } from '../helpers.js?v=619';
-import { openAddModal } from '../dialogs/add-module-dialog.js?v=740';
+import { openAddModal } from '../dialogs/add-module-dialog.js?v=771';
 import { openNumpadPrompt } from '../dialogs/numpad-dialog.js?v=679';
 import { openCustomAlert } from '../dialogs/alert-dialog.js?v=679';
 
@@ -51,6 +51,7 @@ export const MODAL_WIDTHS = {
     GSENSOR: 'w-[180px]',
     TILT: 'w-[180px]',
     OBJECT: 'w-[190px]',
+    PATH: 'w-[190px]',
     PARTICLE: 'w-[190px]',
     ROTATE: 'w-[190px]',
     MOVE: 'w-[190px]',

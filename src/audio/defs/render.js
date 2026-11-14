@@ -177,6 +177,11 @@ export const RENDER = {
                             side: THREE.DoubleSide
                         });
                         break;
+                    case 'line':
+                        mat = new THREE.LineBasicMaterial({
+                            color: gVal > 0.01 ? new THREE.Color(colorHex).multiplyScalar(1.0 + gVal * 1.8) : colorHex
+                        });
+                        break;
                     case 'wire':
                     default: {
                         const baseW = Math.max(0.5, Number(wireWidth) || 1.5);
@@ -464,21 +469,23 @@ export const RENDER = {
                 node.rotation.set(...(packet.transform?.rotation || [0, 0, 0]));
                 node.scale.set(...(packet.transform?.scale || [1, 1, 1]));
             } else {
-                // Leaf mesh / points
+                // Leaf mesh / points / line
                 const override = d.materialOverride || 'auto';
                 const effectiveStyle = (override !== 'auto') ? override : (packet.materialStyle || 'wire');
                 const effectiveColor = packet.color ?? 0xffffff;
                 const pktGlow = Number(packet.glow ?? 0);
                 const effGlow = (effectiveStyle === 'neon') ? Math.max(2.0, pktGlow + 2.0) : pktGlow;
                 const isPoint = effectiveStyle === 'point';
-                const mat = getMaterial(effectiveStyle, effectiveColor, packet.pointSize ?? 3.0, packet.wireWidth ?? 1.5, packet.glassOpacity ?? 0.25, pktGlow);
-                const expectedType = isPoint ? 'Points' : 'Mesh';
+                const isLine = Boolean(packet.isLine) && !isPoint;
+                const matStyle = isLine ? 'line' : effectiveStyle;
+                const mat = getMaterial(matStyle, effectiveColor, packet.pointSize ?? 3.0, packet.wireWidth ?? 1.5, packet.glassOpacity ?? 0.25, pktGlow);
+                const expectedType = isLine ? 'Line' : (isPoint ? 'Points' : 'Mesh');
 
                 if (!node || node.type !== expectedType) {
                     if (node) parentThreeObj.remove(node);
-                    node = isPoint
-                        ? new THREE.Points(packet.geometry, mat)
-                        : new THREE.Mesh(packet.geometry, mat);
+                    node = isLine
+                        ? new THREE.Line(packet.geometry, mat)
+                        : (isPoint ? new THREE.Points(packet.geometry, mat) : new THREE.Mesh(packet.geometry, mat));
                     parentThreeObj.add(node);
                 } else {
                     if (node.geometry !== packet.geometry) {

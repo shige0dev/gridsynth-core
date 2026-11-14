@@ -30,13 +30,14 @@ import { matrixAudioDefs } from './defs/matrix.js?v=591';
 import { valAudioDefs } from './defs/val.js?v=614';
 import { tiltAudioDefs } from './defs/tilt.js?v=623';
 import { geoAudioDefs } from './defs/geo.js?v=766';
+import { pathAudioDefs } from './defs/path.js?v=771';
 import { particleAudioDefs } from './defs/particle.js?v=757';
 import { rotateAudioDefs } from './defs/rotate.js?v=699';
 import { moveAudioDefs } from './defs/move.js?v=701';
 import { scaleAudioDefs } from './defs/scale.js?v=750';
 import { vertexAudioDefs } from './defs/vertex.js?v=714';
 import { scatterAudioDefs } from './defs/scatter.js?v=766';
-import { renderAudioDefs } from './defs/render.js?v=767';
+import { renderAudioDefs } from './defs/render.js?v=771';
 import { vfxAudioDefs } from './defs/vfx.js?v=769';
 import { vmixAudioDefs } from './defs/vmix.js?v=753';
 import { displayAudioDefs } from './defs/display.js?v=699';
@@ -69,6 +70,7 @@ export const AUDIO_REGISTRY = {
     ...valAudioDefs,
     ...tiltAudioDefs,
     ...geoAudioDefs,
+    ...pathAudioDefs,
     ...particleAudioDefs,
     ...rotateAudioDefs,
     ...moveAudioDefs,

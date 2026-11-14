@@ -30,6 +30,7 @@ import { matrixDefs } from './defs/matrix.js?v=619';
 import { valDefs } from './defs/val.js?v=618';
 import { tiltDefs } from './defs/tilt.js?v=623';
 import { geoDefs } from './defs/geo.js?v=766';
+import { pathDefs } from './defs/path.js?v=771';
 import { particleDefs } from './defs/particle.js?v=757';
 import { rotateDefs } from './defs/rotate.js?v=689';
 import { moveDefs } from './defs/move.js?v=701';
@@ -69,6 +70,7 @@ export const MODULE_REGISTRY = {
     ...valDefs,
     ...tiltDefs,
     ...geoDefs,
+    ...pathDefs,
     ...particleDefs,
     ...rotateDefs,
     ...moveDefs,
