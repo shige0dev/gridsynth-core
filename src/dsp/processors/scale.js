@@ -1,3 +1,5 @@
+import { getSR } from './common.js';
+
 export class ScaleProcessor extends AudioWorkletProcessor {
     constructor() {
         super();
@@ -12,6 +14,7 @@ export class ScaleProcessor extends AudioWorkletProcessor {
         this.legato = false;
         this.retrigGap = 0;
         this.lastMidi = null;
+        this.sawNoteOffInBlock = false;
 
         this.heldCv = 1.0;
         this.heldGate = 0.0;
@@ -55,15 +58,19 @@ export class ScaleProcessor extends AudioWorkletProcessor {
                 const oct = Math.floor(midi / 12) - 1;
                 const cv = (oct - 1) + (snappedSemi / 12.0);
 
-                const wasActive = this.manualGate > 0.5;
+                const wasActive = this.manualGate > 0.5 || this.sawNoteOffInBlock;
                 this.manualCv = cv;
                 if (isDown) {
-                    if (wasActive && !isLegato && midi !== this.lastMidi) {
-                        this.retrigGap = Math.max(1, Math.round(0.002 * sampleRate));
+                    if (wasActive && !isLegato && (midi !== this.lastMidi || this.sawNoteOffInBlock)) {
+                        this.retrigGap = Math.max(1, Math.round(0.005 * getSR()));
                     }
                     this.manualGate = 1.0;
                     this.lastMidi = midi;
+                    this.sawNoteOffInBlock = false;
                 } else {
+                    if (this.manualGate > 0.5) {
+                        this.sawNoteOffInBlock = true;
+                    }
                     this.manualGate = 0.0;
                     this.retrigGap = 0;
                     this.lastMidi = null;
@@ -111,6 +118,7 @@ export class ScaleProcessor extends AudioWorkletProcessor {
         const gateOut = outs[1]?.[0];
 
         if (!cvOut) return true;
+        this.sawNoteOffInBlock = false;
         const len = cvOut.length;
         const useExternal = this.isPatched && cvIn && !this.isManualActive;
 

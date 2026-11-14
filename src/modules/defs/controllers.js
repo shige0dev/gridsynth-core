@@ -426,9 +426,6 @@ export const KEY = {
                         setHighlight(prevSemi, false);
                     }
                     setHighlight(semi, true);
-                    if (!m.legato && activePointers.size === 1 && prevSemi !== null) {
-                        playSemi(prevSemi, false);
-                    }
                     playSemi(semi, true);
                 }
             }

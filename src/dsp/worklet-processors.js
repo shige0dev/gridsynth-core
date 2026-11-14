@@ -1,4 +1,4 @@
-// v1.0.0805
+// v1.0.0806
 import './processors/clock.js?v=621';
 import './processors/seq.js?v=800';
 import './processors/adsr.js';
@@ -15,7 +15,7 @@ import './processors/fm.js?v=459';
 import './processors/fm-core.js';
 import './processors/dist4.js?v=470';
 import './processors/slct4.js?v=677';
-import './processors/scale.js?v=805';
+import './processors/scale.js?v=806';
 import './processors/rf.js';
 import './processors/ar.js';
 import './processors/wave.js?v=459';
