@@ -1,4 +1,4 @@
-import { AUDIO_REGISTRY } from './registry.js?v=822';
+import { AUDIO_REGISTRY } from './registry.js?v=823';
 import { AudioHelpers } from './helpers.js?v=779';
 import { parseConn, normalizeSubPort, PORT_ALIASES } from '../core/utils.js?v=459';
 
@@ -167,6 +167,10 @@ export class SynthEngine {
         const { sOut, dIn } = this._resolvePortNodes(sId, sPort, dId, dPort);
         if (sOut && dIn) {
             try { sOut.connect(dIn); } catch (e) {}
+            if (sId === dId && (sPort === 'trig_out' || sPort === 'out_trig') && (dPort === 'trig_in' || dPort === 'gate_in')) {
+                const inst = this.modules[sId] || this.modules[`0/${sId}`];
+                inst?.setSelfLoop?.(true);
+            }
         }
     }
 
@@ -174,6 +178,10 @@ export class SynthEngine {
         const { sOut, dIn } = this._resolvePortNodes(sId, sPort, dId, dPort);
         if (sOut && dIn) {
             try { sOut.disconnect(dIn); } catch (e) {}
+            if (sId === dId && (sPort === 'trig_out' || sPort === 'out_trig') && (dPort === 'trig_in' || dPort === 'gate_in')) {
+                const inst = this.modules[sId] || this.modules[`0/${sId}`];
+                inst?.setSelfLoop?.(false);
+            }
         }
     }
 
