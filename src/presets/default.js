@@ -1,6 +1,6 @@
 import { preset01 } from './demos/01_delay_techno.js?v=459';
 import { preset02 } from './demos/02_keyboard_lead.js?v=807';
-import { preset03 } from './demos/03_wavefold_ar_fr.js?v=833';
+import { preset03 } from './demos/03_wavefold_ar_fr.js?v=834';
 import { preset04 } from './demos/04_random_sh_delay.js?v=459';
 import { preset05 } from './demos/05_subpatch_multi_groove.js?v=459';
 import { preset06 } from './demos/06_strudel_house_bassline.js?v=459';
@@ -16,7 +16,7 @@ import { preset15 } from './demos/15_3d_video_wall.js?v=777';
 export const getDefaultPresets = () => ({
     '01_DELAY_TECHNO': preset01,
     '02_KEYBOARD_LEAD': preset02,
-    '03_WAVEFOLD_AR_FR': preset03,
+    '03_VolcaModuler': preset03,
     '04_RANDOM_SH_DELAY': preset04,
     '05_SUBPATCH_MULTI_GROOVE': preset05,
     '06_STRUDEL_HOUSE_BASSLINE': preset06,

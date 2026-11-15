@@ -2,7 +2,7 @@ export const preset03 = {
   "bpm": 120,
   "pages": {
     "0": {
-      "name": "03_WAVEFOLD AR FR",
+      "name": "03_VolcaModuler",
       "slots": {
         "0": "DIST4_1",
         "1": "DIST4_2",
