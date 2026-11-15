@@ -1062,8 +1062,8 @@ export const FACTORY_SUBPATCHES = {
             },
             modules: {
                 "SUB_IO1": { "type": "SUB_IO", "col": 2, "row": 0 },
-                "FMCORE1": { "type": "FMCORE", "level": 0.85, "ratio": 2.0, "fine": 0, "index": 1.0, "feedback": 0.0, "rootMidi": 48, "col": 1, "row": 1 },
-                "FMCORE2": { "type": "FMCORE", "level": 0.85, "ratio": 1.0, "fine": 0, "index": 1.5, "feedback": 0.0, "rootMidi": 48, "col": 2, "row": 1 },
+                "FMCORE1": { "type": "FMCORE", "wave": "triangle", "level": 0.85, "ratio": 2.0, "fine": 0, "index": 1.0, "feedback": 0.0, "rootMidi": 48, "col": 1, "row": 1 },
+                "FMCORE2": { "type": "FMCORE", "wave": "triangle", "level": 0.85, "ratio": 1.0, "fine": 0, "index": 1.5, "feedback": 0.0, "rootMidi": 48, "col": 2, "row": 1 },
                 "FOLD1": { "type": "FOLD", "gain": 1.5, "mix": 1.0, "shape": "fold", "col": 3, "row": 1 }
             },
             connections: [

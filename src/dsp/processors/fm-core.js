@@ -15,6 +15,7 @@ export class FmCoreProcessor extends AudioWorkletProcessor {
         this.index = 1.0;
         this.feedback = 0.0;
         this.rootMidi = 48;
+        this.wave = 'sine';
         this.hasIndexCv = false;
         this.hasPitchIn = false;
 
@@ -27,6 +28,7 @@ export class FmCoreProcessor extends AudioWorkletProcessor {
                 if (d.index !== undefined) this.index = Math.max(0, d.index);
                 if (d.feedback !== undefined) this.feedback = Math.max(0, Math.min(1.0, d.feedback));
                 if (d.rootMidi !== undefined) this.rootMidi = d.rootMidi;
+                if (d.wave !== undefined) this.wave = d.wave;
                 if (d.hasIndexCv !== undefined) this.hasIndexCv = !!d.hasIndexCv;
                 if (d.hasPitchIn !== undefined) this.hasPitchIn = !!d.hasPitchIn;
             } else if (e.data.type === 'RESET') {
@@ -62,8 +64,15 @@ export class FmCoreProcessor extends AudioWorkletProcessor {
             // Self-feedback phase modulation
             const fbMod = this.lastOut * (this.feedback || 0.0) * Math.PI;
 
-            // Pure sine carrier with phase modulation
-            const sample = Math.sin(this.phase + modPhase + fbMod);
+            // Sine or Triangle carrier with phase modulation
+            const totalPhase = this.phase + modPhase + fbMod;
+            let sample;
+            if (this.wave === 'triangle') {
+                const norm = ((totalPhase / TWO_PI) % 1.0 + 1.0) % 1.0;
+                sample = norm < 0.25 ? norm * 4.0 : (norm < 0.75 ? 2.0 - norm * 4.0 : norm * 4.0 - 4.0);
+            } else {
+                sample = Math.sin(totalPhase);
+            }
             this.lastOut = sample;
 
             out[i] = sample * this.level;

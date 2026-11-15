@@ -92,6 +92,7 @@ export const FMCORE = {
             fine: d.fine ?? 0,
             index: d.index ?? 1.0,
             feedback: d.feedback ?? 0.0,
+            wave: d.wave || 'sine',
             rootMidi: hasPitchIn ? 24 : (d.rootMidi ?? 48)
         });
 
@@ -124,6 +125,7 @@ export const FMCORE = {
             fine: d.fine ?? 0,
             index: d.index ?? 1.0,
             feedback: d.feedback ?? 0.0,
+            wave: d.wave || 'sine',
             rootMidi: hasPitchIn ? 24 : (d.rootMidi ?? 48)
         });
     }

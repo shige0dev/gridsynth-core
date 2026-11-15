@@ -319,6 +319,7 @@ export const FMCORE = {
         fine: 0,
         index: 1.0,
         feedback: 0.0,
+        wave: 'sine',
         rootMidi: 48
     }),
     onNormalize: (m) => {
@@ -327,6 +328,7 @@ export const FMCORE = {
         if (m.fine === undefined) m.fine = 0;
         if (m.index === undefined) m.index = 1.0;
         if (m.feedback === undefined) m.feedback = 0.0;
+        if (!m.wave) m.wave = 'sine';
         if (m.rootMidi === undefined) m.rootMidi = 48;
     },
     ports: () => ({
@@ -392,7 +394,7 @@ export const FMCORE = {
                         <span class="text-[8.5px] font-bold text-cyan-400 uppercase tracking-wider">PM OPERATOR</span>
                         ${isModPatched ? '<span class="px-1 py-0.2 rounded bg-cyan-950 border border-cyan-500/40 text-[6.5px] font-mono text-cyan-300 font-bold">MOD IN</span>' : ''}
                     </div>
-                    <span class="text-[7.5px] font-mono text-slate-400">SINE CARRIER</span>
+                    <button id="fmcore-wave-btn" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 border border-cyan-500/40 text-[7.5px] font-mono font-bold text-cyan-300 cursor-pointer transition-colors">${(m.wave || 'sine') === 'triangle' ? 'TRI' : 'SINE'}</button>
                 </div>
 
                 <!-- 6 Vertical Sliders: ROOT -> LEVEL -> RATIO -> INDEX -> FB -> FINE -->
@@ -418,6 +420,15 @@ export const FMCORE = {
             requirePort: ['mod_in', 'wave_in'],
             cvPort: ['index_cv', 'idx_cv']
         }, m, ctx);
+
+        const waveBtn = document.getElementById('fmcore-wave-btn');
+        if (waveBtn) {
+            waveBtn.addEventListener('click', () => {
+                m.wave = (m.wave || 'sine') === 'sine' ? 'triangle' : 'sine';
+                waveBtn.textContent = m.wave === 'triangle' ? 'TRI' : 'SINE';
+                cb();
+            });
+        }
 
         if (!rootState.isDisabled) {
             UIHelpers.bindSlider('fmcore-root', UIHelpers.midiToNoteName, v => { m.rootMidi = Math.round(v); cb(); }, 1, 24, 72);
