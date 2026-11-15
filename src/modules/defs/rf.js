@@ -45,8 +45,6 @@ export const RF = {
                 <path d="${pathD}" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 <!-- Peak Dot -->
                 <circle cx="${xPeak.toFixed(1)}" cy="${yTop}" r="2.5" fill="#fbbf24" stroke="#78350f" stroke-width="0.75"/>
-                <!-- End Trig Pulse Indicator -->
-                <path d="M ${(padX + W - 3).toFixed(1)} ${yBot} L ${(padX + W).toFixed(1)} ${yTop + 10} L ${(padX + W + 3).toFixed(1)} ${yBot}" fill="none" stroke="#ef4444" stroke-width="1.2"/>
             </svg>
         `;
     },
