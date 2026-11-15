@@ -122,7 +122,7 @@ export const VALUE = {
         return `
             <div class="val-box relative w-full h-full flex items-center justify-center select-none overflow-hidden touch-none" data-module-id="${m.id}">
                 <!-- Shared Panel Bar Slot Container (w-14 h-7 / 56px x 28px) -->
-                <div class="relative w-14 h-7 shrink-0 flex items-center justify-center">
+                <div class="val-center-hit relative w-14 h-7 shrink-0 flex items-center justify-center cursor-ns-resize">
                     ${barSlotHtml}
 
                     <!-- Center Overlay: MAX at top, VAL at center, MIN at bottom -->
@@ -174,7 +174,7 @@ export const VALUE = {
             valBox,
             m,
             8.0,
-            (e) => Boolean(ctx?.ui?.isPerformanceMode || window.__GS_APP__?.isPerformanceMode) && !e.target.closest('.port'),
+            (e) => (Boolean(ctx?.ui?.isPerformanceMode || window.__GS_APP__?.isPerformanceMode) || Boolean(e.target.closest('.val-center-hit'))) && !e.target.closest('.port'),
             (clamped) => {
                 const valDisp = cell.querySelector('.val-val-disp');
                 if (valDisp) {

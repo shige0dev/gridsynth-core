@@ -473,7 +473,7 @@ export class InteractionManager {
             if (container) {
                 const controlSelector = this.ui.isPerformanceMode
                     ? 'input, button, select, textarea, .pad-grid-container, .pad-grid-canvas, .val-box'
-                    : '.port, input, button, select, textarea';
+                    : '.port, input, button, select, textarea, .val-center-hit';
                 const isControl = e.target.closest(controlSelector);
                 if (!isControl) {
                     this._scrollStartY = e.clientY;
@@ -503,7 +503,7 @@ export class InteractionManager {
             }
 
             if (this.ui.isPerformanceMode) return;
-            const isControl = e.target.closest('.port, input, button, select, textarea');
+            const isControl = e.target.closest('.port, input, button, select, textarea, .val-center-hit');
             if (isControl) return;
 
             const body = e.target.closest('.module-body');
@@ -610,7 +610,7 @@ export class InteractionManager {
             const isButtonHeld = e.pointerType === 'mouse' ? ((e.buttons & 1) !== 0) : (e.buttons > 0 || e.pressure > 0);
             const container = document.getElementById('canvas-container');
             if (isButtonHeld && this._gridPointerActive && !this.isDragging && !this.moduleLongPressed && !isCandidateSelected && !isRowBusy && container) {
-                const padBlock = this.ui.isPerformanceMode && e.target.closest('.pad-grid-container, .pad-grid-canvas, .val-box');
+                const padBlock = e.target.closest('.val-center-hit') || (this.ui.isPerformanceMode && e.target.closest('.pad-grid-container, .pad-grid-canvas, .val-box'));
                 if (padBlock || e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal, #main-menu-bar, #page-nav-bar')) {
                     this._isScrollDragging = false;
                     return;
@@ -839,12 +839,12 @@ export class InteractionManager {
         const canvasContainer = document.getElementById('canvas-container');
         if (canvasContainer) {
             canvasContainer.addEventListener('touchstart', (e) => {
-                if (e.target.closest('.pad-modal-touch-area') || (this.ui.isPerformanceMode && e.target.closest('.pad-grid-container, .pad-grid-canvas, .val-box'))) {
+                if (e.target.closest('.pad-modal-touch-area') || e.target.closest('.val-center-hit') || (this.ui.isPerformanceMode && e.target.closest('.pad-grid-container, .pad-grid-canvas, .val-box'))) {
                     if (e.cancelable) e.preventDefault();
                 }
             }, { passive: false });
             canvasContainer.addEventListener('touchmove', (e) => {
-                if (e.target.closest('.pad-modal-touch-area') || (this.ui.isPerformanceMode && e.target.closest('.pad-grid-container, .pad-grid-canvas, .val-box'))) {
+                if (e.target.closest('.pad-modal-touch-area') || e.target.closest('.val-center-hit') || (this.ui.isPerformanceMode && e.target.closest('.pad-grid-container, .pad-grid-canvas, .val-box'))) {
                     if (e.cancelable) e.preventDefault();
                 }
             }, { passive: false });
