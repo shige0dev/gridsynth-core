@@ -7,6 +7,8 @@ export class ArProcessor extends AudioWorkletProcessor {
         this.val = 0.0;
         this.attackParam = 0.38; // normalized 0..1 (default ~0.05s)
         this.releaseParam = 0.57; // normalized 0..1 (default ~0.2s)
+        this.isAPatched = false;
+        this.isRPatched = false;
         this.level = 1.0;
         this.lastReportedStage = -1;
 
@@ -28,6 +30,12 @@ export class ArProcessor extends AudioWorkletProcessor {
                     this.releaseParam = Math.log(sec / 0.005) / Math.log(600.0);
                 }
 
+                if (e.data.isAPatched !== undefined) {
+                    this.isAPatched = !!e.data.isAPatched;
+                }
+                if (e.data.isRPatched !== undefined) {
+                    this.isRPatched = !!e.data.isRPatched;
+                }
                 if (e.data.level !== undefined) {
                     this.level = Math.max(0.0, Math.min(1.0, e.data.level));
                 }
@@ -54,8 +62,8 @@ export class ArProcessor extends AudioWorkletProcessor {
             const cvA = cvAIn ? cvAIn[i] : 0.0;
             const cvR = cvRIn ? cvRIn[i] : 0.0;
 
-            const normA = Math.max(0.0, Math.min(1.0, this.attackParam + cvA));
-            const normR = Math.max(0.0, Math.min(1.0, this.releaseParam + cvR));
+            const normA = this.isAPatched ? Math.max(0.0, Math.min(1.0, cvA)) : this.attackParam;
+            const normR = this.isRPatched ? Math.max(0.0, Math.min(1.0, cvR)) : this.releaseParam;
 
             // Exponential mapping:
             // Attack: 0.005s (5ms) to 2.0s (2000ms)

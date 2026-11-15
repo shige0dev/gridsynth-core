@@ -16,6 +16,7 @@ export class FmCoreProcessor extends AudioWorkletProcessor {
         this.feedback = 0.0;
         this.rootMidi = 48;
         this.hasIndexCv = false;
+        this.hasPitchIn = false;
 
         this.port.onmessage = e => {
             if (e.data.type === 'SET_PARAMS') {
@@ -27,6 +28,7 @@ export class FmCoreProcessor extends AudioWorkletProcessor {
                 if (d.feedback !== undefined) this.feedback = Math.max(0, Math.min(1.0, d.feedback));
                 if (d.rootMidi !== undefined) this.rootMidi = d.rootMidi;
                 if (d.hasIndexCv !== undefined) this.hasIndexCv = !!d.hasIndexCv;
+                if (d.hasPitchIn !== undefined) this.hasPitchIn = !!d.hasPitchIn;
             } else if (e.data.type === 'RESET') {
                 this.phase = 0;
                 this.lastOut = 0;
@@ -45,7 +47,8 @@ export class FmCoreProcessor extends AudioWorkletProcessor {
 
         for (let i = 0; i < out.length; i++) {
             const cv = pIn ? pIn[i] : 0.0;
-            const midiPitch = (this.rootMidi - 69 + (this.fine || 0) / 100) / 12.0 + cv;
+            const effectiveRoot = this.hasPitchIn ? 24 : this.rootMidi;
+            const midiPitch = (effectiveRoot - 69 + (this.fine || 0) / 100) / 12.0 + cv;
             const baseFreq = 440.0 * Math.pow(2.0, midiPitch);
             const freq = baseFreq * this.ratio;
 

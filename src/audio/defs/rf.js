@@ -7,11 +7,13 @@ export const RF = {
         });
 
         const isTimeCvPatched = !!(patch?.has?.('time_cv') || patch?.has?.('cv_time'));
+        const isPeakCvPatched = !!(patch?.has?.('peak_cv') || patch?.has?.('cv_peak'));
         w.port.postMessage({
             type: 'SET_PARAMS',
             time: isTimeCvPatched ? 0 : (d.time ?? 0.2),
             isTimeCvPatched,
-            peak: d.peak ?? 0.5,
+            peak: isPeakCvPatched ? 0.5 : (d.peak ?? 0.5),
+            isPeakCvPatched,
             level: d.level ?? 1.0
         });
 
@@ -76,11 +78,13 @@ export const RF = {
     },
     update: (ctx, inst, d, patch) => {
         const isTimeCvPatched = !!(patch?.has?.('time_cv') || patch?.has?.('cv_time'));
+        const isPeakCvPatched = !!(patch?.has?.('peak_cv') || patch?.has?.('cv_peak'));
         inst.nodes.w.port.postMessage({
             type: 'SET_PARAMS',
             time: isTimeCvPatched ? 0 : (d.time ?? 0.2),
             isTimeCvPatched,
-            peak: d.peak ?? 0.5,
+            peak: isPeakCvPatched ? 0.5 : (d.peak ?? 0.5),
+            isPeakCvPatched,
             level: d.level ?? 1.0
         });
     }

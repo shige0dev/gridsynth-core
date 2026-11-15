@@ -6,6 +6,7 @@ export class RfProcessor extends AudioWorkletProcessor {
         super();
         this.timeSec = 0.2; // 0.0 ~ 2.0s (0 = 0ms passthrough)
         this.isTimeCvPatched = false;
+        this.isPeakCvPatched = false;
         this.peakParam = 0.5; // 0.01 ~ 0.99
         this.level = 1.0;
 
@@ -31,6 +32,9 @@ export class RfProcessor extends AudioWorkletProcessor {
                 }
                 if (e.data.isTimeCvPatched !== undefined) {
                     this.isTimeCvPatched = !!e.data.isTimeCvPatched;
+                }
+                if (e.data.isPeakCvPatched !== undefined) {
+                    this.isPeakCvPatched = !!e.data.isPeakCvPatched;
                 }
                 if (e.data.peak !== undefined) {
                     this.peakParam = Math.max(0.01, Math.min(0.99, e.data.peak));
@@ -79,7 +83,7 @@ export class RfProcessor extends AudioWorkletProcessor {
         }
         this.totalSamples = Math.max(2, Math.round(totalSec * sr));
 
-        const peak = Math.max(0.01, Math.min(0.99, this.peakParam + cvPeak));
+        const peak = Math.max(0.01, Math.min(0.99, this.isPeakCvPatched ? cvPeak : this.peakParam));
         this.riseSamples = Math.max(1, Math.round(this.totalSamples * peak));
         this.fallSamples = Math.max(1, this.totalSamples - this.riseSamples);
     }

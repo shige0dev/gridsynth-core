@@ -13,6 +13,7 @@ export class FmProcessor extends AudioWorkletProcessor {
         this.lastOp3Out = 0;
         this.lastGateHi = false;
         this.hasGateIn = false;
+        this.hasPitchIn = false;
 
         this.algorithm = 1;
         this.rootMidi = 48; // C3 (130.81Hz)
@@ -29,6 +30,7 @@ export class FmProcessor extends AudioWorkletProcessor {
             if (e.data.type === 'SET_PARAMS') {
                 const d = e.data;
                 if (d.hasGateIn !== undefined) this.hasGateIn = !!d.hasGateIn;
+                if (d.hasPitchIn !== undefined) this.hasPitchIn = !!d.hasPitchIn;
                 if (d.algorithm !== undefined) this.algorithm = Math.max(1, Math.min(3, Math.round(d.algorithm)));
                 if (d.rootMidi !== undefined) this.rootMidi = d.rootMidi;
 
@@ -84,9 +86,10 @@ export class FmProcessor extends AudioWorkletProcessor {
             }
             this.lastGateHi = isGateHi;
 
-            // Pitch CV calculation (1V/Oct)
+            // Pitch CV calculation (1V/Oct: 0V = C1/MIDI 24 when pitch_in is patched)
             const cv = pIn ? pIn[i] : 0.0;
-            const baseFreq = 440.0 * Math.pow(2.0, (this.rootMidi - 69) / 12.0 + cv);
+            const effectiveRoot = this.hasPitchIn ? 24 : this.rootMidi;
+            const baseFreq = 440.0 * Math.pow(2.0, (effectiveRoot - 69) / 12.0 + cv);
 
             const f1 = baseFreq * this.op1.ratio;
             const f2 = baseFreq * this.op2.ratio;

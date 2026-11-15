@@ -6,10 +6,14 @@ export const AR = {
             numberOfOutputs: 1
         });
 
+        const isAPatched = !!(patch?.has?.('attack_in') || patch?.has?.('a_cv') || patch?.has?.('cv_a') || patch?.has?.('attack_cv'));
+        const isRPatched = !!(patch?.has?.('release_in') || patch?.has?.('r_cv') || patch?.has?.('cv_r') || patch?.has?.('release_cv'));
         w.port.postMessage({
             type: 'SET_PARAMS',
-            attack: d.attack ?? 0.05,
-            release: d.release ?? 0.2,
+            attack: isAPatched ? 0 : (d.attack ?? 0.05),
+            release: isRPatched ? 0 : (d.release ?? 0.2),
+            isAPatched,
+            isRPatched,
             level: d.level ?? 1.0
         });
 
@@ -68,11 +72,15 @@ export const AR = {
             }
         };
     },
-    update: (ctx, inst, d) => {
+    update: (ctx, inst, d, patch) => {
+        const isAPatched = !!(patch?.has?.('attack_in') || patch?.has?.('a_cv') || patch?.has?.('cv_a') || patch?.has?.('attack_cv'));
+        const isRPatched = !!(patch?.has?.('release_in') || patch?.has?.('r_cv') || patch?.has?.('cv_r') || patch?.has?.('release_cv'));
         inst.nodes.w.port.postMessage({
             type: 'SET_PARAMS',
-            attack: d.attack ?? 0.05,
-            release: d.release ?? 0.2,
+            attack: isAPatched ? 0 : (d.attack ?? 0.05),
+            release: isRPatched ? 0 : (d.release ?? 0.2),
+            isAPatched,
+            isRPatched,
             level: d.level ?? 1.0
         });
     }
