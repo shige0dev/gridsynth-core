@@ -17,6 +17,11 @@ export class RfProcessor extends AudioWorkletProcessor {
         this.lastTrigHi = false;
         this.trigOutSamples = 0;
         this.lastReportedStage = -1;
+        this.sampleCounter = 0;
+        this.latchedTotalSamples = this.totalSamples;
+        this.gateQueue = [];
+        this.gateOutState = 0.0;
+        this.manualTrigger = false;
 
         this.port.onmessage = (e) => {
             if (e.data.type === 'SET_PARAMS') {
@@ -43,6 +48,10 @@ export class RfProcessor extends AudioWorkletProcessor {
                 this.sampleIndex = 0;
                 this.trigOutSamples = 0;
                 this.lastTrigHi = false;
+                this.sampleCounter = 0;
+                this.gateQueue = [];
+                this.gateOutState = 0.0;
+                this.manualTrigger = false;
             }
         };
     }
@@ -51,6 +60,7 @@ export class RfProcessor extends AudioWorkletProcessor {
         this.calcDurations(0.0, 0.0, sr);
         this.running = true;
         this.sampleIndex = 0;
+        this.manualTrigger = true;
     }
 
     calcDurations(cvTime, cvPeak, sr) {
@@ -86,10 +96,29 @@ export class RfProcessor extends AudioWorkletProcessor {
                 const cvT = cvTimeIn ? cvTimeIn[i] : 0.0;
                 const cvP = cvPeakIn ? cvPeakIn[i] : 0.0;
                 this.calcDurations(cvT, cvP, sr);
+                this.latchedTotalSamples = this.totalSamples;
                 this.running = true;
                 this.sampleIndex = 0;
+                this.manualTrigger = false;
+                let target = this.sampleCounter + this.latchedTotalSamples;
+                if (this.gateQueue.length > 0) {
+                    const lastTarget = this.gateQueue[this.gateQueue.length - 1].targetSample;
+                    if (target <= lastTarget) target = lastTarget + 1;
+                }
+                this.gateQueue.push({ targetSample: target, val: 1.0 });
+            } else if (!isTrigHi && this.lastTrigHi) {
+                let target = this.sampleCounter + this.latchedTotalSamples;
+                if (this.gateQueue.length > 0) {
+                    const lastTarget = this.gateQueue[this.gateQueue.length - 1].targetSample;
+                    if (target <= lastTarget) target = lastTarget + 1;
+                }
+                this.gateQueue.push({ targetSample: target, val: 0.0 });
             }
             this.lastTrigHi = isTrigHi;
+
+            while (this.gateQueue.length > 0 && this.gateQueue[0].targetSample <= this.sampleCounter) {
+                this.gateOutState = this.gateQueue.shift().val;
+            }
 
             let cvVal = 0.0;
             if (this.running) {
@@ -102,8 +131,11 @@ export class RfProcessor extends AudioWorkletProcessor {
                     // Cycle finished!
                     cvVal = 0.0;
                     this.running = false;
-                    // Fire end trigger
-                    this.trigOutSamples = pulseLen;
+                    // Fire end trigger for manual triggers (trig_in uses gateQueue passthrough)
+                    if (this.manualTrigger) {
+                        this.trigOutSamples = pulseLen;
+                        this.manualTrigger = false;
+                    }
                 }
                 this.sampleIndex++;
             }
@@ -117,9 +149,11 @@ export class RfProcessor extends AudioWorkletProcessor {
                     outTrig[i] = 1.0;
                     this.trigOutSamples--;
                 } else {
-                    outTrig[i] = 0.0;
+                    outTrig[i] = this.gateOutState;
                 }
             }
+
+            this.sampleCounter++;
         }
 
         const curStage = !this.running ? -1 : (this.sampleIndex < this.riseSamples ? 0 : 1);
