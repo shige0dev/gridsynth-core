@@ -89,10 +89,12 @@ export const WAVE3D = {
             if (sourceMode === 'spec') {
                 an.getByteFrequencyData(freqBuf);
                 const fftSize = freqBuf.length * 2;
-                const f0 = 55; // Match SPEC module's 55Hz base (logarithmic 5-octave span: 55Hz..1760Hz)
+                const f0 = 20; // 20 Hz .. 20 kHz logarithmic spectrum
+                const fMax = Math.min(20000, sampleRate * 0.48);
+                const ratio = fMax / f0;
                 for (let c = 0; c < cols; c++) {
                     const u = c / Math.max(1, cols - 1);
-                    const fCenter = f0 * Math.pow(2, u * 5.0);
+                    const fCenter = f0 * Math.pow(ratio, u);
                     const kCenterFloat = (fCenter * fftSize) / sampleRate;
                     const k0 = Math.max(0, Math.min(freqBuf.length - 1, Math.floor(kCenterFloat)));
                     const k1 = Math.min(freqBuf.length - 1, k0 + 1);
