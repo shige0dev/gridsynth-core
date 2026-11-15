@@ -90,7 +90,7 @@ export class RfProcessor extends AudioWorkletProcessor {
 
         for (let i = 0; i < len; i++) {
             // Trigger input edge detection
-            const trigVal = trigIn ? trigIn[i] : 0.0;
+            const trigVal = Math.min(1.0, trigIn ? trigIn[i] : 0.0);
             const isTrigHi = trigVal > 0.3;
             if (isTrigHi && !this.lastTrigHi) {
                 const cvT = cvTimeIn ? cvTimeIn[i] : 0.0;
@@ -141,7 +141,7 @@ export class RfProcessor extends AudioWorkletProcessor {
             }
 
             if (outCv) {
-                outCv[i] = cvVal * this.level;
+                outCv[i] = Math.min(1.0, cvVal * this.level);
             }
 
             if (outTrig) {
@@ -149,7 +149,7 @@ export class RfProcessor extends AudioWorkletProcessor {
                     outTrig[i] = 1.0;
                     this.trigOutSamples--;
                 } else {
-                    outTrig[i] = this.gateOutState;
+                    outTrig[i] = Math.min(1.0, this.gateOutState);
                 }
             }
 
