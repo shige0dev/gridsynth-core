@@ -24,7 +24,6 @@ export class RfProcessor extends AudioWorkletProcessor {
         this.gateQueue = [];
         this.gateOutState = 0.0;
         this.manualTrigger = false;
-        this.selfLoop = false;
 
         this.port.onmessage = (e) => {
             if (e.data.type === 'SET_PARAMS') {
@@ -43,14 +42,6 @@ export class RfProcessor extends AudioWorkletProcessor {
                 if (e.data.level !== undefined) {
                     this.level = Math.max(0.0, Math.min(1.0, e.data.level));
                 }
-                if (this.selfLoop && !this.running && (this.isTimeCvPatched || this.timeSec > 0)) {
-                    this.startCycle(getSR());
-                }
-            } else if (e.data.type === 'SET_SELF_LOOP') {
-                this.selfLoop = !!e.data.enabled;
-                if (this.selfLoop && !this.running) {
-                    this.startCycle(getSR());
-                }
             } else if (e.data.type === 'TRIGGER' || e.data.type === 'TRIG') {
                 this.startCycle(getSR());
             } else if (e.data.type === 'RESET') {
@@ -62,9 +53,6 @@ export class RfProcessor extends AudioWorkletProcessor {
                 this.gateQueue = [];
                 this.gateOutState = 0.0;
                 this.manualTrigger = false;
-                if (this.selfLoop) {
-                    this.startCycle(getSR());
-                }
             }
         };
     }

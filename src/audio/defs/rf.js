@@ -66,9 +66,6 @@ export const RF = {
             trigger: () => {
                 w.port.postMessage({ type: 'TRIGGER' });
             },
-            setSelfLoop: (enabled) => {
-                w.port.postMessage({ type: 'SET_SELF_LOOP', enabled: !!enabled });
-            },
             reset: () => {
                 curStage = -1;
                 w.port.postMessage({ type: 'RESET' });
