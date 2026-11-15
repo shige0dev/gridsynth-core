@@ -24,8 +24,6 @@ export const preset03 = {
         "30": "SLIDER1",
         "31": "MATH2_3",
         "32": "MATH2_1",
-        "33": "DELAY2",
-        "34": "DELAY1",
         "35": "SLIDER2",
         "36": "MATH2_4",
         "37": "MATH2_2",
@@ -73,12 +71,6 @@ export const preset03 = {
           "type": "VCA",
           "level": 0.54,
           "cvDepth": 0.2
-        },
-        "DELAY1": {
-          "type": "DELAY",
-          "delayTime": 0.77,
-          "feedback": 0.6,
-          "mix": 0.72
         },
         "SPK1": {
           "type": "SPK",
@@ -160,13 +152,13 @@ export const preset03 = {
         },
         "MATH2_1": {
           "type": "MATH2",
-          "mode": "ADD",
+          "mode": "MULTI",
           "valA": 0,
           "valB": 1
         },
         "MATH2_2": {
           "type": "MATH2",
-          "mode": "ADD",
+          "mode": "MULTI",
           "valA": 0,
           "valB": 1
         },
@@ -201,18 +193,12 @@ export const preset03 = {
         "SUB1": {
           "type": "SUB",
           "subType": "ComplexSource"
-        },
-        "DELAY2": {
-          "type": "DELAY",
-          "delayTime": 0.08700000000000001,
-          "feedback": 0.79,
-          "mix": 0.82
         }
       },
       "connections": [
         { "from": { "moduleId": "VCF1", "port": "wave_out" }, "to": { "moduleId": "VCA1", "port": "wave_in" } },
-        { "from": { "moduleId": "DELAY1", "port": "wave_out" }, "to": { "moduleId": "SPK1", "port": "wave_in_l" } },
-        { "from": { "moduleId": "DELAY1", "port": "wave_out" }, "to": { "moduleId": "SPK1", "port": "wave_in_r" } },
+        { "from": { "moduleId": "REVERB1", "port": "wave_out" }, "to": { "moduleId": "SPK1", "port": "wave_in_l" } },
+        { "from": { "moduleId": "REVERB1", "port": "wave_out" }, "to": { "moduleId": "SPK1", "port": "wave_in_r" } },
         { "from": { "moduleId": "AR1", "port": "cv_out" }, "to": { "moduleId": "VCA1", "port": "cv_in" } },
         { "from": { "moduleId": "AR1", "port": "cv_out" }, "to": { "moduleId": "VCF1", "port": "cv_in" } },
         { "from": { "moduleId": "VCF2", "port": "wave_out" }, "to": { "moduleId": "VCA2", "port": "wave_in" } },
@@ -224,19 +210,21 @@ export const preset03 = {
         { "from": { "moduleId": "CLK1", "port": "gate_out" }, "to": { "moduleId": "SEQ16_1", "port": "gate_in" } },
         { "from": { "moduleId": "SEQ16_1", "port": "gate_out" }, "to": { "moduleId": "AR1", "port": "gate_in" } },
         { "from": { "moduleId": "VCA1", "port": "wave_out" }, "to": { "moduleId": "REVERB1", "port": "wave_in" } },
-        { "from": { "moduleId": "REVERB1", "port": "wave_out" }, "to": { "moduleId": "DELAY1", "port": "wave_in" } },
         { "from": { "moduleId": "KEY1", "port": "cv_out" }, "to": { "moduleId": "SUB1", "port": "PIN5_in" } },
         { "from": { "moduleId": "SEQ16_1", "port": "cv_out" }, "to": { "moduleId": "SUB1", "port": "PIN5_in" } },
         { "from": { "moduleId": "SUB1", "port": "PIN10_out" }, "to": { "moduleId": "VCF1", "port": "wave_in" } },
-        { "from": { "moduleId": "RF1", "port": "cv_out" }, "to": { "moduleId": "SUB1", "port": "PIN3_in" } },
+        { "from": { "moduleId": "RF1", "port": "cv_out" }, "to": { "moduleId": "MATH2_2", "port": "cv_in_a" } },
+        { "from": { "moduleId": "SLIDER2", "port": "cv_out" }, "to": { "moduleId": "MATH2_2", "port": "cv_in_b" } },
+        { "from": { "moduleId": "MATH2_2", "port": "cv_out" }, "to": { "moduleId": "SUB1", "port": "PIN3_in" } },
         { "from": { "moduleId": "NOISE1", "port": "wave_out" }, "to": { "moduleId": "SH1", "port": "cv_in" } },
         { "from": { "moduleId": "DIST4_2", "port": "cv_out3" }, "to": { "moduleId": "SH1", "port": "trig_in" } },
-        { "from": { "moduleId": "SH1", "port": "cv_out" }, "to": { "moduleId": "SUB1", "port": "PIN4_in" } },
+        { "from": { "moduleId": "SH1", "port": "cv_out" }, "to": { "moduleId": "MATH2_1", "port": "cv_in_a" } },
+        { "from": { "moduleId": "SLIDER1", "port": "cv_out" }, "to": { "moduleId": "MATH2_1", "port": "cv_in_b" } },
+        { "from": { "moduleId": "MATH2_1", "port": "cv_out" }, "to": { "moduleId": "SUB1", "port": "PIN4_in" } },
         { "from": { "moduleId": "NOISE1", "port": "wave_out" }, "to": { "moduleId": "VCF2", "port": "wave_in" } },
         { "from": { "moduleId": "LFO1", "port": "cv_out" }, "to": { "moduleId": "VCA2", "port": "cv_in" } },
         { "from": { "moduleId": "LFO1", "port": "cv_out" }, "to": { "moduleId": "VCF2", "port": "cv_in" } },
-        { "from": { "moduleId": "VCA2", "port": "wave_out" }, "to": { "moduleId": "DELAY2", "port": "wave_in" } },
-        { "from": { "moduleId": "DELAY2", "port": "wave_out" }, "to": { "moduleId": "REVERB1", "port": "wave_in" } }
+        { "from": { "moduleId": "VCA2", "port": "wave_out" }, "to": { "moduleId": "REVERB1", "port": "wave_in" } }
       ]
     }
   }
