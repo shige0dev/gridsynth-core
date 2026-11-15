@@ -1025,5 +1025,57 @@ export const FACTORY_SUBPATCHES = {
                 { from: { moduleId: "MATH2_2", port: "cv_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }
             ]
         }
+    },
+    'FACTORY_SOURCE': {
+        id: 'FACTORY_SOURCE',
+        subType: 'ComplexSource',
+        format: 'gridsynth-submodule',
+        version: '2.1',
+        name: 'SOURCE',
+        category: 'Oscillator',
+        isSystem: true,
+        description: 'West Coast Complex Oscillator (Modulator -> Carrier FM + Wavefolder)',
+        manifest: {
+            description: 'volca modular SOURCE 構造の西海岸コンプレックス・オシレータ（Modulator + Carrier FM + Wavefolder）',
+            ports: {
+                cv_in: { pin: 'PIN5', signal: 'cv' },
+                mod_cv: { pin: 'PIN4', signal: 'cv' },
+                fold_cv: { pin: 'PIN3', signal: 'cv' },
+                wave_out: { pin: 'PIN10', signal: 'audio' },
+                mod_out: { pin: 'PIN11', signal: 'audio' }
+            }
+        },
+        pins: {
+            PIN5: { label: 'Pitch (1V/Oct)', type: 'cv_in' },
+            PIN4: { label: 'Mod Depth CV', type: 'cv_in' },
+            PIN3: { label: 'Fold CV', type: 'cv_in' },
+            PIN10: { label: 'Audio Out', type: 'audio_out' },
+            PIN11: { label: 'Mod Out', type: 'audio_out' }
+        },
+        pageData: {
+            name: 'SOURCE',
+            slots: {
+                "2": "SUB_IO1",
+                "6": "FMCORE1",
+                "7": "FMCORE2",
+                "8": "FOLD1"
+            },
+            modules: {
+                "SUB_IO1": { "type": "SUB_IO", "col": 2, "row": 0 },
+                "FMCORE1": { "type": "FMCORE", "level": 0.85, "ratio": 2.0, "fine": 0, "index": 1.0, "feedback": 0.0, "rootMidi": 48, "col": 1, "row": 1 },
+                "FMCORE2": { "type": "FMCORE", "level": 0.85, "ratio": 1.0, "fine": 0, "index": 1.5, "feedback": 0.0, "rootMidi": 48, "col": 2, "row": 1 },
+                "FOLD1": { "type": "FOLD", "gain": 1.5, "mix": 1.0, "shape": "fold", "col": 3, "row": 1 }
+            },
+            connections: [
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "FMCORE1", port: "cv_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "FMCORE2", port: "cv_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "FMCORE2", port: "index_cv" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN3_out" }, to: { moduleId: "FOLD1", port: "gain_cv" } },
+                { from: { moduleId: "FMCORE1", port: "wave_out" }, to: { moduleId: "FMCORE2", port: "mod_in" } },
+                { from: { moduleId: "FMCORE1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN11_in" } },
+                { from: { moduleId: "FMCORE2", port: "wave_out" }, to: { moduleId: "FOLD1", port: "wave_in" } },
+                { from: { moduleId: "FOLD1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }
+            ]
+        }
     }
 };
