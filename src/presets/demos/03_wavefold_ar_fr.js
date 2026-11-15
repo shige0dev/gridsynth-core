@@ -19,10 +19,8 @@ export const preset03 = {
         "12": "LFO1",
         "13": "SLIDER3",
         "14": "MATH2_3",
-        "15": "VCF1",
-        "16": "VCA1",
-        "17": "VCF2",
-        "18": "VCA2",
+        "15": "SUB2",
+        "16": "SUB3",
         "20": "NOISE1",
         "21": "SH1",
         "22": "DIST4_3",
@@ -48,30 +46,6 @@ export const preset03 = {
           "time": 1.2440525462210172,
           "peak": 0.11,
           "level": 0.9
-        },
-        "VCF1": {
-          "type": "VCF",
-          "cutoff": 420,
-          "q": 6,
-          "filterType": "lowpass",
-          "modDepth": 2600
-        },
-        "VCA1": {
-          "type": "VCA",
-          "level": 0,
-          "cvDepth": 1
-        },
-        "VCF2": {
-          "type": "VCF",
-          "cutoff": 2290,
-          "q": 6,
-          "filterType": "lowpass",
-          "modDepth": 2600
-        },
-        "VCA2": {
-          "type": "VCA",
-          "level": 0.54,
-          "cvDepth": 0.2
         },
         "SPK1": {
           "type": "SPK",
@@ -204,18 +178,23 @@ export const preset03 = {
         "SUB1": {
           "type": "SUB",
           "subType": "ComplexSource"
+        },
+        "SUB2": {
+          "type": "SUB",
+          "subType": "LowPassGate"
+        },
+        "SUB3": {
+          "type": "SUB",
+          "subType": "LowPassGate"
         }
       },
       "connections": [
-        { "from": { "moduleId": "VCF1", "port": "wave_out" }, "to": { "moduleId": "VCA1", "port": "wave_in" } },
         { "from": { "moduleId": "REVERB1", "port": "wave_out" }, "to": { "moduleId": "SPK1", "port": "wave_in_l" } },
         { "from": { "moduleId": "REVERB1", "port": "wave_out" }, "to": { "moduleId": "SPK1", "port": "wave_in_r" } },
         { "from": { "moduleId": "AR1", "port": "cv_out" }, "to": { "moduleId": "MATH2_3", "port": "cv_in_a" } },
         { "from": { "moduleId": "SLIDER3", "port": "cv_out" }, "to": { "moduleId": "MATH2_3", "port": "cv_in_b" } },
-        { "from": { "moduleId": "MATH2_3", "port": "cv_out" }, "to": { "moduleId": "VCA1", "port": "cv_in" } },
-        { "from": { "moduleId": "MATH2_3", "port": "cv_out" }, "to": { "moduleId": "VCF1", "port": "cv_in" } },
+        { "from": { "moduleId": "MATH2_3", "port": "cv_out" }, "to": { "moduleId": "SUB2", "port": "PIN4_in" } },
         { "from": { "moduleId": "SLIDER4", "port": "cv_out" }, "to": { "moduleId": "REVERB1", "port": "cv_in" } },
-        { "from": { "moduleId": "VCF2", "port": "wave_out" }, "to": { "moduleId": "VCA2", "port": "wave_in" } },
         { "from": { "moduleId": "LFO1", "port": "cv_out" }, "to": { "moduleId": "AR1", "port": "attack_in" } },
         { "from": { "moduleId": "DIST4_1", "port": "cv_out4" }, "to": { "moduleId": "RF1", "port": "trig_in" } },
         { "from": { "moduleId": "CLK1", "port": "gate_out" }, "to": { "moduleId": "DIST4_2", "port": "gate_in" } },
@@ -223,10 +202,10 @@ export const preset03 = {
         { "from": { "moduleId": "CLK1", "port": "gate_out" }, "to": { "moduleId": "DIST4_1", "port": "gate_in" } },
         { "from": { "moduleId": "CLK1", "port": "gate_out" }, "to": { "moduleId": "SEQ16_1", "port": "gate_in" } },
         { "from": { "moduleId": "SEQ16_1", "port": "gate_out" }, "to": { "moduleId": "AR1", "port": "gate_in" } },
-        { "from": { "moduleId": "VCA1", "port": "wave_out" }, "to": { "moduleId": "REVERB1", "port": "wave_in" } },
+        { "from": { "moduleId": "SUB2", "port": "PIN10_out" }, "to": { "moduleId": "REVERB1", "port": "wave_in" } },
         { "from": { "moduleId": "KEY1", "port": "cv_out" }, "to": { "moduleId": "SUB1", "port": "PIN5_in" } },
         { "from": { "moduleId": "SEQ16_1", "port": "cv_out" }, "to": { "moduleId": "SUB1", "port": "PIN5_in" } },
-        { "from": { "moduleId": "SUB1", "port": "PIN10_out" }, "to": { "moduleId": "VCF1", "port": "wave_in" } },
+        { "from": { "moduleId": "SUB1", "port": "PIN10_out" }, "to": { "moduleId": "SUB2", "port": "PIN5_in" } },
         { "from": { "moduleId": "RF1", "port": "cv_out" }, "to": { "moduleId": "MATH2_2", "port": "cv_in_a" } },
         { "from": { "moduleId": "SLIDER2", "port": "cv_out" }, "to": { "moduleId": "MATH2_2", "port": "cv_in_b" } },
         { "from": { "moduleId": "MATH2_2", "port": "cv_out" }, "to": { "moduleId": "SUB1", "port": "PIN3_in" } },
@@ -235,10 +214,9 @@ export const preset03 = {
         { "from": { "moduleId": "SH1", "port": "cv_out" }, "to": { "moduleId": "MATH2_1", "port": "cv_in_a" } },
         { "from": { "moduleId": "SLIDER1", "port": "cv_out" }, "to": { "moduleId": "MATH2_1", "port": "cv_in_b" } },
         { "from": { "moduleId": "MATH2_1", "port": "cv_out" }, "to": { "moduleId": "SUB1", "port": "PIN4_in" } },
-        { "from": { "moduleId": "NOISE1", "port": "wave_out" }, "to": { "moduleId": "VCF2", "port": "wave_in" } },
-        { "from": { "moduleId": "LFO1", "port": "cv_out" }, "to": { "moduleId": "VCA2", "port": "cv_in" } },
-        { "from": { "moduleId": "LFO1", "port": "cv_out" }, "to": { "moduleId": "VCF2", "port": "cv_in" } },
-        { "from": { "moduleId": "VCA2", "port": "wave_out" }, "to": { "moduleId": "REVERB1", "port": "wave_in" } }
+        { "from": { "moduleId": "NOISE1", "port": "wave_out" }, "to": { "moduleId": "SUB3", "port": "PIN5_in" } },
+        { "from": { "moduleId": "LFO1", "port": "cv_out" }, "to": { "moduleId": "SUB3", "port": "PIN4_in" } },
+        { "from": { "moduleId": "SUB3", "port": "PIN10_out" }, "to": { "moduleId": "REVERB1", "port": "wave_in" } }
       ]
     }
   }

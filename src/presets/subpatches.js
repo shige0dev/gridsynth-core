@@ -1077,5 +1077,54 @@ export const FACTORY_SUBPATCHES = {
                 { from: { moduleId: "FOLD1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }
             ]
         }
+    },
+    'FACTORY_LPG': {
+        id: 'FACTORY_LPG',
+        subType: 'LowPassGate',
+        format: 'gridsynth-submodule',
+        version: '2.1',
+        name: 'LPG',
+        category: 'Filter / VCA',
+        isSystem: true,
+        description: 'Vactrol-style Low Pass Gate (VCF + VCA with VALUE depth control)',
+        manifest: {
+            description: 'バクトール風ローパスゲート（VCF + VCA セット＆VALUE 適用度調整）',
+            ports: {
+                wave_in: { pin: 'PIN5', signal: 'audio' },
+                cv_in: { pin: 'PIN4', signal: 'cv' },
+                wave_out: { pin: 'PIN10', signal: 'audio' }
+            }
+        },
+        pins: {
+            PIN5: { label: 'Audio In', type: 'audio_in' },
+            PIN4: { label: 'CV In', type: 'cv_in' },
+            PIN10: { label: 'Audio Out', type: 'audio_out' }
+        },
+        pageData: {
+            name: 'LPG',
+            slots: {
+                "2": "SUB_IO1",
+                "6": "VCF1",
+                "7": "VCA1",
+                "11": "MATH2_1",
+                "12": "VALUE_1"
+            },
+            modules: {
+                "SUB_IO1": { "type": "SUB_IO", "col": 2, "row": 0 },
+                "VCF1": { "type": "VCF", "cutoff": 420, "q": 6.0, "filterType": "lowpass", "modDepth": 2600, "col": 1, "row": 1 },
+                "VCA1": { "type": "VCA", "level": 0.0, "cvDepth": 1.0, "col": 2, "row": 1 },
+                "MATH2_1": { "type": "MATH2", "mode": "MULTI", "valA": 0.0, "valB": 1.0, "col": 1, "row": 2 },
+                "VALUE_1": { "type": "VALUE", "label": "AMOUNT", "val": 1.0, "min": 0.0, "max": 1.0, "def": 1.0, "step": 0.01, "col": 2, "row": 2 }
+            },
+            connections: [
+                { from: { moduleId: "SUB_IO1", port: "PIN5_out" }, to: { moduleId: "VCF1", port: "wave_in" } },
+                { from: { moduleId: "VCF1", port: "wave_out" }, to: { moduleId: "VCA1", port: "wave_in" } },
+                { from: { moduleId: "SUB_IO1", port: "PIN4_out" }, to: { moduleId: "MATH2_1", port: "cv_in_a" } },
+                { from: { moduleId: "VALUE_1", port: "cv_out" }, to: { moduleId: "MATH2_1", port: "cv_in_b" } },
+                { from: { moduleId: "MATH2_1", port: "cv_out" }, to: { moduleId: "VCF1", port: "cv_in" } },
+                { from: { moduleId: "MATH2_1", port: "cv_out" }, to: { moduleId: "VCA1", port: "cv_in" } },
+                { from: { moduleId: "VCA1", port: "wave_out" }, to: { moduleId: "SUB_IO1", port: "PIN10_in" } }
+            ]
+        }
     }
 };
