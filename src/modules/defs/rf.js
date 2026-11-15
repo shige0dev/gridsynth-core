@@ -15,8 +15,8 @@ export const RF = {
             { port: 'peak_cv', color: 'bg-yellow-400' }
         ],
         out: [
-            { port: 'cv_out', color: 'bg-yellow-400' },
-            { port: 'trig_out', color: 'bg-orange-500' }
+            { port: 'trig_out', color: 'bg-orange-500' },
+            { port: 'cv_out', color: 'bg-yellow-400' }
         ]
     }),
     renderSvgCurve: (m) => {
