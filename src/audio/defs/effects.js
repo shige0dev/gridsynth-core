@@ -47,12 +47,14 @@ export const DELAY = {
 };
 
 export const LAG = {
-    create: (ctx, d) => {
+    create: (ctx, d, patch) => {
+        const isTimeCvPatched = !!(patch?.has?.('time_cv'));
         const w = new AudioWorkletNode(ctx, 'cv-delay-processor', { numberOfInputs: 2, numberOfOutputs: 1 });
         const pTime = w.parameters.get('timeMs');
         const pDepth = w.parameters.get('cvDepth');
-        if (pTime) pTime.value = d.timeMs ?? 50;
+        if (pTime) pTime.value = isTimeCvPatched ? 0 : (d.timeMs ?? 50);
         if (pDepth) pDepth.value = d.cvDepth ?? 1.0;
+        w.port.postMessage({ type: 'SET_PATCH', isTimeCvPatched });
 
         const sigIn = ctx.createGain();
         const timeCvIn = ctx.createGain();
@@ -71,11 +73,13 @@ export const LAG = {
             }
         };
     },
-    update: (ctx, inst, d) => {
+    update: (ctx, inst, d, patch) => {
+        const isTimeCvPatched = !!(patch?.has?.('time_cv'));
         const pTime = inst.nodes.w.parameters.get('timeMs');
         const pDepth = inst.nodes.w.parameters.get('cvDepth');
-        if (pTime) AudioHelpers.set(pTime, d.timeMs ?? 50, ctx, 0.005);
+        if (pTime) AudioHelpers.set(pTime, isTimeCvPatched ? 0 : (d.timeMs ?? 50), ctx, 0.005);
         if (pDepth) AudioHelpers.set(pDepth, d.cvDepth ?? 1.0, ctx, 0.005);
+        inst.nodes.w.port.postMessage({ type: 'SET_PATCH', isTimeCvPatched });
     }
 };
 

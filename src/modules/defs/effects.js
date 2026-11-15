@@ -29,7 +29,7 @@ export const LAG = {
     schema: {
         color: 'teal',
         sliders: [
-            { key: 'timeMs', label: 'TIME', min: 0, max: 2000, step: 1, default: 50, unit: 'ms', cvPort: 'time_cv', patchedVal: 50, patchedText: 'EXT CV', format: v => `${Math.round(v)}ms` }
+            { key: 'timeMs', label: 'TIME', min: 0, max: 2000, step: 1, default: 50, unit: 'ms', cvPort: 'time_cv', patchedVal: 0, patchedText: 'EXT CV', format: v => `${Math.round(v)}ms` }
         ]
     },
     renderGrid: (m, ctx) => {

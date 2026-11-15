@@ -13,10 +13,13 @@ export class CvDelayProcessor extends AudioWorkletProcessor {
         this.maxSamples = 48000 * 5; // 5s max buffer
         this.buffer = new Float32Array(this.maxSamples);
         this.writeIndex = 0;
+        this.isTimeCvPatched = false;
         this.port.onmessage = e => {
             if (e.data.type === 'RESET' || e.data.type === 'CLEAR') {
                 this.buffer.fill(0);
                 this.writeIndex = 0;
+            } else if (e.data.type === 'SET_PATCH') {
+                this.isTimeCvPatched = !!e.data.isTimeCvPatched;
             }
         };
     }
@@ -36,10 +39,9 @@ export class CvDelayProcessor extends AudioWorkletProcessor {
             const s = sigIn ? sigIn[i] : 0;
             this.buffer[this.writeIndex] = s;
 
-            let delayMs = isTimeArray ? params.timeMs[i] : baseTimeMs;
-            if (timeCvIn) {
-                delayMs += (timeCvIn[i] || 0) * 500 * depth;
-            }
+            let delayMs = this.isTimeCvPatched
+                ? (timeCvIn ? (timeCvIn[i] || 0) : 0) * 500 * depth
+                : (isTimeArray ? params.timeMs[i] : baseTimeMs);
             delayMs = Math.max(0, Math.min(4999, delayMs));
 
             const delaySamples = (delayMs / 1000) * sr;
