@@ -4,7 +4,8 @@ import { getSR } from './common.js';
 export class RfProcessor extends AudioWorkletProcessor {
     constructor() {
         super();
-        this.timeParam = 0.5; // 0.0 ~ 1.0 (0.5 = 200ms)
+        this.timeSec = 0.2; // 0.0 ~ 2.0s (0 = 0ms passthrough)
+        this.isTimeCvPatched = false;
         this.peakParam = 0.5; // 0.01 ~ 0.99
         this.level = 1.0;
 
@@ -26,14 +27,10 @@ export class RfProcessor extends AudioWorkletProcessor {
         this.port.onmessage = (e) => {
             if (e.data.type === 'SET_PARAMS') {
                 if (e.data.time !== undefined) {
-                    // time can be passed as seconds (0.02 ~ 2.0) or normalized (0 ~ 1)
-                    if (e.data.timeNormalized !== undefined) {
-                        this.timeParam = Math.max(0.0, Math.min(1.0, e.data.timeNormalized));
-                    } else if (e.data.time !== undefined) {
-                        // convert seconds [0.02, 2.0] to normalized [0, 1] using log100
-                        const sec = Math.max(0.02, Math.min(2.0, e.data.time));
-                        this.timeParam = Math.log10(sec / 0.02) / 2.0;
-                    }
+                    this.timeSec = Math.max(0.0, Math.min(2.0, e.data.time));
+                }
+                if (e.data.isTimeCvPatched !== undefined) {
+                    this.isTimeCvPatched = !!e.data.isTimeCvPatched;
                 }
                 if (e.data.peak !== undefined) {
                     this.peakParam = Math.max(0.01, Math.min(0.99, e.data.peak));
@@ -58,15 +55,28 @@ export class RfProcessor extends AudioWorkletProcessor {
 
     startCycle(sr) {
         this.calcDurations(0.0, 0.0, sr);
-        this.running = true;
-        this.sampleIndex = 0;
-        this.manualTrigger = true;
+        if (this.totalSamples <= 0) {
+            this.running = false;
+            this.sampleIndex = 0;
+            this.trigOutSamples = Math.max(1, Math.round(sr * 0.002));
+            this.manualTrigger = false;
+        } else {
+            this.running = true;
+            this.sampleIndex = 0;
+            this.manualTrigger = true;
+        }
     }
 
     calcDurations(cvTime, cvPeak, sr) {
-        const normTime = Math.max(0.0, Math.min(1.0, this.timeParam + cvTime));
-        // Exponential curve: 0.0 -> 0.02s (20ms), 0.5 -> 0.2s (200ms), 1.0 -> 2.0s (2000ms)
-        const totalSec = 0.02 * Math.pow(100.0, normTime);
+        const totalSec = this.isTimeCvPatched
+            ? (cvTime <= 0 ? 0.0 : 2.0 * Math.pow(Math.min(1.0, cvTime), 2.5))
+            : this.timeSec;
+        if (totalSec <= 0.0) {
+            this.totalSamples = 0;
+            this.riseSamples = 0;
+            this.fallSamples = 0;
+            return;
+        }
         this.totalSamples = Math.max(2, Math.round(totalSec * sr));
 
         const peak = Math.max(0.01, Math.min(0.99, this.peakParam + cvPeak));
@@ -97,7 +107,7 @@ export class RfProcessor extends AudioWorkletProcessor {
                 const cvP = cvPeakIn ? cvPeakIn[i] : 0.0;
                 this.calcDurations(cvT, cvP, sr);
                 this.latchedTotalSamples = this.totalSamples;
-                this.running = true;
+                this.running = this.totalSamples > 0;
                 this.sampleIndex = 0;
                 this.manualTrigger = false;
                 let target = this.sampleCounter + this.latchedTotalSamples;

@@ -82,7 +82,7 @@ export const RF = {
 
                 <!-- Vertical Sliders: TIME, PEAK, LEVEL (Standard GridSynth VSlider Rule) -->
                 <div class="flex items-center justify-around py-1 bg-slate-950/60 p-1 rounded-xl border border-slate-800/80 gap-1">
-                    ${UIHelpers.createVSliderHTML('rf-slider-time', 'TIME', 0.02, 2.0, 0.005, m.time ?? 0.2, 'time', 'amber', isTimePatched, timeDisp, 2.5)}
+                    ${UIHelpers.createVSliderHTML('rf-slider-time', 'TIME', 0.0, 2.0, 0.005, m.time ?? 0.2, 'time', 'amber', isTimePatched, timeDisp, 2.5)}
                     ${UIHelpers.createVSliderHTML('rf-slider-peak', 'PEAK', 0.01, 0.99, 0.01, m.peak ?? 0.5, 'shape', 'amber', isPeakPatched, peakDisp, 1)}
                     ${UIHelpers.createVSliderHTML('rf-slider-level', 'LEVEL', 0.0, 1.0, 0.01, m.level ?? 1.0, 'lvl', 'amber', false, lvlDisp, 1)}
                 </div>
@@ -110,7 +110,7 @@ export const RF = {
         const isPeakPatched = ctx?.patched?.has('peak_cv') || ctx?.patched?.has('cv_peak');
 
         if (!isTimePatched) {
-            UIHelpers.bindSlider('rf-slider-time', UIHelpers.formatTime, v => { m.time = v; onSliderChange(); }, 2.5, 0.02, 2.0);
+            UIHelpers.bindSlider('rf-slider-time', UIHelpers.formatTime, v => { m.time = v; onSliderChange(); }, 2.5, 0.0, 2.0);
         }
 
         if (!isPeakPatched) {
