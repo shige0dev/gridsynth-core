@@ -267,12 +267,6 @@ input[type="range"].no-thumb::-moz-range-thumb {
     pointer-events: auto;
 }
 
-.selected-module .port,
-.has-selected-module .port {
-    pointer-events: none !important;
-    transform: none !important;
-}
-
 /* Performance Mode: Hide all ports and disable editing affordances */
 .is-performance-mode .port,
 .is-performance-mode .port-badge,

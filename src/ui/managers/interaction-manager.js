@@ -330,9 +330,8 @@ export class InteractionManager {
                     return;
                 }
                 if (this.selectedModuleIds.length > 0) {
-                    this.ui.selectedTargetForConnection = null;
-                    this.ui.updatePortHighlight();
-                    return;
+                    this.selectedModuleIds = [];
+                    this.updateSelectionClasses();
                 }
                 let mId = port.dataset.moduleId;
                 let pName = port.dataset.port;
@@ -456,6 +455,7 @@ export class InteractionManager {
             this._scrollVelocity = 0;
             this.moduleLongPressed = false;
             this.rowLongPressed = false;
+            this._justLongPressedTimestamp = 0;
 
             const rowEl = e.target.closest('.grid-row');
             const touchedRow = rowEl ? parseInt(rowEl.dataset.row, 10) : null;
@@ -486,6 +486,10 @@ export class InteractionManager {
             const port = e.target.closest('.port');
             if (port) {
                 if (this.ui.isPerformanceMode) return;
+                if (this.selectedModuleIds.length > 0) {
+                    this.selectedModuleIds = [];
+                    this.updateSelectionClasses();
+                }
                 const mId = port.dataset.moduleId, p = port.dataset.port;
                 this._pTimer = setTimeout(() => {
                     this._pTimer = null;
@@ -557,6 +561,11 @@ export class InteractionManager {
                     }
                 }
                 return;
+            }
+
+            if (this.selectedModuleIds.length > 0) {
+                this.selectedModuleIds = [];
+                this.updateSelectionClasses();
             }
 
             if (rowEl) {
