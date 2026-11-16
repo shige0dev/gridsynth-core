@@ -24,7 +24,7 @@ function createSeqAudio(stepCount) {
             w.connect(cv, 0, 0);
             w.connect(gt, 1, 0);
 
-            // Inputs: 0: gate_in / clk_in (PIN 5), 1: keygate_in / RUN (PIN 6)
+            // Inputs: 0: gate_in / clk_in (PIN 5), 1: 1shotgate_in / RUN (PIN 6)
             gIn.connect(w, 0, 0);
             gKeyGateIn.connect(w, 0, 1);
 
@@ -35,7 +35,7 @@ function createSeqAudio(stepCount) {
             const sendPatch = (p) => {
                 const appPatch = window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id) : null;
                 const targetPatch = p || appPatch;
-                const keyGatePatched = Boolean(targetPatch?.has?.('keygate_in'));
+                const keyGatePatched = Boolean(targetPatch?.has?.('1shotgate_in') || targetPatch?.has?.('keygate_in'));
                 w.port.postMessage({ type: 'SET_PATCH', keyGatePatched });
             };
             sendPatch(patch || null);
@@ -57,6 +57,7 @@ function createSeqAudio(stepCount) {
                 inputs: {
                     gate_in: gIn,
                     clk_in: gIn,
+                    '1shotgate_in': gKeyGateIn,
                     keygate_in: gKeyGateIn
                 },
                 outputs: {

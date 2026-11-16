@@ -165,7 +165,7 @@ export const preset02 = {
                 { "from": { "moduleId": "VCO2", "port": "wave_out" }, "to": { "moduleId": "VCF2", "port": "wave_in" } },
                 { "from": { "moduleId": "VCF2", "port": "wave_out" }, "to": { "moduleId": "VCA2", "port": "wave_in" } },
                 { "from": { "moduleId": "ADSR2", "port": "cv_out" }, "to": { "moduleId": "VCA2", "port": "cv_in" } },
-                { "from": { "moduleId": "KEY2", "port": "gate_out" }, "to": { "moduleId": "SEQ8_1", "port": "keygate_in" } },
+                { "from": { "moduleId": "KEY2", "port": "gate_out" }, "to": { "moduleId": "SEQ8_1", "port": "1shotgate_in" } },
                 { "from": { "moduleId": "CLK1", "port": "gate_out" }, "to": { "moduleId": "SEQ8_1", "port": "gate_in" } },
                 { "from": { "moduleId": "KEY2", "port": "gate_out" }, "to": { "moduleId": "CLK1", "port": "reset_in" } },
                 { "from": { "moduleId": "SEQ8_1", "port": "cv_out" }, "to": { "moduleId": "VCO2", "port": "cv_in" } },

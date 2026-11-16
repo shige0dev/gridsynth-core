@@ -179,7 +179,7 @@ export const PAT = {
     ports: () => ({
         in: [
             { port: 'reset_in', pin: 5, color: 'bg-red-500' },
-            { port: 'keygate_in', pin: 6, color: 'bg-orange-500', label: 'RUN' }
+            { port: '1shotgate_in', pin: 6, color: 'bg-orange-500', label: 'RUN' }
         ],
         out: [
             { port: 'gate_out', pin: 10, color: 'bg-red-500' },
@@ -271,7 +271,7 @@ export const PAT = {
                             <input type="range" id="pat-gate-${uid}" min="10" max="95" step="5" value="${gatePct}" class="w-10 h-1 accent-cyan-400 cursor-pointer">
                             <span id="pat-gate-disp-${uid}" class="text-[7.5px] font-mono font-bold text-cyan-300 min-w-[18px] text-right">${gatePct}%</span>
                         </div>
-                        <button id="pat-keymode-${uid}" class="h-5 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors shrink-0 ${keyMode === 'loop' ? 'bg-orange-600 text-white border-orange-500' : 'bg-purple-600 text-white border-purple-500'}" title="RUN / KEYGATE_IN (PIN6) 動作モード切替 (LOOP: ゲートONの間ループ / 1-SHOT: 1周で停止)">RUN: ${keyMode === 'loop' ? 'LOOP' : '1-SHOT'}</button>
+                        <button id="pat-keymode-${uid}" class="h-5 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors shrink-0 ${keyMode === 'loop' ? 'bg-orange-600 text-white border-orange-500' : 'bg-purple-600 text-white border-purple-500'}" title="RUN / 1SHOTGATE_IN (PIN6) 動作モード切替 (LOOP: ゲートONの間ループ / 1-SHOT: 1周で停止)">RUN: ${keyMode === 'loop' ? 'LOOP' : '1-SHOT'}</button>
                     </div>
                     <div class="flex items-center gap-1 shrink-0">
                         <button id="pat-btn-manual-${uid}" class="h-5 px-1.5 flex items-center gap-0.5 text-[7px] font-bold ${m._showManual ? 'bg-cyan-950 text-cyan-300 border-cyan-500' : 'bg-slate-900 text-slate-400'} rounded border border-slate-700 uppercase">

@@ -42,12 +42,12 @@ export const PAT = {
         const rstIn = ctx.createGain();
         const keyGateIn = ctx.createGain();
         rstIn.connect(w, 0, 0);     // input 0: reset_in (PIN 5)
-        keyGateIn.connect(w, 0, 1); // input 1: keygate_in / RUN (PIN 6)
+        keyGateIn.connect(w, 0, 1); // input 1: 1shotgate_in / RUN (PIN 6)
 
         const sendPatch = (p) => {
             const appPatch = window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id) : null;
             const targetPatch = p || appPatch;
-            const keyGatePatched = Boolean(targetPatch?.has?.('keygate_in'));
+            const keyGatePatched = Boolean(targetPatch?.has?.('1shotgate_in') || targetPatch?.has?.('keygate_in'));
             w.port.postMessage({ type: 'SET_PATCH', keyGatePatched });
         };
         sendPatch(patch || null);
@@ -79,6 +79,7 @@ export const PAT = {
             nodes: { w, cv, gt, rstIn, keyGateIn },
             inputs: {
                 reset_in: rstIn,
+                '1shotgate_in': keyGateIn,
                 keygate_in: keyGateIn
             },
             outputs: { cv_out: cv, gate_out: gt },

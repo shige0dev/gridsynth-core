@@ -55,6 +55,7 @@ export const PORT_ALIASES = {
 
     // CLK / GATE
     'clk_in': 'gate_in',
+    'keygate_in': '1shotgate_in',
     'power_in': 'run_in',
     'power': 'run_in',
 
