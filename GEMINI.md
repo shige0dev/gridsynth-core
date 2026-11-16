@@ -38,5 +38,5 @@
 ## 7. コード保守 & バージョン同期
 - **車輪の再発明の禁止**: 毎回オリジナルを作らず、既存の `UIHelpers` や共通コンポーネントを再利用する。
 - **廃止コードの完全消去**: 統合・不要になったモジュールやコードは速やかに全域から削除する。
-- **バージョン同期**: 更新時は `src/main.js`, `index.html`, `src/audio/engine.js`, `src/dsp/worklet-processors.js` の4箇所を同時更新する。
+- **バージョン同期**: 更新時は `src/main.js`, `index.html`, `src/audio/engine.js`, `src/dsp/worklet-processors.js`, `sw.js` (`CACHE_NAME`) の5箇所を同時更新する（新規ファイル追加時は `sw.js` の `PRECACHE_URLS` にも追記）。
 - **仕様書同期**: モジュール仕様（ポート・パラメータ・挙動・SUB定義など）を変更・追加した際は、`GRIDSYNTH_AI_PATCH_SPEC.md` の該当モジュール節も同時更新する。
