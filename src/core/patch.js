@@ -1,5 +1,6 @@
-import { safeClone, parseConn, isSubModule, normalizeSubPort, isPortMatching } from './utils.js?v=459';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=679';
+import { safeClone, parseConn, isSubModule, normalizeSubPort, isPortMatching } from './utils.js?v=841';
+import { parseNoteToCv } from './musical.js?v=367';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=841';
 import { FACTORY_SUBPATCHES } from '../presets/subpatches.js?v=826';
 import { WaveCodec } from '../audio/wave-codec.js?v=459';
 
@@ -288,8 +289,9 @@ export function validateConnectionDirection(c, fromMod, toMod, fromManifest = nu
                 const outPorts = (pList?.out || []).map(p => (typeof p === 'string' ? p : p.port));
                 const outAliases = (pList?.out || []).flatMap(p => typeof p === 'object' && p.alias ? p.alias.split(',').map(s => s.trim()) : []);
                 const isMatch = outPorts.some(p => isPortMatching(p, fromPort)) || outAliases.includes(fromPort);
-                if (outPorts.length > 0 && !isMatch) {
-                    logErr(`結線構文エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - ${c.from.moduleId}:${fromPort} は有効な出力端子ではありません。(利用可能な出力端子: [${outPorts.join(', ')}])`);
+                if (!isMatch) {
+                    const avail = outPorts.length > 0 ? `[${outPorts.join(', ')}]` : 'なし';
+                    logErr(`結線構文エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - ${c.from.moduleId}:${fromPort} は有効な出力端子ではありません。(利用可能な出力端子: ${avail})`);
                     return false;
                 }
             } catch (e) {}
@@ -317,8 +319,9 @@ export function validateConnectionDirection(c, fromMod, toMod, fromManifest = nu
                 const inPorts = (pList?.in || []).map(p => (typeof p === 'string' ? p : p.port));
                 const inAliases = (pList?.in || []).flatMap(p => typeof p === 'object' && p.alias ? p.alias.split(',').map(s => s.trim()) : []);
                 const isMatch = inPorts.some(p => isPortMatching(p, toPort)) || inAliases.includes(toPort);
-                if (inPorts.length > 0 && !isMatch) {
-                    logErr(`結線構文エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - ${c.to.moduleId}:${toPort} は有効な入力端子ではありません。(利用可能な入力端子: [${inPorts.join(', ')}])`);
+                if (!isMatch) {
+                    const avail = inPorts.length > 0 ? `[${inPorts.join(', ')}]` : 'なし';
+                    logErr(`結線構文エラー: "${c.from.moduleId}:${c.from.port} > ${c.to.moduleId}:${c.to.port}" - ${c.to.moduleId}:${toPort} は有効な入力端子ではありません。(利用可能な入力端子: ${avail})`);
                     return false;
                 }
             } catch (e) {}
@@ -460,6 +463,33 @@ export function parsePatch(patchData, cols = 4, userSubpatches = null, errorSink
                 row: Math.floor(slotIdx / cols)
             });
             MODULE_REGISTRY[type]?.onNormalize?.(mod);
+            if ((type === 'SEQ8' || type === 'SEQ16') && Array.isArray(mod.steps)) {
+                mod.steps.forEach(st => {
+                    if (st && typeof st.cv === 'string') {
+                        st.cv = parseNoteToCv(st.cv, 2, 0, 4);
+                    }
+                });
+            }
+            if (type === 'DELAY' && typeof mod.delayTime === 'string') {
+                const divMap = {
+                    '1/1': 4.0, '1/2': 2.0, '1/2D': 3.0, '1/2T': 1.3333,
+                    '1/4': 1.0, '1/4D': 1.5, '1/4T': 0.6667,
+                    '1/8': 0.5, '1/8D': 0.75, '1/8T': 0.3333,
+                    '1/16': 0.25, '1/16D': 0.375, '1/16T': 0.1667
+                };
+                const key = mod.delayTime.trim().toUpperCase();
+                const beats = divMap[key];
+                const bpmVal = Number(patchData.bpm) || 120;
+                mod.delayTime = beats ? Math.max(0.02, Math.min(1.5, Number(((60 / bpmVal) * beats).toFixed(3)))) : (parseFloat(mod.delayTime) || 0.3);
+            }
+            if (type === 'OBJECT' && typeof mod.shape === 'string') {
+                const s = mod.shape.toLowerCase();
+                if (s === 'box') mod.shape = 'cube';
+                if (s === 'icosahedron') mod.shape = 'icosa';
+                if (s === 'octahedron') mod.shape = 'octa';
+                if (s === 'tetrahedron') mod.shape = 'tetra';
+                if (s === 'dodecahedron') mod.shape = 'dodeca';
+            }
             resolvedMods[id] = mod;
             validSlots[slotStr] = id;
         });
