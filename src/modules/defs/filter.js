@@ -26,9 +26,9 @@ export const VCF = {
         },
         sliders: [
             {
-                key: 'cutoff', label: 'CUTOFF', min: -0.7, max: 9.25, step: 0.01, default: 5.78,
+                key: 'cutoff', label: 'CUTOFF', min: 0, max: 9.25, step: 0.01, default: 5.78,
                 unit: 'OCT/V', color: 'emerald',
-                getVal: (mod) => hzToOctV(mod.cutoff ?? 1800),
+                getVal: (mod) => Math.max(0, hzToOctV(mod.cutoff ?? 1800)),
                 setVal: (mod, v) => { mod.cutoff = Math.round(octVToHz(v) * 10) / 10; },
                 format: (v) => `${v.toFixed(2)}V`
             },
