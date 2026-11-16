@@ -32,7 +32,9 @@ export class SampleHoldProcessor extends AudioWorkletProcessor {
     process(ins, outs, params) {
         const sig = ins[0]?.[0], trg = ins[1]?.[0], out = outs[0]?.[0];
         if (!out) return true;
-        const sr = getSR(), sc = params.scale[0] || 1, gl = params.glide[0] || 0;
+        const sr = getSR();
+        const sc = params.scale.length > 1 ? params.scale : (params.scale[0] ?? 1);
+        const glArr = params.glide;
         for (let i = 0; i < out.length; i++) {
             // トリガーが 0 を離脱した瞬間（> 0.001）を検出
             const trgVal = trg ? trg[i] : 0;
@@ -48,8 +50,17 @@ export class SampleHoldProcessor extends AudioWorkletProcessor {
             }
 
             // トリガー立ち上がりと同一サンプルから直ちに新しいホールド値を出力（元トリガーと即座に同期）
-            const target = this.held * sc;
-            this.cur = gl <= 0.001 ? target : (target + (this.cur - target) * Math.exp(-1.0 / (gl * sr)));
+            const curSc = typeof sc === 'number' ? sc : sc[i];
+            const gl = glArr.length > 1 ? glArr[i] : (glArr[0] ?? 0);
+            const target = this.held * curSc;
+            const diff = target - this.cur;
+            if (gl <= 0.001 || Math.abs(diff) < 1e-6) {
+                this.cur = target;
+            } else {
+                // 差分の一定割合で目標値へ対称に漸近する（上昇・下降とも同一時定数）
+                const coeff = 1.0 - Math.exp(-1.0 / (gl * sr));
+                this.cur += diff * coeff;
+            }
             out[i] = this.cur;
 
             if (sig) {
