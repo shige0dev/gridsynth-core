@@ -31,15 +31,82 @@ export const AudioHelpers = {
         Object.values(nodes).forEach(cleanItem);
     },
     buildReverbBuffer: (ctx, dur, mode = 'hall') => {
-        const sr = ctx.sampleRate, len = Math.max(128, Math.floor(sr * Math.max(0.1, Math.min(dur, 6.0))));
-        const b = ctx.createBuffer(2, len, sr), l = b.getChannelData(0), r = b.getChannelData(1);
-        const dec = { room: 5.2, hall: 3.2, plate: 2.4 }[mode] ?? 3.2;
-        const decayCoeff = Math.exp((-dec * 3.0) / len);
-        let env = 1.0;
-        for (let i = 0; i < len; i++) {
-            l[i] = (Math.random() * 2 - 1) * env;
-            r[i] = (Math.random() * 2 - 1) * env;
-            env *= decayCoeff;
+        const sr = ctx.sampleRate;
+        const clampedDur = Math.max(0.1, Math.min(dur, 10.0));
+        const len = Math.max(128, Math.floor(sr * clampedDur));
+        const b = ctx.createBuffer(2, len, sr);
+        const l = b.getChannelData(0);
+        const r = b.getChannelData(1);
+
+        const cfg = {
+            room:  { dec: 4.2, preMs: 6,  attMs: 4,  width: 1.2,  erGain: 0.55, tailGain: 0.9,  modDepth: 0.04, lpAlpha: 0.55 },
+            hall:  { dec: 2.5, preMs: 16, attMs: 18, width: 1.45, erGain: 0.48, tailGain: 1.05, modDepth: 0.09, lpAlpha: 0.45 },
+            plate: { dec: 2.0, preMs: 4,  attMs: 5,  width: 1.4,  erGain: 0.50, tailGain: 1.05, modDepth: 0.06, lpAlpha: 0.65 },
+            space: { dec: 1.25, preMs: 24, attMs: 55, width: 1.75, erGain: 0.42, tailGain: 1.2, modDepth: 0.14, lpAlpha: 0.38 }
+        }[mode] ?? { dec: 2.5, preMs: 16, attMs: 18, width: 1.45, erGain: 0.48, tailGain: 1.05, modDepth: 0.09, lpAlpha: 0.45 };
+
+        // 1. Asymmetric Stereo Early Reflections (Haas effect for instant spatial width)
+        const tapsL = [
+            { ms: 9, g: 0.68 }, { ms: 17, g: -0.54 }, { ms: 27, g: 0.46 },
+            { ms: 41, g: -0.38 }, { ms: 57, g: 0.31 }, { ms: 74, g: -0.24 }, { ms: 93, g: 0.18 }
+        ];
+        const tapsR = [
+            { ms: 13, g: -0.66 }, { ms: 22, g: 0.53 }, { ms: 33, g: -0.45 },
+            { ms: 47, g: 0.37 }, { ms: 63, g: -0.30 }, { ms: 82, g: 0.23 }, { ms: 101, g: -0.17 }
+        ];
+        const burstLen = Math.max(8, Math.floor(sr * 0.0028));
+        const addTapBursts = (chData, taps, seedSign) => {
+            for (const tap of taps) {
+                const start = Math.floor((tap.ms * 0.001) * sr);
+                if (start >= len) continue;
+                const end = Math.min(len, start + burstLen);
+                let lp = 0;
+                for (let i = start; i < end; i++) {
+                    const w = Math.sin(((i - start) / burstLen) * Math.PI);
+                    const n = (Math.random() * 2 - 1) * seedSign;
+                    lp += (n - lp) * 0.5;
+                    chData[i] += lp * w * tap.g * cfg.erGain;
+                }
+            }
+        };
+        addTapBursts(l, tapsL, 1);
+        addTapBursts(r, tapsR, -1);
+
+        // 2. Wide Decorrelated Late Reverb Tail with Mid/Side Spread & Chorus Breathing
+        const preSamples = Math.min(len - 1, Math.floor((cfg.preMs * 0.001) * sr));
+        const attSamples = Math.max(1, Math.floor((cfg.attMs * 0.001) * sr));
+        const tailLen = Math.max(1, len - preSamples);
+        const normScale = 1.0 / Math.sqrt(Math.max(0.75, clampedDur * 0.42));
+
+        let lpL = 0, lpR = 0;
+        let apL = 0, apR = 0;
+        for (let i = preSamples; i < len; i++) {
+            const rel = i - preSamples;
+            const t = rel / tailLen;
+            const att = rel < attSamples ? (rel / attSamples) : 1.0;
+            const endFade = t > 0.9 ? Math.cos(((t - 0.9) / 0.1) * Math.PI * 0.5) : 1.0;
+            const env = att * Math.exp(-cfg.dec * t) * endFade * cfg.tailGain * normScale;
+
+            const rawL = Math.random() * 2 - 1;
+            const rawR = Math.random() * 2 - 1;
+            lpL += (rawL - lpL) * cfg.lpAlpha;
+            lpR += (rawR - lpR) * cfg.lpAlpha;
+
+            // Simple allpass-like diffusion step for denser texture
+            const dL = lpL - 0.35 * apL;
+            apL = lpL;
+            const dR = lpR - 0.35 * apR;
+            apR = lpR;
+
+            const sec = i / sr;
+            const modL = 1.0 + cfg.modDepth * Math.sin(2.0 * Math.PI * 1.43 * sec);
+            const modR = 1.0 + cfg.modDepth * Math.cos(2.0 * Math.PI * 1.87 * sec);
+
+            const mid = (dL + dR) * 0.5;
+            const side = (dL - dR) * 0.5 * cfg.width;
+
+            l[i] += (mid + side) * env * modL;
+            r[i] += (mid - side) * env * modR;
         }
         return b;
     },

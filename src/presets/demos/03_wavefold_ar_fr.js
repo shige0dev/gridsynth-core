@@ -437,11 +437,11 @@ export const preset03 = {
         },
         "REVERB1": {
           "type": "REVERB",
-          "time": 2.7,
+          "time": 4.2,
           "damp": 8500,
           "mix": 0.74,
           "cvDepth": 1,
-          "mode": "hall"
+          "mode": "space"
         },
         "SPK1": {
           "type": "SPK",
@@ -476,7 +476,7 @@ export const preset03 = {
         {
           "from": {
             "moduleId": "REVERB1",
-            "port": "wave_out"
+            "port": "wave_out_r"
           },
           "to": {
             "moduleId": "SPK1",

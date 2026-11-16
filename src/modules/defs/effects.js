@@ -42,21 +42,24 @@ export const LAG = {
 
 export const REVERB = {
     color: 'violet',
-    defaults: () => ({ type: 'REVERB', time: 1.8, damp: 4500, mix: 0.4, cvDepth: 1.0, mode: 'hall' }),
+    defaults: () => ({ type: 'REVERB', time: 2.8, damp: 6500, mix: 0.45, cvDepth: 1.0, mode: 'space' }),
     ports: () => ({
         in: [
             { port: 'wave_in', color: 'bg-blue-500' },
             { port: 'cv_in', color: 'bg-yellow-400' }
         ],
-        out: [{ port: 'wave_out', color: 'bg-blue-500' }]
+        out: [
+            { port: 'wave_out', color: 'bg-blue-500' },
+            { port: 'wave_out_r', color: 'bg-blue-500' }
+        ]
     }),
     schema: {
         color: 'violet',
-        groups: [{ key: 'mode', label: 'Mode', cols: 3, options: [{ val: 'room', label: 'ROOM' }, { val: 'hall', label: 'HALL' }, { val: 'plate', label: 'PLATE' }] }],
+        groups: [{ key: 'mode', label: 'Mode', cols: 4, options: [{ val: 'room', label: 'ROOM' }, { val: 'hall', label: 'HALL' }, { val: 'plate', label: 'PLATE' }, { val: 'space', label: 'SPACE' }] }],
         sliders: [
-            { key: 'time', label: 'TIME', min: 0.2, max: 6.0, step: 0.1, default: 1.8, unit: 's', format: v => v.toFixed(1) + 's' },
-            { key: 'damp', label: 'DAMP', min: 500, max: 16000, step: 100, default: 4500, unit: 'hz', format: v => (v>=1000?`${(v/1000).toFixed(1)}k`:Math.round(v))+'hz' },
-            { key: 'mix', label: 'MIX', min: 0, max: 1.0, step: 0.02, default: 0.4, unit: 'wet', cvPort: 'cv_in', patchedVal: 0, patchedText: 'EXT', format: v => v.toFixed(2) },
+            { key: 'time', label: 'TIME', min: 0.2, max: 10.0, step: 0.1, default: 2.8, unit: 's', format: v => v.toFixed(1) + 's' },
+            { key: 'damp', label: 'DAMP', min: 500, max: 16000, step: 100, default: 6500, unit: 'hz', format: v => (v>=1000?`${(v/1000).toFixed(1)}k`:Math.round(v))+'hz' },
+            { key: 'mix', label: 'MIX', min: 0, max: 1.0, step: 0.02, default: 0.45, unit: 'wet', cvPort: 'cv_in', patchedVal: 0, patchedText: 'EXT', format: v => v.toFixed(2) },
             { key: 'cvDepth', label: 'CV MOD', min: 0, max: 2.0, step: 0.05, default: 1.0, unit: 'depth', color: 'amber', requirePort: 'cv_in', format: v => v.toFixed(2) }
         ]
     },

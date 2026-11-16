@@ -3,12 +3,20 @@ import { AudioHelpers } from '../helpers.js';
 export const SPK = {
     create: (ctx, d) => {
         const inL = ctx.createGain(), inR = ctx.createGain();
+        const splitL = ctx.createChannelSplitter(2), splitR = ctx.createChannelSplitter(2);
         const outL = ctx.createGain(), outR = ctx.createGain();
         const anL = ctx.createAnalyser(), anR = ctx.createAnalyser();
         anL.fftSize = 64;
         anR.fftSize = 64;
         const bufL = new Float32Array(anL.frequencyBinCount);
         const bufR = new Float32Array(anR.frequencyBinCount);
+
+        inL.channelCount = 2;
+        inL.channelCountMode = 'explicit';
+        inL.channelInterpretation = 'speakers';
+        inR.channelCount = 2;
+        inR.channelCountMode = 'explicit';
+        inR.channelInterpretation = 'speakers';
 
         const merger = ctx.createChannelMerger(2);
         const limiter = ctx.createDynamicsCompressor();
@@ -22,8 +30,10 @@ export const SPK = {
         outL.gain.value = vol;
         outR.gain.value = vol;
 
-        inL.connect(outL);
-        inR.connect(outR);
+        inL.connect(splitL);
+        splitL.connect(outL, 0);
+        inR.connect(splitR);
+        splitR.connect(outR, 1);
 
         outL.connect(anL);
         outR.connect(anR);
@@ -42,7 +52,7 @@ export const SPK = {
         }
 
         return {
-            nodes: { inL, inR, outL, outR, anL, anR, merger, limiter, recDest },
+            nodes: { inL, inR, splitL, splitR, outL, outR, anL, anR, merger, limiter, recDest },
             getMediaStream: () => recDest?.stream,
             getOutputNode: () => limiter,
             inputs: {

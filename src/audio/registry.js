@@ -6,10 +6,10 @@
 import { vcoAudioDefs } from './defs/vco.js?v=459';
 import { filterAudioDefs } from './defs/filter.js?v=459';
 import { ampAudioDefs } from './defs/amp.js?v=810';
-import { effectsAudioDefs } from './defs/effects.js?v=459';
+import { effectsAudioDefs } from './defs/effects.js?v=839';
 import { adsrAudioDefs } from './defs/adsr.js?v=459';
 import { modAudioDefs } from './defs/mod.js?v=511';
-import { ioAudioDefs } from './defs/io.js?v=459';
+import { ioAudioDefs } from './defs/io.js?v=839';
 import { scopeAudioDefs } from './defs/scope.js?v=791';
 import { subAudioDefs } from './defs/sub.js?v=459';
 import { controllerAudioDefs } from './defs/controllers.js?v=805';

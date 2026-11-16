@@ -1,4 +1,4 @@
-import { AudioHelpers } from '../helpers.js';
+import { AudioHelpers } from '../helpers.js?v=839';
 
 export const DELAY = {
     create: (ctx, d) => {
@@ -85,25 +85,71 @@ export const LAG = {
 
 export const REVERB = {
     create: (ctx, d, patch) => {
-        const inp = ctx.createGain(), out = ctx.createGain(), dry = ctx.createGain(), wet = ctx.createGain(), conv = ctx.createConvolver(), damp = ctx.createBiquadFilter(), cvG = ctx.createGain();
+        const inp = ctx.createGain();
+        const out = ctx.createGain();
+        const outR = ctx.createGain();
+        const split = ctx.createChannelSplitter(2);
+        const dry = ctx.createGain();
+        const wet = ctx.createGain();
+        const conv = ctx.createConvolver();
+        const hpf = ctx.createBiquadFilter();
+        const damp = ctx.createBiquadFilter();
+        const cvG = ctx.createGain();
+
+        wet.channelCount = 2;
+        wet.channelCountMode = 'explicit';
+        wet.channelInterpretation = 'speakers';
+        out.channelCount = 2;
+        out.channelCountMode = 'explicit';
+        out.channelInterpretation = 'speakers';
+
         const isCvPatched = !!(patch?.has?.('cv_in'));
-        const mix = isCvPatched ? 0.0 : (d.mix ?? 0.4);
-        damp.type = 'lowpass'; damp.frequency.value = d.damp ?? 4500; dry.gain.value = 1.0 - mix; wet.gain.value = mix; cvG.gain.value = d.cvDepth ?? 1.0;
+        const rawMix = Math.max(0, Math.min(1, d.mix ?? 0.4));
+        const dryGain = isCvPatched ? 0.85 : Math.cos(rawMix * Math.PI * 0.46);
+        const wetGain = isCvPatched ? 0.0 : (Math.sin(rawMix * Math.PI * 0.5) * 1.4);
+
+        hpf.type = 'highpass';
+        hpf.frequency.value = 95;
+        hpf.Q.value = 0.707;
+
+        damp.type = 'lowpass';
+        damp.frequency.value = d.damp ?? 4500;
+
+        dry.gain.value = dryGain;
+        wet.gain.value = wetGain;
+        cvG.gain.value = (d.cvDepth ?? 1.0) * 1.4;
+
         conv.buffer = AudioHelpers.buildReverbBuffer(ctx, d.time ?? 1.8, d.mode || 'hall');
-        inp.connect(dry); dry.connect(out); inp.connect(damp); damp.connect(conv); conv.connect(wet); wet.connect(out); cvG.connect(wet.gain);
+
+        inp.connect(dry);
+        dry.connect(out);
+
+        inp.connect(hpf);
+        hpf.connect(damp);
+        damp.connect(conv);
+        conv.connect(wet);
+        wet.connect(out);
+        cvG.connect(wet.gain);
+
+        out.connect(split);
+        split.connect(outR, 1);
+
         const inst = {
-            nodes: { inp, out, dry, wet, conv, damp, cvG },
+            nodes: { inp, out, outR, split, dry, wet, conv, hpf, damp, cvG },
             inputs: { wave_in: inp, cv_in: cvG },
-            outputs: { wave_out: out },
+            outputs: { wave_out: out, wave_out_l: out, wave_out_r: outR },
             patch: patch,
             _time: d.time ?? 1.8,
             _mode: d.mode || 'hall',
             clear: () => {
                 try {
                     const curTime = ctx.currentTime;
+                    const curPatched = !!(inst.patch?.has?.('cv_in'));
+                    const m = Math.max(0, Math.min(1, d.mix ?? 0.4));
+                    const wG = curPatched ? 0.0 : (Math.sin(m * Math.PI * 0.5) * 1.4);
                     wet.gain.cancelScheduledValues(curTime);
                     wet.gain.setValueAtTime(0, curTime);
-                    wet.gain.setValueAtTime(isCvPatched ? 0.0 : (d.mix ?? 0.4), curTime + 0.05);
+                    wet.gain.setValueAtTime(wG, curTime + 0.05);
                 } catch (e) {}
             }
         };
@@ -114,12 +160,14 @@ export const REVERB = {
             inst.patch = patch;
         }
         const isCvPatched = !!(inst.patch?.has?.('cv_in'));
-        const mix = isCvPatched ? 0.0 : (d.mix ?? 0.4);
-        AudioHelpers.set(inst.nodes.wet.gain, mix, ctx);
-        AudioHelpers.set(inst.nodes.dry.gain, 1.0 - mix, ctx);
-        AudioHelpers.set(inst.nodes.cvG.gain, d.cvDepth ?? 1.0, ctx);
+        const rawMix = Math.max(0, Math.min(1, d.mix ?? 0.4));
+        const dryGain = isCvPatched ? 0.85 : Math.cos(rawMix * Math.PI * 0.46);
+        const wetGain = isCvPatched ? 0.0 : (Math.sin(rawMix * Math.PI * 0.5) * 1.4);
+        AudioHelpers.set(inst.nodes.wet.gain, wetGain, ctx);
+        AudioHelpers.set(inst.nodes.dry.gain, dryGain, ctx);
+        AudioHelpers.set(inst.nodes.cvG.gain, (d.cvDepth ?? 1.0) * 1.4, ctx);
         AudioHelpers.set(inst.nodes.damp.frequency, d.damp ?? 4500, ctx);
-        if (Math.abs((d.time ?? 1.8) - inst._time) > 0.1 || (d.mode || 'hall') !== inst._mode) {
+        if (Math.abs((d.time ?? 1.8) - inst._time) > 0.05 || (d.mode || 'hall') !== inst._mode) {
             inst._time = d.time ?? 1.8; inst._mode = d.mode || 'hall';
             try { inst.nodes.conv.buffer = AudioHelpers.buildReverbBuffer(ctx, inst._time, inst._mode); } catch (e) {}
         }
