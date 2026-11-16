@@ -61,7 +61,7 @@ export const FACTORY_SUBPATCHES = {
             description: '303スタイルのアシッドベースボイス（VCO + Resonant VCF + Snappy ADSR + VCA）',
             ports: {
                 cv_in: { pin: 'PIN5', signal: 'cv' },
-                trig_in: { pin: 'PIN4', signal: 'gate' },
+                gate_in: { pin: 'PIN4', signal: 'gate' },
                 wave_out: { pin: 'PIN10', signal: 'audio' }
             }
         },
@@ -198,7 +198,7 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: 'アナログスタイル・パンチーバスドラム（ピッチスウィープ＋減衰）',
             ports: {
-                trig_in: { pin: 'PIN5', signal: 'gate' },
+                gate_in: { pin: 'PIN5', signal: 'gate' },
                 wave_out: { pin: 'PIN10', signal: 'audio' }
             }
         },
@@ -247,7 +247,7 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: 'アナログスタイル・スネアドラム（三角波ボディトーン＋ノイズワイヤー）',
             ports: {
-                trig_in: { pin: 'PIN5', signal: 'gate' },
+                gate_in: { pin: 'PIN5', signal: 'gate' },
                 wave_out: { pin: 'PIN10', signal: 'audio' }
             }
         },
@@ -305,7 +305,7 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: 'ハード＆リッチ・テクノキック（アタッククリック＋50Hzサブランブル）',
             ports: {
-                trig_in: { pin: 'PIN5', signal: 'gate' },
+                gate_in: { pin: 'PIN5', signal: 'gate' },
                 wave_out: { pin: 'PIN10', signal: 'audio' }
             }
         },
@@ -370,7 +370,7 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: 'ハイパスフィルタード・メタリックノイズによるクリスプなハイハット',
             ports: {
-                trig_in: { pin: 'PIN5', signal: 'gate' },
+                gate_in: { pin: 'PIN5', signal: 'gate' },
                 wave_out: { pin: 'PIN10', signal: 'audio' }
             }
         },
@@ -415,7 +415,7 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: '909スタイル・マルチバースト・ハンドクラップ（3連バーストエンベロープ＋ワイドテール）',
             ports: {
-                trig_in: { pin: 'PIN5', signal: 'gate' },
+                gate_in: { pin: 'PIN5', signal: 'gate' },
                 wave_out: { pin: 'PIN10', signal: 'audio' }
             }
         },
@@ -474,7 +474,7 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: 'ロータム（自然な打撃アタックと深く豊かなアコースティック胴鳴り）',
             ports: {
-                trig_in: { pin: 'PIN5', signal: 'gate' },
+                gate_in: { pin: 'PIN5', signal: 'gate' },
                 wave_out: { pin: 'PIN10', signal: 'audio' }
             }
         },
@@ -526,7 +526,7 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: 'メタリックパーカッション / リムショット（金属的な倍音リングモジュレーション）',
             ports: {
-                trig_in: { pin: 'PIN5', signal: 'gate' },
+                gate_in: { pin: 'PIN5', signal: 'gate' },
                 wave_out: { pin: 'PIN10', signal: 'audio' }
             }
         },
@@ -571,7 +571,7 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: '38Hzの重低音サブベースキック。ディープなローエンド振動',
             ports: {
-                trig_in: { pin: 'PIN5', signal: 'gate' },
+                gate_in: { pin: 'PIN5', signal: 'gate' },
                 wave_out: { pin: 'PIN10', signal: 'audio' }
             }
         },
@@ -620,7 +620,7 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: 'ソリッドなリムショット。高域レゾナンスの鋭いクリック音',
             ports: {
-                trig_in: { pin: 'PIN5', signal: 'gate' },
+                gate_in: { pin: 'PIN5', signal: 'gate' },
                 wave_out: { pin: 'PIN10', signal: 'audio' }
             }
         },
@@ -665,7 +665,7 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: '繊細なゴーストスネア。控えめなアタックとソフトなホワイトノイズ',
             ports: {
-                trig_in: { pin: 'PIN5', signal: 'gate' },
+                gate_in: { pin: 'PIN5', signal: 'gate' },
                 wave_out: { pin: 'PIN10', signal: 'audio' }
             }
         },
@@ -710,7 +710,7 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: '柔らかく耳馴染みの良いソフトクローズドハイハット',
             ports: {
-                trig_in: { pin: 'PIN5', signal: 'gate' },
+                gate_in: { pin: 'PIN5', signal: 'gate' },
                 wave_out: { pin: 'PIN10', signal: 'audio' }
             }
         },
@@ -755,7 +755,7 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: 'ロングテイルのオープンハイハット。シズル感のある減衰',
             ports: {
-                trig_in: { pin: 'PIN5', signal: 'gate' },
+                gate_in: { pin: 'PIN5', signal: 'gate' },
                 wave_out: { pin: 'PIN10', signal: 'audio' }
             }
         },
@@ -800,7 +800,7 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: 'カウベル（808スタイルのデュアル矩形波＋バンドパスフィルターによる金属打音）',
             ports: {
-                trig_in: { pin: 'PIN5', signal: 'gate' },
+                gate_in: { pin: 'PIN5', signal: 'gate' },
                 wave_out: { pin: 'PIN10', signal: 'audio' }
             }
         },
@@ -845,7 +845,7 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: 'ハイタム（タイトな打撃アタックとパンチの効いたアコースティック胴鳴り）',
             ports: {
-                trig_in: { pin: 'PIN5', signal: 'gate' },
+                gate_in: { pin: 'PIN5', signal: 'gate' },
                 wave_out: { pin: 'PIN10', signal: 'audio' }
             }
         },
@@ -897,7 +897,7 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: '超高域のレゾナントパーカッション。クリスタル・ボンゴ的な響き',
             ports: {
-                trig_in: { pin: 'PIN5', signal: 'gate' },
+                gate_in: { pin: 'PIN5', signal: 'gate' },
                 wave_out: { pin: 'PIN10', signal: 'audio' }
             }
         },
@@ -942,7 +942,7 @@ export const FACTORY_SUBPATCHES = {
         manifest: {
             description: 'エクスプローシブなクラッシュシンバル。金属倍音とロングシマー減衰',
             ports: {
-                trig_in: { pin: 'PIN5', signal: 'gate' },
+                gate_in: { pin: 'PIN5', signal: 'gate' },
                 wave_out: { pin: 'PIN10', signal: 'audio' }
             }
         },

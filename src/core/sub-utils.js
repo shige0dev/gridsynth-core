@@ -37,11 +37,13 @@ export const normalizeSubPort = (port, modIdOrType = null, manifest = null) => {
     const pLower = p.toLowerCase();
     const isChild = modIdOrType ? isSubIOModule(modIdOrType) : false;
 
-    // 1. Check if port matches an alias defined in manifest.ports
+    // 1. Check if port matches an alias defined in manifest.ports (including gate_in<->trig_in, gate_out<->trig_out)
     if (manifest && manifest.ports) {
         const pSanitized = sanitizeSubPortAlias(p).toLowerCase();
+        const altLower = pLower === 'gate_in' ? 'trig_in' : pLower === 'trig_in' ? 'gate_in' : pLower === 'gate_out' ? 'trig_out' : pLower === 'trig_out' ? 'gate_out' : null;
         for (const [aliasKey, def] of Object.entries(manifest.ports)) {
-            if (aliasKey.toLowerCase() === pLower || (pSanitized && sanitizeSubPortAlias(aliasKey).toLowerCase() === pSanitized)) {
+            const kLower = aliasKey.toLowerCase();
+            if (kLower === pLower || (altLower && kLower === altLower) || (pSanitized && sanitizeSubPortAlias(aliasKey).toLowerCase() === pSanitized)) {
                 const pinStr = (def.pin || '').toUpperCase();
                 const m = pinStr.match(/^PIN([1-9]|1[0-4])$/);
                 if (m) {

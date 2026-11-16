@@ -112,7 +112,7 @@
 | **Audio (`wave_*`)** | `±1.0V` (0dBFS) | **Audio / CV / Gate 間で相互接続可能**（すべて Web Audio の連続電圧信号として処理。例: `SUB1:mod_out (Audio) > SCOPE1:cv_in` や `LFO1:cv_out > VCF1:cv_in`） | **加算合成 (Sum)**。ただし複数音源のミックスはレベル調整のため `MIX` モジュール推奨 |
 | **Pitch CV (`cv_*`)** | **1V/Oct**: `0.0V = C1 (32.70Hz, MIDI 24)`, `1.0V = C2`, `2.0V = C3` | Audio / CV / Gate 間で相互接続可能 | **加算合成 (Sum)**。`KEY1:cv_out` + `SEQ8_1:cv_out` ➔ `VCO1:cv_in` で鍵盤トランスポーズとして機能 |
 | **Control CV (`*_cv`)** | Unipolar `0.0〜1.0V` / Bipolar `±1.0V` | Audio / CV / Gate 間で相互接続可能 | **加算合成 (Sum)** |
-| **Gate / Trigger** | Low `0.0V` / High `1.0V`（検出閾値 `> 0.3V`、`1shotgate_in` は `≥ 0.4V`） | Audio / CV / Gate 間で相互接続可能 | **加算合成 (Sum)**。2本の Gate が同時に High になると `2.0V` になり閾値 `> 0.3V` を超えるため、**実質的に論理 OR として機能**します |
+| **Gate** | Low `0.0V` / High `1.0V`（検出閾値 `> 0.3V`、`1shotgate_in` は `≥ 0.4V`） | Audio / CV / Gate 間で相互接続可能 | **加算合成 (Sum)**。クロックや短パルスGate、ホールドGateはすべて同一の `Gate` 信号（赤色端子）として扱われます。2本重ねると論理 OR として機能 |
 | **3D Object (`obj_*`)** | Three.js ジオメトリパケット | **`obj_out` ➔ `obj_in` / `base_in` / `child_in` 専用**（音声/CVとは接続不可） | **グループ合成 (Group)**。`MOVE`/`ROTATE`/`SCALE`/`RENDER` の `obj_in` に複数の `obj_out` を繋ぐと自動的に3Dコンテナグループとして一括処理・同時描画されます |
 | **Video (`video_*`)** | WebGL 512×512 テクスチャ | **`video_out` ➔ `video_in` / `video_in1` / `video_in2` 専用**（音声/CVとは接続不可） | **単一入力**。2系統の映像を合成する場合は必ず `VMIX`（`video_in1`, `video_in2`）を使用します |
 
@@ -198,7 +198,7 @@ $$\text{slot} = \text{row} \times 4 + \text{col} \quad (\text{col} \in \{0, 1, 2
 - **ポート仕様 (`PORTS`)**:
   | ポート名 | ピン | 方向 | 信号 | 未結線時の挙動 | 変調対象・変換式 |
   | :--- | :---: | :---: | :---: | :--- | :--- |
-  | `gate_in` | PIN4 | IN | Gate/Trig | 無音待機（`0.0V`） | 立ち上がり（`> 0.3V`）で全3オペレータの内蔵ADSRを同時トリガー |
+  | `gate_in` | PIN4 | IN | Gate | 無音待機（`0.0V`） | 立ち上がり（`> 0.3V`）で全3オペレータの内蔵ADSRを同時起動 |
   | `cv_in` | PIN5 | IN | CV | `rootMidi` の音程で発振 | **結線時は `rootMidi` を `48` (C3) 基準に固定**し、1V/Oct（`0.0V = C1`）でピッチ制御 |
   | `wave_out` | PIN10 | OUT | Audio | - | FM合成後のオーディオ出力 |
 
@@ -347,11 +347,11 @@ $$\text{slot} = \text{row} \times 4 + \text{col} \quad (\text{col} \in \{0, 1, 2
 - **ポート仕様 (`PORTS`)**:
   | ポート名 | ピン | 方向 | 信号 | 未結線時の挙動 | 変調対象・変換式 |
   | :--- | :---: | :---: | :---: | :--- | :--- |
-  | `gate_in` | PIN5 | IN | Gate | `0.0V` 出力 | 立ち上がりエッジでサイクル開始（別名 `trig_in` も互換受理） |
+  | `gate_in` | PIN5 | IN | Gate | `0.0V` 出力 | 立ち上がりエッジでサイクル開始 |
   | `time_cv` | PIN6 | IN | CV | 手動 `time` 値を使用 | 結線時は全体周期 `time` を CV（`0〜1V`）で制御 |
   | `peak_cv` | PIN7 | IN | CV | 手動 `peak` 比率を使用 | 結線時は Rise/Fall 比率 `peak` を CV（`0〜1V`）で制御 |
   | `cv_out` | PIN10 | OUT | CV | - | `0.0V` 〜 `level` のエンベロープCV出力 |
-  | `gate_out` | PIN11 | OUT | Gate | - | Fall 完了時（EOC）にトリガーパルスを出力（別モジュールへの連鎖用、別名 `trig_out`） |
+  | `gate_out` | PIN11 | OUT | 短パルスGate | - | Fall 完了時（EOC）に短パルスGateを出力（別モジュールへの連鎖用） |
 
 - **パラメータ仕様 (`PARAMS`)**: `time` (`0.02〜2.0`s, 既定 `0.2`), `peak` (`0.01〜0.99`, 既定 `0.5`: `0.05` 以下で鋭いパーカッション減衰), `level` (`0.0〜1.0`, 既定 `1.0`)
 
@@ -361,7 +361,7 @@ $$\text{slot} = \text{row} \times 4 + \text{col} \quad (\text{col} \in \{0, 1, 2
 - **ポート仕様 (`PORTS`)**:
   | ポート名 | ピン | 方向 | 信号 | 未結線時の挙動 | 変調対象・変換式 |
   | :--- | :---: | :---: | :---: | :--- | :--- |
-  | `reset_in` | PIN4 | IN | Trig | 連続フリーラン | 立ち上がりで位相を `phase` 初期位置へリセット |
+  | `reset_in` | PIN4 | IN | 短パルスGate | 連続フリーラン | 立ち上がりで位相を `phase` 初期位置へリセット |
   | `freq_cv_in` | PIN5 | IN | CV | 設定周期で発振 | LFO発振周波数を 1V/Oct スケールで変調（※`cv_in` ではなく `freq_cv_in`） |
   | `cv_out` | PIN10 | OUT | CV | - | LFO波形出力（`unipolar`: `0〜depth`, `bipolar`: `-depth〜+depth`） |
 
@@ -384,7 +384,7 @@ $$\text{slot} = \text{row} \times 4 + \text{col} \quad (\text{col} \in \{0, 1, 2
   | ポート名 | ピン | 方向 | 信号 | 未結線時の挙動 | 説明 |
   | :--- | :---: | :---: | :---: | :--- | :--- |
   | `cv_in` | PIN5 | IN | CV | **内部ホワイトノイズを自動生成**してサンプリング | 結線時は外部入力信号（LFOやVCO等）の瞬時値をサンプリング |
-  | `gate_in` | PIN4 | IN | Gate | ホールド値を維持 | 立ち上がり（`> 0.001V`）の瞬間に直前の入力値（または内部乱数）をホールド（別名 `trig_in` も互換受理） |
+  | `gate_in` | PIN4 | IN | Gate | ホールド値を維持 | 立ち上がり（`> 0.001V`）の瞬間に直前の入力値（または内部乱数）をホールド |
   | `cv_out` | PIN10 | OUT | CV | - | $\text{held} \times \text{scale}$ にグライドをかけたCV出力 |
 
 - **パラメータ仕様 (`PARAMS`)**:
@@ -441,7 +441,7 @@ $$\text{slot} = \text{row} \times 4 + \text{col} \quad (\text{col} \in \{0, 1, 2
 - **ポート仕様 (`PORTS`)**:
   | ポート名 | ピン | 方向 | 信号 | 未結線時の挙動 | 説明 |
   | :--- | :---: | :---: | :---: | :--- | :--- |
-  | `reset_in` | PIN5 | IN | Trig | 内部BPMで連続自走 | 立ち上がりでサイクル位相を先頭（0）へリセット（`CLK` 起点の `COUNT` と位相を完全一致させたい場合は開始トリガーを共有可能） |
+  | `reset_in` | PIN5 | IN | 短パルスGate | 内部BPMで連続自走 | 立ち上がりでサイクル位相を先頭（0）へリセット（`CLK` 起点の `COUNT` と位相を完全一致させたい場合は開始ゲートを共有可能） |
   | `1shotgate_in` | PIN6 | IN | Gate | **常時再生** | 結線時は `≥ 0.4V` の間だけ先頭から再生し、`0V` で即停止＆リセット（旧名 `keygate_in` も互換受理） |
   | `gate_out` | PIN10 | OUT | Gate | - | ノート発音期間（ステップ長 × `gateLen`）に `1.0V` を出力 |
   | `cv_out` | PIN11 | OUT | CV | - | 1V/Oct ピッチCV（`c1` = `0.0V`, `c2` = `1.0V`, `c3` = `2.0V`）を出力 |
@@ -481,9 +481,9 @@ $$\text{slot} = \text{row} \times 4 + \text{col} \quad (\text{col} \in \{0, 1, 2
   | ポート名 | ピン | 方向 | 信号 | 未結線時の挙動 | 説明 |
   | :--- | :---: | :---: | :---: | :--- | :--- |
   | `clk_in` | PIN5 | IN | Clock | カウント停止（`0.0V`） | 立ち上がりごとにカウント `step = (step + 1) % max` を進行（別名 `gate_in`） |
-  | `reset_in` | PIN4 | IN | Trig | - | 立ち上がりでカウントを `0` にリセット |
+  | `reset_in` | PIN4 | IN | 短パルスGate | - | 立ち上がりでカウントを `0` にリセット |
   | `cv_out` | PIN10 | OUT | CV | - | $\text{cv\_out} = \text{step} / \text{max}$（`0.0V` 〜 `(max-1)/max V` の正規化ステップランプCV） |
-  | `carry_out` | PIN11 | OUT | Trig | - | カウントが1周して `0` に戻る瞬間にトリガーパルスを出力 |
+  | `carry_out` | PIN11 | OUT | 短パルスGate | - | カウントが1周して `0` に戻る瞬間に短パルスGateを出力 |
 
 - **パラメータ仕様 (`PARAMS`)**: `max` (`8`, `16`, `32`, `64`, `128`, `256`, デフォルト `16`)
 
@@ -494,14 +494,14 @@ $$\text{slot} = \text{row} \times 4 + \text{col} \quad (\text{col} \in \{0, 1, 2
   | ポート名 | ピン | 方向 | 信号 | 未結線時の挙動 | 説明 |
   | :--- | :---: | :---: | :---: | :--- | :--- |
   | `cv_in` | PIN5 | IN | CV | ステップ0で静止 | `0.0V 〜 1.0V` の正規化位相CV（`COUNT:cv_out` を接続）から $\text{step} = \lfloor \text{cv\_in} \times \text{divisions} \rfloor \bmod \text{divisions}$ を算出 |
-  | `out_1..4` | PIN7..10 | OUT | Gate/Trig | - | 各トラックの出力（**`out_1`, `out_2`, `out_3`, `out_4`** ※アンダースコア必須） |
+  | `out_1..4` | PIN7..10 | OUT | Gate | - | 各トラックの出力（**`out_1`, `out_2`, `out_3`, `out_4`** ※アンダースコア必須） |
 
 - **パラメータ仕様 (`PARAMS`)**:
   | キー名 | 型 | 範囲 / 選択肢 | デフォルト | 詳細 |
   | :--- | :--- | :--- | :---: | :--- |
   | `divisions` | int | `16` \| `32` \| `64` | `16` | 有効ステップ分割数（`COUNT.max` と同じ値に揃えるのが基本です） |
   | `patterns` | array | 4 × 64配列 (`0` or `1`) | - | **内部バッファは各トラック長さ64の配列ですが、再生時は先頭 `divisions` 要素（0 〜 `divisions-1`）のみが使用されます** |
-  | `modes` | array | `["trig"\|"gate", ...]` (長さ4) | `["gate",...]` | **`"trig"`**: ステップ進入時に **約10msの短いトリガーパルス** を出力（ドラムSUBや `RF` に最適）<br>**`"gate"`**: ステップ期間中ずっと `1.0V` を維持し、ステップ切り替わり時に2msのギャップを挿入（`ADSR` に最適） |
+  | `modes` | array | `["trig"\|"gate", ...]` (長さ4) | `["gate",...]` | **`"trig"`**: ステップ進入時に **約10msの短パルスGate** を出力（ドラムSUBや `RF` に最適）<br>**`"gate"`**: ステップ期間中ずっと `1.0V` を維持し、ステップ切り替わり時に2msのギャップを挿入（`ADSR` に最適） |
 
 ---
 
@@ -577,8 +577,9 @@ $$\text{slot} = \text{row} \times 4 + \text{col} \quad (\text{col} \in \{0, 1, 2
 ### 5.5 ミキサー・エフェクト・出力・アナライザー系 (Mix, FX, Output & Analyzers)
 
 #### `MIX` — 2〜4ch オーディオ/CVミキサー
-- **ポート仕様 (`PORTS`)**: `wave_in1` (PIN5), `wave_in2` (PIN4), `wave_in3` (PIN3, `channels >= 3`), `wave_in4` (PIN2, `channels == 4`) | OUT: `wave_out` (PIN10)
+- **ポート仕様 (`PORTS`)**: `wave_in1` (PIN5), `wave_in2` (PIN4), `wave_in3` (PIN3, `channels >= 3` のみ有効), `wave_in4` (PIN2, `channels == 4` のみ有効) | OUT: `wave_out` (PIN10)
 - **パラメータ仕様 (`PARAMS`)**: `channels` (`2〜4`, 既定 `2`), `lvl1..4` (`0.0〜1.0`, 既定 `1.0`), `mute1..4` (`bool`, 既定 `false`)
+- **重要ルール**: **`channels` の数だけ入力ポートが生成されます**（既定 `channels: 2` のまま `wave_in3` や `wave_in4` に接続するとエラーになります。3系統混ぜるなら `"channels": 3`、4系統なら `"channels": 4` を必ず明記してください）。
 
 ---
 
@@ -625,7 +626,7 @@ $$\text{slot} = \text{row} \times 4 + \text{col} \quad (\text{col} \in \{0, 1, 2
 
 #### `SCOPE` / `LISS` / `SPEC` — ビジュアル・アナライザー群
 - **`SCOPE`（オシロスコープ）**:
-  - **PORTS**: `cv_in` (PIN5: 観測するAudio/CV信号), `gate_in` (PIN6: 外部シンクロトリガー、未結線時は内部ゼロクロス同期 / 別名 `trig_in`) | OUT: なし
+  - **PORTS**: `cv_in` (PIN5: 観測するAudio/CV信号), `gate_in` (PIN6: 外部シンクロGate、未結線時は内部ゼロクロス同期) | OUT: なし
   - **PARAMS**: `timeSpan` (`0.001〜5.0`s, 既定 `0.05`), `vRange` (`0.5〜20.0`V, 既定 `2`), `trigMode` (`"auto"` \| `"free"`, 既定 `"auto"`)
 - **`LISS`（XYリサジュー・フェーズスコープ）**:
   - **PORTS**: `cv_in_x` (PIN5), `cv_in_y` (PIN6) | OUT: なし | **PARAMS**: `vRange` (`0.5〜10.0`V, 既定 `2`)
@@ -644,22 +645,22 @@ Gridsynth は1スロットに複数モジュールの回路をカプセル化す
 | **`"FACTORY_SOURCE"`** (`"ComplexSource"`) | West Coast | `cv_in` (`PIN5`), `mod_cv` (`PIN4`), `fold_cv` (`PIN3`) | `wave_out` (`PIN10`), `mod_out` (`PIN11`) | Volca Modular 風コンプレックス・オシレーター（`FMCORE1(tri)` ➔ `FMCORE2(tri)` ➔ `FOLD1`） |
 | **`"FACTORY_LPG"`** (`"LowPassGate"`) | West Coast | `wave_in` (`PIN5`), `cv_in` (`PIN4`), `PIN3_in` (Env) | `wave_out` (`PIN10`) | バクトール風ローパスゲート（`VCF` + `VCA` を `MATH2(MULTI)` で同時開閉） |
 | **`"FACTORY_VOICE"`** (`"MonoVoice"`) | Synth | `cv_in` (`PIN5`), `gate_in` (`PIN4`) | `wave_out` (`PIN10`) | 王道モノシンセ (`VCO`+`VCF`+`ADSR`+`VCA`) |
-| **`"FACTORY_ACID"`** (`"AcidBass"`) | Synth | `cv_in` (`PIN5`), `trig_in` (`PIN4`) | `wave_out` (`PIN10`) | 303系強レゾナンス・アシッドベース |
+| **`"FACTORY_ACID"`** (`"AcidBass"`) | Synth | `cv_in` (`PIN5`), `gate_in` (`PIN4`) | `wave_out` (`PIN10`) | 303系強レゾナンス・アシッドベース |
 | **`"FACTORY_DUAL_VCO"`** (`"DualLead"`) | Synth | `cv_in` (`PIN5`), `gate_in` (`PIN4`) | `wave_out` (`PIN10`) | デュアルVCOデチューン・リード |
-| **`"FACTORY_KICK"`** (`"Kick"`) | Drum | `trig_in` (`PIN5`) | `wave_out` (`PIN10`) | 808/909系パンチのあるバスドラム |
-| **`"FACTORY_KICK2"`** (`"TechnoKick"`) | Drum | `trig_in` (`PIN5`) | `wave_out` (`PIN10`) | ハードテクノ向け重低音キック |
-| **`"FACTORY_SUB_KICK"`** (`"SubKick"`) | Drum | `trig_in` (`PIN5`) | `wave_out` (`PIN10`) | ディープ・サブベースキック |
-| **`"FACTORY_SNARE"`** (`"Snare"`) | Drum | `trig_in` (`PIN5`) | `wave_out` (`PIN10`) | スナッピーなアナログスネア |
-| **`"FACTORY_RIM"`** (`"Rimshot"`) | Drum | `trig_in` (`PIN5`) | `wave_out` (`PIN10`) | シャープなリムショット |
-| **`"FACTORY_GHOST_SNARE"`** (`"Ghost"`) | Drum | `trig_in` (`PIN5`) | `wave_out` (`PIN10`) | ゴーストノート用ショートスネア |
-| **`"FACTORY_CLAP"`** (`"Clap"`) | Drum | `trig_in` (`PIN5`) | `wave_out` (`PIN10`) | マルチバースト・ハンドクラップ |
-| **`"FACTORY_HIHAT"`** (`"HiHat"`) | Drum | `trig_in` (`PIN5`) | `wave_out` (`PIN10`) | クリスプなクローズドハイハット |
-| **`"FACTORY_CH_SOFT"`** (`"HiHatSoft"`) | Drum | `trig_in` (`PIN5`) | `wave_out` (`PIN10`) | ソフトなシェイカー風ハイハット |
-| **`"FACTORY_OPEN_HAT"`** (`"OpenHat"`) | Drum | `trig_in` (`PIN5`) | `wave_out` (`PIN10`) | メタリックなオープンハイハット |
-| **`"FACTORY_COWBELL"`** (`"Cowbell"`) | Drum | `trig_in` (`PIN5`) | `wave_out` (`PIN10`) | 808風FMカウベル |
-| **`"FACTORY_TOM"`** / **`"FACTORY_HIGH_TOM"`** | Drum | `trig_in` (`PIN5`) | `wave_out` (`PIN10`) | エレクトロニック・タム |
-| **`"FACTORY_PERC"`** / **`"FACTORY_PERC2"`** | Drum | `trig_in` (`PIN5`) | `wave_out` (`PIN10`) | FMメタリックパーカッション |
-| **`"FACTORY_CRASH"`** (`"Crash"`) | Drum | `trig_in` (`PIN5`) | `wave_out` (`PIN10`) | ロングディケイ・クラッシュシンバル |
+| **`"FACTORY_KICK"`** (`"Kick"`) | Drum | `gate_in` (`PIN5`) | `wave_out` (`PIN10`) | 808/909系パンチのあるバスドラム |
+| **`"FACTORY_KICK2"`** (`"TechnoKick"`) | Drum | `gate_in` (`PIN5`) | `wave_out` (`PIN10`) | ハードテクノ向け重低音キック |
+| **`"FACTORY_SUB_KICK"`** (`"SubKick"`) | Drum | `gate_in` (`PIN5`) | `wave_out` (`PIN10`) | ディープ・サブベースキック |
+| **`"FACTORY_SNARE"`** (`"Snare"`) | Drum | `gate_in` (`PIN5`) | `wave_out` (`PIN10`) | スナッピーなアナログスネア |
+| **`"FACTORY_RIM"`** (`"Rimshot"`) | Drum | `gate_in` (`PIN5`) | `wave_out` (`PIN10`) | シャープなリムショット |
+| **`"FACTORY_GHOST_SNARE"`** (`"Ghost"`) | Drum | `gate_in` (`PIN5`) | `wave_out` (`PIN10`) | ゴーストノート用ショートスネア |
+| **`"FACTORY_CLAP"`** (`"Clap"`) | Drum | `gate_in` (`PIN5`) | `wave_out` (`PIN10`) | マルチバースト・ハンドクラップ |
+| **`"FACTORY_HIHAT"`** (`"HiHat"`) | Drum | `gate_in` (`PIN5`) | `wave_out` (`PIN10`) | クリスプなクローズドハイハット |
+| **`"FACTORY_CH_SOFT"`** (`"HiHatSoft"`) | Drum | `gate_in` (`PIN5`) | `wave_out` (`PIN10`) | ソフトなシェイカー風ハイハット |
+| **`"FACTORY_OPEN_HAT"`** (`"OpenHat"`) | Drum | `gate_in` (`PIN5`) | `wave_out` (`PIN10`) | メタリックなオープンハイハット |
+| **`"FACTORY_COWBELL"`** (`"Cowbell"`) | Drum | `gate_in` (`PIN5`) | `wave_out` (`PIN10`) | 808風FMカウベル |
+| **`"FACTORY_TOM"`** / **`"FACTORY_HIGH_TOM"`** | Drum | `gate_in` (`PIN5`) | `wave_out` (`PIN10`) | エレクトロニック・タム |
+| **`"FACTORY_PERC"`** / **`"FACTORY_PERC2"`** | Drum | `gate_in` (`PIN5`) | `wave_out` (`PIN10`) | FMメタリックパーカッション |
+| **`"FACTORY_CRASH"`** (`"Crash"`) | Drum | `gate_in` (`PIN5`) | `wave_out` (`PIN10`) | ロングディケイ・クラッシュシンバル |
 | **`"FACTORY_SPACE_FX"`** (`"SpaceFx"`) | FX | `wave_in` (`PIN5`) | `wave_out` (`PIN10`) | ディレイ＋リバーブ複合空間エフェクト |
 
 #### ② カスタム `SUB` ＆ `SUB_IO` の作成・結線ルール（AIが迷わないための原則）
@@ -1004,14 +1005,14 @@ $$\text{CV} = \frac{\text{MIDI\_Note} - 24}{12}$$
         "CLK1:gate_out > COUNT1:clk_in",
         "COUNT1:cv_out > MATRIX1:cv_in",
         "COUNT1:carry_out > PAT1:reset_in",
-        "MATRIX1:out_1 > SUB_KICK:trig_in",
-        "MATRIX1:out_2 > SUB_SNARE:trig_in",
-        "MATRIX1:out_3 > SUB_HAT:trig_in",
+        "MATRIX1:out_1 > SUB_KICK:gate_in",
+        "MATRIX1:out_2 > SUB_SNARE:gate_in",
+        "MATRIX1:out_3 > SUB_HAT:gate_in",
         "SUB_KICK:wave_out > MIX_DRUM:wave_in1",
         "SUB_SNARE:wave_out > MIX_DRUM:wave_in2",
         "SUB_HAT:wave_out > MIX_DRUM:wave_in3",
         "PAT1:cv_out > SUB_ACID:cv_in",
-        "PAT1:gate_out > SUB_ACID:trig_in",
+        "PAT1:gate_out > SUB_ACID:gate_in",
         "SUB_ACID:wave_out > DELAY1:wave_in",
         "MIX_DRUM:wave_out > MIX_MASTER:wave_in1",
         "DELAY1:wave_out > MIX_MASTER:wave_in2",
@@ -1025,7 +1026,83 @@ $$\text{CV} = \frac{\text{MIDI\_Note} - 24}{12}$$
 
 ---
 
-## 9. 外部 AI 向け指示プロンプトテンプレート (Copy & Paste Prompt)
+## 9. 全42モジュール 1行ポート辞書 (Quick Port Dictionary)
+
+接続前にポート名を高速確認するための辞書です。記載のないポート名はすべてエラーになります。
+
+```text
+[Sound]
+VCO       | IN: cv_in [cv_in2..4 when channels>=2..4] | OUT: wave_out
+NOISE     | IN: (none) | OUT: wave_out
+FMx3      | IN: gate_in cv_in | OUT: wave_out
+FMCORE    | IN: cv_in mod_in index_cv | OUT: wave_out
+WAVE      | IN: gate_in start_cv end_cv speed_cv link_in | OUT: wave_out link_out
+
+[Filter / Shaper]
+VCF       | IN: wave_in cv_in | OUT: wave_out
+FOLD      | IN: wave_in gain_cv | OUT: wave_out
+
+[Amp / Env / Mod]
+VCA       | IN: wave_in cv_in | OUT: wave_out
+ADSR      | IN: gate_in | OUT: cv_out
+AR        | IN: gate_in attack_in release_in | OUT: cv_out
+RF        | IN: gate_in time_cv peak_cv | OUT: cv_out gate_out
+LFO       | IN: reset_in freq_cv_in | OUT: cv_out
+SH        | IN: cv_in gate_in | OUT: cv_out
+LAG       | IN: cv_in time_cv | OUT: cv_out
+
+[Clock / Seq / Logic / Ctrl]
+CLK       | IN: reset_in | OUT: gate_out
+SEQ8      | IN: gate_in 1shotgate_in | OUT: gate_out cv_out
+SEQ16     | IN: gate_in 1shotgate_in | OUT: gate_out cv_out
+PAT       | IN: reset_in 1shotgate_in | OUT: gate_out cv_out
+KEY       | IN: cv_in | OUT: cv_out gate_out
+COUNT     | IN: clk_in reset_in | OUT: cv_out carry_out
+MATRIX    | IN: cv_in | OUT: out_1 out_2 out_3 out_4
+LUT       | IN: cv_in | OUT: cv_out
+CHORD     | IN: cv_in | OUT: cv_out1 cv_out2 cv_out3 cv_out4
+MARKOV    | IN: gate_in trans_in | OUT: trans_out1 trans_out2 trans_out3 startgate_out gate_out longgate_out cv_out
+DIST4     | IN: cv_in gate_in | OUT: cv_out1 cv_out2 cv_out3 cv_out4
+SLCT4     | IN: gate_in cv_in1 cv_in2 cv_in3 cv_in4 | OUT: gate_out cv_out
+MATH1     | IN: cv_in_a | OUT: cv_out
+MATH2     | IN: cv_in_a cv_in_b | OUT: cv_out
+VALUE     | IN: (none) | OUT: cv_out
+SWITCH    | IN: cv_in | OUT: cv_out
+PAD       | IN: hue_cv bright_cv | OUT: x_cv y_cv gate_out
+GSENSOR   | IN: (none) | OUT: x_out y_out z_out
+
+[Mix / FX / Output / Analyzer]
+MIX       | IN: wave_in1 wave_in2 [wave_in3..4 when channels>=3..4] | OUT: wave_out
+DELAY     | IN: wave_in | OUT: wave_out
+REVERB    | IN: wave_in cv_in | OUT: wave_out wave_out_r
+SPK       | IN: wave_in_l wave_in_r | OUT: (none)
+SCOPE     | IN: cv_in gate_in | OUT: (none)
+LISS      | IN: cv_in_x cv_in_y | OUT: (none)
+SPEC      | IN: wave_in | OUT: (none)
+
+[Subpatch]
+SUB       | IN: PIN1_in..PIN7_in (Factory Drum: gate_in, Synth: cv_in gate_in) | OUT: PIN8_out..PIN14_out (Factory: wave_out)
+SUB_IO    | IN: PIN8_in..PIN14_in | OUT: PIN1_out..PIN7_out
+
+[3D / Video]
+OBJECT    | IN: (none) | OUT: obj_out
+PATH      | IN: cv_in | OUT: obj_out
+PARTICLE  | IN: cv_in obj_in gate_in | OUT: obj_out
+WAVE3D    | IN: wave_in cv_in | OUT: obj_out
+ROTATE    | IN: obj_in cv_in | OUT: obj_out
+MOVE      | IN: obj_in cv_in | OUT: obj_out
+SCALE     | IN: obj_in cv_in | OUT: obj_out
+VERTEX    | IN: obj_in cv_in | OUT: obj_out
+SCATTER   | IN: base_in child_in cv_in | OUT: obj_out
+RENDER    | IN: obj_in fov_in | OUT: video_out
+VFX       | IN: video_in cv_in | OUT: video_out
+VMIX      | IN: video_in1 video_in2 cv_in | OUT: video_out
+DISPLAY   | IN: video_in | OUT: video_out
+```
+
+---
+
+## 10. 外部 AI 向け指示プロンプトテンプレート (Copy & Paste Prompt)
 
 外部 AI（ChatGPT, Claude, Gemini, Cursor 等）にパッチ生成を依頼する際は、本ファイル（`GRIDSYNTH_AI_PATCH_SPEC.md`）を添付し、以下のプロンプトを入力してください。
 

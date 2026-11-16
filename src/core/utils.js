@@ -1,6 +1,6 @@
 // src/core/utils.js
 
-import { isSubModule, normalizeSubPort } from './sub-utils.js?v=844';
+import { isSubModule, normalizeSubPort } from './sub-utils.js?v=846';
 
 export const safeClone = (obj) =>
     typeof structuredClone === 'function' ? structuredClone(obj) : JSON.parse(JSON.stringify(obj));
@@ -129,5 +129,5 @@ export const HIGHLIGHT_CLASSES = {
 };
 
 // Re-export subpatch utilities & signal definitions for seamless backward compatibility
-export * from './sub-utils.js?v=844';
+export * from './sub-utils.js?v=846';
 export * from './signals.js?v=845';
