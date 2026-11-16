@@ -1,4 +1,4 @@
-import { safeClone, parseConn, isSubModule, normalizeSubPort, isPortMatching, sanitizeSubPortAlias } from './utils.js?v=846';
+import { safeClone, parseConn, isSubModule, normalizeSubPort, isPortMatching, sanitizeSubPortAlias } from './utils.js?v=847';
 import { parseNoteToCv } from './musical.js?v=367';
 import { MODULE_REGISTRY } from '../modules/registry.js?v=845';
 import { FACTORY_SUBPATCHES } from '../presets/subpatches.js?v=846';
