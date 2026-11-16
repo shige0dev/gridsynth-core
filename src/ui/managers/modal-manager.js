@@ -226,7 +226,6 @@ export class ModalManager {
             removeConnectionsForPort: (p) => this.ui.removeConnectionsForPort(id, p),
             sendControl: (event) => this.ui.synth.sendControlEvent(`${this.ui.currentPageId}/${id}`, event),
             sendKeyNote: (midi, isDown, legato = false) => this.ui.synth.sendControlEvent(`${this.ui.currentPageId}/${id}`, { type: 'NOTE', midi, isDown, legato }),
-            triggerManualSample: () => this.ui.synth.sendControlEvent(`${this.ui.currentPageId}/${id}`, { type: 'TRIG' }),
             prompt: (t, init) => this.openCustomPrompt(t, init),
             numpad: (t, init, min, max) => this.openNumpadPrompt(t, init, min, max),
             openSubpage: (pId) => this.ui.switchPage(pId),

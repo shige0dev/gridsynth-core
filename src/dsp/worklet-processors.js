@@ -1,10 +1,10 @@
-// v1.0.0834
+// v1.0.0835
 import './processors/clock.js?v=621';
 import './processors/seq.js?v=800';
 import './processors/adsr.js';
 import './processors/lfo.js?v=621';
 import './processors/math.js?v=691';
-import './processors/sh.js?v=462';
+import './processors/sh.js?v=835';
 import './processors/fold.js';
 import './processors/cv-delay.js';
 import './processors/scope.js?v=791';
