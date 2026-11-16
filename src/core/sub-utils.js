@@ -1,5 +1,14 @@
 // src/core/sub-utils.js
 
+export const sanitizeSubPortAlias = (name) => {
+    if (!name || typeof name !== 'string') return '';
+    return name
+        .trim()
+        .replace(/[\s:>]+/g, '_')
+        .replace(/[^a-zA-Z0-9_\-\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf]/g, '_')
+        .replace(/^_+|_+$/g, '');
+};
+
 export const isSubModule = (modIdOrType) => {
     if (!modIdOrType || typeof modIdOrType !== 'string') return false;
     const s = modIdOrType.trim().toUpperCase();
@@ -30,8 +39,9 @@ export const normalizeSubPort = (port, modIdOrType = null, manifest = null) => {
 
     // 1. Check if port matches an alias defined in manifest.ports
     if (manifest && manifest.ports) {
+        const pSanitized = sanitizeSubPortAlias(p).toLowerCase();
         for (const [aliasKey, def] of Object.entries(manifest.ports)) {
-            if (aliasKey.toLowerCase() === pLower) {
+            if (aliasKey.toLowerCase() === pLower || (pSanitized && sanitizeSubPortAlias(aliasKey).toLowerCase() === pSanitized)) {
                 const pinStr = (def.pin || '').toUpperCase();
                 const m = pinStr.match(/^PIN([1-9]|1[0-4])$/);
                 if (m) {

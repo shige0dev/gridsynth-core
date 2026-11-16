@@ -1,5 +1,5 @@
 import { UIHelpers } from '../../ui/helpers.js?v=297';
-import { normalizeSubPort } from '../../core/sub-utils.js?v=459';
+import { normalizeSubPort, sanitizeSubPortAlias } from '../../core/sub-utils.js?v=844';
 
 export const SUB = {
     color: 'cyan',
@@ -219,9 +219,13 @@ export const SUB_IO = {
                 }
             }
 
-            const cleanName = rawName.trim();
+            const cleanName = sanitizeSubPortAlias(rawName);
             if (cleanName) {
-                pageData.manifest.ports[cleanName] = {
+                let uniqueName = cleanName;
+                if (pageData.manifest.ports[uniqueName]) {
+                    uniqueName = `${cleanName}_PIN${slot}`;
+                }
+                pageData.manifest.ports[uniqueName] = {
                     pin: pinKey,
                     signal: slot <= 7 ? 'cv' : 'audio'
                 };

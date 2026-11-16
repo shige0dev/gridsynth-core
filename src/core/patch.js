@@ -1,4 +1,4 @@
-import { safeClone, parseConn, isSubModule, normalizeSubPort, isPortMatching } from './utils.js?v=841';
+import { safeClone, parseConn, isSubModule, normalizeSubPort, isPortMatching, sanitizeSubPortAlias } from './utils.js?v=844';
 import { parseNoteToCv } from './musical.js?v=367';
 import { MODULE_REGISTRY } from '../modules/registry.js?v=841';
 import { FACTORY_SUBPATCHES } from '../presets/subpatches.js?v=826';
@@ -76,6 +76,19 @@ export function resolveSubpatchTemplate(idOrSubType, userSubpatches = null) {
     }
 
     return null;
+}
+
+function sanitizeManifestPorts(manifest) {
+    if (!manifest || !manifest.ports || typeof manifest.ports !== 'object') return manifest;
+    const cleanPorts = {};
+    for (const [rawKey, def] of Object.entries(manifest.ports)) {
+        const cleanKey = sanitizeSubPortAlias(rawKey);
+        if (!cleanKey) continue;
+        const pinKey = String(def?.pin || '').toUpperCase();
+        const uniqueKey = cleanPorts[cleanKey] && pinKey ? `${cleanKey}_${pinKey}` : cleanKey;
+        cleanPorts[uniqueKey] = def;
+    }
+    return { ...manifest, ports: cleanPorts };
 }
 
 export function resolveModManifest(mod, rawPages, pageId, userSubpatches = null) {
@@ -490,6 +503,9 @@ export function parsePatch(patchData, cols = 4, userSubpatches = null, errorSink
                 if (s === 'tetrahedron') mod.shape = 'tetra';
                 if (s === 'dodecahedron') mod.shape = 'dodeca';
             }
+            if (type === 'SUB' && mod.manifest) {
+                mod.manifest = sanitizeManifestPorts(mod.manifest);
+            }
             resolvedMods[id] = mod;
             validSlots[slotStr] = id;
         });
@@ -539,7 +555,7 @@ export function parsePatch(patchData, cols = 4, userSubpatches = null, errorSink
             name: pData.name || '',
             ...(pData.subType ? { subType: pData.subType } : {}),
             ...(pData.sourceTemplateId ? { sourceTemplateId: pData.sourceTemplateId } : {}),
-            ...(pData.manifest ? { manifest: safeClone(pData.manifest) } : {}),
+            ...(pData.manifest ? { manifest: sanitizeManifestPorts(safeClone(pData.manifest)) } : {}),
             slots: validSlots,
             modules: resolvedMods,
             connections
@@ -605,7 +621,7 @@ export function exportPatch(pagesData, bpm = 120, cols = 4, rows = 32) {
             name: pData.name || '',
             ...(pData.subType ? { subType: pData.subType } : {}),
             ...(pData.sourceTemplateId ? { sourceTemplateId: pData.sourceTemplateId } : {}),
-            ...(pData.manifest ? { manifest: safeClone(pData.manifest) } : {}),
+            ...(pData.manifest ? { manifest: sanitizeManifestPorts(safeClone(pData.manifest)) } : {}),
             slots,
             modules: cleanMods,
             connections: (pData.connections || []).map(parseConn).filter(Boolean).filter(c => {
