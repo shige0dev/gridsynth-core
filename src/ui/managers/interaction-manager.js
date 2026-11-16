@@ -394,9 +394,6 @@ export class InteractionManager {
                     this.updateSelectionClasses();
                     return;
                 }
-                if (this.ui.modules[mId]?.type === 'SUB_IO') {
-                    return;
-                }
                 const now = Date.now();
                 const isDoubleTap = (now - this._lastTap < 350 && this._lastTapId === mId);
                 this._lastTap = now;

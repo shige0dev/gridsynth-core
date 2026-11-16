@@ -1,5 +1,5 @@
 // src/ui/managers/modal-manager.js
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=841';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=843';
 import { UIHelpers } from '../helpers.js?v=619';
 import { openAddModal } from '../dialogs/add-module-dialog.js?v=771';
 import { openNumpadPrompt } from '../dialogs/numpad-dialog.js?v=679';
@@ -48,6 +48,7 @@ export const MODAL_WIDTHS = {
     // IO & Monitoring
     SPK: 'w-[185px]',
     SUB: 'w-[240px]',
+    SUB_IO: 'w-[280px]',
     GSENSOR: 'w-[180px]',
     TILT: 'w-[180px]',
     OBJECT: 'w-[190px]',
@@ -190,7 +191,7 @@ export class ModalManager {
     openSettingsModal(mId) {
         if (this.ui.isPerformanceMode) return;
         const m = this.ui.modules[mId];
-        if (!m || m.type === 'SUB_IO') return;
+        if (!m) return;
         if (DOCK_TITLES[m.type]) {
             this.openDockModal(mId);
             return;

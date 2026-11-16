@@ -1,4 +1,5 @@
 import { UIHelpers } from '../../ui/helpers.js?v=297';
+import { normalizeSubPort } from '../../core/sub-utils.js?v=459';
 
 export const SUB = {
     color: 'cyan',
@@ -122,7 +123,57 @@ export const SUB_IO = {
             </svg>
         </div>`,
     renderModal: (m, ctx) => {
+        const pageId = String(ctx?.currentPageId ?? '1');
+        const pageData = ctx?.pagesData?.[pageId];
         const pageName = ctx?.getPageName ? ctx.getPageName() : (m.name || 'SUBPATCH');
+
+        // Find parent SUB module if any
+        let parentSub = null;
+        if (ctx?.pagesData) {
+            for (const pData of Object.values(ctx.pagesData)) {
+                if (!pData?.modules) continue;
+                const found = Object.values(pData.modules).find(mod => mod?.type === 'SUB' && String(mod.targetPage ?? 1) === pageId);
+                if (found) { parentSub = found; break; }
+            }
+        }
+        const manifest = pageData?.manifest || parentSub?.manifest || { ports: {} };
+        const portsMap = manifest.ports || {};
+
+        // Collect active (patched) PIN numbers (1..14) connected to this SUB_IO in current subpage
+        const activePins = new Set();
+        if (ctx?.patched) {
+            ctx.patched.forEach(pName => {
+                const norm = normalizeSubPort(pName, 'SUB_IO', manifest);
+                const match = String(norm).match(/^PIN([1-9]|1[0-4])(?:_(?:in|out))?$/i);
+                if (match) activePins.add(parseInt(match[1], 10));
+            });
+        }
+
+        const pinNames = {};
+        for (const [aliasKey, def] of Object.entries(portsMap)) {
+            const pm = String(def?.pin || '').toUpperCase().match(/^PIN([1-9]|1[0-4])$/);
+            if (pm) {
+                pinNames[parseInt(pm[1], 10)] = aliasKey;
+            }
+        }
+
+        const renderPinRow = (slot) => {
+            const isPatched = activePins.has(slot);
+            const isInputFromParent = slot <= 7;
+            const dirLabel = isInputFromParent ? 'IN' : 'OUT';
+            const dirColor = isInputFromParent ? 'text-cyan-300' : 'text-emerald-300';
+            const curName = pinNames[slot] || '';
+            return `
+                <div class="flex items-center gap-1.5 px-1.5 py-1 rounded border ${isPatched ? 'bg-slate-900/90 border-slate-700' : 'bg-slate-950/50 border-slate-800/50 opacity-35'}">
+                    <span class="w-9 text-[8.5px] font-mono font-bold ${isPatched ? dirColor : 'text-slate-500'} shrink-0">PIN${slot}</span>
+                    <span class="w-6 text-[7px] font-mono font-bold text-slate-400 shrink-0">${dirLabel}</span>
+                    <input type="text" data-pin-slot="${slot}" value="${curName.replace(/"/g, '&quot;')}" placeholder="${isPatched ? `pin_${slot}` : '未結線'}" ${isPatched ? '' : 'disabled'}
+                        class="sub-io-pin-input flex-1 min-w-0 bg-slate-950 border ${isPatched ? 'border-slate-700 focus:border-emerald-400 text-white' : 'border-slate-800 text-slate-600 cursor-not-allowed'} rounded px-1.5 py-0.5 text-[9px] font-mono outline-none transition-colors" />
+                </div>`;
+        };
+
+        const pinRowsHtml = Array.from({ length: 14 }, (_, i) => renderPinRow(i + 1)).join('');
+
         return `
             <div class="space-y-2 p-1">
                 <div class="flex items-center justify-between pb-1 border-b border-slate-800">
@@ -132,15 +183,14 @@ export const SUB_IO = {
                         <span class="text-[8px]">✏️</span>
                     </button>
                 </div>
-                <div class="text-center py-1">
-                    <span class="text-[10px] font-bold text-emerald-300 uppercase">SUBPATCH I/O ROOT</span>
-                    <p class="text-[8.5px] text-slate-400 mt-1">メイングリッドの SUB モジュールと12本の対称端子で通信します。</p>
-                    <div class="mt-1.5 p-1 bg-slate-950/80 rounded border border-slate-800 text-[7.5px] text-left text-slate-300 space-y-0.5">
-                        <div><span class="font-mono text-cyan-300 font-bold">PIN1〜7 [OUT]</span>: 親からの送り (CV / Gate / Clock)</div>
-                        <div><span class="font-mono text-emerald-300 font-bold">PIN8〜14 [IN]</span>: 親への戻り (Audio L/R / Mod還元)</div>
-                        <div class="text-[7px] text-slate-400 pt-0.5">左: PIN1〜4 (上➔下) / 下: PIN5〜10 (左➔右) / 右: PIN11〜14 (下➔上)</div>
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-[8px] font-bold text-emerald-300 uppercase">PIN NAMES (結線中のみ有効)</span>
+                        <span class="text-[7.5px] font-mono text-slate-400">${activePins.size} active</span>
                     </div>
-                    <p class="text-[8px] text-amber-400/80 mt-1">※ このモジュールは削除できません（保護中）</p>
+                    <div class="max-h-56 overflow-y-auto space-y-1 pr-0.5">
+                        ${pinRowsHtml}
+                    </div>
                 </div>
                 <div class="flex gap-1.5 pt-1">
                     <button id="sub-io-save-btn" class="flex-1 py-1.5 bg-emerald-950 hover:bg-emerald-900 text-emerald-300 rounded-lg border border-emerald-500/70 text-[10px] font-bold shadow-sm flex items-center justify-center gap-1 transition">
@@ -155,6 +205,58 @@ export const SUB_IO = {
             </div>`;
     },
     bindEvents: (m, ctx, cb) => {
+        const pageId = String(ctx?.currentPageId ?? '1');
+        const updatePinAlias = (slot, rawName) => {
+            const pageData = ctx?.pagesData?.[pageId];
+            if (!pageData) return;
+            if (!pageData.manifest) pageData.manifest = { ports: {} };
+            if (!pageData.manifest.ports) pageData.manifest.ports = {};
+
+            const pinKey = `PIN${slot}`;
+            for (const [k, v] of Object.entries(pageData.manifest.ports)) {
+                if (String(v?.pin || '').toUpperCase() === pinKey) {
+                    delete pageData.manifest.ports[k];
+                }
+            }
+
+            const cleanName = rawName.trim();
+            if (cleanName) {
+                pageData.manifest.ports[cleanName] = {
+                    pin: pinKey,
+                    signal: slot <= 7 ? 'cv' : 'audio'
+                };
+            }
+
+            // Sync to parent SUB module if present
+            if (ctx?.pagesData) {
+                for (const pData of Object.values(ctx.pagesData)) {
+                    if (!pData?.modules) continue;
+                    for (const mod of Object.values(pData.modules)) {
+                        if (mod?.type === 'SUB' && String(mod.targetPage ?? 1) === pageId) {
+                            mod.manifest = JSON.parse(JSON.stringify(pageData.manifest));
+                        }
+                    }
+                }
+            }
+            cb?.();
+        };
+
+        document.querySelectorAll('.sub-io-pin-input').forEach(inp => {
+            inp.addEventListener('change', (e) => {
+                const slot = parseInt(e.target.dataset.pinSlot, 10);
+                if (!isNaN(slot)) {
+                    updatePinAlias(slot, e.target.value);
+                    ctx.showToast?.(`PIN${slot} の名称を更新しました`);
+                }
+            });
+            inp.addEventListener('input', (e) => {
+                const slot = parseInt(e.target.dataset.pinSlot, 10);
+                if (!isNaN(slot)) {
+                    updatePinAlias(slot, e.target.value);
+                }
+            });
+        });
+
         document.getElementById('sub-io-rename-btn')?.addEventListener('click', async () => {
             const curName = ctx.getPageName ? ctx.getPageName() : (m.name || 'SUBPATCH');
             const res = await ctx.prompt('SUBPATCH NAME', curName);
