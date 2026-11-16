@@ -1,7 +1,7 @@
-export const APP_VERSION = 'v1.0.0849';
+export const APP_VERSION = 'v1.0.0850';
 
-import { SynthEngine } from './audio/engine.js?v=849';
-import { UIController } from './ui/controller.js?v=849';
+import { SynthEngine } from './audio/engine.js?v=850';
+import { UIController } from './ui/controller.js?v=850';
 import { initExternalAPI } from './core/api.js?v=679';
 
 function applyDeviceMode() {
@@ -44,4 +44,10 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initApp);
 } else {
     initApp();
+}
+
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
 }
