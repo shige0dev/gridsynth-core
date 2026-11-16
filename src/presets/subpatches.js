@@ -203,7 +203,7 @@ export const FACTORY_SUBPATCHES = {
             }
         },
         pins: {
-            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN5: { label: 'Gate', type: 'gate_in' },
             PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
@@ -252,7 +252,7 @@ export const FACTORY_SUBPATCHES = {
             }
         },
         pins: {
-            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN5: { label: 'Gate', type: 'gate_in' },
             PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
@@ -310,7 +310,7 @@ export const FACTORY_SUBPATCHES = {
             }
         },
         pins: {
-            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN5: { label: 'Gate', type: 'gate_in' },
             PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
@@ -375,7 +375,7 @@ export const FACTORY_SUBPATCHES = {
             }
         },
         pins: {
-            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN5: { label: 'Gate', type: 'gate_in' },
             PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
@@ -420,7 +420,7 @@ export const FACTORY_SUBPATCHES = {
             }
         },
         pins: {
-            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN5: { label: 'Gate', type: 'gate_in' },
             PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
@@ -479,7 +479,7 @@ export const FACTORY_SUBPATCHES = {
             }
         },
         pins: {
-            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN5: { label: 'Gate', type: 'gate_in' },
             PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
@@ -531,7 +531,7 @@ export const FACTORY_SUBPATCHES = {
             }
         },
         pins: {
-            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN5: { label: 'Gate', type: 'gate_in' },
             PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
@@ -576,7 +576,7 @@ export const FACTORY_SUBPATCHES = {
             }
         },
         pins: {
-            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN5: { label: 'Gate', type: 'gate_in' },
             PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
@@ -625,7 +625,7 @@ export const FACTORY_SUBPATCHES = {
             }
         },
         pins: {
-            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN5: { label: 'Gate', type: 'gate_in' },
             PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
@@ -670,7 +670,7 @@ export const FACTORY_SUBPATCHES = {
             }
         },
         pins: {
-            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN5: { label: 'Gate', type: 'gate_in' },
             PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
@@ -715,7 +715,7 @@ export const FACTORY_SUBPATCHES = {
             }
         },
         pins: {
-            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN5: { label: 'Gate', type: 'gate_in' },
             PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
@@ -760,7 +760,7 @@ export const FACTORY_SUBPATCHES = {
             }
         },
         pins: {
-            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN5: { label: 'Gate', type: 'gate_in' },
             PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
@@ -805,7 +805,7 @@ export const FACTORY_SUBPATCHES = {
             }
         },
         pins: {
-            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN5: { label: 'Gate', type: 'gate_in' },
             PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
@@ -850,7 +850,7 @@ export const FACTORY_SUBPATCHES = {
             }
         },
         pins: {
-            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN5: { label: 'Gate', type: 'gate_in' },
             PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
@@ -902,7 +902,7 @@ export const FACTORY_SUBPATCHES = {
             }
         },
         pins: {
-            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN5: { label: 'Gate', type: 'gate_in' },
             PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
@@ -947,7 +947,7 @@ export const FACTORY_SUBPATCHES = {
             }
         },
         pins: {
-            PIN5: { label: 'Trig / Gate', type: 'gate_in' },
+            PIN5: { label: 'Gate', type: 'gate_in' },
             PIN10: { label: 'Audio Out', type: 'audio_out' }
         },
         pageData: {
