@@ -1,7 +1,7 @@
-export const APP_VERSION = 'v1.0.0847';
+export const APP_VERSION = 'v1.0.0848';
 
-import { SynthEngine } from './audio/engine.js?v=847';
-import { UIController } from './ui/controller.js?v=847';
+import { SynthEngine } from './audio/engine.js?v=848';
+import { UIController } from './ui/controller.js?v=848';
 import { initExternalAPI } from './core/api.js?v=679';
 
 function applyDeviceMode() {

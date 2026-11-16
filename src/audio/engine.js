@@ -1,4 +1,4 @@
-import { AUDIO_REGISTRY } from './registry.js?v=845';
+import { AUDIO_REGISTRY } from './registry.js?v=848';
 import { AudioHelpers } from './helpers.js?v=839';
 import { parseConn, normalizeSubPort, PORT_ALIASES } from '../core/utils.js?v=847';
 

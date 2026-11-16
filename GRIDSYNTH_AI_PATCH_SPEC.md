@@ -421,7 +421,7 @@ $$\text{slot} = \text{row} \times 4 + \text{col} \quad (\text{col} \in \{0, 1, 2
 - **ポート仕様 (`PORTS`)**:
   | ポート名 | ピン | 方向 | 信号 | 未結線時の挙動 | 説明 |
   | :--- | :---: | :---: | :---: | :--- | :--- |
-  | `gate_in` | PIN5 | IN | Clock | **停止（自動進行しません）** | **必須**: `CLK1:gate_out` 等のクロックを入力すると立ち上がりでステップ進行（別名 `clk_in`） |
+  | `gate_in` | PIN5 | IN | Gate | **停止（自動進行しません）** | **必須**: `CLK1:gate_out` 等のクロックを入力すると立ち上がりでステップ進行 |
   | `1shotgate_in` | PIN6 | IN | Gate | **常時RUN有効**（クロックに従い連続再生） | **結線時はゲート待機モード**: `≥ 0.4V` の間だけ先頭から再生し、`0V` で即停止＆リセット（旧名 `keygate_in` も互換受理） |
   | `gate_out` | PIN10 | OUT | Gate | - | 現在ステップの `gate: true` かつクロックHighの期間 `1.0V` を出力 |
   | `cv_out` | PIN11 | OUT | CV | - | 現在ステップの 1V/Oct ピッチCV（`0.0V = C1`, `1.0V = C2`）を出力 |
@@ -480,7 +480,7 @@ $$\text{slot} = \text{row} \times 4 + \text{col} \quad (\text{col} \in \{0, 1, 2
 - **ポート仕様 (`PORTS`)**:
   | ポート名 | ピン | 方向 | 信号 | 未結線時の挙動 | 説明 |
   | :--- | :---: | :---: | :---: | :--- | :--- |
-  | `clk_in` | PIN5 | IN | Clock | カウント停止（`0.0V`） | 立ち上がりごとにカウント `step = (step + 1) % max` を進行（別名 `gate_in`） |
+  | `gate_in` | PIN5 | IN | Gate | カウント停止（`0.0V`） | 立ち上がりごとにカウント `step = (step + 1) % max` を進行（旧名 `clk_in` も互換受理） |
   | `reset_in` | PIN4 | IN | 短パルスGate | - | 立ち上がりでカウントを `0` にリセット |
   | `cv_out` | PIN10 | OUT | CV | - | $\text{cv\_out} = \text{step} / \text{max}$（`0.0V` 〜 `(max-1)/max V` の正規化ステップランプCV） |
   | `carry_out` | PIN11 | OUT | 短パルスGate | - | カウントが1周して `0` に戻る瞬間に短パルスGateを出力 |
@@ -1002,7 +1002,7 @@ $$\text{CV} = \frac{\text{MIDI\_Note} - 24}{12}$$
         "SPK1": { "type": "SPK", "masterVol": 0.18 }
       },
       "connections": [
-        "CLK1:gate_out > COUNT1:clk_in",
+        "CLK1:gate_out > COUNT1:gate_in",
         "COUNT1:cv_out > MATRIX1:cv_in",
         "COUNT1:carry_out > PAT1:reset_in",
         "MATRIX1:out_1 > SUB_KICK:gate_in",
@@ -1057,7 +1057,7 @@ SEQ8      | IN: gate_in 1shotgate_in | OUT: gate_out cv_out
 SEQ16     | IN: gate_in 1shotgate_in | OUT: gate_out cv_out
 PAT       | IN: reset_in 1shotgate_in | OUT: gate_out cv_out
 KEY       | IN: cv_in | OUT: cv_out gate_out
-COUNT     | IN: clk_in reset_in | OUT: cv_out carry_out
+COUNT     | IN: gate_in reset_in | OUT: cv_out carry_out
 MATRIX    | IN: cv_in | OUT: out_1 out_2 out_3 out_4
 LUT       | IN: cv_in | OUT: cv_out
 CHORD     | IN: cv_in | OUT: cv_out1 cv_out2 cv_out3 cv_out4
