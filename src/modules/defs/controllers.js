@@ -90,7 +90,7 @@ export const KEY = {
             { port: 'cv_in', pin: 5, label: 'IN', signal: 'cv', color: 'bg-yellow-400' }
         ],
         out: [
-            { port: 'gate_out', pin: 10, label: 'G', signal: 'gate', color: 'bg-orange-500' },
+            { port: 'gate_out', pin: 10, label: 'G', signal: 'gate', color: 'bg-red-500' },
             { port: 'cv_out', pin: 11, label: 'CV', signal: 'cv', color: 'bg-yellow-400' }
         ]
     }),

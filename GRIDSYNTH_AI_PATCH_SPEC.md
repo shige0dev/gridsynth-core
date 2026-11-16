@@ -131,12 +131,12 @@ $$\text{slot} = \text{row} \times 4 + \text{col} \quad (\text{col} \in \{0, 1, 2
 ## 4. 結線ルール・ゲイン設計・頻出エラー防止 (Patching Rules & Pitfalls)
 
 1. **禁止結線（エラー・無音の原因）**:
-   - ❌ `LFO1:cv_in` / `LFO1:trig_in` ➔ 存在しません。LFOの入力は **`freq_cv_in`** と **`reset_in`** です。
+   - ❌ `LFO1:cv_in` / `LFO1:gate_in` ➔ 存在しません。LFOの入力は **`freq_cv_in`** と **`reset_in`** です。
    - ❌ `CLK1:power_in` ➔ 存在しません。クロックのリセット入力は **`reset_in`** です。
    - ❌ `VCO1:fm_in` / `VCO1:pwm_in` ➔ 存在しません。FM変調には **`FMx3`** または **`FMCORE`**（または `SUB` の `FACTORY_SOURCE`）を使用してください。
    - ❌ `MATRIX1:gate_out1` ➔ 存在しません。MATRIXの出力は **`out_1`, `out_2`, `out_3`, `out_4`** です。
    - ❌ `SCALE1:cv_in > VCO1:cv_in` ➔ `SCALE` は **3Dオブジェクト拡大縮小モジュール**（`obj_in` ➔ `obj_out`）です。ピッチCVのスケールクオンタイズには **`KEY` モジュール**（`cv_in` ➔ `cv_out`）を使用してください。
-   - ❌ 同一モジュールの自己ループ（例: `RF1:trig_out > RF1:trig_in`）➔ 禁止（2台のモジュール間の相互ループ `RF1 ⇄ RF2` や `MARKOV1 ⇄ MARKOV2` は可能）。
+   - ❌ 同一モジュールの自己ループ（例: `RF1:gate_out > RF1:gate_in`）➔ 禁止（2台のモジュール間の相互ループ `RF1 ⇄ RF2` や `MARKOV1 ⇄ MARKOV2` は可能）。
 2. **ゲインステージング指針（音割れ・無音防止）**:
    - `SPK` は内蔵リミッター（Threshold -1.5dB, Ratio 20:1）を備えていますが、`masterVol` は **`0.15` 〜 `0.35`** を推奨します。
    - **`VCA` に `ADSR` / `AR` / `RF` 等のエンベロープを結線する場合、必ず `VCA` の `"level": 0.0` に設定**してください（デフォルトの `1.0` のままだとゲートオフ時も音が鳴り続けます）。
@@ -342,16 +342,16 @@ $$\text{slot} = \text{row} \times 4 + \text{col} \quad (\text{col} \in \{0, 1, 2
 
 ---
 
-#### `RF` — ライズ・フォール・ファンクションジェネレーター（EOCトリガー出力付き）
-トリガー1発で Rise ➔ Fall の1サイクルを実行し、完了時に `trig_out` からEOC（End of Cycle）パルスを出します。
+#### `RF` — ライズ・フォール・ファンクションジェネレーター（EOCゲート出力付き）
+トリガー1発で Rise ➔ Fall の1サイクルを実行し、完了時に `gate_out` からEOC（End of Cycle）パルスを出します。
 - **ポート仕様 (`PORTS`)**:
   | ポート名 | ピン | 方向 | 信号 | 未結線時の挙動 | 変調対象・変換式 |
   | :--- | :---: | :---: | :---: | :--- | :--- |
-  | `trig_in` | PIN5 | IN | Trig | `0.0V` 出力 | 立ち上がりエッジでサイクル開始 |
+  | `gate_in` | PIN5 | IN | Gate | `0.0V` 出力 | 立ち上がりエッジでサイクル開始（別名 `trig_in` も互換受理） |
   | `time_cv` | PIN6 | IN | CV | 手動 `time` 値を使用 | 結線時は全体周期 `time` を CV（`0〜1V`）で制御 |
   | `peak_cv` | PIN7 | IN | CV | 手動 `peak` 比率を使用 | 結線時は Rise/Fall 比率 `peak` を CV（`0〜1V`）で制御 |
   | `cv_out` | PIN10 | OUT | CV | - | `0.0V` 〜 `level` のエンベロープCV出力 |
-  | `trig_out` | PIN11 | OUT | Trig | - | Fall 完了時（EOC）にトリガーパルスを出力（別モジュールへの連鎖用） |
+  | `gate_out` | PIN11 | OUT | Gate | - | Fall 完了時（EOC）にトリガーパルスを出力（別モジュールへの連鎖用、別名 `trig_out`） |
 
 - **パラメータ仕様 (`PARAMS`)**: `time` (`0.02〜2.0`s, 既定 `0.2`), `peak` (`0.01〜0.99`, 既定 `0.5`: `0.05` 以下で鋭いパーカッション減衰), `level` (`0.0〜1.0`, 既定 `1.0`)
 
@@ -384,7 +384,7 @@ $$\text{slot} = \text{row} \times 4 + \text{col} \quad (\text{col} \in \{0, 1, 2
   | ポート名 | ピン | 方向 | 信号 | 未結線時の挙動 | 説明 |
   | :--- | :---: | :---: | :---: | :--- | :--- |
   | `cv_in` | PIN5 | IN | CV | **内部ホワイトノイズを自動生成**してサンプリング | 結線時は外部入力信号（LFOやVCO等）の瞬時値をサンプリング |
-  | `trig_in` | PIN4 | IN | Trig | ホールド値を維持 | 立ち上がり（`> 0.001V`）の瞬間に直前の入力値（または内部乱数）をホールド |
+  | `gate_in` | PIN4 | IN | Gate | ホールド値を維持 | 立ち上がり（`> 0.001V`）の瞬間に直前の入力値（または内部乱数）をホールド（別名 `trig_in` も互換受理） |
   | `cv_out` | PIN10 | OUT | CV | - | $\text{held} \times \text{scale}$ にグライドをかけたCV出力 |
 
 - **パラメータ仕様 (`PARAMS`)**:
@@ -394,7 +394,7 @@ $$\text{slot} = \text{row} \times 4 + \text{col} \quad (\text{col} \in \{0, 1, 2
   | `glide` | number | `0.0` 〜 `0.5` (s) | `0.0` | 目標値への対称RC漸近ポルタメント時定数（秒） |
   | `scale` | number | `-3.0` 〜 `3.0` | `1.0` | 出力電圧のスケーリング倍率 |
 
-- **最小接続例**: `"CLK1:gate_out > SH1:trig_in"`, `"SH1:cv_out > KEY1:cv_in"`, `"KEY1:cv_out > VCO1:cv_in"`（スケールに則ったランダムメロディ）
+- **最小接続例**: `"CLK1:gate_out > SH1:gate_in"`, `"SH1:cv_out > KEY1:cv_in"`, `"KEY1:cv_out > VCO1:cv_in"`（スケールに則ったランダムメロディ）
 
 ---
 
@@ -625,7 +625,7 @@ $$\text{slot} = \text{row} \times 4 + \text{col} \quad (\text{col} \in \{0, 1, 2
 
 #### `SCOPE` / `LISS` / `SPEC` — ビジュアル・アナライザー群
 - **`SCOPE`（オシロスコープ）**:
-  - **PORTS**: `cv_in` (PIN5: 観測するAudio/CV信号), `trig_in` (PIN6: 外部シンクロトリガー、未結線時は内部ゼロクロス同期) | OUT: なし
+  - **PORTS**: `cv_in` (PIN5: 観測するAudio/CV信号), `gate_in` (PIN6: 外部シンクロトリガー、未結線時は内部ゼロクロス同期 / 別名 `trig_in`) | OUT: なし
   - **PARAMS**: `timeSpan` (`0.001〜5.0`s, 既定 `0.05`), `vRange` (`0.5〜20.0`V, 既定 `2`), `trigMode` (`"auto"` \| `"free"`, 既定 `"auto"`)
 - **`LISS`（XYリサジュー・フェーズスコープ）**:
   - **PORTS**: `cv_in_x` (PIN5), `cv_in_y` (PIN6) | OUT: なし | **PARAMS**: `vRange` (`0.5〜10.0`V, 既定 `2`)
@@ -782,7 +782,7 @@ $$\text{CV} = \frac{\text{MIDI\_Note} - 24}{12}$$
 `SH`（内部ノイズ）を `KEY`（スケールクオンタイザー）に通すことで、音楽的なランダム旋律を生成します。
 ```json
 "connections": [
-  "CLK1:gate_out > SH1:trig_in",
+  "CLK1:gate_out > SH1:gate_in",
   "SH1:cv_out > KEY1:cv_in",
   "KEY1:cv_out > VCO1:cv_in",
   "CLK1:gate_out > ADSR1:gate_in"
@@ -816,7 +816,7 @@ $$\text{CV} = \frac{\text{MIDI\_Note} - 24}{12}$$
 },
 "connections": [
   "SEQ16_1:cv_out > SUB_SRC:PIN5_in",
-  "SEQ16_1:gate_out > RF1:trig_in",
+  "SEQ16_1:gate_out > RF1:gate_in",
   "SUB_SRC:PIN10_out > SUB_LPG:PIN5_in",
   "VAL_AMT:cv_out > SUB_LPG:PIN4_in",
   "RF1:cv_out > SUB_LPG:PIN3_in",

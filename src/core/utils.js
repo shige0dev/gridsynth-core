@@ -55,6 +55,9 @@ export const PORT_ALIASES = {
 
     // CLK / GATE
     'clk_in': 'gate_in',
+    'trig_in': 'gate_in',
+    'trig': 'gate_in',
+    'trig_out': 'gate_out',
     'keygate_in': '1shotgate_in',
     'power_in': 'run_in',
     'power': 'run_in',
@@ -64,7 +67,6 @@ export const PORT_ALIASES = {
     'in1': 'wave_in',
     'wave_in1': 'wave_in',
     'in2': 'wave_in2',
-    'trig': 'trig_in',
 
     // FOLD / EFFECTS / AR
     'fold_cv': 'gain_cv',
@@ -128,4 +130,4 @@ export const HIGHLIGHT_CLASSES = {
 
 // Re-export subpatch utilities & signal definitions for seamless backward compatibility
 export * from './sub-utils.js?v=844';
-export * from './signals.js?v=459';
+export * from './signals.js?v=845';

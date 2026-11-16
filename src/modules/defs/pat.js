@@ -179,7 +179,7 @@ export const PAT = {
     ports: () => ({
         in: [
             { port: 'reset_in', pin: 5, color: 'bg-red-500' },
-            { port: '1shotgate_in', pin: 6, color: 'bg-orange-500', label: 'RUN' }
+            { port: '1shotgate_in', pin: 6, color: 'bg-red-500', label: 'RUN' }
         ],
         out: [
             { port: 'gate_out', pin: 10, color: 'bg-red-500' },

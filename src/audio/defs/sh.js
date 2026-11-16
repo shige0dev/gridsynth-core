@@ -37,7 +37,7 @@ export const SH = {
         const buf = new Float32Array(an.frequencyBinCount);
         return {
             nodes: { w, sig, trg, out, an },
-            inputs: { cv_in: sig, sig_in: sig, trig_in: trg },
+            inputs: { cv_in: sig, sig_in: sig, gate_in: trg, trig_in: trg },
             outputs: { cv_out: out },
             read: () => {
                 an.getFloatTimeDomainData(buf);

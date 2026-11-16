@@ -45,9 +45,9 @@ export const MARKOV = {
                 { port: 'trans_out1', pin: 7, color: getTransColor(0, 'trans_out1') },
                 { port: 'trans_out2', pin: 8, color: getTransColor(1, 'trans_out2') },
                 { port: 'trans_out3', pin: 9, color: getTransColor(2, 'trans_out3') },
-                { port: 'startgate_out', pin: 10, color: 'bg-rose-500' },
-                { port: 'gate_out', pin: 11, color: 'bg-rose-500' },
-                { port: 'longgate_out', pin: 12, color: 'bg-rose-500' },
+                { port: 'startgate_out', pin: 10, color: 'bg-red-500' },
+                { port: 'gate_out', pin: 11, color: 'bg-red-500' },
+                { port: 'longgate_out', pin: 12, color: 'bg-red-500' },
                 { port: 'cv_out', pin: 13, color: 'bg-yellow-400' }
             ]
         };

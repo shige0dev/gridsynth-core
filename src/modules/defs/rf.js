@@ -10,12 +10,12 @@ export const RF = {
     }),
     ports: () => ({
         in: [
-            { port: 'trig_in', color: 'bg-red-500' },
+            { port: 'gate_in', color: 'bg-red-500' },
             { port: 'time_cv', color: 'bg-yellow-400' },
             { port: 'peak_cv', color: 'bg-yellow-400' }
         ],
         out: [
-            { port: 'trig_out', color: 'bg-red-500' },
+            { port: 'gate_out', color: 'bg-red-500' },
             { port: 'cv_out', color: 'bg-yellow-400' }
         ]
     }),

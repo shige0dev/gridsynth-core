@@ -31,7 +31,7 @@ export const PARTICLE = {
         in: [
             { port: 'cv_in', pin: 4, color: 'bg-yellow-400', label: 'CV' },
             { port: 'obj_in', pin: 5, color: 'bg-purple-500', label: 'OBJ' },
-            { port: 'gate_in', pin: 6, color: 'bg-red-500', label: 'TRIG' }
+            { port: 'gate_in', pin: 6, color: 'bg-red-500', label: 'GATE' }
         ],
         out: [
             { port: 'obj_out', pin: 10, color: 'bg-purple-500', label: 'OBJ' }

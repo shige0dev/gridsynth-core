@@ -54,7 +54,7 @@ export const SH = {
     ports: () => ({
         in: [
             { port: 'cv_in', color: 'bg-yellow-400' },
-            { port: 'trig_in', color: 'bg-red-500' }
+            { port: 'gate_in', color: 'bg-red-500' }
         ],
         out: [{ port: 'cv_out', color: 'bg-yellow-400' }]
     }),

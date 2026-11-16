@@ -12,7 +12,7 @@
   - 左辺 (PIN1〜4): 入力 (PIN4=MOD1, PIN1=AUX)
   - 底辺 (PIN5〜10): PIN5=**最頻出 CV IN (1V/Oct)**, PIN10=**最頻出 Gate OUT**
   - 右辺 (PIN11〜14): 出力 (PIN11=**最頻出 CV OUT / OUT1**)
-- **シグナル種別と色**: CV=`bg-yellow-400`, Gate=`bg-orange-500` / `bg-red-500`, Audio=`bg-blue-500`。
+- **シグナル種別と色**: CV=`bg-yellow-400`, Gate=`bg-red-500`, Audio=`bg-blue-500`。
 - **結線ステート同期**: ケーブル脱着時は `cableManager` ➔ `synth.updateModule` 経由で `patchState` を Worklet (`isPatched`) へ即時同期。
 
 ## 3. パネル表示規格 (Panel Bar Standards)

@@ -61,6 +61,7 @@ export const RF = {
             outputs: {
                 cv_out: outCv,
                 out: outCv,
+                gate_out: outTrig,
                 trig_out: outTrig
             },
             trigger: () => {

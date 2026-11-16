@@ -3,24 +3,24 @@
 export const SIGNAL_TYPES = {
     CLOCK: {
         id: 'clock',
-        label: 'CLOCK',
-        stroke: '#f43f5e',       // rose-500
-        brightStroke: '#fecdd3', // rose-200
-        tailwind: 'bg-rose-500'
+        label: 'GATE',
+        stroke: '#ef4444',       // red-500
+        brightStroke: '#fca5a5', // red-300
+        tailwind: 'bg-red-500'
     },
     GATE_SEQ: {
         id: 'gate_seq',
-        label: 'GATE/STEP',
-        stroke: '#f43f5e',       // rose-500 (MARKOV / SEQ8 / SEQ16 gate)
-        brightStroke: '#fecdd3',
-        tailwind: 'bg-rose-500'
+        label: 'GATE',
+        stroke: '#ef4444',       // red-500
+        brightStroke: '#fca5a5', // red-300
+        tailwind: 'bg-red-500'
     },
     TRIGGER: {
         id: 'trigger',
-        label: 'TRIGGER',
-        stroke: '#f97316',       // orange-500
-        brightStroke: '#fdba74', // orange-300
-        tailwind: 'bg-orange-500'
+        label: 'GATE',
+        stroke: '#ef4444',       // red-500
+        brightStroke: '#fca5a5', // red-300
+        tailwind: 'bg-red-500'
     },
     TRANS: {
         id: 'trans',
@@ -32,9 +32,9 @@ export const SIGNAL_TYPES = {
     GATE: {
         id: 'gate',
         label: 'GATE',
-        stroke: '#f59e0b',       // amber-500
-        brightStroke: '#fde68a',
-        tailwind: 'bg-orange-500'
+        stroke: '#ef4444',       // red-500
+        brightStroke: '#fca5a5', // red-300
+        tailwind: 'bg-red-500'
     },
     CV: {
         id: 'cv',
