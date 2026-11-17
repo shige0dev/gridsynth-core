@@ -5,12 +5,13 @@ export class SeqProcessor extends AudioWorkletProcessor {
         super();
         this.step = -1;
         this.lastHi = false;
-        this.lastKeyHi = false;
+        this.lastResetHi = false;
         this.cv = 0;
         this.gate = 0;
+        this.eos = false;
         this.gap = 0;
 
-        this.keyGatePatched = false;
+        this.resetPatched = false;
         this.keyMode = 'loop';
         this.active = true;
 
@@ -26,16 +27,17 @@ export class SeqProcessor extends AudioWorkletProcessor {
                     this.steps = msg.steps;
                 }
             } else if (msg.type === 'SET_PATCH') {
-                if (msg.keyGatePatched !== undefined) {
-                    const nextKey = Boolean(msg.keyGatePatched);
-                    if (nextKey !== this.keyGatePatched) {
-                        this.keyGatePatched = nextKey;
-                        this.lastKeyHi = false;
-                        if (this.keyGatePatched) {
-                            // RUN結線時: ゲート待ち状態へ移行してリセット
+                const rawPatched = msg.resetPatched ?? msg.keyGatePatched;
+                if (rawPatched !== undefined) {
+                    const nextReset = Boolean(rawPatched);
+                    if (nextReset !== this.resetPatched) {
+                        this.resetPatched = nextReset;
+                        this.lastResetHi = false;
+                        if (this.resetPatched) {
+                            // RESET_IN結線時: リセット待ち状態へ移行
                             this.resetState(false);
                         } else {
-                            // RUN未結線時: 常時スタンバイ（active = true）へ復帰
+                            // RESET_IN未結線時: 常時スタンバイ（active = true）へ復帰
                             this.active = true;
                             this.port.postMessage({ type: 'STEP', step: this.step, active: true });
                         }
@@ -49,8 +51,8 @@ export class SeqProcessor extends AudioWorkletProcessor {
                 if (msg.keyMode !== undefined) {
                     this.keyMode = msg.keyMode === 'oneshot' ? 'oneshot' : 'loop';
                 }
-                this.lastKeyHi = false;
-                this.resetState(!this.keyGatePatched);
+                this.lastResetHi = false;
+                this.resetState(!this.resetPatched);
             }
         };
     }
@@ -58,6 +60,7 @@ export class SeqProcessor extends AudioWorkletProcessor {
     resetState(active) {
         this.active = active;
         this.step = -1;
+        this.eos = false;
         this.lastHi = false;
         this.gap = 0;
         this.gate = 0;
@@ -96,37 +99,32 @@ export class SeqProcessor extends AudioWorkletProcessor {
 
     process(ins, outs) {
         const gIn = ins[0]?.[0];
-        const inKey = ins[1]?.[0];
-        const cvOut = outs[0]?.[0], gOut = outs[1]?.[0];
-        const len = (cvOut || gOut || gIn || inKey || []).length || 128;
+        const inReset = ins[1]?.[0];
+        const cvOut = outs[0]?.[0], gOut = outs[1]?.[0], eosOut = outs[2]?.[0];
+        const len = (cvOut || gOut || eosOut || gIn || inReset || []).length || 128;
         const minGap = Math.max(1, Math.round(0.002 * getSR()));
         const numSteps = (this.steps && this.steps.length > 0) ? this.steps.length : 8;
 
         for (let i = 0; i < len; i++) {
             const clkV = gIn ? gIn[i] : 0.0;
-            const keyV = inKey ? inKey[i] : 0.0;
+            const rstV = inReset ? inReset[i] : 0.0;
             const isHi = clkV > 0.3;
-            const isKeyHi = keyV >= 0.4;
+            const isRstHi = rstV >= 0.4;
 
-            // 1. RUN / KEYGATE_IN control:
-            // - Unpatched: always on standby (active = true), advances on clock.
-            // - Patched: waits for gate; starts on gate rising edge, resets & stops on gate off.
-            if (!this.keyGatePatched) {
+            // 1. RESET_IN (PIN6) control:
+            // - Unpatched: always active (loop playback on clock).
+            // - Patched: waits in standby until rising edge, resets to step 0 and starts.
+            if (!this.resetPatched) {
                 this.active = true;
-                this.lastKeyHi = false;
+                this.lastResetHi = false;
             } else {
-                if (!isKeyHi) {
-                    if (this.lastKeyHi || this.active || this.step !== -1) {
-                        this.active = false;
-                        this.step = -1;
-                        this.gate = 0.0;
-                        this.port.postMessage({ type: 'STEP', step: -1, active: false });
-                    }
-                    this.lastKeyHi = false;
-                } else if (!this.lastKeyHi) {
-                    this.lastKeyHi = true;
+                if (!isRstHi) {
+                    this.lastResetHi = false;
+                } else if (!this.lastResetHi) {
+                    this.lastResetHi = true;
                     this.active = true;
                     this.step = -1;
+                    this.eos = false;
                     if (isHi) {
                         const { found, nextStep } = this.findNextActiveStep(numSteps);
                         if (found) this.applyStep(nextStep, minGap);
@@ -138,14 +136,19 @@ export class SeqProcessor extends AudioWorkletProcessor {
             // 2. Clock falling edge
             if (!isHi) {
                 this.lastHi = false;
+                this.eos = false;
             }
 
             // 3. Clock rising edge
             if (isHi && !this.lastHi) {
                 this.lastHi = true;
+                this.eos = false;
                 if (this.active) {
                     const { found, nextStep, wrapped } = this.findNextActiveStep(numSteps);
-                    if (this.keyGatePatched && this.keyMode === 'oneshot' && wrapped) {
+                    if (wrapped) {
+                        this.eos = true;
+                    }
+                    if (this.resetPatched && this.keyMode === 'oneshot' && wrapped) {
                         this.active = false;
                         this.step = -1;
                         this.gate = 0.0;
@@ -156,7 +159,7 @@ export class SeqProcessor extends AudioWorkletProcessor {
                 }
             }
 
-            // 4. Output gate and cv
+            // 4. Output gate, cv, and eos
             const cur = (this.active && this.step >= 0 && this.step < numSteps) ? this.steps[this.step] : null;
             const isGateOn = typeof cur === 'number' ? true : (cur && cur.gate !== false);
             const isActOn = typeof cur === 'number' ? true : (cur && cur.active !== false);
@@ -171,6 +174,7 @@ export class SeqProcessor extends AudioWorkletProcessor {
 
             if (cvOut) cvOut[i] = this.cv;
             if (gOut) gOut[i] = this.gate;
+            if (eosOut) eosOut[i] = (this.eos && isHi) ? 1.0 : 0.0;
         }
         return true;
     }

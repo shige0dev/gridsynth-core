@@ -1,6 +1,6 @@
-import { AUDIO_REGISTRY } from './registry.js?v=850';
+import { AUDIO_REGISTRY } from './registry.js?v=851';
 import { AudioHelpers } from './helpers.js?v=839';
-import { parseConn, normalizeSubPort, PORT_ALIASES } from '../core/utils.js?v=847';
+import { parseConn, normalizeSubPort, PORT_ALIASES } from '../core/utils.js?v=851';
 
 export const WORKLET_MODULE_TYPES = ['CLK', 'SEQ8', 'SEQ16', 'PAT', 'ADSR', 'LFO', 'MATH1', 'MATH2', 'SH', 'FOLD', 'LAG', 'CVDELAY', 'SCOPE', 'LISS', 'MARKOV', 'CHORD', 'FMx3', 'FMCORE', 'DIST4', 'SLCT4', 'KEY', 'RF', 'AR', 'WAVE', 'PAD', 'COUNT', 'LUT', 'MATRIX'];
 

@@ -1,11 +1,11 @@
 import { preset01 } from './demos/01_delay_techno.js?v=459';
-import { preset02 } from './demos/02_keyboard_lead.js?v=841';
+import { preset02 } from './demos/02_keyboard_lead.js?v=851';
 import { preset03 } from './demos/03_wavefold_ar_fr.js?v=839';
 import { preset04 } from './demos/04_random_sh_delay.js?v=459';
 import { preset05 } from './demos/05_subpatch_multi_groove.js?v=459';
 import { preset06 } from './demos/06_strudel_house_bassline.js?v=459';
 import { preset07 } from './demos/07_dub_techno_deep_space.js?v=459';
-import { preset08 } from './demos/08_markov_generative_chains.js?v=459';
+import { preset08 } from './demos/08_markov_generative_chains.js?v=851';
 import { preset09 } from './demos/09_fm_heavy_techno_groove.js?v=459';
 import { preset11 } from './demos/11_fmcore_2op_demo.js?v=459';
 import { preset12 } from './demos/12_chord_arpeggio.js?v=459';

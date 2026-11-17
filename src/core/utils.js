@@ -53,12 +53,17 @@ export const PORT_ALIASES = {
     'b': 'cv_in_b',
     'in_b': 'cv_in_b',
 
-    // CLK / GATE
+    // CLK / GATE / RESET / EOS
     'clk_in': 'gate_in',
     'trig_in': 'gate_in',
     'trig': 'gate_in',
     'trig_out': 'gate_out',
-    'keygate_in': '1shotgate_in',
+    'trans_in': 'reset_in',
+    'trans_out1': 'eos_out1',
+    'trans_out2': 'eos_out2',
+    'trans_out3': 'eos_out3',
+    '1shotgate_in': 'reset_in',
+    'keygate_in': 'reset_in',
     'power_in': 'run_in',
     'power': 'run_in',
 
@@ -130,4 +135,4 @@ export const HIGHLIGHT_CLASSES = {
 
 // Re-export subpatch utilities & signal definitions for seamless backward compatibility
 export * from './sub-utils.js?v=847';
-export * from './signals.js?v=845';
+export * from './signals.js?v=851';

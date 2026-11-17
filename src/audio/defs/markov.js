@@ -54,9 +54,13 @@ export const MARKOV = {
             nodes: { w, silent, gClk, gTrig, g1, g2, g3, gCv, gStartGate, gThruGate, gLongGate },
             inputs: {
                 gate_in: gClk,
+                reset_in: gTrig,
                 trans_in: gTrig
             },
             outputs: {
+                eos_out1: g1,
+                eos_out2: g2,
+                eos_out3: g3,
                 trans_out1: g1,
                 trans_out2: g2,
                 trans_out3: g3,

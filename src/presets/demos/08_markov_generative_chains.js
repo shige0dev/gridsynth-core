@@ -31,22 +31,22 @@ export const preset08 = {
                 "CLK1:gate_out > MARKOV4:gate_in",
                 "CLK1:gate_out > ADSR1:gate_in",
 
-                // Markov Transition Mesh (4 nodes - Complete Graph K4)
-                "MARKOV1:trans_out1 > MARKOV2:trans_in",
-                "MARKOV1:trans_out2 > MARKOV3:trans_in",
-                "MARKOV1:trans_out3 > MARKOV4:trans_in",
+                // Markov EOS Transition Mesh (4 nodes - Complete Graph K4)
+                "MARKOV1:eos_out1 > MARKOV2:reset_in",
+                "MARKOV1:eos_out2 > MARKOV3:reset_in",
+                "MARKOV1:eos_out3 > MARKOV4:reset_in",
 
-                "MARKOV2:trans_out1 > MARKOV1:trans_in",
-                "MARKOV2:trans_out2 > MARKOV3:trans_in",
-                "MARKOV2:trans_out3 > MARKOV4:trans_in",
+                "MARKOV2:eos_out1 > MARKOV1:reset_in",
+                "MARKOV2:eos_out2 > MARKOV3:reset_in",
+                "MARKOV2:eos_out3 > MARKOV4:reset_in",
 
-                "MARKOV3:trans_out1 > MARKOV1:trans_in",
-                "MARKOV3:trans_out2 > MARKOV2:trans_in",
-                "MARKOV3:trans_out3 > MARKOV4:trans_in",
+                "MARKOV3:eos_out1 > MARKOV1:reset_in",
+                "MARKOV3:eos_out2 > MARKOV2:reset_in",
+                "MARKOV3:eos_out3 > MARKOV4:reset_in",
 
-                "MARKOV4:trans_out1 > MARKOV1:trans_in",
-                "MARKOV4:trans_out2 > MARKOV2:trans_in",
-                "MARKOV4:trans_out3 > MARKOV3:trans_in",
+                "MARKOV4:eos_out1 > MARKOV1:reset_in",
+                "MARKOV4:eos_out2 > MARKOV2:reset_in",
+                "MARKOV4:eos_out3 > MARKOV3:reset_in",
 
                 // Pitch CV Summing to VCO1
                 "MARKOV1:cv_out > VCO1:cv_in",

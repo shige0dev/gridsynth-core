@@ -95,8 +95,8 @@ export const getPortSignalType = (portName = '', modId = '') => {
     if (p.includes('link')) {
         return SIGNAL_TYPES.LINK;
     }
-    if (p.includes('trans')) {
-        return SIGNAL_TYPES.TRANS;
+    if (p.includes('eos') || p.includes('trans') || p.includes('trig') || p.includes('reset') || p.includes('gate') || p.includes('power') || p.includes('run')) {
+        return SIGNAL_TYPES.GATE;
     }
     if (m.startsWith('SLCT4') || m.startsWith('DIST4') || m.startsWith('MATRIX')) {
         if (p.includes('gate') || p.includes('clk')) return SIGNAL_TYPES.GATE_SEQ;

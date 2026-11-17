@@ -11,32 +11,35 @@ function createSeqAudio(stepCount) {
 
             const w = new AudioWorkletNode(ctx, 'seq-processor', {
                 numberOfInputs: 2,
-                numberOfOutputs: 2,
+                numberOfOutputs: 3,
+                outputChannelCount: [1, 1, 1],
                 processorOptions: { steps }
             });
             w.port.postMessage({ type: 'SET_STEPS', steps });
             w.port.postMessage({ type: 'SET_CONFIG', keyMode });
 
-            const cv = ctx.createGain(), gt = ctx.createGain();
-            const gIn = ctx.createGain(), gKeyGateIn = ctx.createGain();
+            const cv = ctx.createGain(), gt = ctx.createGain(), eos = ctx.createGain();
+            const gIn = ctx.createGain(), gResetIn = ctx.createGain();
 
-            // Outputs: 0: cv_out (PIN 11), 1: gate_out (PIN 10)
+            // Outputs: 0: cv_out (PIN 11), 1: gate_out (PIN 10), 2: eos_out (PIN 9)
             w.connect(cv, 0, 0);
             w.connect(gt, 1, 0);
+            w.connect(eos, 2, 0);
 
-            // Inputs: 0: gate_in / clk_in (PIN 5), 1: 1shotgate_in / RUN (PIN 6)
+            // Inputs: 0: gate_in / clk_in (PIN 5), 1: reset_in (PIN 6)
             gIn.connect(w, 0, 0);
-            gKeyGateIn.connect(w, 0, 1);
+            gResetIn.connect(w, 0, 1);
 
             if (eng?.silentSink) {
                 gt.connect(eng.silentSink);
+                eos.connect(eng.silentSink);
             }
 
             const sendPatch = (p) => {
                 const appPatch = window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id) : null;
                 const targetPatch = p || appPatch;
-                const keyGatePatched = Boolean(targetPatch?.has?.('1shotgate_in') || targetPatch?.has?.('keygate_in'));
-                w.port.postMessage({ type: 'SET_PATCH', keyGatePatched });
+                const resetPatched = Boolean(targetPatch?.has?.('reset_in') || targetPatch?.has?.('1shotgate_in') || targetPatch?.has?.('keygate_in'));
+                w.port.postMessage({ type: 'SET_PATCH', resetPatched });
             };
             sendPatch(patch || null);
             w.port.postMessage({ type: 'RESET', keyMode });
@@ -53,16 +56,18 @@ function createSeqAudio(stepCount) {
             };
 
             return {
-                nodes: { w, cv, gt, gIn, gKeyGateIn },
+                nodes: { w, cv, gt, eos, gIn, gResetIn },
                 inputs: {
                     gate_in: gIn,
                     clk_in: gIn,
-                    '1shotgate_in': gKeyGateIn,
-                    keygate_in: gKeyGateIn
+                    reset_in: gResetIn,
+                    '1shotgate_in': gResetIn,
+                    keygate_in: gResetIn
                 },
                 outputs: {
                     cv_out: cv,
-                    gate_out: gt
+                    gate_out: gt,
+                    eos_out: eos
                 },
                 updatePatchState: (p) => sendPatch(p),
                 resetStep: () => {

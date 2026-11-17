@@ -303,9 +303,10 @@ function createSeqModule(maxSteps) {
         ports: () => ({
             in: [
                 { port: 'gate_in', pin: 5, color: 'bg-red-500', label: 'GATE' },
-                { port: '1shotgate_in', pin: 6, color: 'bg-red-500', label: 'RUN' }
+                { port: 'reset_in', pin: 6, color: 'bg-red-500', label: 'RST' }
             ],
             out: [
+                { port: 'eos_out', pin: 9, color: 'bg-red-500', label: 'EOS' },
                 { port: 'gate_out', pin: 10, color: 'bg-red-500', label: 'GATE' },
                 { port: 'cv_out', pin: 11, color: 'bg-yellow-400', label: 'CV' }
             ]
@@ -355,7 +356,7 @@ function createSeqModule(maxSteps) {
                                 <i data-lucide="download" class="w-2.5 h-2.5 pointer-events-none"></i>
                                 <span>IMP</span>
                             </button>
-                            <button id="${prefix}-keymode-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors shrink-0 ${keyMode === 'loop' ? 'bg-orange-600 text-white border-orange-500' : 'bg-purple-600 text-white border-purple-500'}" title="RUN (PIN6) 動作モード切替 (LOOP: ゲートONの間ループ / 1-SHOT: 1周で停止)">RUN: ${keyMode === 'loop' ? 'LOOP' : '1-SHOT'}</button>
+                            <button id="${prefix}-keymode-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors shrink-0 ${keyMode === 'loop' ? 'bg-orange-600 text-white border-orange-500' : 'bg-purple-600 text-white border-purple-500'}" title="RESET_IN (PIN6) 動作モード切替 (LOOP: リセットで先頭からループ / 1-SHOT: 1周後に停止＆EOS出力)">RUN: ${keyMode === 'loop' ? 'LOOP' : '1-SHOT'}</button>
                             <button id="${prefix}-qlz-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors shrink-0 ${m.quantize !== false ? 'bg-cyan-600 text-white border-cyan-500' : 'bg-slate-800 text-slate-400 border-slate-700'}">QLZ: ${m.quantize !== false ? 'ON' : 'OFF'}</button>
                         </div>
                     </div>

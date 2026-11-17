@@ -28,23 +28,23 @@ export const MARKOV = {
     },
     ports: (m, ctx) => {
         const weights = m?.weights || [10, 0, 0, 0];
-        // weights[1..3] correspond to trans_out1..3 (PIN 7..9)
+        // weights[1..3] correspond to eos_out1..3 (PIN 7..9)
         const patched = ctx?.patched;
-        const getTransColor = (extIdx, port) => {
+        const getEosColor = (extIdx, port, legacyPort) => {
             const w = weights[extIdx + 1] || 0;
             if (w <= 0) return 'bg-slate-700';
-            const isConnected = patched?.has(port);
-            return isConnected ? 'bg-slate-400' : 'bg-purple-500';
+            const isConnected = patched?.has(port) || patched?.has(legacyPort);
+            return isConnected ? 'bg-red-500' : 'bg-purple-500';
         };
         return {
             in: [
                 { port: 'gate_in', pin: 5, color: 'bg-red-500' },
-                { port: 'trans_in', pin: 6, color: 'bg-slate-400' }
+                { port: 'reset_in', pin: 6, color: 'bg-red-500' }
             ],
             out: [
-                { port: 'trans_out1', pin: 7, color: getTransColor(0, 'trans_out1') },
-                { port: 'trans_out2', pin: 8, color: getTransColor(1, 'trans_out2') },
-                { port: 'trans_out3', pin: 9, color: getTransColor(2, 'trans_out3') },
+                { port: 'eos_out1', pin: 7, color: getEosColor(0, 'eos_out1', 'trans_out1') },
+                { port: 'eos_out2', pin: 8, color: getEosColor(1, 'eos_out2', 'trans_out2') },
+                { port: 'eos_out3', pin: 9, color: getEosColor(2, 'eos_out3', 'trans_out3') },
                 { port: 'startgate_out', pin: 10, color: 'bg-red-500' },
                 { port: 'gate_out', pin: 11, color: 'bg-red-500' },
                 { port: 'longgate_out', pin: 12, color: 'bg-red-500' },
@@ -122,7 +122,7 @@ export const MARKOV = {
                 <!-- CV Out & Transition Weights Unified Row -->
                 <div class="bg-slate-950/40 p-2 rounded-xl border border-slate-800 space-y-1.5">
                     <div class="flex items-center justify-between text-[8px] font-bold text-slate-400 uppercase tracking-wider pb-0.5 border-b border-slate-800/80">
-                        <span>CV OUT & TRANSITION WEIGHTS</span>
+                        <span>CV OUT & EOS WEIGHTS</span>
                     </div>
 
                     <div class="flex items-center justify-around gap-1 pt-1">
@@ -134,11 +134,11 @@ export const MARKOV = {
 
                         <div class="w-[1px] h-28 bg-slate-800/80 self-center mx-0.5"></div>
 
-                        <!-- Self Transition Slider (weights[0]: TRANS_OUT 0 内部自己結線) -->
-                        ${UIHelpers.createVSliderHTML('markov-w-0', 'SELF', 0, 100, 1, weights[0] ?? 10, 'OUT 0', 'amber', false, `${pcts[0]}%`)}
+                        <!-- Self Transition Slider (weights[0]: 内部自己ループ) -->
+                        ${UIHelpers.createVSliderHTML('markov-w-0', 'SELF', 0, 100, 1, weights[0] ?? 10, 'LOOP', 'amber', false, `${pcts[0]}%`)}
 
-                        <!-- Output 1..3 Sliders (weights[1..3]: OUT 1 to OUT 3 matching PIN 7..PIN 9) -->
-                        ${[1, 2, 3].map(idx => UIHelpers.createVSliderHTML(`markov-w-${idx}`, `OUT ${idx}`, 0, 100, 1, weights[idx] ?? 0, `CH ${idx}`, 'amber', false, `${pcts[idx]}%`)).join('')}
+                        <!-- EOS 1..3 Sliders (weights[1..3]: EOS 1 to EOS 3 matching PIN 7..PIN 9) -->
+                        ${[1, 2, 3].map(idx => UIHelpers.createVSliderHTML(`markov-w-${idx}`, `EOS ${idx}`, 0, 100, 1, weights[idx] ?? 0, `PIN ${6 + idx}`, 'amber', false, `${pcts[idx]}%`)).join('')}
                     </div>
                 </div>
             </div>`;

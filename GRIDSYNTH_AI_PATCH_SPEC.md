@@ -417,12 +417,13 @@ $$\text{slot} = \text{row} \times 4 + \text{col} \quad (\text{col} \in \{0, 1, 2
 
 ---
 
-#### `SEQ8` / `SEQ16` — 8 / 16ステップシーケンサー（`1shotgate_in` 制御対応）
+#### `SEQ8` / `SEQ16` — 8 / 16ステップシーケンサー（`reset_in` & `eos_out` 連鎖対応）
 - **ポート仕様 (`PORTS`)**:
   | ポート名 | ピン | 方向 | 信号 | 未結線時の挙動 | 説明 |
   | :--- | :---: | :---: | :---: | :--- | :--- |
   | `gate_in` | PIN5 | IN | Gate | **停止（自動進行しません）** | **必須**: `CLK1:gate_out` 等のクロックを入力すると立ち上がりでステップ進行 |
-  | `1shotgate_in` | PIN6 | IN | Gate | **常時RUN有効**（クロックに従い連続再生） | **結線時はゲート待機モード**: `≥ 0.4V` の間だけ先頭から再生し、`0V` で即停止＆リセット（旧名 `keygate_in` も互換受理） |
+  | `reset_in` | PIN6 | IN | 短パルスGate | **常時RUN有効**（クロックに従い連続再生） | **結線時はリセット待機モード**: 立ち上がりエッジ（`≥ 0.4V`）でステートを先頭（ステップ0）へ初期化して開始（旧名 `1shotgate_in`/`keygate_in` も互換受理） |
+  | `eos_out` | PIN9 | OUT | 短パルスGate | - | **EOS (End Of State)**: 最終ステップが終わった次のクロック立ち上がりで短パルスGateを発信（他モジュール `reset_in` へのバトン接続用） |
   | `gate_out` | PIN10 | OUT | Gate | - | 現在ステップの `gate: true` かつクロックHighの期間 `1.0V` を出力 |
   | `cv_out` | PIN11 | OUT | CV | - | 現在ステップの 1V/Oct ピッチCV（`0.0V = C1`, `1.0V = C2`）を出力 |
 
@@ -430,7 +431,7 @@ $$\text{slot} = \text{row} \times 4 + \text{col} \quad (\text{col} \in \{0, 1, 2
   | キー名 | 型 | 範囲 / 選択肢 | デフォルト | 詳細 |
   | :--- | :--- | :--- | :---: | :--- |
   | `quantize` | bool | `true` \| `false` | `true` | `true` で半音（$1/12\text{V}$）単位にスナップ |
-  | `keyMode` | enum | `"loop"` \| `"oneshot"` | `"loop"` | `1shotgate_in` 結線時の挙動（`"oneshot"` は1周再生後に自動停止し次のゲート立ち上がりまで待機） |
+  | `keyMode` | enum | `"loop"` \| `"oneshot"` | `"loop"` | `reset_in` 結線時の挙動（`"oneshot"` は1周再生後、最終ステップが終わった次のクロックで自動停止＆`eos_out` 発信） |
   | `steps` | array | 長さ8 (`SEQ8`) / 16 (`SEQ16`) | - | `{ "cv": 1.0, "active": true, "cvActive": true, "gate": true }` の配列（`cv` に `"C2"` 等の音名文字列を書いてもローダーが数値へ自動変換します） |
 
 ---
@@ -526,13 +527,13 @@ $$\text{slot} = \text{row} \times 4 + \text{col} \quad (\text{col} \in \{0, 1, 2
 ---
 
 #### `MARKOV` — マルコフ連鎖ステートノード
-複数台の `MARKOV` を `trans_out1..3 > trans_in` で相互結線し、確率的オートマトン作曲を行います。
+複数台の `MARKOV`（または `SEQ`）を `eos_out1..3 > reset_in` で相互結線し、確率的オートマトン作曲を行います。
 - **ポート仕様 (`PORTS`)**:
-  - IN: `gate_in` (PIN5: クロック入力), `trans_in` (PIN6: 他ノードからの状態遷移トリガー)
-  - OUT: `trans_out1` (PIN11), `trans_out2` (PIN12), `trans_out3` (PIN13), `startgate_out` (PIN7), `gate_out` (PIN8), `longgate_out` (PIN9), `cv_out` (PIN10: アクティブ時に自身のピッチCVを出力、非アクティブ時は `0.0V`)
-- **パラメータ仕様 (`PARAMS`)**: `initOn` (`bool`: 最初の1台のみ `true` に設定), `rootMidi` (`24〜72`, 既定 `48`), `quantize` (`bool`), `holdClocks` (`1〜16`, 既定 `1`), `weights` (`[self, out1, out2, out3]` の遷移確率重み配列、例: `[2, 5, 3, 0]`)
+  - IN: `gate_in` (PIN5: クロック入力), `reset_in` (PIN6: 状態初期化＆開始を行うリセット入力)
+  - OUT: `eos_out1` (PIN7), `eos_out2` (PIN8), `eos_out3` (PIN9: 最終状態が終わった次のクロックで確率発火するEOS出力), `startgate_out` (PIN10), `gate_out` (PIN11), `longgate_out` (PIN12), `cv_out` (PIN13: アクティブ時に自身のピッチCVを出力、非アクティブ時は `0.0V`)
+- **パラメータ仕様 (`PARAMS`)**: `initOn` (`bool`: 最初の1台のみ `true` に設定), `rootMidi` (`24〜72`, 既定 `48`), `quantize` (`bool`), `holdClocks` (`1〜16`, 既定 `1`), `weights` (`[self, eos1, eos2, eos3]` の確率重み配列、例: `[2, 5, 3, 0]`)
 - **最小接続例**:
-  `"CLK1:gate_out > MARKOV1:gate_in"`, `"CLK1:gate_out > MARKOV2:gate_in"`, `"MARKOV1:trans_out1 > MARKOV2:trans_in"`, `"MARKOV2:trans_out1 > MARKOV1:trans_in"`, `"MARKOV1:cv_out > VCO1:cv_in"`, `"MARKOV2:cv_out > VCO1:cv_in"`
+  `"CLK1:gate_out > MARKOV1:gate_in"`, `"CLK1:gate_out > MARKOV2:gate_in"`, `"MARKOV1:eos_out1 > MARKOV2:reset_in"`, `"MARKOV2:eos_out1 > MARKOV1:reset_in"`, `"MARKOV1:cv_out > VCO1:cv_in"`, `"MARKOV2:cv_out > VCO1:cv_in"`
 
 ---
 
@@ -850,7 +851,7 @@ $$\text{CV} = \frac{\text{MIDI\_Note} - 24}{12}$$
 
 ### 【レシピ 1】常時自動再生 SEQ8 + KEY トランスポーズ + WAVE3D スペアナ地形 + 2×2 大画面 DISPLAY + ワイド SPACE リバーブ
 - **運用ポイント**:
-  - `SEQ8_1:1shotgate_in` を未結線にしているため、**インポート直後から即座に自動再生**されます（鍵盤押下トリガーにしたい場合のみ `KEY1:gate_out > SEQ8_1:1shotgate_in` を接続します）。
+  - `SEQ8_1:reset_in` を未結線にしているため、**インポート直後から即座に自動再生**されます（`EOS` 連携や外部リセットしたい場合のみ `reset_in` に接続します）。
   - `KEY1:cv_out`（`"cv": 0.0` で初期オフセット0V）と `SEQ8_1:cv_out` を両方 `VCO1:cv_in` に接続することで、画面の鍵盤を弾いた瞬間にシーケンス全体をリアルタイム移調できます。
 
 ```json
@@ -1053,15 +1054,15 @@ LAG       | IN: cv_in time_cv | OUT: cv_out
 
 [Clock / Seq / Logic / Ctrl]
 CLK       | IN: reset_in | OUT: gate_out
-SEQ8      | IN: gate_in 1shotgate_in | OUT: gate_out cv_out
-SEQ16     | IN: gate_in 1shotgate_in | OUT: gate_out cv_out
+SEQ8      | IN: gate_in reset_in | OUT: eos_out gate_out cv_out
+SEQ16     | IN: gate_in reset_in | OUT: eos_out gate_out cv_out
 PAT       | IN: reset_in 1shotgate_in | OUT: gate_out cv_out
 KEY       | IN: cv_in | OUT: cv_out gate_out
 COUNT     | IN: gate_in reset_in | OUT: cv_out carry_out
 MATRIX    | IN: cv_in | OUT: out_1 out_2 out_3 out_4
 LUT       | IN: cv_in | OUT: cv_out
 CHORD     | IN: cv_in | OUT: cv_out1 cv_out2 cv_out3 cv_out4
-MARKOV    | IN: gate_in trans_in | OUT: trans_out1 trans_out2 trans_out3 startgate_out gate_out longgate_out cv_out
+MARKOV    | IN: gate_in reset_in | OUT: eos_out1 eos_out2 eos_out3 startgate_out gate_out longgate_out cv_out
 DIST4     | IN: cv_in gate_in | OUT: cv_out1 cv_out2 cv_out3 cv_out4
 SLCT4     | IN: gate_in cv_in1 cv_in2 cv_in3 cv_in4 | OUT: gate_out cv_out
 MATH1     | IN: cv_in_a | OUT: cv_out
@@ -1116,7 +1117,7 @@ DISPLAY   | IN: video_in | OUT: video_out
 3. "modules" の各 "type" および "connections" の全ポート名が §2.2・§5 のモジュール別リファレンスに実在し、"送信元ID:出力ポート > 送信先ID:入力ポート" (OUT ➔ IN) の方向であること。
 4. 最終オーディオ出力は SPK1 の "wave_in_l" と "wave_in_r" の両方に結線すること（REVERB を使う場合は "REVERB1:wave_out > SPK1:wave_in_l", "REVERB1:wave_out_r > SPK1:wave_in_r" でワイドステレオ接続）。
 5. エンベロープ (ADSR / AR / RF) で開閉する VCA は必ず `"level": 0.0` に設定すること。
-6. SEQ8 / SEQ16 には必ず CLK の `gate_out` を `gate_in` に接続すること。インポート直後から自動再生させる場合は `1shotgate_in` (PIN6: RUN) を未結線にし、鍵盤押下中のみ再生させる場合のみ `1shotgate_in` に結線すること。
+6. SEQ8 / SEQ16 には必ず CLK の `gate_out` を `gate_in` に接続すること。インポート直後から自動再生させる場合は `reset_in` (PIN6) を未結線にし、外部リセット／EOS連鎖（`eos_out > reset_in`）で起動させる場合のみ `reset_in` に結線すること。
 7. ピッチCVのスケールクオンタイズには KEY モジュール (`cv_in > cv_out`) を使用すること（SCALE モジュールは 3D オブジェクト拡大縮小専用 `obj_in > obj_out`）。
 8. 3D・映像パイプラインは OBJECT / PATH / PARTICLE / WAVE3D (`obj_out`) ➔ ROTATE / MOVE / SCALE / VERTEX / SCATTER (`obj_in > obj_out`) ➔ RENDER (`obj_in > video_out`) ➔ VFX / VMIX ➔ DISPLAY (`video_in`) の順に接続すること。DISPLAY が1台の場合は `"divN": 1`、2x2大画面の場合は `"divN": 2` を4台隣接配置してデイジーチェーン接続すること。
 9. 万一インポート時にエラーメッセージが返された場合は、エラー文中の「利用可能な端子一覧」を参照して該当箇所を修正し、完全な JSON を再出力すること。
