@@ -131,6 +131,7 @@ export class ToolbarManager {
                 await this.ui.setPowerState(true);
             }
             this.ui.synth.setPlaybackState(true);
+            this.ui.synth.resetSequencers();
             document.getElementById('seq-play-btn')?.classList.add('is-active');
         });
 

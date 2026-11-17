@@ -44,7 +44,7 @@ export class SeqProcessor extends AudioWorkletProcessor {
                 }
             } else if (msg.type === 'RESET') {
                 this.lastResetVal = 0.0;
-                this.resetState(!this.resetPatched);
+                this.resetState(true);
             }
         };
     }
