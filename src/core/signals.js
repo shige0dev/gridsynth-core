@@ -17,10 +17,17 @@ export const SIGNAL_TYPES = {
     },
     TRIGGER: {
         id: 'reset_eos',
-        label: 'RESET/EOS',
+        label: 'RESET',
         stroke: '#f97316',       // orange-500
         brightStroke: '#fdba74', // orange-300
         tailwind: 'bg-orange-500'
+    },
+    EOS: {
+        id: 'eos',
+        label: 'EOS',
+        stroke: '#f59e0b',       // amber-500 (shifted toward yellow from orange)
+        brightStroke: '#fcd34d', // amber-300
+        tailwind: 'bg-amber-500'
     },
     TRANS: {
         id: 'trans',
@@ -95,7 +102,10 @@ export const getPortSignalType = (portName = '', modId = '') => {
     if (p.includes('link')) {
         return SIGNAL_TYPES.LINK;
     }
-    if (p.includes('eos') || p.includes('reset') || p.includes('trans')) {
+    if (p.includes('eos')) {
+        return SIGNAL_TYPES.EOS;
+    }
+    if (p.includes('reset') || p.includes('trans')) {
         return SIGNAL_TYPES.TRIGGER;
     }
     if (p.includes('trig') || p.includes('gate') || p.includes('power') || p.includes('run')) {

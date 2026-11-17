@@ -32,7 +32,7 @@ export const MARKOV = {
         const patched = ctx?.patched;
         const getEosColor = (extIdx) => {
             const w = weights[extIdx + 1] || 0;
-            return w <= 0 ? 'bg-slate-700' : 'bg-orange-500';
+            return w <= 0 ? 'bg-slate-700' : 'bg-amber-500';
         };
         return {
             in: [
