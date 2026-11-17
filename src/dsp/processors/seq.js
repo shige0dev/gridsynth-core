@@ -32,10 +32,7 @@ export class SeqProcessor extends AudioWorkletProcessor {
                     if (nextReset !== this.resetPatched) {
                         this.resetPatched = nextReset;
                         this.lastResetVal = 0.0;
-                        if (this.resetPatched) {
-                            // RESET_IN結線時: リセット待ち状態へ移行
-                            this.resetState(false);
-                        } else {
+                        if (!this.resetPatched) {
                             // RESET_IN未結線時: 常時スタンバイ（active = true）へ復帰
                             this.active = true;
                             this.port.postMessage({ type: 'STEP', step: this.step, active: true });
