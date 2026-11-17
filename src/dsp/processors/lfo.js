@@ -1,4 +1,4 @@
-import { getSR } from './common.js';
+import { getSR, isRisingSpike } from './common.js';
 
 export class LfoProcessor extends AudioWorkletProcessor {
     static get parameterDescriptors() {
@@ -19,7 +19,7 @@ export class LfoProcessor extends AudioWorkletProcessor {
         this.syncMode = 'free';
         this.division = '1/4';
         this.bpm = 120;
-        this.lastTrig = false;
+        this.lastTrigVal = 0.0;
         this.configRate = null;
         this.configDepth = null;
         this.configDuty = null;
@@ -47,7 +47,7 @@ export class LfoProcessor extends AudioWorkletProcessor {
             } else if (e.data.type === 'RESET') {
                 this.ph = 0;
                 this.syncBaseSample = (typeof currentFrame !== 'undefined') ? currentFrame : ((typeof currentTime !== 'undefined') ? (currentTime * getSR()) : 0);
-                this.lastTrig = false;
+                this.lastTrigVal = 0.0;
             }
         };
     }
@@ -87,11 +87,10 @@ export class LfoProcessor extends AudioWorkletProcessor {
 
             for (let i = 0; i < out.length; i++) {
                 const trigVal = resetIn ? resetIn[i] : 0;
-                const isHi = trigVal > 0.3;
-                if (isHi && !this.lastTrig) {
+                if (isRisingSpike(trigVal, this.lastTrigVal, 0.4)) {
                     this.syncBaseSample = frameStart + i;
                 }
-                this.lastTrig = isHi;
+                this.lastTrigVal = trigVal;
 
                 const currentSample = frameStart + i - this.syncBaseSample;
                 const rawP = (currentSample / sr) * baseRate + phaseOffset;
@@ -109,11 +108,10 @@ export class LfoProcessor extends AudioWorkletProcessor {
             const baseRate = (this.configRate !== null && this.configRate !== undefined) ? this.configRate : (paramRate ?? 2.0);
             for (let i = 0; i < out.length; i++) {
                 const trigVal = resetIn ? resetIn[i] : 0;
-                const isHi = trigVal > 0.3;
-                if (isHi && !this.lastTrig) {
+                if (isRisingSpike(trigVal, this.lastTrigVal, 0.4)) {
                     this.ph = 0;
                 }
-                this.lastTrig = isHi;
+                this.lastTrigVal = trigVal;
 
                 let effRate = baseRate;
                 if (rateCvIn) {

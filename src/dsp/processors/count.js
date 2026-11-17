@@ -1,6 +1,10 @@
+import { isRisingSpike } from './common.js';
+
 // ============================================================================
 // COUNT Processor (AudioWorklet)
 // 256 Binary Counter / Frequency Divider with Carry Out and CV Output
+import { isRisingSpike } from './common.js';
+
 // ============================================================================
 
 class CountProcessor extends AudioWorkletProcessor {
@@ -33,6 +37,7 @@ class CountProcessor extends AudioWorkletProcessor {
       } else if (data.type === 'RESET') {
         this.count = 0;
         this.carryCounter = 0;
+        this.prevReset = 0;
       }
     };
   }
@@ -57,9 +62,9 @@ class CountProcessor extends AudioWorkletProcessor {
       const clkVal = clkIn ? clkIn[i] : 0;
       const resetVal = resetIn ? resetIn[i] : 0;
 
-      // 1. Reset check (Rising edge >= 0.3)
+      // 1. Reset check (Differentiated rising spike >= 0.4)
       let didReset = false;
-      if (resetVal >= 0.3 && this.prevReset < 0.3) {
+      if (isRisingSpike(resetVal, this.prevReset, 0.4)) {
         this.count = 0;
         this.carryCounter = 0;
         this.lastReportedCount = -1;

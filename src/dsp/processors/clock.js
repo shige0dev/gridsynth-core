@@ -1,4 +1,4 @@
-import { getSR } from './common.js';
+import { getSR, isRisingSpike } from './common.js';
 
 export function parseClockRate(val) {
     if (typeof val === 'number') return val > 0 ? val : 1.0;
@@ -37,7 +37,7 @@ export class ClockProcessor extends AudioWorkletProcessor {
         this.div = 'x2';
         this.limitPct = 90.0;
         this.running = false;
-        this.lastResetTrig = false;
+        this.lastResetVal = 0.0;
         this.port.onmessage = e => {
             if (e.data.type === 'SET_STATE') {
                 if (typeof e.data.running === 'boolean') {
@@ -52,7 +52,7 @@ export class ClockProcessor extends AudioWorkletProcessor {
             } else if (e.data.type === 'RESET') {
                 this.T = 0;
                 this.left = 0;
-                this.lastResetTrig = false;
+                this.lastResetVal = 0.0;
             }
         };
     }
@@ -71,14 +71,13 @@ export class ClockProcessor extends AudioWorkletProcessor {
         const pDur = Math.min(reqPDur, maxPDur);
 
         for (let i = 0; i < out.length; i++) {
-            // 1. 外部リセット端子 (reset_in) の立ち上がり検知 (> 0.3)
+            // 1. 外部リセット端子 (reset_in) の微分スパイク立ち上がり検知 (>= 0.4)
             const rstVal = rstIn ? rstIn[i] : 0.0;
-            const isRstHi = rstVal > 0.3;
-            if (isRstHi && !this.lastResetTrig) {
+            if (isRisingSpike(rstVal, this.lastResetVal, 0.4)) {
                 this.T = 0;
                 this.left = this.running ? pDur : 0; // リセットと同時に拍頭パルスを出力 (再生中のみ)
             }
-            this.lastResetTrig = isRstHi;
+            this.lastResetVal = rstVal;
 
             if (!this.running) {
                 out[i] = 0;

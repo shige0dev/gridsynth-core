@@ -1,11 +1,11 @@
-import { getSR } from './common.js';
+import { getSR, isRisingSpike } from './common.js';
 
 export class SeqProcessor extends AudioWorkletProcessor {
     constructor(options) {
         super();
         this.step = -1;
         this.lastHi = false;
-        this.lastResetHi = false;
+        this.lastResetVal = 0.0;
         this.cv = 0;
         this.gate = 0;
         this.eos = false;
@@ -31,7 +31,7 @@ export class SeqProcessor extends AudioWorkletProcessor {
                     const nextReset = Boolean(rawPatched);
                     if (nextReset !== this.resetPatched) {
                         this.resetPatched = nextReset;
-                        this.lastResetHi = false;
+                        this.lastResetVal = 0.0;
                         if (this.resetPatched) {
                             // RESET_IN結線時: リセット待ち状態へ移行
                             this.resetState(false);
@@ -43,7 +43,7 @@ export class SeqProcessor extends AudioWorkletProcessor {
                     }
                 }
             } else if (msg.type === 'RESET') {
-                this.lastResetHi = false;
+                this.lastResetVal = 0.0;
                 this.resetState(!this.resetPatched);
             }
         };
@@ -101,19 +101,15 @@ export class SeqProcessor extends AudioWorkletProcessor {
             const clkV = gIn ? gIn[i] : 0.0;
             const rstV = inReset ? inReset[i] : 0.0;
             const isHi = clkV > 0.3;
-            const isRstHi = rstV >= 0.4;
 
-            // 1. RESET_IN (PIN6) control:
+            // 1. RESET_IN (PIN6) control (differentiated rising spike):
             // - Unpatched: always active (loop playback on clock).
-            // - Patched: waits in standby until rising edge, resets to step 0 and starts.
+            // - Patched: waits in standby until rising spike (supports stacked signals e.g. 1V->2V), resets to step 0 and starts.
             if (!this.resetPatched) {
                 this.active = true;
-                this.lastResetHi = false;
+                this.lastResetVal = 0.0;
             } else {
-                if (!isRstHi) {
-                    this.lastResetHi = false;
-                } else if (!this.lastResetHi) {
-                    this.lastResetHi = true;
+                if (isRisingSpike(rstV, this.lastResetVal, 0.4)) {
                     this.active = true;
                     this.step = -1;
                     this.eos = false;
@@ -123,6 +119,7 @@ export class SeqProcessor extends AudioWorkletProcessor {
                         this.lastHi = true;
                     }
                 }
+                this.lastResetVal = rstV;
             }
 
             // 2. Clock falling edge

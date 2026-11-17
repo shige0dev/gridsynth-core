@@ -1,3 +1,5 @@
+import { isRisingSpike } from './common.js';
+
 export class MarkovProcessor extends AudioWorkletProcessor {
     constructor() {
         super();
@@ -12,6 +14,7 @@ export class MarkovProcessor extends AudioWorkletProcessor {
         this.armed = false;
         this.trigOutCh = -1;
         this.shotActive = false;
+        this.lastTrigVal = 0.0;
 
         this.port.onmessage = e => {
             if (e.data.type === 'SET_STATE') {
@@ -34,6 +37,7 @@ export class MarkovProcessor extends AudioWorkletProcessor {
                 this.trigOutCh = -1;
                 this.clkActive = false;
                 this.shotActive = false;
+                this.lastTrigVal = 0.0;
                 this.port.postMessage({ type: 'STATE_CHANGED', state: this.state, remaining: this.holdClocks, clockCount: 0 });
             } else if (e.data.type === 'RESET') {
                 this.state = this.initOn ? 1 : 0;
@@ -42,6 +46,7 @@ export class MarkovProcessor extends AudioWorkletProcessor {
                 this.trigOutCh = -1;
                 this.clkActive = false;
                 this.shotActive = false;
+                this.lastTrigVal = 0.0;
                 this.port.postMessage({ type: 'STATE_CHANGED', state: this.state, remaining: this.holdClocks, clockCount: 0 });
             }
         };
@@ -61,8 +66,10 @@ export class MarkovProcessor extends AudioWorkletProcessor {
             const trigV = inTrig ? inTrig[i] : 0.0;
             const isClkHi = clkV >= 0.5;
 
-            // 1. 他ノードからの遷移トリガー受信（バトン受け口）
-            if (trigV >= 0.4 && this.state === 0) {
+            // 1. 他ノードからの遷移トリガー受信（微分スパイク立ち上がり検知）
+            const isTrigSpike = isRisingSpike(trigV, this.lastTrigVal, 0.4);
+            this.lastTrigVal = trigV;
+            if (isTrigSpike && this.state === 0) {
                 if (isClkHi) {
                     this.state = 1;
                     this.armed = false;

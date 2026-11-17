@@ -1,4 +1,4 @@
-import { getSR } from './common.js';
+import { getSR, isRisingSpike } from './common.js';
 
 export class PatProcessor extends AudioWorkletProcessor {
     static get parameterDescriptors() {
@@ -23,7 +23,7 @@ export class PatProcessor extends AudioWorkletProcessor {
         this.activeLabel = '\u2014';
         this.activeIsRest = true;
         this.postCounter = 0;
-        this.lastResetTrig = false;
+        this.lastResetVal = 0.0;
         this.lastKeyHi = false;
         this.keyGatePatched = false;
         this.keyMode = 'loop';
@@ -70,7 +70,7 @@ export class PatProcessor extends AudioWorkletProcessor {
                 if (e.data.keyMode !== undefined) {
                     this.keyMode = e.data.keyMode === 'oneshot' ? 'oneshot' : 'loop';
                 }
-                this.lastResetTrig = false;
+                this.lastResetVal = 0.0;
                 this.lastKeyHi = false;
                 this.resetPlayhead(!this.keyGatePatched);
             }
@@ -112,16 +112,15 @@ export class PatProcessor extends AudioWorkletProcessor {
         const minGapSamples = Math.max(1, Math.round(0.002 * sr));
 
         for (let i = 0; i < len; i++) {
-            // 1. 外部リセット端子 (reset_in) の立ち上がり検知 (> 0.3)
+            // 1. 外部リセット端子 (reset_in) の微分スパイク立ち上がり検知 (>= 0.4)
             const rstVal = rstIn ? rstIn[i] : 0.0;
-            const isRstHi = rstVal > 0.3;
-            if (isRstHi && !this.lastResetTrig) {
+            if (isRisingSpike(rstVal, this.lastResetVal, 0.4)) {
                 this.phase = 0.0;
                 this.cycleCount = 0;
                 this.gap = 0;
                 this.activeIdx = -1;
             }
-            this.lastResetTrig = isRstHi;
+            this.lastResetVal = rstVal;
 
             // 2. RUN / KEYGATE_IN (PIN6) 制御:
             // - 未結線: 常時スタンバイ (active = true)
