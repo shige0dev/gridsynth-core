@@ -1,7 +1,7 @@
 // src/ui/managers/cable-manager.js
 import { parseConn, isSameConn, getPortSignalType, resolveConnectionSignalType, isSubModule, normalizeSubPort, getOppositeSubPort, getPortAliases, isPortMatching, getSubPortAlias } from '../../core/utils.js?v=852';
-import { resolveModManifest } from '../../core/patch.js?v=852';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=852';
+import { resolveModManifest } from '../../core/patch.js?v=853';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=853';
 import { WaveCodec } from '../../audio/wave-codec.js?v=459';
 
 export class CableManager {
@@ -101,6 +101,22 @@ export class CableManager {
             if (el) return el;
         }
         return null;
+    }
+
+    _isConnMatchingPort(conn, sel) {
+        if (!conn || !sel) return false;
+        const isSelSub = isSubModule(sel.moduleId);
+        const selManifest = isSelSub ? this.getSubManifest(sel.moduleId) : null;
+        const checkSide = (end) => {
+            if (!end || end.moduleId !== sel.moduleId) return false;
+            if (end.port === sel.port || isPortMatching(end.port, sel.port)) return true;
+            if (isSelSub && isSubModule(end.moduleId)) {
+                const m = this.getSubManifest(end.moduleId);
+                return normalizeSubPort(end.port, end.moduleId, m) === normalizeSubPort(sel.port, sel.moduleId, selManifest);
+            }
+            return false;
+        };
+        return checkSide(conn.from) || checkSide(conn.to);
     }
 
     updatePortHighlight(skipCableRender = false) {
@@ -306,16 +322,13 @@ export class CableManager {
 
         let hasMatchedConn = false;
         if (hasSel) {
-            hasMatchedConn = this.ui.connections.some(c =>
-                (c.from.moduleId === sel.moduleId && c.from.port === sel.port) ||
-                (c.to.moduleId === sel.moduleId && c.to.port === sel.port)
-            );
+            hasMatchedConn = this.ui.connections.some(c => this._isConnMatchingPort(c, sel));
         }
 
         const connsToRender = [...this.ui.connections].sort((a, b) => {
             if (!hasSel || !hasMatchedConn) return 0;
-            const aMatch = (a.from.moduleId === sel.moduleId && a.from.port === sel.port) || (a.to.moduleId === sel.moduleId && a.to.port === sel.port);
-            const bMatch = (b.from.moduleId === sel.moduleId && b.from.port === sel.port) || (b.to.moduleId === sel.moduleId && b.to.port === sel.port);
+            const aMatch = this._isConnMatchingPort(a, sel);
+            const bMatch = this._isConnMatchingPort(b, sel);
             if (aMatch && !bMatch) return 1;
             if (!aMatch && bMatch) return -1;
             return 0;
@@ -356,14 +369,7 @@ export class CableManager {
             const strokeColor = sig.stroke;
             const brightStrokeColor = sig.brightStroke;
 
-            const isFromSub = isSubModule(conn.from.moduleId);
-            const isToSub = isSubModule(conn.to.moduleId);
-            const isSelSub = sel && isSubModule(sel.moduleId);
-
-            const isMatched = hasSel && (
-                (conn.from.moduleId === sel.moduleId && (conn.from.port === sel.port || (isFromSub && isSelSub && normalizeSubPort(conn.from.port, conn.from.moduleId) === normalizeSubPort(sel.port, sel.moduleId)))) ||
-                (conn.to.moduleId === sel.moduleId && (conn.to.port === sel.port || (isToSub && isSelSub && normalizeSubPort(conn.to.port, conn.to.moduleId) === normalizeSubPort(sel.port, sel.moduleId))))
-            );
+            const isMatched = hasSel && this._isConnMatchingPort(conn, sel);
 
             path.setAttribute('fill', 'none');
             path.setAttribute('stroke-linecap', 'round');

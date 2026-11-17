@@ -148,7 +148,7 @@ export class SeqProcessor extends AudioWorkletProcessor {
                     if (wrapped) {
                         this.eos = true;
                     }
-                    if (this.resetPatched && this.keyMode === 'oneshot' && wrapped) {
+                    if (this.resetPatched && wrapped) {
                         this.active = false;
                         this.step = -1;
                         this.gate = 0.0;

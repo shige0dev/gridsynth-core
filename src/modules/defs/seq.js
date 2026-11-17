@@ -356,7 +356,6 @@ function createSeqModule(maxSteps) {
                                 <i data-lucide="download" class="w-2.5 h-2.5 pointer-events-none"></i>
                                 <span>IMP</span>
                             </button>
-                            <button id="${prefix}-keymode-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors shrink-0 ${keyMode === 'loop' ? 'bg-orange-600 text-white border-orange-500' : 'bg-purple-600 text-white border-purple-500'}" title="RESET_IN (PIN6) 動作モード切替 (LOOP: リセットで先頭からループ / 1-SHOT: 1周後に停止＆EOS出力)">RUN: ${keyMode === 'loop' ? 'LOOP' : '1-SHOT'}</button>
                             <button id="${prefix}-qlz-btn" class="h-4 px-1.5 rounded text-[7.5px] font-bold border leading-none inline-flex items-center justify-center transition-colors shrink-0 ${m.quantize !== false ? 'bg-cyan-600 text-white border-cyan-500' : 'bg-slate-800 text-slate-400 border-slate-700'}">QLZ: ${m.quantize !== false ? 'ON' : 'OFF'}</button>
                         </div>
                     </div>
@@ -375,12 +374,6 @@ function createSeqModule(maxSteps) {
             root.querySelector(`#${btnPrefix}-json-export-btn`)?.addEventListener('click', () => openSeqExport(m, ctx, cb, maxSteps));
             root.querySelector(`#${btnPrefix}-json-import-btn`)?.addEventListener('click', () => openSeqImport(m, ctx, cb, maxSteps));
             root.addEventListener('click', (e) => {
-                if (e.target.closest(`#${prefix}-keymode-btn`)) {
-                    m.keyMode = m.keyMode === 'oneshot' ? 'loop' : 'oneshot';
-                    ctx.reRenderModal();
-                    cb();
-                    return;
-                }
                 if (e.target.closest(`#${prefix}-qlz-btn`)) {
                     m.quantize = !(m.quantize !== false);
                     ctx.reRenderModal();

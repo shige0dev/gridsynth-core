@@ -422,8 +422,8 @@ $$\text{slot} = \text{row} \times 4 + \text{col} \quad (\text{col} \in \{0, 1, 2
   | ポート名 | ピン | 方向 | 信号 | 未結線時の挙動 | 説明 |
   | :--- | :---: | :---: | :---: | :--- | :--- |
   | `gate_in` | PIN5 | IN | Gate | **停止（自動進行しません）** | **必須**: `CLK1:gate_out` 等のクロックを入力すると立ち上がりでステップ進行 |
-  | `reset_in` | PIN6 | IN | 短パルスGate | **常時RUN有効**（クロックに従い連続再生） | **結線時はリセット待機モード**: 立ち上がりエッジ（`≥ 0.4V`）でステートを先頭（ステップ0）へ初期化して開始（旧名 `1shotgate_in`/`keygate_in` も互換受理） |
-  | `eos_out` | PIN9 | OUT | 短パルスGate | - | **EOS (End Of State)**: 最終ステップが終わった次のクロック立ち上がりで短パルスGateを発信（他モジュール `reset_in` へのバトン接続用） |
+  | `reset_in` | PIN6 | IN | Reset/EOS | **自己ループ有効**（クロックに従い連続再生） | **結線時はステート終わりの自己フィードバック無し**: 立ち上がりエッジ（`≥ 0.4V`）でステートを先頭へリセットして開始し、最終ステップ後は停止して次の `reset_in` を待ちます。鍵盤を離した瞬間に停止させたい場合は `MATH2(AND)` 等で `gate_in` のクロック供給自体を止めてください（旧名 `1shotgate_in`/`keygate_in` も互換受理） |
+  | `eos_out` | PIN9 | OUT | Reset/EOS | - | **EOS (End Of State)**: 最終ステップが終わった次のクロック立ち上がりで短パルスを発信（他モジュール `reset_in` へのバトン接続用） |
   | `gate_out` | PIN10 | OUT | Gate | - | 現在ステップの `gate: true` かつクロックHighの期間 `1.0V` を出力 |
   | `cv_out` | PIN11 | OUT | CV | - | 現在ステップの 1V/Oct ピッチCV（`0.0V = C1`, `1.0V = C2`）を出力 |
 
@@ -431,7 +431,6 @@ $$\text{slot} = \text{row} \times 4 + \text{col} \quad (\text{col} \in \{0, 1, 2
   | キー名 | 型 | 範囲 / 選択肢 | デフォルト | 詳細 |
   | :--- | :--- | :--- | :---: | :--- |
   | `quantize` | bool | `true` \| `false` | `true` | `true` で半音（$1/12\text{V}$）単位にスナップ |
-  | `keyMode` | enum | `"loop"` \| `"oneshot"` | `"loop"` | `reset_in` 結線時の挙動（`"oneshot"` は1周再生後、最終ステップが終わった次のクロックで自動停止＆`eos_out` 発信） |
   | `steps` | array | 長さ8 (`SEQ8`) / 16 (`SEQ16`) | - | `{ "cv": 1.0, "active": true, "cvActive": true, "gate": true }` の配列（`cv` に `"C2"` 等の音名文字列を書いてもローダーが数値へ自動変換します） |
 
 ---
