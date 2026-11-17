@@ -110,7 +110,6 @@ export const preset02 = {
                 "SEQ8_1": {
                     "type": "SEQ8",
                     "quantize": true,
-                    "keyMode": "loop",
                     "steps": [
                         { "cv": 0, "active": true, "cvActive": true, "gate": true },
                         { "cv": 0.499998, "active": true, "cvActive": true, "gate": true },

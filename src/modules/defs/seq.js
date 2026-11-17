@@ -277,7 +277,6 @@ function createSeqModule(maxSteps) {
         defaults: () => ({
             type: typeName,
             quantize: true,
-            keyMode: 'loop',
             steps: Array.from({ length: maxSteps }, (_, i) => ({
                 cv: i === 0 ? 0 : 0.25,
                 active: true,
@@ -286,9 +285,6 @@ function createSeqModule(maxSteps) {
             }))
         }),
         onNormalize: (m) => {
-            if (!m.keyMode) {
-                m.keyMode = 'loop';
-            }
             if (Array.isArray(m.steps)) {
                 if (typeof m.steps[0] === 'number') {
                     m.steps = m.steps.map(cv => ({ cv, active: true, cvActive: true, gate: true }));

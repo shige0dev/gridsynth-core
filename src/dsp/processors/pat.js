@@ -36,9 +36,8 @@ export class PatProcessor extends AudioWorkletProcessor {
                 if (e.data.cycleBeats) this.cycleBeats = e.data.cycleBeats;
                 if (e.data.gateLen !== undefined) this.gateLen = Math.max(0.05, Math.min(0.98, e.data.gateLen));
             } else if (e.data.type === 'SET_PATCH') {
-                const rawPatched = e.data.resetPatched ?? e.data.keyGatePatched;
-                if (rawPatched !== undefined) {
-                    const nextReset = Boolean(rawPatched);
+                if (e.data.resetPatched !== undefined) {
+                    const nextReset = Boolean(e.data.resetPatched);
                     if (nextReset !== this.resetPatched) {
                         this.resetPatched = nextReset;
                         this.lastResetVal = 0.0;

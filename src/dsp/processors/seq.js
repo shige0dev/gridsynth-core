@@ -26,9 +26,8 @@ export class SeqProcessor extends AudioWorkletProcessor {
                     this.steps = msg.steps;
                 }
             } else if (msg.type === 'SET_PATCH') {
-                const rawPatched = msg.resetPatched ?? msg.keyGatePatched;
-                if (rawPatched !== undefined) {
-                    const nextReset = Boolean(rawPatched);
+                if (msg.resetPatched !== undefined) {
+                    const nextReset = Boolean(msg.resetPatched);
                     if (nextReset !== this.resetPatched) {
                         this.resetPatched = nextReset;
                         this.lastResetVal = 0.0;

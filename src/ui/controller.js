@@ -1,10 +1,10 @@
-import { isSubModule } from '../core/utils.js?v=861';
-import { parsePatch } from '../core/patch.js?v=861';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=863';
+import { isSubModule } from '../core/utils.js?v=864';
+import { parsePatch } from '../core/patch.js?v=864';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=864';
 import { UIHelpers } from './helpers.js?v=854';
-import { PresetManager } from './managers/preset-manager.js?v=854';
+import { PresetManager } from './managers/preset-manager.js?v=864';
 import { ModalManager } from './managers/modal-manager.js?v=854';
-import { CableManager } from './managers/cable-manager.js?v=861';
+import { CableManager } from './managers/cable-manager.js?v=864';
 import { PageManager } from './managers/page-manager.js?v=854';
 import { InteractionManager } from './managers/interaction-manager.js?v=854';
 import { ToolbarManager } from './managers/toolbar-manager.js?v=857';
@@ -200,8 +200,8 @@ export class UIController {
                     const weights = Array.isArray(m.weights) ? m.weights : [10, 0, 0, 0];
                     const patched = ctx.patched;
                     const isConnected = patched && patched.size > 0;
-                    // weights[0] is SELF (internal normalized), weights[1..3] map to trans_out1..3
-                    const hasUnconnected = [1, 2, 3].some(idx => Number(weights[idx] || 0) > 0 && !patched.has(`trans_out${idx}`));
+                    // weights[0] is SELF (internal normalized), weights[1..3] map to eos_out1..3
+                    const hasUnconnected = [1, 2, 3].some(idx => Number(weights[idx] || 0) > 0 && !patched.has(`eos_out${idx}`));
                     if (!isConnected || hasUnconnected) {
                         titleClass = 'text-slate-600 font-semibold';
                         extraTitleAttrs = hasUnconnected ? 'title="未結線の出力端子にウエイトが設定されています"' : 'title="未結線モジュール"';

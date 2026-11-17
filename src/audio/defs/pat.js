@@ -41,7 +41,7 @@ export const PAT = {
         const sendPatch = (p) => {
             const appPatch = window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id) : null;
             const targetPatch = p || appPatch;
-            const resetPatched = Boolean(targetPatch?.has?.('reset_in') || targetPatch?.has?.('1shotgate_in') || targetPatch?.has?.('keygate_in'));
+            const resetPatched = Boolean(targetPatch?.has?.('reset_in'));
             w.port.postMessage({ type: 'SET_PATCH', resetPatched });
         };
         sendPatch(patch || null);
@@ -75,9 +75,7 @@ export const PAT = {
         return {
             nodes: { w, cv, gt, eos, rstIn },
             inputs: {
-                reset_in: rstIn,
-                '1shotgate_in': rstIn,
-                keygate_in: rstIn
+                reset_in: rstIn
             },
             outputs: { cv_out: cv, gate_out: gt, eos_out: eos },
             updatePatchState: (p) => sendPatch(p),

@@ -86,7 +86,6 @@ export const preset03 = {
         "SEQ16_1": {
           "type": "SEQ16",
           "quantize": true,
-          "keyMode": "loop",
           "steps": [
             {
               "cv": 0,

@@ -58,12 +58,6 @@ export const PORT_ALIASES = {
     'trig_in': 'gate_in',
     'trig': 'gate_in',
     'trig_out': 'gate_out',
-    'trans_in': 'reset_in',
-    'trans_out1': 'eos_out1',
-    'trans_out2': 'eos_out2',
-    'trans_out3': 'eos_out3',
-    '1shotgate_in': 'reset_in',
-    'keygate_in': 'reset_in',
     'power_in': 'run_in',
     'power': 'run_in',
 
