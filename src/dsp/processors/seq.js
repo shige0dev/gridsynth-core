@@ -137,7 +137,7 @@ export class SeqProcessor extends AudioWorkletProcessor {
                     if (wrapped) {
                         this.eos = true;
                     }
-                    if (this.resetPatched && wrapped) {
+                    if (this.resetPatched && wrapped && rstV < 0.4) {
                         this.active = false;
                         this.step = -1;
                         this.gate = 0.0;

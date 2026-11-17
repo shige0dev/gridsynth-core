@@ -3,8 +3,6 @@ import { isRisingSpike } from './common.js';
 // ============================================================================
 // COUNT Processor (AudioWorklet)
 // 256 Binary Counter / Frequency Divider with Carry Out and CV Output
-import { isRisingSpike } from './common.js';
-
 // ============================================================================
 
 class CountProcessor extends AudioWorkletProcessor {

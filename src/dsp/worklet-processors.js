@@ -1,6 +1,6 @@
-// v1.0.0855
+// v1.0.0856
 import './processors/clock.js?v=855';
-import './processors/seq.js?v=855';
+import './processors/seq.js?v=856';
 import './processors/adsr.js';
 import './processors/lfo.js?v=855';
 import './processors/math.js?v=691';
@@ -20,6 +20,6 @@ import './processors/rf.js';
 import './processors/ar.js';
 import './processors/wave.js?v=459';
 import './processors/pad.js';
-import './processors/count.js?v=855';
+import './processors/count.js?v=856';
 import './processors/lut.js?v=573';
 import './processors/matrix.js?v=591';
