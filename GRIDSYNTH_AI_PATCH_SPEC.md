@@ -2,7 +2,7 @@
 
 Gridsynth = ブラウザ上の 4列×32行モジュラーシンセ＆3Dビジュアライザー。
 あなた（AI）は、依頼に応じて **インポート可能な単一 JSON パッチ** を生成する。
-※ 本書は [docs/SPEC_GENERATION_RULES.md](docs/SPEC_GENERATION_RULES.md) に基づき、実装コード（`v1.0.0861`）から直接抽出・検証した唯一の正です。
+※ 本書は [docs/SPEC_GENERATION_RULES.md](docs/SPEC_GENERATION_RULES.md) に基づき、実装コード（`v1.0.0863`）から直接抽出・検証した唯一の正です。
 
 ---
 
@@ -156,9 +156,10 @@ Gridsynth = ブラウザ上の 4列×32行モジュラーシンセ＆3Dビジュ
 - **SEQ8 / SEQ16** | IN: `gate_in`(**必須**), `reset_in` | OUT: `eos_out`, `gate_out`, `cv_out`
   `quantize` bool (true) / `steps` 8個(SEQ8)または16個(SEQ16)の `{cv, active, cvActive, gate}`（`cv` は 0〜2.0 または音名、他は省略時 `true`）
   `reset_in` 未結線＝常時ループ / 結線＝1周で停止（ワンショット）。`eos_out > reset_in` 戻しでループ。
-- **PAT**（`bpm` 同期で自走。クロック不要）| IN: `reset_in`, `1shotgate_in` | OUT: `gate_out`, `cv_out`
-  `pattern` 文字列 (既定 16個の `"c2"`) / `cycleBeats` 1|2|4|8|16|32 (4) / `gateLen` .10〜.95 (.8) / `keyMode` loop|oneshot (loop)
-  記法: 音名 `c1`〜`c6`(`c#2`,`eb2`), 休符 `~` `-`, 分割 `[a b]`, 交代 `<a b>`, 連打 `a*2`, 伸長 `a@2`, タイ `a^`。`1shotgate_in` 未結線＝常時RUN。
+- **PAT**（`bpm` 同期で自走。クロック不要）| IN: `reset_in` | OUT: `eos_out`, `gate_out`, `cv_out`
+  `pattern` 文字列 (既定 16個の `"c2"`) / `cycleBeats` 1|2|4|8|16|32 (4) / `gateLen` .10〜.95 (.8)
+  記法: 音名 `c1`〜`c6`(`c#2`,`eb2`), 休符 `~` `-`, 分割 `[a b]`, 交代 `<a b>`, 連打 `a*2`, 伸長 `a@2`, タイ `a^`。
+  `reset_in` 未結線＝常時ループ / 結線＝1周（全サイクル完了）で停止（ワンショット）。`eos_out > reset_in` 戻しでループ。
 - **KEY**（16鍵盤兼クオンタイザー）| IN: `cv_in` | OUT: `gate_out`, `cv_out`
   `octave` 1〜6 (3) / `root` 0〜11 (0) / `cv` 0〜5 (2.0) / `legato` bool (false)
   `scale` CHROMATIC|MAJOR|MINOR|PENT.MAJ|PENT.MIN|DORIAN|PHRYGIAN|BLUES|HARM.MIN (CHROMATIC)

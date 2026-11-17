@@ -15,10 +15,10 @@ function getCycles(d) {
 
 export const PAT = {
     create: (ctx, d, patch, eng) => {
-        const keyMode = d.keyMode === 'oneshot' ? 'oneshot' : 'loop';
         const w = new AudioWorkletNode(ctx, 'pat-processor', {
-            numberOfInputs: 2,
-            numberOfOutputs: 2,
+            numberOfInputs: 1,
+            numberOfOutputs: 3,
+            outputChannelCount: [1, 1, 1],
             parameterData: {
                 bpm: eng?.masterBPM || 120
             }
@@ -31,32 +31,29 @@ export const PAT = {
             gateLen: d.gateLen ?? 0.80
         });
         w.port.postMessage({
-            type: 'SET_CONFIG',
-            keyMode
-        });
-        w.port.postMessage({
             type: 'SET_STATE',
             running: eng?.isPlaying || false
         });
 
         const rstIn = ctx.createGain();
-        const keyGateIn = ctx.createGain();
         rstIn.connect(w, 0, 0);     // input 0: reset_in (PIN 5)
-        keyGateIn.connect(w, 0, 1); // input 1: 1shotgate_in / RUN (PIN 6)
 
         const sendPatch = (p) => {
             const appPatch = window.__GS_APP__?.getPatchState ? window.__GS_APP__.getPatchState(d.id) : null;
             const targetPatch = p || appPatch;
-            const keyGatePatched = Boolean(targetPatch?.has?.('1shotgate_in') || targetPatch?.has?.('keygate_in'));
-            w.port.postMessage({ type: 'SET_PATCH', keyGatePatched });
+            const resetPatched = Boolean(targetPatch?.has?.('reset_in') || targetPatch?.has?.('1shotgate_in') || targetPatch?.has?.('keygate_in'));
+            w.port.postMessage({ type: 'SET_PATCH', resetPatched });
         };
         sendPatch(patch || null);
+        w.port.postMessage({ type: 'RESET' });
 
-        const cv = ctx.createGain(), gt = ctx.createGain();
+        const cv = ctx.createGain(), gt = ctx.createGain(), eos = ctx.createGain();
         w.connect(cv, 0, 0);
         w.connect(gt, 1, 0);
+        w.connect(eos, 2, 0);
         if (eng?.silentSink) {
             gt.connect(eng.silentSink);
+            eos.connect(eng.silentSink);
         }
 
         let latestPhase = 0, latestIdx = -1, latestCycle = 0, latestLabel = '\u2014', latestIsRest = true, latestGate = false, latestPowerOn = true, latestTokenId = null;
@@ -76,13 +73,13 @@ export const PAT = {
         };
 
         return {
-            nodes: { w, cv, gt, rstIn, keyGateIn },
+            nodes: { w, cv, gt, eos, rstIn },
             inputs: {
                 reset_in: rstIn,
-                '1shotgate_in': keyGateIn,
-                keygate_in: keyGateIn
+                '1shotgate_in': rstIn,
+                keygate_in: rstIn
             },
-            outputs: { cv_out: cv, gate_out: gt },
+            outputs: { cv_out: cv, gate_out: gt, eos_out: eos },
             updatePatchState: (p) => sendPatch(p),
             resetStep: () => {
                 latestPhase = 0;
@@ -114,10 +111,6 @@ export const PAT = {
             cycles,
             cycleBeats: d.cycleBeats || 4,
             gateLen: d.gateLen ?? 0.80
-        });
-        inst.nodes.w.port.postMessage({
-            type: 'SET_CONFIG',
-            keyMode: d.keyMode === 'oneshot' ? 'oneshot' : 'loop'
         });
         if (patch !== undefined && inst?.updatePatchState) {
             inst.updatePatchState(patch);
