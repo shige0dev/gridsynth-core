@@ -7,8 +7,6 @@ function createSeqAudio(stepCount) {
                 cvActive: true,
                 gate: true
             }));
-            const keyMode = d.keyMode === 'oneshot' ? 'oneshot' : 'loop';
-
             const w = new AudioWorkletNode(ctx, 'seq-processor', {
                 numberOfInputs: 2,
                 numberOfOutputs: 3,
@@ -16,7 +14,6 @@ function createSeqAudio(stepCount) {
                 processorOptions: { steps }
             });
             w.port.postMessage({ type: 'SET_STEPS', steps });
-            w.port.postMessage({ type: 'SET_CONFIG', keyMode });
 
             const cv = ctx.createGain(), gt = ctx.createGain(), eos = ctx.createGain();
             const gIn = ctx.createGain(), gResetIn = ctx.createGain();
@@ -42,7 +39,7 @@ function createSeqAudio(stepCount) {
                 w.port.postMessage({ type: 'SET_PATCH', resetPatched });
             };
             sendPatch(patch || null);
-            w.port.postMessage({ type: 'RESET', keyMode });
+            w.port.postMessage({ type: 'RESET' });
 
             let st = -1;
             let liveActive = true;
@@ -72,7 +69,7 @@ function createSeqAudio(stepCount) {
                 updatePatchState: (p) => sendPatch(p),
                 resetStep: () => {
                     st = -1;
-                    w.port.postMessage({ type: 'RESET', keyMode: d.keyMode === 'oneshot' ? 'oneshot' : 'loop' });
+                    w.port.postMessage({ type: 'RESET' });
                 },
                 read: () => ({
                     step: st,
@@ -83,12 +80,6 @@ function createSeqAudio(stepCount) {
         update: (ctx, inst, d, patch) => {
             if (d?.steps && inst?.nodes?.w) {
                 inst.nodes.w.port.postMessage({ type: 'SET_STEPS', steps: d.steps });
-            }
-            if (d && inst?.nodes?.w) {
-                inst.nodes.w.port.postMessage({
-                    type: 'SET_CONFIG',
-                    keyMode: d.keyMode === 'oneshot' ? 'oneshot' : 'loop'
-                });
             }
             if (patch !== undefined && inst?.updatePatchState) {
                 inst.updatePatchState(patch);

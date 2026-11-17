@@ -1,6 +1,6 @@
 // src/ui/managers/interaction-manager.js
-import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=459';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=459';
+import { safeClone, parseConn, generateModuleId, HIGHLIGHT_CLASSES, isSubModule } from '../../core/utils.js?v=854';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=854';
 import { RowManager } from './row-manager.js?v=459';
 
 export class InteractionManager {
@@ -407,7 +407,7 @@ export class InteractionManager {
                     return;
                 }
                 const mType = this.ui.modules[mId]?.type;
-                if (mType === 'SWITCH' || mType === 'THROUGH') {
+                if (mType === 'SWITCH') {
                     this.ui.saveHistory();
                     this.ui.modules[mId].state = !(this.ui.modules[mId].state !== false);
                     this.ui.synth.updateModule(`${this.ui.currentPageId}/${mId}`, this.ui.modules[mId], this.ui.getPatchState(mId));

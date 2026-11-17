@@ -1,7 +1,7 @@
 // src/ui/managers/cable-manager.js
-import { parseConn, isSameConn, getPortSignalType, resolveConnectionSignalType, isSubModule, normalizeSubPort, getOppositeSubPort, getPortAliases, isPortMatching, getSubPortAlias } from '../../core/utils.js?v=852';
-import { resolveModManifest } from '../../core/patch.js?v=853';
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=853';
+import { parseConn, isSameConn, getPortSignalType, resolveConnectionSignalType, isSubModule, normalizeSubPort, getOppositeSubPort, getPortAliases, isPortMatching, getSubPortAlias } from '../../core/utils.js?v=854';
+import { resolveModManifest } from '../../core/patch.js?v=854';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=854';
 import { WaveCodec } from '../../audio/wave-codec.js?v=459';
 
 export class CableManager {
@@ -103,20 +103,21 @@ export class CableManager {
         return null;
     }
 
+    _isEndMatchingPort(end, sel, selManifest = null) {
+        if (!end || !sel || end.moduleId !== sel.moduleId) return false;
+        if (end.port === sel.port || isPortMatching(end.port, sel.port)) return true;
+        if (isSubModule(sel.moduleId) && isSubModule(end.moduleId)) {
+            const endManifest = this.getSubManifest(end.moduleId);
+            const targetManifest = selManifest ?? this.getSubManifest(sel.moduleId);
+            return normalizeSubPort(end.port, end.moduleId, endManifest) === normalizeSubPort(sel.port, sel.moduleId, targetManifest);
+        }
+        return false;
+    }
+
     _isConnMatchingPort(conn, sel) {
         if (!conn || !sel) return false;
-        const isSelSub = isSubModule(sel.moduleId);
-        const selManifest = isSelSub ? this.getSubManifest(sel.moduleId) : null;
-        const checkSide = (end) => {
-            if (!end || end.moduleId !== sel.moduleId) return false;
-            if (end.port === sel.port || isPortMatching(end.port, sel.port)) return true;
-            if (isSelSub && isSubModule(end.moduleId)) {
-                const m = this.getSubManifest(end.moduleId);
-                return normalizeSubPort(end.port, end.moduleId, m) === normalizeSubPort(sel.port, sel.moduleId, selManifest);
-            }
-            return false;
-        };
-        return checkSide(conn.from) || checkSide(conn.to);
+        const selManifest = isSubModule(sel.moduleId) ? this.getSubManifest(sel.moduleId) : null;
+        return this._isEndMatchingPort(conn.from, sel, selManifest) || this._isEndMatchingPort(conn.to, sel, selManifest);
     }
 
     updatePortHighlight(skipCableRender = false) {
@@ -140,22 +141,13 @@ export class CableManager {
             }
 
             // Highlight all connected opposite ports
+            const selManifest = isSubModule(moduleId) ? this.getSubManifest(moduleId) : null;
             this.ui.connections.forEach(c => {
                 const conn = typeof c === 'string' ? parseConn(c) : c;
                 if (!conn) return;
-                let target = null;
-                const isFromSub = isSubModule(conn.from.moduleId);
-                const isToSub = isSubModule(conn.to.moduleId);
-                const isCurSub = isSubModule(moduleId);
-
-                const fromMatch = conn.from.moduleId === moduleId && (conn.from.port === port || isPortMatching(conn.from.port, port) || (isFromSub && isCurSub && normalizeSubPort(conn.from.port, conn.from.moduleId) === normalizeSubPort(port, moduleId)));
-                const toMatch = conn.to.moduleId === moduleId && (conn.to.port === port || isPortMatching(conn.to.port, port) || (isToSub && isCurSub && normalizeSubPort(conn.to.port, conn.to.moduleId) === normalizeSubPort(port, moduleId)));
-
-                if (fromMatch) {
-                    target = conn.to;
-                } else if (toMatch) {
-                    target = conn.from;
-                }
+                const target = this._isEndMatchingPort(conn.from, this.selectedTargetForConnection, selManifest)
+                    ? conn.to
+                    : (this._isEndMatchingPort(conn.to, this.selectedTargetForConnection, selManifest) ? conn.from : null);
                 if (target) {
                     const oppEl = this.findPortElement(target.moduleId, target.port);
                     if (oppEl) {

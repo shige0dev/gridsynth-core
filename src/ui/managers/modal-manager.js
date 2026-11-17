@@ -1,5 +1,5 @@
 // src/ui/managers/modal-manager.js
-import { MODULE_REGISTRY } from '../../modules/registry.js?v=853';
+import { MODULE_REGISTRY } from '../../modules/registry.js?v=854';
 import { UIHelpers } from '../helpers.js?v=619';
 import { openAddModal } from '../dialogs/add-module-dialog.js?v=771';
 import { openNumpadPrompt } from '../dialogs/numpad-dialog.js?v=679';
@@ -23,7 +23,6 @@ export const MODAL_WIDTHS = {
     CLK: 'w-[200px]',
     COUNT: 'w-[200px]',
     SWITCH: 'w-[170px]',
-    THROUGH: 'w-[170px]',
 
     // Sound Generation & Processing
     VCO: 'w-[235px]',
@@ -36,7 +35,6 @@ export const MODAL_WIDTHS = {
     // Effects
     DELAY: 'w-[200px]',
     LAG: 'w-[190px]',
-    CVDELAY: 'w-[190px]',
     REVERB: 'w-[210px]',
 
     // Modulation & Envelopes
@@ -50,7 +48,6 @@ export const MODAL_WIDTHS = {
     SUB: 'w-[240px]',
     SUB_IO: 'w-[280px]',
     GSENSOR: 'w-[180px]',
-    TILT: 'w-[180px]',
     OBJECT: 'w-[190px]',
     PATH: 'w-[190px]',
     PARTICLE: 'w-[190px]',

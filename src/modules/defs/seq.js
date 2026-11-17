@@ -342,7 +342,6 @@ function createSeqModule(maxSteps) {
         },
         renderModal: (m) => {
             const steps = m.steps || [];
-            const keyMode = m.keyMode === 'oneshot' ? 'oneshot' : 'loop';
             return `
                 <div id="${prefix}-modal-root" class="${is16 ? 'space-y-1' : 'space-y-1.5'}">
                     <div class="flex items-center justify-between pb-1 border-b border-slate-800">

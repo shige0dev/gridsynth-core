@@ -12,7 +12,6 @@ export class SeqProcessor extends AudioWorkletProcessor {
         this.gap = 0;
 
         this.resetPatched = false;
-        this.keyMode = 'loop';
         this.active = true;
 
         const initSteps = options?.processorOptions?.steps;
@@ -43,14 +42,7 @@ export class SeqProcessor extends AudioWorkletProcessor {
                         }
                     }
                 }
-            } else if (msg.type === 'SET_CONFIG') {
-                if (msg.keyMode !== undefined) {
-                    this.keyMode = msg.keyMode === 'oneshot' ? 'oneshot' : 'loop';
-                }
             } else if (msg.type === 'RESET') {
-                if (msg.keyMode !== undefined) {
-                    this.keyMode = msg.keyMode === 'oneshot' ? 'oneshot' : 'loop';
-                }
                 this.lastResetHi = false;
                 this.resetState(!this.resetPatched);
             }
