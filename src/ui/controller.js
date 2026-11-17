@@ -1,6 +1,6 @@
-import { isSubModule } from '../core/utils.js?v=851';
-import { parsePatch } from '../core/patch.js?v=851';
-import { MODULE_REGISTRY } from '../modules/registry.js?v=851';
+import { isSubModule } from '../core/utils.js?v=852';
+import { parsePatch } from '../core/patch.js?v=852';
+import { MODULE_REGISTRY } from '../modules/registry.js?v=852';
 import { UIHelpers } from './helpers.js?v=619';
 import { PresetManager } from './managers/preset-manager.js?v=809';
 import { ModalManager } from './managers/modal-manager.js?v=845';

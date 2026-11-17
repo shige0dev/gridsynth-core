@@ -16,11 +16,11 @@ export const SIGNAL_TYPES = {
         tailwind: 'bg-red-500'
     },
     TRIGGER: {
-        id: 'trigger',
-        label: 'GATE',
-        stroke: '#ef4444',       // red-500
-        brightStroke: '#fca5a5', // red-300
-        tailwind: 'bg-red-500'
+        id: 'reset_eos',
+        label: 'RESET/EOS',
+        stroke: '#f97316',       // orange-500
+        brightStroke: '#fdba74', // orange-300
+        tailwind: 'bg-orange-500'
     },
     TRANS: {
         id: 'trans',
@@ -95,7 +95,10 @@ export const getPortSignalType = (portName = '', modId = '') => {
     if (p.includes('link')) {
         return SIGNAL_TYPES.LINK;
     }
-    if (p.includes('eos') || p.includes('trans') || p.includes('trig') || p.includes('reset') || p.includes('gate') || p.includes('power') || p.includes('run')) {
+    if (p.includes('eos') || p.includes('reset') || p.includes('trans')) {
+        return SIGNAL_TYPES.TRIGGER;
+    }
+    if (p.includes('trig') || p.includes('gate') || p.includes('power') || p.includes('run')) {
         return SIGNAL_TYPES.GATE;
     }
     if (m.startsWith('SLCT4') || m.startsWith('DIST4') || m.startsWith('MATRIX')) {

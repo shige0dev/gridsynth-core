@@ -10,7 +10,7 @@ export const COUNT = {
     ports: () => ({
         in: [
             { port: 'gate_in', pin: 5, color: 'bg-red-500' },
-            { port: 'reset_in', pin: 4, color: 'bg-red-500' }
+            { port: 'reset_in', pin: 4, color: 'bg-orange-500' }
         ],
         out: [
             { port: 'cv_out', pin: 10, color: 'bg-yellow-400' },

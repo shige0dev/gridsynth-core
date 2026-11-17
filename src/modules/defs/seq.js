@@ -303,10 +303,10 @@ function createSeqModule(maxSteps) {
         ports: () => ({
             in: [
                 { port: 'gate_in', pin: 5, color: 'bg-red-500', label: 'GATE' },
-                { port: 'reset_in', pin: 6, color: 'bg-red-500', label: 'RST' }
+                { port: 'reset_in', pin: 6, color: 'bg-orange-500', label: 'RST' }
             ],
             out: [
-                { port: 'eos_out', pin: 9, color: 'bg-red-500', label: 'EOS' },
+                { port: 'eos_out', pin: 9, color: 'bg-orange-500', label: 'EOS' },
                 { port: 'gate_out', pin: 10, color: 'bg-red-500', label: 'GATE' },
                 { port: 'cv_out', pin: 11, color: 'bg-yellow-400', label: 'CV' }
             ]

@@ -30,21 +30,19 @@ export const MARKOV = {
         const weights = m?.weights || [10, 0, 0, 0];
         // weights[1..3] correspond to eos_out1..3 (PIN 7..9)
         const patched = ctx?.patched;
-        const getEosColor = (extIdx, port, legacyPort) => {
+        const getEosColor = (extIdx) => {
             const w = weights[extIdx + 1] || 0;
-            if (w <= 0) return 'bg-slate-700';
-            const isConnected = patched?.has(port) || patched?.has(legacyPort);
-            return isConnected ? 'bg-red-500' : 'bg-purple-500';
+            return w <= 0 ? 'bg-slate-700' : 'bg-orange-500';
         };
         return {
             in: [
                 { port: 'gate_in', pin: 5, color: 'bg-red-500' },
-                { port: 'reset_in', pin: 6, color: 'bg-red-500' }
+                { port: 'reset_in', pin: 6, color: 'bg-orange-500' }
             ],
             out: [
-                { port: 'eos_out1', pin: 7, color: getEosColor(0, 'eos_out1', 'trans_out1') },
-                { port: 'eos_out2', pin: 8, color: getEosColor(1, 'eos_out2', 'trans_out2') },
-                { port: 'eos_out3', pin: 9, color: getEosColor(2, 'eos_out3', 'trans_out3') },
+                { port: 'eos_out1', pin: 7, color: getEosColor(0) },
+                { port: 'eos_out2', pin: 8, color: getEosColor(1) },
+                { port: 'eos_out3', pin: 9, color: getEosColor(2) },
                 { port: 'startgate_out', pin: 10, color: 'bg-red-500' },
                 { port: 'gate_out', pin: 11, color: 'bg-red-500' },
                 { port: 'longgate_out', pin: 12, color: 'bg-red-500' },

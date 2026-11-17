@@ -112,7 +112,7 @@
 | **Audio (`wave_*`)** | `±1.0V` (0dBFS) | **Audio / CV / Gate 間で相互接続可能**（すべて Web Audio の連続電圧信号として処理。例: `SUB1:mod_out (Audio) > SCOPE1:cv_in` や `LFO1:cv_out > VCF1:cv_in`） | **加算合成 (Sum)**。ただし複数音源のミックスはレベル調整のため `MIX` モジュール推奨 |
 | **Pitch CV (`cv_*`)** | **1V/Oct**: `0.0V = C1 (32.70Hz, MIDI 24)`, `1.0V = C2`, `2.0V = C3` | Audio / CV / Gate 間で相互接続可能 | **加算合成 (Sum)**。`KEY1:cv_out` + `SEQ8_1:cv_out` ➔ `VCO1:cv_in` で鍵盤トランスポーズとして機能 |
 | **Control CV (`*_cv`)** | Unipolar `0.0〜1.0V` / Bipolar `±1.0V` | Audio / CV / Gate 間で相互接続可能 | **加算合成 (Sum)** |
-| **Gate** | Low `0.0V` / High `1.0V`（検出閾値 `> 0.3V`、`1shotgate_in` は `≥ 0.4V`） | Audio / CV / Gate 間で相互接続可能 | **加算合成 (Sum)**。クロックや短パルスGate、ホールドGateはすべて同一の `Gate` 信号（赤色端子）として扱われます。2本重ねると論理 OR として機能 |
+| **Gate** | Low `0.0V` / High `1.0V`（検出閾値 `> 0.3V`、`reset_in` は `≥ 0.4V`） | Audio / CV / Gate 間で相互接続可能 | **加算合成 (Sum)**。クロックや短パルスGate、ホールドGateは `Gate`（赤色端子）、`reset_in` / `eos_out` 系は `Reset/EOS`（オレンジ色端子）として視覚区別されますが、電気的には同一の二値パルスとして相互接続可能です。2本重ねると論理 OR として機能 |
 | **3D Object (`obj_*`)** | Three.js ジオメトリパケット | **`obj_out` ➔ `obj_in` / `base_in` / `child_in` 専用**（音声/CVとは接続不可） | **グループ合成 (Group)**。`MOVE`/`ROTATE`/`SCALE`/`RENDER` の `obj_in` に複数の `obj_out` を繋ぐと自動的に3Dコンテナグループとして一括処理・同時描画されます |
 | **Video (`video_*`)** | WebGL 512×512 テクスチャ | **`video_out` ➔ `video_in` / `video_in1` / `video_in2` 専用**（音声/CVとは接続不可） | **単一入力**。2系統の映像を合成する場合は必ず `VMIX`（`video_in1`, `video_in2`）を使用します |
 
