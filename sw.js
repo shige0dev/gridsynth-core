@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gridsynth-v1.0.0858';
+const CACHE_NAME = 'gridsynth-v1.0.0859';
 
 const PRECACHE_URLS = [
   './',

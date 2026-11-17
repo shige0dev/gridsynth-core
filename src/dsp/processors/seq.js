@@ -112,7 +112,6 @@ export class SeqProcessor extends AudioWorkletProcessor {
                 if (isRisingSpike(rstV, this.lastResetVal, 0.4)) {
                     this.active = true;
                     this.step = -1;
-                    this.eos = false;
                     if (isHi) {
                         const { found, nextStep } = this.findNextActiveStep(numSteps);
                         if (found) this.applyStep(nextStep, minGap);
