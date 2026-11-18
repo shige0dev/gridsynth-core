@@ -175,6 +175,12 @@ export const PAT = {
             _addPitch: 'c2'
         };
     },
+    onNormalize: (m) => {
+        if (typeof m.pattern === 'string') {
+            m._tokens = parsePatternToTokens(m.pattern);
+            m._parsedPattern = m.pattern;
+        }
+    },
     ports: () => ({
         in: [
             { port: 'reset_in', pin: 5, color: 'bg-orange-500', label: 'RST' }
