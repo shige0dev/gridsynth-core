@@ -100,7 +100,9 @@ export class PatProcessor extends AudioWorkletProcessor {
         const cycleSec = (60.0 / bpm) * (this.cycleBeats || 4.0);
         const phaseInc = 1.0 / Math.max(1, cycleSec * sr);
         const minGapSamples = Math.max(1, Math.round(0.002 * sr));
-        const eosDur = Math.max(1, Math.round(0.015 * sr));
+        const firstEv = this.cycles[0]?.[0];
+        const firstDur = firstEv ? Math.max(0.0001, firstEv.end - firstEv.start) : 0.25;
+        const eosDur = Math.max(1, Math.round(firstDur * cycleSec * (this.gateLen ?? 0.80) * sr));
 
         for (let i = 0; i < len; i++) {
             // 1. 外部リセット端子 (reset_in) 制御 (微分スパイク立ち上がり検知 >= 0.4):
