@@ -390,6 +390,27 @@ export function tokensToEvents(tokens, start = 0.0, end = 1.0, cycleIndex = 0) {
     return events;
 }
 
+const gcd = (a, b) => (b === 0 ? a : gcd(b, a % b));
+const lcm = (a, b) => (a === 0 || b === 0 ? 1 : (a * b) / gcd(a, b));
+
+export function getPatternCycleCount(tokens, maxCycles = 16) {
+    let count = 1;
+    const walk = (nodes) => {
+        if (!Array.isArray(nodes)) return;
+        for (const node of nodes) {
+            if (!node) continue;
+            if (node.type === 'group' && node.groupType === 'angle' && Array.isArray(node.children) && node.children.length > 0) {
+                count = Math.min(maxCycles, lcm(count, node.children.length));
+            }
+            if (Array.isArray(node.children)) {
+                walk(node.children);
+            }
+        }
+    };
+    walk(tokens);
+    return Math.max(1, Math.min(maxCycles, count));
+}
+
 export function tokensToCycles(tokens, maxCycles = 16) {
     const cycles = [];
     for (let c = 0; c < maxCycles; c++) {

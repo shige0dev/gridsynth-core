@@ -1,16 +1,16 @@
 import { AudioHelpers } from '../helpers.js';
-import { parsePatternToTokens, tokensToCycles } from '../../core/pat-tokens.js';
+import { parsePatternToTokens, tokensToCycles, getPatternCycleCount } from '../../core/pat-tokens.js?v=865';
 
 function getCycles(d) {
     if (!d._tokens && d.pattern) {
         d._tokens = parsePatternToTokens(d.pattern);
     }
     if (d._tokens && d._tokens.length > 0) {
-        return tokensToCycles(d._tokens, 16);
+        return tokensToCycles(d._tokens, getPatternCycleCount(d._tokens, 16));
     }
     const defTokens = parsePatternToTokens('c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2 c2');
     d._tokens = defTokens;
-    return tokensToCycles(defTokens, 16);
+    return tokensToCycles(defTokens, 1);
 }
 
 export const PAT = {
