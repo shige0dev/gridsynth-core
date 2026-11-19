@@ -6,24 +6,46 @@ export const VCO = {
     ports: (m) => ({ in: UIHelpers.getMultiPitchInPorts(m), out: [{ port: 'wave_out', color: 'bg-blue-500' }] }),
     renderGrid: (m, ctx) => {
         const isQ = m.quantize !== false;
-        const f1 = m.freq1 || 220;
         const ch = Math.min(4, Math.max(1, m.channels || 1));
         const patched = ctx?.patched;
-        const hasExt = Boolean(
-            patched?.has('cv_in') ||
-            (ch >= 2 && patched?.has('cv_in2')) ||
-            (ch >= 3 && patched?.has('cv_in3')) ||
-            (ch >= 4 && patched?.has('cv_in4'))
-        );
-        const noteStr = isQ ? UIHelpers.midiToNoteName(UIHelpers.freqToMidi(f1)) : '';
-        return `<div class="flex flex-col items-center justify-center leading-none gap-0.5 pointer-events-none text-cyan-400">
-            <span class="text-[9px] font-bold uppercase">${m.wave || 'SAW'}</span>
-            ${hasExt
-                ? `<span class="text-[13px] font-mono font-bold text-amber-300 tracking-tight">EXT</span>`
-                : (isQ
-                    ? `<span class="text-[13px] font-mono font-bold text-white tracking-tight">${noteStr}</span><span class="text-[8.5px] font-mono text-cyan-400/80">${Math.round(f1)}hz</span>`
-                    : `<span class="text-[13px] font-mono font-bold tracking-tight">${Math.round(f1)}<span class="text-[9px] ml-0.5">hz</span></span>`
-                )}
+        const waveShortMap = { sawtooth: 'SAW', square: 'SQR', sine: 'SIN', triangle: 'TRI' };
+        const waveRaw = (m.wave || 'sawtooth').toLowerCase();
+        const waveShort = waveShortMap[waveRaw] || waveRaw.toUpperCase();
+
+        if (ch === 1) {
+            const f1 = m.freq1 || 220;
+            const isExt = Boolean(patched?.has('cv_in'));
+            const noteStr = isQ ? UIHelpers.midiToNoteName(UIHelpers.freqToMidi(f1)) : '';
+            return `<div class="flex flex-col items-center justify-center leading-none gap-0.5 pointer-events-none text-cyan-400">
+                <span class="text-[9px] font-bold uppercase">${m.wave || 'SAW'}</span>
+                ${isExt
+                    ? `<span class="text-[13px] font-mono font-bold text-amber-300 tracking-tight">EXT</span>`
+                    : (isQ
+                        ? `<span class="text-[13px] font-mono font-bold text-white tracking-tight">${noteStr}</span><span class="text-[8.5px] font-mono text-cyan-400/80">${Math.round(f1)}hz</span>`
+                        : `<span class="text-[13px] font-mono font-bold tracking-tight">${Math.round(f1)}<span class="text-[9px] ml-0.5">hz</span></span>`
+                    )}
+            </div>`;
+        }
+
+        const rowCls = ch >= 4
+            ? 'text-[8px] leading-[9px]'
+            : (ch === 3 ? 'text-[8.5px] leading-[10px]' : 'text-[10px] leading-[12px]');
+
+        const rows = Array.from({ length: ch }, (_, i) => {
+            const c = i + 1;
+            const portName = c === 1 ? 'cv_in' : `cv_in${c}`;
+            const isExt = Boolean(patched?.has(portName));
+            const f = m[`freq${c}`] || 220;
+            const label = isExt
+                ? 'EXT'
+                : (isQ ? UIHelpers.midiToNoteName(UIHelpers.freqToMidi(f)) : `${Math.round(f)}hz`);
+            const colorCls = isExt ? 'text-amber-300' : (isQ ? 'text-white' : 'text-cyan-300');
+            return `<span class="${rowCls} font-mono font-bold tracking-tight ${colorCls}">${label}</span>`;
+        }).join('');
+
+        return `<div class="flex flex-col items-center justify-center leading-none pointer-events-none max-w-[50px]">
+            <span class="text-[7px] font-bold uppercase text-cyan-400 leading-none mb-[2px]">${waveShort}</span>
+            ${rows}
         </div>`;
     },
     schema: {
