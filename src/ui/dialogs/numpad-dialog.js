@@ -122,10 +122,10 @@ export function openNumpadPrompt(title, init, min = -10.0, max = 10.0) {
         });
 
 
-        if (okBtn) okBtn.onclick = (e) => { e.stopPropagation(); handleConfirm(); };
-        if (cancelBtn) cancelBtn.onclick = (e) => { e.stopPropagation(); finish(null); };
-        backdrop.onpointerdown = (e) => { e.stopPropagation(); };
-        backdrop.onclick = (e) => { e.stopPropagation(); finish(null); };
+        if (okBtn) okBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); handleConfirm(); };
+        if (cancelBtn) cancelBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); finish(null); };
+        backdrop.onpointerdown = (e) => { e.preventDefault(); e.stopPropagation(); finish(null); };
+        backdrop.onclick = (e) => { e.preventDefault(); e.stopPropagation(); };
 
         const onKeyDown = (e) => {
             if (e.key >= '0' && e.key <= '9') {

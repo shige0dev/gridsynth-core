@@ -2,7 +2,7 @@
 import { MODULE_REGISTRY } from '../../modules/registry.js?v=854';
 import { UIHelpers } from '../helpers.js?v=619';
 import { openAddModal } from '../dialogs/add-module-dialog.js?v=771';
-import { openNumpadPrompt } from '../dialogs/numpad-dialog.js?v=872';
+import { openNumpadPrompt } from '../dialogs/numpad-dialog.js?v=873';
 import { openCustomAlert } from '../dialogs/alert-dialog.js?v=679';
 
 export const MODAL_WIDTHS = {
@@ -69,6 +69,19 @@ export class ModalManager {
         this.activePopupModuleId = null;
         this.dockManager = new DockManager(this.ui, this);
         this._toastTimer = null;
+        this._subDialogDismissedAt = 0;
+    }
+
+    isSubDialogOpen() {
+        const ids = ['custom-numpad-modal', 'custom-prompt-modal', 'custom-alert-modal', 'about-modal', 'json-io-modal'];
+        return ids.some(id => {
+            const el = document.getElementById(id);
+            return el && !el.classList.contains('hidden');
+        });
+    }
+
+    isSubDialogGuarded() {
+        return this.isSubDialogOpen() || (Date.now() - this._subDialogDismissedAt) < 350;
     }
 
     get openDocks() { return this.dockManager.openDocks; }
@@ -92,20 +105,24 @@ export class ModalManager {
 
     bindModalEvents() {
         document.getElementById('close-modal-bg')?.addEventListener('click', () => {
+            if (this.isSubDialogGuarded()) return;
             document.getElementById('shared-modal')?.classList.add('hidden');
             this.activePopupModuleId = null;
         });
 
         document.getElementById('dock-backdrop')?.addEventListener('pointerdown', () => {
+            if (this.isSubDialogGuarded()) return;
             this.closeUnlockedDocks();
         });
         document.getElementById('dock-backdrop')?.addEventListener('click', () => {
+            if (this.isSubDialogGuarded()) return;
             this.closeUnlockedDocks();
         });
 
         // Global outside-tap dismiss for unlocked dock dialogs
         document.addEventListener('pointerdown', (e) => {
             if (this.openDocks.size === 0) return;
+            if (this.isSubDialogGuarded()) return;
             const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
             if (targetEl?.closest?.('.dock-dialog') || targetEl?.closest?.('#custom-prompt-modal') || targetEl?.closest?.('#custom-numpad-modal') || targetEl?.closest?.('#alert-modal') || targetEl?.closest?.('#custom-alert-modal') || targetEl?.closest?.('#about-modal')) return;
             const hasUnlocked = Array.from(this.openDocks.values()).some(d => !d.isLocked);
@@ -304,9 +321,11 @@ export class ModalManager {
             inp.select();
 
             const finish = (val) => {
+                this._subDialogDismissedAt = Date.now();
                 md.classList.add('hidden');
                 inp.onkeydown = null;
                 backdrop.onclick = null;
+                backdrop.onpointerdown = null;
                 if (okBtn) okBtn.onclick = null;
                 if (cancelBtn) cancelBtn.onclick = null;
                 res(val);
@@ -321,14 +340,18 @@ export class ModalManager {
                     finish(null);
                 }
             };
-            if (okBtn) okBtn.onclick = () => finish(inp.value.trim());
-            if (cancelBtn) cancelBtn.onclick = () => finish(null);
-            backdrop.onclick = () => finish(null);
+            if (okBtn) okBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); finish(inp.value.trim()); };
+            if (cancelBtn) cancelBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); finish(null); };
+            backdrop.onpointerdown = (e) => { e.preventDefault(); e.stopPropagation(); finish(null); };
+            backdrop.onclick = (e) => { e.preventDefault(); e.stopPropagation(); };
         });
     }
 
     openNumpadPrompt(title, init, min = -10.0, max = 10.0) {
-        return openNumpadPrompt(title, init, min, max);
+        return openNumpadPrompt(title, init, min, max).then((val) => {
+            this._subDialogDismissedAt = Date.now();
+            return val;
+        });
     }
 
     openCustomAlert(title, message, details = [], options = {}) {
