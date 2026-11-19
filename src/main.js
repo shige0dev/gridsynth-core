@@ -1,6 +1,6 @@
-export const APP_VERSION = 'v1.0.0868';
+export const APP_VERSION = 'v1.0.0869';
 
-import { SynthEngine } from './audio/engine.js?v=867';
+import { SynthEngine } from './audio/engine.js?v=869';
 import { UIController } from './ui/controller.js?v=868';
 import { initExternalAPI } from './core/api.js?v=679';
 
@@ -33,21 +33,6 @@ function initApp() {
     if (frame) ro.observe(frame);
 
     // Safeguard: Prevent outer window/body from scrolling on mobile browsers
-
-
-JP
-
-ナビゲーションをスキップ
-miss monique
-
-
-
-
-作成
-
-9+
-
-アバターの画像
     window.addEventListener('scroll', () => {
         if (window.scrollY !== 0 || window.scrollX !== 0) {
             window.scrollTo(0, 0);
