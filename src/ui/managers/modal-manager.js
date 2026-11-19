@@ -2,7 +2,7 @@
 import { MODULE_REGISTRY } from '../../modules/registry.js?v=854';
 import { UIHelpers } from '../helpers.js?v=619';
 import { openAddModal } from '../dialogs/add-module-dialog.js?v=771';
-import { openNumpadPrompt } from '../dialogs/numpad-dialog.js?v=679';
+import { openNumpadPrompt } from '../dialogs/numpad-dialog.js?v=872';
 import { openCustomAlert } from '../dialogs/alert-dialog.js?v=679';
 
 export const MODAL_WIDTHS = {
@@ -107,7 +107,7 @@ export class ModalManager {
         document.addEventListener('pointerdown', (e) => {
             if (this.openDocks.size === 0) return;
             const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
-            if (targetEl?.closest?.('.dock-dialog') || targetEl?.closest?.('#custom-prompt-modal') || targetEl?.closest?.('#alert-modal') || targetEl?.closest?.('#about-modal')) return;
+            if (targetEl?.closest?.('.dock-dialog') || targetEl?.closest?.('#custom-prompt-modal') || targetEl?.closest?.('#custom-numpad-modal') || targetEl?.closest?.('#alert-modal') || targetEl?.closest?.('#custom-alert-modal') || targetEl?.closest?.('#about-modal')) return;
             const hasUnlocked = Array.from(this.openDocks.values()).some(d => !d.isLocked);
             if (hasUnlocked) {
                 this.closeUnlockedDocks();

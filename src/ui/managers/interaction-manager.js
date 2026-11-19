@@ -440,7 +440,7 @@ export class InteractionManager {
         });
 
         this.ui.gridBoard.addEventListener('pointerdown', (e) => {
-            if (e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal')) {
+            if (e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal, #custom-numpad-modal, #custom-prompt-modal')) {
                 return;
             }
             this._sX = e.clientX;
@@ -617,7 +617,7 @@ export class InteractionManager {
             const container = document.getElementById('canvas-container');
             if (isButtonHeld && this._gridPointerActive && !this.isDragging && !this.moduleLongPressed && !isCandidateSelected && !isRowBusy && container) {
                 const padBlock = e.target.closest('.val-center-hit') || (this.ui.isPerformanceMode && e.target.closest('.pad-grid-container, .pad-grid-canvas, .val-box'));
-                if (padBlock || e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal, #main-menu-bar, #page-nav-bar')) {
+                if (padBlock || e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal, #custom-numpad-modal, #custom-prompt-modal, #main-menu-bar, #page-nav-bar')) {
                     this._isScrollDragging = false;
                     return;
                 }
@@ -860,7 +860,7 @@ export class InteractionManager {
         window.addEventListener('wheel', (e) => {
             const container = document.getElementById('canvas-container');
             if (!container) return;
-            if (e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal, #custom-alert-modal, #main-menu-bar, #page-nav-bar')) return;
+            if (e.target.closest('.dock-dialog, .modal-content, #shared-modal, #dock-modal, #preset-manager-modal, #about-modal, #custom-alert-modal, #custom-numpad-modal, #custom-prompt-modal, #main-menu-bar, #page-nav-bar')) return;
             const activeModal = document.querySelector('#shared-modal:not(.hidden), #preset-manager-modal:not(.hidden), #custom-alert-modal:not(.hidden)');
             if (activeModal) return;
             if (e.target.closest('input, select, textarea, .overflow-y-auto:not(#canvas-container)')) return;

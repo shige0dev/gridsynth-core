@@ -33,6 +33,7 @@ export function openNumpadPrompt(title, init, min = -10.0, max = 10.0) {
             md.classList.add('hidden');
             window.removeEventListener('keydown', onKeyDown);
             backdrop.onclick = null;
+            backdrop.onpointerdown = null;
             if (okBtn) okBtn.onclick = null;
             if (cancelBtn) cancelBtn.onclick = null;
             md.querySelectorAll('.numpad-key').forEach(btn => {
@@ -121,9 +122,10 @@ export function openNumpadPrompt(title, init, min = -10.0, max = 10.0) {
         });
 
 
-        if (okBtn) okBtn.onclick = handleConfirm;
-        if (cancelBtn) cancelBtn.onclick = () => finish(null);
-        backdrop.onclick = () => finish(null);
+        if (okBtn) okBtn.onclick = (e) => { e.stopPropagation(); handleConfirm(); };
+        if (cancelBtn) cancelBtn.onclick = (e) => { e.stopPropagation(); finish(null); };
+        backdrop.onpointerdown = (e) => { e.stopPropagation(); };
+        backdrop.onclick = (e) => { e.stopPropagation(); finish(null); };
 
         const onKeyDown = (e) => {
             if (e.key >= '0' && e.key <= '9') {

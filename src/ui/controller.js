@@ -3,10 +3,10 @@ import { parsePatch } from '../core/patch.js?v=864';
 import { MODULE_REGISTRY } from '../modules/registry.js?v=871';
 import { UIHelpers } from './helpers.js?v=854';
 import { PresetManager } from './managers/preset-manager.js?v=868';
-import { ModalManager } from './managers/modal-manager.js?v=854';
+import { ModalManager } from './managers/modal-manager.js?v=872';
 import { CableManager } from './managers/cable-manager.js?v=864';
 import { PageManager } from './managers/page-manager.js?v=854';
-import { InteractionManager } from './managers/interaction-manager.js?v=854';
+import { InteractionManager } from './managers/interaction-manager.js?v=872';
 import { ToolbarManager } from './managers/toolbar-manager.js?v=857';
 
 export const LIVE_TYPES = ['VCA', 'MATH1', 'MATH2', 'SH', 'SCOPE', 'LISS', 'SPEC', 'SEQ8', 'SEQ16', 'ADSR', 'PAT', 'MARKOV', 'SPK', 'MIX', 'DIST4', 'SLCT4', 'KEY', 'RF', 'AR', 'WAVE', 'PAD', 'COUNT', 'LUT', 'MATRIX', 'GSENSOR', 'OBJECT', 'PATH', 'ROTATE', 'MOVE', 'SCALE', 'VERTEX', 'SCATTER', 'RENDER', 'VFX', 'VMIX', 'DISPLAY'];
