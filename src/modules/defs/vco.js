@@ -4,13 +4,26 @@ export const VCO = {
     color: 'blue',
     defaults: () => ({ type: 'VCO', channels: 1, quantize: true, wave: 'sawtooth', freq1: 220, freq2: 220, freq3: 220, freq4: 220 }),
     ports: (m) => ({ in: UIHelpers.getMultiPitchInPorts(m), out: [{ port: 'wave_out', color: 'bg-blue-500' }] }),
-    renderGrid: (m) => {
+    renderGrid: (m, ctx) => {
         const isQ = m.quantize !== false;
         const f1 = m.freq1 || 220;
+        const ch = Math.min(4, Math.max(1, m.channels || 1));
+        const patched = ctx?.patched;
+        const hasExt = Boolean(
+            patched?.has('cv_in') ||
+            (ch >= 2 && patched?.has('cv_in2')) ||
+            (ch >= 3 && patched?.has('cv_in3')) ||
+            (ch >= 4 && patched?.has('cv_in4'))
+        );
         const noteStr = isQ ? UIHelpers.midiToNoteName(UIHelpers.freqToMidi(f1)) : '';
         return `<div class="flex flex-col items-center justify-center leading-none gap-0.5 pointer-events-none text-cyan-400">
             <span class="text-[9px] font-bold uppercase">${m.wave || 'SAW'}</span>
-            ${isQ ? `<span class="text-[13px] font-mono font-bold text-white tracking-tight">${noteStr}</span><span class="text-[8.5px] font-mono text-cyan-400/80">${Math.round(f1)}hz</span>` : `<span class="text-[13px] font-mono font-bold tracking-tight">${Math.round(f1)}<span class="text-[9px] ml-0.5">hz</span></span>`}
+            ${hasExt
+                ? `<span class="text-[13px] font-mono font-bold text-amber-300 tracking-tight">EXT</span>`
+                : (isQ
+                    ? `<span class="text-[13px] font-mono font-bold text-white tracking-tight">${noteStr}</span><span class="text-[8.5px] font-mono text-cyan-400/80">${Math.round(f1)}hz</span>`
+                    : `<span class="text-[13px] font-mono font-bold tracking-tight">${Math.round(f1)}<span class="text-[9px] ml-0.5">hz</span></span>`
+                )}
         </div>`;
     },
     schema: {

@@ -3,7 +3,7 @@
  * Aggregates all modular definitions from ./defs/*.
  */
 
-import { vcoDefs } from './defs/vco.js?v=351';
+import { vcoDefs } from './defs/vco.js?v=870';
 import { filterDefs } from './defs/filter.js?v=838';
 import { ampDefs } from './defs/amp.js?v=810';
 import { effectsDefs } from './defs/effects.js?v=839';
