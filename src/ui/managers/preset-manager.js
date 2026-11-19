@@ -393,6 +393,7 @@ export class PresetManager {
     createNewPatch() {
         const name = `PATCH_${Date.now().toString().slice(-4)}`;
         this._registerAndActivatePreset(name, createDefaultPatchData(120), `新規作成: ${name}`);
+        document.getElementById('preset-manager-modal')?.classList.add('hidden');
     }
 
     openJsonExportModal() {
